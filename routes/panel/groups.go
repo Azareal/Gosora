@@ -59,7 +59,7 @@ func Groups(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 
 	pageList := c.Paginate(basePage.Stats.Groups, perPage, 5)
 	pi := c.PanelGroupPage{basePage, groupList, c.Paginator{pageList, page, lastPage}}
-	return renderTemplate("panel_groups", w, r, basePage.Header, &pi)
+	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage,"","","panel_groups",&pi})
 }
 
 func GroupsEdit(w http.ResponseWriter, r *http.Request, user c.User, sgid string) c.RouteError {

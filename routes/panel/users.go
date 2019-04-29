@@ -25,7 +25,7 @@ func Users(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 
 	pageList := c.Paginate(basePage.Stats.Users, perPage, 5)
 	pi := c.PanelUserPage{basePage, users, c.Paginator{pageList, page, lastPage}}
-	return renderTemplate("panel_users", w, r, basePage.Header, &pi)
+	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage,"","","panel_users",&pi})
 }
 
 func UsersEdit(w http.ResponseWriter, r *http.Request, user c.User, suid string) c.RouteError {
@@ -75,7 +75,7 @@ func UsersEdit(w http.ResponseWriter, r *http.Request, user c.User, suid string)
 	}
 
 	pi := c.PanelPage{basePage, groupList, targetUser}
-	return renderTemplate("panel_user_edit", w, r, basePage.Header, &pi)
+	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage,"","","panel_user_edit",&pi})
 }
 
 func UsersEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, suid string) c.RouteError {

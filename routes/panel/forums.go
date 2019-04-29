@@ -49,7 +49,7 @@ func Forums(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	}
 
 	pi := c.PanelPage{basePage, forumList, nil}
-	return renderTemplate("panel_forums", w, r, basePage.Header, &pi)
+	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage,"","","panel_forums",&pi})
 }
 
 func ForumsCreateSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
@@ -165,6 +165,7 @@ func ForumsEdit(w http.ResponseWriter, r *http.Request, user c.User, sfid string
 	if !user.Perms.ManageForums {
 		return c.NoPermissions(w, r, user)
 	}
+	basePage.Header.AddScriptAsync("panel_forum_edit.js")
 
 	fid, err := strconv.Atoi(sfid)
 	if err != nil {
@@ -206,7 +207,7 @@ func ForumsEdit(w http.ResponseWriter, r *http.Request, user c.User, sfid string
 	}
 
 	pi := c.PanelEditForumPage{basePage, forum.ID, forum.Name, forum.Desc, forum.Active, forum.Preset, gplist}
-	return renderTemplate("panel_forum_edit", w, r, basePage.Header, &pi)
+	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage,"","","panel_forum_edit",&pi})
 }
 
 func ForumsEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, sfid string) c.RouteError {
@@ -364,7 +365,7 @@ func ForumsEditPermsAdvance(w http.ResponseWriter, r *http.Request, user c.User,
 	}
 
 	pi := c.PanelEditForumGroupPage{basePage, forum.ID, gid, forum.Name, forum.Desc, forum.Active, forum.Preset, formattedPermList}
-	return renderTemplate("panel_forum_edit_perms", w, r, basePage.Header, &pi)
+	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage,"","","panel_forum_edit_perms",&pi})
 }
 
 func ForumsEditPermsAdvanceSubmit(w http.ResponseWriter, r *http.Request, user c.User, paramList string) c.RouteError {
