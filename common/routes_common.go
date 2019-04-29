@@ -95,7 +95,7 @@ func cascadeForumPerms(fperms *ForumPerms, user *User) {
 // Even if they have the right permissions, the control panel is only open to supermods+. There are many areas without subpermissions which assume that the current user is a supermod+ and admins are extremely unlikely to give these permissions to someone who isn't at-least a supermod to begin with
 // TODO: Do a panel specific theme?
 func panelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (header *Header, stats PanelStats, rerr RouteError) {
-	theme := getTheme(r)
+	theme := GetThemeByReq(r)
 	header = &Header{
 		Site:        Site,
 		Settings:    SettingBox.Load().(SettingMap),
@@ -176,7 +176,7 @@ func simpleUserCheck(w http.ResponseWriter, r *http.Request, user *User) (header
 	}, nil
 }
 
-func getTheme(r *http.Request) *Theme {
+func GetThemeByReq(r *http.Request) *Theme {
 	var theme = &Theme{Name: ""}
 
 	cookie, err := r.Cookie("current_theme")
@@ -196,7 +196,7 @@ func getTheme(r *http.Request) *Theme {
 // TODO: Add the ability for admins to restrict certain themes to certain groups?
 // ! Be careful about firing errors off here as CustomError uses this
 func userCheck(w http.ResponseWriter, r *http.Request, user *User) (header *Header, rerr RouteError) {
-	theme := getTheme(r)
+	theme := GetThemeByReq(r)
 	header = &Header{
 		Site:        Site,
 		Settings:    SettingBox.Load().(SettingMap),
@@ -219,9 +219,9 @@ func userCheck(w http.ResponseWriter, r *http.Request, user *User) (header *Head
 
 	// An optimisation so we don't populate StartedAt for users who shouldn't see the stat anyway
 	// ? - Should we only show this in debug mode? It might be useful for detecting issues in production, if we show it there as-well
-	//if user.IsAdmin {
+	if user.IsAdmin {
 		header.StartedAt = time.Now()
-	//}
+	}
 
 	//PrepResources(user,header,theme)
 	return header, nil

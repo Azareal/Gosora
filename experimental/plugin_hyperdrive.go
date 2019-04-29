@@ -50,10 +50,11 @@ type Hyperspace struct {
 
 func newHyperspace() *Hyperspace {
 	pageCache := new(Hyperspace)
-	pageCache.topicList.Store([]byte(""))
-	pageCache.gzipTopicList.Store([]byte(""))
-	pageCache.forumList.Store([]byte(""))
-	pageCache.gzipForumList.Store([]byte(""))
+	blank := make(map[string][]byte,len(c.Themes))
+	pageCache.topicList.Store(blank)
+	pageCache.gzipTopicList.Store(blank)
+	pageCache.forumList.Store(blank)
+	pageCache.gzipForumList.Store(blank)
 	pageCache.lastTopicListUpdate.Store(int64(0))
 	return pageCache
 }
@@ -68,39 +69,50 @@ func tickHdrive(args ...interface{}) (skip bool, rerr c.RouteError) {
 	c.DebugLog("Refueling...")
 
 	// Avoid accidentally caching already cached content
-	hyperspace.topicList.Store([]byte(""))
-	hyperspace.gzipTopicList.Store([]byte(""))
-	hyperspace.forumList.Store([]byte(""))
-	hyperspace.gzipForumList.Store([]byte(""))
+	blank := make(map[string][]byte,len(c.Themes))
+	hyperspace.topicList.Store(blank)
+	hyperspace.gzipTopicList.Store(blank)
+	hyperspace.forumList.Store(blank)
+	hyperspace.gzipForumList.Store(blank)
+
+	tListMap := make(map[string][]byte)
+	gtListMap := make(map[string][]byte)
+	fListMap := make(map[string][]byte)
+	gfListMap := make(map[string][]byte)
+
+	var cacheTheme = func(tname string) (skip bool, fail bool, rerr c.RouteError) {
+
+	themeCookie := http.Cookie{Name: "current_theme", Value: tname, Path: "/", MaxAge: c.Year}
 
 	w := httptest.NewRecorder()
 	req := httptest.NewRequest("get", "/topics/", bytes.NewReader(nil))
+	req.AddCookie(&themeCookie)
 	user := c.GuestUser
 
 	head, rerr := c.UserCheck(w, req, &user)
 	if rerr != nil {
-		return true, rerr
+		return true, true, rerr
 	}
 			
 	rerr = routes.TopicList(w, req, user, head)
 	if rerr != nil {
-		return true, rerr
+		return true, true, rerr
 	}
 	if w.Code != 200 {
 		c.LogWarning(errors.New("not 200 for topic list in hyperdrive"))
-		return false, nil
+		return false, true, nil
 	}
 
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(w.Result().Body)
-	hyperspace.topicList.Store(buf.Bytes())
+	tListMap[tname] = buf.Bytes()
 
 	gbuf, err := c.CompressBytesGzip(buf.Bytes())
 	if err != nil {
 		c.LogWarning(err)
-		return false, nil
+		return false, true, nil
 	}
-	hyperspace.gzipTopicList.Store(gbuf)
+	gtListMap[tname] = gbuf
 
 	w = httptest.NewRecorder()
 	req = httptest.NewRequest("get", "/forums/", bytes.NewReader(nil))
@@ -108,39 +120,59 @@ func tickHdrive(args ...interface{}) (skip bool, rerr c.RouteError) {
 
 	head, rerr = c.UserCheck(w, req, &user)
 	if rerr != nil {
-		return true, rerr
+		return true, true, rerr
 	}
 
 	rerr = routes.ForumList(w, req, user, head)
 	if rerr != nil {
-		return true, rerr
+		return true, true, rerr
 	}
 	if w.Code != 200 {
 		c.LogWarning(errors.New("not 200 for forum list in hyperdrive"))
-		return false, nil
+		return false, true, nil
 	}
 
 	buf = new(bytes.Buffer)
 	buf.ReadFrom(w.Result().Body)
-	hyperspace.forumList.Store(buf.Bytes())
+	fListMap[tname] = buf.Bytes()
 
 	gbuf, err = c.CompressBytesGzip(buf.Bytes())
 	if err != nil {
 		c.LogWarning(err)
-		return false, nil
+		return false, true, nil
 	}
-	hyperspace.gzipForumList.Store(gbuf)
+	gfListMap[tname] = gbuf
+	return false, false, nil
+	}
+
+	for tname, _ := range c.Themes {
+		skip, fail, rerr := cacheTheme(tname)
+		if fail || rerr != nil {
+			return skip, rerr
+		}
+	}
+
+	hyperspace.topicList.Store(tListMap)
+	hyperspace.gzipTopicList.Store(gtListMap)
+	hyperspace.forumList.Store(fListMap)
+	hyperspace.gzipForumList.Store(gfListMap)
 	hyperspace.lastTopicListUpdate.Store(time.Now().Unix())
 	
 	return false, nil
 }
 
 func jumpHdriveTopicList(args ...interface{}) (skip bool, rerr c.RouteError) {
-	return jumpHdrive(hyperspace.gzipTopicList.Load().([]byte), hyperspace.topicList.Load().([]byte), args)
+	theme := c.GetThemeByReq(args[1].(*http.Request))
+	p := hyperspace.topicList.Load().(map[string][]byte)
+	pg := hyperspace.gzipTopicList.Load().(map[string][]byte)
+	return jumpHdrive(pg[theme.Name], p[theme.Name], args)
 }
 
 func jumpHdriveForumList(args ...interface{}) (skip bool, rerr c.RouteError) {
-	return jumpHdrive(hyperspace.gzipForumList.Load().([]byte), hyperspace.forumList.Load().([]byte), args)
+	theme := c.GetThemeByReq(args[1].(*http.Request))
+	p := hyperspace.forumList.Load().(map[string][]byte)
+	pg := hyperspace.gzipForumList.Load().(map[string][]byte)
+	return jumpHdrive(pg[theme.Name], p[theme.Name], args)
 }
 
 func jumpHdrive(pg []byte, p []byte, args []interface{}) (skip bool, rerr c.RouteError) {
