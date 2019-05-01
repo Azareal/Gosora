@@ -119,6 +119,44 @@ func analyticsRowsToViewMap(rows *sql.Rows, labelList []int64, viewMap map[int64
 	return viewMap, rows.Err()
 }
 
+type pAvg struct {
+	Avg int64
+	Tot int64
+}
+
+func analyticsRowsToAverageMap(rows *sql.Rows, labelList []int64, avgMap map[int64]int64) (map[int64]int64, error) {
+	defer rows.Close()
+	for rows.Next() {
+		var count int64
+		var createdAt time.Time
+		err := rows.Scan(&count, &createdAt)
+		if err != nil {
+			return avgMap, err
+		}
+		var unixCreatedAt = createdAt.Unix()
+		// TODO: Bulk log this
+		if c.Dev.SuperDebug {
+			log.Print("count: ", count)
+			log.Print("createdAt: ", createdAt)
+			log.Print("unixCreatedAt: ", unixCreatedAt)
+		}
+		var pAvgMap = make(map[int64]pAvg)
+		for _, value := range labelList {
+			if unixCreatedAt > value {
+				prev := pAvgMap[value]
+				prev.Avg += count
+				prev.Tot++
+				pAvgMap[value] = prev
+				break
+			}
+		}
+		for key, pAvg := range pAvgMap {
+			avgMap[key] = pAvg.Avg / pAvg.Tot
+		}
+	}
+	return avgMap, rows.Err()
+}
+
 func PreAnalyticsDetail(w http.ResponseWriter, r *http.Request, user *c.User) (*c.BasePanelPage, c.RouteError) {
 	basePage, ferr := buildBasePage(w, r, user, "analytics", "analytics")
 	if ferr != nil {
@@ -473,46 +511,29 @@ func AnalyticsMemory(w http.ResponseWriter, r *http.Request, user c.User) c.Rout
 	if err != nil {
 		return c.LocalError(err.Error(), w, r, user)
 	}
-	revLabelList, labelList, viewMap := analyticsTimeRangeToLabelList(timeRange)
+	revLabelList, labelList, avgMap := analyticsTimeRangeToLabelList(timeRange)
 
 	c.DebugLog("in panel.AnalyticsMemory")
 	rows, err := qgen.NewAcc().Select("memchunks").Columns("count, createdAt").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
 	if err != nil && err != sql.ErrNoRows {
 		return c.InternalError(err, w, r)
 	}
-	viewMap, err = analyticsRowsToViewMap(rows, labelList, viewMap)
+	avgMap, err = analyticsRowsToAverageMap(rows, labelList, avgMap)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
 
-	var divBy int64 = 1
-	switch timeRange.Range {
-	case "one-year":
-		divBy = 2 * 30 * 12
-	case "three-months":
-		divBy = 2 * 30 * 3
-	case "one-month":
-		divBy = 2 * 30
-	case "one-week":
-		divBy = 1 * 7
-	case "two-days":
-		divBy = 4
-	case "one-day":
-		divBy = 2
-	}
-
 	// TODO: Adjust for the missing chunks in week and month
-	var viewList []int64
-	var viewItems []c.PanelAnalyticsItemUnit
+	var avgList []int64
+	var avgItems []c.PanelAnalyticsItemUnit
 	for _, value := range revLabelList {
-		viewMap[value] = viewMap[value] / divBy
-		viewList = append(viewList, viewMap[value])
-		cv, cu := c.ConvertByteUnit(float64(viewMap[value]))
-		viewItems = append(viewItems, c.PanelAnalyticsItemUnit{Time: value, Unit: cu, Count: int64(cv)})
+		avgList = append(avgList, avgMap[value])
+		cv, cu := c.ConvertByteUnit(float64(avgMap[value]))
+		avgItems = append(avgItems, c.PanelAnalyticsItemUnit{Time: value, Unit: cu, Count: int64(cv)})
 	}
-	graph := c.PanelTimeGraph{Series: [][]int64{viewList}, Labels: labelList}
+	graph := c.PanelTimeGraph{Series: [][]int64{avgList}, Labels: labelList}
 	c.DebugLogf("graph: %+v\n", graph)
-	pi := c.PanelAnalyticsStdUnit{graph, viewItems, timeRange.Range, timeRange.Unit, "time"}
+	pi := c.PanelAnalyticsStdUnit{graph, avgItems, timeRange.Range, timeRange.Unit, "time"}
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_analytics_right","analytics","panel_analytics_memory", pi})
 }
 

@@ -67,6 +67,20 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError 
 	// TODO: Split this into it's own function
 	case "alerts": // A feed of events tailored for a specific user
 		if !user.Loggedin {
+			var etag string
+			_, ok := w.(c.GzipResponseWriter)
+			if ok {
+				etag = "\""+strconv.FormatInt(c.StartTime.Unix(), 10)+"-ng\""
+			} else {
+				etag = "\""+strconv.FormatInt(c.StartTime.Unix(), 10)+"-n\""
+			}
+			w.Header().Set("ETag", etag)
+			if match := r.Header.Get("If-None-Match"); match != "" {
+				if strings.Contains(match, etag) {
+					w.WriteHeader(http.StatusNotModified)
+					return nil
+				}
+			}
 			w.Write(phraseLoginAlerts)
 			return nil
 		}

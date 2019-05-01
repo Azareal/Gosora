@@ -74,6 +74,15 @@ li a {
 	padding-left: 8px;
 	padding-right: 8px;
 }
+.alertItem:not(.withAvatar) {
+	padding-top: 0px;
+	padding-bottom: 0px;
+}
+.alertItem:not(.withAvatar) a {
+	padding-top: 14px;
+	padding-bottom: 18px;
+	font-size: 17px;
+}
 .alertItem.withAvatar {
 	background: none !important;
 	height: 66px;

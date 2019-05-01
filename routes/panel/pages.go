@@ -33,7 +33,7 @@ func Pages(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 
 	pageList := c.Paginate(pageCount, perPage, 5)
 	pi := c.PanelCustomPagesPage{basePage, cPages, c.Paginator{pageList, page, lastPage}}
-	return renderTemplate("panel_pages", w, r, basePage.Header, &pi)
+	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage,"panel_page_list","","panel_pages",&pi})
 }
 
 func PagesCreateSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
@@ -90,7 +90,7 @@ func PagesEdit(w http.ResponseWriter, r *http.Request, user c.User, spid string)
 	}
 
 	pi := c.PanelCustomPageEditPage{basePage, page}
-	return renderTemplate("panel_pages_edit", w, r, basePage.Header, &pi)
+	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage,"panel_page_edit","","panel_pages_edit",&pi})
 }
 
 func PagesEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, spid string) c.RouteError {
