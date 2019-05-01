@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"runtime"
 
 	c "github.com/Azareal/Gosora/common"
 	p "github.com/Azareal/Gosora/common/phrases"
@@ -113,6 +114,10 @@ func Dashboard(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError
 		ramColour = lessThanSwitch(int(ramperc), 50, 75)
 	}
 
+	var m runtime.MemStats
+	runtime.ReadMemStats(&m)
+	memCount, memUnit := c.ConvertByteUnit(float64(m.Sys))
+
 	greaterThanSwitch := func(number int, lowerBound int, midBound int) string {
 		switch {
 		case number > midBound:
@@ -166,14 +171,16 @@ func Dashboard(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError
 		return c.InternalError(intErr, w, r)
 	}
 
-	// TODO: Localise these
 	var gridElements = []GE{
 		// TODO: Implement a check for new versions of Gosora
+		// TODO: Localise this
 		//GE{"dash-version", "v" + version.String(), 0, "grid_istat stat_green", "", "", "Gosora is up-to-date :)"},
 		GE{"dash-version", "v" + c.SoftwareVersion.String(), 0, "grid_istat", "", "", ""},
 
 		GE{"dash-cpu", p.GetTmplPhrasef("panel_dashboard_cpu",cpustr), 1, "grid_istat " + cpuColour, "", "", p.GetTmplPhrase("panel_dashboard_cpu_desc")},
 		GE{"dash-ram", p.GetTmplPhrasef("panel_dashboard_ram",ramstr), 2, "grid_istat " + ramColour, "", "", p.GetTmplPhrase("panel_dashboard_ram_desc")},
+
+		GE{"dash-memused", p.GetTmplPhrasef("panel_dashboard_memused",memCount, memUnit), 2, "grid_istat", "", "", p.GetTmplPhrase("panel_dashboard_memused_desc")},
 	}
 	var addElement = func(element GE) {
 		gridElements = append(gridElements, element)

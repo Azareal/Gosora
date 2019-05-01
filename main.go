@@ -218,6 +218,10 @@ func afterDBInit() (err error) {
 	if err != nil {
 		return errors.WithStack(err)
 	}
+	counters.MemoryCounter, err = counters.NewMemoryCounter(acc)
+	if err != nil {
+		return errors.WithStack(err)
+	}
 
 	return nil
 }

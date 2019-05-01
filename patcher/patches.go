@@ -31,6 +31,7 @@ func init() {
 	addPatch(16, patch16)
 	addPatch(17, patch17)
 	addPatch(18, patch18)
+	addPatch(19, patch19)
 }
 
 func patch0(scanner *bufio.Scanner) (err error) {
@@ -592,4 +593,13 @@ func patch17(scanner *bufio.Scanner) error {
 
 func patch18(scanner *bufio.Scanner) error {
 	return execStmt(qgen.Builder.AddColumn("forums", tblColumn{"order", "int", 0, false, false, "0"}, nil))
+}
+
+func patch19(scanner *bufio.Scanner) error {
+	return execStmt(qgen.Builder.CreateTable("memchunks", "", "",
+		[]tblColumn{
+			tblColumn{"count", "int", 0, false, false, "0"},
+			tblColumn{"createdAt", "datetime", 0, false, false, ""},
+		}, nil,
+	))
 }

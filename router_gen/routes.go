@@ -212,6 +212,7 @@ func panelRoutes() *RouteGroup {
 		View("panel.AnalyticsLanguageViews", "/panel/analytics/lang/", "extraData"),
 		View("panel.AnalyticsReferrerViews", "/panel/analytics/referrer/", "extraData"),
 		View("panel.AnalyticsPosts", "/panel/analytics/posts/").Before("ParseForm"),
+		View("panel.AnalyticsMemory", "/panel/analytics/memory/").Before("ParseForm"),
 		View("panel.AnalyticsTopics", "/panel/analytics/topics/").Before("ParseForm"),
 		View("panel.AnalyticsForums", "/panel/analytics/forums/").Before("ParseForm"),
 

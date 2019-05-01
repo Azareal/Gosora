@@ -614,6 +614,13 @@ func createTables(adapter qgen.Adapter) error {
 		}, nil,
 	)
 
+	qgen.Install.CreateTable("memchunks", "", "",
+		[]tblColumn{
+			tblColumn{"count", "int", 0, false, false, "0"},
+			tblColumn{"createdAt", "datetime", 0, false, false, ""},
+		}, nil,
+	)
+
 	qgen.Install.CreateTable("sync", "", "",
 		[]tblColumn{
 			tblColumn{"last_update", "datetime", 0, false, false, ""},

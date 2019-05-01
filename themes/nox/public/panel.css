@@ -175,6 +175,7 @@ button, .formbutton, .panel_right_button:not(.has_inner_button), #panel_users .p
 	padding: 16px;
 	padding-bottom: 0px;
 	padding-left: 0px;
+	padding-right: 0px;
 	margin-bottom: 10px;
 }
 .colstack_graph_holder .ct-label {

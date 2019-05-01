@@ -1,19 +1,19 @@
-		<div class="colstack_item colstack_head">
-			<div class="rowitem">
-				<h1>{{lang "panel_statistics_user_agents_head"}}</h1>
-				{{template "panel_analytics_time_range.html" . }}
-			</div>
-		</div>
-		<form id="timeRangeForm" name="timeRangeForm" action="/panel/analytics/agents/" method="get"></form>
-		<div id="panel_analytics_agents_chart" class="colstack_graph_holder">
-			<div class="ct_chart"></div>
-		</div>
-		<div id="panel_analytics_agents" class="colstack_item rowlist">
-			{{range .ItemList}}
-			<div class="rowitem panel_compactrow editable_parent">
-				<a href="/panel/analytics/agent/{{.Agent}}" class="panel_upshift">{{.FriendlyAgent}}</a>
-				<span class="panel_compacttext to_right">{{.Count}}{{lang "panel_statistics_views_suffix"}}</span>
-			</div>
-			{{else}}<div class="rowitem passive rowmsg">{{lang "panel_statistics_user_agents_no_user_agents"}}</div>{{end}}
-		</div>
+<div class="colstack_item colstack_head">
+	<div class="rowitem">
+		<h1>{{lang "panel_statistics_user_agents_head"}}</h1>
+		{{template "panel_analytics_time_range.html" . }}
+	</div>
+</div>
+<form id="timeRangeForm" name="timeRangeForm" action="/panel/analytics/agents/" method="get"></form>
+<div id="panel_analytics_agents_chart" class="colstack_graph_holder">
+	<div class="ct_chart"></div>
+</div>
+<div id="panel_analytics_agents" class="colstack_item rowlist">
+	{{range .ItemList}}
+	<div class="rowitem panel_compactrow editable_parent">
+		<a href="/panel/analytics/agent/{{.Agent}}" class="panel_upshift">{{.FriendlyAgent}}</a>
+		<span class="panel_compacttext to_right">{{.Count}}{{lang "panel_statistics_views_suffix"}}</span>
+	</div>
+	{{else}}<div class="rowitem passive rowmsg">{{lang "panel_statistics_user_agents_no_user_agents"}}</div>{{end}}
+</div>
 {{template "panel_analytics_script.html" . }}

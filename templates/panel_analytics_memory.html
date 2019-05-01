@@ -1,0 +1,71 @@
+<div class="colstack_item colstack_head">
+	<div class="rowitem">
+		<h1>{{lang "panel_statistics_memory_head"}}</h1>
+		<select form="timeRangeForm" class="timeRangeSelector to_right" name="timeRange">
+			<option val="one-month"{{if eq .TimeRange "one-month"}} selected{{end}}>{{lang "panel_statistics_time_range_one_month"}}</option>
+			<option val="one-week"{{if eq .TimeRange "one-week"}} selected{{end}}>{{lang "panel_statistics_time_range_one_week"}}</option>
+			<option val="two-days"{{if eq .TimeRange "two-days"}} selected{{end}}>{{lang "panel_statistics_time_range_two_days"}}</option>
+			<option val="one-day"{{if eq .TimeRange "one-day"}} selected{{end}}>{{lang "panel_statistics_time_range_one_day"}}</option>
+			<option val="twelve-hours"{{if eq .TimeRange "twelve-hours"}} selected{{end}}>{{lang "panel_statistics_time_range_twelve_hours"}}</option>
+			<option val="six-hours"{{if eq .TimeRange "six-hours"}} selected{{end}}>{{lang "panel_statistics_time_range_six_hours"}}</option>
+		</select>
+	</div>
+</div>
+<form id="timeRangeForm" name="timeRangeForm" action="/panel/analytics/memory/" method="get"></form>
+<div id="panel_analytics_memory" class="colstack_graph_holder">
+	<div class="ct_chart" aria-label="{{lang "panel_statistics_post_counts_chart_aria"}}"></div>
+</div>
+<div class="colstack_item colstack_head">
+	<div class="rowitem">
+		<h1>{{lang "panel_statistics_details_head"}}</h1>
+	</div>
+</div>
+<div id="panel_analytics_posts_table" class="colstack_item rowlist" aria-label="{{lang "panel_statistics_post_counts_table_aria"}}">
+	{{range .ViewItems}}
+	<div class="rowitem panel_compactrow editable_parent">
+		<a class="panel_upshift {{if or (or (or (eq $.TimeRange "six-hours") (eq $.TimeRange "twelve-hours")) (eq $.TimeRange "one-day")) (eq $.TimeRange "two-days")}}unix_to_24_hour_time{{else}}unix_to_date{{end}}">{{.Time}}</a>
+		<span class="panel_compacttext to_right">{{.Count}}{{.Unit}}</span>
+	</div>
+	{{else}}<div class="rowitem passive rowmsg">{{lang "panel_statistics_post_counts_no_post_counts"}}</div>{{end}}
+</div>
+<script>
+	let rawLabels = [{{range .Graph.Labels}}
+	{{.}},{{end}}
+	];
+	let seriesData = [{{range .Graph.Series}}[{{range .}}
+	{{.}},{{end}}
+	],{{end}}
+	];
+	let legendNames = [{{range .Graph.Legends}}
+	{{.}},{{end}}
+	];
+	
+	(function(window, document, Chartist) {
+  'use strict';
+
+  Chartist.plugins = Chartist.plugins || {};
+  Chartist.plugins.byteUnits = function(options) {
+    options = Chartist.extend({}, {}, options);
+
+    return function byteUnits(chart) {
+      if (chart instanceof Chartist.Line) {
+        chart.on('created', function() {
+					console.log("running created")
+					let vbits = document.getElementsByClassName("ct-vertical");
+        	for(let i = 0; i < vbits.length; i++) {
+        		vbits[i].innerHTML = convertByteUnit(vbits[i].innerHTML);
+        	}
+        });
+      }
+    };
+  };
+
+}(window, document, Chartist));
+	addInitHook("after_phrases", () => {
+		addInitHook("end_init", () => {
+			addInitHook("analytics_loaded", () => {
+				buildStatsChart(rawLabels, seriesData, "{{.TimeRange}}",legendNames, true);
+			});
+		});
+	});
+</script>

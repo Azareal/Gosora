@@ -464,6 +464,58 @@ func AnalyticsPosts(w http.ResponseWriter, r *http.Request, user c.User) c.Route
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_analytics_right","analytics","panel_analytics_posts", pi})
 }
 
+func AnalyticsMemory(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
+	basePage, ferr := PreAnalyticsDetail(w, r, &user)
+	if ferr != nil {
+		return ferr
+	}
+	timeRange, err := analyticsTimeRange(r.FormValue("timeRange"))
+	if err != nil {
+		return c.LocalError(err.Error(), w, r, user)
+	}
+	revLabelList, labelList, viewMap := analyticsTimeRangeToLabelList(timeRange)
+
+	c.DebugLog("in panel.AnalyticsMemory")
+	rows, err := qgen.NewAcc().Select("memchunks").Columns("count, createdAt").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
+	if err != nil && err != sql.ErrNoRows {
+		return c.InternalError(err, w, r)
+	}
+	viewMap, err = analyticsRowsToViewMap(rows, labelList, viewMap)
+	if err != nil {
+		return c.InternalError(err, w, r)
+	}
+
+	var divBy int64 = 1
+	switch timeRange.Range {
+	case "one-year":
+		divBy = 2 * 30 * 12
+	case "three-months":
+		divBy = 2 * 30 * 3
+	case "one-month":
+		divBy = 2 * 30
+	case "one-week":
+		divBy = 1 * 7
+	case "two-days":
+		divBy = 4
+	case "one-day":
+		divBy = 2
+	}
+
+	// TODO: Adjust for the missing chunks in week and month
+	var viewList []int64
+	var viewItems []c.PanelAnalyticsItemUnit
+	for _, value := range revLabelList {
+		viewMap[value] = viewMap[value] / divBy
+		viewList = append(viewList, viewMap[value])
+		cv, cu := c.ConvertByteUnit(float64(viewMap[value]))
+		viewItems = append(viewItems, c.PanelAnalyticsItemUnit{Time: value, Unit: cu, Count: int64(cv)})
+	}
+	graph := c.PanelTimeGraph{Series: [][]int64{viewList}, Labels: labelList}
+	c.DebugLogf("graph: %+v\n", graph)
+	pi := c.PanelAnalyticsStdUnit{graph, viewItems, timeRange.Range, timeRange.Unit, "time"}
+	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_analytics_right","analytics","panel_analytics_memory", pi})
+}
+
 func analyticsRowsToNameMap(rows *sql.Rows) (map[string]int, error) {
 	nameMap := make(map[string]int)
 	defer rows.Close()

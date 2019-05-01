@@ -300,6 +300,13 @@ type PanelAnalyticsStd struct{
 	Unit      string
 	TimeType  string
 }
+type PanelAnalyticsStdUnit struct{
+	Graph     PanelTimeGraph
+	ViewItems []PanelAnalyticsItemUnit
+	TimeRange string
+	Unit      string
+	TimeType  string
+}
 
 type PanelStats struct {
 	Users       int
@@ -375,6 +382,11 @@ type PanelTimeGraph struct {
 type PanelAnalyticsItem struct {
 	Time  int64
 	Count int64
+}
+type PanelAnalyticsItemUnit struct {
+	Time  int64
+	Count int64
+	Unit string
 }
 
 type PanelAnalyticsPage struct {
