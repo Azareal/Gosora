@@ -96,6 +96,8 @@ type config struct {
 	LoosePort         bool
 	DisableServerPush bool
 	EnableCDNPush     bool
+	DisableNoavatarRange bool
+	DisableDefaultNoavatar bool
 
 	Noavatar            string // ? - Move this into the settings table?
 	ItemsPerPage        int    // ? - Move this into the settings table?

@@ -1,7 +1,7 @@
 /*
 *
 *	Gosora User File
-*	Copyright Azareal 2017 - 2019
+*	Copyright Azareal 2017 - 2020
 *
  */
 package common
@@ -456,27 +456,45 @@ type GuestAvatar struct {
 }
 
 func buildNoavatar(uid int, width int) string {
+	if !Config.DisableNoavatarRange {
+		// TODO: Find a faster algorithm
+		if uid > 50000 {
+			uid -= 50000
+		}
+		if uid > 5000 {
+			uid -= 5000
+		}
+		if uid > 500 {
+			uid -= 500
+		}
+		for uid > 50 {
+			uid -= 50
+		}
+	}
+	if !Config.DisableDefaultNoavatar && uid < 5 {
+		return "/static/n"+strconv.Itoa(uid)+"-"+strconv.Itoa(width)+".png?i=0"
+	}
 	return strings.Replace(strings.Replace(Config.Noavatar, "{id}", strconv.Itoa(uid), 1), "{width}", strconv.Itoa(width), 1)
 }
 
 // ? Make this part of *User?
 // TODO: Write tests for this
 func BuildAvatar(uid int, avatar string) (normalAvatar string, microAvatar string) {
-	if avatar != "" {
-		if avatar[0] == '.' {
-			if avatar[1] == '.' {
-				normalAvatar = "/uploads/avatar_" + strconv.Itoa(uid) + "_tmp" + avatar[1:]
-				return normalAvatar, normalAvatar
-			}
-			normalAvatar = "/uploads/avatar_" + strconv.Itoa(uid) + avatar
+	if avatar == "" {
+		if uid == 0 {
+			return guestAvatar.Normal, guestAvatar.Micro
+		}
+		return buildNoavatar(uid, 200), buildNoavatar(uid, 48)
+	}
+	if avatar[0] == '.' {
+		if avatar[1] == '.' {
+			normalAvatar = "/uploads/avatar_" + strconv.Itoa(uid) + "_tmp" + avatar[1:]
 			return normalAvatar, normalAvatar
 		}
-		return avatar, avatar
+		normalAvatar = "/uploads/avatar_" + strconv.Itoa(uid) + avatar
+		return normalAvatar, normalAvatar
 	}
-	if uid == 0 {
-		return guestAvatar.Normal, guestAvatar.Micro
-	}
-	return buildNoavatar(uid, 200), buildNoavatar(uid, 48)
+	return avatar, avatar
 }
 
 // TODO: Move this to *User

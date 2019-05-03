@@ -87,7 +87,7 @@
 	background-color: #444444;
 }
 .colstack_right .colstack_head.colstack_sub_head:not(:first-child) {
-	margin-top: 6px;
+	margin-top: 12px;
 }
 .colstack_head + .colstack_head.colstack_sub_head:not(:first-child) {
 	margin-top: 2px;

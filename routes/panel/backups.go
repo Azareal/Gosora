@@ -57,6 +57,5 @@ func Backups(w http.ResponseWriter, r *http.Request, user c.User, backupURL stri
 		backupList = append(backupList, c.BackupItem{backupFile.Name(), backupFile.ModTime()})
 	}
 
-	pi := c.PanelBackupPage{basePage, backupList}
-	return renderTemplate("panel_backups", w, r, basePage.Header, &pi)
+	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage,"","","panel_backups", c.PanelBackupPage{basePage, backupList}})
 }

@@ -48,15 +48,33 @@
     options = Chartist.extend({}, {}, options);
 
     return function byteUnits(chart) {
-      if (chart instanceof Chartist.Line) {
-        chart.on('created', function() {
-					console.log("running created")
-					let vbits = document.getElementsByClassName("ct-vertical");
-        	for(let i = 0; i < vbits.length; i++) {
-        		vbits[i].innerHTML = convertByteUnit(vbits[i].innerHTML);
-        	}
-        });
-      }
+      if(!chart instanceof Chartist.Line) return;
+			
+			chart.on('created', function() {
+				console.log("running created")
+				const vbits = document.getElementsByClassName("ct-vertical");
+				if(vbits==null) return;
+
+				let tbits = [];
+				for(let i = 0; i < vbits.length; i++) {
+					tbits[i] = vbits[i].innerHTML;
+				}
+			
+				const calc = (places) => {
+					if(places==3) return;
+			
+					const matcher = vbits[0].innerHTML;
+					let allMatch = true;
+       		for(let i = 0; i < tbits.length; i++) {
+						let val = convertByteUnit(tbits[i], places);
+						if(val!=matcher) allMatch = false;
+						vbits[i].innerHTML = val;
+					}
+					
+					if(allMatch) calc(places + 1);
+				}
+				calc(0);
+       });
     };
   };
 

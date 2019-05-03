@@ -81,6 +81,12 @@
 	padding-right: 2px;
 }
 
+#panel_themes .rowitem::after {
+	content: "";
+	display: block;
+	clear: both;
+}
+
 .panel_submitrow .rowitem {
 	display: flex;
 }

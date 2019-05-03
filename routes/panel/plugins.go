@@ -22,8 +22,7 @@ func Plugins(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 		pluginList = append(pluginList, plugin)
 	}
 
-	pi := c.PanelPage{basePage, pluginList, nil}
-	return renderTemplate("panel_plugins", w, r, basePage.Header, &pi)
+	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage,"","","panel_plugins", c.PanelPage{basePage, pluginList, nil}})
 }
 
 // TODO: Abstract more of the plugin activation / installation / deactivation logic, so we can test all that more reliably and easily

@@ -8,13 +8,20 @@ const Gigabyte = Megabyte * 1024;
 const Terabyte = Gigabyte * 1024;
 const Petabyte = Terabyte * 1024;
 
-function convertByteUnit(bytes) {
-	if(bytes >= Petabyte) return Math.ceil(bytes / Petabyte) + "PB";
-	else if(bytes >= Terabyte) return Math.ceil(bytes / Terabyte) + "TB";
-	else if(bytes >= Gigabyte) return Math.ceil(bytes / Gigabyte) + "GB";
-	else if(bytes >= Megabyte) return Math.ceil(bytes / Megabyte) + "MB";
-	else if(bytes >= Kilobyte) return Math.ceil(bytes / Kilobyte) + "KB";
-	return bytes;
+function convertByteUnit(bytes, places = 0) {
+	let out;
+	if(bytes >= Petabyte) out = [bytes / Petabyte, "PB"];
+	else if(bytes >= Terabyte) out = [bytes / Terabyte, "TB"];
+	else if(bytes >= Gigabyte) out = [bytes / Gigabyte, "GB"];
+	else if(bytes >= Megabyte) out = [bytes / Megabyte, "MB"];
+	else if(bytes >= Kilobyte) out = [bytes / Kilobyte, "KB"];
+	else out = [bytes,"b"];
+
+	if(places==0) return Math.ceil(out[0]) + out[1];
+	else {
+		let ex = Math.pow(10, places);
+		return (Math.round(out[0], ex) / ex) + out[1];
+	}
 }
 
 // TODO: Fully localise this

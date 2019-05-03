@@ -1,14 +1,9 @@
-{{template "header.html" . }}
-<div class="colstack panel_stack">
-{{template "panel_menu.html" . }}
-	<main class="colstack_right">
-{{template "panel_before_head.html" . }}
 		<div class="colstack_item colstack_head">
 			<div class="rowitem"><h1>{{lang "panel_logs_registration_head"}}</h1></div>
 		</div>
 		<div id="panel_modlogs" class="colstack_item rowlist">
 			{{range .Logs}}
-			<div class="rowitem panel_compactrow {{if not .Success}}bg_red{{end}}">
+			<div class="rowitem panel_compactrow{{if not .Success}} bg_red{{end}}">
 				<span{{if not .Success}} class="panel_registration_attempt"{{end}} style="float: left;">
 					<span>{{if not .Success}}{{lang "panel_logs_registration_attempt"}}: {{end}}{{.Username}} ({{lang "panel_logs_registration_email"}}: {{.Email}}){{if .ParsedReason}} ({{lang "panel_logs_registration_reason"}}: {{.ParsedReason}}){{end}}</span>
 					{{if $.CurrentUser.Perms.ViewIPs}}<br /><small style="margin-left: 2px;font-size: 12px;" title="{{.IPAddress}}">{{.IPAddress}}</small>{{end}}
@@ -21,6 +16,3 @@
 			{{end}}
 		</div>
 		{{template "paginator.html" . }}
-	</main>
-</div>
-{{template "footer.html" . }}

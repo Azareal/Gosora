@@ -14,6 +14,7 @@ import (
 )
 
 var cacheControlMaxAge = "max-age=" + strconv.Itoa(int(c.Day)) // TODO: Make this a c.Config value
+var cacheControlMaxAgeWeek = "max-age=" + strconv.Itoa(int(c.Week)) // TODO: Make this a c.Config value
 
 // GET functions
 func StaticFile(w http.ResponseWriter, r *http.Request) {
@@ -33,7 +34,11 @@ func StaticFile(w http.ResponseWriter, r *http.Request) {
 	}
 	h.Set("Last-Modified", file.FormattedModTime)
 	h.Set("Content-Type", file.Mimetype)
-	h.Set("Cache-Control", cacheControlMaxAge) //Cache-Control: max-age=31536000
+	if len(file.Sha256) != 0 {
+		h.Set("Cache-Control", cacheControlMaxAgeWeek)
+	} else {
+		h.Set("Cache-Control", cacheControlMaxAge) //Cache-Control: max-age=31536000
+	}
 	h.Set("Vary", "Accept-Encoding")
 
 	if strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") && file.GzipLength > 0 {

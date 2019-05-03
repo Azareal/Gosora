@@ -188,3 +188,9 @@
 .wtype_about .w_about, .wtype_simple .w_simple, .wtype_wol .w_wol, .wtype_default .w_default {
 	display: block;
 }
+
+#panel_themes .rowitem::after {
+	content: "";
+	display: block;
+	clear: both;
+}

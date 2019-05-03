@@ -92,6 +92,10 @@ DisableServerPush - This switch lets you disable the HTTP/2 server push feature.
 
 EnableCDNPush - This switch lets you enable the HTTP/2 CDN Server Push feature. This operates by sending a Link header on every request and may also work with reverse-proxies like Nginx for doing HTTP/2 server pushes.
 
+DisableNoavatarRange - This switch lets you disable the noavatar algorithm which maps IDs to a set ranging from 0 to 50 for better cacheability. Default: false
+
+DisableDefaultNoavatar - This switch lets you disable the default noavatar algorithm which may intercept noavatars for increased efficiency. Default: false
+
 NoAvatar - The default avatar to use for users when they don't have their own. The default for this may change in the near future to better utilise HTTP/2. Example: https://api.adorable.io/avatars/{width}/{id}.png
 
 ItemsPerPage - The number of posts, topics, etc. you want on each page.

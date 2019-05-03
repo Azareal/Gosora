@@ -34,7 +34,7 @@ func Themes(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	}
 
 	pi := c.PanelThemesPage{basePage, pThemeList, vThemeList}
-	return renderTemplate("panel_themes", w, r, basePage.Header, &pi)
+	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage,"panel_themes","","panel_themes",&pi})
 }
 
 func ThemesSetDefault(w http.ResponseWriter, r *http.Request, user c.User, uname string) c.RouteError {
@@ -85,8 +85,7 @@ func ThemesMenus(w http.ResponseWriter, r *http.Request, user c.User) c.RouteErr
 		})
 	}
 
-	pi := c.PanelMenuListPage{basePage, menuList}
-	return renderTemplate("panel_themes_menus", w, r, basePage.Header, &pi)
+	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage,"","","panel_themes_menus", &c.PanelMenuListPage{basePage, menuList}})
 }
 
 func ThemesMenusEdit(w http.ResponseWriter, r *http.Request, user c.User, smid string) c.RouteError {
@@ -133,8 +132,7 @@ func ThemesMenusEdit(w http.ResponseWriter, r *http.Request, user c.User, smid s
 		menuList = append(menuList, item)
 	}
 
-	pi := c.PanelMenuPage{basePage, mid, menuList}
-	return renderTemplate("panel_themes_menus_items", w, r, basePage.Header, &pi)
+	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage,"","","panel_themes_menus_items", &c.PanelMenuPage{basePage, mid, menuList}})
 }
 
 func ThemesMenuItemEdit(w http.ResponseWriter, r *http.Request, user c.User, sitemID string) c.RouteError {
@@ -159,8 +157,7 @@ func ThemesMenuItemEdit(w http.ResponseWriter, r *http.Request, user c.User, sit
 		return c.InternalError(err, w, r)
 	}
 
-	pi := c.PanelMenuItemPage{basePage, menuItem}
-	return renderTemplate("panel_themes_menus_item_edit", w, r, basePage.Header, &pi)
+	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage,"","","panel_themes_menus_item_edit", &c.PanelMenuItemPage{basePage, menuItem}})
 }
 
 func themesMenuItemSetters(r *http.Request, menuItem c.MenuItem) c.MenuItem {
@@ -362,7 +359,7 @@ func ThemesWidgets(w http.ResponseWriter, r *http.Request, user c.User) c.RouteE
 	}
 
 	pi := c.PanelWidgetListPage{basePage, docks, c.WidgetEdit{&c.Widget{ID: 0, Type: "simple"}, make(map[string]string)}}
-	return renderTemplate("panel_themes_widgets", w, r, basePage.Header, &pi)
+	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage,"","","panel_themes_widgets", pi})
 }
 
 func widgetsParseInputs(r *http.Request, widget *c.Widget) (*c.WidgetEdit, error) {

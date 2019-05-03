@@ -16,7 +16,7 @@
 <div id="panel_analytics_posts_table" class="colstack_item rowlist" aria-label="{{lang "panel_statistics_post_counts_table_aria"}}">
 	{{range .ViewItems}}
 	<div class="rowitem panel_compactrow editable_parent">
-		<a class="panel_upshift {{if or (or (or (eq $.TimeRange "six-hours") (eq $.TimeRange "twelve-hours")) (eq $.TimeRange "one-day")) (eq $.TimeRange "two-days")}}unix_to_24_hour_time{{else}}unix_to_date{{end}}">{{.Time}}</a>
+		<a class="panel_upshift unix_{{if or (or (or (eq $.TimeRange "six-hours") (eq $.TimeRange "twelve-hours")) (eq $.TimeRange "one-day")) (eq $.TimeRange "two-days")}}to_24_hour_time{{else}}to_date{{end}}">{{.Time}}</a>
 		<span class="panel_compacttext to_right">{{.Count}}{{lang "panel_statistics_posts_suffix"}}</span>
 	</div>
 	{{else}}<div class="rowitem passive rowmsg">{{lang "panel_statistics_post_counts_no_post_counts"}}</div>{{end}}
