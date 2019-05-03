@@ -135,6 +135,9 @@ func wsPageResponses(wsUser *WSUser, conn *websocket.Conn, page string) {
 		// TODO: Evict from page when permissions change? Or check user perms every-time before sending data?
 	case strings.HasPrefix(page, "/topic/"):
 		//fmt.Println("entering topic prefix websockets zone")
+		if wsUser.User.ID == 0 {
+			return
+		}
 		_, tid, err := ParseSEOURL(page)
 		if err != nil {
 			return
@@ -210,6 +213,9 @@ func wsLeavePage(wsUser *WSUser, conn *websocket.Conn, page string) {
 		})
 	case strings.HasPrefix(page, "/topic/"):
 		//fmt.Println("leaving topic prefix websockets zone")
+		if wsUser.User.ID == 0 {
+			return
+		}
 		wsUser.FinalizePage(page, func() {
 			_, tid, err := ParseSEOURL(page)
 			if err != nil {
