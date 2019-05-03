@@ -1,75 +1,75 @@
-		<div class="colstack_item colstack_head">
-			<div class="rowitem">
-				<h1>{{lang "panel_themes_menus_items_head"}}</h1>
-				<h2 class="hguide">{{lang "panel_hints_reorder"}}</h2>
+<div class="colstack_item colstack_head">
+	<div class="rowitem">
+		<h1>{{lang "panel_themes_menus_items_head"}}</h1>
+		<h2 class="hguide">{{lang "panel_hints_reorder"}}</h2>
+	</div>
+</div>
+<div id="panel_menu_item_holder" class="colstack_item rowlist">
+	{{range .ItemList}}
+	<div class="panel_menu_item rowitem panel_compactrow editable_parent" data-miid="{{.ID}}">
+		<span class="grip"></span>
+		<a href="/panel/themes/menus/item/edit/{{.ID}}" class="editable_block panel_upshift">{{.Name}}</a>
+		<span class="panel_buttons">
+			<a href="/panel/themes/menus/item/edit/{{.ID}}" class="panel_tag panel_right_button edit_button" aria-label="{{lang "panel_themes_menus_items_edit_button_aria"}}"></a>
+			<a href="/panel/themes/menus/item/delete/submit/{{.ID}}?session={{$.CurrentUser.Session}}" class="panel_tag panel_right_button delete_button" aria-label="{{lang "panel_themes_menus_items_delete_button_aria"}}"></a>
+		</span>
+	</div>{{end}}
+</div>
+<div class="colstack_item rowlist panel_submitrow">
+	<div class="rowitem"><button id="panel_menu_items_order_button" class="formbutton">{{lang "panel_themes_menus_items_update_button"}}</button></div>
+</div>
+<div class="colstack_item colstack_head">
+	<div class="rowitem"><h1>{{lang "panel_themes_menus_create_head"}}</h1></div>
+</div>
+<form action="/panel/themes/menus/item/create/submit/?session={{.CurrentUser.Session}}" method="post">
+	<input name="mid" value="{{.MenuID}}" type="hidden" />
+	<div id="panel_themes_menu_item_create" class="colstack_item the_form">
+		{{/** TODO: Let an admin move a menu item from one menu to another? **/}}
+		<div class="formrow">
+			<div class="formitem formlabel"><a>{{lang "panel_themes_menus_name"}}</a></div>
+			<div class="formitem"><input name="item-name" type="text" placeholder="{{lang "panel_themes_menus_name_placeholder"}}" /></div>
+		</div>
+		<div class="formrow">
+			<div class="formitem formlabel"><a>{{lang "panel_themes_menus_htmlid"}}</a></div>
+			<div class="formitem"><input name="item-htmlid" type="text" /></div>
+		</div>
+		<div class="formrow">
+			<div class="formitem formlabel"><a>{{lang "panel_themes_menus_cssclass"}}</a></div>
+			<div class="formitem"><input name="item-cssclass" type="text" /></div>
+		</div>
+		<div class="formrow">
+			<div class="formitem formlabel"><a>{{lang "panel_themes_menus_position"}}</a></div>
+			<div class="formitem">
+				<select name="item-position">
+					<option selected value="left">left</option>
+					<option value="right">right</option>
+				</select>
 			</div>
 		</div>
-		<div id="panel_menu_item_holder" class="colstack_item rowlist">
-			{{range .ItemList}}
-			<div class="panel_menu_item rowitem panel_compactrow editable_parent" data-miid="{{.ID}}">
-				<span class="grip"></span>
-				<a href="/panel/themes/menus/item/edit/{{.ID}}" class="editable_block panel_upshift">{{.Name}}</a>
-				<span class="panel_buttons">
-					<a href="/panel/themes/menus/item/edit/{{.ID}}" class="panel_tag panel_right_button edit_button" aria-label="{{lang "panel_themes_menus_items_edit_button_aria"}}"></a>
-					<a href="/panel/themes/menus/item/delete/submit/{{.ID}}?session={{$.CurrentUser.Session}}" class="panel_tag panel_right_button delete_button" aria-label="{{lang "panel_themes_menus_items_delete_button_aria"}}"></a>
-				</span>
-			</div>{{end}}
+		<div class="formrow">
+			<div class="formitem formlabel"><a>{{lang "panel_themes_menus_path"}}</a></div>
+			<div class="formitem"><input name="item-path" type="text" value="/" /></div>
 		</div>
-		<div class="colstack_item rowlist panel_submitrow">
-			<div class="rowitem"><button id="panel_menu_items_order_button" class="formbutton">{{lang "panel_themes_menus_items_update_button"}}</button></div>
+		<div class="formrow">
+			<div class="formitem formlabel"><a>{{lang "panel_themes_menus_aria"}}</a></div>
+			<div class="formitem"><input name="item-aria" type="text" placeholder="{{lang "panel_themes_menus_aria_placeholder"}}" /></div>
 		</div>
-		<div class="colstack_item colstack_head">
-			<div class="rowitem"><h1>{{lang "panel_themes_menus_create_head"}}</h1></div>
+		<div class="formrow">
+			<div class="formitem formlabel"><a>{{lang "panel_themes_menus_tooltip"}}</a></div>
+			<div class="formitem"><input name="item-tooltip" type="text" placeholder="{{lang "panel_themes_menus_tooltip_placeholder"}}" /></div>
 		</div>
-	<form action="/panel/themes/menus/item/create/submit/?session={{.CurrentUser.Session}}" method="post">
-		<input name="mid" value="{{.MenuID}}" type="hidden" />
-		<div id="panel_themes_menu_item_create" class="colstack_item the_form">
-			{{/** TODO: Let an admin move a menu item from one menu to another? **/}}
-			<div class="formrow">
-				<div class="formitem formlabel"><a>{{lang "panel_themes_menus_name"}}</a></div>
-				<div class="formitem"><input name="item-name" type="text" placeholder="{{lang "panel_themes_menus_name_placeholder"}}" /></div>
-			</div>
-			<div class="formrow">
-				<div class="formitem formlabel"><a>{{lang "panel_themes_menus_htmlid"}}</a></div>
-				<div class="formitem"><input name="item-htmlid" type="text" /></div>
-			</div>
-			<div class="formrow">
-				<div class="formitem formlabel"><a>{{lang "panel_themes_menus_cssclass"}}</a></div>
-				<div class="formitem"><input name="item-cssclass" type="text" /></div>
-			</div>
-			<div class="formrow">
-				<div class="formitem formlabel"><a>{{lang "panel_themes_menus_position"}}</a></div>
-				<div class="formitem">
-					<select name="item-position">
-						<option selected value="left">left</option>
-						<option value="right">right</option>
-					</select>
-				</div>
-			</div>
-			<div class="formrow">
-				<div class="formitem formlabel"><a>{{lang "panel_themes_menus_path"}}</a></div>
-				<div class="formitem"><input name="item-path" type="text" value="/" /></div>
-			</div>
-			<div class="formrow">
-				<div class="formitem formlabel"><a>{{lang "panel_themes_menus_aria"}}</a></div>
-				<div class="formitem"><input name="item-aria" type="text" placeholder="{{lang "panel_themes_menus_aria_placeholder"}}" /></div>
-			</div>
-			<div class="formrow">
-				<div class="formitem formlabel"><a>{{lang "panel_themes_menus_tooltip"}}</a></div>
-				<div class="formitem"><input name="item-tooltip" type="text" placeholder="{{lang "panel_themes_menus_tooltip_placeholder"}}" /></div>
-			</div>
-			<div class="formrow">
-				<div class="formitem formlabel"><a>{{lang "panel_themes_menus_permissions"}}</a></div>
-				<div class="formitem"><select name="item-permissions">
-					<option selected value="everyone">{{lang "panel_themes_menus_everyone" }}</option>
-					<option value="guest-only">{{lang "panel_themes_menus_guestonly"}}</option>
-					<option value="member-only">{{lang "panel_themes_menus_memberonly"}}</option>
-					<option value="supermod-only">{{lang "panel_themes_menus_supermodonly"}}</option>
-					<option value="admin-only">{{lang "panel_themes_menus_adminonly"}}</option>
-				</select></div>
-			</div>
-			<div class="formrow">
-				<div class="formitem"><button name="panel-button" class="formbutton">{{lang "panel_themes_menus_create_button"}}</button></div>
-			</div>
+		<div class="formrow">
+			<div class="formitem formlabel"><a>{{lang "panel_themes_menus_permissions"}}</a></div>
+			<div class="formitem"><select name="item-permissions">
+				<option selected value="everyone">{{lang "panel_themes_menus_everyone" }}</option>
+				<option value="guest-only">{{lang "panel_themes_menus_guestonly"}}</option>
+				<option value="member-only">{{lang "panel_themes_menus_memberonly"}}</option>
+				<option value="supermod-only">{{lang "panel_themes_menus_supermodonly"}}</option>
+				<option value="admin-only">{{lang "panel_themes_menus_adminonly"}}</option>
+			</select></div>
 		</div>
-	</form>
+		<div class="formrow">
+			<div class="formitem"><button name="panel-button" class="formbutton">{{lang "panel_themes_menus_create_button"}}</button></div>
+		</div>
+	</div>
+</form>

@@ -1,9 +1,10 @@
-		<div class="colstack_item colstack_head">
-			<div class="rowitem"><h1>{{lang "panel_dashboard_head"}}</h1></div>
-		</div>
-		<div id="panel_dashboard" class="colstack_grid">
+<div class="colstack_item colstack_head">
+	<div class="rowitem"><h1>{{lang "panel_dashboard_head"}}</h1></div>
+</div>
+<div id="panel_dashboard" class="colstack_grid">
 {{range .}}
-			<div id="{{.ID}}" class="grid_item {{.Class}}" title="{{.Note}}" style="{{if .TextColour}}color: {{.TextColour}};{{end}}
-		{{if .Background}}background-color: {{.Background}};{{end}}"><span>{{.Body}}</span></div>
+	<div id="{{.ID}}" class="grid_item {{.Class}}" title="{{.Note}}" style="{{if .TextColour}}color: {{.TextColour}};{{end}}{{if .Background}}background-color: {{.Background}};{{end}}">
+		<span>{{.Body}}</span>
+	</div>
 {{end}}
-		</div>
+</div>

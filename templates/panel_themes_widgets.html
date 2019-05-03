@@ -9,45 +9,45 @@ type Widget struct {
 	Literal  bool
 }
 **/}}
-		<div class="colstack_item colstack_head">
-			<div class="rowitem"><h1>{{lang "panel_themes_widgets_head"}}</h1></div>
+<div class="colstack_item colstack_head">
+	<div class="rowitem"><h1>{{lang "panel_themes_widgets_head"}}</h1></div>
+</div>
+{{range $name, $dock := .Docks}}
+<div class="colstack_item colstack_head colstack_sub_head">
+	<div class="rowitem"><h2>{{$name}}</h2></div>
+</div>
+<div id="panel_widgets_{{$name}}" class="colstack_item rowlist panel_widgets">
+	{{range $widget := $dock}}
+	<div id="widget_{{$widget.ID}}" class="rowitem panel_compactrow editable_parent widget_item {{if not .Enabled}}bg_red{{end}}">
+		<div class="widget_normal editable_block hide_on_block_edit">
+			<a href="/panel/themes/widgets/edit/{{$widget.ID}}" class="panel_upshift">{{$widget.Type}} <span class="widget_disabled">({{lang "panel_themes_widgets_disabled"}})</span></a>
+			<a class="panel_compacttext to_right">{{$widget.Location}}</a>
 		</div>
-		{{range $name, $dock := .Docks}}
-		<div class="colstack_item colstack_head colstack_sub_head">
-			<div class="rowitem"><h2>{{$name}}</h2></div>
+		<div class="widget_edit show_on_block_edit">
+			<form action="/panel/themes/widgets/edit/submit/{{$widget.ID}}" method="post">
+			<input class="wside" name="wside" value="{{$name}}" type="hidden" />
+			{{template "panel_themes_widgets_widget.html" $widget }}
+			</form>
 		</div>
-		<div id="panel_widgets_{{$name}}" class="colstack_item rowlist panel_widgets">
-			{{range $widget := $dock}}
-			<div id="widget_{{$widget.ID}}" class="rowitem panel_compactrow editable_parent widget_item {{if not .Enabled}}bg_red{{end}}">
-				<div class="widget_normal editable_block hide_on_block_edit">
-					<a href="/panel/themes/widgets/edit/{{$widget.ID}}" class="panel_upshift">{{$widget.Type}} <span class="widget_disabled">({{lang "panel_themes_widgets_disabled"}})</span></a>
-					<a class="panel_compacttext to_right">{{$widget.Location}}</a>
-				</div>
-				<div class="widget_edit show_on_block_edit">
-					<form action="/panel/themes/widgets/edit/submit/{{$widget.ID}}" method="post">
-					<input class="wside" name="wside" value="{{$name}}" type="hidden" />
-					{{template "panel_themes_widgets_widget.html" $widget }}
-					</form>
-				</div>
-			</div>
-			{{end}}
-			<div class="rowitem panel_compactrow editable_parent widget_new">
-				<a href="#" data-dock="{{$name}}" class="editable_block panel_upshift">{{lang "panel_themes_widgets_new"}}</a>
-			</div>
+	</div>
+	{{end}}
+	<div class="rowitem panel_compactrow editable_parent widget_new">
+		<a href="#" data-dock="{{$name}}" class="editable_block panel_upshift">{{lang "panel_themes_widgets_new"}}</a>
+	</div>
+</div>
+{{end}}
+<div id="widgetTmpl">
+	<div class="rowitem panel_compactrow editable_parent widget_item blank_widget bg_red">
+		<div class="widget_normal editable_block hide_on_block_edit">
+			<a href="#" class="panel_upshift">{{.BlankWidget.Type}} <span class="widget_disabled">({{lang "panel_themes_widgets_disabled"}})</span></a>
+			<a class="panel_compacttext to_right">{{.BlankWidget.Location}}</a>
 		</div>
-		{{end}}
-		<div id="widgetTmpl">
-			<div class="rowitem panel_compactrow editable_parent widget_item blank_widget bg_red">
-				<div class="widget_normal editable_block hide_on_block_edit">
-					<a href="#" class="panel_upshift">{{.BlankWidget.Type}} <span class="widget_disabled">({{lang "panel_themes_widgets_disabled"}})</span></a>
-					<a class="panel_compacttext to_right">{{.BlankWidget.Location}}</a>
-				</div>
-				<div class="widget_edit show_on_block_edit">
-					<form action="/panel/themes/widgets/create/submit/" method="post">
-					<input name="session" value="{{.CurrentUser.Session}}" type="hidden" />
-					<input class="wside" name="wside" value="" type="hidden" />
-					{{template "panel_themes_widgets_widget.html" .BlankWidget }}
-					</form>
-				</div>
-			</div>
+		<div class="widget_edit show_on_block_edit">
+			<form action="/panel/themes/widgets/create/submit/" method="post">
+			<input name="session" value="{{.CurrentUser.Session}}" type="hidden" />
+			<input class="wside" name="wside" value="" type="hidden" />
+			{{template "panel_themes_widgets_widget.html" .BlankWidget }}
+			</form>
 		</div>
+	</div>
+</div>
