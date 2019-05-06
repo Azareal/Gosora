@@ -178,7 +178,7 @@ function initPhrases(loggedIn, panel = false) {
 	console.log("in initPhrases")
 	console.log("tmlInits:",tmplInits)
 	let e = "";
-	if(loggedIn && !panel) e = ",topic_list,topic";
+	if(loggedIn && !panel) e = ",status,topic_list,topic";
 	else if(panel) e = ",analytics,panel"; // TODO: Request phrases for just one section of the control panel?
 	else e = ",status,topic_list";
 	fetchPhrases("alerts,paginator"+e) // TODO: Break this up?

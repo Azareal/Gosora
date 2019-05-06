@@ -180,6 +180,8 @@ type TopicStmts struct {
 	createLike      *sql.Stmt
 	addLikesToTopic *sql.Stmt
 	delete          *sql.Stmt
+	deleteActivity *sql.Stmt
+	deleteActivitySubs *sql.Stmt
 	edit            *sql.Stmt
 	setPoll         *sql.Stmt
 	createAction    *sql.Stmt
@@ -204,6 +206,8 @@ func init() {
 			createLike:      acc.Insert("likes").Columns("weight, targetItem, targetType, sentBy, createdAt").Fields("?,?,?,?,UTC_TIMESTAMP()").Prepare(),
 			addLikesToTopic: acc.Update("topics").Set("likeCount = likeCount + ?").Where("tid = ?").Prepare(),
 			delete:          acc.Delete("topics").Where("tid = ?").Prepare(),
+			deleteActivity:  acc.Delete("activity_stream").Where("elementID = ? AND elementType = 'topic'").Prepare(),
+			deleteActivitySubs: acc.Delete("activity_subscriptions").Where("targetID = ? AND targetType = 'topic'").Prepare(),
 			edit:            acc.Update("topics").Set("title = ?, content = ?, parsed_content = ?").Where("tid = ?").Prepare(), // TODO: Only run the content update bits on non-polls, does this matter?
 			setPoll:         acc.Update("topics").Set("content = '', parsed_content = '', poll = ?").Where("tid = ? AND poll = 0").Prepare(),
 			createAction:    acc.Insert("replies").Columns("tid, actionType, ipaddress, createdBy, createdAt, lastUpdated, content, parsed_content").Fields("?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),'',''").Prepare(),
@@ -325,6 +329,14 @@ func (topic *Topic) Delete() error {
 
 	_, err = topicStmts.delete.Exec(topic.ID)
 	topic.cacheRemove()
+	if err != nil {
+		return err
+	}
+	_, err = topicStmts.deleteActivitySubs.Exec(topic.ID)
+	if err != nil {
+		return err
+	}
+	_, err = topicStmts.deleteActivity.Exec(topic.ID)
 	return err
 }
 

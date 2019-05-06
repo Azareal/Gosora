@@ -10,6 +10,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"io"
 	"errors"
 	"log"
 	"net/http"
@@ -27,7 +28,7 @@ var successJSONBytes = []byte(`{"success":"1"}`)
 
 // TODO: Refactor this
 // TODO: Use the phrase system
-var phraseLoginAlerts = []byte(`{"msgs":[{"msg":"Login to see your alerts","path":"/accounts/login"}],"msgCount":0}`)
+var phraseLoginAlerts = []byte(`{"msgs":[{"msg":"Login to see your alerts","path":"/accounts/login"}],"count":0}`)
 
 // TODO: Refactor this endpoint
 // TODO: Move this into the routes package
@@ -40,6 +41,9 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError 
 	}
 
 	action := r.FormValue("action")
+	if action == "" {
+		action = "get"
+	}
 	if action != "get" && action != "set" {
 		return c.PreErrorJS("Invalid Action", w, r)
 	}
@@ -86,8 +90,8 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError 
 		}
 
 		var msglist string
-		var msgCount int
-		err = stmts.getActivityCountByWatcher.QueryRow(user.ID).Scan(&msgCount)
+		var count int
+		err = stmts.getActivityCountByWatcher.QueryRow(user.ID).Scan(&count)
 		if err == ErrNoRows {
 			return c.PreErrorJS("Couldn't find the parent topic", w, r)
 		} else if err != nil {
@@ -141,7 +145,7 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError 
 		if len(msglist) != 0 {
 			msglist = msglist[0 : len(msglist)-1]
 		}
-		_, _ = w.Write([]byte(`{"msgs":[` + msglist + `],"msgCount":` + strconv.Itoa(msgCount) + `}`))
+		_, _ = io.WriteString(w, `{"msgs":[` + msglist + `],"count":` + strconv.Itoa(count) + `}`)
 	default:
 		return c.PreErrorJS("Invalid Module", w, r)
 	}
@@ -296,9 +300,9 @@ func routeJSAntispam(w http.ResponseWriter, r *http.Request, user c.User) c.Rout
 	jsToken := hex.EncodeToString(h.Sum(nil))
 
 	var innerCode = "`document.getElementByld('golden-watch').value = '" + jsToken + "';`"
-	w.Write([]byte(`let hihi = ` + innerCode + `;
+	io.WriteString(w, `let hihi = ` + innerCode + `;
 hihi = hihi.replace('ld','Id');
-eval(hihi);`))
+eval(hihi);`)
 
 	return nil
 }

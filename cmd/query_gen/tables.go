@@ -45,8 +45,8 @@ func createTables(adapter qgen.Adapter) error {
 			tblColumn{"temp_group", "int", 0, false, false, "0"}, // For temporary groups, set this to zero when a temporary group isn't in effect
 		},
 		[]tblKey{
-			tblKey{"uid", "primary"},
-			tblKey{"name", "unique"},
+			tblKey{"uid", "primary","",false},
+			tblKey{"name", "unique","",false},
 		},
 	)
 
@@ -64,7 +64,7 @@ func createTables(adapter qgen.Adapter) error {
 			tblColumn{"tag", "varchar", 50, false, false, "''"},
 		},
 		[]tblKey{
-			tblKey{"gid", "primary"},
+			tblKey{"gid", "primary","",false},
 		},
 	)
 
@@ -83,7 +83,7 @@ func createTables(adapter qgen.Adapter) error {
 			tblColumn{"createdAt", "createdAt", 0, false, false, ""},
 		},
 		[]tblKey{
-			tblKey{"uid", "primary"},
+			tblKey{"uid", "primary","",false},
 		},
 	)
 
@@ -128,7 +128,7 @@ func createTables(adapter qgen.Adapter) error {
 			tblColumn{"temporary", "boolean", 0, false, false, ""}, // special case for permanent bans to do the necessary bookkeeping, might be removed in the future
 		},
 		[]tblKey{
-			tblKey{"uid", "primary"},
+			tblKey{"uid", "primary","",false},
 		},
 	)
 
@@ -138,7 +138,7 @@ func createTables(adapter qgen.Adapter) error {
 			tblColumn{"uid", "int", 0, false, false, ""}, // TODO: Make this a foreign key
 		},
 		[]tblKey{
-			tblKey{"uid", "primary"},
+			tblKey{"uid", "primary","",false},
 		},
 	)
 
@@ -191,7 +191,7 @@ func createTables(adapter qgen.Adapter) error {
 			tblColumn{"lastReplyerID", "int", 0, false, false, "0"},
 		},
 		[]tblKey{
-			tblKey{"fid", "primary"},
+			tblKey{"fid", "primary","",false},
 		},
 	)
 
@@ -204,7 +204,7 @@ func createTables(adapter qgen.Adapter) error {
 		},
 		[]tblKey{
 			// TODO: Test to see that the compound primary key works
-			tblKey{"fid,gid", "primary"},
+			tblKey{"fid,gid", "primary","",false},
 		},
 	)
 
@@ -240,8 +240,8 @@ func createTables(adapter qgen.Adapter) error {
 			tblColumn{"data", "varchar", 200, false, false, "''"},
 		},
 		[]tblKey{
-			tblKey{"tid", "primary"},
-			tblKey{"content", "fulltext"},
+			tblKey{"tid", "primary","",false},
+			tblKey{"content", "fulltext","",false},
 		},
 	)
 
@@ -264,8 +264,8 @@ func createTables(adapter qgen.Adapter) error {
 			tblColumn{"poll", "int", 0, false, false, "0"},
 		},
 		[]tblKey{
-			tblKey{"rid", "primary"},
-			tblKey{"content", "fulltext"},
+			tblKey{"rid", "primary","",false},
+			tblKey{"content", "fulltext","",false},
 		},
 	)
 
@@ -281,7 +281,7 @@ func createTables(adapter qgen.Adapter) error {
 			tblColumn{"extra", "varchar", 200, false, false, ""},
 		},
 		[]tblKey{
-			tblKey{"attachID", "primary"},
+			tblKey{"attachID", "primary","",false},
 		},
 	)
 
@@ -295,7 +295,7 @@ func createTables(adapter qgen.Adapter) error {
 			// TODO: Add a createdBy column?
 		},
 		[]tblKey{
-			tblKey{"reviseID", "primary"},
+			tblKey{"reviseID", "primary","",false},
 		},
 	)
 
@@ -309,7 +309,7 @@ func createTables(adapter qgen.Adapter) error {
 			tblColumn{"votes", "int", 0, false, false, "0"},
 		},
 		[]tblKey{
-			tblKey{"pollID", "primary"},
+			tblKey{"pollID", "primary","",false},
 		},
 	)
 
@@ -344,7 +344,7 @@ func createTables(adapter qgen.Adapter) error {
 			tblColumn{"ipaddress", "varchar", 200, false, false, "0.0.0.0.0"},
 		},
 		[]tblKey{
-			tblKey{"rid", "primary"},
+			tblKey{"rid", "primary","",false},
 		},
 	)
 
@@ -363,7 +363,10 @@ func createTables(adapter qgen.Adapter) error {
 		[]tblColumn{
 			tblColumn{"watcher", "int", 0, false, false, ""}, // TODO: Make this a foreign key
 			tblColumn{"asid", "int", 0, false, false, ""},    // TODO: Make this a foreign key
-		}, nil,
+		}, 
+		[]tblKey{
+			tblKey{"asid,asid","foreign","activity_stream",true},
+		},
 	)
 
 	qgen.Install.CreateTable("activity_stream", "", "",
@@ -376,7 +379,7 @@ func createTables(adapter qgen.Adapter) error {
 			tblColumn{"elementID", "int", 0, false, false, ""},        /* the ID of the element being acted upon */
 		},
 		[]tblKey{
-			tblKey{"asid", "primary"},
+			tblKey{"asid", "primary","",false},
 		},
 	)
 
@@ -398,7 +401,7 @@ func createTables(adapter qgen.Adapter) error {
 			tblColumn{"constraints", "varchar", 200, false, false, "''"},
 		},
 		[]tblKey{
-			tblKey{"name", "unique"},
+			tblKey{"name", "unique","",false},
 		},
 	)
 
@@ -409,7 +412,7 @@ func createTables(adapter qgen.Adapter) error {
 			tblColumn{"replacement", "varchar", 200, false, false, ""},
 		},
 		[]tblKey{
-			tblKey{"wfid", "primary"},
+			tblKey{"wfid", "primary","",false},
 		},
 	)
 
@@ -420,7 +423,7 @@ func createTables(adapter qgen.Adapter) error {
 			tblColumn{"installed", "boolean", 0, false, false, "0"},
 		},
 		[]tblKey{
-			tblKey{"uname", "unique"},
+			tblKey{"uname", "unique","",false},
 		},
 	)
 
@@ -431,7 +434,7 @@ func createTables(adapter qgen.Adapter) error {
 			//tblColumn{"profileUserVars", "text", 0, false, false, "''"},
 		},
 		[]tblKey{
-			tblKey{"uname", "unique"},
+			tblKey{"uname", "unique","",false},
 		},
 	)
 
@@ -446,7 +449,7 @@ func createTables(adapter qgen.Adapter) error {
 			tblColumn{"data", "text", 0, false, false, "''"},
 		},
 		[]tblKey{
-			tblKey{"wid", "primary"},
+			tblKey{"wid", "primary","",false},
 		},
 	)
 
@@ -455,7 +458,7 @@ func createTables(adapter qgen.Adapter) error {
 			tblColumn{"mid", "int", 0, false, true, ""},
 		},
 		[]tblKey{
-			tblKey{"mid", "primary"},
+			tblKey{"mid", "primary","",false},
 		},
 	)
 
@@ -479,7 +482,7 @@ func createTables(adapter qgen.Adapter) error {
 			tblColumn{"adminOnly", "boolean", 0, false, false, "0"},
 		},
 		[]tblKey{
-			tblKey{"miid", "primary"},
+			tblKey{"miid", "primary","",false},
 		},
 	)
 
@@ -495,7 +498,7 @@ func createTables(adapter qgen.Adapter) error {
 			tblColumn{"menuID", "int", 0, false, false, "-1"}, // simple sidebar menu
 		},
 		[]tblKey{
-			tblKey{"pid", "primary"},
+			tblKey{"pid", "primary","",false},
 		},
 	)
 
@@ -510,7 +513,7 @@ func createTables(adapter qgen.Adapter) error {
 			tblColumn{"doneAt", "createdAt", 0, false, false, ""},
 		},
 		[]tblKey{
-			tblKey{"rlid", "primary"},
+			tblKey{"rlid", "primary","",false},
 		},
 	)
 
@@ -523,7 +526,7 @@ func createTables(adapter qgen.Adapter) error {
 			tblColumn{"doneAt", "createdAt", 0, false, false, ""},
 		},
 		[]tblKey{
-			tblKey{"lid", "primary"},
+			tblKey{"lid", "primary","",false},
 		},
 	)
 

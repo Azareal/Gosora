@@ -5,8 +5,10 @@ import (
 	"log"
 	"sync/atomic"
 	"time"
+	"database/sql"
 
 	c "github.com/Azareal/Gosora/common"
+	"github.com/Azareal/Gosora/query_gen"
 )
 
 // TODO: Name the tasks so we can figure out which one it was when something goes wrong? Or maybe toss it up WithStack down there?
@@ -55,6 +57,7 @@ func tickLoop(thumbChan chan bool) {
 	secondTicker := time.NewTicker(time.Second)
 	fifteenMinuteTicker := time.NewTicker(15 * time.Minute)
 	hourTicker := time.NewTicker(time.Hour)
+	dailyTicker := time.NewTicker(time.Hour * 24)
 	for {
 		select {
 		case <-halfSecondTicker.C:
@@ -122,6 +125,23 @@ func tickLoop(thumbChan chan bool) {
 
 			runTasks(c.ScheduledHourTasks)
 			runHook("after_hour_tick")
+		// TODO: Handle the instance going down a lot better
+		case <-dailyTicker.C:
+			// TODO: Find a more efficient way of doing this
+			err := qgen.NewAcc().Select("activity_stream").Cols("asid").EachInt(func(asid int) error {
+				count, err := qgen.NewAcc().Count("activity_stream_matches").Where("asid = ?").Total()
+				if err != sql.ErrNoRows {
+					return err
+				}
+				if count > 0 {
+					return nil
+				}
+				_, err = qgen.NewAcc().Delete("activity_stream").Where("asid = ?").Run(asid)
+				return err
+			})
+			if err != nil && err != sql.ErrNoRows {
+				c.LogError(err)
+			}
 		}
 
 		// TODO: Handle the daily clean-up.

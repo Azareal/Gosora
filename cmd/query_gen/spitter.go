@@ -14,7 +14,7 @@ func NewPrimaryKeySpitter() *PrimaryKeySpitter {
 func (spit *PrimaryKeySpitter) Hook(name string, args ...interface{}) error {
 	if name == "CreateTableStart" {
 		var found string
-		var table = args[0].(*qgen.DB_Install_Table)
+		var table = args[0].(*qgen.DBInstallTable)
 		for _, key := range table.Keys {
 			if key.Type == "primary" {
 				expl := strings.Split(key.Columns, ",")

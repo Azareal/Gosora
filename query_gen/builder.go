@@ -120,6 +120,10 @@ func (build *builder) AddKey(table string, column string, key DBTableKey) (stmt 
 	return build.prepare(build.adapter.AddKey("", table, column, key))
 }
 
+func (build *builder) AddForeignKey(table string, column string, ftable string, fcolumn string, cascade bool) (stmt *sql.Stmt, err error) {
+	return build.prepare(build.adapter.AddForeignKey("", table, column, ftable, fcolumn, cascade))
+}
+
 func (build *builder) SimpleInsert(table string, columns string, fields string) (stmt *sql.Stmt, err error) {
 	return build.prepare(build.adapter.SimpleInsert("", table, columns, fields))
 }

@@ -112,11 +112,20 @@ func (adapter *MysqlAdapter) CreateTable(name string, table string, charset stri
 			if key.Type != "unique" {
 				querystr += " key"
 			}
-			querystr += "("
-			for _, column := range strings.Split(key.Columns, ",") {
-				querystr += "`" + column + "`,"
+			if key.Type == "foreign" {
+				cols := strings.Split(key.Columns, ",")
+				querystr += "(`" + cols[0] + "`) REFERENCES `" + key.FTable + "`(`" + cols[1] + "`)"
+				if key.Cascade {
+					querystr += " ON DELETE CASCADE"
+				}
+				querystr += ","
+			} else {
+				querystr += "("
+				for _, column := range strings.Split(key.Columns, ",") {
+					querystr += "`" + column + "`,"
+				}
+				querystr = querystr[0:len(querystr)-1] + "),"
 			}
-			querystr = querystr[0:len(querystr)-1] + "),"
 		}
 	}
 
@@ -173,12 +182,12 @@ func (adapter *MysqlAdapter) parseColumn(column DBTableColumn) (col DBTableColum
 
 // TODO: Support AFTER column
 // TODO: Test to make sure everything works here
-func (adapter *MysqlAdapter) AddColumn(name string, table string, column DBTableColumn, key *DBTableKey) (string, error) {
+func (a *MysqlAdapter) AddColumn(name string, table string, column DBTableColumn, key *DBTableKey) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
 
-	column, size, end := adapter.parseColumn(column)
+	column, size, end := a.parseColumn(column)
 	querystr := "ALTER TABLE `" + table + "` ADD COLUMN " + "`" + column.Name + "` " + column.Type + size + end
 
 	if key != nil {
@@ -191,12 +200,12 @@ func (adapter *MysqlAdapter) AddColumn(name string, table string, column DBTable
 	}
 
 	// TODO: Shunt the table name logic and associated stmt list up to the a higher layer to reduce the amount of unnecessary overhead in the builder / accumulator
-	adapter.pushStatement(name, "add-column", querystr)
+	a.pushStatement(name, "add-column", querystr)
 	return querystr, nil
 }
 
 // TODO: Test to make sure everything works here
-func (adapter *MysqlAdapter) AddIndex(name string, table string, iname string, colname string) (string, error) {
+func (a *MysqlAdapter) AddIndex(name string, table string, iname string, colname string) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
@@ -209,23 +218,50 @@ func (adapter *MysqlAdapter) AddIndex(name string, table string, iname string, c
 
 	querystr := "ALTER TABLE `" + table + "` ADD INDEX " + "`" + iname + "` (`" + colname + "`);"
 	// TODO: Shunt the table name logic and associated stmt list up to the a higher layer to reduce the amount of unnecessary overhead in the builder / accumulator
-	adapter.pushStatement(name, "add-index", querystr)
+	a.pushStatement(name, "add-index", querystr)
 	return querystr, nil
 }
 
 // TODO: Test to make sure everything works here
 // Only supports FULLTEXT right now
-func (adapter *MysqlAdapter) AddKey(name string, table string, column string, key DBTableKey) (string, error) {
+func (a *MysqlAdapter) AddKey(name string, table string, column string, key DBTableKey) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
-	if key.Type != "fulltext" {
+	var querystr string
+	if key.Type == "fulltext" {
+		querystr = "ALTER TABLE `" + table + "` ADD FULLTEXT(`" + column + "`)"
+	} else {
 		return "", errors.New("Only fulltext is supported by AddKey right now")
 	}
-	querystr := "ALTER TABLE `" + table + "` ADD FULLTEXT(`" + column + "`)"
 
 	// TODO: Shunt the table name logic and associated stmt list up to the a higher layer to reduce the amount of unnecessary overhead in the builder / accumulator
-	adapter.pushStatement(name, "add-key", querystr)
+	a.pushStatement(name, "add-key", querystr)
+	return querystr, nil
+}
+
+func (a *MysqlAdapter) AddForeignKey(name string, table string, column string, ftable string, fcolumn string, cascade bool) (out string, e error) {
+	var c = func(str string, val bool) {
+		if e != nil || !val {
+			return
+		}
+		e = errors.New("You need a "+str+" for this table")
+	}
+	c("name",table=="")
+	c("column",column=="")
+	c("ftable",ftable=="")
+	c("fcolumn",fcolumn=="")
+	if e != nil {
+		return "", e
+	}
+
+	querystr := "ALTER TABLE `"+table+"` ADD CONSTRAINT `fk_"+column+"` FOREIGN KEY(`"+column+"`) REFERENCES `"+ftable+"`(`"+fcolumn+"`)"
+	if cascade {
+		querystr += " ON DELETE CASCADE"
+	}
+
+	// TODO: Shunt the table name logic and associated stmt list up to the a higher layer to reduce the amount of unnecessary overhead in the builder / accumulator
+	a.pushStatement(name, "add-foreign-key", querystr)
 	return querystr, nil
 }
 

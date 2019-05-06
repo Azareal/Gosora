@@ -23,6 +23,10 @@ type DBTableColumn struct {
 type DBTableKey struct {
 	Columns string
 	Type    string
+
+	// Foreign keys only
+	FTable string
+	Cascade bool
 }
 
 type DBSelect struct {
@@ -111,6 +115,7 @@ type Adapter interface {
 	AddColumn(name string, table string, column DBTableColumn, key *DBTableKey) (string, error)
 	AddIndex(name string, table string, iname string, colname string) (string, error)
 	AddKey(name string, table string, column string, key DBTableKey) (string, error)
+	AddForeignKey(name string, table string, column string, ftable string, fcolumn string, cascade bool) (out string, e error)
 	SimpleInsert(name string, table string, columns string, fields string) (string, error)
 	SimpleUpdate(up *updatePrebuilder) (string, error)
 	SimpleUpdateSelect(up *updatePrebuilder) (string, error) // ! Experimental

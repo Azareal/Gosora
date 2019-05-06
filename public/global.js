@@ -138,7 +138,7 @@ function loadAlerts(menuAlerts) {
 	$.ajax({
 		type: 'get',
 		dataType: 'json',
-		url:'/api/?action=get&module=alerts',
+		url:'/api/?module=alerts',
 		success: (data) => {
 			if("errmsg" in data) {
 				setAlertError(menuAlerts,data.errmsg)
@@ -147,8 +147,8 @@ function loadAlerts(menuAlerts) {
 			alertList = [];
 			alertMapping = {};
 			for(var i in data.msgs) addAlert(data.msgs[i]);
-			console.log("data.msgCount:",data.msgCount)
-			alertCount = data.msgCount;
+			console.log("data.count:",data.count)
+			alertCount = data.count;
 			updateAlertList(menuAlerts)
 		},
 		error: (magic,theStatus,error) => {

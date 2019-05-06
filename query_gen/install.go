@@ -3,17 +3,17 @@ package qgen
 var Install *installer
 
 func init() {
-	Install = &installer{instructions: []DB_Install_Instruction{}}
+	Install = &installer{instructions: []DBInstallInstruction{}}
 }
 
-type DB_Install_Instruction struct {
+type DBInstallInstruction struct {
 	Table    string
 	Contents string
 	Type     string
 }
 
 // TODO: Add methods to this to construct it OO-like
-type DB_Install_Table struct {
+type DBInstallTable struct {
 	Name      string
 	Charset   string
 	Collation string
@@ -25,8 +25,8 @@ type DB_Install_Table struct {
 // TODO: Re-implement the query generation, query builder and installer adapters as layers on-top of a query text adapter
 type installer struct {
 	adapter      Adapter
-	instructions []DB_Install_Instruction
-	tables       []*DB_Install_Table // TODO: Use this in Record() in the next commit to allow us to auto-migrate settings rather than manually patching them in on upgrade
+	instructions []DBInstallInstruction
+	tables       []*DBInstallTable // TODO: Use this in Record() in the next commit to allow us to auto-migrate settings rather than manually patching them in on upgrade
 	plugins      []QueryPlugin
 }
 
@@ -41,7 +41,7 @@ func (install *installer) SetAdapter(name string) error {
 
 func (install *installer) SetAdapterInstance(adapter Adapter) {
 	install.adapter = adapter
-	install.instructions = []DB_Install_Instruction{}
+	install.instructions = []DBInstallInstruction{}
 }
 
 func (install *installer) AddPlugins(plugins ...QueryPlugin) {
@@ -49,7 +49,7 @@ func (install *installer) AddPlugins(plugins ...QueryPlugin) {
 }
 
 func (install *installer) CreateTable(table string, charset string, collation string, columns []DBTableColumn, keys []DBTableKey) error {
-	tableStruct := &DB_Install_Table{table, charset, collation, columns, keys}
+	tableStruct := &DBInstallTable{table, charset, collation, columns, keys}
 	err := install.RunHook("CreateTableStart", tableStruct)
 	if err != nil {
 		return err
@@ -62,7 +62,7 @@ func (install *installer) CreateTable(table string, charset string, collation st
 	if err != nil {
 		return err
 	}
-	install.instructions = append(install.instructions, DB_Install_Instruction{table, res, "create-table"})
+	install.instructions = append(install.instructions, DBInstallInstruction{table, res, "create-table"})
 	install.tables = append(install.tables, tableStruct)
 	return nil
 }
@@ -81,7 +81,7 @@ func (install *installer) AddIndex(table string, iname string, colname string) e
 	if err != nil {
 		return err
 	}
-	install.instructions = append(install.instructions, DB_Install_Instruction{table, res, "index"})
+	install.instructions = append(install.instructions, DBInstallInstruction{table, res, "index"})
 	return nil
 }
 
@@ -99,7 +99,7 @@ func (install *installer) SimpleInsert(table string, columns string, fields stri
 	if err != nil {
 		return err
 	}
-	install.instructions = append(install.instructions, DB_Install_Instruction{table, res, "insert"})
+	install.instructions = append(install.instructions, DBInstallInstruction{table, res, "insert"})
 	return nil
 }
 

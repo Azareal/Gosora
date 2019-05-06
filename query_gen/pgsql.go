@@ -147,6 +147,25 @@ func (adapter *PgsqlAdapter) AddKey(name string, table string, column string, ke
 	return "", errors.New("not implemented")
 }
 
+// TODO: Implement this
+// TODO: Test to make sure everything works here
+func (adapter *PgsqlAdapter) AddForeignKey(name string, table string, column string, ftable string, fcolumn string, cascade bool) (out string, e error) {
+	var c = func(str string, val bool) {
+		if e != nil || !val {
+			return
+		}
+		e = errors.New("You need a "+str+" for this table")
+	}
+	c("name",table=="")
+	c("column",column=="")
+	c("ftable",ftable=="")
+	c("fcolumn",fcolumn=="")
+	if e != nil {
+		return "", e
+	}
+	return "", errors.New("not implemented")
+}
+
 // TODO: Test this
 // ! We need to get the last ID out of this somehow, maybe add returning to every query? Might require some sort of wrapper over the sql statements
 func (adapter *PgsqlAdapter) SimpleInsert(name string, table string, columns string, fields string) (string, error) {

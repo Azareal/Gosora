@@ -10,10 +10,12 @@ import (
 	"bytes"
 	"database/sql"
 	"fmt"
+	"os"
 	"io/ioutil"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/Azareal/Gosora/query_gen"
 	_ "github.com/go-sql-driver/mysql"
@@ -93,53 +95,140 @@ func (ins *MysqlInstaller) InitDatabase() (err error) {
 		fmt.Println("The database was successfully created")
 	}
 
-	fmt.Println("Switching to database ", ins.dbName)
+	/*fmt.Println("Switching to database ", ins.dbName)
 	_, err = db.Exec("USE " + ins.dbName)
+	if err != nil {
+		return err
+	}*/
+	db.Close()
+
+	db, err = sql.Open("mysql", ins.dbUsername+_dbPassword+"@tcp("+ins.dbHost+":"+ins.dbPort+")/" + ins.dbName)
 	if err != nil {
 		return err
 	}
 
+	// Make sure that the connection is alive..
+	err = db.Ping()
+	if err != nil {
+		return err
+	}
+	fmt.Println("Successfully connected to the database")
+
 	// Ready the query builder
+	ins.db = db
 	qgen.Builder.SetConn(db)
 	return qgen.Builder.SetAdapter("mysql")
 }
 
+func(ins *MysqlInstaller) createTable(f os.FileInfo) error {
+	table := strings.TrimPrefix(f.Name(), "query_")
+	ext := filepath.Ext(table)
+	if ext != ".sql" {
+		return nil
+	}
+	table = strings.TrimSuffix(table, ext)
+	
+	// ? - This is mainly here for tests, although it might allow the installer to overwrite a production database, so we might want to proceed with caution
+	q := "DROP TABLE IF EXISTS `" + table + "`;"
+	_, err := ins.db.Exec(q)
+	if err != nil {
+		fmt.Println("Failed query:", q)
+		fmt.Println("e:",err)
+		return err
+	}
+
+	data, err := ioutil.ReadFile("./schema/mysql/" + f.Name())
+	if err != nil {
+		return err
+	}
+	data = bytes.TrimSpace(data)
+
+	_, err = ins.db.Exec(string(data))
+	if err != nil {
+		fmt.Println("Failed query:", string(data))
+		fmt.Println("e:",err)
+		return err
+	}
+	fmt.Printf("Created table '%s'\n", table)
+
+	return nil
+}
+
 func (ins *MysqlInstaller) TableDefs() (err error) {
 	fmt.Println("Creating the tables")
-	files, _ := ioutil.ReadDir("./schema/mysql/")
-	for _, f := range files {
+	files, err := ioutil.ReadDir("./schema/mysql/")
+	if err != nil {
+		return err
+	}
+
+	// TODO: Can we reduce the amount of boilerplate here?
+	after := []string{"activity_stream_matches"}
+	c1 := make(chan os.FileInfo)
+	c2 := make(chan os.FileInfo)
+	e := make(chan error)
+	var wg sync.WaitGroup
+	r := func(c chan os.FileInfo) {
+		wg.Add(1)
+		for f := range c {
+			err := ins.createTable(f)
+			if err != nil {
+				e <- err
+			}
+		}
+		wg.Done()
+	}
+	go r(c1)
+	go r(c2)
+
+	var a []os.FileInfo
+Outer:
+	for i, f := range files {
 		if !strings.HasPrefix(f.Name(), "query_") {
 			continue
 		}
-
-		var table, ext string
-		table = strings.TrimPrefix(f.Name(), "query_")
-		ext = filepath.Ext(table)
+		table := strings.TrimPrefix(f.Name(), "query_")
+		ext := filepath.Ext(table)
 		if ext != ".sql" {
 			continue
 		}
 		table = strings.TrimSuffix(table, ext)
-
-		// ? - This is mainly here for tests, although it might allow the installer to overwrite a production database, so we might want to proceed with caution
-		_, err = ins.db.Exec("DROP TABLE IF EXISTS `" + table + "`;")
-		if err != nil {
-			fmt.Println("Failed query:", "DROP TABLE IF EXISTS `"+table+"`;")
-			return err
+		for _, tbl := range after {
+			if tbl == table {
+				a = append(a, f)
+				continue Outer
+			}
 		}
-
-		fmt.Printf("Creating table '%s'\n", table)
-		data, err := ioutil.ReadFile("./schema/mysql/" + f.Name())
-		if err != nil {
-			return err
+		if i%2 == 0 {
+			c1 <- f
+		} else {
+			c2 <- f
 		}
-		data = bytes.TrimSpace(data)
+	}
+	close(c1)
+	close(c2)
+	wg.Wait()
+	close(e)
+	
+	var first error
+	for err := range e {
+		if first == nil {
+			first = err
+		}
+	}
+	if first != nil {
+		return first
+	}
 
-		_, err = ins.db.Exec(string(data))
+	for _, f := range a {
+		if !strings.HasPrefix(f.Name(), "query_") {
+			continue
+		}
+		err := ins.createTable(f)
 		if err != nil {
-			fmt.Println("Failed query:", string(data))
 			return err
 		}
 	}
+
 	return nil
 }
 

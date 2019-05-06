@@ -53,6 +53,7 @@ func (adapter *MssqlAdapter) DropTable(name string, table string) (string, error
 	return querystr, nil
 }
 
+// TODO: Add support for foreign keys?
 // TODO: Convert any remaining stringy types to nvarchar
 // We may need to change the CreateTable API to better suit Mssql and the other database drivers which are coming up
 func (adapter *MssqlAdapter) CreateTable(name string, table string, charset string, collation string, columns []DBTableColumn, keys []DBTableKey) (string, error) {
@@ -170,6 +171,25 @@ func (adapter *MssqlAdapter) AddKey(name string, table string, column string, ke
 	}
 	if column == "" {
 		return "", errors.New("You need a name for the column")
+	}
+	return "", errors.New("not implemented")
+}
+
+// TODO: Implement this
+// TODO: Test to make sure everything works here
+func (adapter *MssqlAdapter) AddForeignKey(name string, table string, column string, ftable string, fcolumn string, cascade bool) (out string, e error) {
+	var c = func(str string, val bool) {
+		if e != nil || !val {
+			return
+		}
+		e = errors.New("You need a "+str+" for this table")
+	}
+	c("name",table=="")
+	c("column",column=="")
+	c("ftable",ftable=="")
+	c("fcolumn",fcolumn=="")
+	if e != nil {
+		return "", e
 	}
 	return "", errors.New("not implemented")
 }

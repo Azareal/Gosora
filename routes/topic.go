@@ -452,8 +452,7 @@ func CreateTopic(w http.ResponseWriter, r *http.Request, user c.User, header *c.
 		}
 	}
 
-	ctpage := c.CreateTopicPage{header, forumList, fid}
-	return renderTemplate("create_topic", w, r, header, ctpage)
+	return renderTemplate("create_topic", w, r, header, c.CreateTopicPage{header, forumList, fid})
 }
 
 func CreateTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
@@ -461,7 +460,6 @@ func CreateTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.Ro
 	if err != nil {
 		return c.LocalError("The provided ForumID is not a valid number.", w, r, user)
 	}
-
 	// TODO: Add hooks to make use of headerLite
 	lite, ferr := c.SimpleForumUserCheck(w, r, &user, fid)
 	if ferr != nil {
