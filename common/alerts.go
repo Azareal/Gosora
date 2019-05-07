@@ -79,7 +79,7 @@ func BuildAlert(alert Alert, user User /* The current user */) (out string, err 
 	}*/
 
 	if alert.Event == "friend_invite" {
-		return buildAlertString(phrases.GetTmplPhrase("alerts.new_friend_invite"), []string{alert.Actor.Name}, alert.Actor.Link, alert.Actor.Avatar, alert.ASID), nil
+		return buildAlertString(".new_friend_invite", []string{alert.Actor.Name}, alert.Actor.Link, alert.Actor.Avatar, alert.ASID), nil
 	}
 
 	// Not that many events for us to handle in a forum
@@ -92,13 +92,13 @@ func BuildAlert(alert Alert, user User /* The current user */) (out string, err 
 			}
 			// Store the forum ID in the targetUser column instead of making a new one? o.O
 			// Add an additional column for extra information later on when we add the ability to link directly to posts. We don't need the forum data for now...
-			return buildAlertString(phrases.GetTmplPhrase("alerts.forum_new_topic"), []string{alert.Actor.Name, topic.Title}, topic.Link, alert.Actor.Avatar, alert.ASID), nil
+			return buildAlertString(".forum_new_topic", []string{alert.Actor.Name, topic.Title}, topic.Link, alert.Actor.Avatar, alert.ASID), nil
 		}
-		return buildAlertString(phrases.GetTmplPhrase("alerts.forum_unknown_action"), []string{alert.Actor.Name}, "", alert.Actor.Avatar, alert.ASID), nil
+		return buildAlertString(".forum_unknown_action", []string{alert.Actor.Name}, "", alert.Actor.Avatar, alert.ASID), nil
 	}
 
 	var url, area string
-	var phraseName = "alerts." + alert.ElementType
+	var phraseName = "." + alert.ElementType
 	switch alert.ElementType {
 	case "topic":
 		topic, err := Topics.Get(alert.ElementID)
@@ -145,7 +145,7 @@ func BuildAlert(alert Alert, user User /* The current user */) (out string, err 
 		phraseName += "_reply"
 	}
 
-	return buildAlertString(phrases.GetTmplPhrase(phraseName), []string{alert.Actor.Name, area}, url, alert.Actor.Avatar, alert.ASID), nil
+	return buildAlertString(phraseName, []string{alert.Actor.Name, area}, url, alert.Actor.Avatar, alert.ASID), nil
 }
 
 func buildAlertString(msg string, sub []string, path string, avatar string, asid int) string {
@@ -157,7 +157,7 @@ func buildAlertString(msg string, sub []string, path string, avatar string, asid
 		substring = substring[:len(substring)-1]
 	}
 
-	return `{"msg":"` + escapeTextInJson(msg) + `","sub":[` + substring + `],"path":"` + escapeTextInJson(path) + `","avatar":"` + escapeTextInJson(avatar) + `","asid":"` + strconv.Itoa(asid) + `"}`
+	return `{"msg":"` + escapeTextInJson(msg) + `","sub":[` + substring + `],"path":"` + escapeTextInJson(path) + `","avatar":"` + escapeTextInJson(avatar) + `","id":` + strconv.Itoa(asid) + `}`
 }
 
 func AddActivityAndNotifyAll(actor int, targetUser int, event string, elementType string, elementID int) error {

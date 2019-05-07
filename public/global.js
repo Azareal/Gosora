@@ -48,7 +48,7 @@ function bindToAlerts() {
 			url: "/api/?action=set&module=dismiss-alert",
 			type: "POST",
 			dataType: "json",
-			data: { asid: $(this).attr("data-asid") },
+			data: { id: $(this).attr("data-asid") },
 			error: ajaxError,
 			success: () => {
 				window.location.href = this.getAttribute("href");
@@ -59,21 +59,22 @@ function bindToAlerts() {
 
 function addAlert(msg, notice = false) {
 	var mmsg = msg.msg;
+	if(mmsg[0]==".") mmsg = phraseBox["alerts"]["alerts"+mmsg];
 	if("sub" in msg) {
 		for(var i = 0; i < msg.sub.length; i++) mmsg = mmsg.replace("\{"+i+"\}", msg.sub[i]);
 	}
 
 	let aItem = Template_alert({
-		ASID: msg.asid,
+		ASID: msg.id,
 		Path: msg.path,
 		Avatar: msg.avatar || "",
 		Message: mmsg
 	})
-	//alertMapping[msg.asid] = aItem;
+	//alertMapping[msg.id] = aItem;
 	let div = document.createElement('div');
 	div.innerHTML = aItem.trim();
-	alertMapping[msg.asid] = div.firstChild;
-	alertList.push(msg.asid);
+	alertMapping[msg.id] = div.firstChild;
+	alertList.push(msg.id);
 
 	if(notice) {
 		// TODO: Add some sort of notification queue to avoid flooding the end-user with notices?
@@ -257,7 +258,7 @@ function runWebSockets(resume = false) {
 			else if("event" in data) {
 				if(data.event == "dismiss-alert"){
 					Object.keys(alertMapping).forEach((key) => {
-						if(key==data.asid) {
+						if(key==data.id) {
 							alertCount--;
 							let index = -1;
 							for(var i = 0; i < alertList.length; i++) {

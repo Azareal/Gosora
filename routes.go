@@ -51,11 +51,11 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError 
 	switch r.FormValue("module") {
 	// TODO: Split this into it's own function
 	case "dismiss-alert":
-		asid, err := strconv.Atoi(r.FormValue("asid"))
+		id, err := strconv.Atoi(r.FormValue("id"))
 		if err != nil {
-			return c.PreErrorJS("Invalid asid", w, r)
+			return c.PreErrorJS("Invalid id", w, r)
 		}
-		res, err := stmts.deleteActivityStreamMatch.Exec(user.ID, asid)
+		res, err := stmts.deleteActivityStreamMatch.Exec(user.ID, id)
 		if err != nil {
 			return c.InternalError(err, w, r)
 		}
@@ -65,7 +65,7 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError 
 		}
 		// Don't want to throw an internal error due to a socket closing
 		if c.EnableWebsockets && count > 0 {
-			_ = c.WsHub.PushMessage(user.ID, `{"event":"dismiss-alert","asid":`+strconv.Itoa(asid)+`}`)
+			_ = c.WsHub.PushMessage(user.ID, `{"event":"dismiss-alert","id":`+strconv.Itoa(id)+`}`)
 		}
 		w.Write(successJSONBytes)
 	// TODO: Split this into it's own function
