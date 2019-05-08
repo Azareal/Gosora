@@ -39,18 +39,33 @@ function buildStatsChart(rawLabels, seriesData, timeRange, legendNames, bytes = 
 	} else if(timeRange=="three-months") {
 		labels = [aphrases["analytics.now"],"3" + aphrases["analytics.days_short"]]
 		for(let i = 6; i < 90; i = i + 3) {
-			labels.push(i + aphrases["analytics.days_short"]);
+			if (i%2==0) labels.push("");
+			else labels.push(i + aphrases["analytics.days_short"]);
 		}
 	} else if(timeRange=="one-month") {
 		labels = [aphrases["analytics.now"],"1" + aphrases["analytics.days_short"]];
 		for(let i = 2; i < 30; i++) {
-			labels.push(i + aphrases["analytics.days_short"]);
+			if (i%2==0) labels.push("");
+			else labels.push(i + aphrases["analytics.days_short"]);
 		}
 	} else if(timeRange=="one-week") {
 		labels = [aphrases["analytics.now"]];
 		for(let i = 2; i < 14; i++) {
 			if (i%2==0) labels.push("");
 			else labels.push(Math.floor(i/2) + aphrases["analytics.days"]);
+		}
+	} else if (timeRange=="two-days" || timeRange == "one-day" || timeRange == "twelve-hours") {
+		for(const i in rawLabels) {
+			if (i%2==0) {
+				labels.push("");
+				continue;
+			}
+			let date = new Date(rawLabels[i]*1000);
+			console.log("date: ", date);
+			let minutes = "0" + date.getMinutes();
+			let label = date.getHours() + ":" + minutes.substr(-2);
+			console.log("label:", label);
+			labels.push(label);
 		}
 	} else {
 		for(const i in rawLabels) {
