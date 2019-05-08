@@ -114,6 +114,11 @@ func (ins *MysqlInstaller) InitDatabase() (err error) {
 	}
 	fmt.Println("Successfully connected to the database")
 
+	_, err = db.Exec("SET FOREIGN_KEY_CHECKS = 0;")
+	if err != nil {
+		return err
+	}
+
 	// Ready the query builder
 	ins.db = db
 	qgen.Builder.SetConn(db)
@@ -229,7 +234,8 @@ Outer:
 		}
 	}
 
-	return nil
+	_, err = ins.db.Exec("SET FOREIGN_KEY_CHECKS = 1;")
+	return err
 }
 
 // ? - Moved this here since it was breaking the installer, we need to add this at some point
