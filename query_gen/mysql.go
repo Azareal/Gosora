@@ -402,7 +402,7 @@ func (adapter *MysqlAdapter) SimpleUpdate(up *updatePrebuilder) (string, error) 
 	}
 	querystr = querystr[0 : len(querystr)-1]
 
-	whereStr, err := adapter.buildWhere(up.where)
+	whereStr, err := adapter.buildFlexiWhere(up.where,up.dateCutoff)
 	if err != nil {
 		return querystr, err
 	}
@@ -485,7 +485,11 @@ func (adapter *MysqlAdapter) buildFlexiWhere(where string, dateCutoff *dateCutof
 	}
 	querystr = " WHERE"
 	if dateCutoff != nil {
-		querystr += " " + dateCutoff.Column + " BETWEEN (UTC_TIMESTAMP() - interval " + strconv.Itoa(dateCutoff.Quantity) + " " + dateCutoff.Unit + ") AND UTC_TIMESTAMP() AND"
+		if dateCutoff.Type == 0 {
+			querystr += " " + dateCutoff.Column + " BETWEEN (UTC_TIMESTAMP() - interval " + strconv.Itoa(dateCutoff.Quantity) + " " + dateCutoff.Unit + ") AND UTC_TIMESTAMP() AND"
+		} else {
+			querystr += " " + dateCutoff.Column + " < UTC_TIMESTAMP() - interval " + strconv.Itoa(dateCutoff.Quantity) + " " + dateCutoff.Unit + " AND"
+		}
 	}
 	if len(where) != 0 {
 		for _, loc := range processWhere(where) {

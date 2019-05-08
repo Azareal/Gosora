@@ -88,6 +88,7 @@ type config struct {
 
 	PrimaryServer bool
 	ServerCount   int
+	PostIPCutoff int
 
 	DisableLiveTopicList bool
 	DisableJSAntispam    bool
@@ -196,6 +197,10 @@ func ProcessConfig() (err error) {
 		log.Fatal("MaxRequestSize should not be zero or below")
 	}
 	Site.MaxRequestSize = Config.MaxRequestSize
+
+	if Config.PostIPCutoff == 0 {
+		Config.PostIPCutoff = 180 // Default cutoff
+	}
 
 	// ? Find a way of making these unlimited if zero? It might rule out some optimisations, waste memory, and break layouts
 	if Config.MaxTopicTitleLength == 0 {

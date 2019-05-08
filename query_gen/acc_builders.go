@@ -44,37 +44,47 @@ type accUpdateBuilder struct {
 	build *Accumulator
 }
 
-func (update *accUpdateBuilder) Set(set string) *accUpdateBuilder {
-	update.up.set = set
-	return update
+func (u *accUpdateBuilder) Set(set string) *accUpdateBuilder {
+	u.up.set = set
+	return u
 }
 
-func (update *accUpdateBuilder) Where(where string) *accUpdateBuilder {
-	if update.up.where != "" {
-		update.up.where += " AND "
+func (u *accUpdateBuilder) Where(where string) *accUpdateBuilder {
+	if u.up.where != "" {
+		u.up.where += " AND "
 	}
-	update.up.where += where
-	return update
+	u.up.where += where
+	return u
 }
 
-func (update *accUpdateBuilder) WhereQ(sel *selectPrebuilder) *accUpdateBuilder {
-	update.up.whereSubQuery = sel
-	return update
+func (u *accUpdateBuilder) DateCutoff(column string, quantity int, unit string) *accUpdateBuilder {
+	u.up.dateCutoff = &dateCutoff{column, quantity, unit, 0}
+	return u
 }
 
-func (builder *accUpdateBuilder) Prepare() *sql.Stmt {
-	if builder.up.whereSubQuery != nil {
-		return builder.build.prepare(builder.build.adapter.SimpleUpdateSelect(builder.up))
+func (u *accUpdateBuilder) DateOlderThan(column string, quantity int, unit string) *accUpdateBuilder {
+	u.up.dateCutoff = &dateCutoff{column, quantity, unit, 1}
+	return u
+}
+
+func (u *accUpdateBuilder) WhereQ(sel *selectPrebuilder) *accUpdateBuilder {
+	u.up.whereSubQuery = sel
+	return u
+}
+
+func (u *accUpdateBuilder) Prepare() *sql.Stmt {
+	if u.up.whereSubQuery != nil {
+		return u.build.prepare(u.build.adapter.SimpleUpdateSelect(u.up))
 	}
-	return builder.build.prepare(builder.build.adapter.SimpleUpdate(builder.up))
+	return u.build.prepare(u.build.adapter.SimpleUpdate(u.up))
 }
 
-func (builder *accUpdateBuilder) Exec(args ...interface{}) (res sql.Result, err error) {
-	query, err := builder.build.adapter.SimpleUpdate(builder.up)
+func (u *accUpdateBuilder) Exec(args ...interface{}) (res sql.Result, err error) {
+	query, err := u.build.adapter.SimpleUpdate(u.up)
 	if err != nil {
 		return res, err
 	}
-	return builder.build.exec(query, args...)
+	return u.build.exec(query, args...)
 }
 
 type AccSelectBuilder struct {
@@ -134,7 +144,7 @@ func (selectItem *AccSelectBuilder) InQ(column string, subBuilder *AccSelectBuil
 }
 
 func (builder *AccSelectBuilder) DateCutoff(column string, quantity int, unit string) *AccSelectBuilder {
-	builder.dateCutoff = &dateCutoff{column, quantity, unit}
+	builder.dateCutoff = &dateCutoff{column, quantity, unit, 0}
 	return builder
 }
 
@@ -309,7 +319,7 @@ func (b *accCountBuilder) Limit(limit string) *accCountBuilder {
 }
 
 func (b *accCountBuilder) DateCutoff(column string, quantity int, unit string) *accCountBuilder {
-	b.dateCutoff = &dateCutoff{column, quantity, unit}
+	b.dateCutoff = &dateCutoff{column, quantity, unit, 0}
 	return b
 }
 

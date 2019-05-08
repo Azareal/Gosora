@@ -142,6 +142,14 @@ func tickLoop(thumbChan chan bool) {
 			if err != nil && err != sql.ErrNoRows {
 				c.LogError(err)
 			}
+
+			if c.Config.PostIPCutoff > -1 {
+				// TODO: Use unixtime to remove this MySQLesque logic?
+				_, err := qgen.NewAcc().Update("replies").Set("ipaddress = '0'").DateOlderThan("createdAt",c.Config.PostIPCutoff,"day").Where("ipaddress != '0'").Exec()
+				if err != nil {
+					c.LogError(err)
+				}
+			}
 		}
 
 		// TODO: Handle the daily clean-up.

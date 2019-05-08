@@ -4,6 +4,7 @@ type dateCutoff struct {
 	Column   string
 	Quantity int
 	Unit     string
+	Type int
 }
 
 type prebuilder struct {
@@ -27,7 +28,7 @@ func (build *prebuilder) Insert(nlist ...string) *insertPrebuilder {
 
 func (build *prebuilder) Update(nlist ...string) *updatePrebuilder {
 	name := optString(nlist, "")
-	return &updatePrebuilder{name, "", "", "", nil, build.adapter}
+	return &updatePrebuilder{name, "", "", "", nil, nil, build.adapter}
 }
 
 func (build *prebuilder) Delete(nlist ...string) *deletePrebuilder {
@@ -69,6 +70,7 @@ type updatePrebuilder struct {
 	table         string
 	set           string
 	where         string
+	dateCutoff *dateCutoff // We might want to do this in a slightly less hacky way
 	whereSubQuery *selectPrebuilder
 
 	build Adapter
