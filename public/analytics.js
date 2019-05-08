@@ -28,6 +28,7 @@ function convertByteUnit(bytes, places = 0) {
 // TODO: Load rawLabels and seriesData dynamically rather than potentially fiddling with nonces for the CSP?
 function buildStatsChart(rawLabels, seriesData, timeRange, legendNames, bytes = false) {
 	console.log("buildStatsChart");
+	console.log("seriesData:",seriesData);
 	let labels = [];
 	let aphrases = phraseBox["analytics"];
 	if(timeRange=="one-year") {

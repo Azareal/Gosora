@@ -23,6 +23,7 @@
 		{{if .OGDesc}}<meta property="og:description" content="{{.OGDesc}}" />
 		<meta property="twitter:description" content="{{.OGDesc}}" />{{end}}
 		{{if .GoogSiteVerify}}<meta name="google-site-verification" content="{{.GoogSiteVerify}}" />{{end}}
+		<link rel="search" type="application/opensearchdescription+xml" title="{{.Header.Site.Name}}" href="/opensearch.xml">
 	</head>
 	<body>
 		{{if not .CurrentUser.IsSuperMod}}<style>.supermod_only { display: none !important; }</style>{{end}}{{flush}}

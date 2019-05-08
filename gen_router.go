@@ -165,6 +165,7 @@ var RouteMap = map[string]interface{}{
 	"routes.StaticFile": routes.StaticFile,
 	"routes.RobotsTxt": routes.RobotsTxt,
 	"routes.SitemapXml": routes.SitemapXml,
+	"routes.OpenSearchXml": routes.OpenSearchXml,
 	"routes.BadRoute": routes.BadRoute,
 	"routes.HTTPSRedirect": routes.HTTPSRedirect,
 }
@@ -313,8 +314,9 @@ var routeMapEnum = map[string]int{
 	"routes.StaticFile": 139,
 	"routes.RobotsTxt": 140,
 	"routes.SitemapXml": 141,
-	"routes.BadRoute": 142,
-	"routes.HTTPSRedirect": 143,
+	"routes.OpenSearchXml": 142,
+	"routes.BadRoute": 143,
+	"routes.HTTPSRedirect": 144,
 }
 var reverseRouteMapEnum = map[int]string{ 
 	0: "routes.Overview",
@@ -459,8 +461,9 @@ var reverseRouteMapEnum = map[int]string{
 	139: "routes.StaticFile",
 	140: "routes.RobotsTxt",
 	141: "routes.SitemapXml",
-	142: "routes.BadRoute",
-	143: "routes.HTTPSRedirect",
+	142: "routes.OpenSearchXml",
+	143: "routes.BadRoute",
+	144: "routes.HTTPSRedirect",
 }
 var osMapEnum = map[string]int{ 
 	"unknown": 0,
@@ -615,7 +618,7 @@ type HTTPSRedirect struct {
 
 func (red *HTTPSRedirect) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Connection", "close")
-	counters.RouteViewCounter.Bump(143)
+	counters.RouteViewCounter.Bump(144)
 	dest := "https://" + req.Host + req.URL.String()
 	http.Redirect(w, req, dest, http.StatusTemporaryRedirect)
 }
@@ -2251,6 +2254,9 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					//log.Print("req.URL.Path: ",req.URL.Path)
 					routes.StaticFile(w,req)
 					return nil
+				case "opensearch.xml":
+					counters.RouteViewCounter.Bump(142)
+					return routes.OpenSearchXml(w,req)
 				/*case "sitemap.xml":
 					counters.RouteViewCounter.Bump(141)
 					return routes.SitemapXml(w,req)*/
@@ -2274,7 +2280,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 			} else {
 				r.DumpRequest(req,"Bad Route")
 			}
-			counters.RouteViewCounter.Bump(142)
+			counters.RouteViewCounter.Bump(143)
 			return c.NotFound(w,req,nil)
 	}
 	return err

@@ -41,39 +41,40 @@
 	];
 
 	(function(window, document, Chartist) {
-  'use strict';
+	'use strict';
 
-  Chartist.plugins = Chartist.plugins || {};
-  Chartist.plugins.byteUnits = function(options) {
-    options = Chartist.extend({}, {}, options);
+	Chartist.plugins = Chartist.plugins || {};
+	Chartist.plugins.byteUnits = function(options) {
+	options = Chartist.extend({}, {}, options);
 
     return function byteUnits(chart) {
-      if(!chart instanceof Chartist.Line) return;
+    	if(!chart instanceof Chartist.Line) return;
 			
-			chart.on('created', function() {
-				console.log("running created")
-				const vbits = document.getElementsByClassName("ct-vertical");
-				if(vbits==null) return;
+		chart.on('created', function() {
+			console.log("running created")
+			const vbits = document.getElementsByClassName("ct-vertical");
+			if(vbits==null) return;
 
-				let tbits = [];
-				for(let i = 0; i < vbits.length; i++) {
-					tbits[i] = vbits[i].innerHTML;
+			let tbits = [];
+			for(let i = 0; i < vbits.length; i++) {
+				tbits[i] = vbits[i].innerHTML;
+			}
+			console.log("tbits:",tbits);
+			
+			const calc = (places) => {
+				if(places==3) return;
+			
+				const matcher = vbits[0].innerHTML;
+				let allMatch = true;
+       			for(let i = 0; i < tbits.length; i++) {
+					let val = convertByteUnit(tbits[i], places);
+					if(val!=matcher) allMatch = false;
+					vbits[i].innerHTML = val;
 				}
-			
-				const calc = (places) => {
-					if(places==3) return;
-			
-					const matcher = vbits[0].innerHTML;
-					let allMatch = true;
-       		for(let i = 0; i < tbits.length; i++) {
-						let val = convertByteUnit(tbits[i], places);
-						if(val!=matcher) allMatch = false;
-						vbits[i].innerHTML = val;
-					}
 					
-					if(allMatch) calc(places + 1);
-				}
-				calc(0);
+				if(allMatch) calc(places + 1);
+			}
+			calc(0);
        });
     };
   };
@@ -82,8 +83,17 @@
 	addInitHook("after_phrases", () => {
 		addInitHook("end_init", () => {
 			addInitHook("analytics_loaded", () => {
-				buildStatsChart(rawLabels, seriesData, "{{.TimeRange}}",legendNames, true);
-			});
+				if("{{.TimeRange}}" != "one-week" && seriesData.length > 0 && seriesData[0].length > 12) {
+					let elem = document.getElementsByClassName("colstack_graph_holder")[0];
+					let w = elem.clientWidth;
+					console.log("w:",w);
+					elem.classList.add("scrolly");
+					console.log("elem.clientWidth:",elem.clientWidth);
+					elem.setAttribute("style","width:"+w+"px;");
+					console.log("elem.clientWidth:",elem.clientWidth);
+				}
+				buildStatsChart(rawLabels, seriesData, "{{.TimeRange}}",legendNames,true);
+		});
 		});
 	});
 </script>

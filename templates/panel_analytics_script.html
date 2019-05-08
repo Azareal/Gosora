@@ -13,6 +13,15 @@ let legendNames = [{{range .Graph.Legends}}
 addInitHook("after_phrases", () => {
 	addInitHook("end_init", () => {
 		addInitHook("analytics_loaded", () => {
+			if("{{.TimeRange}}" != "one-week" && seriesData.length > 0 && seriesData[0].length > 12) {
+				let elem = document.getElementsByClassName("colstack_graph_holder")[0];
+				let w = elem.clientWidth;
+				console.log("w:",w);
+				elem.classList.add("scrolly");
+				console.log("elem.clientWidth:",elem.clientWidth);
+				elem.setAttribute("style","width:"+w+"px;");
+				console.log("elem.clientWidth:",elem.clientWidth);
+			}
 			buildStatsChart(rawLabels, seriesData, "{{.TimeRange}}",legendNames);
 		});
 	});
