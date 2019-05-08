@@ -179,6 +179,7 @@ func main() {
 	mapIt("routes.StaticFile")
 	mapIt("routes.RobotsTxt")
 	mapIt("routes.SitemapXml")
+	mapIt("routes.OpenSearchXml")
 	mapIt("routes.BadRoute")
 	mapIt("routes.HTTPSRedirect")
 	tmplVars.AllRouteNames = allRouteNames
@@ -832,6 +833,9 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					//log.Print("req.URL.Path: ",req.URL.Path)
 					routes.StaticFile(w,req)
 					return nil
+				case "opensearch.xml":
+					counters.RouteViewCounter.Bump({{index .AllRouteMap "routes.OpenSearchXml"}})
+					return routes.OpenSearchXml(w,req)
 				/*case "sitemap.xml":
 					counters.RouteViewCounter.Bump({{index .AllRouteMap "routes.SitemapXml"}})
 					return routes.SitemapXml(w,req)*/

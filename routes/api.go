@@ -252,3 +252,19 @@ func APIMe(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 
 	return nil
 }
+
+func OpenSearchXml(w http.ResponseWriter, r *http.Request) c.RouteError {
+	furl := "http"
+	if c.Site.EnableSsl {
+		furl += "s"
+	}
+	furl += "://"+c.Site.URL
+	w.Write([]byte(`<OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/" xmlns:moz="http://www.mozilla.org/2006/browser/search/">
+	<ShortName>`+c.Site.Name+`</ShortName>
+	<InputEncoding>UTF-8</InputEncoding>
+	<Url type="text/html" template="`+furl+`/topics/?q={searchTerms}" />
+	<Url type="application/opensearchdescription+xml" rel="self" template="`+furl+`/opensearch.xml" />
+	<moz:SearchForm>`+furl+`</moz:SearchForm>
+</OpenSearchDescription>`))
+	return nil
+}
