@@ -147,6 +147,7 @@ function loadAlerts(menuAlerts) {
 			}
 			alertList = [];
 			alertMapping = {};
+			if(!data.hasOwnProperty("msgs")) data = {"msgs":[],"count":0};
 			for(var i in data.msgs) addAlert(data.msgs[i]);
 			console.log("data.count:",data.count)
 			alertCount = data.count;

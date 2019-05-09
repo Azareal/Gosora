@@ -89,11 +89,10 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError 
 			return nil
 		}
 
-		var msglist string
 		var count int
 		err = stmts.getActivityCountByWatcher.QueryRow(user.ID).Scan(&count)
 		if err == ErrNoRows {
-			return c.PreErrorJS("Couldn't find the parent topic", w, r)
+			return c.PreErrorJS("Unable to get the activity count", w, r)
 		} else if err != nil {
 			return c.InternalErrorJS(err, w, r)
 		}
@@ -127,6 +126,8 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError 
 			return c.InternalErrorJS(err, w, r)
 		}
 
+		var msglist string
+		//var sb strings.Builder
 		var ok bool
 		for _, alert := range alerts {
 			alert.Actor, ok = list[alert.ActorID]
@@ -139,13 +140,18 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError 
 				return c.LocalErrorJS(err.Error(), w, r)
 			}
 
+			//sb.Write(res)
 			msglist += res + ","
 		}
 
 		if len(msglist) != 0 {
 			msglist = msglist[0 : len(msglist)-1]
 		}
-		_, _ = io.WriteString(w, `{"msgs":[` + msglist + `],"count":` + strconv.Itoa(count) + `}`)
+		if count == 0 {
+			_, _ = io.WriteString(w, `{}`)
+		} else {
+			_, _ = io.WriteString(w, `{"msgs":[` + msglist + `],"count":` + strconv.Itoa(count) + `}`)
+		}
 	default:
 		return c.PreErrorJS("Invalid Module", w, r)
 	}
