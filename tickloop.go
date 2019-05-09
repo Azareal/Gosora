@@ -3,8 +3,9 @@ package main
 import (
 	"errors"
 	"log"
-	"sync/atomic"
 	"time"
+	"strconv"
+	"sync/atomic"
 	"database/sql"
 
 	c "github.com/Azareal/Gosora/common"
@@ -51,6 +52,18 @@ func runHook(name string) {
 }
 
 func tickLoop(thumbChan chan bool) {
+	lastDailyStr, err := c.Meta.Get("lastDaily")
+	// TODO: Report this error back correctly...
+	if err != nil && err != sql.ErrNoRows {
+		c.LogError(err)
+	}
+	lastDaily, _ := strconv.ParseInt(lastDailyStr, 10, 64)
+	now := time.Now().Unix()
+	low := now - (60 * 60 * 24)
+	if lastDaily < low {
+		dailies()
+	}
+	
 	// TODO: Write tests for these
 	// Run this goroutine once every half second
 	halfSecondTicker := time.NewTicker(time.Second / 2)
@@ -127,31 +140,58 @@ func tickLoop(thumbChan chan bool) {
 			runHook("after_hour_tick")
 		// TODO: Handle the instance going down a lot better
 		case <-dailyTicker.C:
-			// TODO: Find a more efficient way of doing this
-			err := qgen.NewAcc().Select("activity_stream").Cols("asid").EachInt(func(asid int) error {
-				count, err := qgen.NewAcc().Count("activity_stream_matches").Where("asid = ?").Total()
-				if err != sql.ErrNoRows {
-					return err
-				}
-				if count > 0 {
-					return nil
-				}
-				_, err = qgen.NewAcc().Delete("activity_stream").Where("asid = ?").Run(asid)
-				return err
-			})
-			if err != nil && err != sql.ErrNoRows {
-				c.LogError(err)
-			}
-
-			if c.Config.PostIPCutoff > -1 {
-				// TODO: Use unixtime to remove this MySQLesque logic?
-				_, err := qgen.NewAcc().Update("replies").Set("ipaddress = '0'").DateOlderThan("createdAt",c.Config.PostIPCutoff,"day").Where("ipaddress != '0'").Exec()
-				if err != nil {
-					c.LogError(err)
-				}
-			}
+			dailies()
 		}
 
 		// TODO: Handle the daily clean-up.
+	}
+}
+
+func dailies() {
+	// TODO: Find a more efficient way of doing this
+	err := qgen.NewAcc().Select("activity_stream").Cols("asid").EachInt(func(asid int) error {
+		count, err := qgen.NewAcc().Count("activity_stream_matches").Where("asid = " + strconv.Itoa(asid)).Total()
+		if err != sql.ErrNoRows {
+			return err
+		}
+		if count > 0 {
+			return nil
+		}
+		_, err = qgen.NewAcc().Delete("activity_stream").Where("asid = ?").Run(asid)
+		return err
+	})
+	if err != nil && err != sql.ErrNoRows {
+		c.LogError(err)
+	}
+
+	if c.Config.PostIPCutoff > -1 {
+		// TODO: Use unixtime to remove this MySQLesque logic?
+		_, err := qgen.NewAcc().Update("topics").Set("ipaddress = '0'").DateOlderThan("createdAt",c.Config.PostIPCutoff,"day").Where("ipaddress != '0'").Exec()
+		if err != nil {
+			c.LogError(err)
+		}
+
+		_, err = qgen.NewAcc().Update("replies").Set("ipaddress = '0'").DateOlderThan("createdAt",c.Config.PostIPCutoff,"day").Where("ipaddress != '0'").Exec()
+		if err != nil {
+			c.LogError(err)
+		}
+		
+		// TODO: Find some way of purging the ip data in polls_votes without breaking any anti-cheat measures which might be running... maybe hash it instead?
+
+		_, err = qgen.NewAcc().Update("users_replies").Set("ipaddress = '0'").DateOlderThan("createdAt",c.Config.PostIPCutoff,"day").Where("ipaddress != '0'").Exec()
+		if err != nil {
+			c.LogError(err)
+		}
+
+		// TODO: lastActiveAt isn't currently set, so we can't rely on this to purge last_ips of users who haven't been on in a while
+		/*_, err = qgen.NewAcc().Update("users").Set("last_ip = '0'").DateOlderThan("lastActiveAt",c.Config.PostIPCutoff,"day").Where("last_ip != '0'").Exec()
+		if err != nil {
+			c.LogError(err)
+		}*/
+	}
+
+	err = c.Meta.Set("lastDaily", strconv.FormatInt(time.Now().Unix(), 10))
+	if err != nil {
+		c.LogError(err)
 	}
 }

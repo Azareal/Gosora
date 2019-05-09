@@ -215,8 +215,8 @@ function runWebSockets(resume = false) {
 	// TODO: Sync alerts, topic list, etc.
 	conn.onopen = () => {
 		console.log("The WebSockets connection was opened");
-		conn.send("page " + document.location.pathname + '\r');
-		if(resume) conn.send("resume " + Math.round((new Date()).getTime() / 1000) + '\r');
+		if(resume) conn.send("resume " + document.location.pathname + " " + Math.round((new Date()).getTime() / 1000) + '\r');
+		else conn.send("page " + document.location.pathname + '\r');
 		// TODO: Don't ask again, if it's denied. We could have a setting in the UCP which automatically requests this when someone flips desktop notifications on
 		if(me.User.ID > 0) Notification.requestPermission();
 	}

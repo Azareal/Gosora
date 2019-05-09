@@ -41,6 +41,7 @@ func init() {
 type WsTopicList struct {
 	Topics   []*WsTopicsRow
 	LastPage int // Not for WebSockets, but for the JSON endpoint for /topics/ to keep the paginator functional
+	LastUpdate int64
 }
 
 // TODO: How should we handle errors for this?
@@ -78,8 +79,7 @@ func RouteWebsockets(w http.ResponseWriter, r *http.Request, user User) RouteErr
 			panic("conn must not be nil")
 		}
 
-		messages := bytes.Split(message, []byte("\r"))
-		for _, msg := range messages {
+		for _, msg := range bytes.Split(message, []byte("\r")) {
 			//StoppedServer("Profile end") // A bit of code for me to profile the software
 			if bytes.HasPrefix(msg, []byte("page ")) {
 				msgblocks := bytes.SplitN(msg, []byte(" "), 2)
@@ -93,11 +93,22 @@ func RouteWebsockets(w http.ResponseWriter, r *http.Request, user User) RouteErr
 					wsPageResponses(wsUser, conn, currentPage)
 				}
 			} else if bytes.HasPrefix(msg, []byte("resume ")) {
-				msgblocks := bytes.SplitN(msg, []byte(" "), 2)
-				if len(msgblocks) < 2 {
+				msgblocks := bytes.SplitN(msg, []byte(" "), 3)
+				if len(msgblocks) < 3 {
 					continue
 				}
-				//log.Print("resuming on " + string(msgblocks[1]))
+				//log.Print("resuming on " + string(msgblocks[1]) + " at " + string(msgblocks[2]))
+
+				if !bytes.Equal(msgblocks[1], []byte(currentPage)) {
+					wsLeavePage(wsUser, conn, currentPage) // Avoid clients abusing late resumes
+					currentPage = string(msgblocks[1])
+					// TODO: Synchronise this better?
+					resume, err := strconv.ParseInt(string(msgblocks[2]), 10, 64)
+					wsPageResponses(wsUser, conn, currentPage)
+					if err != nil {
+						wsPageResume(wsUser, conn, currentPage, resume)
+					}
+				}
 			}
 			/*if bytes.Equal(message,[]byte(`start-view`)) {
 			} else if bytes.Equal(message,[]byte(`end-view`)) {
@@ -194,6 +205,26 @@ func wsPageResponses(wsUser *WSUser, conn *websocket.Conn, page string) {
 	err := wsUser.SetPageForSocket(conn, page)
 	if err != nil {
 		LogError(err)
+	}
+}
+
+// TODO: Use a map instead of a switch to make this more modular?
+// TODO: Implement this
+func wsPageResume(wsUser *WSUser, conn *websocket.Conn, page string, resume int64) {
+	if page == "/" {
+		page = Config.DefaultPath
+	}
+	
+	switch {
+	// TODO: Synchronise this bit of resume with tick updating lastTopicList?
+	case page == "/topics/":
+		/*if resume >= hub.lastTick.Unix() {
+			conn.Write([]byte("resume tooslow"))
+		} else {
+		conn.Write([]byte("resume success"))
+		}*/
+	default:
+		return
 	}
 }
 

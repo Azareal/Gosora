@@ -222,6 +222,10 @@ func afterDBInit() (err error) {
 	if err != nil {
 		return errors.WithStack(err)
 	}
+	c.Meta, err = c.NewDefaultMetaStore(acc)
+	if err != nil {
+		return errors.WithStack(err)
+	}
 
 	return nil
 }

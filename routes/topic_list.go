@@ -16,7 +16,7 @@ func wsTopicList(topicList []*c.TopicsRow, lastPage int) *c.WsTopicList {
 	for i, topicRow := range topicList {
 		wsTopicList[i] = topicRow.WebSockets()
 	}
-	return &c.WsTopicList{wsTopicList, lastPage}
+	return &c.WsTopicList{wsTopicList, lastPage, 0}
 }
 
 func TopicList(w http.ResponseWriter, r *http.Request, user c.User, header *c.Header) c.RouteError {

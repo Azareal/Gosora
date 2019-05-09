@@ -157,6 +157,40 @@ func analyticsRowsToAverageMap(rows *sql.Rows, labelList []int64, avgMap map[int
 	return avgMap, rows.Err()
 }
 
+func analyticsRowsToAverageMap2(rows *sql.Rows, labelList []int64, avgMap map[int64]int64) (map[int64]int64, error) {
+	defer rows.Close()
+	for rows.Next() {
+		var stack, heap int64
+		var createdAt time.Time
+		err := rows.Scan(&stack, &heap, &createdAt)
+		if err != nil {
+			return avgMap, err
+		}
+		var unixCreatedAt = createdAt.Unix()
+		// TODO: Bulk log this
+		if c.Dev.SuperDebug {
+			log.Print("stack: ", stack)
+			log.Print("heap: ", heap)
+			log.Print("createdAt: ", createdAt)
+			log.Print("unixCreatedAt: ", unixCreatedAt)
+		}
+		var pAvgMap = make(map[int64]pAvg)
+		for _, value := range labelList {
+			if unixCreatedAt > value {
+				prev := pAvgMap[value]
+				prev.Avg += stack + heap
+				prev.Tot++
+				pAvgMap[value] = prev
+				break
+			}
+		}
+		for key, pAvg := range pAvgMap {
+			avgMap[key] = pAvg.Avg / pAvg.Tot
+		}
+	}
+	return avgMap, rows.Err()
+}
+
 func PreAnalyticsDetail(w http.ResponseWriter, r *http.Request, user *c.User) (*c.BasePanelPage, c.RouteError) {
 	basePage, ferr := buildBasePage(w, r, user, "analytics", "analytics")
 	if ferr != nil {
@@ -535,6 +569,42 @@ func AnalyticsMemory(w http.ResponseWriter, r *http.Request, user c.User) c.Rout
 	c.DebugLogf("graph: %+v\n", graph)
 	pi := c.PanelAnalyticsStdUnit{graph, avgItems, timeRange.Range, timeRange.Unit, "time"}
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_analytics_right","analytics","panel_analytics_memory", pi})
+}
+
+// TODO: Show stack and heap memory separately on the chart
+func AnalyticsActiveMemory(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
+	basePage, ferr := PreAnalyticsDetail(w, r, &user)
+	if ferr != nil {
+		return ferr
+	}
+	timeRange, err := analyticsTimeRange(r.FormValue("timeRange"))
+	if err != nil {
+		return c.LocalError(err.Error(), w, r, user)
+	}
+	revLabelList, labelList, avgMap := analyticsTimeRangeToLabelList(timeRange)
+
+	c.DebugLog("in panel.AnalyticsActiveMemory")
+	rows, err := qgen.NewAcc().Select("memchunks").Columns("stack, heap, createdAt").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
+	if err != nil && err != sql.ErrNoRows {
+		return c.InternalError(err, w, r)
+	}
+	avgMap, err = analyticsRowsToAverageMap2(rows, labelList, avgMap)
+	if err != nil {
+		return c.InternalError(err, w, r)
+	}
+
+	// TODO: Adjust for the missing chunks in week and month
+	var avgList []int64
+	var avgItems []c.PanelAnalyticsItemUnit
+	for _, value := range revLabelList {
+		avgList = append(avgList, avgMap[value])
+		cv, cu := c.ConvertByteUnit(float64(avgMap[value]))
+		avgItems = append(avgItems, c.PanelAnalyticsItemUnit{Time: value, Unit: cu, Count: int64(cv)})
+	}
+	graph := c.PanelTimeGraph{Series: [][]int64{avgList}, Labels: labelList}
+	c.DebugLogf("graph: %+v\n", graph)
+	pi := c.PanelAnalyticsStdUnit{graph, avgItems, timeRange.Range, timeRange.Unit, "time"}
+	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_analytics_right","analytics","panel_analytics_active_memory", pi})
 }
 
 func analyticsRowsToNameMap(rows *sql.Rows) (map[string]int, error) {

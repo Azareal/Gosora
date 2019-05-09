@@ -377,6 +377,7 @@ func createTables(adapter qgen.Adapter) error {
 			tblColumn{"event", "varchar", 50, false, false, ""},       /* mention, like, reply (as in the act of replying to an item, not the reply item type, you can "reply" to a forum by making a topic in it), friend_invite */
 			tblColumn{"elementType", "varchar", 50, false, false, ""}, /* topic, post (calling it post here to differentiate it from the 'reply' event), forum, user */
 			tblColumn{"elementID", "int", 0, false, false, ""},        /* the ID of the element being acted upon */
+			tblColumn{"createdAt", "createdAt", 0, false, false, ""},
 		},
 		[]tblKey{
 			tblKey{"asid", "primary","",false},
@@ -620,6 +621,8 @@ func createTables(adapter qgen.Adapter) error {
 	qgen.Install.CreateTable("memchunks", "", "",
 		[]tblColumn{
 			tblColumn{"count", "int", 0, false, false, "0"},
+			tblColumn{"stack", "int", 0, false, false, "0"},
+			tblColumn{"heap", "int", 0, false, false, "0"},
 			tblColumn{"createdAt", "datetime", 0, false, false, ""},
 		}, nil,
 	)
@@ -633,6 +636,13 @@ func createTables(adapter qgen.Adapter) error {
 	qgen.Install.CreateTable("updates", "", "",
 		[]tblColumn{
 			tblColumn{"dbVersion", "int", 0, false, false, "0"},
+		}, nil,
+	)
+
+	qgen.Install.CreateTable("meta", "", "",
+		[]tblColumn{
+			tblColumn{"name", "varchar", 200, false, false, ""},
+			tblColumn{"value", "varchar", 200, false, false, ""},
 		}, nil,
 	)
 

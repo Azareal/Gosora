@@ -213,6 +213,7 @@ func panelRoutes() *RouteGroup {
 		View("panel.AnalyticsReferrerViews", "/panel/analytics/referrer/", "extraData"),
 		View("panel.AnalyticsPosts", "/panel/analytics/posts/").Before("ParseForm"),
 		View("panel.AnalyticsMemory", "/panel/analytics/memory/").Before("ParseForm"),
+		View("panel.AnalyticsActiveMemory", "/panel/analytics/active-memory/").Before("ParseForm"),
 		View("panel.AnalyticsTopics", "/panel/analytics/topics/").Before("ParseForm"),
 		View("panel.AnalyticsForums", "/panel/analytics/forums/").Before("ParseForm"),
 

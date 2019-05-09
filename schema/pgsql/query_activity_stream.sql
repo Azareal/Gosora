@@ -5,5 +5,6 @@ CREATE TABLE "activity_stream" (
 	`event` varchar (50) not null,
 	`elementType` varchar (50) not null,
 	`elementID` int not null,
+	`createdAt` timestamp not null,
 	primary key(`asid`)
 );

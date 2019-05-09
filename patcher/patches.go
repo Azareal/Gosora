@@ -33,6 +33,7 @@ func init() {
 	addPatch(18, patch18)
 	addPatch(19, patch19)
 	addPatch(20, patch20)
+	addPatch(21, patch21)
 }
 
 func patch0(scanner *bufio.Scanner) (err error) {
@@ -626,4 +627,28 @@ func patch20(scanner *bufio.Scanner) error {
 	}
 	
 	return execStmt(qgen.Builder.AddForeignKey("activity_stream_matches", "asid","activity_stream","asid",true))
+}
+
+func patch21(scanner *bufio.Scanner) error {
+	err := execStmt(qgen.Builder.AddColumn("memchunks", tblColumn{"stack", "int", 0, false, false, "0"}, nil))
+	if err != nil {
+		return err
+	}
+	
+	err = execStmt(qgen.Builder.AddColumn("memchunks", tblColumn{"heap", "int", 0, false, false, "0"}, nil))
+	if err != nil {
+		return err
+	}
+	
+	err = execStmt(qgen.Builder.CreateTable("meta", "", "",
+		[]tblColumn{
+			tblColumn{"name", "varchar", 200, false, false, ""},
+			tblColumn{"value", "varchar", 200, false, false, ""},
+		}, nil,
+	))
+	if err != nil {
+		return err
+	}
+
+	return execStmt(qgen.Builder.AddColumn("activity_stream", tblColumn{"createdAt", "createdAt", 0, false, false, ""}, nil))
 }

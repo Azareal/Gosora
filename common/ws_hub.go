@@ -77,16 +77,17 @@ func wsTopicListTick(hub *WsHubImpl) error {
 	if !TopicListThaw.Thawed() && hub.lastTopicList != nil {
 		return nil
 	}
+	tickStart := time.Now()
 	
 	// Don't waste CPU time if nothing has happened
 	// TODO: Get a topic list method which strips stickies?
 	tList, _, _, err := TopicList.GetList(1, "", nil)
 	if err != nil {
-		hub.lastTick = time.Now()
+		hub.lastTick = tickStart
 		return err // TODO: Do we get ErrNoRows here?
 	}
 	defer func() {
-		hub.lastTick = time.Now()
+		hub.lastTick = tickStart
 		hub.lastTopicList = tList
 	}()
 	if len(tList) == 0 {
@@ -177,7 +178,7 @@ func wsTopicListTick(hub *WsHubImpl) error {
 			wsTopicList[i] = topicRow.WebSockets()
 		}
 
-		outBytes, err := json.Marshal(&WsTopicList{wsTopicList, 0})
+		outBytes, err := json.Marshal(&WsTopicList{wsTopicList, 0, tickStart.Unix()})
 		if err != nil {
 			return err
 		}

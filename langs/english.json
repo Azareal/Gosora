@@ -741,6 +741,7 @@
 		"panel_menu_statistics_languages":"Languages",
 		"panel_menu_statistics_referrers":"Referrers",
 		"panel_menu_statistics_memory":"Memory",
+		"panel_menu_statistics_active_memory":"Active Memory",
 		"panel_menu_reports":"Reports",
 		"panel_menu_logs":"Logs",
 		"panel_menu_logs_registrations":"Registrations",
@@ -884,6 +885,7 @@
 		"panel_statistics_topic_counts_head":"Topic Counts",
 		"panel_statistics_requests_head":"Requests",
 		"panel_statistics_memory_head":"Memory Usage",
+		"panel_statistics_active_memory_head":"Active Memory",
 
 		"panel_statistics_time_range_one_year":"1 year",
 		"panel_statistics_time_range_three_months":"3 months",

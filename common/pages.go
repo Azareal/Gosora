@@ -334,6 +334,7 @@ type PanelPage struct {
 
 type GridElement struct {
 	ID         string
+	Href string
 	Body       string
 	Order      int // For future use
 	Class      string

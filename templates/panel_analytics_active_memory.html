@@ -1,10 +1,10 @@
 <div class="colstack_item colstack_head">
 	<div class="rowitem">
-		<h1>{{lang "panel_statistics_memory_head"}}</h1>
+		<h1>{{lang "panel_statistics_active_memory_head"}}</h1>
 		{{template "panel_analytics_time_range_month.html" . }}
 	</div>
 </div>
-<form id="timeRangeForm" name="timeRangeForm" action="/panel/analytics/memory/" method="get"></form>
+<form id="timeRangeForm" name="timeRangeForm" action="/panel/analytics/active-memory/" method="get"></form>
 <div id="panel_analytics_memory" class="colstack_graph_holder">
 	<div class="ct_chart" aria-label="{{lang "panel_statistics_memory_chart_aria"}}"></div>
 </div>
