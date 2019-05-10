@@ -988,6 +988,17 @@ func TestPhrases(t *testing.T) {
 	// TODO: Cover the other phrase types, also try switching between languages to see if anything strange happens
 }
 
+func TestMetaStore(t *testing.T) {
+	m, err := c.Meta.Get("magic")
+	expect(t, m == "", "meta var should be empty")
+	recordMustNotExist(t, err, "meta var shouldn't exist")
+	err = c.Meta.Set("magic","lol")
+	expectNilErr(t,err)
+	m, err = c.Meta.Get("magic")
+	expectNilErr(t,err)
+	expect(t,m=="lol","meta var should be lol")
+}
+
 func TestWordFilters(t *testing.T) {
 	// TODO: Test the word filters and their store
 	expect(t, c.WordFilters.Length() == 0, "Word filter list should be empty")
