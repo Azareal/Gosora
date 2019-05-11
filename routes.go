@@ -10,12 +10,13 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
-	"io"
 	"errors"
+	"io"
 	"log"
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 	"unicode"
 
 	c "github.com/Azareal/Gosora/common"
@@ -74,9 +75,9 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError 
 			var etag string
 			_, ok := w.(c.GzipResponseWriter)
 			if ok {
-				etag = "\""+strconv.FormatInt(c.StartTime.Unix(), 10)+"-ng\""
+				etag = "\"" + strconv.FormatInt(c.StartTime.Unix(), 10) + "-ng\""
 			} else {
-				etag = "\""+strconv.FormatInt(c.StartTime.Unix(), 10)+"-n\""
+				etag = "\"" + strconv.FormatInt(c.StartTime.Unix(), 10) + "-n\""
 			}
 			w.Header().Set("ETag", etag)
 			if match := r.Header.Get("If-None-Match"); match != "" {
@@ -97,26 +98,43 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError 
 			return c.InternalErrorJS(err, w, r)
 		}
 
-		rows, err := stmts.getActivityFeedByWatcher.Query(user.ID)
-		if err != nil {
-			return c.InternalErrorJS(err, w, r)
-		}
-		defer rows.Close()
-
+		rCreatedAt, _ := strconv.ParseInt(r.FormValue("t"), 10, 64)
+		rCount, _ := strconv.Atoi(r.FormValue("c"))
+		//log.Print("rCreatedAt:", rCreatedAt)
+		//log.Print("rCount:", rCount)
 		var actors []int
 		var alerts []c.Alert
-		for rows.Next() {
-			var alert c.Alert
-			err = rows.Scan(&alert.ASID, &alert.ActorID, &alert.TargetUserID, &alert.Event, &alert.ElementType, &alert.ElementID)
+		var createdAt time.Time
+		var topCreatedAt int64
+
+		if count != 0 {
+			rows, err := stmts.getActivityFeedByWatcher.Query(user.ID)
 			if err != nil {
 				return c.InternalErrorJS(err, w, r)
 			}
-			alerts = append(alerts, alert)
-			actors = append(actors, alert.ActorID)
-		}
-		err = rows.Err()
-		if err != nil {
-			return c.InternalErrorJS(err, w, r)
+			defer rows.Close()
+
+			for rows.Next() {
+				var alert c.Alert
+				err = rows.Scan(&alert.ASID, &alert.ActorID, &alert.TargetUserID, &alert.Event, &alert.ElementType, &alert.ElementID, &createdAt)
+				if err != nil {
+					return c.InternalErrorJS(err, w, r)
+				}
+
+				uCreatedAt := createdAt.Unix()
+				//log.Print("uCreatedAt", uCreatedAt)
+				//if rCreatedAt == 0 || rCreatedAt < uCreatedAt {
+				alerts = append(alerts, alert)
+				actors = append(actors, alert.ActorID)
+				//}
+				if uCreatedAt > topCreatedAt {
+					topCreatedAt = uCreatedAt
+				}
+			}
+			err = rows.Err()
+			if err != nil {
+				return c.InternalErrorJS(err, w, r)
+			}
 		}
 
 		// Might not want to error here, if the account was deleted properly, we might want to figure out how we should handle deletions in general
@@ -134,23 +152,21 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError 
 			if !ok {
 				return c.InternalErrorJS(errors.New("No such actor"), w, r)
 			}
-
 			res, err := c.BuildAlert(alert, user)
 			if err != nil {
 				return c.LocalErrorJS(err.Error(), w, r)
 			}
-
 			//sb.Write(res)
 			msglist += res + ","
 		}
-
 		if len(msglist) != 0 {
 			msglist = msglist[0 : len(msglist)-1]
 		}
-		if count == 0 {
+
+		if count == 0 || msglist == "" || (rCreatedAt != 0 && rCreatedAt >= topCreatedAt && count == rCount) {
 			_, _ = io.WriteString(w, `{}`)
 		} else {
-			_, _ = io.WriteString(w, `{"msgs":[` + msglist + `],"count":` + strconv.Itoa(count) + `}`)
+			_, _ = io.WriteString(w, `{"msgs":[`+msglist+`],"count":`+strconv.Itoa(count)+`,"tc":`+strconv.Itoa(int(topCreatedAt))+`}`)
 		}
 	default:
 		return c.PreErrorJS("Invalid Module", w, r)
@@ -218,18 +234,18 @@ func routeAPIPhrases(w http.ResponseWriter, r *http.Request, user c.User) c.Rout
 	var etag string
 	_, ok := w.(c.GzipResponseWriter)
 	if ok {
-		etag = "\""+strconv.FormatInt(c.StartTime.Unix(), 10)+"-g\""
+		etag = "\"" + strconv.FormatInt(c.StartTime.Unix(), 10) + "-g\""
 	} else {
-		etag = "\""+strconv.FormatInt(c.StartTime.Unix(), 10)+"\""
+		etag = "\"" + strconv.FormatInt(c.StartTime.Unix(), 10) + "\""
 	}
-	
+
 	var plist map[string]string
 	var posLoop = func(positive string) c.RouteError {
 		// ! Constrain it to a subset of phrases for now
 		for _, item := range phraseWhitelist {
 			if strings.HasPrefix(positive, item) {
 				// TODO: Break this down into smaller security boundaries based on control panel sections?
-				if strings.HasPrefix(positive,"panel") {
+				if strings.HasPrefix(positive, "panel") {
 					w.Header().Set("Cache-Control", "private")
 					ok = user.IsSuperMod
 				} else {
@@ -306,7 +322,7 @@ func routeJSAntispam(w http.ResponseWriter, r *http.Request, user c.User) c.Rout
 	jsToken := hex.EncodeToString(h.Sum(nil))
 
 	var innerCode = "`document.getElementByld('golden-watch').value = '" + jsToken + "';`"
-	io.WriteString(w, `let hihi = ` + innerCode + `;
+	io.WriteString(w, `let hihi = `+innerCode+`;
 hihi = hihi.replace('ld','Id');
 eval(hihi);`)
 

@@ -49,7 +49,7 @@ function bindToAlerts() {
 			type: "POST",
 			dataType: "json",
 			data: { id: $(this).attr("data-asid") },
-			error: ajaxError,
+			//error: ajaxError,
 			success: () => {
 				window.location.href = this.getAttribute("href");
 			}
@@ -134,12 +134,15 @@ function setAlertError(menuAlerts,msg) {
 }
 
 var alertsInitted = false;
-function loadAlerts(menuAlerts) {
+var lastTc = 0;
+function loadAlerts(menuAlerts, eTc = false) {
 	if(!alertsInitted) return;
+	let tc = "";
+	if(eTc && lastTc != 0) tc = "&t=" + lastTc + "&c=" + alertCount;
 	$.ajax({
 		type: 'get',
 		dataType: 'json',
-		url:'/api/?module=alerts',
+		url:'/api/?module=alerts' + tc,
 		success: (data) => {
 			if("errmsg" in data) {
 				setAlertError(menuAlerts,data.errmsg)
@@ -147,11 +150,17 @@ function loadAlerts(menuAlerts) {
 			}
 			alertList = [];
 			alertMapping = {};
-			if(!data.hasOwnProperty("msgs")) data = {"msgs":[],"count":0};
-			for(var i in data.msgs) addAlert(data.msgs[i]);
-			console.log("data.count:",data.count)
-			alertCount = data.count;
-			updateAlertList(menuAlerts)
+			if(!data.hasOwnProperty("msgs")) data = {"msgs":[],"count":alertCount,"tc":lastTc};
+			/*else if(data.count != (alertCount + data.msgs.length)) tc = false;
+			if(eTc && lastTc != 0) {
+				for(var i in data.msgs) wsAlertEvent(data.msgs[i]);
+			} else {*/
+				for(var i in data.msgs) addAlert(data.msgs[i]);
+				console.log("data.count:",data.count);
+				alertCount = data.count;
+				updateAlertList(menuAlerts);
+			//}
+			lastTc = data.tc;
 		},
 		error: (magic,theStatus,error) => {
 			let errtxt = "Unable to get the alerts";
@@ -196,11 +205,10 @@ function wsAlertEvent(data) {
 	alertList = [alertList[alertList.length-1]];
 	aTmp = aTmp.slice(0,-1);
 	for(let i = 0; i < aTmp.length; i++) alertList.push(aTmp[i]);
-	//var alist = "";
-	//for (var i = 0; i < alertList.length; i++) alist += alertMapping[alertList[i]];
 	// TODO: Add support for other alert feeds like PM Alerts
 	var generalAlerts = document.getElementById("general_alerts");
 	// TODO: Make sure we update alertCount here
+	lastTc = 0;
 	updateAlertList(generalAlerts/*, alist*/);
 }
 
@@ -259,28 +267,27 @@ function runWebSockets(resume = false) {
 			else if("event" in data) {
 				if(data.event == "dismiss-alert"){
 					Object.keys(alertMapping).forEach((key) => {
-						if(key==data.id) {
-							alertCount--;
-							let index = -1;
-							for(var i = 0; i < alertList.length; i++) {
-								if(alertList[i]==key) {
-									alertList[i] = 0;
-									index = i;
-								}
+						if(key!=data.id) return;
+						alertCount--;
+						let index = -1;
+						for(var i = 0; i < alertList.length; i++) {
+							if(alertList[i]==key) {
+								alertList[i] = 0;
+								index = i;
 							}
-							if(index==-1) return;
-
-							for(var i = index; (i+1) < alertList.length; i++) {
-								alertList[i] = alertList[i+1];
-							}
-							alertList.splice(alertList.length-1,1);
-							delete alertMapping[key];
-
-							// TODO: Add support for other alert feeds like PM Alerts
-							var generalAlerts = document.getElementById("general_alerts");
-							if(alertList.length < 8) loadAlerts(generalAlerts);
-							else updateAlertList(generalAlerts);
 						}
+						if(index==-1) return;
+
+						for(var i = index; (i+1) < alertList.length; i++) {
+							alertList[i] = alertList[i+1];
+						}
+						alertList.splice(alertList.length-1,1);
+						delete alertMapping[key];
+
+						// TODO: Add support for other alert feeds like PM Alerts
+						var generalAlerts = document.getElementById("general_alerts");
+						if(alertList.length < 8) loadAlerts(generalAlerts);
+						else updateAlertList(generalAlerts);
 					});
 				}
 			} else if("Topics" in data) {
@@ -366,18 +373,15 @@ function runWebSockets(resume = false) {
 function PageOffset(count, page, perPage) {
 	let offset = 0;
 	let lastPage = LastPage(count, perPage)
-	if(page > 1) {
-		offset = (perPage * page) - perPage
-	} else if (page == -1) {
-		page = lastPage
-		offset = (perPage * page) - perPage
-	} else {
-		page = 1
-	}
+	if(page > 1) offset = (perPage * page) - perPage;
+	else if (page == -1) {
+		page = lastPage;
+		offset = (perPage * page) - perPage;
+	} else page = 1;
 
 	// We don't want the offset to overflow the slices, if everything's in memory
 	//if(offset >= (count - 1)) offset = 0;
-	return {Offset:offset, Page:page, LastPage:lastPage}
+	return {Offset:offset, Page:page, LastPage:lastPage};
 }
 function LastPage(count, perPage) {
 	return (count / perPage) + 1

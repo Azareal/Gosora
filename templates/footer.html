@@ -11,7 +11,7 @@
 		</div>
 		{{if .CurrentUser.IsAdmin}}<div class="elapsed">{{.Header.Elapsed1}} | {{elapsed .Header.StartedAt}}</div>{{end}}
 		<form action="/theme/" method="post">
-			<div id="themeSelector" style="float: right;">
+			<div id="themeSelector">
 				<select id="themeSelectorSelect" name="themeSelector" aria-label="{{lang "footer_theme_selector_aria"}}">
 				{{range .Header.Themes}}
     				{{if not .HideFromThemes}}<option val="{{.Name}}"{{if eq $.Header.Theme.Name .Name}} selected{{end}}>{{.FriendlyName}}</option>{{end}}

@@ -11,6 +11,7 @@ import (
 	"errors"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/Azareal/Gosora/common/phrases"
 	"github.com/Azareal/Gosora/query_gen"
@@ -23,6 +24,7 @@ type Alert struct {
 	Event        string
 	ElementType  string
 	ElementID    int
+	CreatedAt time.Time
 
 	Actor *User
 }
@@ -42,14 +44,14 @@ var alertStmts AlertStmts
 func init() {
 	DbInits.Add(func(acc *qgen.Accumulator) error {
 		alertStmts = AlertStmts{
-			addActivity: acc.Insert("activity_stream").Columns("actor, targetUser, event, elementType, elementID").Fields("?,?,?,?,?").Prepare(),
+			addActivity: acc.Insert("activity_stream").Columns("actor, targetUser, event, elementType, elementID, createdAt").Fields("?,?,?,?,?,UTC_TIMESTAMP()").Prepare(),
 			notifyWatchers: acc.SimpleInsertInnerJoin(
 				qgen.DBInsert{"activity_stream_matches", "watcher, asid", ""},
 				qgen.DBJoin{"activity_stream", "activity_subscriptions", "activity_subscriptions.user, activity_stream.asid", "activity_subscriptions.targetType = activity_stream.elementType AND activity_subscriptions.targetID = activity_stream.elementID AND activity_subscriptions.user != activity_stream.actor", "asid = ?", "", ""},
 			),
 			notifyOne:        acc.Insert("activity_stream_matches").Columns("watcher, asid").Fields("?,?").Prepare(),
 			getWatchers:      acc.SimpleInnerJoin("activity_stream", "activity_subscriptions", "activity_subscriptions.user", "activity_subscriptions.targetType = activity_stream.elementType AND activity_subscriptions.targetID = activity_stream.elementID AND activity_subscriptions.user != activity_stream.actor", "asid = ?", "", ""),
-			getActivityEntry: acc.Select("activity_stream").Columns("actor, targetUser, event, elementType, elementID").Where("asid = ?").Prepare(),
+			getActivityEntry: acc.Select("activity_stream").Columns("actor, targetUser, event, elementType, elementID, createdAt").Where("asid = ?").Prepare(),
 		}
 		return acc.FirstError()
 	})
@@ -237,7 +239,7 @@ func notifyWatchers(asid int64) {
 	}
 
 	var alert = Alert{ASID: int(asid)}
-	err = alertStmts.getActivityEntry.QueryRow(asid).Scan(&alert.ActorID, &alert.TargetUserID, &alert.Event, &alert.ElementType, &alert.ElementID)
+	err = alertStmts.getActivityEntry.QueryRow(asid).Scan(&alert.ActorID, &alert.TargetUserID, &alert.Event, &alert.ElementType, &alert.ElementID, &alert.CreatedAt)
 	if err != nil && err != ErrNoRows {
 		LogError(err)
 		return

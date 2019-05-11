@@ -1031,7 +1031,7 @@ func LikeTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User, stid s
 	}
 
 	// ! Be careful about leaking per-route permission state with &user
-	alert := c.Alert{0, user.ID, topic.CreatedBy, "like", "topic", tid, &user}
+	alert := c.Alert{ActorID: user.ID, TargetUserID: topic.CreatedBy, Event: "like", ElementType: "topic", ElementID: tid, Actor: &user}
 	err = c.AddActivityAndNotifyTarget(alert)
 	if err != nil {
 		return c.InternalErrorJSQ(err, w, r, isJs)

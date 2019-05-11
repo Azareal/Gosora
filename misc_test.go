@@ -990,13 +990,26 @@ func TestPhrases(t *testing.T) {
 
 func TestMetaStore(t *testing.T) {
 	m, err := c.Meta.Get("magic")
-	expect(t, m == "", "meta var should be empty")
-	recordMustNotExist(t, err, "meta var shouldn't exist")
+	expect(t, m == "", "meta var magic should be empty")
+	recordMustNotExist(t, err, "meta var magic should not exist")
+
 	err = c.Meta.Set("magic","lol")
 	expectNilErr(t,err)
+
 	m, err = c.Meta.Get("magic")
 	expectNilErr(t,err)
-	expect(t,m=="lol","meta var should be lol")
+	expect(t,m=="lol","meta var magic should be lol")
+
+	err = c.Meta.Set("magic","wha")
+	expectNilErr(t,err)
+
+	m, err = c.Meta.Get("magic")
+	expectNilErr(t,err)
+	expect(t,m=="wha","meta var magic should be wha")
+
+	m, err = c.Meta.Get("giggle")
+	expect(t, m == "", "meta var giggle should be empty")
+	recordMustNotExist(t, err, "meta var giggle should not exist")
 }
 
 func TestWordFilters(t *testing.T) {

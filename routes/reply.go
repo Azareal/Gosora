@@ -487,7 +487,7 @@ func ProfileReplyCreateSubmit(w http.ResponseWriter, r *http.Request, user c.Use
 	}
 
 	// ! Be careful about leaking per-route permission state with &user
-	alert := c.Alert{0, user.ID, profileOwner.ID, "reply", "user", profileOwner.ID, &user}
+	alert := c.Alert{ActorID: user.ID, TargetUserID: profileOwner.ID, Event: "reply", ElementType: "user", ElementID: profileOwner.ID, Actor: &user}
 	err = c.AddActivityAndNotifyTarget(alert)
 	if err != nil {
 		return c.InternalError(err, w, r)
@@ -623,7 +623,7 @@ func ReplyLikeSubmit(w http.ResponseWriter, r *http.Request, user c.User, srid s
 	}
 
 	// ! Be careful about leaking per-route permission state with &user
-	alert := c.Alert{0, user.ID, reply.CreatedBy, "like", "post", rid, &user}
+	alert := c.Alert{ActorID: user.ID, TargetUserID: reply.CreatedBy, Event: "like", ElementType: "post", ElementID: rid, Actor: &user}
 	err = c.AddActivityAndNotifyTarget(alert)
 	if err != nil {
 		return c.InternalErrorJSQ(err, w, r, isJs)

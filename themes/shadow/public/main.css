@@ -357,6 +357,9 @@ red {
 	color: var(--dim-text-color);
 	float: right;
 }
+.level_label:before {
+	content: "{{lang "topic.level_tooltip" . }}";
+}
 .level {
 	margin-left: 3px;
 }
@@ -631,6 +634,9 @@ input, select, textarea {
 }
 #poweredBy span {
 	font-size: 12px;
+}
+#themeSelector {
+	float: right;
 }
 
 .poll_item {

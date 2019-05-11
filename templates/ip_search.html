@@ -15,7 +15,7 @@
 	{{if .IP}}
 	<div class="rowblock rowlist bgavatars micro_grid">
 		{{range .ItemList}}<div class="rowitem" style="background-image: url('{{.Avatar}}');">
-			<img src="{{.Avatar}}" class="bgsub" alt="{{.Name}}'s Avatar" />
+			<img src="{{.Avatar}}" class="bgsub" alt="Avatar" aria-hidden="true" />
 			<a class="rowTitle" href="{{.Link}}">{{.Name}}</a>
 		</div>
 		{{else}}<div class="rowitem rowmsg">{{lang "ip_search_no_users"}}</div>{{end}}

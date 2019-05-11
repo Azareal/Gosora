@@ -959,6 +959,9 @@ input[type=checkbox]:checked + label.poll_option_label .sel {
 	color: black;
 	text-decoration: none;
 }
+#themeSelector {
+	float: right;
+}
 
 .sidebar .rowhead:not(:first-child) {
 	margin-top: 12px;
