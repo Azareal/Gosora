@@ -31,7 +31,7 @@
 		<div class="controls button_container{{if .LikeCount}} has_likes{{end}}">
 			<div class="action_button_left">
 			{{if $.CurrentUser.Loggedin}}
-				{{if $.CurrentUser.Perms.LikeItem}}<a href="/reply/like/submit/{{.ID}}?session={{$.CurrentUser.Session}}" class="action_button like_item {{if .Liked}}remove_like{{else}}add_like{{end}}" aria-label="{{lang "topic.post_like_aria"}}" data-action="like"></a>{{end}}
+				{{if $.CurrentUser.Perms.LikeItem}}<a href="/reply/like/submit/{{.ID}}?session={{$.CurrentUser.Session}}" class="action_button like_item {{if .Liked}}remove{{else}}add{{end}}_like" aria-label="{{lang "topic.post_like_aria"}}" data-action="like"></a>{{end}}
 				<a href="" class="action_button quote_item" aria-label="{{lang "topic.quote_aria"}}" data-action="quote"></a>
 				{{if not $.Topic.IsClosed or $.CurrentUser.Perms.CloseTopic}}
 				{{if $.CurrentUser.Perms.EditReply}}<a href="/reply/edit/submit/{{.ID}}?session={{$.CurrentUser.Session}}" class="action_button edit_item" aria-label="{{lang "topic.post_edit_aria"}}" data-action="edit"></a>{{end}}
