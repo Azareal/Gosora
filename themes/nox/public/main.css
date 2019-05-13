@@ -1399,9 +1399,9 @@ input[type=checkbox]:checked + label .sel {
 	}
 }
 
-@media(max-width: 850px) {
-	/**/
-}
+{{/**@media(max-width: 850px) {
+	//
+}**/}}
 
 @media(min-width: 1010px) {
 	#container {
@@ -1412,11 +1412,10 @@ input[type=checkbox]:checked + label .sel {
 		margin-left: auto;
 		margin-right: auto;
 	}
-	.footBlock {
+	.footBlock, .footer {
 		display: flex;
 	}
 	.footer {
-		display: flex;
 		flex-direction: column;
 	}
 

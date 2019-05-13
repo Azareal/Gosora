@@ -74,7 +74,7 @@ type CTemplateSet struct {
 
 	logger  *log.Logger
 	loggerf *os.File
-	lang string
+	lang    string
 }
 
 func NewCTemplateSet(in string) *CTemplateSet {
@@ -108,6 +108,7 @@ func NewCTemplateSet(in string) *CTemplateSet {
 			"lang":       true,
 			//"langf":true,
 			"level":   true,
+			"bunit":   true,
 			"abstime": true,
 			"reltime": true,
 			"scope":   true,
@@ -117,7 +118,7 @@ func NewCTemplateSet(in string) *CTemplateSet {
 		},
 		logger:  log.New(f, "", log.LstdFlags),
 		loggerf: f,
-		lang:in,
+		lang:    in,
 	}
 }
 
@@ -443,13 +444,13 @@ func (c *CTemplateSet) compile(name string, content string, expects string, expe
 	}
 
 	if c.lang == "normal" {
-	fout += "// nolint\nfunc Template_" + fname + "(tmpl_" + fname + "_i interface{}, w io.Writer) error {\n"
-	fout += `tmpl_` + fname + `_vars, ok := tmpl_` + fname + `_i.(` + expects + `)
+		fout += "// nolint\nfunc Template_" + fname + "(tmpl_" + fname + "_i interface{}, w io.Writer) error {\n"
+		fout += `tmpl_` + fname + `_vars, ok := tmpl_` + fname + `_i.(` + expects + `)
 	if !ok {
 		return errors.New("invalid page struct value")
 	}
 `
-	fout += `var iw http.ResponseWriter
+		fout += `var iw http.ResponseWriter
 	gzw, ok := w.(common.GzipResponseWriter)
 	if ok {
 		iw = gzw.ResponseWriter
@@ -1116,6 +1117,17 @@ ArgLoop:
 			litString("phrases.GetLevelPhrase("+leftParam+")", false)
 			c.importMap[langPkg] = langPkg
 			break ArgLoop
+		case "bunit":
+			// TODO: Implement bunit literals
+			leftOperand := node.Args[pos+1].String()
+			if len(leftOperand) == 0 {
+				panic("The leftoperand for function buint cannot be left blank")
+			}
+			leftParam, _ := c.compileIfVarSub(con, leftOperand)
+			out = "{\nbyteFloat, unit := common.ConvertByteUnit(float64(" + leftParam + "))\n"
+			out += "w.Write(fmt.Sprintf(\"%.1f\", byteFloat) + unit)\n"
+			literal = true
+			break ArgLoop
 		case "abstime":
 			// TODO: Implement level literals
 			leftOperand := node.Args[pos+1].String()
@@ -1407,7 +1419,7 @@ func (c *CTemplateSet) retCall(name string, params ...interface{}) {
 	c.detail("returned from " + name + " => (" + pstr + ")")
 }
 
-func buildUserExprs(holder string) ([]string,[]string) {
+func buildUserExprs(holder string) ([]string, []string) {
 	var userExprs = []string{
 		holder + ".CurrentUser.Loggedin",
 		holder + ".CurrentUser.IsSuperMod",

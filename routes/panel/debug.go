@@ -41,6 +41,17 @@ func Debug(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	var memStats runtime.MemStats
 	runtime.ReadMemStats(&memStats)
 
-	pi := c.PanelDebugPage{basePage, goVersion, dbVersion, uptime, openConnCount, qgen.Builder.GetAdapter().GetName(), goroutines, cpus, memStats}
-	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage,"panel_dashboard_right","","panel_debug", pi})
+	var tlen, ulen int
+	tcache := c.Topics.GetCache()
+	if tcache != nil {
+		tlen = tcache.Length()
+	}
+	ucache := c.Users.GetCache()
+	if ucache != nil {
+		ulen = ucache.Length()
+	}
+	topicListThawed := c.TopicListThaw.Thawed()
+
+	pi := c.PanelDebugPage{basePage, goVersion, dbVersion, uptime, openConnCount, qgen.Builder.GetAdapter().GetName(), goroutines, cpus, memStats, tlen, ulen, topicListThawed}
+	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_dashboard_right", "debug_page", "panel_debug", pi})
 }

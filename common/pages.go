@@ -282,25 +282,25 @@ type ResetPage struct {
 /* WIP for dyntmpl */
 type Panel struct {
 	*BasePanelPage
-	HTMLID string
+	HTMLID     string
 	ClassNames string
-	TmplName string
-	Inner    nobreak
+	TmplName   string
+	Inner      nobreak
 }
 type PanelAnalytics struct {
 	*BasePanelPage
 	FormAction string
-	TmplName string
-	Inner    nobreak
+	TmplName   string
+	Inner      nobreak
 }
-type PanelAnalyticsStd struct{
+type PanelAnalyticsStd struct {
 	Graph     PanelTimeGraph
 	ViewItems []PanelAnalyticsItem
 	TimeRange string
 	Unit      string
 	TimeType  string
 }
-type PanelAnalyticsStdUnit struct{
+type PanelAnalyticsStdUnit struct {
 	Graph     PanelTimeGraph
 	ViewItems []PanelAnalyticsItemUnit
 	TimeRange string
@@ -334,7 +334,7 @@ type PanelPage struct {
 
 type GridElement struct {
 	ID         string
-	Href string
+	Href       string
 	Body       string
 	Order      int // For future use
 	Class      string
@@ -387,7 +387,7 @@ type PanelAnalyticsItem struct {
 type PanelAnalyticsItemUnit struct {
 	Time  int64
 	Count int64
-	Unit string
+	Unit  string
 }
 
 type PanelAnalyticsPage struct {
@@ -591,6 +591,10 @@ type PanelDebugPage struct {
 	Goroutines int
 	CPUs       int
 	MemStats   runtime.MemStats
+
+	TCache        int
+	UCache        int
+	TopicListThaw bool
 }
 
 type PageSimple struct {

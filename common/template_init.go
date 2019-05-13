@@ -1,6 +1,7 @@
 package common
 
 import (
+	"fmt"
 	"html/template"
 	"io"
 	"log"
@@ -301,7 +302,7 @@ func compileTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName string
 	tmpls.AddStd("account", "common.Account", accountPage)
 
 	basePage := &BasePanelPage{header, PanelStats{}, "dashboard", ReportForumID}
-	tmpls.AddStd("panel", "common.Panel", Panel{basePage, "panel_dashboard_right","","panel_dashboard", inter})
+	tmpls.AddStd("panel", "common.Panel", Panel{basePage, "panel_dashboard_right", "", "panel_dashboard", inter})
 	//tmpls.AddStd("panel_analytics", "common.PanelAnalytics", Panel{basePage, "panel_dashboard_right","panel_dashboard", inter})
 
 	var writeTemplate = func(name string, content interface{}) {
@@ -686,6 +687,22 @@ func initDefaultTmplFuncMap() {
 			panic("levelInt is not an integer")
 		}
 		return template.HTML(phrases.GetLevelPhrase(level))
+	}
+
+	fmap["bunit"] = func(byteInt interface{}) interface{} {
+		var byteFloat float64
+		var unit string
+		switch bytes := byteInt.(type) {
+		case int:
+			byteFloat, unit = ConvertByteUnit(float64(bytes))
+		case int64:
+			byteFloat, unit = ConvertByteUnit(float64(bytes))
+		case uint64:
+			byteFloat, unit = ConvertByteUnit(float64(bytes))
+		default:
+			panic("bytes is not an int, int64 or uint64")
+		}
+		return fmt.Sprintf("%.1f", byteFloat) + unit
 	}
 
 	fmap["abstime"] = func(timeInt interface{}) interface{} {

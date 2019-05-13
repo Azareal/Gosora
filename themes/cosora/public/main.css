@@ -1594,41 +1594,12 @@ red {
 	padding-bottom: 0px;
 	padding-right: 10px;
 }
-.grid_item span {
+.grid_item span, .grid_item a {
 	margin-top: 16px;
 	margin-bottom: 16px;
 	margin-left: auto;
 	margin-right: auto;
 	text-align: center;
-}
-/* TODO: Move these to panel.css */
-#dash-version:before, #dash-cpu:before, #dash-ram:before, #dash-totonline:before, #dash-gonline:before, #dash-uonline:before, #dash-reqs:before, #dash-postsperday:before, #dash-topicsperday:before {
-	display: inline-block;
-	background: var(--tinted-background-color);
-	font: normal normal normal 14px/1 FontAwesome;
-	font-size: 20px;
-	padding-left: 17px;
-	padding-top: 16px;
-	padding-right: 19px;
-	color: hsl(0,0%,20%);
-}
-#dash-version:before {
-	content: "\f126";
-}
-#dash-cpu:before {
-	content: "\f2db";
-}
-#dash-ram:before {
-	content: "\f233";
-}
-#dash-totonline:before, #dash-gonline:before, #dash-uonline:before {
-	content: "\f007";
-}
-#dash-reqs:before {
-	content: "\f080";
-}
-#dash-postsperday:before, #dash-topicsperday:before {
-	content: "\f27b";
 }
 
 @media(min-width: 1000px) {
@@ -1648,13 +1619,6 @@ red {
 		max-width: 1000px;
 		margin-left: auto;
 		margin-right: auto;
-	}
-	.footer {
-		max-width: 1000px;
-		margin-left: auto;
-		margin-right: auto;
-	}
-	#main {
 		padding-top: 18px;
 		padding-left: 16px;
 		padding-right: 16px;
@@ -1662,6 +1626,9 @@ red {
 		border-right: 1px solid hsl(20,0%,95%);
 	}
 	.footer {
+		max-width: 1000px;
+		margin-left: auto;
+		margin-right: auto;
 		padding-left: 8px;
 		padding-right: 8px;
 	}
@@ -1686,10 +1653,7 @@ red {
 	.like_count {
 		margin-right: 1px;
 	}
-	.like_count:after {
-		margin-right: 6px;
-	}
-	.created_at:before, .ip_item:before {
+	.like_count:after, .created_at:before, .ip_item:before {
 		margin-right: 6px;
 	}
 }

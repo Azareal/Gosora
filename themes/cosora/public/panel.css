@@ -80,6 +80,41 @@
 	font-size: 17px;
 	color: hsl(0,0%,40%);
 }
+/* TODO: Move these to panel.css */
+#dash-version:before, #dash-cpu:before, #dash-ram:before, #dash-memused:before, #dash-totonline:before, #dash-gonline:before, #dash-uonline:before, #dash-reqs:before, #dash-postsperday:before, #dash-topicsperday:before {
+	display: inline-block;
+	background: var(--tinted-background-color);
+	font: normal normal normal 14px/1 FontAwesome;
+	font-size: 20px;
+	padding-left: 17px;
+	padding-top: 16px;
+	padding-right: 19px;
+	color: hsl(0,0%,20%);
+}
+#dash-version:before {
+	content: "\f126";
+}
+#dash-cpu:before, #dash-memused:before {
+	content: "\f2db";
+}
+#dash-ram:before {
+	content: "\f233";
+}
+#dash-totonline:before, #dash-gonline:before, #dash-uonline:before {
+	content: "\f007";
+}
+#dash-reqs:before {
+	content: "\f080";
+}
+#dash-postsperday:before, #dash-topicsperday:before {
+	content: "\f27b";
+}
+#panel_debug .grid_stat:not(.grid_stat_head) {
+	margin-bottom: 8px;
+}
+.debug_page.colstack_right .colstack_sub_head {
+	margin-top: 6px;
+}
 
 .complex_rowlist {
 	background-color: inherit !important;

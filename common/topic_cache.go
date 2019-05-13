@@ -125,37 +125,37 @@ func (mts *MemoryTopicCache) Remove(id int) error {
 }
 
 // RemoveUnsafe is the unsafe version of Remove. THIS METHOD IS NOT THREAD-SAFE.
-func (mts *MemoryTopicCache) RemoveUnsafe(id int) error {
-	_, ok := mts.items[id]
+func (s *MemoryTopicCache) RemoveUnsafe(id int) error {
+	_, ok := s.items[id]
 	if !ok {
 		return ErrNoRows
 	}
-	delete(mts.items, id)
-	atomic.AddInt64(&mts.length, -1)
+	delete(s.items, id)
+	atomic.AddInt64(&s.length, -1)
 	return nil
 }
 
 // Flush removes all the topics from the cache, useful for tests.
-func (mts *MemoryTopicCache) Flush() {
-	mts.Lock()
-	mts.items = make(map[int]*Topic)
-	mts.length = 0
-	mts.Unlock()
+func (s *MemoryTopicCache) Flush() {
+	s.Lock()
+	s.items = make(map[int]*Topic)
+	s.length = 0
+	s.Unlock()
 }
 
 // ! Is this concurrent?
 // Length returns the number of topics in the memory cache
-func (mts *MemoryTopicCache) Length() int {
-	return int(mts.length)
+func (s *MemoryTopicCache) Length() int {
+	return int(s.length)
 }
 
 // SetCapacity sets the maximum number of topics which this cache can hold
-func (mts *MemoryTopicCache) SetCapacity(capacity int) {
+func (s *MemoryTopicCache) SetCapacity(capacity int) {
 	// Ints are moved in a single instruction, so this should be thread-safe
-	mts.capacity = capacity
+	s.capacity = capacity
 }
 
 // GetCapacity returns the maximum number of topics this cache can hold
-func (mts *MemoryTopicCache) GetCapacity() int {
-	return mts.capacity
+func (s *MemoryTopicCache) GetCapacity() int {
+	return s.capacity
 }

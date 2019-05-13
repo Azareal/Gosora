@@ -99,6 +99,23 @@ func InitPhrases(lang string) error {
 
 		// [prefix][name]phrase
 		langPack.TmplPhrasesPrefixes = make(map[string]map[string]string)
+		var conMap = make(map[string]string) // Cache phrase strings so we can de-dupe items to reduce memory use. There appear to be some minor improvements with this, although we would need a more thorough check to be sure.
+		for name, phrase := range langPack.TmplPhrases {
+			_, ok := conMap[phrase]
+			if !ok {
+				conMap[phrase] = phrase
+			}
+			cItem := conMap[phrase]
+			prefix := strings.Split(name, ".")[0]
+			_, ok = langPack.TmplPhrasesPrefixes[prefix]
+			if !ok {
+				langPack.TmplPhrasesPrefixes[prefix] = make(map[string]string)
+			}
+			langPack.TmplPhrasesPrefixes[prefix][name] = cItem
+		}
+
+		// [prefix][name]phrase
+		/*langPack.TmplPhrasesPrefixes = make(map[string]map[string]string)
 		for name, phrase := range langPack.TmplPhrases {
 			prefix := strings.Split(name, ".")[0]
 			_, ok := langPack.TmplPhrasesPrefixes[prefix]
@@ -106,7 +123,7 @@ func InitPhrases(lang string) error {
 				langPack.TmplPhrasesPrefixes[prefix] = make(map[string]string)
 			}
 			langPack.TmplPhrasesPrefixes[prefix][name] = phrase
-		}
+		}*/
 
 		langPack.TmplIndicesToPhrases = make([][][]byte, len(langTmplIndicesToNames))
 		for tmplID, phraseNames := range langTmplIndicesToNames {

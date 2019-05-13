@@ -1026,21 +1026,6 @@ blockquote:first-child {
 	background-color: var(--main-block-color);
 }
 
-#panel_dashboard_right .colstack_head .rowitem {
-	padding: 10px;
-}
-#panel_dashboard_right .colstack_head .rowitem h1 {
-	font-size: 15px;
-	margin-left: auto;
-}
-
-#panel_dashboard_right .colstack_head a {
-	text-align: center;
-	width: 100%;
-	display: block;
-	font-size: 15px;
-}
-
 @media(max-width: 935px) {
 	.simple .user_tag {
 		display: none;

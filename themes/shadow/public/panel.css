@@ -43,6 +43,21 @@
 	content: "{{lang "panel_delete_button_text" . }}";
 }
 
+#panel_dashboard_right .colstack_head .rowitem {
+	padding: 10px;
+}
+#panel_dashboard_right .colstack_head .rowitem h1, #panel_dashboard_right .colstack_sub_head .rowitem h2 {
+	font-size: 15px;
+	margin-left: auto;
+	margin-right: auto;
+}
+#panel_dashboard_right .colstack_head a, #panel_dashboard_right .colstack_sub_head a {
+	text-align: center;
+	width: 100%;
+	display: block;
+	font-size: 15px;
+}
+
 #panel_forums .rowitem {
 	display: flex;
 }
