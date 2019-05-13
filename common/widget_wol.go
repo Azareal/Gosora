@@ -2,6 +2,7 @@ package common
 
 import (
 	"bytes"
+	//"log"
 	"net/http/httptest"
 
 	"github.com/Azareal/Gosora/common/phrases"
@@ -20,7 +21,7 @@ func wolInit(widget *Widget, schedule *WidgetScheduler) error {
 	return nil
 }
 
-func wolGetUsers() ([]*User,int) {
+func wolGetUsers() ([]*User, int) {
 	ucount := WsHub.UserCount()
 	// We don't want a ridiculously long list, so we'll show the number if it's too high and only show staff individually
 	var users []*User
@@ -56,15 +57,23 @@ var wolLastUsers []*User
 func wolTick(widget *Widget) error {
 	w := httptest.NewRecorder()
 	users, ucount := wolGetUsers()
-	//log.Printf("users: %+v\n",users)
-	//log.Printf("wolLastUsers: %+v\n",wolLastUsers)
+
+	var inOld = func(id int) bool {
+		for _, user := range wolLastUsers {
+			if id == user.ID {
+				return true
+			}
+		}
+		return false
+	}
 
 	// Avoid rebuilding the widget, if the users are exactly the same as on the last tick
 	if len(users) == len(wolLastUsers) {
 		diff := false
-		for i, user := range users {
-			if user.ID != wolLastUsers[i].ID {
+		for _, user := range users {
+			if !inOld(user.ID) {
 				diff = true
+				break
 			}
 		}
 		if !diff {
@@ -77,6 +86,8 @@ func wolTick(widget *Widget) error {
 			}
 		}
 	}
+	//log.Printf("users: %+v\n", users)
+	//log.Printf("wolLastUsers: %+v\n", wolLastUsers)
 
 	wol := &wolUsers{SimpleDefaultHeader(w), phrases.GetTmplPhrase("widget.online_name"), users, ucount}
 	err := wol.Header.Theme.RunTmpl("widget_online", wol, wol.Header.Writer)
