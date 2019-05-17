@@ -16,32 +16,33 @@ import (
 )
 
 type ReplyUser struct {
-	ID            int
-	ParentID      int
-	Content       string
-	ContentHtml   string
-	CreatedBy     int
+	Reply
+	//ID            int
+	//ParentID      int
+	//Content       string
+	ContentHtml string
+	//CreatedBy     int
 	UserLink      string
 	CreatedByName string
-	Group         int
-	CreatedAt     time.Time
-	LastEdit      int
-	LastEditBy    int
-	Avatar        string
-	MicroAvatar   string
-	ClassName     string
-	ContentLines  int
-	Tag           string
-	URL           string
-	URLPrefix     string
-	URLName       string
-	Level         int
-	IPAddress     string
-	Liked         bool
-	LikeCount     int
-	AttachCount   int
-	ActionType    string
-	ActionIcon    string
+	//Group         int
+	//CreatedAt     time.Time
+	//LastEdit      int
+	//LastEditBy    int
+	Avatar      string
+	MicroAvatar string
+	ClassName   string
+	//ContentLines  int
+	Tag       string
+	URL       string
+	URLPrefix string
+	URLName   string
+	Level     int
+	//IPAddress     string
+	//Liked         bool
+	//LikeCount     int
+	//AttachCount int
+	//ActionType  string
+	ActionIcon string
 
 	Attachments []*MiniAttachment
 }
@@ -59,6 +60,8 @@ type Reply struct {
 	IPAddress    string
 	Liked        bool
 	LikeCount    int
+	AttachCount  int
+	ActionType   string
 }
 
 var ErrAlreadyLiked = errors.New("You already liked this!")
@@ -110,10 +113,10 @@ func (reply *Reply) Like(uid int) (err error) {
 		return err
 	}
 	_, err = userStmts.incrementLiked.Exec(1, uid)
+	_ = Rstore.GetCache().Remove(reply.ID)
 	return err
 }
 
-// TODO: Write tests for this
 func (reply *Reply) Delete() error {
 	_, err := replyStmts.delete.Exec(reply.ID)
 	if err != nil {
@@ -125,6 +128,7 @@ func (reply *Reply) Delete() error {
 	if tcache != nil {
 		tcache.Remove(reply.ParentID)
 	}
+	_ = Rstore.GetCache().Remove(reply.ID)
 	return err
 }
 
@@ -136,11 +140,14 @@ func (reply *Reply) SetPost(content string) error {
 	content = PreparseMessage(html.UnescapeString(content))
 	parsedContent := ParseMessage(content, topic.ParentID, "forums")
 	_, err = replyStmts.edit.Exec(content, parsedContent, reply.ID) // TODO: Sniff if this changed anything to see if we hit an existing poll
+	_ = Rstore.GetCache().Remove(reply.ID)
 	return err
 }
 
+// TODO: Write tests for this
 func (reply *Reply) SetPoll(pollID int) error {
 	_, err := replyStmts.setPoll.Exec(pollID, reply.ID) // TODO: Sniff if this changed anything to see if we hit a poll
+	_ = Rstore.GetCache().Remove(reply.ID)
 	return err
 }
 

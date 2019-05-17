@@ -82,10 +82,12 @@ func (tList *DefaultTopicList) Tick() error {
 		if group.UserCount == 0 && group.ID != GuestUser.Group {
 			continue
 		}
+
 		var canSee = make([]byte, len(group.CanSee))
 		for i, item := range group.CanSee {
 			canSee[i] = byte(item)
 		}
+
 		var canSeeInt = make([]int, len(canSee))
 		copy(canSeeInt, group.CanSee)
 		sCanSee := string(canSee)
@@ -244,7 +246,6 @@ func (tList *DefaultTopicList) GetList(page int, orderby string, filterIDs []int
 func (tList *DefaultTopicList) getList(page int, orderby string, argList []interface{}, qlist string) (topicList []*TopicsRow, paginator Paginator, err error) {
 	//log.Printf("argList: %+v\n",argList)
 	//log.Printf("qlist: %+v\n",qlist)
-	
 	topicCount, err := ArgQToTopicCount(argList, qlist)
 	if err != nil {
 		return nil, Paginator{nil, 1, 1}, err
@@ -259,7 +260,7 @@ func (tList *DefaultTopicList) getList(page int, orderby string, argList []inter
 	}
 
 	// TODO: Prepare common qlist lengths to speed this up in common cases, prepared statements are prepared lazily anyway, so it probably doesn't matter if we do ten or so
-	stmt, err := qgen.Builder.SimpleSelect("topics", "tid, title, content, createdBy, is_closed, sticky, createdAt, lastReplyAt, lastReplyBy, lastReplyID, parentID, views, postCount, likeCount", "parentID IN("+qlist+")", orderq, "?,?")
+	stmt, err := qgen.Builder.SimpleSelect("topics", "tid, title, content, createdBy, is_closed, sticky, createdAt, lastReplyAt, lastReplyBy, lastReplyID, parentID, views, postCount, likeCount, attachCount, poll, data", "parentID IN("+qlist+")", orderq, "?,?")
 	if err != nil {
 		return nil, Paginator{nil, 1, 1}, err
 	}
@@ -274,11 +275,15 @@ func (tList *DefaultTopicList) getList(page int, orderby string, argList []inter
 	}
 	defer rows.Close()
 
-	var reqUserList = make(map[int]bool)
+	rcache := Rstore.GetCache()
+	rcap := rcache.GetCapacity()
+	rlen := rcache.Length()
+	tcache := Topics.GetCache()
+	reqUserList := make(map[int]bool)
 	for rows.Next() {
 		// TODO: Embed Topic structs in TopicsRow to make it easier for us to reuse this work in the topic cache
-		topic := TopicsRow{ID: 0}
-		err := rows.Scan(&topic.ID, &topic.Title, &topic.Content, &topic.CreatedBy, &topic.IsClosed, &topic.Sticky, &topic.CreatedAt, &topic.LastReplyAt, &topic.LastReplyBy, &topic.LastReplyID, &topic.ParentID, &topic.ViewCount, &topic.PostCount, &topic.LikeCount)
+		topic := TopicsRow{}
+		err := rows.Scan(&topic.ID, &topic.Title, &topic.Content, &topic.CreatedBy, &topic.IsClosed, &topic.Sticky, &topic.CreatedAt, &topic.LastReplyAt, &topic.LastReplyBy, &topic.LastReplyID, &topic.ParentID, &topic.ViewCount, &topic.PostCount, &topic.LikeCount, &topic.AttachCount, &topic.Poll, &topic.Data)
 		if err != nil {
 			return nil, Paginator{nil, 1, 1}, err
 		}
@@ -298,6 +303,29 @@ func (tList *DefaultTopicList) getList(page int, orderby string, argList []inter
 		topicList = append(topicList, &topic)
 		reqUserList[topic.CreatedBy] = true
 		reqUserList[topic.LastReplyBy] = true
+
+		//log.Print("rlen: ", rlen)
+		//log.Print("rcap: ", rcap)
+		//log.Print("topic.PostCount: ", topic.PostCount)
+		//log.Print("topic.PostCount == 2 && rlen < rcap: ", topic.PostCount == 2 && rlen < rcap)
+		if topic.PostCount == 2 && rlen < rcap {
+			rids, err := GetRidsForTopic(topic.ID, 0)
+			if err != nil {
+				return nil, Paginator{nil, 1, 1}, err
+			}
+
+			//log.Print("rids: ", rids)
+			if len(rids) == 0 {
+				continue
+			}
+			_, _ = Rstore.Get(rids[0])
+			rlen++
+			topic.Rids = []int{rids[0]}
+		}
+
+		if tcache != nil {
+			_ = tcache.Set(topic.Topic())
+		}
 	}
 	err = rows.Err()
 	if err != nil {

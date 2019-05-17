@@ -517,7 +517,6 @@ func ProfileReplyEditSubmit(w http.ResponseWriter, r *http.Request, user c.User,
 	if err != nil {
 		return c.InternalErrorJSQ(err, w, r, isJs)
 	}
-
 	// ? Does the admin understand that this group perm affects this?
 	if user.ID != creator.ID && !user.Perms.EditReply {
 		return c.NoPermissionsJSQ(w, r, user, isJs)
@@ -555,7 +554,6 @@ func ProfileReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user c.Use
 	if err != nil {
 		return c.InternalErrorJSQ(err, w, r, isJs)
 	}
-
 	if user.ID != creator.ID && !user.Perms.DeleteReply {
 		return c.NoPermissionsJSQ(w, r, user, isJs)
 	}

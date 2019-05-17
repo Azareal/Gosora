@@ -76,7 +76,7 @@ func (mts *DefaultTopicStore) DirtyGet(id int) *Topic {
 	err = mts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.LastReplyBy, &topic.LastReplyAt, &topic.LastReplyID, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.ViewCount, &topic.PostCount, &topic.LikeCount, &topic.AttachCount, &topic.Poll, &topic.Data)
 	if err == nil {
 		topic.Link = BuildTopicURL(NameToSlug(topic.Title), id)
-		_ = mts.cache.Add(topic)
+		_ = mts.cache.Set(topic)
 		return topic
 	}
 	return BlankTopic()
@@ -93,7 +93,7 @@ func (mts *DefaultTopicStore) Get(id int) (topic *Topic, err error) {
 	err = mts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.LastReplyBy, &topic.LastReplyAt, &topic.LastReplyID, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.ViewCount, &topic.PostCount, &topic.LikeCount, &topic.AttachCount, &topic.Poll, &topic.Data)
 	if err == nil {
 		topic.Link = BuildTopicURL(NameToSlug(topic.Title), id)
-		_ = mts.cache.Add(topic)
+		_ = mts.cache.Set(topic)
 	}
 	return topic, err
 }

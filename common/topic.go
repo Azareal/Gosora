@@ -10,9 +10,12 @@ import (
 	"database/sql"
 	"html"
 	"html/template"
+	//"log"
 	"strconv"
+	"strings"
 	"time"
 
+	p "github.com/Azareal/Gosora/common/phrases"
 	"github.com/Azareal/Gosora/query_gen"
 )
 
@@ -43,6 +46,8 @@ type Topic struct {
 	ClassName   string // CSS Class Name
 	Poll        int
 	Data        string // Used for report metadata
+
+	Rids []int
 }
 
 type TopicUser struct {
@@ -83,8 +88,10 @@ type TopicUser struct {
 	Liked         bool
 
 	Attachments []*MiniAttachment
+	Rids        []int
 }
 
+// TODO: Embed TopicUser to simplify this structure and it's related logic?
 type TopicsRow struct {
 	ID          int
 	Link        string
@@ -106,6 +113,7 @@ type TopicsRow struct {
 	AttachCount int
 	LastPage    int
 	ClassName   string
+	Poll        int
 	Data        string // Used for report metadata
 
 	Creator      *User
@@ -115,6 +123,7 @@ type TopicsRow struct {
 
 	ForumName string //TopicsRow
 	ForumLink string
+	Rids      []int
 }
 
 type WsTopicsRow struct {
@@ -156,7 +165,12 @@ func (t *Topic) TopicsRow() *TopicsRow {
 	forumName := ""
 	forumLink := ""
 
-	return &TopicsRow{t.ID, t.Link, t.Title, t.Content, t.CreatedBy, t.IsClosed, t.Sticky, t.CreatedAt, t.LastReplyAt, t.LastReplyBy, t.LastReplyID, t.ParentID, t.Status, t.IPAddress, t.ViewCount, t.PostCount, t.LikeCount, t.AttachCount, lastPage, t.ClassName, t.Data, creator, "", contentLines, lastUser, forumName, forumLink}
+	return &TopicsRow{t.ID, t.Link, t.Title, t.Content, t.CreatedBy, t.IsClosed, t.Sticky, t.CreatedAt, t.LastReplyAt, t.LastReplyBy, t.LastReplyID, t.ParentID, t.Status, t.IPAddress, t.ViewCount, t.PostCount, t.LikeCount, t.AttachCount, lastPage, t.ClassName, t.Poll, t.Data, creator, "", contentLines, lastUser, forumName, forumLink, t.Rids}
+}
+
+// ! Some data may be lost in the conversion
+func (t *TopicsRow) Topic() *Topic {
+	return &Topic{t.ID, t.Link, t.Title, t.Content, t.CreatedBy, t.IsClosed, t.Sticky, t.CreatedAt, t.LastReplyAt, t.LastReplyBy, t.LastReplyID, t.ParentID, t.Status, t.IPAddress, t.ViewCount, t.PostCount, t.LikeCount, t.AttachCount, t.ClassName, t.Poll, t.Data, t.Rids}
 }
 
 // ! Not quite safe as Topic doesn't contain all the data needed to constructs a WsTopicsRow
@@ -169,22 +183,24 @@ func (t *Topic) TopicsRow() *TopicsRow {
 }*/
 
 type TopicStmts struct {
-	addReplies      *sql.Stmt
-	updateLastReply *sql.Stmt
-	lock            *sql.Stmt
-	unlock          *sql.Stmt
-	moveTo          *sql.Stmt
-	stick           *sql.Stmt
-	unstick         *sql.Stmt
-	hasLikedTopic   *sql.Stmt
-	createLike      *sql.Stmt
-	addLikesToTopic *sql.Stmt
-	delete          *sql.Stmt
-	deleteActivity *sql.Stmt
+	getRids            *sql.Stmt
+	getReplies         *sql.Stmt
+	addReplies         *sql.Stmt
+	updateLastReply    *sql.Stmt
+	lock               *sql.Stmt
+	unlock             *sql.Stmt
+	moveTo             *sql.Stmt
+	stick              *sql.Stmt
+	unstick            *sql.Stmt
+	hasLikedTopic      *sql.Stmt
+	createLike         *sql.Stmt
+	addLikesToTopic    *sql.Stmt
+	delete             *sql.Stmt
+	deleteActivity     *sql.Stmt
 	deleteActivitySubs *sql.Stmt
-	edit            *sql.Stmt
-	setPoll         *sql.Stmt
-	createAction    *sql.Stmt
+	edit               *sql.Stmt
+	setPoll            *sql.Stmt
+	createAction       *sql.Stmt
 
 	getTopicUser *sql.Stmt // TODO: Can we get rid of this?
 	getByReplyID *sql.Stmt
@@ -195,22 +211,24 @@ var topicStmts TopicStmts
 func init() {
 	DbInits.Add(func(acc *qgen.Accumulator) error {
 		topicStmts = TopicStmts{
-			addReplies:      acc.Update("topics").Set("postCount = postCount + ?, lastReplyBy = ?, lastReplyAt = UTC_TIMESTAMP()").Where("tid = ?").Prepare(),
-			updateLastReply: acc.Update("topics").Set("lastReplyID = ?").Where("lastReplyID > ? AND tid = ?").Prepare(),
-			lock:            acc.Update("topics").Set("is_closed = 1").Where("tid = ?").Prepare(),
-			unlock:          acc.Update("topics").Set("is_closed = 0").Where("tid = ?").Prepare(),
-			moveTo:          acc.Update("topics").Set("parentID = ?").Where("tid = ?").Prepare(),
-			stick:           acc.Update("topics").Set("sticky = 1").Where("tid = ?").Prepare(),
-			unstick:         acc.Update("topics").Set("sticky = 0").Where("tid = ?").Prepare(),
-			hasLikedTopic:   acc.Select("likes").Columns("targetItem").Where("sentBy = ? and targetItem = ? and targetType = 'topics'").Prepare(),
-			createLike:      acc.Insert("likes").Columns("weight, targetItem, targetType, sentBy, createdAt").Fields("?,?,?,?,UTC_TIMESTAMP()").Prepare(),
-			addLikesToTopic: acc.Update("topics").Set("likeCount = likeCount + ?").Where("tid = ?").Prepare(),
-			delete:          acc.Delete("topics").Where("tid = ?").Prepare(),
-			deleteActivity:  acc.Delete("activity_stream").Where("elementID = ? AND elementType = 'topic'").Prepare(),
+			getRids:            acc.Select("replies").Columns("rid").Where("tid = ?").Orderby("rid ASC").Limit("?,?").Prepare(),
+			getReplies:         acc.SimpleLeftJoin("replies", "users", "replies.rid, replies.content, replies.createdBy, replies.createdAt, replies.lastEdit, replies.lastEditBy, users.avatar, users.name, users.group, users.url_prefix, users.url_name, users.level, replies.ipaddress, replies.likeCount, replies.attachCount, replies.actionType", "replies.createdBy = users.uid", "replies.tid = ?", "replies.rid ASC", "?,?"),
+			addReplies:         acc.Update("topics").Set("postCount = postCount + ?, lastReplyBy = ?, lastReplyAt = UTC_TIMESTAMP()").Where("tid = ?").Prepare(),
+			updateLastReply:    acc.Update("topics").Set("lastReplyID = ?").Where("lastReplyID > ? AND tid = ?").Prepare(),
+			lock:               acc.Update("topics").Set("is_closed = 1").Where("tid = ?").Prepare(),
+			unlock:             acc.Update("topics").Set("is_closed = 0").Where("tid = ?").Prepare(),
+			moveTo:             acc.Update("topics").Set("parentID = ?").Where("tid = ?").Prepare(),
+			stick:              acc.Update("topics").Set("sticky = 1").Where("tid = ?").Prepare(),
+			unstick:            acc.Update("topics").Set("sticky = 0").Where("tid = ?").Prepare(),
+			hasLikedTopic:      acc.Select("likes").Columns("targetItem").Where("sentBy = ? and targetItem = ? and targetType = 'topics'").Prepare(),
+			createLike:         acc.Insert("likes").Columns("weight, targetItem, targetType, sentBy, createdAt").Fields("?,?,?,?,UTC_TIMESTAMP()").Prepare(),
+			addLikesToTopic:    acc.Update("topics").Set("likeCount = likeCount + ?").Where("tid = ?").Prepare(),
+			delete:             acc.Delete("topics").Where("tid = ?").Prepare(),
+			deleteActivity:     acc.Delete("activity_stream").Where("elementID = ? AND elementType = 'topic'").Prepare(),
 			deleteActivitySubs: acc.Delete("activity_subscriptions").Where("targetID = ? AND targetType = 'topic'").Prepare(),
-			edit:            acc.Update("topics").Set("title = ?, content = ?, parsed_content = ?").Where("tid = ?").Prepare(), // TODO: Only run the content update bits on non-polls, does this matter?
-			setPoll:         acc.Update("topics").Set("content = '', parsed_content = '', poll = ?").Where("tid = ? AND poll = 0").Prepare(),
-			createAction:    acc.Insert("replies").Columns("tid, actionType, ipaddress, createdBy, createdAt, lastUpdated, content, parsed_content").Fields("?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),'',''").Prepare(),
+			edit:               acc.Update("topics").Set("title = ?, content = ?, parsed_content = ?").Where("tid = ?").Prepare(), // TODO: Only run the content update bits on non-polls, does this matter?
+			setPoll:            acc.Update("topics").Set("content = '', parsed_content = '', poll = ?").Where("tid = ? AND poll = 0").Prepare(),
+			createAction:       acc.Insert("replies").Columns("tid, actionType, ipaddress, createdBy, createdAt, lastUpdated, content, parsed_content").Fields("?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),'',''").Prepare(),
 
 			getTopicUser: acc.SimpleLeftJoin("topics", "users", "topics.title, topics.content, topics.createdBy, topics.createdAt, topics.lastReplyAt, topics.lastReplyBy, topics.lastReplyID, topics.is_closed, topics.sticky, topics.parentID, topics.ipaddress, topics.views, topics.postCount, topics.likeCount, topics.attachCount,topics.poll, users.name, users.avatar, users.group, users.url_prefix, users.url_name, users.level", "topics.createdBy = users.uid", "tid = ?", "", ""),
 			getByReplyID: acc.SimpleLeftJoin("replies", "topics", "topics.tid, topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ipaddress, topics.views, topics.postCount, topics.likeCount, topics.poll, topics.data", "replies.tid = topics.tid", "rid = ?", "", ""),
@@ -385,6 +403,233 @@ func (topic *Topic) CreateActionReply(action string, ipaddress string, uid int) 
 	return err
 }
 
+func GetRidsForTopic(tid int, offset int) (rids []int, err error) {
+	rows, err := topicStmts.getRids.Query(tid, offset, Config.ItemsPerPage)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var rid int
+	for rows.Next() {
+		err := rows.Scan(&rid)
+		if err != nil {
+			return nil, err
+		}
+		rids = append(rids, rid)
+	}
+
+	return rids, rows.Err()
+}
+
+func (ru *ReplyUser) Init(parentID int) error {
+	ru.UserLink = BuildProfileURL(NameToSlug(ru.CreatedByName), ru.CreatedBy)
+	ru.ParentID = parentID
+	ru.ContentLines = strings.Count(ru.Content, "\n")
+
+	postGroup, err := Groups.Get(ru.Group)
+	if err != nil {
+		return err
+	}
+	if postGroup.IsMod {
+		ru.ClassName = Config.StaffCSS
+	}
+
+	// TODO: Make a function for this? Build a more sophisticated noavatar handling system? Do bulk user loads and let the c.UserStore initialise this?
+	ru.Avatar, ru.MicroAvatar = BuildAvatar(ru.CreatedBy, ru.Avatar)
+	if ru.Tag == "" {
+		ru.Tag = postGroup.Tag
+	}
+
+	// We really shouldn't have inline HTML, we should do something about this...
+	if ru.ActionType != "" {
+		var action string
+		aarr := strings.Split(ru.ActionType, "-")
+		switch aarr[0] {
+		case "lock":
+			action = aarr[0]
+			ru.ActionIcon = "&#x1F512;&#xFE0E"
+		case "unlock":
+			action = aarr[0]
+			ru.ActionIcon = "&#x1F513;&#xFE0E"
+		case "stick":
+			action = aarr[0]
+			ru.ActionIcon = "&#x1F4CC;&#xFE0E"
+		case "unstick":
+			action = aarr[0]
+			ru.ActionIcon = "&#x1F4CC;&#xFE0E"
+		case "move":
+			if len(aarr) == 2 {
+				fid, _ := strconv.Atoi(aarr[1])
+				forum, err := Forums.Get(fid)
+				if err == nil {
+					ru.ActionType = p.GetTmplPhrasef("topic.action_topic_move_dest", forum.Link, forum.Name, ru.UserLink, ru.CreatedByName)
+				} else {
+					action = aarr[0]
+				}
+			} else {
+				action = aarr[0]
+			}
+		default:
+			// TODO: Only fire this off if a corresponding phrase for the ActionType doesn't exist? Or maybe have some sort of action registry?
+			ru.ActionType = p.GetTmplPhrasef("topic.action_topic_default", ru.ActionType)
+		}
+		if action != "" {
+			ru.ActionType = p.GetTmplPhrasef("topic.action_topic_"+action, ru.UserLink, ru.CreatedByName)
+		}
+	}
+
+	return nil
+}
+
+// TODO: Factor TopicUser into a *Topic and *User, as this starting to become overly complicated x.x
+func (topic *TopicUser) Replies(offset int, pFrag int, user *User) (rlist []*ReplyUser, ogdesc string, err error) {
+	var likedMap map[int]int
+	if user.Liked > 0 {
+		likedMap = make(map[int]int)
+	}
+	var likedQueryList = []int{user.ID}
+
+	var attachMap map[int]int
+	if user.Perms.EditReply {
+		attachMap = make(map[int]int)
+	}
+	var attachQueryList = []int{}
+
+	var rid int
+	if len(topic.Rids) > 0 {
+		//log.Print("have rid")
+		rid = topic.Rids[0]
+	}
+	re, err := Rstore.GetCache().Get(rid)
+	ucache := Users.GetCache()
+	var ruser *User
+	if err == nil && ucache != nil {
+		//log.Print("ucache step")
+		ruser, err = ucache.Get(re.CreatedBy)
+	}
+
+	// TODO: Factor the user fields out and embed a user struct instead
+	var reply *ReplyUser
+	hTbl := GetHookTable()
+	if err == nil {
+		//log.Print("reply cached serve")
+		reply = &ReplyUser{ClassName: "", Reply: *re, CreatedByName: ruser.Name, Avatar: ruser.Avatar, URLPrefix: ruser.URLPrefix, URLName: ruser.URLName, Level: ruser.Level}
+
+		err := reply.Init(topic.ID)
+		if err != nil {
+			return nil, "", err
+		}
+		reply.ContentHtml = ParseMessage(reply.Content, topic.ParentID, "forums")
+
+		if reply.ID == pFrag {
+			ogdesc = reply.Content
+			if len(ogdesc) > 200 {
+				ogdesc = ogdesc[:197] + "..."
+			}
+		}
+
+		if reply.LikeCount > 0 && user.Liked > 0 {
+			likedMap[reply.ID] = len(rlist)
+			likedQueryList = append(likedQueryList, reply.ID)
+		}
+		if user.Perms.EditReply && reply.AttachCount > 0 {
+			attachMap[reply.ID] = len(rlist)
+			attachQueryList = append(attachQueryList, reply.ID)
+		}
+
+		hTbl.VhookNoRet("topic_reply_row_assign", &rlist, &reply)
+		rlist = append(rlist, reply)
+	} else {
+		rows, err := topicStmts.getReplies.Query(topic.ID, offset, Config.ItemsPerPage)
+		if err != nil {
+			return nil, "", err
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			reply = &ReplyUser{}
+			err := rows.Scan(&reply.ID, &reply.Content, &reply.CreatedBy, &reply.CreatedAt, &reply.LastEdit, &reply.LastEditBy, &reply.Avatar, &reply.CreatedByName, &reply.Group, &reply.URLPrefix, &reply.URLName, &reply.Level, &reply.IPAddress, &reply.LikeCount, &reply.AttachCount, &reply.ActionType)
+			if err != nil {
+				return nil, "", err
+			}
+
+			err = reply.Init(topic.ID)
+			if err != nil {
+				return nil, "", err
+			}
+			reply.ContentHtml = ParseMessage(reply.Content, topic.ParentID, "forums")
+
+			if reply.ID == pFrag {
+				ogdesc = reply.Content
+				if len(ogdesc) > 200 {
+					ogdesc = ogdesc[:197] + "..."
+				}
+			}
+
+			if reply.LikeCount > 0 && user.Liked > 0 {
+				likedMap[reply.ID] = len(rlist)
+				likedQueryList = append(likedQueryList, reply.ID)
+			}
+			if user.Perms.EditReply && reply.AttachCount > 0 {
+				attachMap[reply.ID] = len(rlist)
+				attachQueryList = append(attachQueryList, reply.ID)
+			}
+
+			hTbl.VhookNoRet("topic_reply_row_assign", &rlist, &reply)
+			// TODO: Use a pointer instead to make it easier to abstract this loop? What impact would this have on escape analysis?
+			rlist = append(rlist, reply)
+			//log.Printf("r: %d-%d", reply.ID, len(rlist)-1)
+		}
+		err = rows.Err()
+		if err != nil {
+			return nil, "", err
+		}
+	}
+
+	// TODO: Add a config setting to disable the liked query for a burst of extra speed
+	if user.Liked > 0 && len(likedQueryList) > 1 /*&& user.LastLiked <= time.Now()*/ {
+		// TODO: Abstract this
+		rows, err := qgen.NewAcc().Select("likes").Columns("targetItem").Where("sentBy = ? AND targetType = 'replies'").In("targetItem", likedQueryList[1:]).Query(user.ID)
+		if err != nil && err != sql.ErrNoRows {
+			return nil, "", err
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var likeRid int
+			err := rows.Scan(&likeRid)
+			if err != nil {
+				return nil, "", err
+			}
+			rlist[likedMap[likeRid]].Liked = true
+		}
+		err = rows.Err()
+		if err != nil {
+			return nil, "", err
+		}
+	}
+
+	if user.Perms.EditReply && len(attachQueryList) > 0 {
+		//log.Printf("attachQueryList: %+v\n", attachQueryList)
+		amap, err := Attachments.BulkMiniGetList("replies", attachQueryList)
+		if err != nil && err != sql.ErrNoRows {
+			return nil, "", err
+		}
+		//log.Printf("amap: %+v\n", amap)
+		//log.Printf("attachMap: %+v\n", attachMap)
+		for id, attach := range amap {
+			//log.Print("id:", id)
+			rlist[attachMap[id]].Attachments = attach
+			/*for _, a := range attach {
+				log.Printf("a: %+v\n", a)
+			}*/
+		}
+	}
+
+	return rlist, ogdesc, nil
+}
+
 // TODO: Test this
 func (topic *Topic) Author() (*User, error) {
 	return Users.Get(topic.CreatedBy)
@@ -452,7 +697,7 @@ func GetTopicUser(user *User, tid int) (tu TopicUser, err error) {
 	if tcache != nil {
 		theTopic := Topic{ID: tu.ID, Link: tu.Link, Title: tu.Title, Content: tu.Content, CreatedBy: tu.CreatedBy, IsClosed: tu.IsClosed, Sticky: tu.Sticky, CreatedAt: tu.CreatedAt, LastReplyAt: tu.LastReplyAt, LastReplyID: tu.LastReplyID, ParentID: tu.ParentID, IPAddress: tu.IPAddress, ViewCount: tu.ViewCount, PostCount: tu.PostCount, LikeCount: tu.LikeCount, AttachCount: tu.AttachCount, Poll: tu.Poll}
 		//log.Printf("theTopic: %+v\n", theTopic)
-		_ = tcache.Add(&theTopic)
+		_ = tcache.Set(&theTopic)
 	}
 	return tu, err
 }
@@ -485,6 +730,7 @@ func copyTopicToTopicUser(topic *Topic, user *User) (tu TopicUser) {
 	tu.AttachCount = topic.AttachCount
 	tu.Poll = topic.Poll
 	tu.Data = topic.Data
+	tu.Rids = topic.Rids
 
 	return tu
 }

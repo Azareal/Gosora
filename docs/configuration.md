@@ -60,9 +60,13 @@ UserCache - The type of user cache you want to use. You can leave this blank to 
 
 TopicCache - The type of topic cache you want to use. You can leave this blank to disable this feature or use `static` for a small in-memory cache.
 
+ReplyCache - The type of reply cache you want to use. You can leave this blank to disable this feature or use `static` for a small in-memory cache.
+
 UserCacheCapacity - The maximum number of users you want in the in-memory user cache, if enabled in the UserCache setting.
 
 TopicCacheCapacity - The maximum number of topics you want in the in-memory topic cache, if enabled in the TopicCache setting.
+
+ReplyCacheCapacity - The maximum number of replies you want in the in-memory reply cache, if enabled in the ReplyCache setting.
 
 DefaultPath - The route you want the homepage `/` to default to. Examples: `/topics/` or `/forums/`
 

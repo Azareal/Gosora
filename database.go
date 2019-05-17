@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"log"
 
-	"github.com/Azareal/Gosora/common"
+	c "github.com/Azareal/Gosora/common"
 	"github.com/pkg/errors"
 )
 
@@ -29,17 +29,17 @@ func InitDatabase() (err error) {
 	globs = &Globs{stmts}
 
 	log.Print("Running the db handlers.")
-	err = common.DbInits.Run()
+	err = c.DbInits.Run()
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
 	log.Print("Loading the usergroups.")
-	common.Groups, err = common.NewMemoryGroupStore()
+	c.Groups, err = c.NewMemoryGroupStore()
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	err2 := common.Groups.LoadGroups()
+	err2 := c.Groups.LoadGroups()
 	if err2 != nil {
 		return errors.WithStack(err2)
 	}
@@ -47,59 +47,58 @@ func InitDatabase() (err error) {
 	// We have to put this here, otherwise LoadForums() won't be able to get the last poster data when building it's forums
 	log.Print("Initialising the user and topic stores")
 
-	var ucache common.UserCache
-	if common.Config.UserCache == "static" {
-		ucache = common.NewMemoryUserCache(common.Config.UserCacheCapacity)
+	var ucache c.UserCache
+	if c.Config.UserCache == "static" {
+		ucache = c.NewMemoryUserCache(c.Config.UserCacheCapacity)
+	}
+	var tcache c.TopicCache
+	if c.Config.TopicCache == "static" {
+		tcache = c.NewMemoryTopicCache(c.Config.TopicCacheCapacity)
 	}
 
-	var tcache common.TopicCache
-	if common.Config.TopicCache == "static" {
-		tcache = common.NewMemoryTopicCache(common.Config.TopicCacheCapacity)
-	}
-
-	common.Users, err = common.NewDefaultUserStore(ucache)
+	c.Users, err = c.NewDefaultUserStore(ucache)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	common.Topics, err = common.NewDefaultTopicStore(tcache)
+	c.Topics, err = c.NewDefaultTopicStore(tcache)
 	if err != nil {
 		return errors.WithStack(err2)
 	}
 
 	log.Print("Loading the forums.")
-	common.Forums, err = common.NewMemoryForumStore()
+	c.Forums, err = c.NewMemoryForumStore()
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	err = common.Forums.LoadForums()
+	err = c.Forums.LoadForums()
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
 	log.Print("Loading the forum permissions.")
-	common.FPStore, err = common.NewMemoryForumPermsStore()
+	c.FPStore, err = c.NewMemoryForumPermsStore()
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	err = common.FPStore.Init()
+	err = c.FPStore.Init()
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
 	log.Print("Loading the settings.")
-	err = common.LoadSettings()
+	err = c.LoadSettings()
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
 	log.Print("Loading the plugins.")
-	err = common.InitExtend()
+	err = c.InitExtend()
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
 	log.Print("Loading the themes.")
-	err = common.Themes.LoadActiveStatus()
+	err = c.Themes.LoadActiveStatus()
 	if err != nil {
 		return errors.WithStack(err)
 	}

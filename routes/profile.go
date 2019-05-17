@@ -3,7 +3,6 @@ package routes
 import (
 	"database/sql"
 	"net/http"
-	"strings"
 	"time"
 
 	c "github.com/Azareal/Gosora/common"
@@ -37,9 +36,9 @@ func ViewProfile(w http.ResponseWriter, r *http.Request, user c.User, header *c.
 
 	var err error
 	var replyCreatedAt time.Time
-	var replyContent, replyCreatedByName, replyAvatar, replyMicroAvatar, replyTag, replyClassName string
-	var rid, replyCreatedBy, replyLastEdit, replyLastEditBy, replyLines, replyGroup int
-	var replyList []c.ReplyUser
+	var replyContent, replyCreatedByName, replyAvatar string
+	var rid, replyCreatedBy, replyLastEdit, replyLastEditBy, replyGroup int
+	var replyList []*c.ReplyUser
 
 	// TODO: Do a 301 if it's the wrong username? Do a canonical too?
 	_, pid, err := ParseSEOURL(r.URL.Path[len("/user/"):])
@@ -78,32 +77,26 @@ func ViewProfile(w http.ResponseWriter, r *http.Request, user c.User, header *c.
 			return c.InternalError(err, w, r)
 		}
 
-		group, err := c.Groups.Get(replyGroup)
+		replyLiked := false
+		replyLikeCount := 0
+		ru := &c.ReplyUser{Reply: c.Reply{rid, 0, replyContent, replyCreatedBy, replyGroup, replyCreatedAt, replyLastEdit, replyLastEditBy, 0, "", replyLiked, replyLikeCount, 0, ""}, ContentHtml: c.ParseMessage(replyContent, 0, ""), CreatedByName: replyCreatedByName, Avatar: replyAvatar, Level: 0}
+		ru.Init(puser.ID)
+
+		group, err := c.Groups.Get(ru.Group)
 		if err != nil {
 			return c.InternalError(err, w, r)
 		}
 
-		replyLines = strings.Count(replyContent, "\n")
-		if group.IsMod {
-			replyClassName = c.Config.StaffCSS
-		} else {
-			replyClassName = ""
-		}
-		replyAvatar, replyMicroAvatar = c.BuildAvatar(replyCreatedBy, replyAvatar)
-
 		if group.Tag != "" {
-			replyTag = group.Tag
-		} else if puser.ID == replyCreatedBy {
-			replyTag = phrases.GetTmplPhrase("profile_owner_tag")
+			ru.Tag = group.Tag
+		} else if puser.ID == ru.CreatedBy {
+			ru.Tag = phrases.GetTmplPhrase("profile_owner_tag")
 		} else {
-			replyTag = ""
+			ru.Tag = ""
 		}
 
-		replyLiked := false
-		replyLikeCount := 0
 		// TODO: Add a hook here
-
-		replyList = append(replyList, c.ReplyUser{rid, puser.ID, replyContent, c.ParseMessage(replyContent, 0, ""), replyCreatedBy, c.BuildProfileURL(c.NameToSlug(replyCreatedByName), replyCreatedBy), replyCreatedByName, replyGroup, replyCreatedAt, replyLastEdit, replyLastEditBy, replyAvatar, replyMicroAvatar, replyClassName, replyLines, replyTag, "", "", "", 0, "", replyLiked, replyLikeCount, 0, "", "", nil})
+		replyList = append(replyList, ru)
 	}
 	err = rows.Err()
 	if err != nil {

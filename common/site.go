@@ -69,6 +69,8 @@ type config struct {
 	UserCacheCapacity  int
 	TopicCache         string
 	TopicCacheCapacity int
+	ReplyCache         string
+	ReplyCacheCapacity int
 
 	SMTPServer    string
 	SMTPUsername  string
@@ -88,16 +90,16 @@ type config struct {
 
 	PrimaryServer bool
 	ServerCount   int
-	PostIPCutoff int
+	PostIPCutoff  int
 
 	DisableLiveTopicList bool
 	DisableJSAntispam    bool
 	//LooseCSP             bool
-	LooseHost         bool
-	LoosePort         bool
-	DisableServerPush bool
-	EnableCDNPush     bool
-	DisableNoavatarRange bool
+	LooseHost              bool
+	LoosePort              bool
+	DisableServerPush      bool
+	EnableCDNPush          bool
+	DisableNoavatarRange   bool
 	DisableDefaultNoavatar bool
 
 	Noavatar            string // ? - Move this into the settings table?

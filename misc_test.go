@@ -709,8 +709,7 @@ func TestReplyStore(t *testing.T) {
 	_, err = c.Rstore.Get(0)
 	recordMustNotExist(t, err, "RID #0 shouldn't exist")
 
-	var replyTest = func(rid int, parentID int, createdBy int, content string, ip string) {
-		reply, err := c.Rstore.Get(rid)
+	var replyTest2 = func(reply *c.Reply, err error, rid int, parentID int, createdBy int, content string, ip string) {
 		expectNilErr(t, err)
 		expect(t, reply.ID == rid, fmt.Sprintf("RID #%d has the wrong ID. It should be %d not %d", rid, rid, reply.ID))
 		expect(t, reply.ParentID == parentID, fmt.Sprintf("The parent topic of RID #%d should be %d not %d", rid, parentID, reply.ParentID))
@@ -718,16 +717,29 @@ func TestReplyStore(t *testing.T) {
 		expect(t, reply.Content == content, fmt.Sprintf("The contents of RID #%d should be '%s' not %s", rid, content, reply.Content))
 		expect(t, reply.IPAddress == ip, fmt.Sprintf("The IPAddress of RID#%d should be '%s' not %s", rid, ip, reply.IPAddress))
 	}
+
+	var replyTest = func(rid int, parentID int, createdBy int, content string, ip string) {
+		reply, err := c.Rstore.Get(rid)
+		replyTest2(reply, err, rid, parentID, createdBy, content, ip)
+		reply, err = c.Rstore.GetCache().Get(rid)
+		replyTest2(reply, err, rid, parentID, createdBy, content, ip)
+	}
 	replyTest(1, 1, 1, "A reply!", "::1")
+
+	// ! This is hard to do deterministically as the system may pre-load certain items but let's give it a try:
+	//_, err = c.Rstore.GetCache().Get(1)
+	//recordMustNotExist(t, err, "RID #1 shouldn't be in the cache")
 
 	_, err = c.Rstore.Get(2)
 	recordMustNotExist(t, err, "RID #2 shouldn't exist")
 
-	// TODO: Test Create and Get
-	//Create(tid int, content string, ipaddress string, fid int, uid int) (id int, err error)
 	topic, err := c.Topics.Get(1)
 	expectNilErr(t, err)
 	expect(t, topic.PostCount == 1, fmt.Sprintf("TID #1's post count should be one, not %d", topic.PostCount))
+
+	_, err = c.Rstore.GetCache().Get(2)
+	recordMustNotExist(t, err, "RID #2 shouldn't be in the cache")
+
 	rid, err := c.Rstore.Create(topic, "Fofofo", "::1", 1)
 	expectNilErr(t, err)
 	expect(t, rid == 2, fmt.Sprintf("The next reply ID should be 2 not %d", rid))
@@ -754,6 +766,28 @@ func TestReplyStore(t *testing.T) {
 	rid, err = c.Rstore.Create(topic, "hiii", "::1", 1)
 	expectNilErr(t, err)
 	replyTest(rid, topic.ID, 1, "hiii", "::1")
+
+	reply, err := c.Rstore.Get(rid)
+	expectNilErr(t, err)
+	expectNilErr(t, reply.SetPost("huuu"))
+	expect(t, reply.Content == "hiii", fmt.Sprintf("topic.Content should be hiii, not %s", reply.Content))
+	reply, err = c.Rstore.Get(rid)
+	expectNilErr(t, err)
+	expect(t, reply.Content == "huuu", fmt.Sprintf("topic.Content should be huuu, not %s", reply.Content))
+	expectNilErr(t, reply.Delete())
+	// No pointer shenanigans x.x
+	expect(t, reply.ID == rid, fmt.Sprintf("pointer shenanigans"))
+
+	_, err = c.Rstore.GetCache().Get(rid)
+	recordMustNotExist(t, err, fmt.Sprintf("RID #%d shouldn't be in the cache", rid))
+	_, err = c.Rstore.Get(rid)
+	recordMustNotExist(t, err, fmt.Sprintf("RID #%d shouldn't exist", rid))
+
+	// TODO: Write a test for this
+	//(topic *TopicUser) Replies(offset int, pFrag int, user *User) (rlist []*ReplyUser, ogdesc string, err error)
+
+	// TODO: Add tests for *Reply
+	// TODO: Add tests for ReplyCache
 }
 
 func TestProfileReplyStore(t *testing.T) {
@@ -993,19 +1027,19 @@ func TestMetaStore(t *testing.T) {
 	expect(t, m == "", "meta var magic should be empty")
 	recordMustNotExist(t, err, "meta var magic should not exist")
 
-	err = c.Meta.Set("magic","lol")
-	expectNilErr(t,err)
+	err = c.Meta.Set("magic", "lol")
+	expectNilErr(t, err)
 
 	m, err = c.Meta.Get("magic")
-	expectNilErr(t,err)
-	expect(t,m=="lol","meta var magic should be lol")
+	expectNilErr(t, err)
+	expect(t, m == "lol", "meta var magic should be lol")
 
-	err = c.Meta.Set("magic","wha")
-	expectNilErr(t,err)
+	err = c.Meta.Set("magic", "wha")
+	expectNilErr(t, err)
 
 	m, err = c.Meta.Get("magic")
-	expectNilErr(t,err)
-	expect(t,m=="wha","meta var magic should be wha")
+	expectNilErr(t, err)
+	expect(t, m == "wha", "meta var magic should be wha")
 
 	m, err = c.Meta.Get("giggle")
 	expect(t, m == "", "meta var giggle should be empty")

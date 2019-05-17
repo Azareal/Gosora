@@ -1,6 +1,42 @@
-/*addHook(() => {
+function memStuff(window, document, Chartist) {
+	'use strict';
 
-})*/
+	Chartist.plugins = Chartist.plugins || {};
+	Chartist.plugins.byteUnits = function(options) {
+	options = Chartist.extend({}, {}, options);
+
+    return function byteUnits(chart) {
+    	if(!chart instanceof Chartist.Line) return;
+			
+		chart.on('created', function() {
+			console.log("running created")
+			const vbits = document.getElementsByClassName("ct-vertical");
+			if(vbits==null) return;
+
+			let tbits = [];
+			for(let i = 0; i < vbits.length; i++) {
+				tbits[i] = vbits[i].innerHTML;
+			}
+			console.log("tbits:",tbits);
+			
+			const calc = (places) => {
+				if(places==3) return;
+			
+				const matcher = vbits[0].innerHTML;
+				let allMatch = true;
+       			for(let i = 0; i < tbits.length; i++) {
+					let val = convertByteUnit(tbits[i], places);
+					if(val!=matcher) allMatch = false;
+					vbits[i].innerHTML = val;
+				}
+					
+				if(allMatch) calc(places + 1);
+			}
+			calc(0);
+       });
+    };
+  };
+}
 
 const Kilobyte = 1024;
 const Megabyte = Kilobyte * 1024;

@@ -21,7 +21,6 @@ import (
 )
 
 type TopicStmts struct {
-	getReplies    *sql.Stmt
 	getLikedTopic *sql.Stmt
 	updateAttachs *sql.Stmt
 }
@@ -32,7 +31,6 @@ var topicStmts TopicStmts
 func init() {
 	c.DbInits.Add(func(acc *qgen.Accumulator) error {
 		topicStmts = TopicStmts{
-			getReplies:    acc.SimpleLeftJoin("replies", "users", "replies.rid, replies.content, replies.createdBy, replies.createdAt, replies.lastEdit, replies.lastEditBy, users.avatar, users.name, users.group, users.url_prefix, users.url_name, users.level, replies.ipaddress, replies.likeCount, replies.attachCount, replies.actionType", "replies.createdBy = users.uid", "replies.tid = ?", "replies.rid ASC", "?,?"),
 			getLikedTopic: acc.Select("likes").Columns("targetItem").Where("sentBy = ? && targetItem = ? && targetType = 'topics'").Prepare(),
 			// TODO: Less race-y attachment count updates
 			updateAttachs: acc.Update("topics").Set("attachCount = ?").Where("tid = ?").Prepare(),
@@ -124,7 +122,7 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user c.User, header *c.He
 	// Calculate the offset
 	offset, page, lastPage := c.PageOffset(topic.PostCount, page, c.Config.ItemsPerPage)
 	pageList := c.Paginate(topic.PostCount, c.Config.ItemsPerPage, 5)
-	tpage := c.TopicPage{header, []c.ReplyUser{}, topic, forum, poll, c.Paginator{pageList, page, lastPage}}
+	tpage := c.TopicPage{header, nil, topic, forum, poll, c.Paginator{pageList, page, lastPage}}
 
 	// Get the replies if we have any...
 	if topic.PostCount > 0 {
@@ -132,159 +130,15 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user c.User, header *c.He
 		if strings.HasPrefix(r.URL.Fragment, "post-") {
 			pFrag, _ = strconv.Atoi(strings.TrimPrefix(r.URL.Fragment, "post-"))
 		}
-		var likedMap map[int]int
-		if user.Liked > 0 {
-			likedMap = make(map[int]int)
-		}
-		var likedQueryList = []int{user.ID}
 
-		var attachMap map[int]int
-		if user.Perms.EditReply {
-			attachMap = make(map[int]int)
-		}
-		var attachQueryList = []int{}
-
-		rows, err := topicStmts.getReplies.Query(topic.ID, offset, c.Config.ItemsPerPage)
+		rlist, ogdesc, err := topic.Replies(offset, pFrag, &user)
 		if err == sql.ErrNoRows {
 			return c.LocalError("Bad Page. Some of the posts may have been deleted or you got here by directly typing in the page number.", w, r, user)
 		} else if err != nil {
 			return c.InternalError(err, w, r)
 		}
-		defer rows.Close()
-
-		// TODO: Factor the user fields out and embed a user struct instead
-		replyItem := c.ReplyUser{ClassName: ""}
-		for rows.Next() {
-			err := rows.Scan(&replyItem.ID, &replyItem.Content, &replyItem.CreatedBy, &replyItem.CreatedAt, &replyItem.LastEdit, &replyItem.LastEditBy, &replyItem.Avatar, &replyItem.CreatedByName, &replyItem.Group, &replyItem.URLPrefix, &replyItem.URLName, &replyItem.Level, &replyItem.IPAddress, &replyItem.LikeCount, &replyItem.AttachCount, &replyItem.ActionType)
-			if err != nil {
-				return c.InternalError(err, w, r)
-			}
-
-			replyItem.UserLink = c.BuildProfileURL(c.NameToSlug(replyItem.CreatedByName), replyItem.CreatedBy)
-			replyItem.ParentID = topic.ID
-			replyItem.ContentHtml = c.ParseMessage(replyItem.Content, topic.ParentID, "forums")
-			replyItem.ContentLines = strings.Count(replyItem.Content, "\n")
-
-			if replyItem.ID == pFrag {
-				header.OGDesc = replyItem.Content
-				if len(header.OGDesc) > 200 {
-					header.OGDesc = header.OGDesc[:197] + "..."
-				}
-			}
-
-			postGroup, err = c.Groups.Get(replyItem.Group)
-			if err != nil {
-				return c.InternalError(err, w, r)
-			}
-
-			if postGroup.IsMod {
-				replyItem.ClassName = c.Config.StaffCSS
-			} else {
-				replyItem.ClassName = ""
-			}
-
-			// TODO: Make a function for this? Build a more sophisticated noavatar handling system? Do bulk user loads and let the c.UserStore initialise this?
-			replyItem.Avatar, replyItem.MicroAvatar = c.BuildAvatar(replyItem.CreatedBy, replyItem.Avatar)
-			replyItem.Tag = postGroup.Tag
-
-			// We really shouldn't have inline HTML, we should do something about this...
-			if replyItem.ActionType != "" {
-				var action string
-				aarr := strings.Split(replyItem.ActionType, "-")
-				switch aarr[0] {
-				case "lock":
-					action = "lock"
-					replyItem.ActionIcon = "&#x1F512;&#xFE0E"
-				case "unlock":
-					action = "unlock"
-					replyItem.ActionIcon = "&#x1F513;&#xFE0E"
-				case "stick":
-					action = "stick"
-					replyItem.ActionIcon = "&#x1F4CC;&#xFE0E"
-				case "unstick":
-					action = "unstick"
-					replyItem.ActionIcon = "&#x1F4CC;&#xFE0E"
-				case "move":
-					if len(aarr) == 2 {
-						fid, _ := strconv.Atoi(aarr[1])
-						forum, err := c.Forums.Get(fid)
-						if err == nil {
-							replyItem.ActionType = phrases.GetTmplPhrasef("topic.action_topic_move_dest", forum.Link, forum.Name, replyItem.UserLink, replyItem.CreatedByName)
-						} else {
-							action = "move"
-						}
-					} else {
-						action = "move"
-					}
-					replyItem.ActionIcon = ""
-				default:
-					// TODO: Only fire this off if a corresponding phrase for the ActionType doesn't exist? Or maybe have some sort of action registry?
-					replyItem.ActionType = phrases.GetTmplPhrasef("topic.action_topic_default", replyItem.ActionType)
-					replyItem.ActionIcon = ""
-				}
-				if action != "" {
-					replyItem.ActionType = phrases.GetTmplPhrasef("topic.action_topic_"+action, replyItem.UserLink, replyItem.CreatedByName)
-				}
-			}
-
-			if replyItem.LikeCount > 0 && user.Liked > 0 {
-				likedMap[replyItem.ID] = len(tpage.ItemList)
-				likedQueryList = append(likedQueryList, replyItem.ID)
-			}
-			if user.Perms.EditReply && replyItem.AttachCount > 0 {
-				attachMap[replyItem.ID] = len(tpage.ItemList)
-				attachQueryList = append(attachQueryList, replyItem.ID)
-			}
-
-			header.Hooks.VhookNoRet("topic_reply_row_assign", &tpage, &replyItem)
-			// TODO: Use a pointer instead to make it easier to abstract this loop? What impact would this have on escape analysis?
-			tpage.ItemList = append(tpage.ItemList, replyItem)
-			//log.Printf("r: %d-%d", replyItem.ID, len(tpage.ItemList)-1)
-		}
-		err = rows.Err()
-		if err != nil {
-			return c.InternalError(err, w, r)
-		}
-
-		// TODO: Add a config setting to disable the liked query for a burst of extra speed
-		if user.Liked > 0 && len(likedQueryList) > 1 /*&& user.LastLiked <= time.Now()*/ {
-			// TODO: Abstract this
-			rows, err := qgen.NewAcc().Select("likes").Columns("targetItem").Where("sentBy = ? AND targetType = 'replies'").In("targetItem", likedQueryList[1:]).Query(user.ID)
-			if err != nil && err != sql.ErrNoRows {
-				return c.InternalError(err, w, r)
-			}
-			defer rows.Close()
-
-			for rows.Next() {
-				var likeRid int
-				err := rows.Scan(&likeRid)
-				if err != nil {
-					return c.InternalError(err, w, r)
-				}
-				tpage.ItemList[likedMap[likeRid]].Liked = true
-			}
-			err = rows.Err()
-			if err != nil {
-				return c.InternalError(err, w, r)
-			}
-		}
-
-		if user.Perms.EditReply && len(attachQueryList) > 0 {
-			//log.Printf("attachQueryList: %+v\n", attachQueryList)
-			amap, err := c.Attachments.BulkMiniGetList("replies", attachQueryList)
-			if err != nil && err != sql.ErrNoRows {
-				return c.InternalError(err, w, r)
-			}
-			//log.Printf("amap: %+v\n", amap)
-			//log.Printf("attachMap: %+v\n", attachMap)
-			for id, attach := range amap {
-				//log.Print("id:", id)
-				tpage.ItemList[attachMap[id]].Attachments = attach
-				/*for _, a := range attach {
-					log.Printf("a: %+v\n", a)
-				}*/
-			}
-		}
+		header.OGDesc = ogdesc
+		tpage.ItemList = rlist
 	}
 
 	header.Zone = "view_topic"
@@ -777,33 +631,33 @@ func DeleteTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.Ro
 }
 
 func StickTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User, stid string) c.RouteError {
-	topic, lite,rerr := topicActionPre(stid, "pin", w, r, user)
+	topic, lite, rerr := topicActionPre(stid, "pin", w, r, user)
 	if rerr != nil {
 		return rerr
 	}
 	if !user.Perms.ViewTopic || !user.Perms.PinTopic {
 		return c.NoPermissions(w, r, user)
 	}
-	return topicActionPost(topic.Stick(), "stick", w, r, lite,topic, user)
+	return topicActionPost(topic.Stick(), "stick", w, r, lite, topic, user)
 }
 
 func topicActionPre(stid string, action string, w http.ResponseWriter, r *http.Request, user c.User) (*c.Topic, *c.HeaderLite, c.RouteError) {
 	tid, err := strconv.Atoi(stid)
 	if err != nil {
-		return nil, nil,c.PreError(phrases.GetErrorPhrase("id_must_be_integer"), w, r)
+		return nil, nil, c.PreError(phrases.GetErrorPhrase("id_must_be_integer"), w, r)
 	}
 
 	topic, err := c.Topics.Get(tid)
 	if err == sql.ErrNoRows {
-		return nil, nil,c.PreError("The topic you tried to "+action+" doesn't exist.", w, r)
+		return nil, nil, c.PreError("The topic you tried to "+action+" doesn't exist.", w, r)
 	} else if err != nil {
-		return nil, nil,c.InternalError(err, w, r)
+		return nil, nil, c.InternalError(err, w, r)
 	}
 
 	// TODO: Add hooks to make use of headerLite
 	lite, ferr := c.SimpleForumUserCheck(w, r, &user, topic.ParentID)
 	if ferr != nil {
-		return nil, nil,ferr
+		return nil, nil, ferr
 	}
 
 	return topic, lite, nil
@@ -833,7 +687,7 @@ func UnstickTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User, sti
 	if !user.Perms.ViewTopic || !user.Perms.PinTopic {
 		return c.NoPermissions(w, r, user)
 	}
-	return topicActionPost(topic.Unstick(), "unstick", w, r, lite,topic, user)
+	return topicActionPost(topic.Unstick(), "unstick", w, r, lite, topic, user)
 }
 
 func LockTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
@@ -901,14 +755,14 @@ func LockTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.Rout
 }
 
 func UnlockTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User, stid string) c.RouteError {
-	topic, lite,rerr := topicActionPre(stid, "unlock", w, r, user)
+	topic, lite, rerr := topicActionPre(stid, "unlock", w, r, user)
 	if rerr != nil {
 		return rerr
 	}
 	if !user.Perms.ViewTopic || !user.Perms.CloseTopic {
 		return c.NoPermissions(w, r, user)
 	}
-	return topicActionPost(topic.Unlock(), "unlock", w, r, lite,topic, user)
+	return topicActionPost(topic.Unlock(), "unlock", w, r, lite, topic, user)
 }
 
 // ! JS only route

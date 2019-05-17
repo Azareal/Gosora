@@ -27,8 +27,8 @@ import (
 	c "github.com/Azareal/Gosora/common"
 	"github.com/Azareal/Gosora/common/counters"
 	"github.com/Azareal/Gosora/common/phrases"
-	"github.com/Azareal/Gosora/routes"
 	"github.com/Azareal/Gosora/query_gen"
+	"github.com/Azareal/Gosora/routes"
 	"github.com/fsnotify/fsnotify"
 	"github.com/pkg/errors"
 )
@@ -47,11 +47,57 @@ func init() {
 	c.RenderTemplateAlias = routes.RenderTemplate
 }
 
+func afterDBInit() (err error) {
+	err = storeInit()
+	if err != nil {
+		return err
+	}
+
+	var uids []int
+	tcache := c.Topics.GetCache()
+	if tcache != nil {
+		// Preload ten topics to get the wheels going
+		var count = 10
+		if tcache.GetCapacity() <= 10 {
+			count = 2
+			if tcache.GetCapacity() <= 2 {
+				count = 0
+			}
+		}
+
+		// TODO: Use the same cached data for both the topic list and the topic fetches...
+		tList, _, _, err := c.TopicList.GetList(1, "", nil)
+		if err != nil {
+			return err
+		}
+		if count > len(tList) {
+			count = len(tList)
+		}
+		for i := 0; i < count; i++ {
+			_, _ = c.Topics.Get(tList[i].ID)
+		}
+	}
+
+	ucache := c.Users.GetCache()
+	if ucache != nil {
+		// Preload associated users too...
+		for _, uid := range uids {
+			_, _ = c.Users.Get(uid)
+		}
+	}
+
+	return nil
+}
+
 // Experimenting with a new error package here to try to reduce the amount of debugging we have to do
 // TODO: Dynamically register these items to avoid maintaining as much code here?
-func afterDBInit() (err error) {
+func storeInit() (err error) {
 	acc := qgen.NewAcc()
-	c.Rstore, err = c.NewSQLReplyStore(acc)
+	var rcache c.ReplyCache
+	if c.Config.ReplyCache == "static" {
+		rcache = c.NewMemoryReplyCache(c.Config.ReplyCacheCapacity)
+	}
+	c.Rstore, err = c.NewSQLReplyStore(acc, rcache)
 	if err != nil {
 		return errors.WithStack(err)
 	}

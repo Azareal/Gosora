@@ -105,6 +105,8 @@ func TestPreparser(t *testing.T) {
 	msgList.Add("@Admin\ndd", "@1\ndd")
 	msgList.Add("d@Admin", "d@Admin")
 	msgList.Add("\\@Admin", "@Admin")
+	msgList.Add("@元気", "@元気")
+	// TODO: More tests for unicode names?
 	//msgList.Add("\\\\@Admin", "@1")
 	//msgList.Add("byte 0", string([]byte{0}), "")
 	msgList.Add("byte 'a'", string([]byte{'a'}), "a")

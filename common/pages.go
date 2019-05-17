@@ -180,7 +180,7 @@ type TopicCAttachItem struct {
 
 type TopicPage struct {
 	*Header
-	ItemList []ReplyUser
+	ItemList []*ReplyUser
 	Topic    TopicUser
 	Forum    *Forum
 	Poll     Poll
@@ -215,7 +215,7 @@ type ForumsPage struct {
 
 type ProfilePage struct {
 	*Header
-	ItemList     []ReplyUser
+	ItemList     []*ReplyUser
 	ProfileOwner User
 	CurrentScore int
 	NextScore    int
@@ -594,6 +594,7 @@ type PanelDebugPage struct {
 
 	TCache        int
 	UCache        int
+	RCache        int
 	TopicListThaw bool
 }
 

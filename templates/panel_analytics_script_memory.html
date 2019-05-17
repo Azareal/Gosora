@@ -1,0 +1,21 @@
+<script>
+	let rawLabels = [{{range .Graph.Labels}}
+	{{.}},{{end}}
+	];
+	let seriesData = [{{range .Graph.Series}}[{{range .}}
+	{{.}},{{end}}
+	],{{end}}
+	];
+	let legendNames = [{{range .Graph.Legends}}
+	{{.}},{{end}}
+	];
+
+	addInitHook("after_phrases", () => {
+		addInitHook("end_init", () => {
+			addInitHook("analytics_loaded", () => {
+				memStuff(window, document, Chartist);
+				buildStatsChart(rawLabels, seriesData, "{{.TimeRange}}",legendNames,true);
+			});
+		});
+	});
+</script>
