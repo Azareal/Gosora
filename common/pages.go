@@ -592,9 +592,14 @@ type PanelDebugPage struct {
 	CPUs       int
 	MemStats   runtime.MemStats
 
-	TCache        int
-	UCache        int
-	RCache        int
+	TCache int
+	UCache int
+	RCache int
+
+	TCap int
+	UCap int
+	RCap int
+
 	TopicListThaw bool
 }
 
