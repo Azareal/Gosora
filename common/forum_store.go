@@ -21,6 +21,7 @@ var forumCreateMutex sync.Mutex
 var forumPerms map[int]map[int]*ForumPerms // [gid][fid]*ForumPerms // TODO: Add an abstraction around this and make it more thread-safe
 var Forums ForumStore
 var ErrBlankName = errors.New("The name must not be blank")
+var ErrNoDeleteReports = errors.New("You cannot delete the Reports forum")
 
 // ForumStore is an interface for accessing the forums and the metadata stored on them
 type ForumStore interface {
@@ -163,8 +164,8 @@ func (mfs *MemoryForumStore) CacheGet(id int) (*Forum, error) {
 	return fint.(*Forum), nil
 }
 
-func (mfs *MemoryForumStore) Get(id int) (*Forum, error) {
-	fint, ok := mfs.forums.Load(id)
+func (s *MemoryForumStore) Get(id int) (*Forum, error) {
+	fint, ok := s.forums.Load(id)
 	if ok {
 		forum := fint.(*Forum)
 		if forum.Name == "" {
@@ -173,29 +174,23 @@ func (mfs *MemoryForumStore) Get(id int) (*Forum, error) {
 		return forum, nil
 	}
 
-	var forum = &Forum{ID: id}
-	err := mfs.get.QueryRow(id).Scan(&forum.Name, &forum.Desc, &forum.Active, &forum.Order, &forum.Preset, &forum.ParentID, &forum.ParentType, &forum.TopicCount, &forum.LastTopicID, &forum.LastReplyerID)
+	forum, err := s.BypassGet(id)
 	if err != nil {
-		return forum, err
+		return nil, err
+	}
+	s.CacheSet(forum)
+	return forum, err
+}
+
+func (s *MemoryForumStore) BypassGet(id int) (*Forum, error) {
+	var forum = &Forum{ID: id}
+	err := s.get.QueryRow(id).Scan(&forum.Name, &forum.Desc, &forum.Active, &forum.Order, &forum.Preset, &forum.ParentID, &forum.ParentType, &forum.TopicCount, &forum.LastTopicID, &forum.LastReplyerID)
+	if err != nil {
+		return nil, err
 	}
 	if forum.Name == "" {
 		return nil, ErrNoRows
 	}
-	forum.Link = BuildForumURL(NameToSlug(forum.Name), forum.ID)
-	forum.LastTopic = Topics.DirtyGet(forum.LastTopicID)
-	forum.LastReplyer = Users.DirtyGet(forum.LastReplyerID)
-
-	mfs.CacheSet(forum)
-	return forum, err
-}
-
-func (mfs *MemoryForumStore) BypassGet(id int) (*Forum, error) {
-	var forum = &Forum{ID: id}
-	err := mfs.get.QueryRow(id).Scan(&forum.Name, &forum.Desc, &forum.Active, &forum.Order, &forum.Preset, &forum.ParentID, &forum.ParentType, &forum.TopicCount, &forum.LastTopicID, &forum.LastReplyerID)
-	if err != nil {
-		return nil, err
-	}
-
 	forum.Link = BuildForumURL(NameToSlug(forum.Name), forum.ID)
 	forum.LastTopic = Topics.DirtyGet(forum.LastTopicID)
 	forum.LastReplyer = Users.DirtyGet(forum.LastReplyerID)
@@ -297,7 +292,7 @@ func (mfs *MemoryForumStore) CacheDelete(id int) {
 // TODO: Add a hook to allow plugin_guilds to detect when one of it's forums has just been deleted?
 func (s *MemoryForumStore) Delete(id int) error {
 	if id == ReportForumID {
-		return errors.New("You cannot delete the Reports forum")
+		return ErrNoDeleteReports
 	}
 	_, err := s.delete.Exec(id)
 	s.CacheDelete(id)
@@ -378,8 +373,8 @@ func (s *MemoryForumStore) UpdateOrder(updateMap map[int]int) error {
 
 // ! Might be slightly inaccurate, if the sync.Map is constantly shifting and churning, but it'll stabilise eventually. Also, slow. Don't use this on every request x.x
 // Length returns the number of forums in the memory cache
-func (mfs *MemoryForumStore) Length() (length int) {
-	mfs.forums.Range(func(_ interface{}, value interface{}) bool {
+func (s *MemoryForumStore) Length() (length int) {
+	s.forums.Range(func(_ interface{}, value interface{}) bool {
 		length++
 		return true
 	})

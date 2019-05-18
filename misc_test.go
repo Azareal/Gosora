@@ -537,8 +537,11 @@ func TestForumStore(t *testing.T) {
 		c.InitPlugins()
 	}
 
+	fcache, ok := c.Forums.(c.ForumCache)
+	expect(t, ok, "Unable to cast ForumStore to ForumCache")
+
 	expect(t, c.Forums.GlobalCount() == 2, "The forumstore global count should be 2")
-	//expect(t, c.Forums.Length() == 2, "The forumstore length should be 2")
+	expect(t, fcache.Length() == 2, "The forum cache length should be 2")
 
 	_, err := c.Forums.Get(-1)
 	recordMustNotExist(t, err, "FID #-1 shouldn't exist")
@@ -553,8 +556,12 @@ func TestForumStore(t *testing.T) {
 	expect(t, !forum.Active, fmt.Sprintf("The reports forum shouldn't be active"))
 	var expectDesc = "All the reports go here"
 	expect(t, forum.Desc == expectDesc, fmt.Sprintf("The forum description should be '%s' not '%s'", expectDesc, forum.Desc))
+	forum, err = c.Forums.BypassGet(1)
+	recordMustExist(t, err, "Couldn't find FID #1")
 
 	forum, err = c.Forums.Get(2)
+	recordMustExist(t, err, "Couldn't find FID #2")
+	forum, err = c.Forums.BypassGet(2)
 	recordMustExist(t, err, "Couldn't find FID #2")
 
 	expect(t, forum.ID == 2, fmt.Sprintf("The FID should be 2 not %d", forum.ID))
@@ -578,9 +585,11 @@ func TestForumStore(t *testing.T) {
 	expect(t, c.Forums.Exists(3), "FID #2 should exist")
 
 	expect(t, c.Forums.GlobalCount() == 3, "The forumstore global count should be 3")
-	//expect(t, c.Forums.Length() == 3, "The forumstore length should be 3")
+	expect(t, fcache.Length() == 3, "The forum cache length should be 3")
 
 	forum, err = c.Forums.Get(3)
+	recordMustExist(t, err, "Couldn't find FID #3")
+	forum, err = c.Forums.BypassGet(3)
 	recordMustExist(t, err, "Couldn't find FID #3")
 
 	expect(t, forum.ID == 3, fmt.Sprintf("The FID should be 3 not %d", forum.ID))
@@ -593,12 +602,82 @@ func TestForumStore(t *testing.T) {
 	expectNilErr(t, c.Forums.Delete(3))
 	expect(t, forum.ID == 3, fmt.Sprintf("forum pointer shenanigans"))
 	expect(t, c.Forums.GlobalCount() == 2, "The forumstore global count should be 2")
-	//expect(t, c.Forums.Length() == 2, "The forumstore length should be 2")
+	expect(t, fcache.Length() == 2, "The forum cache length should be 2")
 	expect(t, !c.Forums.Exists(3), "FID #3 shouldn't exist after being deleted")
 	_, err = c.Forums.Get(3)
 	recordMustNotExist(t, err, "FID #3 shouldn't exist after being deleted")
+	_, err = c.Forums.BypassGet(3)
+	recordMustNotExist(t, err, "FID #3 shouldn't exist after being deleted")
 
-	// TODO: Test deleting the reports forum
+	expect(t, c.Forums.Delete(c.ReportForumID) != nil, "The reports forum shouldn't be deletable")
+	expect(t, c.Forums.Exists(c.ReportForumID), fmt.Sprintf("FID #%d should still exist", c.ReportForumID))
+	_, err = c.Forums.Get(c.ReportForumID)
+	expect(t, err == nil, fmt.Sprintf("FID #%d should still exist", c.ReportForumID))
+	_, err = c.Forums.BypassGet(c.ReportForumID)
+	expect(t, err == nil, fmt.Sprintf("FID #%d should still exist", c.ReportForumID))
+
+	eforums := map[int]bool{1: true, 2: true}
+	{
+		forums, err := c.Forums.GetAll()
+		expectNilErr(t, err)
+		found := make(map[int]*c.Forum)
+		for _, forum := range forums {
+			_, ok := eforums[forum.ID]
+			expect(t, ok, fmt.Sprintf("unknown forum #%d in forums", forum.ID))
+			found[forum.ID] = forum
+		}
+		for fid, _ := range eforums {
+			_, ok := found[fid]
+			expect(t, ok, fmt.Sprintf("unable to find expected forum #%d in forums", fid))
+		}
+	}
+
+	{
+		fids, err := c.Forums.GetAllIDs()
+		expectNilErr(t, err)
+		found := make(map[int]bool)
+		for _, fid := range fids {
+			_, ok := eforums[fid]
+			expect(t, ok, fmt.Sprintf("unknown fid #%d in fids", fid))
+			found[fid] = true
+		}
+		for fid, _ := range eforums {
+			_, ok := found[fid]
+			expect(t, ok, fmt.Sprintf("unable to find expected fid #%d in fids", fid))
+		}
+	}
+
+	vforums := map[int]bool{2: true}
+	{
+		forums, err := c.Forums.GetAllVisible()
+		expectNilErr(t, err)
+		found := make(map[int]*c.Forum)
+		for _, forum := range forums {
+			_, ok := vforums[forum.ID]
+			expect(t, ok, fmt.Sprintf("unknown forum #%d in forums", forum.ID))
+			found[forum.ID] = forum
+		}
+		for fid, _ := range vforums {
+			_, ok := found[fid]
+			expect(t, ok, fmt.Sprintf("unable to find expected forum #%d in forums", fid))
+		}
+	}
+
+	{
+		fids, err := c.Forums.GetAllVisibleIDs()
+		expectNilErr(t, err)
+		found := make(map[int]bool)
+		for _, fid := range fids {
+			_, ok := vforums[fid]
+			expect(t, ok, fmt.Sprintf("unknown fid #%d in fids", fid))
+			found[fid] = true
+		}
+		for fid, _ := range vforums {
+			_, ok := found[fid]
+			expect(t, ok, fmt.Sprintf("unable to find expected fid #%d in fids", fid))
+		}
+	}
+
 	// TODO: Test forum update
 	// TODO: Other forumstore stuff and forumcache?
 }
