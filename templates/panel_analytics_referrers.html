@@ -1,6 +1,10 @@
 <div class="colstack_item colstack_head">
 	<div class="rowitem">
 		<h1>{{lang "panel_statistics_referrers_head"}}</h1>
+		<select form="timeRangeForm" class="spamSelector to_right autoSubmitRedirect" name="spam">
+			<option val="0"{{if not .ShowSpam}} selected{{end}}>{{lang "panel_statistics_spam_hide"}}</option>
+			<option val="1"{{if .ShowSpam}} selected{{end}}>{{lang "panel_statistics_spam_show"}}</option>
+		</select>
 		{{template "panel_analytics_time_range.html" . }}
 	</div>
 </div>

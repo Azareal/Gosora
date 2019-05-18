@@ -162,6 +162,7 @@
 	padding-left: 2px;
 	padding-right: 2px;
 }
+
 .ct_chart {
 	padding-left: 10px;
     padding-top: 14px;
@@ -172,11 +173,11 @@
 	background-color: white;
 	border: 1px solid hsl(0,0%,85%);
 }
-
-#widgetTmpl {
-	display: none;
+.spamSelector + .timeRangeSelector {
+	margin-left: 8px;
 }
-.widget_disabled {
+
+#widgetTmpl, .widget_disabled {
 	display: none;
 }
 .bg_red .widget_disabled {

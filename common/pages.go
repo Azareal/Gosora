@@ -424,6 +424,13 @@ type PanelAnalyticsAgentsPage struct {
 	TimeRange string
 }
 
+type PanelAnalyticsReferrersPage struct {
+	*BasePanelPage
+	ItemList  []PanelAnalyticsAgentsItem
+	TimeRange string
+	ShowSpam  bool
+}
+
 type PanelAnalyticsRoutePage struct {
 	*BasePanelPage
 	Route     string

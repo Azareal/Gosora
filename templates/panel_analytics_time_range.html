@@ -1,4 +1,4 @@
-<select form="timeRangeForm" class="timeRangeSelector to_right" name="timeRange">
+<select form="timeRangeForm" class="timeRangeSelector to_right autoSubmitRedirect" name="timeRange">
 	<option val="one-year"{{if eq .TimeRange "one-year"}} selected{{end}}>{{lang "panel_statistics_time_range_one_year"}}</option>
 	<option val="three-months"{{if eq .TimeRange "three-months"}} selected{{end}}>{{lang "panel_statistics_time_range_three_months"}}</option>
 	<option val="one-month"{{if eq .TimeRange "one-month"}} selected{{end}}>{{lang "panel_statistics_time_range_one_month"}}</option>

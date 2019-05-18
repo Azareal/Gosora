@@ -885,9 +885,23 @@ function mainInit(){
 	});
 
 	// The time range selector for the time graphs in the Control Panel
-	$(".timeRangeSelector").change(function(){
+	/*$(".timeRangeSelector").change(function(){
 		console.log("Changed the time range to " + this.options[this.selectedIndex].getAttribute("val"));
 		window.location = this.form.getAttribute("action")+"?timeRange=" + this.options[this.selectedIndex].getAttribute("val"); // Do a redirect as a form submission refuses to work properly
+	});*/
+	$(".autoSubmitRedirect").change(function(){
+		let elems = this.form.elements;
+		let s = "";
+		for(let i = 0; i < elems.length; i++) {
+			let elem = elems[i];
+			if(elem.nodeName=="SELECT") {
+				s += elem.name + "=" + elem.options[elem.selectedIndex].getAttribute("val") + "&";
+			}
+			// TODO: Implement other element types...
+		}
+		if(s.length > 0) s = "?" + s.substr(0, s.length-1);
+
+		window.location = this.form.getAttribute("action") + s; // Do a redirect as a form submission refuses to work properly
 	});
 
 	$(".unix_to_24_hour_time").each(function(){

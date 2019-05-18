@@ -887,6 +887,9 @@
 		"panel_statistics_memory_head":"Memory Usage",
 		"panel_statistics_active_memory_head":"Active Memory",
 
+		"panel_statistics_spam_hide":"Hide Spam",
+		"panel_statistics_spam_show":"Show Spam",
+
 		"panel_statistics_time_range_one_year":"1 year",
 		"panel_statistics_time_range_three_months":"3 months",
 		"panel_statistics_time_range_one_month":"1 month",

@@ -353,6 +353,9 @@
 .analytics .colstack_head h1 {
 	margin-top: 2px;
 }
+.spamSelector + .timeRangeSelector {
+	margin-left: 8px;
+}
 
 /* Experimental header tweaks */
 .colstack_head a {
@@ -369,10 +372,7 @@
 	display: flex;
 	width: 100%;
 }
-#widgetTmpl {
-	display: none;
-}
-.widget_disabled {
+#widgetTmpl, .widget_disabled {
 	display: none;
 }
 .bg_red .widget_disabled {

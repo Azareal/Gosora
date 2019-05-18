@@ -129,11 +129,11 @@
 .ct-series-a .ct-bar, .ct-series-a .ct-line, .ct-series-a .ct-point, .ct-series-a .ct-slice-donut {
     stroke: hsl(359,98%,43%) !important;
 }
-
-#widgetTmpl {
-	display: none;
+.spamSelector + .timeRangeSelector {
+	margin-left: 8px;
 }
-.widget_disabled {
+
+#widgetTmpl, .widget_disabled {
 	display: none;
 }
 .bg_red .widget_disabled {

@@ -172,6 +172,10 @@ button, .formbutton, .panel_right_button:not(.has_inner_button), #panel_users .p
     color: rgb(200,200,200);
 }*/
 
+.spamSelector + .timeRangeSelector {
+	margin-left: 8px;
+}
+
 .colstack_graph_holder {
 	background-color: #444444;
 	border-radius: 3px;
