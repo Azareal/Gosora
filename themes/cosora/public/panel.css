@@ -344,7 +344,7 @@
     transform: translate(-100%) rotate(-45deg);
 	white-space: nowrap;
 }*/
-.timeRangeSelector {
+.analytics .colstack_head select {
 	margin-top: -5px;
 }
 .colstack_graph_holder + .rowlist {

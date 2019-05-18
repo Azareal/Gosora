@@ -1037,8 +1037,6 @@ func AnalyticsLanguages(w http.ResponseWriter, r *http.Request, user c.User) c.R
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_analytics_right", "analytics", "panel_analytics_langs", pi})
 }
 
-var spamDomains = []string{"porn", "sexy"}
-
 func AnalyticsReferrers(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	basePage, ferr := buildBasePage(w, r, &user, "analytics", "analytics")
 	if ferr != nil {
@@ -1060,7 +1058,7 @@ func AnalyticsReferrers(w http.ResponseWriter, r *http.Request, user c.User) c.R
 	showSpam := r.FormValue("spam") == "1"
 
 	var isSpammy = func(domain string) bool {
-		for _, substr := range spamDomains {
+		for _, substr := range c.SpammyDomainBits {
 			if strings.Contains(domain, substr) {
 				return true
 			}

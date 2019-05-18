@@ -48,6 +48,9 @@ var ExternalSites = map[string]string{
 	"YT": "https://www.youtube.com/",
 }
 
+// TODO: Make this more customisable
+var SpammyDomainBits = []string{"porn", "sexy", "lesbian", "acup"}
+
 type StringList []string
 
 // ? - Should we allow users to upload .php or .go files? It could cause security issues. We could store them with a mangled extension to render them inert
