@@ -12,7 +12,7 @@ body {
 /* Patch for Edge, until they fix emojis in arial x.x */
 @supports (-ms-ime-align:auto) { .user_content { font-family: Segoe UI Emoji, arial; } }
 
-ul {
+#main_menu {
 	padding-left: 0px;
 	padding-right: 0px;
 	height: 36px;
@@ -21,16 +21,17 @@ ul {
 	background-color: rgb(252,252,252);
 	margin-bottom: 12px;
 }
-li {
+.menu_left, .menu_right {
 	height: 35px;
 	padding-left: 10px;
 	padding-top: 8px;
 	padding-bottom: 8px;
+	padding-right: 10px;
 	background: white;
 	border-bottom: 1px solid hsl(0, 0%, 80%);
 }
-li:hover { background: rgb(252,252,252); }
-li a {
+.menu_left:hover, .menu_right:hover { background: rgb(252,252,252); }
+.menu_left a, .menu_right a {
 	text-decoration: none;
 	color: black;
 	font-size: 17px;
@@ -38,12 +39,10 @@ li a {
 .menu_left {
 	float: left;
 	border-right: 1px solid hsl(0, 0%, 80%);
-	padding-right: 10px;
 }
 .menu_right {
 	float: right;
 	border-left: 1px solid hsl(0, 0%, 80%);
-	padding-right: 10px;
 }
 #menu_overview {
 	background: none;

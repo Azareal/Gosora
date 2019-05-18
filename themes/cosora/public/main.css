@@ -161,7 +161,7 @@ li {
     margin-right: 3px;
 }
 
-ul {
+#main_menu {
 	display: flex;
 	list-style-type: none;
 	padding: 0px;

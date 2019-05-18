@@ -39,7 +39,7 @@ body {
 	padding-bottom: 5px;
 }
 
-ul {
+#main_menu {
 	list-style-type: none;
 	background-color: var(--main-block-color);
 	border-bottom: 1px solid var(--main-background-color);
@@ -49,28 +49,26 @@ ul {
 	height: 41px;
 }
 
-li {
+.menu_left, .menu_right li {
 	float: left;
 	height: 29.5px;
 	padding-top: 12px;
 	margin: 0;
 }
-
 .menu_left {
 	margin-right: 10px;
 }
-
 .menu_right {
 	float: right;
 }
 
-#menu_overview {
+#main_menu #menu_overview {
 	margin-right: 13px;
 	margin-left: 10px;
 	font-size: 16px;
 }
 
-.menu_left:not(#menu_overview) {
+#main_menu .menu_left:not(#menu_overview) {
 	font-size: 15px;
 	padding-top: 13px;
 }
@@ -78,12 +76,10 @@ li {
 .alert_bell {
 	float: right;
 }
-
 .menu_alerts {
 	float: right;
 	padding-top: 14px;
 }
-
 .alert_counter {
 	background-color: rgb(200,0,0);
 	border-radius: 2px;
@@ -93,7 +89,6 @@ li {
 	position: relative;
 	top: -1px;
 }
-
 .alert_aftercounter {
 	float: right;
 	margin-right: 4px;
@@ -1045,7 +1040,7 @@ blockquote:first-child {
 }
 
 @media(max-width: 830px) {
-	ul {
+	#main_menu {
 		padding-left: 10px;
 		padding-right: 0px;
 		height: 35px;
@@ -1125,7 +1120,7 @@ blockquote:first-child {
 	}
 
 	@media(min-width: 400px) {
-		ul {
+		#main_menu {
 			height: 40px;
 		}
 		#menu_overview {
@@ -1204,7 +1199,7 @@ blockquote:first-child {
 }
 
 @media(max-width: 324px) {
-	ul {
+	#main_menu {
 		padding-left: 5px;
 	}
 }

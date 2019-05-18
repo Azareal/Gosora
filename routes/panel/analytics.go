@@ -608,7 +608,7 @@ func AnalyticsActiveMemory(w http.ResponseWriter, r *http.Request, user c.User) 
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_analytics_right", "analytics", "panel_analytics_active_memory", pi})
 }
 
-func analyticsRowsToNameMap(rows *sql.Rows) (map[string]int, error) {
+func analyticsRowsToRefMap(rows *sql.Rows) (map[string]int, error) {
 	nameMap := make(map[string]int)
 	defer rows.Close()
 	for rows.Next() {
@@ -812,10 +812,23 @@ func AnalyticsRoutes(w http.ResponseWriter, r *http.Request, user c.User) c.Rout
 	}
 	ovList := analyticsVMapToOVList(vMap)
 
+	ex := strings.Split(r.FormValue("ex"), ",")
+	var inEx = func(name string) bool {
+		for _, e := range ex {
+			if e == name {
+				return true
+			}
+		}
+		return false
+	}
+
 	var vList [][]int64
 	var legendList []string
 	var i int
 	for _, ovitem := range ovList {
+		if inEx(ovitem.name) {
+			continue
+		}
 		var viewList []int64
 		for _, value := range revLabelList {
 			viewList = append(viewList, ovitem.viewMap[value])
@@ -833,6 +846,9 @@ func AnalyticsRoutes(w http.ResponseWriter, r *http.Request, user c.User) c.Rout
 	// TODO: Sort this slice
 	var routeItems []c.PanelAnalyticsRoutesItem
 	for route, count := range routeMap {
+		if inEx(route) {
+			continue
+		}
 		routeItems = append(routeItems, c.PanelAnalyticsRoutesItem{
 			Route: route,
 			Count: count,
@@ -1051,7 +1067,7 @@ func AnalyticsReferrers(w http.ResponseWriter, r *http.Request, user c.User) c.R
 	if err != nil && err != sql.ErrNoRows {
 		return c.InternalError(err, w, r)
 	}
-	refMap, err := analyticsRowsToNameMap(rows)
+	refMap, err := analyticsRowsToRefMap(rows)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}

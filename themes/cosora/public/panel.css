@@ -314,10 +314,10 @@
 .ct-series-a .ct-bar, .ct-series-a .ct-line, .ct-series-a .ct-point, .ct-series-a .ct-slice-donut {
     stroke: hsl(359,98%,53%) !important;
 }
-.ct-point {
+.ct-series-a.ct-point {
 	stroke: hsl(359,98%,23%) !important;
 }
-.ct-point:hover {
+.ct-series-a.ct-point:hover {
 	stroke: hsl(359,98%,30%) !important;
 }
 /*.ct-chart-line {
@@ -344,6 +344,10 @@
     transform: translate(-100%) rotate(-45deg);
 	white-space: nowrap;
 }*/
+.ct-legend {
+	margin-top: 0px;
+	margin-bottom: 0px;
+}
 .analytics .colstack_head select {
 	margin-top: -5px;
 }

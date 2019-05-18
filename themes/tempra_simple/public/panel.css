@@ -173,6 +173,10 @@
 	background-color: white;
 	border: 1px solid hsl(0,0%,85%);
 }
+.ct-legend {
+	margin-top: 0px;
+	margin-bottom: 0px;
+}
 .spamSelector + .timeRangeSelector {
 	margin-left: 8px;
 }

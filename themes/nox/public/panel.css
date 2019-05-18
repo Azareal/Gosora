@@ -203,6 +203,9 @@ button, .formbutton, .panel_right_button:not(.has_inner_button), #panel_users .p
 .colstack_graph_holder .ct-grid {
 	stroke: rgb(125,125,125);
 }
+.ct-legend {
+	margin-left: 0px;
+}
 
 #panel_setting .formlabel {
 	display: none;
