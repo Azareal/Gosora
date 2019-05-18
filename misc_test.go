@@ -537,6 +537,9 @@ func TestForumStore(t *testing.T) {
 		c.InitPlugins()
 	}
 
+	expect(t, c.Forums.GlobalCount() == 2, "The forumstore global count should be 2")
+	//expect(t, c.Forums.Length() == 2, "The forumstore length should be 2")
+
 	_, err := c.Forums.Get(-1)
 	recordMustNotExist(t, err, "FID #-1 shouldn't exist")
 	_, err = c.Forums.Get(0)
@@ -560,22 +563,22 @@ func TestForumStore(t *testing.T) {
 	expectDesc = "A place for general discussions which don't fit elsewhere"
 	expect(t, forum.Desc == expectDesc, fmt.Sprintf("The forum description should be '%s' not '%s'", expectDesc, forum.Desc))
 
-	ok := c.Forums.Exists(-1)
-	expect(t, !ok, "FID #-1 shouldn't exist")
-	ok = c.Forums.Exists(0)
-	expect(t, !ok, "FID #0 shouldn't exist")
-	ok = c.Forums.Exists(1)
-	expect(t, ok, "FID #1 should exist")
-	ok = c.Forums.Exists(2)
-	expect(t, ok, "FID #2 should exist")
-	ok = c.Forums.Exists(3)
-	expect(t, !ok, "FID #3 shouldn't exist")
+	expect(t, !c.Forums.Exists(-1), "FID #-1 shouldn't exist")
+	expect(t, !c.Forums.Exists(0), "FID #0 shouldn't exist")
+	expect(t, c.Forums.Exists(1), "FID #1 should exist")
+	expect(t, c.Forums.Exists(2), "FID #2 should exist")
+	expect(t, !c.Forums.Exists(3), "FID #3 shouldn't exist")
+
+	_, err = c.Forums.Create("", "", true, "all")
+	expect(t, err != nil, "A forum shouldn't be successfully created, if it has a blank name")
 
 	fid, err := c.Forums.Create("Test Forum", "", true, "all")
 	expectNilErr(t, err)
 	expect(t, fid == 3, "The first forum we create should have an ID of 3")
-	ok = c.Forums.Exists(3)
-	expect(t, ok, "FID #2 should exist")
+	expect(t, c.Forums.Exists(3), "FID #2 should exist")
+
+	expect(t, c.Forums.GlobalCount() == 3, "The forumstore global count should be 3")
+	//expect(t, c.Forums.Length() == 3, "The forumstore length should be 3")
 
 	forum, err = c.Forums.Get(3)
 	recordMustExist(t, err, "Couldn't find FID #3")
@@ -586,8 +589,18 @@ func TestForumStore(t *testing.T) {
 	expect(t, forum.Desc == "", fmt.Sprintf("The forum description should be blank not '%s'", forum.Desc))
 
 	// TODO: More forum creation tests
-	// TODO: Test forum deletion
+
+	expectNilErr(t, c.Forums.Delete(3))
+	expect(t, forum.ID == 3, fmt.Sprintf("forum pointer shenanigans"))
+	expect(t, c.Forums.GlobalCount() == 2, "The forumstore global count should be 2")
+	//expect(t, c.Forums.Length() == 2, "The forumstore length should be 2")
+	expect(t, !c.Forums.Exists(3), "FID #3 shouldn't exist after being deleted")
+	_, err = c.Forums.Get(3)
+	recordMustNotExist(t, err, "FID #3 shouldn't exist after being deleted")
+
+	// TODO: Test deleting the reports forum
 	// TODO: Test forum update
+	// TODO: Other forumstore stuff and forumcache?
 }
 
 // TODO: Implement this

@@ -1,7 +1,7 @@
 /*
 *
 *	Gosora Forum Store
-* 	Copyright Azareal 2017 - 2019
+* 	Copyright Azareal 2017 - 2020
 *
  */
 package common
@@ -20,6 +20,7 @@ import (
 var forumCreateMutex sync.Mutex
 var forumPerms map[int]map[int]*ForumPerms // [gid][fid]*ForumPerms // TODO: Add an abstraction around this and make it more thread-safe
 var Forums ForumStore
+var ErrBlankName = errors.New("The name must not be blank")
 
 // ForumStore is an interface for accessing the forums and the metadata stored on them
 type ForumStore interface {
@@ -67,7 +68,7 @@ type MemoryForumStore struct {
 	updateCache  *sql.Stmt
 	addTopics    *sql.Stmt
 	removeTopics *sql.Stmt
-	updateOrder *sql.Stmt
+	updateOrder  *sql.Stmt
 }
 
 // NewMemoryForumStore gives you a new instance of MemoryForumStore
@@ -83,7 +84,7 @@ func NewMemoryForumStore() (*MemoryForumStore, error) {
 		updateCache:  acc.Update("forums").Set("lastTopicID = ?, lastReplyerID = ?").Where("fid = ?").Prepare(),
 		addTopics:    acc.Update("forums").Set("topicCount = topicCount + ?").Where("fid = ?").Prepare(),
 		removeTopics: acc.Update("forums").Set("topicCount = topicCount - ?").Where("fid = ?").Prepare(),
-		updateOrder: acc.Update("forums").Set("order = ?").Where("fid = ?").Prepare(),
+		updateOrder:  acc.Update("forums").Set("order = ?").Where("fid = ?").Prepare(),
 	}, acc.FirstError()
 }
 
@@ -164,21 +165,28 @@ func (mfs *MemoryForumStore) CacheGet(id int) (*Forum, error) {
 
 func (mfs *MemoryForumStore) Get(id int) (*Forum, error) {
 	fint, ok := mfs.forums.Load(id)
-	if !ok || fint.(*Forum).Name == "" {
-		var forum = &Forum{ID: id}
-		err := mfs.get.QueryRow(id).Scan(&forum.Name, &forum.Desc, &forum.Active, &forum.Order, &forum.Preset, &forum.ParentID, &forum.ParentType, &forum.TopicCount, &forum.LastTopicID, &forum.LastReplyerID)
-		if err != nil {
-			return forum, err
+	if ok {
+		forum := fint.(*Forum)
+		if forum.Name == "" {
+			return nil, ErrNoRows
 		}
+		return forum, nil
+	}
 
-		forum.Link = BuildForumURL(NameToSlug(forum.Name), forum.ID)
-		forum.LastTopic = Topics.DirtyGet(forum.LastTopicID)
-		forum.LastReplyer = Users.DirtyGet(forum.LastReplyerID)
-
-		mfs.CacheSet(forum)
+	var forum = &Forum{ID: id}
+	err := mfs.get.QueryRow(id).Scan(&forum.Name, &forum.Desc, &forum.Active, &forum.Order, &forum.Preset, &forum.ParentID, &forum.ParentType, &forum.TopicCount, &forum.LastTopicID, &forum.LastReplyerID)
+	if err != nil {
 		return forum, err
 	}
-	return fint.(*Forum), nil
+	if forum.Name == "" {
+		return nil, ErrNoRows
+	}
+	forum.Link = BuildForumURL(NameToSlug(forum.Name), forum.ID)
+	forum.LastTopic = Topics.DirtyGet(forum.LastTopicID)
+	forum.LastReplyer = Users.DirtyGet(forum.LastReplyerID)
+
+	mfs.CacheSet(forum)
+	return forum, err
 }
 
 func (mfs *MemoryForumStore) BypassGet(id int) (*Forum, error) {
@@ -274,7 +282,10 @@ func (mfs *MemoryForumStore) GetFirstChild(parentID int, parentType string) (*Fo
 // TODO: Add a query for this rather than hitting cache
 func (mfs *MemoryForumStore) Exists(id int) bool {
 	forum, ok := mfs.forums.Load(id)
-	return ok && forum.(*Forum).Name != ""
+	if !ok {
+		return false
+	}
+	return forum.(*Forum).Name != ""
 }
 
 // TODO: Batch deletions with name blanking? Is this necessary?
@@ -284,12 +295,12 @@ func (mfs *MemoryForumStore) CacheDelete(id int) {
 }
 
 // TODO: Add a hook to allow plugin_guilds to detect when one of it's forums has just been deleted?
-func (mfs *MemoryForumStore) Delete(id int) error {
+func (s *MemoryForumStore) Delete(id int) error {
 	if id == ReportForumID {
 		return errors.New("You cannot delete the Reports forum")
 	}
-	_, err := mfs.delete.Exec(id)
-	mfs.CacheDelete(id)
+	_, err := s.delete.Exec(id)
+	s.CacheDelete(id)
 	return err
 }
 
@@ -329,6 +340,9 @@ func (mfs *MemoryForumStore) UpdateLastTopic(tid int, uid int, fid int) error {
 }
 
 func (mfs *MemoryForumStore) Create(forumName string, forumDesc string, active bool, preset string) (int, error) {
+	if forumName == "" {
+		return 0, ErrBlankName
+	}
 	forumCreateMutex.Lock()
 	res, err := mfs.create.Exec(forumName, forumDesc, active, preset)
 	if err != nil {
