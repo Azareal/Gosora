@@ -49,7 +49,7 @@ var ExternalSites = map[string]string{
 }
 
 // TODO: Make this more customisable
-var SpammyDomainBits = []string{"porn", "sexy", "lesbian", "acup"}
+var SpammyDomainBits = []string{"porn", "sex", "lesbian", "acup", "nude", "milf", "tits", "vape", "busty", "kink"}
 
 type StringList []string
 
