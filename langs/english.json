@@ -889,6 +889,9 @@
 
 		"panel_statistics_spam_hide":"Hide Spam",
 		"panel_statistics_spam_show":"Show Spam",
+		"panel_statistics_memory_type_total":"Total",
+		"panel_statistics_memory_type_stack":"Stack",
+		"panel_statistics_memory_type_heap":"Heap",
 
 		"panel_statistics_time_range_one_year":"1 year",
 		"panel_statistics_time_range_three_months":"3 months",

@@ -64,17 +64,40 @@ func afterDBInit() (err error) {
 				count = 0
 			}
 		}
-
-		// TODO: Use the same cached data for both the topic list and the topic fetches...
-		tList, _, _, err := c.TopicList.GetList(1, "", nil)
+		group, err := c.Groups.Get(c.GuestUser.Group)
 		if err != nil {
 			return err
 		}
-		if count > len(tList) {
-			count = len(tList)
+
+		// TODO: Use the same cached data for both the topic list and the topic fetches...
+		tList, _, _, err := c.TopicList.GetListByCanSee(group.CanSee, 1, "", nil)
+		if err != nil {
+			return err
+		}
+		ctList := make([]*c.TopicsRow, len(tList))
+		copy(ctList, tList)
+
+		tList, _, _, err = c.TopicList.GetListByCanSee(group.CanSee, 2, "", nil)
+		if err != nil {
+			return err
+		}
+		for _, tItem := range tList {
+			ctList = append(ctList, tItem)
+		}
+
+		tList, _, _, err = c.TopicList.GetListByCanSee(group.CanSee, 3, "", nil)
+		if err != nil {
+			return err
+		}
+		for _, tItem := range tList {
+			ctList = append(ctList, tItem)
+		}
+
+		if count > len(ctList) {
+			count = len(ctList)
 		}
 		for i := 0; i < count; i++ {
-			_, _ = c.Topics.Get(tList[i].ID)
+			_, _ = c.Topics.Get(ctList[i].ID)
 		}
 	}
 

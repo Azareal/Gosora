@@ -252,7 +252,7 @@ func compileCommons(c *tmpl.CTemplateSet, header *Header, header2 *Header, out T
 	var replyList []*ReplyUser
 	reply := Reply{1, 1, "Yo!", 1, Config.DefaultGroup, now, 0, 0, 1, "::1", true, 1, 1, ""}
 	ru := &ReplyUser{ClassName: "", Reply: reply, CreatedByName: "Alice", Avatar: avatar, URLPrefix: "", URLName: "", Level: 0, Attachments: miniAttach}
-	ru.Init(topic.ID)
+	ru.Init()
 	replyList = append(replyList, ru)
 	tpage := TopicPage{htitle("Topic Name"), replyList, topic, &Forum{ID: 1, Name: "Hahaha"}, poll, Paginator{[]int{1}, 1, 1}}
 	tpage.Forum.Link = BuildForumURL(NameToSlug(tpage.Forum.Name), tpage.Forum.ID)
@@ -268,19 +268,19 @@ func compileTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName string
 	header, header2, _ := tmplInitHeaders(user, user2, user3)
 	now := time.Now()
 
-	poll := Poll{ID: 1, Type: 0, Options: map[int]string{0: "Nothing", 1: "Something"}, Results: map[int]int{0: 5, 1: 2}, QuickOptions: []PollOption{
+	/*poll := Poll{ID: 1, Type: 0, Options: map[int]string{0: "Nothing", 1: "Something"}, Results: map[int]int{0: 5, 1: 2}, QuickOptions: []PollOption{
 		PollOption{0, "Nothing"},
 		PollOption{1, "Something"},
-	}, VoteCount: 7}
-	avatar, microAvatar := BuildAvatar(62, "")
+	}, VoteCount: 7}*/
+	//avatar, microAvatar := BuildAvatar(62, "")
 	miniAttach := []*MiniAttachment{&MiniAttachment{Path: "/"}}
 	var replyList []*ReplyUser
-	topic := TopicUser{1, "blah", "Blah", "Hey there!", 0, false, false, now, now, 1, 1, 0, "", "127.0.0.1", 1, 0, 1, 0, "classname", poll.ID, "weird-data", BuildProfileURL("fake-user", 62), "Fake User", Config.DefaultGroup, avatar, microAvatar, 0, "", "", "", "", "", 58, false, miniAttach, nil}
+	//topic := TopicUser{1, "blah", "Blah", "Hey there!", 0, false, false, now, now, 1, 1, 0, "", "127.0.0.1", 1, 0, 1, 0, "classname", poll.ID, "weird-data", BuildProfileURL("fake-user", 62), "Fake User", Config.DefaultGroup, avatar, microAvatar, 0, "", "", "", "", "", 58, false, miniAttach, nil}
 	// TODO: Do we want the UID on this to be 0?
-	avatar, microAvatar = BuildAvatar(0, "")
+	//avatar, microAvatar = BuildAvatar(0, "")
 	reply := Reply{1, 1, "Yo!", 1, Config.DefaultGroup, now, 0, 0, 1, "::1", true, 1, 1, ""}
-	ru := &ReplyUser{ClassName: "", Reply: reply, CreatedByName: "Alice", Avatar: avatar, URLPrefix: "", URLName: "", Level: 0, Attachments: miniAttach}
-	ru.Init(topic.ID)
+	ru := &ReplyUser{ClassName: "", Reply: reply, CreatedByName: "Alice", Avatar: "", URLPrefix: "", URLName: "", Level: 0, Attachments: miniAttach}
+	ru.Init()
 	replyList = append(replyList, ru)
 
 	// Convienience function to save a line here and there
@@ -477,7 +477,7 @@ func compileJSTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName stri
 	avatar, microAvatar = BuildAvatar(0, "")
 	reply := Reply{1, 1, "Yo!", 1, Config.DefaultGroup, now, 0, 0, 1, "::1", true, 1, 1, ""}
 	ru := &ReplyUser{ClassName: "", Reply: reply, CreatedByName: "Alice", Avatar: avatar, URLPrefix: "", URLName: "", Level: 0, Attachments: miniAttach}
-	ru.Init(topic.ID)
+	ru.Init()
 	replyList = append(replyList, ru)
 
 	varList = make(map[string]tmpl.VarItem)

@@ -2,6 +2,7 @@ package common
 
 import (
 	//"log"
+	"database/sql"
 	"strconv"
 	"sync"
 
@@ -308,7 +309,16 @@ func (tList *DefaultTopicList) getList(page int, orderby string, argList []inter
 		//log.Print("rcap: ", rcap)
 		//log.Print("topic.PostCount: ", topic.PostCount)
 		//log.Print("topic.PostCount == 2 && rlen < rcap: ", topic.PostCount == 2 && rlen < rcap)
-		if topic.PostCount == 2 && rlen < rcap {
+
+		// Avoid the extra queries on topic list pages, if we already have what we want...
+		var hRids = false
+		if tcache != nil {
+			if t, err := tcache.Get(topic.ID); err == nil {
+				hRids = len(t.Rids) != 0
+			}
+		}
+
+		if topic.PostCount == 2 && rlen < rcap && !hRids && page < 5 {
 			rids, err := GetRidsForTopic(topic.ID, 0)
 			if err != nil {
 				return nil, Paginator{nil, 1, 1}, err
@@ -324,7 +334,9 @@ func (tList *DefaultTopicList) getList(page int, orderby string, argList []inter
 		}
 
 		if tcache != nil {
-			_ = tcache.Set(topic.Topic())
+			if _, err := tcache.Get(topic.ID); err == sql.ErrNoRows {
+				_ = tcache.Set(topic.Topic())
+			}
 		}
 	}
 	err = rows.Err()

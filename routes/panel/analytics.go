@@ -158,7 +158,7 @@ func analyticsRowsToAverageMap(rows *sql.Rows, labelList []int64, avgMap map[int
 	return avgMap, rows.Err()
 }
 
-func analyticsRowsToAverageMap2(rows *sql.Rows, labelList []int64, avgMap map[int64]int64) (map[int64]int64, error) {
+func analyticsRowsToAverageMap2(rows *sql.Rows, labelList []int64, avgMap map[int64]int64, typ int) (map[int64]int64, error) {
 	defer rows.Close()
 	for rows.Next() {
 		var stack, heap int64
@@ -174,6 +174,11 @@ func analyticsRowsToAverageMap2(rows *sql.Rows, labelList []int64, avgMap map[in
 			log.Print("heap: ", heap)
 			log.Print("createdAt: ", createdAt)
 			log.Print("unixCreatedAt: ", unixCreatedAt)
+		}
+		if typ == 1 {
+			heap = 0
+		} else if typ == 2 {
+			stack = 0
 		}
 		var pAvgMap = make(map[int64]pAvg)
 		for _, value := range labelList {
@@ -589,7 +594,17 @@ func AnalyticsActiveMemory(w http.ResponseWriter, r *http.Request, user c.User) 
 	if err != nil && err != sql.ErrNoRows {
 		return c.InternalError(err, w, r)
 	}
-	avgMap, err = analyticsRowsToAverageMap2(rows, labelList, avgMap)
+
+	var typ int
+	switch r.FormValue("mtype") {
+	case "1":
+		typ = 1
+	case "2":
+		typ = 2
+	default:
+		typ = 0
+	}
+	avgMap, err = analyticsRowsToAverageMap2(rows, labelList, avgMap, typ)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -604,7 +619,7 @@ func AnalyticsActiveMemory(w http.ResponseWriter, r *http.Request, user c.User) 
 	}
 	graph := c.PanelTimeGraph{Series: [][]int64{avgList}, Labels: labelList}
 	c.DebugLogf("graph: %+v\n", graph)
-	pi := c.PanelAnalyticsStdUnit{graph, avgItems, timeRange.Range, timeRange.Unit, "time"}
+	pi := c.PanelAnalyticsActiveMemory{graph, avgItems, timeRange.Range, timeRange.Unit, "time", typ}
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_analytics_right", "analytics", "panel_analytics_active_memory", pi})
 }
 
@@ -1012,19 +1027,35 @@ func AnalyticsLanguages(w http.ResponseWriter, r *http.Request, user c.User) c.R
 	}
 	ovList := analyticsVMapToOVList(vMap)
 
+	ex := strings.Split(r.FormValue("ex"), ",")
+	var inEx = func(name string) bool {
+		for _, e := range ex {
+			if e == name {
+				return true
+			}
+		}
+		return false
+	}
+
 	var vList [][]int64
 	var legendList []string
 	var i int
 	for _, ovitem := range ovList {
+		if inEx(ovitem.name) {
+			continue
+		}
+		lName, ok := phrases.GetHumanLangPhrase(ovitem.name)
+		if !ok {
+			lName = ovitem.name
+		}
+		if inEx(lName) {
+			continue
+		}
 		var viewList []int64
 		for _, value := range revLabelList {
 			viewList = append(viewList, ovitem.viewMap[value])
 		}
 		vList = append(vList, viewList)
-		lName, ok := phrases.GetHumanLangPhrase(ovitem.name)
-		if !ok {
-			lName = ovitem.name
-		}
 		legendList = append(legendList, lName)
 		if i >= 6 {
 			break
@@ -1038,9 +1069,15 @@ func AnalyticsLanguages(w http.ResponseWriter, r *http.Request, user c.User) c.R
 	// TODO: Sort this slice
 	var langItems []c.PanelAnalyticsAgentsItem
 	for lang, count := range langMap {
+		if inEx(lang) {
+			continue
+		}
 		lLang, ok := phrases.GetHumanLangPhrase(lang)
 		if !ok {
 			lLang = lang
+		}
+		if inEx(lLang) {
+			continue
 		}
 		langItems = append(langItems, c.PanelAnalyticsAgentsItem{
 			Agent:         lang,

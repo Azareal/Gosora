@@ -357,7 +357,7 @@
 .analytics .colstack_head h1 {
 	margin-top: 2px;
 }
-.spamSelector + .timeRangeSelector {
+select + .timeRangeSelector {
 	margin-left: 8px;
 }
 

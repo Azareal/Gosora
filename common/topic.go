@@ -422,9 +422,8 @@ func GetRidsForTopic(tid int, offset int) (rids []int, err error) {
 	return rids, rows.Err()
 }
 
-func (ru *ReplyUser) Init(parentID int) error {
+func (ru *ReplyUser) Init() error {
 	ru.UserLink = BuildProfileURL(NameToSlug(ru.CreatedByName), ru.CreatedBy)
-	ru.ParentID = parentID
 	ru.ContentLines = strings.Count(ru.Content, "\n")
 
 	postGroup, err := Groups.Get(ru.Group)
@@ -516,7 +515,7 @@ func (topic *TopicUser) Replies(offset int, pFrag int, user *User) (rlist []*Rep
 		//log.Print("reply cached serve")
 		reply = &ReplyUser{ClassName: "", Reply: *re, CreatedByName: ruser.Name, Avatar: ruser.Avatar, URLPrefix: ruser.URLPrefix, URLName: ruser.URLName, Level: ruser.Level}
 
-		err := reply.Init(topic.ID)
+		err := reply.Init()
 		if err != nil {
 			return nil, "", err
 		}
@@ -554,7 +553,7 @@ func (topic *TopicUser) Replies(offset int, pFrag int, user *User) (rlist []*Rep
 				return nil, "", err
 			}
 
-			err = reply.Init(topic.ID)
+			err = reply.Init()
 			if err != nil {
 				return nil, "", err
 			}
@@ -596,8 +595,8 @@ func (topic *TopicUser) Replies(offset int, pFrag int, user *User) (rlist []*Rep
 		}
 		defer rows.Close()
 
+		var likeRid int
 		for rows.Next() {
-			var likeRid int
 			err := rows.Scan(&likeRid)
 			if err != nil {
 				return nil, "", err

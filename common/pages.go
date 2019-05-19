@@ -307,6 +307,14 @@ type PanelAnalyticsStdUnit struct {
 	Unit      string
 	TimeType  string
 }
+type PanelAnalyticsActiveMemory struct {
+	Graph     PanelTimeGraph
+	ViewItems []PanelAnalyticsItemUnit
+	TimeRange string
+	Unit      string
+	TimeType  string
+	MemType   int
+}
 
 type PanelStats struct {
 	Users       int

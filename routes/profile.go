@@ -79,8 +79,8 @@ func ViewProfile(w http.ResponseWriter, r *http.Request, user c.User, header *c.
 
 		replyLiked := false
 		replyLikeCount := 0
-		ru := &c.ReplyUser{Reply: c.Reply{rid, 0, replyContent, replyCreatedBy, replyGroup, replyCreatedAt, replyLastEdit, replyLastEditBy, 0, "", replyLiked, replyLikeCount, 0, ""}, ContentHtml: c.ParseMessage(replyContent, 0, ""), CreatedByName: replyCreatedByName, Avatar: replyAvatar, Level: 0}
-		ru.Init(puser.ID)
+		ru := &c.ReplyUser{Reply: c.Reply{rid, puser.ID, replyContent, replyCreatedBy, replyGroup, replyCreatedAt, replyLastEdit, replyLastEditBy, 0, "", replyLiked, replyLikeCount, 0, ""}, ContentHtml: c.ParseMessage(replyContent, 0, ""), CreatedByName: replyCreatedByName, Avatar: replyAvatar, Level: 0}
+		ru.Init()
 
 		group, err := c.Groups.Get(ru.Group)
 		if err != nil {
