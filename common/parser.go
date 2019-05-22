@@ -2,6 +2,7 @@ package common
 
 import (
 	"bytes"
+	//"fmt"
 	"net/url"
 	"regexp"
 	"strconv"
@@ -468,7 +469,7 @@ func AddHashLinkType(prefix string, handler func(*strings.Builder, string, *int)
 	hashLinkTypes[prefix[0]] = prefix
 }
 
-func writeURL(sb *strings.Builder, url string, label string) {
+func WriteURL(sb *strings.Builder, url string, label string) {
 	sb.Write(URLOpen)
 	sb.WriteString(url)
 	sb.Write(URLOpen2)
@@ -487,7 +488,7 @@ var hashLinkMap = map[string]func(*strings.Builder, string, *int){
 			sb.Write(InvalidTopic)
 			return
 		}
-		writeURL(sb, BuildTopicURL("", tid), "#tid-"+strconv.Itoa(tid))
+		WriteURL(sb, BuildTopicURL("", tid), "#tid-"+strconv.Itoa(tid))
 	},
 	"rid-": func(sb *strings.Builder, msg string, i *int) {
 		rid, intLen := CoerceIntString(msg[*i:])
@@ -498,7 +499,8 @@ var hashLinkMap = map[string]func(*strings.Builder, string, *int){
 			sb.Write(InvalidTopic)
 			return
 		}
-		writeURL(sb, BuildTopicURL("", topic.ID), "#rid-"+strconv.Itoa(rid))
+		// TODO: Send the user to the right page and post not just the right topic?
+		WriteURL(sb, BuildTopicURL("", topic.ID), "#rid-"+strconv.Itoa(rid))
 	},
 	"fid-": func(sb *strings.Builder, msg string, i *int) {
 		fid, intLen := CoerceIntString(msg[*i:])
@@ -508,7 +510,7 @@ var hashLinkMap = map[string]func(*strings.Builder, string, *int){
 			sb.Write(InvalidForum)
 			return
 		}
-		writeURL(sb, BuildForumURL("", fid), "#fid-"+strconv.Itoa(fid))
+		WriteURL(sb, BuildForumURL("", fid), "#fid-"+strconv.Itoa(fid))
 	},
 	// TODO: Forum Shortcode Link
 }
@@ -536,28 +538,50 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 	for _, filter := range wordFilters {
 		msg = strings.Replace(msg, filter.Find, filter.Replacement, -1)
 	}
-	msg += "          "
 
 	// Search for URLs, mentions and hashlinks in the messages...
 	var sb strings.Builder
 	var lastItem = 0
 	var i = 0
-	for ; len(msg) > (i + 1); i++ {
-		if (i == 0 && (msg[0] > 32)) || ((msg[i] < 33) && (msg[i+1] > 32)) {
+	//var c bool
+	//fmt.Println("msg:", "'"+msg+"'")
+	for ; len(msg) > i; i++ {
+		//fmt.Printf("msg[%d]: %s\n",i,string(msg[i]))
+		if (i == 0 && (msg[0] > 32)) || (len(msg) > (i+1) && (msg[i] < 33) && (msg[i+1] > 32)) {
+			//fmt.Println("s1")
 			if (i != 0) || msg[i] < 33 {
 				i++
 			}
+			if len(msg) <= (i+1) {
+				break
+			}
+			//fmt.Println("s2")
 			if msg[i] == '#' {
+				//fmt.Println("msg[i+1]:", msg[i+1])
+				//fmt.Println("string(msg[i+1]):", string(msg[i+1]))
 				hashType := hashLinkTypes[msg[i+1]]
 				if hashType == "" {
+					//fmt.Println("uh1")
+					sb.WriteString(msg[lastItem:i])
+					i++
+					lastItem = i
 					continue
 				}
-				if msg[i+1:len(hashType)+1] == hashType {
+				//fmt.Println("hashType:", hashType)
+				if len(msg) <= (i + len(hashType) + 1) {
 					sb.WriteString(msg[lastItem:i])
-					i += len(hashType) + 1
-					hashLinkMap[hashType](&sb, msg, &i)
 					lastItem = i
+					continue
 				}
+				if msg[i+1:i+len(hashType)+1] != hashType {
+					continue
+				}
+				
+				//fmt.Println("msg[lastItem:i]:", msg[lastItem:i])
+				sb.WriteString(msg[lastItem:i])
+				i += len(hashType) + 1
+				hashLinkMap[hashType](&sb, msg, &i)
+				lastItem = i
 				i--
 			} else if msg[i] == '@' {
 				sb.WriteString(msg[lastItem:i])
@@ -570,6 +594,7 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 				if err != nil {
 					sb.Write(InvalidProfile)
 					lastItem = i
+					i--
 					continue
 				}
 
@@ -583,17 +608,18 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 				lastItem = i
 				i--
 			} else if msg[i] == 'h' || msg[i] == 'f' || msg[i] == 'g' || msg[i] == '/' {
-				if msg[i+1] == 't' && msg[i+2] == 't' && msg[i+3] == 'p' {
-					if msg[i+4] == 's' && msg[i+5] == ':' && msg[i+6] == '/' {
+				//fmt.Println("s3")
+				if len(msg) > i+3 && msg[i+1] == 't' && msg[i+2] == 't' && msg[i+3] == 'p' {
+					if len(msg) > i+6 && msg[i+4] == 's' && msg[i+5] == ':' && msg[i+6] == '/' {
 						// Do nothing
-					} else if msg[i+4] == ':' && msg[i+5] == '/' {
+					} else if len(msg) > i+5 && msg[i+4] == ':' && msg[i+5] == '/' {
 						// Do nothing
 					} else {
 						continue
 					}
-				} else if msg[i+1] == 't' && msg[i+2] == 'p' && msg[i+3] == ':' && msg[i+4] == '/' {
+				} else if len(msg) > i+4 && msg[i+1] == 't' && msg[i+2] == 'p' && msg[i+3] == ':' && msg[i+4] == '/' {
 					// Do nothing
-				} else if msg[i+1] == 'i' && msg[i+2] == 't' && msg[i+3] == ':' && msg[i+4] == '/' {
+				} else if len(msg) > i+4 && msg[i+1] == 'i' && msg[i+2] == 't' && msg[i+3] == ':' && msg[i+4] == '/' {
 					// Do nothing
 				} else if msg[i+1] == '/' {
 					// Do nothing
@@ -601,20 +627,35 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 					continue
 				}
 
+				//fmt.Println("p1:",i)
 				sb.WriteString(msg[lastItem:i])
-				urlLen := PartialURLStringLen(msg[i:])
-				if msg[i+urlLen] > 32 { // space and invisibles
+				urlLen, ok := PartialURLStringLen(msg[i:])
+				if len(msg) < i+urlLen {
+					//fmt.Println("o1")
+					sb.Write(InvalidURL)
+					i += len(msg) - 1
+					lastItem = i
+					break
+				}
+				//fmt.Println("msg[i:i+urlLen]:", "'"+msg[i:i+urlLen]+"'")
+				if !ok {
+					//fmt.Printf("o2: i = %d; i+urlLen = %d\n",i,i+urlLen)
 					sb.Write(InvalidURL)
 					i += urlLen
+					lastItem = i
+					i--
 					continue
 				}
 
-				media, ok := parseMediaString(msg[i : i+urlLen])
+				media, ok := parseMediaString(msg[i:i+urlLen])
 				if !ok {
+					//fmt.Println("o3")
 					sb.Write(InvalidURL)
 					i += urlLen
+					lastItem = i
 					continue
 				}
+				//fmt.Println("p2")
 
 				var addImage = func(url string) {
 					sb.Write(imageOpen)
@@ -650,6 +691,7 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 					i += urlLen
 					continue
 				}
+				//fmt.Println("p3")
 
 				sb.Write(URLOpen)
 				sb.WriteString(msg[i : i+urlLen])
@@ -663,12 +705,19 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 		}
 	}
 	if lastItem != i && sb.Len() != 0 {
-		calclen := len(msg) - 10
+		/*calclen := len(msg)
 		if calclen <= lastItem {
 			calclen = lastItem
-		}
-		sb.WriteString(msg[lastItem:calclen])
+		}*/
+		//if i == len(msg) {
+			sb.WriteString(msg[lastItem:])
+		/*} else {
+			sb.WriteString(msg[lastItem:calclen])
+		}*/
+	}
+	if sb.Len() != 0 {
 		msg = sb.String()
+		//fmt.Println("sb.String():", "'"+sb.String()+"'")
 	}
 
 	msg = strings.Replace(msg, "\n", "<br>", -1)
@@ -680,23 +729,21 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 // ftp://, http://, https:// git://, //, mailto: (not a URL, just here for length comparison purposes)
 // TODO: Write a test for this
 func validateURLString(data string) bool {
-	datalen := len(data)
 	i := 0
-
-	if datalen >= 6 {
+	if len(data) >= 6 {
 		if data[0:6] == "ftp://" || data[0:6] == "git://" {
 			i = 6
-		} else if datalen >= 7 && data[0:7] == "http://" {
+		} else if len(data) >= 7 && data[0:7] == "http://" {
 			i = 7
-		} else if datalen >= 8 && data[0:8] == "https://" {
+		} else if len(data) >= 8 && data[0:8] == "https://" {
 			i = 8
 		}
-	} else if datalen >= 2 && data[0] == '/' && data[1] == '/' {
+	} else if len(data) >= 2 && data[0] == '/' && data[1] == '/' {
 		i = 2
 	}
 
 	// ? - There should only be one : and that's only if the URL is on a non-standard port. Same for ?s.
-	for ; datalen > i; i++ {
+	for ; len(data) > i; i++ {
 		if data[i] != '\\' && data[i] != '_' && data[i] != ':' && data[i] != '?' && data[i] != '&' && data[i] != '=' && data[i] != ';' && data[i] != '@' && data[i] != '#' && !(data[i] > 44 && data[i] < 58) && !(data[i] > 64 && data[i] < 91) && !(data[i] > 96 && data[i] < 123) {
 			return false
 		}
@@ -734,19 +781,17 @@ func validatedURLBytes(data []byte) (url []byte) {
 
 // TODO: Write a test for this
 func PartialURLString(data string) (url []byte) {
-	datalen := len(data)
 	i := 0
-	end := datalen - 1
-
-	if datalen >= 6 {
+	end := len(data) - 1
+	if len(data) >= 6 {
 		if data[0:6] == "ftp://" || data[0:6] == "git://" {
 			i = 6
-		} else if datalen >= 7 && data[0:7] == "http://" {
+		} else if len(data) >= 7 && data[0:7] == "http://" {
 			i = 7
-		} else if datalen >= 8 && data[0:8] == "https://" {
+		} else if len(data) >= 8 && data[0:8] == "https://" {
 			i = 8
 		}
-	} else if datalen >= 2 && data[0] == '/' && data[1] == '/' {
+	} else if len(data) >= 2 && data[0] == '/' && data[1] == '/' {
 		i = 2
 	}
 
@@ -762,32 +807,73 @@ func PartialURLString(data string) (url []byte) {
 }
 
 // TODO: Write a test for this
-func PartialURLStringLen(data string) int {
-	datalen := len(data)
+func PartialURLStringLen(data string) (int, bool) {
 	i := 0
-
-	if datalen >= 6 {
+	if len(data) >= 6 {
 		//log.Print(string(data[0:5]))
 		if data[0:6] == "ftp://" || data[0:6] == "git://" {
 			i = 6
-		} else if datalen >= 7 && data[0:7] == "http://" {
+		} else if len(data) >= 7 && data[0:7] == "http://" {
 			i = 7
-		} else if datalen >= 8 && data[0:8] == "https://" {
+		} else if len(data) >= 8 && data[0:8] == "https://" {
 			i = 8
 		}
-	} else if datalen >= 2 && data[0] == '/' && data[1] == '/' {
+	} else if len(data) >= 2 && data[0] == '/' && data[1] == '/' {
+		i = 2
+	}
+	//fmt.Println("Data Length: ",len(data))
+	if len(data) < i {
+		//fmt.Println("e1:",i)
+		return i+1, false
+	}
+
+	// ? - There should only be one : and that's only if the URL is on a non-standard port. Same for ?s.
+	f := i
+	//fmt.Println("f:",f)
+	for ; len(data) > i; i++ {
+		if data[i] < 33 { // space and invisibles
+			//fmt.Println("e2:",i)
+			return i, i != f
+		} else if data[i] != '\\' && data[i] != '_' && data[i] != ':' && data[i] != '?' && data[i] != '&' && data[i] != '=' && data[i] != ';' && data[i] != '@' && data[i] != '#' && !(data[i] > 44 && data[i] < 58) && !(data[i] > 64 && data[i] < 91) && !(data[i] > 96 && data[i] < 123) {
+			//log.Print("Bad Character: ", data[i])
+			//fmt.Println("e3")
+			return i, false
+		}
+	}
+	
+	//fmt.Println("e4:", i)
+	/*if data[i-1] < 33 {
+		return i-1, i != f
+	}*/
+	//fmt.Println("e5")
+	return i, i != f
+}
+
+// TODO: Write a test for this
+func PartialURLStringLen2(data string) int {
+	i := 0
+	if len(data) >= 6 {
+		//log.Print(string(data[0:5]))
+		if data[0:6] == "ftp://" || data[0:6] == "git://" {
+			i = 6
+		} else if len(data) >= 7 && data[0:7] == "http://" {
+			i = 7
+		} else if len(data) >= 8 && data[0:8] == "https://" {
+			i = 8
+		}
+	} else if len(data) >= 2 && data[0] == '/' && data[1] == '/' {
 		i = 2
 	}
 
 	// ? - There should only be one : and that's only if the URL is on a non-standard port. Same for ?s.
-	for ; datalen > i; i++ {
+	for ; len(data) > i; i++ {
 		if data[i] != '\\' && data[i] != '_' && data[i] != ':' && data[i] != '?' && data[i] != '&' && data[i] != '=' && data[i] != ';' && data[i] != '@' && data[i] != '#' && !(data[i] > 44 && data[i] < 58) && !(data[i] > 64 && data[i] < 91) && !(data[i] > 96 && data[i] < 123) {
 			//log.Print("Bad Character: ", data[i])
 			return i
 		}
 	}
-	//log.Print("Data Length: ",datalen)
-	return datalen
+	//log.Print("Data Length: ",len(data))
+	return len(data)
 }
 
 type MediaEmbed struct {

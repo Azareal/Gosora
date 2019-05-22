@@ -1,6 +1,8 @@
 package main
 
 import (
+	"strconv"
+	"strings"
 	"testing"
 
 	c "github.com/Azareal/Gosora/common"
@@ -132,12 +134,56 @@ func TestParser(t *testing.T) {
 	var msgList = &METriList{nil}
 
 	url := "github.com/Azareal/Gosora"
+	msgList.Add("", "")
+	msgList.Add("haha", "haha")
+	msgList.Add("<b>t</b>", "<b>t</b>")
+	msgList.Add("//", "<red>[Invalid URL]</red>")
+	msgList.Add("http://", "<red>[Invalid URL]</red>")
+	msgList.Add("https://", "<red>[Invalid URL]</red>")
+	msgList.Add("ftp://", "<red>[Invalid URL]</red>")
+	msgList.Add("git://", "<red>[Invalid URL]</red>")
+	msgList.Add("ssh://", "ssh://")
+
+	msgList.Add("// ", "<red>[Invalid URL]</red> ")
+	msgList.Add("// //", "<red>[Invalid URL]</red> <red>[Invalid URL]</red>")
+	msgList.Add("http:// ", "<red>[Invalid URL]</red> ")
+	msgList.Add("https:// ", "<red>[Invalid URL]</red> ")
+	msgList.Add("ftp:// ", "<red>[Invalid URL]</red> ")
+	msgList.Add("git:// ", "<red>[Invalid URL]</red> ")
+	msgList.Add("ssh:// ", "ssh:// ")
+
+	msgList.Add("// t", "<red>[Invalid URL]</red> t")
+	msgList.Add("http:// t", "<red>[Invalid URL]</red> t")
+
+	msgList.Add("http:", "http:")
+	msgList.Add("https:", "https:")
+	msgList.Add("ftp:", "ftp:")
+	msgList.Add("git:", "git:")
+	msgList.Add("ssh:", "ssh:")
+
+	msgList.Add("http", "http")
+	msgList.Add("https", "https")
+	msgList.Add("ftp", "ftp")
+	msgList.Add("git", "git")
+	msgList.Add("ssh", "ssh")
+
+	msgList.Add("ht", "ht")
+	msgList.Add("htt", "htt")
+	msgList.Add("ft", "ft")
+	msgList.Add("gi", "gi")
+	msgList.Add("ss", "ss")
+	msgList.Add("haha\nhaha\nhaha", "haha<br>haha<br>haha")
 	msgList.Add("//"+url, "<a href='//"+url+"'>//"+url+"</a>")
+	msgList.Add("//a", "<a href='//a'>//a</a>")
 	msgList.Add("https://"+url, "<a href='https://"+url+"'>https://"+url+"</a>")
+	msgList.Add("https://t", "<a href='https://t'>https://t</a>")
 	msgList.Add("http://"+url, "<a href='http://"+url+"'>http://"+url+"</a>")
+	msgList.Add("#http://"+url, "#http://"+url)
+	msgList.Add("@http://"+url, "<red>[Invalid Profile]</red>ttp://"+url)
 	msgList.Add("//"+url+"\n", "<a href='//"+url+"'>//"+url+"</a><br>")
 	msgList.Add("\n//"+url, "<br><a href='//"+url+"'>//"+url+"</a>")
 	msgList.Add("\n//"+url+"\n", "<br><a href='//"+url+"'>//"+url+"</a><br>")
+	msgList.Add("\n//"+url+"\n\n", "<br><a href='//"+url+"'>//"+url+"</a><br><br>")
 	msgList.Add("//"+url+"\n//"+url, "<a href='//"+url+"'>//"+url+"</a><br><a href='//"+url+"'>//"+url+"</a>")
 	msgList.Add("//"+url+"\n\n//"+url, "<a href='//"+url+"'>//"+url+"</a><br><br><a href='//"+url+"'>//"+url+"</a>")
 	msgList.Add("//"+c.Site.URL, "<a href='//"+c.Site.URL+"'>//"+c.Site.URL+"</a>")
@@ -145,11 +191,42 @@ func TestParser(t *testing.T) {
 	msgList.Add("//"+c.Site.URL+"\n//"+c.Site.URL, "<a href='//"+c.Site.URL+"'>//"+c.Site.URL+"</a><br><a href='//"+c.Site.URL+"'>//"+c.Site.URL+"</a>")
 
 	msgList.Add("#tid-1", "<a href='/topic/1'>#tid-1</a>")
+	msgList.Add("##tid-1", "##tid-1")
+	msgList.Add("# #tid-1", "# #tid-1")
+	msgList.Add("@ #tid-1", "<red>[Invalid Profile]</red>#tid-1")
+	msgList.Add("@#tid-1", "<red>[Invalid Profile]</red>tid-1")
+	msgList.Add("@ #tid-@", "<red>[Invalid Profile]</red>#tid-@")
+	msgList.Add("#tid-1 #tid-1", "<a href='/topic/1'>#tid-1</a> <a href='/topic/1'>#tid-1</a>")
 	msgList.Add("#tid-0", "<red>[Invalid Topic]</red>")
 	msgList.Add("https://"+url+"/#tid-1", "<a href='https://"+url+"/#tid-1'>https://"+url+"/#tid-1</a>")
+	msgList.Add("https://"+url+"/?hi=2", "<a href='https://"+url+"/?hi=2'>https://"+url+"/?hi=2</a>")
 	msgList.Add("#fid-1", "<a href='/forum/1'>#fid-1</a>")
 	msgList.Add("#fid-0", "<red>[Invalid Forum]</red>")
+	msgList.Add("#", "#")
+	msgList.Add("# ", "# ")
+	msgList.Add("#@", "#@")
+	msgList.Add("#@ ", "#@ ")
+	msgList.Add("#@1", "#@1")
+	msgList.Add("#f", "#f")
+	msgList.Add("#ff", "#ff")
+	msgList.Add("#ffffid-0", "#ffffid-0")
+	//msgList.Add("#ffffid-0", "#ffffid-0")
+	msgList.Add("#nid-0", "#nid-0")
+	msgList.Add("#nnid-0", "#nnid-0")
+	msgList.Add("@@", "<red>[Invalid Profile]</red>")
+	msgList.Add("@@ @@", "<red>[Invalid Profile]</red> <red>[Invalid Profile]</red>")
+	msgList.Add("@@1", "<red>[Invalid Profile]</red>1")
+	msgList.Add("@#1", "<red>[Invalid Profile]</red>1")
+	msgList.Add("@##1", "<red>[Invalid Profile]</red>#1")
+	msgList.Add("@2", "<red>[Invalid Profile]</red>")
+	msgList.Add("@2t", "<red>[Invalid Profile]</red>t")
+	msgList.Add("@2 t", "<red>[Invalid Profile]</red> t")
+	msgList.Add("@2 ", "<red>[Invalid Profile]</red> ")
+	msgList.Add("@2 @2", "<red>[Invalid Profile]</red> <red>[Invalid Profile]</red>")
 	msgList.Add("@1", "<a href='/user/admin.1' class='mention'>@Admin</a>")
+	msgList.Add("@1t", "<a href='/user/admin.1' class='mention'>@Admin</a>t")
+	msgList.Add("@1 ", "<a href='/user/admin.1' class='mention'>@Admin</a> ")
+	msgList.Add("@1 @1", "<a href='/user/admin.1' class='mention'>@Admin</a> <a href='/user/admin.1' class='mention'>@Admin</a>")
 	msgList.Add("@0", "<red>[Invalid Profile]</red>")
 	msgList.Add("@-1", "<red>[Invalid Profile]</red>1")
 
@@ -162,6 +239,43 @@ func TestParser(t *testing.T) {
 			t.Error("Testing string '" + item.Msg + "'")
 			t.Error("Bad output:", "'"+res+"'")
 			t.Error("Expected:", "'"+item.Expects+"'")
+			break
 		}
+	}
+
+	c.AddHashLinkType("nnid-", func(sb *strings.Builder, msg string, i *int) {
+		tid, intLen := c.CoerceIntString(msg[*i:])
+		*i += intLen
+
+		topic, err := c.Topics.Get(tid)
+		if err != nil || !c.Forums.Exists(topic.ParentID) {
+			sb.Write(c.InvalidTopic)
+			return
+		}
+		c.WriteURL(sb, c.BuildTopicURL("", tid), "#nnid-"+strconv.Itoa(tid))
+	})
+	res := c.ParseMessage("#nnid-1", 1, "forums")
+	expect := "<a href='/topic/1'>#nnid-1</a>"
+	if res != expect {
+		t.Error("Bad output:", "'"+res+"'")
+		t.Error("Expected:", "'"+expect+"'")
+	}
+
+	c.AddHashLinkType("longidnameneedtooverflowhack-", func(sb *strings.Builder, msg string, i *int) {
+		tid, intLen := c.CoerceIntString(msg[*i:])
+		*i += intLen
+
+		topic, err := c.Topics.Get(tid)
+		if err != nil || !c.Forums.Exists(topic.ParentID) {
+			sb.Write(c.InvalidTopic)
+			return
+		}
+		c.WriteURL(sb, c.BuildTopicURL("", tid), "#longidnameneedtooverflowhack-"+strconv.Itoa(tid))
+	})
+	res = c.ParseMessage("#longidnameneedtooverflowhack-1", 1, "forums")
+	expect = "<a href='/topic/1'>#longidnameneedtooverflowhack-1</a>"
+	if res != expect {
+		t.Error("Bad output:", "'"+res+"'")
+		t.Error("Expected:", "'"+expect+"'")
 	}
 }

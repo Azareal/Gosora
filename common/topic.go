@@ -520,6 +520,10 @@ func (topic *TopicUser) Replies(offset int, pFrag int, user *User) (rlist []*Rep
 			return nil, "", err
 		}
 		reply.ContentHtml = ParseMessage(reply.Content, topic.ParentID, "forums")
+		// TODO: Do this more efficiently by avoiding the allocations entirely in ParseMessage, if there's nothing to do.
+		if reply.ContentHtml == reply.Content {
+			reply.ContentHtml = reply.Content
+		}
 
 		if reply.ID == pFrag {
 			ogdesc = reply.Content

@@ -342,7 +342,7 @@ func bbcodeParseURL(i int, start int, lastTag int, msgbytes []byte, outbytes []b
 	start = i + 5
 	outbytes = append(outbytes, msgbytes[lastTag:i]...)
 	i = start
-	i += c.PartialURLStringLen(string(msgbytes[start:]))
+	i += c.PartialURLStringLen2(string(msgbytes[start:]))
 	if !bytes.Equal(msgbytes[i:i+6], []byte("[/url]")) {
 		outbytes = append(outbytes, c.InvalidURL...)
 		return i, start, lastTag, outbytes

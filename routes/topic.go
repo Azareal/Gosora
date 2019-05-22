@@ -66,6 +66,10 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user c.User, header *c.He
 
 	// TODO: Cache ContentHTML when possible?
 	topic.ContentHTML = c.ParseMessage(topic.Content, topic.ParentID, "forums")
+	// TODO: Do this more efficiently by avoiding the allocations entirely in ParseMessage, if there's nothing to do.
+	if topic.ContentHTML == topic.Content {
+		topic.ContentHTML = topic.Content
+	}
 	topic.ContentLines = strings.Count(topic.Content, "\n")
 
 	header.OGDesc = topic.Content
