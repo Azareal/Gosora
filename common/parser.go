@@ -744,7 +744,8 @@ func validateURLString(data string) bool {
 
 	// ? - There should only be one : and that's only if the URL is on a non-standard port. Same for ?s.
 	for ; len(data) > i; i++ {
-		if data[i] != '\\' && data[i] != '_' && data[i] != ':' && data[i] != '?' && data[i] != '&' && data[i] != '=' && data[i] != ';' && data[i] != '@' && data[i] != '#' && !(data[i] > 44 && data[i] < 58) && !(data[i] > 64 && data[i] < 91) && !(data[i] > 96 && data[i] < 123) {
+		char := data[i]
+		if char != '\\' && char != '_' && char != ':' && char != '?' && char != '&' && char != '=' && char != ';' && char != '@' && char != '#' && char != ']' && !(char > 44 && char < 58) && !(char > 64 && char < 92) && !(char > 96 && char < 123) { // 90 is Z, 91 is [
 			return false
 		}
 	}
@@ -770,7 +771,8 @@ func validatedURLBytes(data []byte) (url []byte) {
 
 	// ? - There should only be one : and that's only if the URL is on a non-standard port. Same for ?s.
 	for ; datalen > i; i++ {
-		if data[i] != '\\' && data[i] != '_' && data[i] != ':' && data[i] != '?' && data[i] != '&' && data[i] != '=' && data[i] != ';' && data[i] != '@' && data[i] != '#' && !(data[i] > 44 && data[i] < 58) && !(data[i] > 64 && data[i] < 91) && !(data[i] > 96 && data[i] < 123) {
+		char := data[i]
+		if char != '\\' && char != '_' && char != ':' && char != '?' && char != '&' && char != '=' && char != ';' && char != '@' && char != '#' && char != ']' && !(char > 44 && char < 58) && !(char > 64 && char < 92) && !(char > 96 && char < 123) { // 90 is Z, 91 is [
 			return InvalidURL
 		}
 	}
@@ -797,7 +799,8 @@ func PartialURLString(data string) (url []byte) {
 
 	// ? - There should only be one : and that's only if the URL is on a non-standard port. Same for ?s.
 	for ; end >= i; i++ {
-		if data[i] != '\\' && data[i] != '_' && data[i] != ':' && data[i] != '?' && data[i] != '&' && data[i] != '=' && data[i] != ';' && data[i] != '@' && data[i] != '#' && !(data[i] > 44 && data[i] < 58) && !(data[i] > 64 && data[i] < 91) && !(data[i] > 96 && data[i] < 123) {
+		char := data[i]
+		if char != '\\' && char != '_' && char != ':' && char != '?' && char != '&' && char != '=' && char != ';' && char != '@' && char != '#' && char != ']' && !(char > 44 && char < 58) && !(char > 64 && char < 92) && !(char > 96 && char < 123) { // 90 is Z, 91 is [
 			end = i
 		}
 	}
@@ -807,6 +810,7 @@ func PartialURLString(data string) (url []byte) {
 }
 
 // TODO: Write a test for this
+// TODO: Handle the host bits differently from the paths...
 func PartialURLStringLen(data string) (int, bool) {
 	i := 0
 	if len(data) >= 6 {
@@ -831,11 +835,12 @@ func PartialURLStringLen(data string) (int, bool) {
 	f := i
 	//fmt.Println("f:",f)
 	for ; len(data) > i; i++ {
-		if data[i] < 33 { // space and invisibles
+		char := data[i]
+		if char < 33 { // space and invisibles
 			//fmt.Println("e2:",i)
 			return i, i != f
-		} else if data[i] != '\\' && data[i] != '_' && data[i] != ':' && data[i] != '?' && data[i] != '&' && data[i] != '=' && data[i] != ';' && data[i] != '@' && data[i] != '#' && !(data[i] > 44 && data[i] < 58) && !(data[i] > 64 && data[i] < 91) && !(data[i] > 96 && data[i] < 123) {
-			//log.Print("Bad Character: ", data[i])
+		} else if char != '\\' && char != '_' && char != ':' && char != '?' && char != '&' && char != '=' && char != ';' && char != '@' && char != '#' && char != ']' && !(char > 44 && char < 58) && !(char > 64 && char < 92) && !(char > 96 && char < 123) { // 90 is Z, 91 is [
+			//log.Print("Bad Character: ", char)
 			//fmt.Println("e3")
 			return i, false
 		}
@@ -850,6 +855,7 @@ func PartialURLStringLen(data string) (int, bool) {
 }
 
 // TODO: Write a test for this
+// TODO: Get this to support IPv6 hosts, this isn't currently done as this is used in the bbcode plugin where it thinks the [ is a IPv6 host
 func PartialURLStringLen2(data string) int {
 	i := 0
 	if len(data) >= 6 {
@@ -867,8 +873,9 @@ func PartialURLStringLen2(data string) int {
 
 	// ? - There should only be one : and that's only if the URL is on a non-standard port. Same for ?s.
 	for ; len(data) > i; i++ {
-		if data[i] != '\\' && data[i] != '_' && data[i] != ':' && data[i] != '?' && data[i] != '&' && data[i] != '=' && data[i] != ';' && data[i] != '@' && data[i] != '#' && !(data[i] > 44 && data[i] < 58) && !(data[i] > 64 && data[i] < 91) && !(data[i] > 96 && data[i] < 123) {
-			//log.Print("Bad Character: ", data[i])
+		char := data[i]
+		if char != '\\' && char != '_' && char != ':' && char != '?' && char != '&' && char != '=' && char != ';' && char != '@' && char != '#' && !(char > 44 && char < 58) && !(char > 64 && char < 91) && !(char > 96 && char < 123) { // 90 is Z, 91 is [
+			//log.Print("Bad Character: ", char)
 			return i
 		}
 	}
@@ -938,12 +945,12 @@ func parseMediaString(data string) (media MediaEmbed, ok bool) {
 
 	// ? - I don't think this hostname will hit every YT domain
 	// TODO: Make this a more customisable handler rather than hard-coding it in here
-	if hostname == "www.youtube.com" && path == "/watch" {
+	if strings.HasSuffix(hostname,".youtube.com") && path == "/watch" {
 		video, ok := query["v"]
 		if ok && len(video) >= 1 && video[0] != "" {
 			media.Type = "raw"
 			// TODO: Filter the URL to make sure no nasties end up in there
-			media.Body = "<iframe class='postIframe' src='https://www.youtube-nocookie.com/embed/" + video[0] + "' frameborder='0' allowfullscreen></iframe>"
+			media.Body = "<iframe class='postIframe' src='https://www.youtube-nocookie.com/embed/" + video[0] + "' frameborder=0 allowfullscreen></iframe>"
 			return media, true
 		}
 	}
