@@ -206,7 +206,7 @@ func CompileTemplates() error {
 	return nil
 }
 
-func compileCommons(c *tmpl.CTemplateSet, header *Header, header2 *Header, out TItemHold) error {
+func compileCommons(c *tmpl.CTemplateSet, header *Header, header2 *Header, forumList []Forum, out TItemHold) error {
 	// TODO: Add support for interface{}s
 	_, user2, user3 := tmplInitUsers()
 	now := time.Now()
@@ -220,16 +220,6 @@ func compileCommons(c *tmpl.CTemplateSet, header *Header, header2 *Header, out T
 		header2.Title = name
 		return header2
 	}*/
-
-	// TODO: Use a dummy forum list to avoid o(n) problems
-	var forumList []Forum
-	forums, err := Forums.GetAll()
-	if err != nil {
-		return err
-	}
-	for _, forum := range forums {
-		forumList = append(forumList, *forum)
-	}
 
 	var topicsList []*TopicsRow
 	topicsList = append(topicsList, &TopicsRow{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, now, now, user3.ID, 1, 1, "", "127.0.0.1", 1, 0, 1, 1, 0, "classname", 0, "", &user2, "", 0, &user3, "General", "/forum/general.2", nil})
@@ -283,19 +273,68 @@ func compileTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName string
 	ru.Init()
 	replyList = append(replyList, ru)
 
+	// TODO: Use a dummy forum list to avoid o(n) problems
+	var forumList []Forum
+	forums, err := Forums.GetAll()
+	if err != nil {
+		return err
+	}
+	for _, forum := range forums {
+		forumList = append(forumList, *forum)
+	}
+
 	// Convienience function to save a line here and there
 	var htitle = func(name string) *Header {
 		header.Title = name
 		return header
 	}
 	tmpls := TItemHold(make(map[string]TItem))
-	err := compileCommons(c, header, header2, tmpls)
+	err = compileCommons(c, header, header2, forumList, tmpls)
 	if err != nil {
 		return err
 	}
 
 	ppage := ProfilePage{htitle("User 526"), replyList, user, 0, 0} // TODO: Use the score from user to generate the currentScore and nextScore
 	tmpls.Add("profile", "common.ProfilePage", ppage)
+
+	var topicsList []*TopicsRow
+	topicsList = append(topicsList, &TopicsRow{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, now, now, user3.ID, 1, 1, "", "127.0.0.1", 1, 0, 1, 1, 0, "classname", 0, "", &user2, "", 0, &user3, "General", "/forum/general.2", nil})
+	topicListPage := TopicListPage{htitle("Topic List"), topicsList, forumList, Config.DefaultForum, TopicListSort{"lastupdated", false}, Paginator{[]int{1}, 1, 1}}
+
+	forumItem := BlankForum(1, "general-forum.1", "General Forum", "Where the general stuff happens", true, "all", 0, "", 0)
+	forumPage := ForumPage{htitle("General Forum"), topicsList, forumItem, Paginator{[]int{1}, 1, 1}}
+
+	// Experimental!
+	for _, tmpl := range strings.Split(Dev.ExtraTmpls,",") {
+		sp := strings.Split(tmpl,":")
+		if len(sp) < 2 {
+			continue
+		}
+		typ := "0"
+		if len(sp) == 3 {
+			typ = sp[2]
+		}
+
+		var pi interface{}
+		switch sp[1] {
+		case "common.TopicListPage":
+			pi = topicListPage
+		case "common.ForumPage":
+			pi = forumPage
+		case "common.ProfilePage":
+			pi = ppage
+		case "common.Page":
+			pi = Page{htitle("Something"), tList, nil}
+		default:
+			continue
+		}
+
+		if typ == "1" {
+			tmpls.Add(sp[0], sp[1], pi)
+		} else {
+			tmpls.AddStd(sp[0], sp[1], pi)
+		}
+	}
 
 	tmpls.AddStd("login", "common.Page", Page{htitle("Login Page"), tList, nil})
 	tmpls.AddStd("register", "common.Page", Page{htitle("Registration Page"), tList, "nananana"})
@@ -374,10 +413,7 @@ func compileTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName string
 			writeTemplate(name, tmpl)
 		}
 	}
-	/*writeTemplate("login", loginTmpl)
-	writeTemplate("register", registerTmpl)
-	writeTemplate("ip_search", ipSearchTmpl)
-	writeTemplate("error", errorTmpl)*/
+
 	return nil
 }
 

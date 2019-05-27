@@ -181,6 +181,7 @@ func createTables(adapter qgen.Adapter) error {
 			tblColumn{"fid", "int", 0, false, true, ""},
 			tblColumn{"name", "varchar", 100, false, false, ""},
 			tblColumn{"desc", "varchar", 200, false, false, ""},
+			tblColumn{"tmpl", "varchar", 200, false, false, ""},
 			tblColumn{"active", "boolean", 0, false, false, "1"},
 			tblColumn{"order", "int", 0, false, false, "0"},
 			tblColumn{"topicCount", "int", 0, false, false, "0"},

@@ -113,11 +113,6 @@ func (ins *MysqlInstaller) InitDatabase() (err error) {
 	}
 	fmt.Println("Successfully connected to the database")
 
-	_, err = db.Exec("SET FOREIGN_KEY_CHECKS = 0;")
-	if err != nil {
-		return err
-	}
-
 	// Ready the query builder
 	ins.db = db
 	qgen.Builder.SetConn(db)
@@ -147,9 +142,10 @@ func (ins *MysqlInstaller) createTable(f os.FileInfo) error {
 	}
 	data = bytes.TrimSpace(data)
 
-	_, err = ins.db.Exec(string(data))
+	q = string(data)
+	_, err = ins.db.Exec(q)
 	if err != nil {
-		fmt.Println("Failed query:", string(data))
+		fmt.Println("Failed query:", q)
 		fmt.Println("e:", err)
 		return err
 	}
@@ -161,6 +157,11 @@ func (ins *MysqlInstaller) createTable(f os.FileInfo) error {
 func (ins *MysqlInstaller) TableDefs() (err error) {
 	fmt.Println("Creating the tables")
 	files, err := ioutil.ReadDir("./schema/mysql/")
+	if err != nil {
+		return err
+	}
+
+	_, err = ins.db.Exec("SET FOREIGN_KEY_CHECKS = 0;")
 	if err != nil {
 		return err
 	}

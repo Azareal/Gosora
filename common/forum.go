@@ -27,6 +27,7 @@ type Forum struct {
 	Link       string
 	Name       string
 	Desc       string
+	Tmpl string
 	Active     bool
 	Order int
 	Preset     string

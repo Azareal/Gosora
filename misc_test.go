@@ -536,6 +536,7 @@ func TestForumStore(t *testing.T) {
 	if !c.PluginsInited {
 		c.InitPlugins()
 	}
+	// TODO: Test ForumStore.Reload
 
 	fcache, ok := c.Forums.(c.ForumCache)
 	expect(t, ok, "Unable to cast ForumStore to ForumCache")
@@ -569,6 +570,22 @@ func TestForumStore(t *testing.T) {
 	expect(t, forum.Active, fmt.Sprintf("The general forum should be active"))
 	expectDesc = "A place for general discussions which don't fit elsewhere"
 	expect(t, forum.Desc == expectDesc, fmt.Sprintf("The forum description should be '%s' not '%s'", expectDesc, forum.Desc))
+
+	// Forum reload test, kind of hacky but gets the job done
+	/*
+	CacheGet(id int) (*Forum, error)
+	CacheSet(forum *Forum) error
+	*/
+	expect(t,ok,"ForumCache should be available")
+	forum.Name = "nanana"
+	fcache.CacheSet(forum)
+	forum, err = c.Forums.Get(2)
+	recordMustExist(t, err, "Couldn't find FID #2")
+	expect(t, forum.Name == "nanana", fmt.Sprintf("The faux name should be nanana not %s", forum.Name))
+	expectNilErr(t,c.Forums.Reload(2))
+	forum, err = c.Forums.Get(2)
+	recordMustExist(t, err, "Couldn't find FID #2")
+	expect(t, forum.Name == "General", fmt.Sprintf("The proper name should be 2 not %s", forum.Name))
 
 	expect(t, !c.Forums.Exists(-1), "FID #-1 shouldn't exist")
 	expect(t, !c.Forums.Exists(0), "FID #0 shouldn't exist")

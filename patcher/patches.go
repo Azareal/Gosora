@@ -34,6 +34,7 @@ func init() {
 	addPatch(19, patch19)
 	addPatch(20, patch20)
 	addPatch(21, patch21)
+	addPatch(22, patch22)
 }
 
 func patch0(scanner *bufio.Scanner) (err error) {
@@ -651,4 +652,8 @@ func patch21(scanner *bufio.Scanner) error {
 	}
 
 	return execStmt(qgen.Builder.AddColumn("activity_stream", tblColumn{"createdAt", "createdAt", 0, false, false, ""}, nil))
+}
+
+func patch22(scanner *bufio.Scanner) error {
+	return execStmt(qgen.Builder.AddColumn("forums", tblColumn{"tmpl", "varchar", 200, false, false, ""}, nil))
 }

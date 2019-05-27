@@ -121,6 +121,7 @@ type devConfig struct {
 
 	NoFsnotify bool // Super Experimental!
 	FullReqLog bool
+	ExtraTmpls string // Experimental flag for adding compiled templates, we'll likely replace this with a better mechanism
 }
 
 // configHolder is purely for having a big struct to unmarshal data into

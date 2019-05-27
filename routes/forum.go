@@ -124,7 +124,11 @@ func ViewForum(w http.ResponseWriter, r *http.Request, user c.User, header *c.He
 
 	pageList := c.Paginate(forum.TopicCount, c.Config.ItemsPerPage, 5)
 	pi := c.ForumPage{header, topicList, forum, c.Paginator{pageList, page, lastPage}}
-	ferr = renderTemplate("forum", w, r, header, pi)
+	var tmpl = forum.Tmpl
+	if tmpl == "" {
+		tmpl = "forum"
+	}
+	ferr = renderTemplate(tmpl, w, r, header, pi)
 	counters.ForumViewCounter.Bump(forum.ID)
 	return ferr
 }

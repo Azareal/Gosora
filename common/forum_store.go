@@ -10,6 +10,7 @@ import (
 	"database/sql"
 	"errors"
 	"log"
+	//"fmt"
 	"sort"
 	"sync"
 	"sync/atomic"
@@ -77,8 +78,8 @@ func NewMemoryForumStore() (*MemoryForumStore, error) {
 	acc := qgen.NewAcc()
 	// TODO: Do a proper delete
 	return &MemoryForumStore{
-		get:          acc.Select("forums").Columns("name, desc, active, order, preset, parentID, parentType, topicCount, lastTopicID, lastReplyerID").Where("fid = ?").Prepare(),
-		getAll:       acc.Select("forums").Columns("fid, name, desc, active, order, preset, parentID, parentType, topicCount, lastTopicID, lastReplyerID").Orderby("order ASC, fid ASC").Prepare(),
+		get:          acc.Select("forums").Columns("name, desc, tmpl, active, order, preset, parentID, parentType, topicCount, lastTopicID, lastReplyerID").Where("fid = ?").Prepare(),
+		getAll:       acc.Select("forums").Columns("fid, name, desc, tmpl, active, order, preset, parentID, parentType, topicCount, lastTopicID, lastReplyerID").Orderby("order ASC, fid ASC").Prepare(),
 		delete:       acc.Update("forums").Set("name= '', active = 0").Where("fid = ?").Prepare(),
 		create:       acc.Insert("forums").Columns("name, desc, active, preset").Fields("?,?,?,?").Prepare(),
 		count:        acc.Count("forums").Where("name != ''").Prepare(),
@@ -109,7 +110,7 @@ func (mfs *MemoryForumStore) LoadForums() error {
 	var i = 0
 	for ; rows.Next(); i++ {
 		forum := &Forum{ID: 0, Active: true, Preset: "all"}
-		err = rows.Scan(&forum.ID, &forum.Name, &forum.Desc, &forum.Active, &forum.Order, &forum.Preset, &forum.ParentID, &forum.ParentType, &forum.TopicCount, &forum.LastTopicID, &forum.LastReplyerID)
+		err = rows.Scan(&forum.ID, &forum.Name, &forum.Desc, &forum.Tmpl, &forum.Active, &forum.Order, &forum.Preset, &forum.ParentID, &forum.ParentType, &forum.TopicCount, &forum.LastTopicID, &forum.LastReplyerID)
 		if err != nil {
 			return err
 		}
@@ -133,9 +134,9 @@ func (mfs *MemoryForumStore) LoadForums() error {
 
 // TODO: Hide social groups too
 // ? - Will this be hit a lot by plugin_guilds?
-func (mfs *MemoryForumStore) rebuildView() {
+func (s *MemoryForumStore) rebuildView() {
 	var forumView []*Forum
-	mfs.forums.Range(func(_ interface{}, value interface{}) bool {
+	s.forums.Range(func(_ interface{}, value interface{}) bool {
 		forum := value.(*Forum)
 		// ? - ParentType blank means that it doesn't have a parent
 		if forum.Active && forum.Name != "" && forum.ParentType == "" {
@@ -144,20 +145,20 @@ func (mfs *MemoryForumStore) rebuildView() {
 		return true
 	})
 	sort.Sort(SortForum(forumView))
-	mfs.forumView.Store(forumView)
+	s.forumView.Store(forumView)
 	TopicListThaw.Thaw()
 }
 
-func (mfs *MemoryForumStore) DirtyGet(id int) *Forum {
-	fint, ok := mfs.forums.Load(id)
+func (s *MemoryForumStore) DirtyGet(id int) *Forum {
+	fint, ok := s.forums.Load(id)
 	if !ok || fint.(*Forum).Name == "" {
 		return &Forum{ID: -1, Name: ""}
 	}
 	return fint.(*Forum)
 }
 
-func (mfs *MemoryForumStore) CacheGet(id int) (*Forum, error) {
-	fint, ok := mfs.forums.Load(id)
+func (s *MemoryForumStore) CacheGet(id int) (*Forum, error) {
+	fint, ok := s.forums.Load(id)
 	if !ok || fint.(*Forum).Name == "" {
 		return nil, ErrNoRows
 	}
@@ -184,7 +185,7 @@ func (s *MemoryForumStore) Get(id int) (*Forum, error) {
 
 func (s *MemoryForumStore) BypassGet(id int) (*Forum, error) {
 	var forum = &Forum{ID: id}
-	err := s.get.QueryRow(id).Scan(&forum.Name, &forum.Desc, &forum.Active, &forum.Order, &forum.Preset, &forum.ParentID, &forum.ParentType, &forum.TopicCount, &forum.LastTopicID, &forum.LastReplyerID)
+	err := s.get.QueryRow(id).Scan(&forum.Name, &forum.Desc, &forum.Tmpl,&forum.Active, &forum.Order, &forum.Preset, &forum.ParentID, &forum.ParentType, &forum.TopicCount, &forum.LastTopicID, &forum.LastReplyerID)
 	if err != nil {
 		return nil, err
 	}
@@ -200,10 +201,10 @@ func (s *MemoryForumStore) BypassGet(id int) (*Forum, error) {
 }
 
 // TODO: Optimise this
-func (mfs *MemoryForumStore) BulkGetCopy(ids []int) (forums []Forum, err error) {
+func (s *MemoryForumStore) BulkGetCopy(ids []int) (forums []Forum, err error) {
 	forums = make([]Forum, len(ids))
 	for i, id := range ids {
-		forum, err := mfs.Get(id)
+		forum, err := s.Get(id)
 		if err != nil {
 			return nil, err
 		}
@@ -212,29 +213,24 @@ func (mfs *MemoryForumStore) BulkGetCopy(ids []int) (forums []Forum, err error) 
 	return forums, nil
 }
 
-func (mfs *MemoryForumStore) Reload(id int) error {
-	var forum = &Forum{ID: id}
-	err := mfs.get.QueryRow(id).Scan(&forum.Name, &forum.Desc, &forum.Active, &forum.Order, &forum.Preset, &forum.ParentID, &forum.ParentType, &forum.TopicCount, &forum.LastTopicID, &forum.LastReplyerID)
+func (s *MemoryForumStore) Reload(id int) error {
+	forum, err := s.BypassGet(id)
 	if err != nil {
 		return err
 	}
-	forum.Link = BuildForumURL(NameToSlug(forum.Name), forum.ID)
-	forum.LastTopic = Topics.DirtyGet(forum.LastTopicID)
-	forum.LastReplyer = Users.DirtyGet(forum.LastReplyerID)
-
-	mfs.CacheSet(forum)
+	s.CacheSet(forum)
 	return nil
 }
 
-func (mfs *MemoryForumStore) CacheSet(forum *Forum) error {
-	mfs.forums.Store(forum.ID, forum)
-	mfs.rebuildView()
+func (s *MemoryForumStore) CacheSet(forum *Forum) error {
+	s.forums.Store(forum.ID, forum)
+	s.rebuildView()
 	return nil
 }
 
 // ! Has a randomised order
-func (mfs *MemoryForumStore) GetAll() (forumView []*Forum, err error) {
-	mfs.forums.Range(func(_ interface{}, value interface{}) bool {
+func (s *MemoryForumStore) GetAll() (forumView []*Forum, err error) {
+	s.forums.Range(func(_ interface{}, value interface{}) bool {
 		forumView = append(forumView, value.(*Forum))
 		return true
 	})
@@ -243,8 +239,8 @@ func (mfs *MemoryForumStore) GetAll() (forumView []*Forum, err error) {
 }
 
 // ? - Can we optimise the sorting?
-func (mfs *MemoryForumStore) GetAllIDs() (ids []int, err error) {
-	mfs.forums.Range(func(_ interface{}, value interface{}) bool {
+func (s *MemoryForumStore) GetAllIDs() (ids []int, err error) {
+	s.forums.Range(func(_ interface{}, value interface{}) bool {
 		ids = append(ids, value.(*Forum).ID)
 		return true
 	})
@@ -252,13 +248,13 @@ func (mfs *MemoryForumStore) GetAllIDs() (ids []int, err error) {
 	return ids, nil
 }
 
-func (mfs *MemoryForumStore) GetAllVisible() (forumView []*Forum, err error) {
-	forumView = mfs.forumView.Load().([]*Forum)
+func (s *MemoryForumStore) GetAllVisible() (forumView []*Forum, err error) {
+	forumView = s.forumView.Load().([]*Forum)
 	return forumView, nil
 }
 
-func (mfs *MemoryForumStore) GetAllVisibleIDs() ([]int, error) {
-	forumView := mfs.forumView.Load().([]*Forum)
+func (s *MemoryForumStore) GetAllVisibleIDs() ([]int, error) {
+	forumView := s.forumView.Load().([]*Forum)
 	var ids = make([]int, len(forumView))
 	for i := 0; i < len(forumView); i++ {
 		ids[i] = forumView[i].ID
@@ -275,8 +271,8 @@ func (mfs *MemoryForumStore) GetFirstChild(parentID int, parentType string) (*Fo
 }*/
 
 // TODO: Add a query for this rather than hitting cache
-func (mfs *MemoryForumStore) Exists(id int) bool {
-	forum, ok := mfs.forums.Load(id)
+func (s *MemoryForumStore) Exists(id int) bool {
+	forum, ok := s.forums.Load(id)
 	if !ok {
 		return false
 	}
@@ -284,9 +280,9 @@ func (mfs *MemoryForumStore) Exists(id int) bool {
 }
 
 // TODO: Batch deletions with name blanking? Is this necessary?
-func (mfs *MemoryForumStore) CacheDelete(id int) {
-	mfs.forums.Delete(id)
-	mfs.rebuildView()
+func (s *MemoryForumStore) CacheDelete(id int) {
+	s.forums.Delete(id)
+	s.rebuildView()
 }
 
 // TODO: Add a hook to allow plugin_guilds to detect when one of it's forums has just been deleted?
@@ -299,47 +295,49 @@ func (s *MemoryForumStore) Delete(id int) error {
 	return err
 }
 
-func (mfs *MemoryForumStore) AddTopic(tid int, uid int, fid int) error {
-	_, err := mfs.updateCache.Exec(tid, uid, fid)
+func (s *MemoryForumStore) AddTopic(tid int, uid int, fid int) error {
+	_, err := s.updateCache.Exec(tid, uid, fid)
 	if err != nil {
 		return err
 	}
-	_, err = mfs.addTopics.Exec(1, fid)
+	_, err = s.addTopics.Exec(1, fid)
 	if err != nil {
 		return err
 	}
 	// TODO: Bypass the database and update this with a lock or an unsafe atomic swap
-	return mfs.Reload(fid)
+	return s.Reload(fid)
 }
 
 // TODO: Update the forum cache with the latest topic
-func (mfs *MemoryForumStore) RemoveTopic(fid int) error {
-	_, err := mfs.removeTopics.Exec(1, fid)
+func (s *MemoryForumStore) RemoveTopic(fid int) error {
+	_, err := s.removeTopics.Exec(1, fid)
 	if err != nil {
 		return err
 	}
 	// TODO: Bypass the database and update this with a lock or an unsafe atomic swap
-	mfs.Reload(fid)
+	s.Reload(fid)
 	return nil
 }
 
 // DEPRECATED. forum.Update() will be the way to do this in the future, once it's completed
 // TODO: Have a pointer to the last topic rather than storing it on the forum itself
-func (mfs *MemoryForumStore) UpdateLastTopic(tid int, uid int, fid int) error {
-	_, err := mfs.updateCache.Exec(tid, uid, fid)
+func (s *MemoryForumStore) UpdateLastTopic(tid int, uid int, fid int) error {
+	_, err := s.updateCache.Exec(tid, uid, fid)
 	if err != nil {
 		return err
 	}
 	// TODO: Bypass the database and update this with a lock or an unsafe atomic swap
-	return mfs.Reload(fid)
+	return s.Reload(fid)
 }
 
-func (mfs *MemoryForumStore) Create(forumName string, forumDesc string, active bool, preset string) (int, error) {
+func (s *MemoryForumStore) Create(forumName string, forumDesc string, active bool, preset string) (int, error) {
 	if forumName == "" {
 		return 0, ErrBlankName
 	}
 	forumCreateMutex.Lock()
-	res, err := mfs.create.Exec(forumName, forumDesc, active, preset)
+	defer forumCreateMutex.Unlock()
+
+	res, err := s.create.Exec(forumName, forumDesc, active, preset)
 	if err != nil {
 		return 0, err
 	}
@@ -350,13 +348,12 @@ func (mfs *MemoryForumStore) Create(forumName string, forumDesc string, active b
 	}
 	fid := int(fid64)
 
-	err = mfs.Reload(fid)
+	err = s.Reload(fid)
 	if err != nil {
 		return 0, err
 	}
 
 	PermmapToQuery(PresetToPermmap(preset), fid)
-	forumCreateMutex.Unlock()
 	return fid, nil
 }
 
@@ -383,8 +380,8 @@ func (s *MemoryForumStore) Length() (length int) {
 
 // TODO: Get the total count of forums in the forum store rather than doing a heavy query for this?
 // GlobalCount returns the total number of forums
-func (mfs *MemoryForumStore) GlobalCount() (fcount int) {
-	err := mfs.count.QueryRow().Scan(&fcount)
+func (s *MemoryForumStore) GlobalCount() (fcount int) {
+	err := s.count.QueryRow().Scan(&fcount)
 	if err != nil {
 		LogError(err)
 	}
