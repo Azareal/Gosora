@@ -655,5 +655,5 @@ func patch21(scanner *bufio.Scanner) error {
 }
 
 func patch22(scanner *bufio.Scanner) error {
-	return execStmt(qgen.Builder.AddColumn("forums", tblColumn{"tmpl", "varchar", 200, false, false, ""}, nil))
+	return execStmt(qgen.Builder.AddColumn("forums", tblColumn{"tmpl", "varchar", 200, false, false, "''"}, nil))
 }
