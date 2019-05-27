@@ -1,6 +1,6 @@
 {{if gt .LastPage 1}}
 <div class="pageset">
-	{{if gt .Page 1}}<div class="pageitem pagefirst"><a href="?page=1" rel="prev" aria-label="{{lang "paginator.first_page_aria"}}">{{lang "paginator.first_page"}}</a></div>
+	{{if gt .Page 1}}<div class="pageitem pagefirst"><a href="?page=1" aria-label="{{lang "paginator.first_page_aria"}}">{{lang "paginator.first_page"}}</a></div>
 	<div class="pageitem pageprev"><a href="?page={{subtract .Page 1}}" rel="prev" aria-label="{{lang "paginator.prev_page_aria"}}">{{lang "paginator.prev_page"}}</a></div>
 	<link rel="prev" href="?page={{subtract .Page 1}}" />{{end}}
 	{{range .PageList}}
@@ -9,6 +9,6 @@
 	{{if ne .LastPage .Page}}
 	<link rel="next" href="?page={{add .Page 1}}" />
 	<div class="pageitem pagenext"><a href="?page={{add .Page 1}}" rel="next" aria-label="{{lang "paginator.next_page_aria"}}">{{lang "paginator.next_page"}}</a></div>
-	<div class="pageitem pagelast"><a href="?page={{.LastPage}}" rel="next" aria-label="{{lang "paginator.last_page_aria"}}">{{lang "paginator.last_page"}}</a></div>{{end}}
+	<div class="pageitem pagelast"><a href="?page={{.LastPage}}" aria-label="{{lang "paginator.last_page_aria"}}">{{lang "paginator.last_page"}}</a></div>{{end}}
 </div>
 {{end}}

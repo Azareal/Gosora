@@ -1033,7 +1033,8 @@ input[type=checkbox]:checked + label .sel {
 .attach_item button {
 	margin-top: -1px;
 }
-.post_item:not(.has_attachs) .attach_item_buttons,
+.post_item:not(.has_attachs):not(.top_post) .attach_item_buttons,
+.post_item:not(.has_attachs) .attach_item_delete,
 .has_attachs .update_buttons .add_file_button {
 	display: none;
 }
@@ -1398,7 +1399,6 @@ input[type=checkbox]:checked + label .sel {
 		max-width: calc(100% - 180px);
 	}
 }
-
 {{/**@media(max-width: 850px) {
 	//
 }**/}}
