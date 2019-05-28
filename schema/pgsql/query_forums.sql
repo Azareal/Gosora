@@ -2,7 +2,7 @@ CREATE TABLE "forums" (
 	`fid` serial not null,
 	`name` varchar (100) not null,
 	`desc` varchar (200) not null,
-	`tmpl` varchar (200) not null,
+	`tmpl` varchar (200) DEFAULT '' not null,
 	`active` boolean DEFAULT 1 not null,
 	`order` int DEFAULT 0 not null,
 	`topicCount` int DEFAULT 0 not null,

@@ -13,8 +13,8 @@ INSERT INTO [users_groups] ([name],[permissions],[plugin_perms]) VALUES ('Member
 INSERT INTO [users_groups] ([name],[permissions],[plugin_perms],[is_banned]) VALUES ('Banned','{"ViewTopic":true}','{}',1);
 INSERT INTO [users_groups] ([name],[permissions],[plugin_perms]) VALUES ('Awaiting Activation','{"ViewTopic":true}','{}');
 INSERT INTO [users_groups] ([name],[permissions],[plugin_perms],[tag]) VALUES ('Not Loggedin','{"ViewTopic":true}','{}','Guest');
-INSERT INTO [forums] ([name],[active],[desc]) VALUES ('Reports',0,'All the reports go here');
-INSERT INTO [forums] ([name],[lastTopicID],[lastReplyerID],[desc]) VALUES ('General',1,1,'A place for general discussions which don''t fit elsewhere');
+INSERT INTO [forums] ([name],[active],[desc],[tmpl]) VALUES ('Reports',0,'All the reports go here','');
+INSERT INTO [forums] ([name],[lastTopicID],[lastReplyerID],[desc],[tmpl]) VALUES ('General',1,1,'A place for general discussions which don''t fit elsewhere','');
 INSERT INTO [forums_permissions] ([gid],[fid],[permissions]) VALUES (1,1,'{"ViewTopic":true,"CreateReply":true,"CreateTopic":true,"PinTopic":true,"CloseTopic":true}');
 INSERT INTO [forums_permissions] ([gid],[fid],[permissions]) VALUES (2,1,'{"ViewTopic":true,"CreateReply":true,"CloseTopic":true}');
 INSERT INTO [forums_permissions] ([gid],[fid],[permissions]) VALUES (3,1,'{}');

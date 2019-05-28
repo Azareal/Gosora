@@ -2,7 +2,7 @@ CREATE TABLE [forums] (
 	[fid] int not null IDENTITY,
 	[name] nvarchar (100) not null,
 	[desc] nvarchar (200) not null,
-	[tmpl] nvarchar (200) not null,
+	[tmpl] nvarchar (200) DEFAULT '' not null,
 	[active] bit DEFAULT 1 not null,
 	[order] int DEFAULT 0 not null,
 	[topicCount] int DEFAULT 0 not null,
