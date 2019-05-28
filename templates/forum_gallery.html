@@ -1,0 +1,80 @@
+{{template "header.html" . }}
+
+<link rel="canonical" href="//{{.Site.URL}}{{.Forum.Link}}{{if gt .Page 1}}?page={{.Page}}{{end}}" />
+
+<main id="forumItemList" itemscope itemtype="http://schema.org/ItemList">
+	<div id="forum_head_block" class="rowblock rowhead topic_list_title_block{{if .CurrentUser.Loggedin}} has_opt{{end}}">
+		<div class="rowitem forum_title">
+			<h1 itemprop="name">{{.Title}}</h1>
+		</div>
+		{{if .CurrentUser.Loggedin}}
+			<div class="optbox">
+				{{if .CurrentUser.Perms.CreateTopic}}
+				<div class="opt dummy_opt"></div>
+				<div class="pre_opt auto_hide"></div>
+				<div class="opt create_topic_opt" title="{{lang "topic_list.create_topic_tooltip"}}" aria-label="{{lang "topic_list.create_topic_aria"}}"><a class="create_topic_link" href="/topics/create/{{.Forum.ID}}"></a></div>
+				{{/** TODO: Add a permissions check for this **/}}
+				<div class="opt mod_opt" title="{{lang "topic_list.moderate_tooltip"}}">
+					<a class="moderate_link" href="#" aria-label="{{lang "topic_list.moderate_aria"}}"></a>
+				</div>
+				{{else}}<div class="opt locked_opt" title="{{lang "forum_locked_tooltip"}}" aria-label="{{lang "forum_locked_aria"}}"><a></a></div>{{end}}
+			</div>
+			<div style="clear: both;"></div>
+		{{end}}
+	</div>
+	{{if .CurrentUser.Loggedin}}
+	{{template "topics_mod_floater.html"}}
+	
+	{{if .CurrentUser.Perms.CreateTopic}}
+	<div id="forum_topic_create_form" class="rowblock topic_create_form quick_create_form" style="display: none;" aria-label="{{lang "quick_topic.aria"}}">
+		<form id="quick_post_form" enctype="multipart/form-data" action="/topic/create/submit/?session={{.CurrentUser.Session}}" method="post"></form>
+		<img class="little_row_avatar" src="{{.CurrentUser.MicroAvatar}}" height="64" alt="{{lang "quick_topic.avatar_alt"}}" title="{{lang "quick_topic.avatar_tooltip"}}" />
+		<input form="quick_post_form" id="topic_board_input" name="topic-board" value="{{.Forum.ID}}" type="hidden">
+		<div class="main_form">
+			<div class="topic_meta">
+				<div class="formrow topic_name_row real_first_child">
+					<div class="formitem">
+						<input form="quick_post_form" name="topic-name" placeholder="{{lang "quick_topic.whatsup"}}" required>
+					</div>
+				</div>
+			</div>
+			{{template "topics_quick_topic.html" . }}
+		</div>
+	</div>
+	{{end}}
+	{{end}}
+	<div id="forum_topic_list" class="rowblock micro_grid" aria-label="{{lang "forum_list_aria"}}">
+		{{range .ItemList}}<div class="rowitem" data-tid="{{.ID}}" style="grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));">
+		<div>
+			<a class="rowtopic" href="{{.Link}}" itemprop="itemListElement"><img src="{{.Content}}" style="width:100%;height:160px;" /></a>
+			<br /><a class="rowsmall starter" href="{{.Link}}">{{.Title}}</a>
+		</div>
+		<!--<div class="topic_left passive datarow">
+			<a href="{{.Creator.Link}}"><img src="{{.Creator.MicroAvatar}}" height=64 alt="Avatar" title="{{.Creator.Name}}'s Avatar" aria-hidden="true" /></a>
+			<span class="topic_inner_left">
+				<a class="rowtopic" href="{{.Link}}" itemprop="itemListElement" title="{{.Title}}"><span>{{.Title}}</span></a>
+				<br /><a class="rowsmall starter" href="{{.Creator.Link}}" title="{{.Creator.Name}}">{{.Creator.Name}}</a>
+			</span>
+		</div>-->
+		<!--<div class="topic_middle">
+			<div class="topic_middle_inside rowsmall">
+				<span class="replyCount">{{.PostCount}}&nbsp;{{lang "topic_list.replies_suffix"}}</span>
+				<span class="likeCount">{{.LikeCount}}&nbsp;{{lang "topic_list.likes_suffix"}}</span>
+				<span class="viewCount">{{.ViewCount}}&nbsp;{{lang "topic_list.views_suffix"}}</span>
+			</div>
+		</div>
+		<div class="topic_right passive datarow">
+			<div class="topic_right_inside">
+				<a href="{{.LastUser.Link}}"><img src="{{.LastUser.MicroAvatar}}" height=64 alt="Avatar" title="{{.LastUser.Name}}'s Avatar" aria-hidden="true" /></a>
+				<span>
+					<a href="{{.LastUser.Link}}" class="lastName" style="font-size: 14px;" title="{{.LastUser.Name}}">{{.LastUser.Name}}</a><br>
+					<a href="{{.Link}}?page={{.LastPage}}{{if .LastReplyID}}#post-{{.LastReplyID}}{{end}}" class="rowsmall lastReplyAt" title="{{abstime .LastReplyAt}}">{{reltime .LastReplyAt}}</a>
+				</span>
+			</div>
+		</div>-->
+		</div>{{else}}<div class="rowitem passive rowmsg">{{lang "forum_no_topics"}}{{if .CurrentUser.Loggedin}}{{if .CurrentUser.Perms.CreateTopic}} <a href="/topics/create/{{.Forum.ID}}">{{lang "forum_start_one"}}</a>{{end}}{{end}}</div>{{end}}
+	</div>
+
+{{template "paginator.html" . }}
+</main>
+{{template "footer.html" . }}
