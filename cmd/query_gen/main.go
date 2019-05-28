@@ -186,9 +186,9 @@ func seedTables(adapter qgen.Adapter) error {
 	//
 	// TODO: Stop processFields() from stripping the spaces in the descriptions in the next commit
 
-	qgen.Install.SimpleInsert("forums", "name, active, desc", "'Reports',0,'All the reports go here'")
+	qgen.Install.SimpleInsert("forums", "name, active, desc, tmpl", "'Reports',0,'All the reports go here',''")
 
-	qgen.Install.SimpleInsert("forums", "name, lastTopicID, lastReplyerID, desc", "'General',1,1,'A place for general discussions which don't fit elsewhere'")
+	qgen.Install.SimpleInsert("forums", "name, lastTopicID, lastReplyerID, desc, tmpl", "'General',1,1,'A place for general discussions which don't fit elsewhere',''")
 
 	//
 

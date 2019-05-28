@@ -81,7 +81,7 @@ func NewMemoryForumStore() (*MemoryForumStore, error) {
 		get:          acc.Select("forums").Columns("name, desc, tmpl, active, order, preset, parentID, parentType, topicCount, lastTopicID, lastReplyerID").Where("fid = ?").Prepare(),
 		getAll:       acc.Select("forums").Columns("fid, name, desc, tmpl, active, order, preset, parentID, parentType, topicCount, lastTopicID, lastReplyerID").Orderby("order ASC, fid ASC").Prepare(),
 		delete:       acc.Update("forums").Set("name= '', active = 0").Where("fid = ?").Prepare(),
-		create:       acc.Insert("forums").Columns("name, desc, active, preset").Fields("?,?,?,?").Prepare(),
+		create:       acc.Insert("forums").Columns("name, desc, tmpl, active, preset").Fields("?,?,'',?,?").Prepare(),
 		count:        acc.Count("forums").Where("name != ''").Prepare(),
 		updateCache:  acc.Update("forums").Set("lastTopicID = ?, lastReplyerID = ?").Where("fid = ?").Prepare(),
 		addTopics:    acc.Update("forums").Set("topicCount = topicCount + ?").Where("fid = ?").Prepare(),
