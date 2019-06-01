@@ -509,14 +509,15 @@ var agentMapEnum = map[string]int{
 	"cloudflare": 21,
 	"uptimebot": 22,
 	"slackbot": 23,
-	"discourse": 24,
-	"lynx": 25,
-	"blank": 26,
-	"malformed": 27,
-	"suspicious": 28,
-	"semrush": 29,
-	"dotbot": 30,
-	"zgrab": 31,
+	"apple": 24,
+	"discourse": 25,
+	"lynx": 26,
+	"blank": 27,
+	"malformed": 28,
+	"suspicious": 29,
+	"semrush": 30,
+	"dotbot": 31,
+	"zgrab": 32,
 }
 var reverseAgentMapEnum = map[int]string{ 
 	0: "unknown",
@@ -543,14 +544,15 @@ var reverseAgentMapEnum = map[int]string{
 	21: "cloudflare",
 	22: "uptimebot",
 	23: "slackbot",
-	24: "discourse",
-	25: "lynx",
-	26: "blank",
-	27: "malformed",
-	28: "suspicious",
-	29: "semrush",
-	30: "dotbot",
-	31: "zgrab",
+	24: "apple",
+	25: "discourse",
+	26: "lynx",
+	27: "blank",
+	28: "malformed",
+	29: "suspicious",
+	30: "semrush",
+	31: "dotbot",
+	32: "zgrab",
 }
 var markToAgent = map[string]string{ 
 	"OPR": "opera",
@@ -577,6 +579,7 @@ var markToAgent = map[string]string{
 	"Twitterbot": "twitter",
 	"facebookexternalhit": "facebook",
 	"Facebot": "facebook",
+	"Applebot": "apple",
 	"Discourse": "discourse",
 	"SemrushBot": "semrush",
 	"DotBot": "dotbot",
@@ -705,7 +708,7 @@ func (r *GenRouter) SuspiciousRequest(req *http.Request, prepend string) {
 		prepend += "\n"
 	}
 	r.DumpRequest(req,prepend+"Suspicious Request")
-	counters.AgentViewCounter.Bump(28)
+	counters.AgentViewCounter.Bump(29)
 }
 
 func isLocalHost(host string) bool {
@@ -720,7 +723,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(200) // 400
 		w.Write([]byte(""))
 		r.DumpRequest(req,"Malformed Request T"+strconv.Itoa(typ))
-		counters.AgentViewCounter.Bump(27)
+		counters.AgentViewCounter.Bump(28)
 	}
 	
 	// Split the Host and Port string
@@ -844,7 +847,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	ua := strings.TrimSpace(strings.Replace(strings.TrimPrefix(req.UserAgent(),"Mozilla/5.0 ")," Safari/537.36","",-1)) // Noise, no one's going to be running this and it would require some sort of agent ranking system to determine which identifier should be prioritised over another
 	var agent string
 	if ua == "" {
-		counters.AgentViewCounter.Bump(26)
+		counters.AgentViewCounter.Bump(27)
 		if c.Dev.DebugMode {
 			var prepend string
 			for _, char := range req.UserAgent() {

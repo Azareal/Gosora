@@ -12,7 +12,7 @@
 
 <link rel="canonical" href="//{{.Site.URL}}{{.Topic.Link}}{{if gt .Page 1}}?page={{.Page}}{{end}}" />
 
-<div  {{scope "topic_title_block"}} class="rowblock rowhead topic_block" aria-label="{{lang "topic.opening_post_aria"}}">
+<div {{scope "topic_title_block"}} class="rowblock rowhead topic_block" aria-label="{{lang "topic.topic_info_aria"}}">
 	<div class="rowitem topic_item{{if .Topic.Sticky}} topic_sticky_head{{else if .Topic.IsClosed}} topic_closed_head{{end}}">
 		<h1 class='topic_name hide_on_edit' title='{{.Topic.Title}}'>{{.Topic.Title}}</h1>
 		{{if .Topic.IsClosed}}<span class='username hide_on_micro topic_status_e topic_status_closed hide_on_edit' title='{{lang "status.closed_tooltip"}}' aria-label='{{lang "topic.status_closed_aria"}}'>&#x1F512;&#xFE0E</span>{{end}}

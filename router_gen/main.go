@@ -225,6 +225,7 @@ func main() {
 		"cloudflare",
 		"uptimebot",
 		"slackbot",
+		"apple",
 		"discourse",
 		"lynx",
 		"blank",
@@ -266,6 +267,7 @@ func main() {
 		"Twitterbot",
 		"facebookexternalhit",
 		"Facebot",
+		"Applebot",
 		"Discourse",
 
 		"SemrushBot",
@@ -299,6 +301,7 @@ func main() {
 		"Twitterbot":          "twitter",
 		"facebookexternalhit": "facebook",
 		"Facebot":             "facebook",
+		"Applebot":"apple",
 		"Discourse":           "discourse",
 
 		"SemrushBot": "semrush",

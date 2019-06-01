@@ -193,6 +193,8 @@
 		"cloudflare":"Cloudflare Alwayson",
 		"uptimebot":"Uptimebot",
 		"slackbot":"Slackbot",
+		"facebook":"FacebookBot",
+		"apple":"AppleBot",
 		"discourse":"Discourse Forum Onebox",
 		"lynx":"Lynx",
 		
@@ -588,6 +590,7 @@
 		"forums_none":"None",
 		"forums_no_forums":"You don't have access to any forums.",
 
+		"topic.topic_info_aria":"Topic information",
 		"topic.opening_post_aria":"The opening post for this topic",
 		"topic.status_closed_aria":"This topic is locked",
 		"topic.title_input_aria":"Topic Title Input",

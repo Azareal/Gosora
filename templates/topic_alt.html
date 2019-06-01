@@ -7,7 +7,7 @@
 
 <link rel="canonical" href="//{{.Site.URL}}{{.Topic.Link}}{{if gt .Page 1}}?page={{.Page}}{{end}}" />
 
-<div {{scope "topic_title_block"}} class="rowblock rowhead topic_block" aria-label="{{lang "topic.opening_post_aria"}}">
+<div {{scope "topic_title_block"}} class="rowblock rowhead topic_block" aria-label="{{lang "topic.topic_info_aria"}}">
 	<div class="rowitem topic_item{{if .Topic.Sticky}} topic_sticky_head{{else if .Topic.IsClosed}} topic_closed_head{{end}}">
 		<h1 class='topic_name hide_on_edit' title='{{.Topic.Title}}'>{{.Topic.Title}}</h1>
 		<span class="topic_name_forum_sep hide_on_edit"> - </span>
@@ -29,8 +29,7 @@
 </div>
 
 <div class="rowblock post_container">
-	{{if .Poll.ID}}
-	<form id="poll_{{.Poll.ID}}_form" action="/poll/vote/{{.Poll.ID}}?session={{.CurrentUser.Session}}" method="post"></form>
+	{{if .Poll.ID}}<form id="poll_{{.Poll.ID}}_form" action="/poll/vote/{{.Poll.ID}}?session={{.CurrentUser.Session}}" method="post"></form>
 	<article class="rowitem passive deletable_block editable_parent post_item poll_item top_post hide_on_edit">
 		{{template "topic_alt_userinfo.html" .Topic }}
 		<div id="poll_voter_{{.Poll.ID}}" class="content_container poll_voter">
