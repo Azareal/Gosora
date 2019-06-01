@@ -164,7 +164,7 @@ func userStoreTest(t *testing.T, newUserID int) {
 	expect(t, !c.Users.Exists(newUserID), fmt.Sprintf("UID #%d shouldn't exist", newUserID))
 
 	expect(t, isCacheLengthZero(ucache), fmt.Sprintf("User cache length should be 0, not %d", cacheLength(ucache)))
-	expectIntToBeX(t, c.Users.GlobalCount(), 1, "The number of users should be one, not %d")
+	expectIntToBeX(t, c.Users.Count(), 1, "The number of users should be one, not %d")
 
 	var awaitingActivation = 5
 	// TODO: Write tests for the registration validators
@@ -452,7 +452,7 @@ func topicStoreTest(t *testing.T, newID int) {
 	ok = c.Topics.Exists(1)
 	expect(t, ok, "TID #1 should exist")
 
-	count := c.Topics.GlobalCount()
+	count := c.Topics.Count()
 	expect(t, count == 1, fmt.Sprintf("Global count for topics should be 1, not %d", count))
 
 	//Create(fid int, topicName string, content string, uid int, ipaddress string) (tid int, err error)
@@ -461,7 +461,7 @@ func topicStoreTest(t *testing.T, newID int) {
 	expect(t, tid == newID, fmt.Sprintf("TID for the new topic should be %d, not %d", newID, tid))
 	expect(t, c.Topics.Exists(newID), fmt.Sprintf("TID #%d should exist", newID))
 
-	count = c.Topics.GlobalCount()
+	count = c.Topics.Count()
 	expect(t, count == 2, fmt.Sprintf("Global count for topics should be 2, not %d", count))
 
 	var iFrag = func(cond bool) string {
@@ -541,7 +541,7 @@ func TestForumStore(t *testing.T) {
 	fcache, ok := c.Forums.(c.ForumCache)
 	expect(t, ok, "Unable to cast ForumStore to ForumCache")
 
-	expect(t, c.Forums.GlobalCount() == 2, "The forumstore global count should be 2")
+	expect(t, c.Forums.Count() == 2, "The forumstore global count should be 2")
 	expect(t, fcache.Length() == 2, "The forum cache length should be 2")
 
 	_, err := c.Forums.Get(-1)
@@ -601,7 +601,7 @@ func TestForumStore(t *testing.T) {
 	expect(t, fid == 3, "The first forum we create should have an ID of 3")
 	expect(t, c.Forums.Exists(3), "FID #2 should exist")
 
-	expect(t, c.Forums.GlobalCount() == 3, "The forumstore global count should be 3")
+	expect(t, c.Forums.Count() == 3, "The forumstore global count should be 3")
 	expect(t, fcache.Length() == 3, "The forum cache length should be 3")
 
 	forum, err = c.Forums.Get(3)
@@ -618,7 +618,7 @@ func TestForumStore(t *testing.T) {
 
 	expectNilErr(t, c.Forums.Delete(3))
 	expect(t, forum.ID == 3, fmt.Sprintf("forum pointer shenanigans"))
-	expect(t, c.Forums.GlobalCount() == 2, "The forumstore global count should be 2")
+	expect(t, c.Forums.Count() == 2, "The forumstore global count should be 2")
 	expect(t, fcache.Length() == 2, "The forum cache length should be 2")
 	expect(t, !c.Forums.Exists(3), "FID #3 shouldn't exist after being deleted")
 	_, err = c.Forums.Get(3)
@@ -938,10 +938,37 @@ func TestProfileReplyStore(t *testing.T) {
 	// TODO: Test profileReply.SetBody() and profileReply.Creator()
 }
 
+func TestActivityStream(t *testing.T) {
+	miscinit(t)
+
+	expect(t,c.Activity.Count()==0,"activity stream count should be 0")
+
+	_, err := c.Activity.Get(-1)
+	recordMustNotExist(t, err, "activity item -1 shouldn't exist")
+	_, err = c.Activity.Get(0)
+	recordMustNotExist(t, err, "activity item 0 shouldn't exist")
+	_, err = c.Activity.Get(1)
+	recordMustNotExist(t, err, "activity item 1 shouldn't exist")
+
+	a := c.Alert{ActorID: 1, TargetUserID: 1, Event: "like", ElementType: "topic", ElementID: 1}
+	id, err := c.Activity.Add(a)
+	expectNilErr(t,err)
+	expect(t,id==1,"new activity item id should be 1")
+
+	expect(t,c.Activity.Count()==1,"activity stream count should be 1")
+	alert, err := c.Activity.Get(1)
+	expectNilErr(t,err)
+	expect(t,alert.ActorID==1,"alert actorid should be 1")
+	expect(t,alert.TargetUserID==1,"alert targetuserid should be 1")
+	expect(t,alert.Event=="like","alert event type should be like")
+	expect(t,alert.ElementType=="topic","alert element type should be topic")
+	expect(t,alert.ElementID==1,"alert element id should be 1")
+}
+
 func TestLogs(t *testing.T) {
 	miscinit(t)
 	gTests := func(store c.LogStore, phrase string) {
-		expect(t, store.GlobalCount() == 0, "There shouldn't be any "+phrase)
+		expect(t, store.Count() == 0, "There shouldn't be any "+phrase)
 		logs, err := store.GetOffset(0, 25)
 		expectNilErr(t, err)
 		expect(t, len(logs) == 0, "The log slice should be empty")
@@ -952,8 +979,8 @@ func TestLogs(t *testing.T) {
 	gTests2 := func(store c.LogStore, phrase string) {
 		err := store.Create("something", 0, "bumblefly", "::1", 1)
 		expectNilErr(t, err)
-		count := store.GlobalCount()
-		expect(t, count == 1, fmt.Sprintf("store.GlobalCount should return one, not %d", count))
+		count := store.Count()
+		expect(t, count == 1, fmt.Sprintf("store.Count should return one, not %d", count))
 		logs, err := store.GetOffset(0, 25)
 		recordMustExist(t, err, "We should have at-least one "+phrase)
 		expect(t, len(logs) == 1, "The length of the log slice should be one")
@@ -1159,7 +1186,7 @@ func TestWordFilters(t *testing.T) {
 	// TODO: Test the word filters and their store
 	expect(t, c.WordFilters.Length() == 0, "Word filter list should be empty")
 	expect(t, c.WordFilters.EstCount() == 0, "Word filter list should be empty")
-	expect(t, c.WordFilters.GlobalCount() == 0, "Word filter list should be empty")
+	expect(t, c.WordFilters.Count() == 0, "Word filter list should be empty")
 	filters, err := c.WordFilters.GetAll()
 	expectNilErr(t, err) // TODO: Slightly confusing that we don't get ErrNoRow here
 	expect(t, len(filters) == 0, "Word filter map should be empty")
@@ -1169,7 +1196,7 @@ func TestWordFilters(t *testing.T) {
 	expectNilErr(t, err)
 	expect(t, c.WordFilters.Length() == 1, "Word filter list should not be empty")
 	expect(t, c.WordFilters.EstCount() == 1, "Word filter list should not be empty")
-	expect(t, c.WordFilters.GlobalCount() == 1, "Word filter list should not be empty")
+	expect(t, c.WordFilters.Count() == 1, "Word filter list should not be empty")
 	filters, err = c.WordFilters.GetAll()
 	expectNilErr(t, err)
 	expect(t, len(filters) == 1, "Word filter map should not be empty")

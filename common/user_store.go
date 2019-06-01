@@ -26,7 +26,7 @@ type UserStore interface {
 	BypassGet(id int) (*User, error)
 	Create(username string, password string, email string, group int, active bool) (int, error)
 	Reload(id int) error
-	GlobalCount() int
+	Count() int
 
 	SetCache(cache UserCache)
 	GetCache() UserCache
@@ -41,7 +41,7 @@ type DefaultUserStore struct {
 	exists         *sql.Stmt
 	register       *sql.Stmt
 	usernameExists *sql.Stmt
-	userCount      *sql.Stmt
+	count      *sql.Stmt
 }
 
 // NewDefaultUserStore gives you a new instance of DefaultUserStore
@@ -59,7 +59,7 @@ func NewDefaultUserStore(cache UserCache) (*DefaultUserStore, error) {
 		exists:         acc.SimpleSelect("users", "uid", "uid = ?", "", ""),
 		register:       acc.Insert("users").Columns("name, email, password, salt, group, is_super_admin, session, active, message, createdAt, lastActiveAt, lastLiked, oldestItemLikedCreatedAt").Fields("?,?,?,?,?,0,'',?,'',UTC_TIMESTAMP(),UTC_TIMESTAMP(),UTC_TIMESTAMP(),UTC_TIMESTAMP()").Prepare(), // TODO: Implement user_count on users_groups here
 		usernameExists: acc.SimpleSelect("users", "name", "name = ?", "", ""),
-		userCount:      acc.Count("users").Prepare(),
+		count:      acc.Count("users").Prepare(),
 	}, acc.FirstError()
 }
 
@@ -282,24 +282,24 @@ func (mus *DefaultUserStore) Create(username string, password string, email stri
 	return int(lastID), err
 }
 
-// GlobalCount returns the total number of users registered on the forums
-func (mus *DefaultUserStore) GlobalCount() (ucount int) {
-	err := mus.userCount.QueryRow().Scan(&ucount)
+// Count returns the total number of users registered on the forums
+func (s *DefaultUserStore) Count() (count int) {
+	err := s.count.QueryRow().Scan(&count)
 	if err != nil {
 		LogError(err)
 	}
-	return ucount
+	return count
 }
 
-func (mus *DefaultUserStore) SetCache(cache UserCache) {
-	mus.cache = cache
+func (s *DefaultUserStore) SetCache(cache UserCache) {
+	s.cache = cache
 }
 
 // TODO: We're temporarily doing this so that you can do ucache != nil in getTopicUser. Refactor it.
-func (mus *DefaultUserStore) GetCache() UserCache {
-	_, ok := mus.cache.(*NullUserCache)
+func (s *DefaultUserStore) GetCache() UserCache {
+	_, ok := s.cache.(*NullUserCache)
 	if ok {
 		return nil
 	}
-	return mus.cache
+	return s.cache
 }

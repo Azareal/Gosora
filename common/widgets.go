@@ -166,7 +166,7 @@ func HasWidgets(dock string, header *Header) bool {
 		if !widget.Enabled {
 			continue
 		}
-		if widget.Allowed(header.Zone) {
+		if widget.Allowed(header.Zone,header.ZoneID) {
 			wcount++
 		}
 	}
@@ -210,7 +210,7 @@ func BuildWidget(dock string, header *Header) (sbody string) {
 		if !widget.Enabled {
 			continue
 		}
-		if widget.Allowed(header.Zone) {
+		if widget.Allowed(header.Zone,header.ZoneID) {
 			item, err := widget.Build(header)
 			if err != nil {
 				LogError(err)

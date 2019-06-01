@@ -60,6 +60,31 @@ func Debug(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	}
 	topicListThawed := c.TopicListThaw.Thawed()
 
-	pi := c.PanelDebugPage{basePage, goVersion, dbVersion, uptime, openConnCount, qgen.Builder.GetAdapter().GetName(), goroutines, cpus, memStats, tlen, ulen, rlen, tcap, ucap, rcap, topicListThawed}
+	debugCache := c.DebugPageCache{tlen, ulen, rlen, tcap, ucap, rcap, topicListThawed}
+	debugDatabase := c.DebugPageDatabase{c.Topics.Count(),c.Users.Count(),c.Rstore.Count(),c.Prstore.Count(),c.Activity.Count()}
+
+	staticSize, err := c.DirSize("./public/")
+	if err != nil {
+		return c.InternalError(err,w,r)
+	}
+	attachSize, err := c.DirSize("./attachs/")
+	if err != nil {
+		return c.InternalError(err,w,r)
+	}
+	uploadsSize, err := c.DirSize("./uploads/")
+	if err != nil {
+		return c.InternalError(err,w,r)
+	}
+	logsSize, err := c.DirSize("./logs/")
+	if err != nil {
+		return c.InternalError(err,w,r)
+	}
+	backupsSize, err := c.DirSize("./backups/")
+	if err != nil {
+		return c.InternalError(err,w,r)
+	}
+	debugDisk := c.DebugPageDisk{staticSize,attachSize,uploadsSize,logsSize,backupsSize}
+
+	pi := c.PanelDebugPage{basePage, goVersion, dbVersion, uptime, openConnCount, qgen.Builder.GetAdapter().GetName(), goroutines, cpus, memStats, debugCache, debugDatabase, debugDisk}
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_dashboard_right", "debug_page", "panel_debug", pi})
 }

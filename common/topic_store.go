@@ -36,7 +36,7 @@ type TopicStore interface {
 	// TODO: Implement these two methods
 	//Replies(tid int) ([]*Reply, error)
 	//RepliesRange(tid int, lower int, higher int) ([]*Reply, error)
-	GlobalCount() int
+	Count() int
 
 	SetCache(cache TopicCache)
 	GetCache() TopicCache
@@ -47,7 +47,7 @@ type DefaultTopicStore struct {
 
 	get        *sql.Stmt
 	exists     *sql.Stmt
-	topicCount *sql.Stmt
+	count *sql.Stmt
 	create     *sql.Stmt
 }
 
@@ -61,7 +61,7 @@ func NewDefaultTopicStore(cache TopicCache) (*DefaultTopicStore, error) {
 		cache:      cache,
 		get:        acc.Select("topics").Columns("title, content, createdBy, createdAt, lastReplyBy, lastReplyAt, lastReplyID, is_closed, sticky, parentID, ipaddress, views, postCount, likeCount, attachCount, poll, data").Where("tid = ?").Prepare(),
 		exists:     acc.Select("topics").Columns("tid").Where("tid = ?").Prepare(),
-		topicCount: acc.Count("topics").Prepare(),
+		count: acc.Count("topics").Prepare(),
 		create:     acc.Insert("topics").Columns("parentID, title, content, parsed_content, createdAt, lastReplyAt, lastReplyBy, ipaddress, words, createdBy").Fields("?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,?,?").Prepare(),
 	}, acc.FirstError()
 }
@@ -239,13 +239,13 @@ func (mts *DefaultTopicStore) AddLastTopic(item *Topic, fid int) error {
 	return nil
 }
 
-// GlobalCount returns the total number of topics on these forums
-func (mts *DefaultTopicStore) GlobalCount() (tcount int) {
-	err := mts.topicCount.QueryRow().Scan(&tcount)
+// Count returns the total number of topics on these forums
+func (s *DefaultTopicStore) Count() (count int) {
+	err := s.count.QueryRow().Scan(&count)
 	if err != nil {
 		LogError(err)
 	}
-	return tcount
+	return count
 }
 
 func (mts *DefaultTopicStore) SetCache(cache TopicCache) {

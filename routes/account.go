@@ -714,7 +714,7 @@ func AccountEditEmailTokenSubmit(w http.ResponseWriter, r *http.Request, user c.
 func AccountLogins(w http.ResponseWriter, r *http.Request, user c.User, header *c.Header) c.RouteError {
 	accountEditHead("account_logins", w, r, &user, header)
 
-	logCount := c.LoginLogs.Count(user.ID)
+	logCount := c.LoginLogs.CountUser(user.ID)
 	page, _ := strconv.Atoi(r.FormValue("page"))
 	perPage := 12
 	offset, page, lastPage := c.PageOffset(logCount, page, perPage)

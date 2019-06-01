@@ -594,6 +594,34 @@ type PanelRegLogsPage struct {
 	Paginator
 }
 
+type DebugPageCache struct {
+	Topics int
+	Users int
+	Replies int
+
+	TCap int
+	UCap int
+	RCap int
+
+	TopicListThaw bool
+}
+
+type DebugPageDatabase struct {
+	Topics int
+	Users int
+	Replies int
+	ProfileReplies int
+	ActivityStream int
+}
+
+type DebugPageDisk struct {
+	Static int
+	Attachments int
+	Avatars int
+	Logs int
+	Backups int
+}
+
 type PanelDebugPage struct {
 	*BasePanelPage
 	GoVersion string
@@ -607,15 +635,9 @@ type PanelDebugPage struct {
 	CPUs       int
 	MemStats   runtime.MemStats
 
-	TCache int
-	UCache int
-	RCache int
-
-	TCap int
-	UCap int
-	RCap int
-
-	TopicListThaw bool
+	Cache DebugPageCache
+	Database DebugPageDatabase
+	Disk DebugPageDisk
 }
 
 type PageSimple struct {

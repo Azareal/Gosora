@@ -111,27 +111,27 @@ func FootHeaders(w http.ResponseWriter, header *c.Header) {
 	}
 }
 
-func renderTemplate3(tmplName string, hookName string, w http.ResponseWriter, r *http.Request, header *c.Header, pi interface{}) error {
-	c.PrepResources(&header.CurrentUser, header, header.Theme)
-	if header.CurrentUser.Loggedin {
-		header.MetaDesc = ""
-		header.OGDesc = ""
-	} else if header.MetaDesc != "" && header.OGDesc == "" {
-		header.OGDesc = header.MetaDesc
+func renderTemplate3(tmplName string, hookName string, w http.ResponseWriter, r *http.Request, h *c.Header, pi interface{}) error {
+	c.PrepResources(&h.CurrentUser, h, h.Theme)
+	if h.CurrentUser.Loggedin {
+		h.MetaDesc = ""
+		h.OGDesc = ""
+	} else if h.MetaDesc != "" && h.OGDesc == "" {
+		h.OGDesc = h.MetaDesc
 	}
-	header.AddScript("global.js")
-	if header.CurrentUser.Loggedin {
-		header.AddScriptAsync("member.js")
+	h.AddScript("global.js")
+	if h.CurrentUser.Loggedin {
+		h.AddScriptAsync("member.js")
 	}
 
-	FootHeaders(w, header)
-	if header.CurrentUser.IsAdmin {
-		header.Elapsed1 = time.Since(header.StartedAt).String()
+	FootHeaders(w, h)
+	if h.CurrentUser.IsAdmin {
+		h.Elapsed1 = time.Since(h.StartedAt).String()
 	}
-	if c.RunPreRenderHook("pre_render_"+hookName, w, r, &header.CurrentUser, pi) {
+	if c.RunPreRenderHook("pre_render_"+hookName, w, r, &h.CurrentUser, pi) {
 		return nil
 	}
-	return header.Theme.RunTmpl(tmplName, pi, w)
+	return h.Theme.RunTmpl(tmplName, pi, w)
 }
 
 // TODO: Rename renderTemplate to RenderTemplate instead of using this hack to avoid breaking things

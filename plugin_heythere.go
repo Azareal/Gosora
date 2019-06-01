@@ -6,7 +6,7 @@ func init() {
 	c.Plugins.Add(&c.Plugin{UName: "heythere", Name: "Hey There", Author: "Azareal", URL: "https://github.com/Azareal", Init: initHeythere, Deactivate: deactivateHeythere})
 }
 
-// init_heythere is separate from init() as we don't want the plugin to run if the plugin is disabled
+// initHeythere is separate from init() as we don't want the plugin to run if the plugin is disabled
 func initHeythere(plugin *c.Plugin) error {
 	plugin.AddHook("topic_reply_row_assign", heythereReply)
 	return nil

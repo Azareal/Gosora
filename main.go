@@ -243,6 +243,10 @@ func storeInit() (err error) {
 	if err != nil {
 		return errors.WithStack(err)
 	}
+	c.Activity, err = c.NewDefaultActivityStream(acc)
+	if err != nil {
+		return errors.WithStack(err)
+	}
 	// TODO: Let the admin choose other thumbnailers, maybe ones defined in plugins
 	c.Thumbnailer = c.NewCaireThumbnailer()
 
@@ -486,7 +490,7 @@ func main() {
 				// TODO: Add a LastRequested field to cached User structs to avoid evicting the same things which wind up getting loaded again anyway?
 				if ucache != nil {
 					ucap := ucache.GetCapacity()
-					if ucache.Length() <= ucap || c.Users.GlobalCount() <= ucap {
+					if ucache.Length() <= ucap || c.Users.Count() <= ucap {
 						couldNotDealloc = false
 						continue
 					}

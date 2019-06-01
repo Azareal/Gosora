@@ -23,6 +23,7 @@ import (
 )
 
 var ErrNoDefaultTheme = errors.New("The default theme isn't registered in the system")
+var ErrBadDefaultTemplate = errors.New("The template you tried to load doesn't exist in the interpreted pool.")
 
 type Theme struct {
 	Path string // Redirect this file to another folder
@@ -311,6 +312,9 @@ func (theme *Theme) RunTmpl(template string, pi interface{}, w io.Writer) error 
 		mapping, ok := theme.TemplatesMap[template]
 		if !ok {
 			mapping = template
+		}
+		if theme.IntTmplHandle.Lookup(mapping+".html") == nil {
+			return ErrBadDefaultTemplate
 		}
 		return theme.IntTmplHandle.ExecuteTemplate(w, mapping+".html", pi)
 	default:

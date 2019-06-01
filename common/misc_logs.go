@@ -55,7 +55,7 @@ func (log *RegLogItem) Create() (id int, err error) {
 }
 
 type RegLogStore interface {
-	GlobalCount() (logCount int)
+	Count() (count int)
 	GetOffset(offset int, perPage int) (logs []RegLogItem, err error)
 }
 
@@ -71,12 +71,12 @@ func NewRegLogStore(acc *qgen.Accumulator) (*SQLRegLogStore, error) {
 	}, acc.FirstError()
 }
 
-func (store *SQLRegLogStore) GlobalCount() (logCount int) {
-	err := store.count.QueryRow().Scan(&logCount)
+func (s *SQLRegLogStore) Count() (count int) {
+	err := s.count.QueryRow().Scan(&count)
 	if err != nil {
 		LogError(err)
 	}
-	return logCount
+	return count
 }
 
 func (store *SQLRegLogStore) GetOffset(offset int, perPage int) (logs []RegLogItem, err error) {
@@ -142,8 +142,8 @@ func (log *LoginLogItem) Create() (id int, err error) {
 }
 
 type LoginLogStore interface {
-	GlobalCount() (logCount int)
-	Count(uid int) (logCount int)
+	Count() (count int)
+	CountUser(uid int) (count int)
 	GetOffset(uid int, offset int, perPage int) (logs []LoginLogItem, err error)
 }
 
@@ -161,20 +161,20 @@ func NewLoginLogStore(acc *qgen.Accumulator) (*SQLLoginLogStore, error) {
 	}, acc.FirstError()
 }
 
-func (store *SQLLoginLogStore) GlobalCount() (logCount int) {
-	err := store.count.QueryRow().Scan(&logCount)
+func (s *SQLLoginLogStore) Count() (count int) {
+	err := s.count.QueryRow().Scan(&count)
 	if err != nil {
 		LogError(err)
 	}
-	return logCount
+	return count
 }
 
-func (store *SQLLoginLogStore) Count(uid int) (logCount int) {
-	err := store.countForUser.QueryRow(uid).Scan(&logCount)
+func (s *SQLLoginLogStore) CountUser(uid int) (count int) {
+	err := s.countForUser.QueryRow(uid).Scan(&count)
 	if err != nil {
 		LogError(err)
 	}
-	return logCount
+	return count
 }
 
 func (store *SQLLoginLogStore) GetOffset(uid int, offset int, perPage int) (logs []LoginLogItem, err error) {

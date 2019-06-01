@@ -21,7 +21,7 @@ func Pages(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	}
 
 	// TODO: Test the pagination here
-	pageCount := c.Pages.GlobalCount()
+	pageCount := c.Pages.Count()
 	page, _ := strconv.Atoi(r.FormValue("page"))
 	perPage := 15
 	offset, page, lastPage := c.PageOffset(pageCount, page, perPage)

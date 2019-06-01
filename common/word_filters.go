@@ -24,7 +24,7 @@ type WordFilterStore interface {
 	Update(id int, find string, replacement string) error
 	Length() int
 	EstCount() int
-	GlobalCount() (count int)
+	Count() (count int)
 }
 
 type DefaultWordFilterStore struct {
@@ -53,9 +53,9 @@ func NewDefaultWordFilterStore(acc *qgen.Accumulator) (*DefaultWordFilterStore, 
 }
 
 // ReloadAll drops all the items in the memory cache and replaces them with fresh copies from the database
-func (store *DefaultWordFilterStore) ReloadAll() error {
+func (s *DefaultWordFilterStore) ReloadAll() error {
 	var wordFilters = make(map[int]*WordFilter)
-	filters, err := store.bypassGetAll()
+	filters, err := s.bypassGetAll()
 	if err != nil {
 		return err
 	}
@@ -64,13 +64,13 @@ func (store *DefaultWordFilterStore) ReloadAll() error {
 		wordFilters[filter.ID] = filter
 	}
 
-	store.box.Store(wordFilters)
+	s.box.Store(wordFilters)
 	return nil
 }
 
 // ? - Return pointers to word filters intead to save memory? -- A map is a pointer.
-func (store *DefaultWordFilterStore) bypassGetAll() (filters []*WordFilter, err error) {
-	rows, err := store.getAll.Query()
+func (s *DefaultWordFilterStore) bypassGetAll() (filters []*WordFilter, err error) {
+	rows, err := s.getAll.Query()
 	if err != nil {
 		return nil, err
 	}
@@ -88,49 +88,49 @@ func (store *DefaultWordFilterStore) bypassGetAll() (filters []*WordFilter, err 
 }
 
 // GetAll returns all of the word filters in a map. Do note mutate this map (or maps returned from any store not explicitly noted as copies) as multiple threads may be accessing it at once
-func (store *DefaultWordFilterStore) GetAll() (filters map[int]*WordFilter, err error) {
-	return store.box.Load().(map[int]*WordFilter), nil
+func (s *DefaultWordFilterStore) GetAll() (filters map[int]*WordFilter, err error) {
+	return s.box.Load().(map[int]*WordFilter), nil
 }
 
 // Create adds a new word filter to the database and refreshes the memory cache
-func (store *DefaultWordFilterStore) Create(find string, replacement string) error {
-	_, err := store.create.Exec(find, replacement)
+func (s *DefaultWordFilterStore) Create(find string, replacement string) error {
+	_, err := s.create.Exec(find, replacement)
 	if err != nil {
 		return err
 	}
-	return store.ReloadAll()
+	return s.ReloadAll()
 }
 
 // Delete removes a word filter from the database and refreshes the memory cache
-func (store *DefaultWordFilterStore) Delete(id int) error {
-	_, err := store.delete.Exec(id)
+func (s *DefaultWordFilterStore) Delete(id int) error {
+	_, err := s.delete.Exec(id)
 	if err != nil {
 		return err
 	}
-	return store.ReloadAll()
+	return s.ReloadAll()
 }
 
-func (store *DefaultWordFilterStore) Update(id int, find string, replacement string) error {
-	_, err := store.update.Exec(find, replacement, id)
+func (s *DefaultWordFilterStore) Update(id int, find string, replacement string) error {
+	_, err := s.update.Exec(find, replacement, id)
 	if err != nil {
 		return err
 	}
-	return store.ReloadAll()
+	return s.ReloadAll()
 }
 
 // Length gets the number of word filters currently in memory, for the DefaultWordFilterStore, this should be all of them
-func (store *DefaultWordFilterStore) Length() int {
-	return len(store.box.Load().(map[int]*WordFilter))
+func (s *DefaultWordFilterStore) Length() int {
+	return len(s.box.Load().(map[int]*WordFilter))
 }
 
 // EstCount provides the same result as Length(), intended for alternate implementations of WordFilterStore, so that Length is the number of items in cache, if only a subset is held there and EstCount is the total count
-func (store *DefaultWordFilterStore) EstCount() int {
-	return len(store.box.Load().(map[int]*WordFilter))
+func (s *DefaultWordFilterStore) EstCount() int {
+	return len(s.box.Load().(map[int]*WordFilter))
 }
 
-// GlobalCount gets the total number of word filters directly from the database
-func (store *DefaultWordFilterStore) GlobalCount() (count int) {
-	err := store.count.QueryRow().Scan(&count)
+// Count gets the total number of word filters directly from the database
+func (s *DefaultWordFilterStore) Count() (count int) {
+	err := s.count.QueryRow().Scan(&count)
 	if err != nil {
 		LogError(err)
 	}

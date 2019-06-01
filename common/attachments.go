@@ -29,7 +29,7 @@ type AttachmentStore interface {
 	Add(sectionID int, sectionTable string, originID int, originTable string, uploadedBy int, path string, extra string) (int, error)
 	MoveTo(sectionID int, originID int, originTable string) error
 	MoveToByExtra(sectionID int, originTable string, extra string) error
-	GlobalCount() int
+	Count() int
 	CountIn(originTable string, oid int) int
 	CountInPath(path string) int
 	Delete(aid int) error
@@ -149,18 +149,18 @@ func (store *DefaultAttachmentStore) Add(sectionID int, sectionTable string, ori
 	return int(lid), err
 }
 
-func (store *DefaultAttachmentStore) MoveTo(sectionID int, originID int, originTable string) error {
-	_, err := store.move.Exec(sectionID, originID, originTable)
+func (s *DefaultAttachmentStore) MoveTo(sectionID int, originID int, originTable string) error {
+	_, err := s.move.Exec(sectionID, originID, originTable)
 	return err
 }
 
-func (store *DefaultAttachmentStore) MoveToByExtra(sectionID int, originTable string, extra string) error {
-	_, err := store.moveByExtra.Exec(sectionID, originTable, extra)
+func (s *DefaultAttachmentStore) MoveToByExtra(sectionID int, originTable string, extra string) error {
+	_, err := s.moveByExtra.Exec(sectionID, originTable, extra)
 	return err
 }
 
-func (store *DefaultAttachmentStore) GlobalCount() (count int) {
-	err := store.count.QueryRow().Scan(&count)
+func (s *DefaultAttachmentStore) Count() (count int) {
+	err := s.count.QueryRow().Scan(&count)
 	if err != nil {
 		LogError(err)
 	}

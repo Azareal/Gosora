@@ -25,7 +25,7 @@ type GroupStore interface {
 	GetAll() ([]*Group, error)
 	GetRange(lower int, higher int) ([]*Group, error)
 	Reload(id int) error // ? - Should we move this to GroupCache? It might require us to do some unnecessary casting though
-	GlobalCount() int
+	Count() int
 }
 
 type GroupCache interface {
@@ -336,14 +336,14 @@ func (mgs *MemoryGroupStore) GetRange(lower int, higher int) (groups []*Group, e
 	return groups, nil
 }
 
-func (mgs *MemoryGroupStore) Length() int {
-	mgs.RLock()
-	defer mgs.RUnlock()
-	return mgs.groupCount
+func (s *MemoryGroupStore) Length() int {
+	s.RLock()
+	defer s.RUnlock()
+	return s.groupCount
 }
 
-func (mgs *MemoryGroupStore) GlobalCount() (count int) {
-	err := mgs.count.QueryRow().Scan(&count)
+func (s *MemoryGroupStore) Count() (count int) {
+	err := s.count.QueryRow().Scan(&count)
 	if err != nil {
 		LogError(err)
 	}

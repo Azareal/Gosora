@@ -47,7 +47,7 @@ type ForumStore interface {
 	Create(forumName string, forumDesc string, active bool, preset string) (int, error)
 	UpdateOrder(updateMap map[int]int) error
 
-	GlobalCount() int
+	Count() int
 }
 
 type ForumCache interface {
@@ -379,13 +379,13 @@ func (s *MemoryForumStore) Length() (length int) {
 }
 
 // TODO: Get the total count of forums in the forum store rather than doing a heavy query for this?
-// GlobalCount returns the total number of forums
-func (s *MemoryForumStore) GlobalCount() (fcount int) {
-	err := s.count.QueryRow().Scan(&fcount)
+// Count returns the total number of forums
+func (s *MemoryForumStore) Count() (count int) {
+	err := s.count.QueryRow().Scan(&count)
 	if err != nil {
 		LogError(err)
 	}
-	return fcount
+	return count
 }
 
 // TODO: Work on SqlForumStore

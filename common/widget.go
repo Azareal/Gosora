@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"strings"
+	"strconv"
 	"sync/atomic"
 
 	"github.com/Azareal/Gosora/query_gen"
@@ -76,11 +77,22 @@ func (widget *Widget) Copy() (owidget *Widget) {
 
 // TODO: Test this
 // TODO: Add support for zone:id. Perhaps, carry a ZoneID property around in *Header? It might allow some weirdness like frontend[5] which matches any zone with an ID of 5 but it would be a tad faster than verifying each zone, although it might be problematic if users end up relying on this behaviour for areas which don't pass IDs to the widgets system but *probably* should
-func (widget *Widget) Allowed(zone string) bool {
+// TODO: Add a selector which also matches topics inside a specific forum?
+func (widget *Widget) Allowed(zone string, zoneid int) bool {
 	for _, loc := range strings.Split(widget.Location, "|") {
+		if len(loc) == 0 {
+			continue
+		}
+		sloc := strings.Split(":",loc)
+		if len(sloc) > 1 {
+			iloc, _ := strconv.Atoi(sloc[1])
+			if zoneid != 0 && iloc != zoneid {
+				continue
+			}
+		}
 		if loc == "global" || loc == zone {
 			return true
-		} else if len(loc) > 0 && loc[0] == '!' {
+		} else if loc[0] == '!' {
 			loc = loc[1:]
 			if loc != "global" && loc != zone {
 				return true

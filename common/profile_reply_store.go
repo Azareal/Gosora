@@ -3,7 +3,7 @@ package common
 import (
 	"database/sql"
 
-	"github.com/Azareal/Gosora/query_gen"
+	qgen "github.com/Azareal/Gosora/query_gen"
 )
 
 var Prstore ProfileReplyStore
@@ -11,6 +11,7 @@ var Prstore ProfileReplyStore
 type ProfileReplyStore interface {
 	Get(id int) (*ProfileReply, error)
 	Create(profileID int, content string, createdBy int, ipaddress string) (id int, err error)
+	Count() (count int)
 }
 
 // TODO: Refactor this to stop using the global stmt store
@@ -18,23 +19,25 @@ type ProfileReplyStore interface {
 type SQLProfileReplyStore struct {
 	get    *sql.Stmt
 	create *sql.Stmt
+	count  *sql.Stmt
 }
 
 func NewSQLProfileReplyStore(acc *qgen.Accumulator) (*SQLProfileReplyStore, error) {
 	return &SQLProfileReplyStore{
 		get:    acc.Select("users_replies").Columns("uid, content, createdBy, createdAt, lastEdit, lastEditBy, ipaddress").Where("rid = ?").Prepare(),
 		create: acc.Insert("users_replies").Columns("uid, content, parsed_content, createdAt, createdBy, ipaddress").Fields("?,?,?,UTC_TIMESTAMP(),?,?").Prepare(),
+		count:  acc.Count("users_replies").Prepare(),
 	}, acc.FirstError()
 }
 
-func (store *SQLProfileReplyStore) Get(id int) (*ProfileReply, error) {
-	reply := ProfileReply{ID: id}
-	err := store.get.QueryRow(id).Scan(&reply.ParentID, &reply.Content, &reply.CreatedBy, &reply.CreatedAt, &reply.LastEdit, &reply.LastEditBy, &reply.IPAddress)
-	return &reply, err
+func (s *SQLProfileReplyStore) Get(id int) (*ProfileReply, error) {
+	r := ProfileReply{ID: id}
+	err := s.get.QueryRow(id).Scan(&r.ParentID, &r.Content, &r.CreatedBy, &r.CreatedAt, &r.LastEdit, &r.LastEditBy, &r.IPAddress)
+	return &r, err
 }
 
-func (store *SQLProfileReplyStore) Create(profileID int, content string, createdBy int, ipaddress string) (id int, err error) {
-	res, err := store.create.Exec(profileID, content, ParseMessage(content, 0, ""), createdBy, ipaddress)
+func (s *SQLProfileReplyStore) Create(profileID int, content string, createdBy int, ipaddress string) (id int, err error) {
+	res, err := s.create.Exec(profileID, content, ParseMessage(content, 0, ""), createdBy, ipaddress)
 	if err != nil {
 		return 0, err
 	}
@@ -42,7 +45,16 @@ func (store *SQLProfileReplyStore) Create(profileID int, content string, created
 	if err != nil {
 		return 0, err
 	}
-
 	// Should we reload the user?
 	return int(lastID), err
+}
+
+// TODO: Write a test for this
+// Count returns the total number of topic replies on these forums
+func (s *SQLProfileReplyStore) Count() (count int) {
+	err := s.count.QueryRow().Scan(&count)
+	if err != nil {
+		LogError(err)
+	}
+	return count
 }

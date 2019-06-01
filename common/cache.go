@@ -14,7 +14,7 @@ type DataStore interface {
 	DirtyGet(id int) interface{}
 	Get(id int) (interface{}, error)
 	BypassGet(id int) (interface{}, error)
-	//GlobalCount()
+	//Count() int
 }
 
 // nolint

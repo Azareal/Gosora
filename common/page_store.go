@@ -72,7 +72,7 @@ var Pages PageStore
 
 // Holds the custom pages, but doesn't include the template pages in /pages/ which are a lot more flexible yet harder to use and which are too risky security-wise to make editable in the Control Panel
 type PageStore interface {
-	GlobalCount() (pageCount int)
+	Count() (count int)
 	Get(id int) (*CustomPage, error)
 	GetByName(name string) (*CustomPage, error)
 	GetOffset(offset int, perPage int) (pages []*CustomPage, err error)
@@ -99,15 +99,15 @@ func NewDefaultPageStore(acc *qgen.Accumulator) (*DefaultPageStore, error) {
 	}, acc.FirstError()
 }
 
-func (store *DefaultPageStore) GlobalCount() (pageCount int) {
-	err := store.count.QueryRow().Scan(&pageCount)
+func (s *DefaultPageStore) Count() (count int) {
+	err := s.count.QueryRow().Scan(&count)
 	if err != nil {
 		LogError(err)
 	}
-	return pageCount
+	return count
 }
 
-func (store *DefaultPageStore) parseAllowedGroups(raw string, page *CustomPage) error {
+func (s *DefaultPageStore) parseAllowedGroups(raw string, page *CustomPage) error {
 	if raw == "" {
 		return nil
 	}

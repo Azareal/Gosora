@@ -745,6 +745,8 @@ func initDefaultTmplFuncMap() {
 			byteFloat, unit = ConvertByteUnit(float64(bytes))
 		case uint64:
 			byteFloat, unit = ConvertByteUnit(float64(bytes))
+		case float64:
+			byteFloat, unit = ConvertByteUnit(bytes)
 		default:
 			panic("bytes is not an int, int64 or uint64")
 		}

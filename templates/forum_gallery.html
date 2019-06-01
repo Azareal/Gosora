@@ -43,8 +43,8 @@
 	</div>
 	{{end}}
 	{{end}}
-	<div id="forum_topic_list" class="rowblock micro_grid" aria-label="{{lang "forum_list_aria"}}">
-		{{range .ItemList}}<div class="rowitem" data-tid="{{.ID}}" style="grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));">
+	<div id="forum_topic_list" class="rowblock micro_grid" aria-label="{{lang "forum_list_aria"}}" style="grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));">
+		{{range .ItemList}}<div class="rowitem" data-tid="{{.ID}}">
 		<div>
 			<a class="rowtopic" href="{{.Link}}" itemprop="itemListElement"><img src="{{.Content}}" style="width:100%;height:160px;" /></a>
 			<br /><a class="rowsmall starter" href="{{.Link}}">{{.Title}}</a>

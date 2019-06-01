@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	//"fmt"
 
 	"github.com/Azareal/Gosora/common/phrases"
 	"github.com/Azareal/Gosora/query_gen"
@@ -30,11 +31,9 @@ type Alert struct {
 }
 
 type AlertStmts struct {
-	addActivity      *sql.Stmt
 	notifyWatchers   *sql.Stmt
 	notifyOne        *sql.Stmt
 	getWatchers      *sql.Stmt
-	getActivityEntry *sql.Stmt
 }
 
 var alertStmts AlertStmts
@@ -44,14 +43,12 @@ var alertStmts AlertStmts
 func init() {
 	DbInits.Add(func(acc *qgen.Accumulator) error {
 		alertStmts = AlertStmts{
-			addActivity: acc.Insert("activity_stream").Columns("actor, targetUser, event, elementType, elementID, createdAt").Fields("?,?,?,?,?,UTC_TIMESTAMP()").Prepare(),
 			notifyWatchers: acc.SimpleInsertInnerJoin(
 				qgen.DBInsert{"activity_stream_matches", "watcher, asid", ""},
 				qgen.DBJoin{"activity_stream", "activity_subscriptions", "activity_subscriptions.user, activity_stream.asid", "activity_subscriptions.targetType = activity_stream.elementType AND activity_subscriptions.targetID = activity_stream.elementID AND activity_subscriptions.user != activity_stream.actor", "asid = ?", "", ""},
 			),
 			notifyOne:        acc.Insert("activity_stream_matches").Columns("watcher, asid").Fields("?,?").Prepare(),
 			getWatchers:      acc.SimpleInnerJoin("activity_stream", "activity_subscriptions", "activity_subscriptions.user", "activity_subscriptions.targetType = activity_stream.elementType AND activity_subscriptions.targetID = activity_stream.elementID AND activity_subscriptions.user != activity_stream.actor", "asid = ?", "", ""),
-			getActivityEntry: acc.Select("activity_stream").Columns("actor, targetUser, event, elementType, elementID, createdAt").Where("asid = ?").Prepare(),
 		}
 		return acc.FirstError()
 	})
@@ -79,7 +76,6 @@ func BuildAlert(alert Alert, user User /* The current user */) (out string, err 
 			return
 		}
 	}*/
-
 	if alert.Event == "friend_invite" {
 		return buildAlertString(".new_friend_invite", []string{alert.Actor.Name}, alert.Actor.Link, alert.Actor.Avatar, alert.ASID), nil
 	}
@@ -163,45 +159,41 @@ func buildAlertString(msg string, sub []string, path string, avatar string, asid
 }
 
 func AddActivityAndNotifyAll(actor int, targetUser int, event string, elementType string, elementID int) error {
-	res, err := alertStmts.addActivity.Exec(actor, targetUser, event, elementType, elementID)
+	id, err := Activity.Add(Alert{ActorID: actor, TargetUserID: targetUser, Event: event, ElementType: elementType, ElementID: elementID})
 	if err != nil {
 		return err
 	}
-	lastID, err := res.LastInsertId()
-	if err != nil {
-		return err
-	}
-	return NotifyWatchers(lastID)
+	return NotifyWatchers(id)
 }
 
 func AddActivityAndNotifyTarget(alert Alert) error {
-	res, err := alertStmts.addActivity.Exec(alert.ActorID, alert.TargetUserID, alert.Event, alert.ElementType, alert.ElementID)
+	id, err := Activity.Add(alert)
 	if err != nil {
 		return err
 	}
 
-	lastID, err := res.LastInsertId()
+	err = NotifyOne(alert.TargetUserID, id)
 	if err != nil {
 		return err
 	}
-
-	err = NotifyOne(alert.TargetUserID, lastID)
-	if err != nil {
-		return err
-	}
-	alert.ASID = int(lastID)
+	alert.ASID = id
 
 	// Live alerts, if the target is online and WebSockets is enabled
-	_ = WsHub.pushAlert(alert.TargetUserID, alert)
+	if EnableWebsockets {
+	go func() {
+		_ = WsHub.pushAlert(alert.TargetUserID, alert)
+		//fmt.Println("err:",err)
+	}()
+	}
 	return nil
 }
 
-func NotifyOne(watcher int, asid int64) error {
+func NotifyOne(watcher int, asid int) error {
 	_, err := alertStmts.notifyOne.Exec(watcher, asid)
 	return err
 }
 
-func NotifyWatchers(asid int64) error {
+func NotifyWatchers(asid int) error {
 	_, err := alertStmts.notifyWatchers.Exec(asid)
 	if err != nil {
 		return err
@@ -214,7 +206,7 @@ func NotifyWatchers(asid int64) error {
 	return nil
 }
 
-func notifyWatchers(asid int64) {
+func notifyWatchers(asid int) {
 	rows, err := alertStmts.getWatchers.Query(asid)
 	if err != nil && err != ErrNoRows {
 		LogError(err)
@@ -238,12 +230,10 @@ func notifyWatchers(asid int64) {
 		return
 	}
 
-	var alert = Alert{ASID: int(asid)}
-	err = alertStmts.getActivityEntry.QueryRow(asid).Scan(&alert.ActorID, &alert.TargetUserID, &alert.Event, &alert.ElementType, &alert.ElementID, &alert.CreatedAt)
+	alert, err := Activity.Get(asid)
 	if err != nil && err != ErrNoRows {
 		LogError(err)
 		return
 	}
-
 	_ = WsHub.pushAlerts(uids, alert)
 }

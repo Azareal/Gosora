@@ -77,16 +77,58 @@
 	<div class="grid_item grid_stat grid_stat_head"><span>User Cache</span></div>
 	<div class="grid_item grid_stat grid_stat_head"><span>Reply Cache</span></div>
 
-	<div class="grid_item grid_stat"><span>{{.TCache}} / {{.TCap}}</span></div>
-	<div class="grid_item grid_stat"><span>{{.UCache}} / {{.UCap}}</span></div>
-	<div class="grid_item grid_stat"><span>{{.RCache}} / {{.RCap}}</span></div>
+	<div class="grid_item grid_stat"><span>{{.Cache.Topics}} / {{.Cache.TCap}}</span></div>
+	<div class="grid_item grid_stat"><span>{{.Cache.Users}} / {{.Cache.UCap}}</span></div>
+	<div class="grid_item grid_stat"><span>{{.Cache.Replies}} / {{.Cache.RCap}}</span></div>
 
 
 	<div class="grid_item grid_stat grid_stat_head"><span>Topic List</span></div>
 	<div class="grid_item grid_stat grid_stat_head"><span>???</span></div>
 	<div class="grid_item grid_stat grid_stat_head"><span>???</span></div>
 
-	<div class="grid_item grid_stat"><span>{{if .TopicListThaw}}Thawed{{else}}Sleeping{{end}}</span></div>
+	<div class="grid_item grid_stat"><span>{{if .Cache.TopicListThaw}}Thawed{{else}}Sleeping{{end}}</span></div>
 	<div class="grid_item grid_stat"><span>?</span></div>
+	<div class="grid_item grid_stat"><span>?</span></div>
+</div>
+<div class="colstack_item colstack_head colstack_sub_head">
+	<div class="rowitem"><h2>Database</h2></div>
+</div>
+<div id="panel_debug" class="colstack_grid">
+	<div class="grid_item grid_stat grid_stat_head"><span>Topics</span></div>
+	<div class="grid_item grid_stat grid_stat_head"><span>Users</span></div>
+	<div class="grid_item grid_stat grid_stat_head"><span>Replies</span></div>
+
+	<div class="grid_item grid_stat"><span>{{.Database.Topics}}</span></div>
+	<div class="grid_item grid_stat"><span>{{.Database.Users}}</span></div>
+	<div class="grid_item grid_stat"><span>{{.Database.Replies}}</span></div>
+
+
+	<div class="grid_item grid_stat grid_stat_head"><span>Profile Replies</span></div>
+	<div class="grid_item grid_stat grid_stat_head"><span>Activity Stream</span></div>
+	<div class="grid_item grid_stat grid_stat_head"><span>???</span></div>
+
+	<div class="grid_item grid_stat"><span>{{.Database.ProfileReplies}}</span></div>
+	<div class="grid_item grid_stat"><span>{{.Database.ActivityStream}}</span></div>
+	<div class="grid_item grid_stat"><span>?</span></div>
+</div>
+<div class="colstack_item colstack_head colstack_sub_head">
+	<div class="rowitem"><h2>Disk</h2></div>
+</div>
+<div id="panel_debug" class="colstack_grid">
+	<div class="grid_item grid_stat grid_stat_head"><span>Static Files</span></div>
+	<div class="grid_item grid_stat grid_stat_head"><span>Attachments</span></div>
+	<div class="grid_item grid_stat grid_stat_head"><span>Avatars</span></div>
+
+	<div class="grid_item grid_stat"><span>{{bunit .Disk.Static}}</span></div>
+	<div class="grid_item grid_stat"><span>{{bunit .Disk.Attachments}}</span></div>
+	<div class="grid_item grid_stat"><span>{{bunit .Disk.Avatars}}</span></div>
+
+
+	<div class="grid_item grid_stat grid_stat_head"><span>Log Files</span></div>
+	<div class="grid_item grid_stat grid_stat_head"><span>Backups</span></div>
+	<div class="grid_item grid_stat grid_stat_head"><span>???</span></div>
+
+	<div class="grid_item grid_stat"><span>{{bunit .Disk.Logs}}</span></div>
+	<div class="grid_item grid_stat"><span>{{bunit .Disk.Backups}}</span></div>
 	<div class="grid_item grid_stat"><span>?</span></div>
 </div>

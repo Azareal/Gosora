@@ -10,6 +10,7 @@ import (
 	"crypto/rand"
 	"encoding/base32"
 	"encoding/base64"
+	"path/filepath"
 	"errors"
 	"fmt"
 	"html"
@@ -508,4 +509,18 @@ func BuildSlug(slug string, id int) string {
 		return strconv.Itoa(id)
 	}
 	return slug + "." + strconv.Itoa(id)
+}
+
+func DirSize(path string) (int, error) {
+	var size int64
+	err := filepath.Walk(path, func(_ string, file os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !file.IsDir() {
+			size += file.Size()
+		}
+		return err
+	})
+	return int(size), err
 }

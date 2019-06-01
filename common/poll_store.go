@@ -51,7 +51,7 @@ type PollStore interface {
 	Create(parent Pollable, pollType int, pollOptions map[int]string) (int, error)
 	CastVote(optionIndex int, pollID int, uid int, ipaddress string) error
 	Reload(id int) error
-	//GlobalCount() int
+	//Count() int
 
 	SetCache(cache PollCache)
 	GetCache() PollCache
@@ -68,7 +68,7 @@ type DefaultPollStore struct {
 	incrementVoteCount          *sql.Stmt
 	incrementVoteCountForOption *sql.Stmt
 	delete                      *sql.Stmt
-	//pollCount      *sql.Stmt
+	//count      *sql.Stmt
 }
 
 func NewDefaultPollStore(cache PollCache) (*DefaultPollStore, error) {
@@ -86,7 +86,7 @@ func NewDefaultPollStore(cache PollCache) (*DefaultPollStore, error) {
 		addVote:                     acc.Insert("polls_votes").Columns("pollID, uid, option, castAt, ipaddress").Fields("?,?,?,UTC_TIMESTAMP(),?").Prepare(),
 		incrementVoteCount:          acc.Update("polls").Set("votes = votes + 1").Where("pollID = ?").Prepare(),
 		incrementVoteCountForOption: acc.Update("polls_options").Set("votes = votes + 1").Where("option = ? AND pollID = ?").Prepare(),
-		//pollCount: acc.SimpleCount("polls", "", ""),
+		//count: acc.SimpleCount("polls", "", ""),
 	}, acc.FirstError()
 }
 

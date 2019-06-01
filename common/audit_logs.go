@@ -21,7 +21,7 @@ type LogItem struct {
 
 type LogStore interface {
 	Create(action string, elementID int, elementType string, ipaddress string, actorID int) (err error)
-	GlobalCount() int
+	Count() int
 	GetOffset(offset int, perPage int) (logs []LogItem, err error)
 }
 
@@ -40,17 +40,17 @@ func NewModLogStore(acc *qgen.Accumulator) (*SQLModLogStore, error) {
 }
 
 // TODO: Make a store for this?
-func (store *SQLModLogStore) Create(action string, elementID int, elementType string, ipaddress string, actorID int) (err error) {
-	_, err = store.create.Exec(action, elementID, elementType, ipaddress, actorID)
+func (s *SQLModLogStore) Create(action string, elementID int, elementType string, ipaddress string, actorID int) (err error) {
+	_, err = s.create.Exec(action, elementID, elementType, ipaddress, actorID)
 	return err
 }
 
-func (store *SQLModLogStore) GlobalCount() (logCount int) {
-	err := store.count.QueryRow().Scan(&logCount)
+func (s *SQLModLogStore) Count() (count int) {
+	err := s.count.QueryRow().Scan(&count)
 	if err != nil {
 		LogError(err)
 	}
-	return logCount
+	return count
 }
 
 func buildLogList(rows *sql.Rows) (logs []LogItem, err error) {
@@ -91,21 +91,21 @@ func NewAdminLogStore(acc *qgen.Accumulator) (*SQLAdminLogStore, error) {
 }
 
 // TODO: Make a store for this?
-func (store *SQLAdminLogStore) Create(action string, elementID int, elementType string, ipaddress string, actorID int) (err error) {
-	_, err = store.create.Exec(action, elementID, elementType, ipaddress, actorID)
+func (s *SQLAdminLogStore) Create(action string, elementID int, elementType string, ipaddress string, actorID int) (err error) {
+	_, err = s.create.Exec(action, elementID, elementType, ipaddress, actorID)
 	return err
 }
 
-func (store *SQLAdminLogStore) GlobalCount() (logCount int) {
-	err := store.count.QueryRow().Scan(&logCount)
+func (s *SQLAdminLogStore) Count() (count int) {
+	err := s.count.QueryRow().Scan(&count)
 	if err != nil {
 		LogError(err)
 	}
-	return logCount
+	return count
 }
 
-func (store *SQLAdminLogStore) GetOffset(offset int, perPage int) (logs []LogItem, err error) {
-	rows, err := store.getOffset.Query(offset, perPage)
+func (s *SQLAdminLogStore) GetOffset(offset int, perPage int) (logs []LogItem, err error) {
+	rows, err := s.getOffset.Query(offset, perPage)
 	if err != nil {
 		return logs, err
 	}

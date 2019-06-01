@@ -13,7 +13,7 @@ import (
 	"github.com/Azareal/Gosora/common/phrases"
 )
 
-var cacheControlMaxAge = "max-age=" + strconv.Itoa(int(c.Day)) // TODO: Make this a c.Config value
+var cacheControlMaxAge = "max-age=" + strconv.Itoa(int(c.Day))      // TODO: Make this a c.Config value
 var cacheControlMaxAgeWeek = "max-age=" + strconv.Itoa(int(c.Week)) // TODO: Make this a c.Config value
 
 // GET functions
@@ -68,15 +68,16 @@ func CustomPage(w http.ResponseWriter, r *http.Request, user c.User, header *c.H
 	} else if err != sql.ErrNoRows {
 		return c.InternalError(err, w, r)
 	}
-
-	// ! Is this safe?
-	if c.DefaultTemplates.Lookup("page_"+name+".html") == nil {
-		return c.NotFound(w, r, header)
-	}
-
 	header.Title = phrases.GetTitlePhrase("page")
+
 	// TODO: Pass the page name to the pre-render hook?
-	return renderTemplate2("page_"+name, "tmpl_page", w, r, header, c.Page{header, tList, nil})
+	err = renderTemplate3("page_"+name, "tmpl_page", w, r, header, c.Page{header, tList, nil})
+	if err == c.ErrBadDefaultTemplate {
+		return c.NotFound(w, r, header)
+	} else if err != nil {
+		return c.InternalError(err, w, r)
+	}
+	return nil
 }
 
 // TODO: Set the cookie domain
