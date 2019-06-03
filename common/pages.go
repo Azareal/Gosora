@@ -612,6 +612,16 @@ type DebugPageDatabase struct {
 	Replies int
 	ProfileReplies int
 	ActivityStream int
+	Likes int
+	Attachments int
+	Polls int
+
+	Views int
+	ViewsAgents int
+	ViewsForums int
+	ViewsLangs int
+	ViewsReferrers int
+	ViewsSystems int
 }
 
 type DebugPageDisk struct {

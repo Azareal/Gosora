@@ -105,11 +105,38 @@
 
 	<div class="grid_item grid_stat grid_stat_head"><span>Profile Replies</span></div>
 	<div class="grid_item grid_stat grid_stat_head"><span>Activity Stream</span></div>
-	<div class="grid_item grid_stat grid_stat_head"><span>???</span></div>
+	<div class="grid_item grid_stat grid_stat_head"><span>Likes</span></div>
 
 	<div class="grid_item grid_stat"><span>{{.Database.ProfileReplies}}</span></div>
 	<div class="grid_item grid_stat"><span>{{.Database.ActivityStream}}</span></div>
+	<div class="grid_item grid_stat"><span>{{.Database.Likes}}</span></div>
+
+
+	<div class="grid_item grid_stat grid_stat_head"><span>Attachments</span></div>
+	<div class="grid_item grid_stat grid_stat_head"><span>Polls</span></div>
+	<div class="grid_item grid_stat grid_stat_head"><span>???</span></div>
+
+	<div class="grid_item grid_stat"><span>{{.Database.Attachments}}</span></div>
+	<div class="grid_item grid_stat"><span>{{.Database.Polls}}</span></div>
 	<div class="grid_item grid_stat"><span>?</span></div>
+
+
+	<div class="grid_item grid_stat grid_stat_head"><span>Views</span></div>
+	<div class="grid_item grid_stat grid_stat_head"><span>Views Agents</span></div>
+	<div class="grid_item grid_stat grid_stat_head"><span>Views Forums</span></div>
+
+	<div class="grid_item grid_stat"><span>{{.Database.Views}}</span></div>
+	<div class="grid_item grid_stat"><span>{{.Database.ViewsAgents}}</span></div>
+	<div class="grid_item grid_stat"><span>{{.Database.ViewsForums}}</span></div>
+
+
+	<div class="grid_item grid_stat grid_stat_head"><span>Views Langs</span></div>
+	<div class="grid_item grid_stat grid_stat_head"><span>Views Referrers</span></div>
+	<div class="grid_item grid_stat grid_stat_head"><span>Views Systems</span></div>
+
+	<div class="grid_item grid_stat"><span>{{.Database.ViewsLangs}}</span></div>
+	<div class="grid_item grid_stat"><span>{{.Database.ViewsReferrers}}</span></div>
+	<div class="grid_item grid_stat"><span>{{.Database.ViewsSystems}}</span></div>
 </div>
 <div class="colstack_item colstack_head colstack_sub_head">
 	<div class="rowitem"><h2>Disk</h2></div>

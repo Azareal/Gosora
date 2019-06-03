@@ -73,9 +73,10 @@ func Dashboard(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError
 	if ferr != nil {
 		return ferr
 	}
+	var unknown = p.GetTmplPhrase("panel_dashboard_unknown")
 
 	// We won't calculate this on the spot anymore, as the system doesn't seem to like it if we do multiple fetches simultaneously. Should we constantly calculate this on a background thread? Perhaps, the watchdog to scale back heavy features under load? One plus side is that we'd get immediate CPU percentages here instead of waiting it to kick in with WebSockets
-	var cpustr = "Unknown"
+	var cpustr = unknown
 	var cpuColour string
 
 	lessThanSwitch := func(number int, lowerBound int, midBound int) string {
@@ -91,7 +92,7 @@ func Dashboard(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError
 	var ramstr, ramColour string
 	memres, err := mem.VirtualMemory()
 	if err != nil {
-		ramstr = "Unknown"
+		ramstr = unknown
 	} else {
 		totalCount, totalUnit := c.ConvertByteUnit(float64(memres.Total))
 		usedCount := c.ConvertByteInUnit(float64(memres.Total-memres.Available), totalUnit)
@@ -205,13 +206,13 @@ func Dashboard(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError
 		//addElem("dash-reqs","", strconv.Itoa(reqCount) + " reqs / second", 7, "grid_stat grid_end_group " + topicColour, "", "", "The number of requests over the last 24 hours")
 	}
 
-	addElem("dash-postsperday", "",strconv.Itoa(postCount) + " posts" + postInterval, 6, "grid_stat " + postColour, "", "", "The number of new posts over the last 24 hours")
-	addElem("dash-topicsperday", "",strconv.Itoa(topicCount) + " topics" + topicInterval, 7, "grid_stat " + topicColour, "", "", "The number of new topics over the last 24 hours")
-	addElem("dash-totonlineperday","", "?? online / day", 8, "grid_stat stat_disabled", "", "", p.GetTmplPhrase("panel_dashboard_coming_soon") /*, "The people online over the last 24 hours"*/)
+	addElem("dash-postsperday", "",p.GetTmplPhrasef("panel_dashboard_posts", postCount, postInterval), 6, "grid_stat " + postColour, "", "", p.GetTmplPhrase("panel_dashboard_posts_desc"))
+	addElem("dash-topicsperday", "",p.GetTmplPhrasef("panel_dashboard_topics", topicCount, topicInterval), 7, "grid_stat " + topicColour, "", "", p.GetTmplPhrase("panel_dashboard_topics_desc"))
+	addElem("dash-totonlineperday","", p.GetTmplPhrasef("panel_dashboard_online_day"), 8, "grid_stat stat_disabled", "", "", p.GetTmplPhrase("panel_dashboard_coming_soon") /*, "The people online over the last 24 hours"*/)
 
-	addElem("dash-searches","", "?? searches / week", 9, "grid_stat stat_disabled", "", "", p.GetTmplPhrase("panel_dashboard_coming_soon") /*"The number of searches over the last 7 days"*/)
-	addElem("dash-newusers","", strconv.Itoa(newUserCount) + " new users" + newUserInterval, 10, "grid_stat", "", "", "The number of new users over the last 7 days")
-	addElem("dash-reports","", strconv.Itoa(reportCount) + " reports" + reportInterval, 11, "grid_stat", "", "", "The number of reports over the last 7 days")
+	addElem("dash-searches","", p.GetTmplPhrasef("panel_dashboard_searches_day"), 9, "grid_stat stat_disabled", "", "", p.GetTmplPhrase("panel_dashboard_coming_soon") /*"The number of searches over the last 7 days"*/)
+	addElem("dash-newusers","", p.GetTmplPhrasef("panel_dashboard_new_users", newUserCount, newUserInterval), 10, "grid_stat", "", "", p.GetTmplPhrasef("panel_dashboard_new_users_desc"))
+	addElem("dash-reports","", p.GetTmplPhrasef("panel_dashboard_reports", reportCount, reportInterval), 11, "grid_stat", "", "", p.GetTmplPhrasef("panel_dashboard_reports_desc"))
 
 	if false {
 		addElem("dash-minperuser","", "?? minutes / user / week", 12, "grid_stat stat_disabled", "", "", p.GetTmplPhrase("panel_dashboard_coming_soon") /*"The average number of number of minutes spent by each active user over the last 7 days"*/)

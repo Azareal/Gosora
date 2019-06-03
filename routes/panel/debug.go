@@ -61,7 +61,47 @@ func Debug(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	topicListThawed := c.TopicListThaw.Thawed()
 
 	debugCache := c.DebugPageCache{tlen, ulen, rlen, tcap, ucap, rcap, topicListThawed}
-	debugDatabase := c.DebugPageDatabase{c.Topics.Count(),c.Users.Count(),c.Rstore.Count(),c.Prstore.Count(),c.Activity.Count()}
+
+	// TODO: Implement a LikeStore and call Count on that instead
+	likes, err := qgen.NewAcc().Count("likes").Total()
+	if err != nil {
+		return c.InternalError(err,w,r)
+	}
+	// TODO: Call Count on an attachment store
+	attachs, err := qgen.NewAcc().Count("attachments").Total()
+	if err != nil {
+		return c.InternalError(err,w,r)
+	}
+	// TODO: Implement a PollStore and call Count on that instead
+	polls, err := qgen.NewAcc().Count("polls").Total()
+	if err != nil {
+		return c.InternalError(err,w,r)
+	}
+	views, err := qgen.NewAcc().Count("viewchunks").Total()
+	if err != nil {
+		return c.InternalError(err,w,r)
+	}
+	viewsAgents, err := qgen.NewAcc().Count("viewchunks_agents").Total()
+	if err != nil {
+		return c.InternalError(err,w,r)
+	}
+	viewsForums, err := qgen.NewAcc().Count("viewchunks_forums").Total()
+	if err != nil {
+		return c.InternalError(err,w,r)
+	}
+	viewsLangs, err := qgen.NewAcc().Count("viewchunks_langs").Total()
+	if err != nil {
+		return c.InternalError(err,w,r)
+	}
+	viewsReferrers, err := qgen.NewAcc().Count("viewchunks_referrers").Total()
+	if err != nil {
+		return c.InternalError(err,w,r)
+	}
+	viewsSystems, err := qgen.NewAcc().Count("viewchunks_systems").Total()
+	if err != nil {
+		return c.InternalError(err,w,r)
+	}
+	debugDatabase := c.DebugPageDatabase{c.Topics.Count(),c.Users.Count(),c.Rstore.Count(),c.Prstore.Count(),c.Activity.Count(),likes,attachs,polls,views,viewsAgents,viewsForums,viewsLangs,viewsReferrers,viewsSystems}
 
 	staticSize, err := c.DirSize("./public/")
 	if err != nil {

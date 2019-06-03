@@ -3,7 +3,7 @@
 </div>
 <div id="panel_dashboard" class="colstack_grid">
 {{range .}}
-	<div id="{{.ID}}" class="grid_item {{.Class}}" title="{{.Note}}" style="{{if .TextColour}}color: {{.TextColour}};{{end}}{{if .Background}}background-color: {{.Background}};{{end}}">
+	<div id="{{.ID}}" class="grid_item {{.Class}}" title="{{.Note}}" style="{{if .TextColour}}color:{{.TextColour}};{{end}}{{if .Background}}background-color:{{.Background}};{{end}}">
 		{{if .Href}}<a href="{{.Href}}">{{.Body}}</a>{{else}}<span>{{.Body}}</span>{{end}}
 	</div>
 {{end}}
