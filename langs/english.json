@@ -762,6 +762,8 @@
 		"panel_dashboard_ram_desc":"The global RAM usage of this server",
 		"panel_dashboard_memused":"Mem: %.1f%s",
 		"panel_dashboard_memused_desc":"The amount of memory likely being used by this instance",
+		"panel_dashboard_disk":"Disk: %.1f%s",
+		"panel_dashboard_disk_desc":"The amount of disk space being used by this instance",
 		"panel_dashboard_online": "%d%s online",
 		"panel_dashboard_online_desc":"The number of people who are currently online",
 		"panel_dashboard_guests_online":"%d%s guests online",

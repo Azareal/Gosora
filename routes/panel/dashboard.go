@@ -172,6 +172,10 @@ func Dashboard(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError
 		return c.InternalError(intErr, w, r)
 	}
 
+	var grid1 = []GE{}
+	var addElem1 = func(id string, href string, body string, order int, class string, back string, textColour string, tooltip string) {
+		grid1 = append(grid1, GE{id,href,body,order,class,back,textColour,tooltip})
+	}
 	var gridElements = []GE{}
 	var addElem = func(id string, href string, body string, order int, class string, back string, textColour string, tooltip string) {
 		gridElements = append(gridElements, GE{id,href,body,order,class,back,textColour,tooltip})
@@ -179,12 +183,19 @@ func Dashboard(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError
 
 	// TODO: Implement a check for new versions of Gosora
 	// TODO: Localise this
-	//addElem("dash-version", "", "v" + version.String(), 0, "grid_istat stat_green", "", "", "Gosora is up-to-date :)")
-	addElem("dash-version", "","v" + c.SoftwareVersion.String(), 0, "grid_istat", "", "", "")
+	//addElem1("dash-version", "", "v" + version.String(), 0, "grid_istat stat_green", "", "", "Gosora is up-to-date :)")
+	addElem1("dash-version", "","v" + c.SoftwareVersion.String(), 0, "grid_istat", "", "", "")
 
-	addElem("dash-cpu","", p.GetTmplPhrasef("panel_dashboard_cpu",cpustr), 1, "grid_istat " + cpuColour, "", "", p.GetTmplPhrase("panel_dashboard_cpu_desc"))
-	addElem("dash-ram","", p.GetTmplPhrasef("panel_dashboard_ram",ramstr), 2, "grid_istat " + ramColour, "", "", p.GetTmplPhrase("panel_dashboard_ram_desc"))
-	addElem("dash-memused","/panel/analytics/memory/", p.GetTmplPhrasef("panel_dashboard_memused",memCount, memUnit), 2, "grid_istat", "", "", p.GetTmplPhrase("panel_dashboard_memused_desc"))
+	addElem1("dash-cpu","", p.GetTmplPhrasef("panel_dashboard_cpu",cpustr), 1, "grid_istat " + cpuColour, "", "", p.GetTmplPhrase("panel_dashboard_cpu_desc"))
+	addElem1("dash-ram","", p.GetTmplPhrasef("panel_dashboard_ram",ramstr), 2, "grid_istat " + ramColour, "", "", p.GetTmplPhrase("panel_dashboard_ram_desc"))
+	addElem1("dash-memused","/panel/analytics/memory/", p.GetTmplPhrasef("panel_dashboard_memused",memCount, memUnit), 2, "grid_istat", "", "", p.GetTmplPhrase("panel_dashboard_memused_desc"))
+
+	dirSize, err := c.DirSize(".")
+	if err != nil {
+		return c.InternalError(err,w,r)
+	}
+	dirFloat, unit := c.ConvertByteUnit(float64(dirSize))
+	addElem1("dash-disk","", p.GetTmplPhrasef("panel_dashboard_disk",dirFloat, unit), 2, "grid_istat", "", "", p.GetTmplPhrase("panel_dashboard_disk_desc"))
 
 	if c.EnableWebsockets {
 		uonline := c.WsHub.UserCount()
@@ -220,5 +231,5 @@ func Dashboard(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError
 		addElem("dash-postsperuser","", "?? posts / user / week", 14, "grid_stat stat_disabled", "", "", p.GetTmplPhrase("panel_dashboard_coming_soon") /*"The average number of posts made by each active user over the past week"*/)
 	}
 
-	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_dashboard_right","","panel_dashboard", gridElements})
+	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_dashboard_right","","panel_dashboard", c.DashGrids{grid1,gridElements}})
 }

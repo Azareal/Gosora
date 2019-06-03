@@ -109,6 +109,9 @@
 #dash-postsperday:before, #dash-topicsperday:before {
 	content: "\f27b";
 }
+.grid2 {
+	margin-top: 16px;
+}
 #panel_debug .grid_stat:not(.grid_stat_head) {
 	margin-bottom: 8px;
 }

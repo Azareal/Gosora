@@ -217,6 +217,10 @@ main > *:last-child {
 	width: 100%;
 	overflow: hidden;
 }
+.grid_item a {
+	text-decoration: none;
+	color: black;
+}
 .grid_stat, .grid_istat {
 	text-align: center;
 	padding-top: 12px;
@@ -224,9 +228,9 @@ main > *:last-child {
 	font-size: 16px;
 }
 
-.grid_istat {
+/*.grid_istat {
 	margin-bottom: 5px;
-}
+}*/
 .stat_green {
 	background-color: lightgreen;
 	border-color: lightgreen;
@@ -242,6 +246,9 @@ main > *:last-child {
 .stat_disabled {
 	background-color: lightgray;
 	border-color: lightgray;
+}
+.grid2 {
+	margin-top: 16px;
 }
 
 .rowhead .rowitem, .colstack_head .rowitem {

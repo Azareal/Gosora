@@ -349,6 +349,8 @@ func compileTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName string
 
 	basePage := &BasePanelPage{header, PanelStats{}, "dashboard", ReportForumID}
 	tmpls.AddStd("panel", "common.Panel", Panel{basePage, "panel_dashboard_right", "", "panel_dashboard", inter})
+	ges := []GridElement{GridElement{"","", "", 1, "grid_istat", "", "", ""}}
+	tmpls.AddStd("panel_dashboard", "common.DashGrids", DashGrids{ges,ges})
 	//tmpls.AddStd("panel_analytics", "common.PanelAnalytics", Panel{basePage, "panel_dashboard_right","panel_dashboard", inter})
 
 	var writeTemplate = func(name string, content interface{}) {

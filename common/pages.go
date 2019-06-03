@@ -351,9 +351,14 @@ type GridElement struct {
 	Note       string
 }
 
+type DashGrids struct {
+	Grid1 []GridElement
+	Grid2 []GridElement
+}
+
 type PanelDashboardPage struct {
 	*BasePanelPage
-	GridItems []GridElement
+	Grids DashGrids
 }
 
 type PanelSetting struct {
@@ -622,6 +627,8 @@ type DebugPageDatabase struct {
 	ViewsLangs int
 	ViewsReferrers int
 	ViewsSystems int
+	PostChunks int
+	TopicChunks int
 }
 
 type DebugPageDisk struct {

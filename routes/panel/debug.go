@@ -62,46 +62,57 @@ func Debug(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 
 	debugCache := c.DebugPageCache{tlen, ulen, rlen, tcap, ucap, rcap, topicListThawed}
 
+	var count = func(tbl string) (int, error) {
+		return qgen.NewAcc().Count(tbl).Total()
+	}
 	// TODO: Implement a LikeStore and call Count on that instead
-	likes, err := qgen.NewAcc().Count("likes").Total()
+	likes, err := count("likes")
 	if err != nil {
 		return c.InternalError(err,w,r)
 	}
 	// TODO: Call Count on an attachment store
-	attachs, err := qgen.NewAcc().Count("attachments").Total()
+	attachs, err := count("attachments")
 	if err != nil {
 		return c.InternalError(err,w,r)
 	}
 	// TODO: Implement a PollStore and call Count on that instead
-	polls, err := qgen.NewAcc().Count("polls").Total()
+	polls, err := count("polls")
 	if err != nil {
 		return c.InternalError(err,w,r)
 	}
-	views, err := qgen.NewAcc().Count("viewchunks").Total()
+	views, err := count("viewchunks")
 	if err != nil {
 		return c.InternalError(err,w,r)
 	}
-	viewsAgents, err := qgen.NewAcc().Count("viewchunks_agents").Total()
+	viewsAgents, err := count("viewchunks_agents")
 	if err != nil {
 		return c.InternalError(err,w,r)
 	}
-	viewsForums, err := qgen.NewAcc().Count("viewchunks_forums").Total()
+	viewsForums, err := count("viewchunks_forums")
 	if err != nil {
 		return c.InternalError(err,w,r)
 	}
-	viewsLangs, err := qgen.NewAcc().Count("viewchunks_langs").Total()
+	viewsLangs, err := count("viewchunks_langs")
 	if err != nil {
 		return c.InternalError(err,w,r)
 	}
-	viewsReferrers, err := qgen.NewAcc().Count("viewchunks_referrers").Total()
+	viewsReferrers, err := count("viewchunks_referrers")
 	if err != nil {
 		return c.InternalError(err,w,r)
 	}
-	viewsSystems, err := qgen.NewAcc().Count("viewchunks_systems").Total()
+	viewsSystems, err := count("viewchunks_systems")
 	if err != nil {
 		return c.InternalError(err,w,r)
 	}
-	debugDatabase := c.DebugPageDatabase{c.Topics.Count(),c.Users.Count(),c.Rstore.Count(),c.Prstore.Count(),c.Activity.Count(),likes,attachs,polls,views,viewsAgents,viewsForums,viewsLangs,viewsReferrers,viewsSystems}
+	postChunks, err := count("postchunks")
+	if err != nil {
+		return c.InternalError(err,w,r)
+	}
+	topicChunks, err := count("topicchunks")
+	if err != nil {
+		return c.InternalError(err,w,r)
+	}
+	debugDatabase := c.DebugPageDatabase{c.Topics.Count(),c.Users.Count(),c.Rstore.Count(),c.Prstore.Count(),c.Activity.Count(),likes,attachs,polls,views,viewsAgents,viewsForums,viewsLangs,viewsReferrers,viewsSystems,postChunks,topicChunks}
 
 	staticSize, err := c.DirSize("./public/")
 	if err != nil {

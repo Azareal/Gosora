@@ -401,6 +401,10 @@ func (c *CTemplateSet) compile(name string, content string, expects string, expe
 		c.importMap[langPkg] = langPkg
 	}
 
+	// TODO: Simplify this logic by doing some reordering?
+	if c.lang == "normal" {
+		c.importMap["net/http"] = "net/http"
+	}
 	var importList string
 	for _, item := range c.importMap {
 		importList += "import \"" + item + "\"\n"

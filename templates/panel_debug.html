@@ -1,6 +1,6 @@
 <div class="colstack_item colstack_head">
 	<div class="rowitem"><h1>{{lang "panel_debug_head"}}</h1></div>
-</div>
+</div>{{flush}}
 <div id="panel_debug" class="colstack_grid">
 	<div class="grid_item grid_stat grid_stat_head"><span>{{lang "panel_debug_uptime_label"}}</span></div>
 	<div class="grid_item grid_stat grid_stat_head"><span>{{lang "panel_debug_go_version_label"}}</span></div>
@@ -137,6 +137,15 @@
 	<div class="grid_item grid_stat"><span>{{.Database.ViewsLangs}}</span></div>
 	<div class="grid_item grid_stat"><span>{{.Database.ViewsReferrers}}</span></div>
 	<div class="grid_item grid_stat"><span>{{.Database.ViewsSystems}}</span></div>
+
+
+	<div class="grid_item grid_stat grid_stat_head"><span>Post Analytics</span></div>
+	<div class="grid_item grid_stat grid_stat_head"><span>Topic Analytics</span></div>
+	<div class="grid_item grid_stat grid_stat_head"><span>???</span></div>
+
+	<div class="grid_item grid_stat"><span>{{.Database.PostChunks}}</span></div>
+	<div class="grid_item grid_stat"><span>{{.Database.TopicChunks}}</span></div>
+	<div class="grid_item grid_stat"><span>?</span></div>
 </div>
 <div class="colstack_item colstack_head colstack_sub_head">
 	<div class="rowitem"><h2>Disk</h2></div>

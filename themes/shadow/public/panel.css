@@ -57,6 +57,9 @@
 	display: block;
 	font-size: 15px;
 }
+.grid2 {
+	margin-top: 6px;
+}
 
 #panel_forums .rowitem {
 	display: flex;
@@ -70,7 +73,6 @@
 	float: none;
 	margin-left: 0px;
 }
-
 #panel_users .ban_button:before {
 	content: "|";
 	margin-right: 4px;
