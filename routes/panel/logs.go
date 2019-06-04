@@ -20,7 +20,7 @@ func LogsRegs(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError 
 
 	logCount := c.RegLogs.Count()
 	page, _ := strconv.Atoi(r.FormValue("page"))
-	perPage := 10
+	perPage := 12
 	offset, page, lastPage := c.PageOffset(logCount, page, perPage)
 
 	logs, err := c.RegLogs.GetOffset(offset, perPage)
@@ -109,7 +109,7 @@ func LogsMod(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 
 	logCount := c.ModLogs.Count()
 	page, _ := strconv.Atoi(r.FormValue("page"))
-	perPage := 10
+	perPage := 12
 	offset, page, lastPage := c.PageOffset(logCount, page, perPage)
 
 	logs, err := c.ModLogs.GetOffset(offset, perPage)
@@ -136,7 +136,7 @@ func LogsAdmin(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError
 
 	logCount := c.ModLogs.Count()
 	page, _ := strconv.Atoi(r.FormValue("page"))
-	perPage := 10
+	perPage := 12
 	offset, page, lastPage := c.PageOffset(logCount, page, perPage)
 
 	logs, err := c.AdminLogs.GetOffset(offset, perPage)
