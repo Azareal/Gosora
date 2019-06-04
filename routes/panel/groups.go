@@ -57,7 +57,7 @@ func Groups(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 		count++
 	}
 
-	pageList := c.Paginate(basePage.Stats.Groups, perPage, 5)
+	pageList := c.Paginate(page, lastPage, 5)
 	pi := c.PanelGroupPage{basePage, groupList, c.Paginator{pageList, page, lastPage}}
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage,"","","panel_groups",&pi})
 }

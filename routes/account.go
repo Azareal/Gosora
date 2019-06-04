@@ -724,7 +724,7 @@ func AccountLogins(w http.ResponseWriter, r *http.Request, user c.User, header *
 		return c.InternalError(err, w, r)
 	}
 
-	pageList := c.Paginate(logCount, perPage, 5)
+	pageList := c.Paginate(page, lastPage, 5)
 	pi := c.Account{header, "logins", "account_logins", c.AccountLoginsPage{header, logs, c.Paginator{pageList, page, lastPage}}}
 	return renderTemplate("account", w, r, header, pi)
 }

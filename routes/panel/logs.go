@@ -32,7 +32,7 @@ func LogsRegs(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError 
 		llist[index] = c.PageRegLogItem{log, strings.Replace(strings.TrimSuffix(log.FailureReason, "|"), "|", " | ", -1)}
 	}
 
-	pageList := c.Paginate(logCount, perPage, 5)
+	pageList := c.Paginate(page, lastPage, 5)
 	pi := c.PanelRegLogsPage{basePage, llist, c.Paginator{pageList, page, lastPage}}
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage,"","","panel_reglogs", pi})
 }
@@ -123,7 +123,7 @@ func LogsMod(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 		llist[index] = c.PageLogItem{Action: template.HTML(action), IPAddress: log.IPAddress, DoneAt: log.DoneAt}
 	}
 
-	pageList := c.Paginate(logCount, perPage, 5)
+	pageList := c.Paginate(page, lastPage, 5)
 	pi := c.PanelLogsPage{basePage, llist, c.Paginator{pageList, page, lastPage}}
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage,"","","panel_modlogs", pi})
 }
@@ -150,7 +150,7 @@ func LogsAdmin(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError
 		llist[index] = c.PageLogItem{Action: template.HTML(action), IPAddress: log.IPAddress, DoneAt: log.DoneAt}
 	}
 
-	pageList := c.Paginate(logCount, perPage, 5)
+	pageList := c.Paginate(page, lastPage, 5)
 	pi := c.PanelLogsPage{basePage, llist, c.Paginator{pageList, page, lastPage}}
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage,"","","panel_adminlogs", pi})
 }

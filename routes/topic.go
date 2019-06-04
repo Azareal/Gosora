@@ -126,7 +126,7 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user c.User, header *c.He
 
 	// Calculate the offset
 	offset, page, lastPage := c.PageOffset(topic.PostCount, page, c.Config.ItemsPerPage)
-	pageList := c.Paginate(topic.PostCount, c.Config.ItemsPerPage, 5)
+	pageList := c.Paginate(page, lastPage, 5)
 	tpage := c.TopicPage{header, nil, topic, forum, poll, c.Paginator{pageList, page, lastPage}}
 
 	// Get the replies if we have any...

@@ -122,7 +122,7 @@ func ViewForum(w http.ResponseWriter, r *http.Request, user c.User, header *c.He
 		return nil
 	}
 
-	pageList := c.Paginate(forum.TopicCount, c.Config.ItemsPerPage, 5)
+	pageList := c.Paginate(page, lastPage, 5)
 	pi := c.ForumPage{header, topicList, forum, c.Paginator{pageList, page, lastPage}}
 	tmpl := forum.Tmpl
 	if tmpl == "" {

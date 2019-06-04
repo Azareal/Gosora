@@ -66,44 +66,40 @@ func NewDefaultTopicStore(cache TopicCache) (*DefaultTopicStore, error) {
 	}, acc.FirstError()
 }
 
-func (mts *DefaultTopicStore) DirtyGet(id int) *Topic {
-	topic, err := mts.cache.Get(id)
+func (s *DefaultTopicStore) DirtyGet(id int) *Topic {
+	topic, err := s.cache.Get(id)
 	if err == nil {
 		return topic
 	}
-
-	topic = &Topic{ID: id}
-	err = mts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.LastReplyBy, &topic.LastReplyAt, &topic.LastReplyID, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.ViewCount, &topic.PostCount, &topic.LikeCount, &topic.AttachCount, &topic.Poll, &topic.Data)
+	topic, err = s.BypassGet(id)
 	if err == nil {
-		topic.Link = BuildTopicURL(NameToSlug(topic.Title), id)
-		_ = mts.cache.Set(topic)
+		_ = s.cache.Set(topic)
 		return topic
 	}
 	return BlankTopic()
 }
 
 // TODO: Log weird cache errors?
-func (mts *DefaultTopicStore) Get(id int) (topic *Topic, err error) {
-	topic, err = mts.cache.Get(id)
+func (s *DefaultTopicStore) Get(id int) (topic *Topic, err error) {
+	topic, err = s.cache.Get(id)
 	if err == nil {
 		return topic, nil
 	}
-
-	topic = &Topic{ID: id}
-	err = mts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.LastReplyBy, &topic.LastReplyAt, &topic.LastReplyID, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.ViewCount, &topic.PostCount, &topic.LikeCount, &topic.AttachCount, &topic.Poll, &topic.Data)
+	topic, err = s.BypassGet(id)
 	if err == nil {
-		topic.Link = BuildTopicURL(NameToSlug(topic.Title), id)
-		_ = mts.cache.Set(topic)
+		_ = s.cache.Set(topic)
 	}
 	return topic, err
 }
 
 // BypassGet will always bypass the cache and pull the topic directly from the database
-func (mts *DefaultTopicStore) BypassGet(id int) (*Topic, error) {
-	topic := &Topic{ID: id}
-	err := mts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.LastReplyBy, &topic.LastReplyAt, &topic.LastReplyID, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.ViewCount, &topic.PostCount, &topic.LikeCount, &topic.AttachCount, &topic.Poll, &topic.Data)
-	topic.Link = BuildTopicURL(NameToSlug(topic.Title), id)
-	return topic, err
+func (s *DefaultTopicStore) BypassGet(id int) (*Topic, error) {
+	t := &Topic{ID: id}
+	err := s.get.QueryRow(id).Scan(&t.Title, &t.Content, &t.CreatedBy, &t.CreatedAt, &t.LastReplyBy, &t.LastReplyAt, &t.LastReplyID, &t.IsClosed, &t.Sticky, &t.ParentID, &t.IPAddress, &t.ViewCount, &t.PostCount, &t.LikeCount, &t.AttachCount, &t.Poll, &t.Data)
+	if err == nil {
+		t.Link = BuildTopicURL(NameToSlug(t.Title), id)
+	}
+	return t, err
 }
 
 // TODO: Avoid duplicating much of this logic from user_store.go
@@ -155,14 +151,14 @@ func (s *DefaultTopicStore) BulkGetMap(ids []int) (list map[int]*Topic, err erro
 	defer rows.Close()
 
 	for rows.Next() {
-		topic := &Topic{}
-		err := rows.Scan(&topic.ID, &topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.LastReplyBy, &topic.LastReplyAt, &topic.LastReplyID, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.ViewCount, &topic.PostCount, &topic.LikeCount, &topic.AttachCount, &topic.Poll, &topic.Data)
+		t := &Topic{}
+		err := rows.Scan(&t.ID, &t.Title, &t.Content, &t.CreatedBy, &t.CreatedAt, &t.LastReplyBy, &t.LastReplyAt, &t.LastReplyID, &t.IsClosed, &t.Sticky, &t.ParentID, &t.IPAddress, &t.ViewCount, &t.PostCount, &t.LikeCount, &t.AttachCount, &t.Poll, &t.Data)
 		if err != nil {
 			return list, err
 		}
-		topic.Link = BuildTopicURL(NameToSlug(topic.Title), topic.ID)
-		s.cache.Set(topic)
-		list[topic.ID] = topic
+		t.Link = BuildTopicURL(NameToSlug(t.Title), t.ID)
+		s.cache.Set(t)
+		list[t.ID] = t
 	}
 	err = rows.Err()
 	if err != nil {
@@ -187,21 +183,19 @@ func (s *DefaultTopicStore) BulkGetMap(ids []int) (list map[int]*Topic, err erro
 	return list, err
 }
 
-func (mts *DefaultTopicStore) Reload(id int) error {
-	topic := &Topic{ID: id}
-	err := mts.get.QueryRow(id).Scan(&topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.LastReplyBy, &topic.LastReplyAt, &topic.LastReplyID, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.ViewCount, &topic.PostCount, &topic.LikeCount, &topic.AttachCount, &topic.Poll, &topic.Data)
+func (s *DefaultTopicStore) Reload(id int) error {
+	topic, err := s.BypassGet(id)
 	if err == nil {
-		topic.Link = BuildTopicURL(NameToSlug(topic.Title), id)
-		_ = mts.cache.Set(topic)
+		_ = s.cache.Set(topic)
 	} else {
-		_ = mts.cache.Remove(id)
+		_ = s.cache.Remove(id)
 	}
 	TopicListThaw.Thaw()
 	return err
 }
 
-func (mts *DefaultTopicStore) Exists(id int) bool {
-	return mts.exists.QueryRow(id).Scan(&id) == nil
+func (s *DefaultTopicStore) Exists(id int) bool {
+	return s.exists.QueryRow(id).Scan(&id) == nil
 }
 
 func (mts *DefaultTopicStore) Create(fid int, topicName string, content string, uid int, ipaddress string) (tid int, err error) {
@@ -234,7 +228,7 @@ func (mts *DefaultTopicStore) Create(fid int, topicName string, content string, 
 }
 
 // ? - What is this? Do we need it? Should it be in the main store interface?
-func (mts *DefaultTopicStore) AddLastTopic(item *Topic, fid int) error {
+func (s *DefaultTopicStore) AddLastTopic(item *Topic, fid int) error {
 	// Coming Soon...
 	return nil
 }
@@ -248,15 +242,15 @@ func (s *DefaultTopicStore) Count() (count int) {
 	return count
 }
 
-func (mts *DefaultTopicStore) SetCache(cache TopicCache) {
-	mts.cache = cache
+func (s *DefaultTopicStore) SetCache(cache TopicCache) {
+	s.cache = cache
 }
 
 // TODO: We're temporarily doing this so that you can do tcache != nil in getTopicUser. Refactor it.
-func (mts *DefaultTopicStore) GetCache() TopicCache {
-	_, ok := mts.cache.(*NullTopicCache)
+func (s *DefaultTopicStore) GetCache() TopicCache {
+	_, ok := s.cache.(*NullTopicCache)
 	if ok {
 		return nil
 	}
-	return mts.cache
+	return s.cache
 }

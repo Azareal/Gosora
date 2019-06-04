@@ -1002,18 +1002,20 @@ func CoerceIntString(data string) (res int, length int) {
 
 // TODO: Write tests for this
 // Make sure we reflect changes to this in the JS port in /public/global.js
-func Paginate(count int, perPage int, maxPages int) []int {
-	if count < perPage {
-		return []int{1}
+func Paginate(currentPage int, lastPage int, maxPages int) (out []int) {
+	diff := lastPage - currentPage
+	pre := 3
+	if diff < 3 {
+		pre = maxPages - diff
 	}
-	var page int
-	var out []int
-	for current := 0; current < count; current += perPage {
+	
+	page := currentPage - pre
+	if page < 0 {
+		page = 0
+	}
+	for len(out) < maxPages && page < lastPage {
 		page++
 		out = append(out, page)
-		if len(out) >= maxPages {
-			break
-		}
 	}
 	return out
 }

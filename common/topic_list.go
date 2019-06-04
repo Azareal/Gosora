@@ -365,7 +365,7 @@ func (tList *DefaultTopicList) getList(page int, orderby string, argList []inter
 		topic.LastUser = userList[topic.LastReplyBy]
 	}
 
-	pageList := Paginate(topicCount, Config.ItemsPerPage, 5)
+	pageList := Paginate(page, lastPage, 5)
 	return topicList, Paginator{pageList, page, lastPage}, nil
 }
 

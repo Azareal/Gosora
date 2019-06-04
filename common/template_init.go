@@ -527,7 +527,7 @@ func compileJSTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName stri
 
 	itemsPerPage := 25
 	_, page, lastPage := PageOffset(20, 1, itemsPerPage)
-	pageList := Paginate(20, itemsPerPage, 5)
+	pageList := Paginate(page, lastPage, 5)
 	tmpls.AddStd("paginator", "common.Paginator", Paginator{pageList, page, lastPage})
 
 	tmpls.AddStd("topic_c_edit_post", "common.TopicCEditPost", TopicCEditPost{ID: 0, Source: "", Ref: ""})

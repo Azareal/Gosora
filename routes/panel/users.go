@@ -23,7 +23,7 @@ func Users(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 		return c.InternalError(err, w, r)
 	}
 
-	pageList := c.Paginate(basePage.Stats.Users, perPage, 5)
+	pageList := c.Paginate(page, lastPage, 5)
 	pi := c.PanelUserPage{basePage, users, c.Paginator{pageList, page, lastPage}}
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage,"","","panel_users",&pi})
 }

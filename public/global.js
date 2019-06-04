@@ -386,14 +386,17 @@ function PageOffset(count, page, perPage) {
 function LastPage(count, perPage) {
 	return (count / perPage) + 1
 }
-function Paginate(count, perPage, maxPages) {
-	if(count < perPage) return [1];
-	let page = 0;
+function Paginate(currentPage, lastPage, maxPages) {
+	let diff = lastPage - currentPage;
+	let pre = 3;
+	if(diff < 3) pre = maxPages - diff;
+	
+	let page = currentPage - pre;
+	if(page < 0) page = 0;
 	let out = [];
-	for(let current = 0; current < count; current += perPage){
+	while(out.length < maxPages && page < lastPage){
 		page++;
 		out.push(page);
-		if(out.length >= maxPages) break;
 	}
 	return out;
 }
@@ -405,9 +408,9 @@ function mainInit(){
 		event.preventDefault();
 		let moreTopicBlocks = document.getElementsByClassName("more_topic_block_active");
 		for(let i = 0; i < moreTopicBlocks.length; i++) {
-			let moreTopicBlock = moreTopicBlocks[i];
-			moreTopicBlock.classList.remove("more_topic_block_active");
-			moreTopicBlock.classList.add("more_topic_block_initial");
+			let block = moreTopicBlocks[i];
+			block.classList.remove("more_topic_block_active");
+			block.classList.add("more_topic_block_initial");
 		}
 		$(".ajax_topic_dupe").fadeOut("slow", function(){
 			$(this).remove();
@@ -437,9 +440,7 @@ function mainInit(){
 			data: { isJs: 1 },
 			error: ajaxError,
 			success: function (data, status, xhr) {
-				if("success" in data) {
-					if(data["success"] == "1") return;
-				}
+				if("success" in data && data["success"] == "1") return;
 				// addNotice("Failed to add a like: {err}")
 				likeButton.classList.add("add_like");
 				likeButton.classList.remove("remove_like");
@@ -465,11 +466,8 @@ function mainInit(){
 		let urlParams = new URLSearchParams(window.location.search);
 		let page = urlParams.get('page');
 		if(page=="") page = 1;
-		let stopAtPage = lastPage;
-		if(stopAtPage>5) stopAtPage = 5;
 
-		let pageList = [];
-		for(let i = 0; i < stopAtPage;i++) pageList.push(i+1);
+		let pageList = Paginate(page,lastPage,5)
 		//$(".pageset").html(Template_paginator({PageList: pageList, Page: page, LastPage: lastPage}));
 		let ok = false;
 		$(".pageset").each(function(){
@@ -804,7 +802,7 @@ function mainInit(){
 
 	// This one's for Tempra Conflux
 	// TODO: We might want to use pure JS here
-	$(".ip_item").each(function(){
+	/*$(".ip_item").each(function(){
 		var ip = this.textContent;
 		if(ip.length > 10){
 			this.innerHTML = "Show IP";
@@ -813,7 +811,7 @@ function mainInit(){
 				this.textContent = ip;
 			};
 		}
-	});
+	});*/
 
 	$(".quote_item").click(function(){
 		event.preventDefault();
