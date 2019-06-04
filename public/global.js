@@ -351,7 +351,6 @@ function runWebSockets(resume = false) {
 		notifyOnScriptW("template_alert", (e) => {
 			if(e!=undefined) console.log("failed alert? why?", e)
 		}, () => {
-			//console.log("ha")
 			if(!Template_alert) throw("template function not found");
 			addInitHook("after_phrases", () => {
 				// TODO: The load part of loadAlerts could be done asynchronously while the update of the DOM could be deferred
@@ -799,19 +798,6 @@ function mainInit(){
 			blockParent.find('.show_on_edit').removeClass("edit_opened");
 		});
 	});
-
-	// This one's for Tempra Conflux
-	// TODO: We might want to use pure JS here
-	/*$(".ip_item").each(function(){
-		var ip = this.textContent;
-		if(ip.length > 10){
-			this.innerHTML = "Show IP";
-			this.onclick = function(event) {
-				event.preventDefault();
-				this.textContent = ip;
-			};
-		}
-	});*/
 
 	$(".quote_item").click(function(){
 		event.preventDefault();
