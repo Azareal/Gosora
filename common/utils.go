@@ -261,7 +261,7 @@ func ConvertFriendlyUnit(num int) (int, string) {
 
 // TODO: Make slugs optional for certain languages across the entirety of Gosora?
 // TODO: Let plugins replace NameToSlug and the URL building logic with their own
-func NameToSlug(name string) (slug string) {
+/*func NameToSlug(name string) (slug string) {
 	// TODO: Do we want this reliant on config file flags? This might complicate tests and oddball uses
 	if !Config.BuildSlugs {
 		return ""
@@ -283,6 +283,33 @@ func NameToSlug(name string) (slug string) {
 		slug = "untitled"
 	}
 	return slug
+}*/
+
+// TODO: Make slugs optional for certain languages across the entirety of Gosora?
+// TODO: Let plugins replace NameToSlug and the URL building logic with their own
+func NameToSlug(name string) (slug string) {
+	// TODO: Do we want this reliant on config file flags? This might complicate tests and oddball uses
+	if !Config.BuildSlugs {
+		return ""
+	}
+	name = strings.TrimSpace(name)
+	name = strings.Replace(name, "  ", " ", -1)
+
+	var sb strings.Builder
+	for _, char := range name {
+		if unicode.IsLower(char) || unicode.IsNumber(char) {
+			sb.WriteRune(char)
+		} else if unicode.IsUpper(char) {
+			sb.WriteRune(unicode.ToLower(char))
+		} else if unicode.IsSpace(char) {
+			sb.WriteByte('-')
+		}
+	}
+
+	if sb.Len() == 0 {
+		return "untitled"
+	}
+	return sb.String()
 }
 
 // TODO: Write a test for this
