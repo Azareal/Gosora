@@ -428,7 +428,7 @@ func (adapter *MssqlAdapter) SimpleUpdate(up *updatePrebuilder) (string, error) 
 	return querystr, nil
 }
 
-func (adapter *MssqlAdapter) SimpleUpdateSelect(up *updatePrebuilder) (string, error) {
+func (adapter *MssqlAdapter) SimpleUpdateSelect(b *updatePrebuilder) (string, error) {
 	return "", errors.New("not implemented")
 }
 
@@ -468,6 +468,10 @@ func (adapter *MssqlAdapter) SimpleDelete(name string, table string, where strin
 	querystr = strings.TrimSpace(querystr[0 : len(querystr)-4])
 	adapter.pushStatement(name, "delete", querystr)
 	return querystr, nil
+}
+
+func (adapter *MssqlAdapter) ComplexDelete(b *deletePrebuilder) (string, error) {
+	return "", errors.New("not implemented")
 }
 
 // We don't want to accidentally wipe tables, so we'll have a separate method for purging tables instead

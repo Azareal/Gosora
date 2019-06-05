@@ -320,6 +320,17 @@ func (adapter *PgsqlAdapter) SimpleDelete(name string, table string, where strin
 }
 
 // TODO: Implement this
+func (adapter *PgsqlAdapter) ComplexDelete(b *deletePrebuilder) (string, error) {
+	if b.table == "" {
+		return "", errors.New("You need a name for this table")
+	}
+	if b.where == "" {
+		return "", errors.New("You need to specify what data you want to delete")
+	}
+	return "", nil
+}
+
+// TODO: Implement this
 // We don't want to accidentally wipe tables, so we'll have a separate method for purging tables instead
 func (adapter *PgsqlAdapter) Purge(name string, table string) (string, error) {
 	if table == "" {

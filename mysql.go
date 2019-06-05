@@ -3,7 +3,7 @@
 /*
 *
 *	Gosora MySQL Interface
-*	Copyright Azareal 2016 - 2019
+*	Copyright Azareal 2016 - 2020
 *
  */
 package main

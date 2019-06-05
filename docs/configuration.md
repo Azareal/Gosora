@@ -86,6 +86,8 @@ ServerCount - The number of instances you're running. This setting is currently 
 
 PostIPCutoff - The number of days which need to pass before the IP data for a post is automatically deleted. 0 defaults to whatever the current default is, currently 180 and -1 disables this feature. Default: 0
 
+LogPruneCutoff - The number of days which need to pass before the login and registration logs are pruned. 0 defaults to whatever the current default is, currently 365 and -1 disables this feature. Default: 0
+
 DisableLiveTopicList - This switch allows you to disable the live topic list. Default: false
 
 DisableJSAntispam - This switch lets you disable the JS anti-spam feature. It may be useful if you primarily get users who for one reason or another have decided to disable JavaScript. Default: false

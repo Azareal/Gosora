@@ -899,19 +899,35 @@ func AnalyticsAgents(w http.ResponseWriter, r *http.Request, user c.User) c.Rout
 	}
 	ovList := analyticsVMapToOVList(vMap)
 
+	ex := strings.Split(r.FormValue("ex"), ",")
+	var inEx = func(name string) bool {
+		for _, e := range ex {
+			if e == name {
+				return true
+			}
+		}
+		return false
+	}
+
 	var vList [][]int64
 	var legendList []string
 	var i int
 	for _, ovitem := range ovList {
+		if inEx(ovitem.name) {
+			continue
+		}
+		lName, ok := phrases.GetUserAgentPhrase(ovitem.name)
+		if !ok {
+			lName = ovitem.name
+		}
+		if inEx(lName) {
+			continue
+		}
 		var viewList []int64
 		for _, value := range revLabelList {
 			viewList = append(viewList, ovitem.viewMap[value])
 		}
 		vList = append(vList, viewList)
-		lName, ok := phrases.GetUserAgentPhrase(ovitem.name)
-		if !ok {
-			lName = ovitem.name
-		}
 		legendList = append(legendList, lName)
 		if i >= 6 {
 			break
@@ -924,9 +940,15 @@ func AnalyticsAgents(w http.ResponseWriter, r *http.Request, user c.User) c.Rout
 	// TODO: Sort this slice
 	var agentItems []c.PanelAnalyticsAgentsItem
 	for agent, count := range agentMap {
+		if inEx(agent) {
+			continue
+		}
 		aAgent, ok := phrases.GetUserAgentPhrase(agent)
 		if !ok {
 			aAgent = agent
+		}
+		if inEx(aAgent) {
+			continue
 		}
 		agentItems = append(agentItems, c.PanelAnalyticsAgentsItem{
 			Agent:         agent,

@@ -91,6 +91,7 @@ type config struct {
 	PrimaryServer bool
 	ServerCount   int
 	PostIPCutoff  int
+	LogPruneCutoff int
 
 	DisableLiveTopicList bool
 	DisableJSAntispam    bool
@@ -203,6 +204,9 @@ func ProcessConfig() (err error) {
 
 	if Config.PostIPCutoff == 0 {
 		Config.PostIPCutoff = 180 // Default cutoff
+	}
+	if Config.LogPruneCutoff == 0 {
+		Config.LogPruneCutoff = 365 // Default cutoff
 	}
 
 	// ? Find a way of making these unlimited if zero? It might rule out some optimisations, waste memory, and break layouts

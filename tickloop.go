@@ -164,6 +164,17 @@ func dailies() {
 		c.LogError(err)
 	}
 
+	if c.Config.LogPruneCutoff > -1 {
+		_, err := qgen.NewAcc().Delete("login_logs").DateOlderThan("doneAt",c.Config.LogPruneCutoff,"day").Run()
+		if err != nil {
+			c.LogError(err)
+		}
+		_, err = qgen.NewAcc().Delete("registration_logs").DateOlderThan("doneAt",c.Config.LogPruneCutoff,"day").Run()
+		if err != nil {
+			c.LogError(err)
+		}
+	}
+
 	if c.Config.PostIPCutoff > -1 {
 		// TODO: Use unixtime to remove this MySQLesque logic?
 		_, err := qgen.NewAcc().Update("topics").Set("ipaddress = '0'").DateOlderThan("createdAt",c.Config.PostIPCutoff,"day").Where("ipaddress != '0'").Exec()

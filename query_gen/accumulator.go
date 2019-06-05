@@ -224,7 +224,7 @@ func (build *Accumulator) PurgeTx(tx *sql.Tx, table string) (stmt *sql.Stmt) {
 }
 
 func (build *Accumulator) Delete(table string) *accDeleteBuilder {
-	return &accDeleteBuilder{table, "", build}
+	return &accDeleteBuilder{table, "", nil, build}
 }
 
 func (build *Accumulator) Update(table string) *accUpdateBuilder {

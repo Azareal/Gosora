@@ -117,11 +117,12 @@ type Adapter interface {
 	AddKey(name string, table string, column string, key DBTableKey) (string, error)
 	AddForeignKey(name string, table string, column string, ftable string, fcolumn string, cascade bool) (out string, e error)
 	SimpleInsert(name string, table string, columns string, fields string) (string, error)
-	SimpleUpdate(up *updatePrebuilder) (string, error)
-	SimpleUpdateSelect(up *updatePrebuilder) (string, error) // ! Experimental
+	SimpleUpdate(b *updatePrebuilder) (string, error)
+	SimpleUpdateSelect(b *updatePrebuilder) (string, error) // ! Experimental
 	SimpleDelete(name string, table string, where string) (string, error)
 	Purge(name string, table string) (string, error)
 	SimpleSelect(name string, table string, columns string, where string, orderby string, limit string) (string, error)
+	ComplexDelete(b *deletePrebuilder) (string, error)
 	SimpleLeftJoin(name string, table1 string, table2 string, columns string, joiners string, where string, orderby string, limit string) (string, error)
 	SimpleInnerJoin(string, string, string, string, string, string, string, string) (string, error)
 	SimpleInsertSelect(string, DBInsert, DBSelect) (string, error)

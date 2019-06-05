@@ -4,7 +4,7 @@ type dateCutoff struct {
 	Column   string
 	Quantity int
 	Unit     string
-	Type int
+	Type     int
 }
 
 type prebuilder struct {
@@ -33,36 +33,45 @@ func (build *prebuilder) Update(nlist ...string) *updatePrebuilder {
 
 func (build *prebuilder) Delete(nlist ...string) *deletePrebuilder {
 	name := optString(nlist, "")
-	return &deletePrebuilder{name, "", "", build.adapter}
+	return &deletePrebuilder{name, "", "", nil, build.adapter}
 }
 
 type deletePrebuilder struct {
-	name  string
-	table string
-	where string
+	name       string
+	table      string
+	where      string
+	dateCutoff *dateCutoff
 
 	build Adapter
 }
 
-func (delete *deletePrebuilder) Table(table string) *deletePrebuilder {
-	delete.table = table
-	return delete
+func (b *deletePrebuilder) Table(table string) *deletePrebuilder {
+	b.table = table
+	return b
 }
 
-func (delete *deletePrebuilder) Where(where string) *deletePrebuilder {
-	if delete.where != "" {
-		delete.where += " AND "
+func (b *deletePrebuilder) Where(where string) *deletePrebuilder {
+	if b.where != "" {
+		b.where += " AND "
 	}
-	delete.where += where
-	return delete
+	b.where += where
+	return b
 }
 
-func (delete *deletePrebuilder) Text() (string, error) {
-	return delete.build.SimpleDelete(delete.name, delete.table, delete.where)
+// TODO: We probably want to avoid the double allocation of two builders somehow
+func (b *deletePrebuilder) FromAcc(acc *accDeleteBuilder) *deletePrebuilder {
+	b.table = acc.table
+	b.where = acc.where
+	b.dateCutoff = acc.dateCutoff
+	return b
 }
 
-func (delete *deletePrebuilder) Parse() {
-	delete.build.SimpleDelete(delete.name, delete.table, delete.where)
+func (b *deletePrebuilder) Text() (string, error) {
+	return b.build.SimpleDelete(b.name, b.table, b.where)
+}
+
+func (b *deletePrebuilder) Parse() {
+	b.build.SimpleDelete(b.name, b.table, b.where)
 }
 
 type updatePrebuilder struct {
@@ -70,7 +79,7 @@ type updatePrebuilder struct {
 	table         string
 	set           string
 	where         string
-	dateCutoff *dateCutoff // We might want to do this in a slightly less hacky way
+	dateCutoff    *dateCutoff // We might want to do this in a slightly less hacky way
 	whereSubQuery *selectPrebuilder
 
 	build Adapter
@@ -80,35 +89,35 @@ func qUpdate(table string, set string, where string) *updatePrebuilder {
 	return &updatePrebuilder{table: table, set: set, where: where}
 }
 
-func (update *updatePrebuilder) Table(table string) *updatePrebuilder {
-	update.table = table
-	return update
+func (b *updatePrebuilder) Table(table string) *updatePrebuilder {
+	b.table = table
+	return b
 }
 
-func (update *updatePrebuilder) Set(set string) *updatePrebuilder {
-	update.set = set
-	return update
+func (b *updatePrebuilder) Set(set string) *updatePrebuilder {
+	b.set = set
+	return b
 }
 
-func (update *updatePrebuilder) Where(where string) *updatePrebuilder {
-	if update.where != "" {
-		update.where += " AND "
+func (b *updatePrebuilder) Where(where string) *updatePrebuilder {
+	if b.where != "" {
+		b.where += " AND "
 	}
-	update.where += where
-	return update
+	b.where += where
+	return b
 }
 
-func (update *updatePrebuilder) WhereQ(sel *selectPrebuilder) *updatePrebuilder {
-	update.whereSubQuery = sel
-	return update
+func (b *updatePrebuilder) WhereQ(sel *selectPrebuilder) *updatePrebuilder {
+	b.whereSubQuery = sel
+	return b
 }
 
-func (update *updatePrebuilder) Text() (string, error) {
-	return update.build.SimpleUpdate(update)
+func (b *updatePrebuilder) Text() (string, error) {
+	return b.build.SimpleUpdate(b)
 }
 
-func (update *updatePrebuilder) Parse() {
-	update.build.SimpleUpdate(update)
+func (b *updatePrebuilder) Parse() {
+	b.build.SimpleUpdate(b)
 }
 
 type selectPrebuilder struct {
@@ -125,22 +134,22 @@ type selectPrebuilder struct {
 	build Adapter
 }
 
-func (selectItem *selectPrebuilder) Table(table string) *selectPrebuilder {
-	selectItem.table = table
-	return selectItem
+func (b *selectPrebuilder) Table(table string) *selectPrebuilder {
+	b.table = table
+	return b
 }
 
-func (selectItem *selectPrebuilder) Columns(columns string) *selectPrebuilder {
-	selectItem.columns = columns
-	return selectItem
+func (b *selectPrebuilder) Columns(columns string) *selectPrebuilder {
+	b.columns = columns
+	return b
 }
 
-func (selectItem *selectPrebuilder) Where(where string) *selectPrebuilder {
-	if selectItem.where != "" {
-		selectItem.where += " AND "
+func (b *selectPrebuilder) Where(where string) *selectPrebuilder {
+	if b.where != "" {
+		b.where += " AND "
 	}
-	selectItem.where += where
-	return selectItem
+	b.where += where
+	return b
 }
 
 func (b *selectPrebuilder) InQ(subBuilder *selectPrebuilder) *selectPrebuilder {
@@ -190,13 +199,13 @@ func (b *selectPrebuilder) FromCountAcc(acc *accCountBuilder) *selectPrebuilder 
 }
 
 // TODO: Add support for dateCutoff
-func (selectItem *selectPrebuilder) Text() (string, error) {
-	return selectItem.build.SimpleSelect(selectItem.name, selectItem.table, selectItem.columns, selectItem.where, selectItem.orderby, selectItem.limit)
+func (b *selectPrebuilder) Text() (string, error) {
+	return b.build.SimpleSelect(b.name, b.table, b.columns, b.where, b.orderby, b.limit)
 }
 
 // TODO: Add support for dateCutoff
-func (selectItem *selectPrebuilder) Parse() {
-	selectItem.build.SimpleSelect(selectItem.name, selectItem.table, selectItem.columns, selectItem.where, selectItem.orderby, selectItem.limit)
+func (b *selectPrebuilder) Parse() {
+	b.build.SimpleSelect(b.name, b.table, b.columns, b.where, b.orderby, b.limit)
 }
 
 type insertPrebuilder struct {
@@ -208,27 +217,27 @@ type insertPrebuilder struct {
 	build Adapter
 }
 
-func (insert *insertPrebuilder) Table(table string) *insertPrebuilder {
-	insert.table = table
-	return insert
+func (b *insertPrebuilder) Table(table string) *insertPrebuilder {
+	b.table = table
+	return b
 }
 
-func (insert *insertPrebuilder) Columns(columns string) *insertPrebuilder {
-	insert.columns = columns
-	return insert
+func (b *insertPrebuilder) Columns(columns string) *insertPrebuilder {
+	b.columns = columns
+	return b
 }
 
-func (insert *insertPrebuilder) Fields(fields string) *insertPrebuilder {
-	insert.fields = fields
-	return insert
+func (b *insertPrebuilder) Fields(fields string) *insertPrebuilder {
+	b.fields = fields
+	return b
 }
 
-func (insert *insertPrebuilder) Text() (string, error) {
-	return insert.build.SimpleInsert(insert.name, insert.table, insert.columns, insert.fields)
+func (b *insertPrebuilder) Text() (string, error) {
+	return b.build.SimpleInsert(b.name, b.table, b.columns, b.fields)
 }
 
-func (insert *insertPrebuilder) Parse() {
-	insert.build.SimpleInsert(insert.name, insert.table, insert.columns, insert.fields)
+func (b *insertPrebuilder) Parse() {
+	b.build.SimpleInsert(b.name, b.table, b.columns, b.fields)
 }
 
 /*type countPrebuilder struct {
@@ -240,30 +249,30 @@ func (insert *insertPrebuilder) Parse() {
 	build Adapter
 }
 
-func (count *countPrebuilder) Table(table string) *countPrebuilder {
-	count.table = table
-	return count
+func (b *countPrebuilder) Table(table string) *countPrebuilder {
+	b.table = table
+	return b
 }
 
-func (count *countPrebuilder) Where(where string) *countPrebuilder {
-	if count.where != "" {
-		count.where += " AND "
+func b *countPrebuilder) Where(where string) *countPrebuilder {
+	if b.where != "" {
+		b.where += " AND "
 	}
-	count.where += where
-	return count
+	b.where += where
+	return b
 }
 
-func (count *countPrebuilder) Limit(limit string) *countPrebuilder {
-	count.limit = limit
-	return count
+func (b *countPrebuilder) Limit(limit string) *countPrebuilder {
+	b.limit = limit
+	return b
 }
 
-func (count *countPrebuilder) Text() (string, error) {
-	return count.build.SimpleCount(count.name, count.table, count.where, count.limit)
+func (b *countPrebuilder) Text() (string, error) {
+	return b.build.SimpleCount(b.name, b.table, b.where, b.limit)
 }
 
-func (count *countPrebuilder) Parse() {
-	count.build.SimpleCount(count.name, count.table, count.where, count.limit)
+func (b *countPrebuilder) Parse() {
+	b.build.SimpleCount(b.name, b.table, b.where, b.limit)
 }*/
 
 func optString(nlist []string, defaultStr string) string {
