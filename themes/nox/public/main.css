@@ -696,6 +696,9 @@ button, .formbutton, .panel_right_button:not(.has_inner_button) {
 .pagefirst a, .pagenext a, .pageprev a, .pagelast a {
 	font-size: 22px;
 }
+.pagecurrent {
+	background-color: #505050;
+}
 
 #prevFloat, #nextFloat {
 	display: none;

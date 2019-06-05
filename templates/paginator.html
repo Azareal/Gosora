@@ -4,7 +4,7 @@
 	<div class="pageitem pageprev"><a href="?page={{subtract .Page 1}}" rel="prev" aria-label="{{lang "paginator.prev_page_aria"}}">{{lang "paginator.prev_page"}}</a></div>
 	<link rel="prev" href="?page={{subtract .Page 1}}" />{{end}}
 	{{range .PageList}}
-	<div class="pageitem"><a href="?page={{.}}">{{.}}</a></div>
+	<div class="pageitem{{if eq . $.Page}} pagecurrent{{end}}"><a href="?page={{.}}">{{.}}</a></div>
 	{{end}}
 	{{if ne .LastPage .Page}}
 	<link rel="next" href="?page={{add .Page 1}}" />
