@@ -65,11 +65,6 @@ func Debug(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	var count = func(tbl string) (int, error) {
 		return qgen.NewAcc().Count(tbl).Total()
 	}
-	// TODO: Implement a LikeStore and call Count on that instead
-	likes, err := count("likes")
-	if err != nil {
-		return c.InternalError(err,w,r)
-	}
 	// TODO: Call Count on an attachment store
 	attachs, err := count("attachments")
 	if err != nil {
@@ -130,7 +125,7 @@ func Debug(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	if err != nil {
 		return c.InternalError(err,w,r)
 	}
-	debugDatabase := c.DebugPageDatabase{c.Topics.Count(),c.Users.Count(),c.Rstore.Count(),c.Prstore.Count(),c.Activity.Count(),likes,attachs,polls,loginLogs,regLogs,modLogs,adminLogs,views,viewsAgents,viewsForums,viewsLangs,viewsReferrers,viewsSystems,postChunks,topicChunks}
+	debugDatabase := c.DebugPageDatabase{c.Topics.Count(),c.Users.Count(),c.Rstore.Count(),c.Prstore.Count(),c.Activity.Count(),c.Likes.Count(),attachs,polls,loginLogs,regLogs,modLogs,adminLogs,views,viewsAgents,viewsForums,viewsLangs,viewsReferrers,viewsSystems,postChunks,topicChunks}
 
 	staticSize, err := c.DirSize("./public/")
 	if err != nil {

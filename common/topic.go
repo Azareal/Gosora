@@ -592,24 +592,12 @@ func (topic *TopicUser) Replies(offset int, pFrag int, user *User) (rlist []*Rep
 
 	// TODO: Add a config setting to disable the liked query for a burst of extra speed
 	if user.Liked > 0 && len(likedQueryList) > 1 /*&& user.LastLiked <= time.Now()*/ {
-		// TODO: Abstract this
-		rows, err := qgen.NewAcc().Select("likes").Columns("targetItem").Where("sentBy = ? AND targetType = 'replies'").In("targetItem", likedQueryList[1:]).Query(user.ID)
-		if err != nil && err != sql.ErrNoRows {
-			return nil, "", err
-		}
-		defer rows.Close()
-
-		var likeRid int
-		for rows.Next() {
-			err := rows.Scan(&likeRid)
-			if err != nil {
-				return nil, "", err
-			}
-			rlist[likedMap[likeRid]].Liked = true
-		}
-		err = rows.Err()
+		eids, err := Likes.BulkExists(likedQueryList[1:], user.ID, "replies")
 		if err != nil {
 			return nil, "", err
+		}
+		for _, eid := range eids {
+			rlist[likedMap[eid]].Liked = true
 		}
 	}
 
