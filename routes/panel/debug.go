@@ -80,6 +80,24 @@ func Debug(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	if err != nil {
 		return c.InternalError(err,w,r)
 	}
+
+	loginLogs, err := count("login_logs")
+	if err != nil {
+		return c.InternalError(err,w,r)
+	}
+	regLogs, err := count("registration_logs")
+	if err != nil {
+		return c.InternalError(err,w,r)
+	}
+	modLogs, err := count("moderation_logs")
+	if err != nil {
+		return c.InternalError(err,w,r)
+	}
+	adminLogs, err := count("administration_logs")
+	if err != nil {
+		return c.InternalError(err,w,r)
+	}
+	
 	views, err := count("viewchunks")
 	if err != nil {
 		return c.InternalError(err,w,r)
@@ -112,7 +130,7 @@ func Debug(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	if err != nil {
 		return c.InternalError(err,w,r)
 	}
-	debugDatabase := c.DebugPageDatabase{c.Topics.Count(),c.Users.Count(),c.Rstore.Count(),c.Prstore.Count(),c.Activity.Count(),likes,attachs,polls,views,viewsAgents,viewsForums,viewsLangs,viewsReferrers,viewsSystems,postChunks,topicChunks}
+	debugDatabase := c.DebugPageDatabase{c.Topics.Count(),c.Users.Count(),c.Rstore.Count(),c.Prstore.Count(),c.Activity.Count(),likes,attachs,polls,loginLogs,regLogs,modLogs,adminLogs,views,viewsAgents,viewsForums,viewsLangs,viewsReferrers,viewsSystems,postChunks,topicChunks}
 
 	staticSize, err := c.DirSize("./public/")
 	if err != nil {

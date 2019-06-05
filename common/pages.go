@@ -621,6 +621,11 @@ type DebugPageDatabase struct {
 	Attachments int
 	Polls int
 
+	LoginLogs int
+	RegLogs int
+	ModLogs int
+	AdminLogs int
+
 	Views int
 	ViewsAgents int
 	ViewsForums int
