@@ -53,6 +53,7 @@ func userRoutes() *RouteGroup {
 		MemberView("routes.AccountEditPassword", "/user/edit/password/"),
 		Action("routes.AccountEditPasswordSubmit", "/user/edit/password/submit/"), // TODO: Full test this
 		UploadAction("routes.AccountEditAvatarSubmit", "/user/edit/avatar/submit/").MaxSizeVar("int(c.Config.MaxRequestSize)"),
+		Action("routes.AccountEditRevokeAvatarSubmit", "/user/edit/avatar/revoke/submit/"),
 		Action("routes.AccountEditUsernameSubmit", "/user/edit/username/submit/"), // TODO: Full test this
 		MemberView("routes.AccountEditMFA", "/user/edit/mfa/"),
 		MemberView("routes.AccountEditMFASetup", "/user/edit/mfa/setup/"),

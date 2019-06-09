@@ -18,6 +18,7 @@ func ThumbTask(thumbChan chan bool) {
 		<-thumbChan
 
 		// TODO: Use a real queue
+		// TODO: Transactions? Self-repairing?
 		acc := qgen.NewAcc()
 		err := acc.Select("users_avatar_queue").Columns("uid").Limit("0,5").EachInt(func(uid int) error {
 			// TODO: Do a bulk user fetch instead?

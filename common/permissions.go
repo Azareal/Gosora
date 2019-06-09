@@ -38,6 +38,7 @@ var GlobalPermList = []string{
 	"ViewAdminLogs",
 	"ViewIPs",
 	"UploadFiles",
+	"UploadAvatars",
 }
 
 // Permission Structure: ActionComponent[Subcomponent]Flag
@@ -65,7 +66,7 @@ type Perms struct {
 
 	// Global non-staff permissions
 	UploadFiles bool
-	// TODO: Add a permission for enabling avatars
+	UploadAvatars bool
 
 	// Forum permissions
 	ViewTopic bool
@@ -120,6 +121,7 @@ func init() {
 		ViewIPs:               true,
 
 		UploadFiles: true,
+		UploadAvatars: true,
 
 		ViewTopic:   true,
 		LikeItem:    true,

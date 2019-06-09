@@ -427,6 +427,9 @@ func AccountEditAvatarSubmit(w http.ResponseWriter, r *http.Request, user c.User
 	if ferr != nil {
 		return ferr
 	}
+	if !user.Perms.UploadAvatars {
+		return c.NoPermissions(w, r, user)
+	}
 
 	// We don't want multiple files
 	// TODO: Are we doing this correctly?
@@ -518,6 +521,37 @@ func AccountEditAvatarSubmit(w http.ResponseWriter, r *http.Request, user c.User
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
+	http.Redirect(w, r, "/user/edit/?avatar_updated=1", http.StatusSeeOther)
+	return nil
+}
+
+func AccountEditRevokeAvatarSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
+	_, ferr := c.SimpleUserCheck(w, r, &user)
+	if ferr != nil {
+		return ferr
+	}
+
+	err := user.ChangeAvatar("")
+	if err != nil {
+		return c.InternalError(err, w, r)
+	}
+
+	// Clean up the old avatar data, so we don't end up with too many dead files in /uploads/
+	if len(user.RawAvatar) > 2 {
+		if user.RawAvatar[0] == '.' && user.RawAvatar[1] == '.' {
+			err := os.Remove("./uploads/avatar_" + strconv.Itoa(user.ID) + "_tmp" + user.RawAvatar[1:])
+			if err != nil && !os.IsNotExist(err) {
+				c.LogWarning(err)
+				return c.LocalError("Something went wrong", w, r, user)
+			}
+			err = os.Remove("./uploads/avatar_" + strconv.Itoa(user.ID) + "_w48" + user.RawAvatar[1:])
+			if err != nil && !os.IsNotExist(err) {
+				c.LogWarning(err)
+				return c.LocalError("Something went wrong", w, r, user)
+			}
+		}
+	}
+
 	http.Redirect(w, r, "/user/edit/?avatar_updated=1", http.StatusSeeOther)
 	return nil
 }

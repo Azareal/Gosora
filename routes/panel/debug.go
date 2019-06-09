@@ -62,91 +62,58 @@ func Debug(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 
 	debugCache := c.DebugPageCache{tlen, ulen, rlen, tcap, ucap, rcap, topicListThawed}
 
-	var count = func(tbl string) (int, error) {
-		return qgen.NewAcc().Count(tbl).Total()
-	}
-	// TODO: Call Count on an attachment store
-	attachs, err := count("attachments")
-	if err != nil {
-		return c.InternalError(err,w,r)
-	}
-	// TODO: Implement a PollStore and call Count on that instead
-	polls, err := count("polls")
-	if err != nil {
-		return c.InternalError(err,w,r)
+	var fErr error
+	var count = func(tbl string) int {
+		if fErr != nil {
+			return 0
+		}
+		c, err := qgen.NewAcc().Count(tbl).Total()
+		fErr = err
+		return c
 	}
 
-	loginLogs, err := count("login_logs")
-	if err != nil {
-		return c.InternalError(err,w,r)
-	}
-	regLogs, err := count("registration_logs")
-	if err != nil {
-		return c.InternalError(err,w,r)
-	}
-	modLogs, err := count("moderation_logs")
-	if err != nil {
-		return c.InternalError(err,w,r)
-	}
-	adminLogs, err := count("administration_logs")
-	if err != nil {
-		return c.InternalError(err,w,r)
-	}
+	// TODO: Call Count on an attachment store
+	attachs := count("attachments")
+	// TODO: Implement a PollStore and call Count on that instead
+	polls := count("polls")
+
+	loginLogs := count("login_logs")
+	regLogs := count("registration_logs")
+	modLogs := count("moderation_logs")
+	adminLogs := count("administration_logs")
 	
-	views, err := count("viewchunks")
-	if err != nil {
-		return c.InternalError(err,w,r)
+	views := count("viewchunks")
+	viewsAgents := count("viewchunks_agents")
+	viewsForums := count("viewchunks_forums")
+	viewsLangs := count("viewchunks_langs")
+	viewsReferrers := count("viewchunks_referrers")
+	viewsSystems := count("viewchunks_systems")
+	postChunks := count("postchunks")
+	topicChunks := count("topicchunks")
+	if fErr != nil {
+		return c.InternalError(fErr,w,r)
 	}
-	viewsAgents, err := count("viewchunks_agents")
-	if err != nil {
-		return c.InternalError(err,w,r)
-	}
-	viewsForums, err := count("viewchunks_forums")
-	if err != nil {
-		return c.InternalError(err,w,r)
-	}
-	viewsLangs, err := count("viewchunks_langs")
-	if err != nil {
-		return c.InternalError(err,w,r)
-	}
-	viewsReferrers, err := count("viewchunks_referrers")
-	if err != nil {
-		return c.InternalError(err,w,r)
-	}
-	viewsSystems, err := count("viewchunks_systems")
-	if err != nil {
-		return c.InternalError(err,w,r)
-	}
-	postChunks, err := count("postchunks")
-	if err != nil {
-		return c.InternalError(err,w,r)
-	}
-	topicChunks, err := count("topicchunks")
-	if err != nil {
-		return c.InternalError(err,w,r)
-	}
+
 	debugDatabase := c.DebugPageDatabase{c.Topics.Count(),c.Users.Count(),c.Rstore.Count(),c.Prstore.Count(),c.Activity.Count(),c.Likes.Count(),attachs,polls,loginLogs,regLogs,modLogs,adminLogs,views,viewsAgents,viewsForums,viewsLangs,viewsReferrers,viewsSystems,postChunks,topicChunks}
 
-	staticSize, err := c.DirSize("./public/")
-	if err != nil {
-		return c.InternalError(err,w,r)
+	var dirSize = func(path string) int {
+		if fErr != nil {
+			return 0
+		}
+		c, err := c.DirSize(path)
+		fErr = err
+		return c
 	}
-	attachSize, err := c.DirSize("./attachs/")
-	if err != nil {
-		return c.InternalError(err,w,r)
+
+	staticSize := dirSize("./public/")
+	attachSize := dirSize("./attachs/")
+	uploadsSize := dirSize("./uploads/")
+	logsSize := dirSize("./logs/")
+	backupsSize := dirSize("./backups/")
+	if fErr != nil {
+		return c.InternalError(fErr,w,r)
 	}
-	uploadsSize, err := c.DirSize("./uploads/")
-	if err != nil {
-		return c.InternalError(err,w,r)
-	}
-	logsSize, err := c.DirSize("./logs/")
-	if err != nil {
-		return c.InternalError(err,w,r)
-	}
-	backupsSize, err := c.DirSize("./backups/")
-	if err != nil {
-		return c.InternalError(err,w,r)
-	}
+
 	debugDisk := c.DebugPageDisk{staticSize,attachSize,uploadsSize,logsSize,backupsSize}
 
 	pi := c.PanelDebugPage{basePage, goVersion, dbVersion, uptime, openConnCount, qgen.Builder.GetAdapter().GetName(), goroutines, cpus, memStats, debugCache, debugDatabase, debugDisk}

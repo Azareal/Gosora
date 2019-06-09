@@ -184,6 +184,7 @@ func GroupsEditPerms(w http.ResponseWriter, r *http.Request, user c.User, sgid s
 	addGlobalPerm("ViewAdminLogs", group.Perms.ViewAdminLogs)
 	addGlobalPerm("ViewIPs", group.Perms.ViewIPs)
 	addGlobalPerm("UploadFiles", group.Perms.UploadFiles)
+	addGlobalPerm("UploadAvatars", group.Perms.UploadAvatars)
 
 	pi := c.PanelEditGroupPermsPage{basePage, group.ID, group.Name, localPerms, globalPerms}
 	return renderTemplate("panel_group_edit_perms", w, r, basePage.Header, pi)

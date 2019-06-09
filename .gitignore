@@ -13,6 +13,7 @@ backups/*.sql
 logs/*.log
 config/config.json
 node_modules/*
+samples/vue/node_modules/*
 bin/*
 out/*
 *.exe

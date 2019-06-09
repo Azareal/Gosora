@@ -28,7 +28,8 @@
 		"ViewAdminLogs":         "Can view the administrator action logs",
 		"ViewIPs":               "Can view IP addresses",
 
-		"UploadFiles": "Can upload files"
+		"UploadFiles": "Can upload files",
+		"UploadAvatars": "Can upload avatars"
 	},
 
 	"LocalPerms": {
@@ -140,6 +141,7 @@
 		"account_mfa_setup":"Setup 2FA",
 		"account_email":"Email Manager",
 		"account_logins":"Logins",
+		"account_penalties":"Penalties",
 		"account_level_list":"Level Progress",
 
 		"panel_dashboard":"Control Panel Dashboard",
@@ -489,6 +491,7 @@
 		"account_menu_security":"Security",
 		"account_menu_notifications":"Notifications",
 		"account_menu_logins":"Logins",
+		"account_menu_penalties":"Penalties",
 
 		"account_coming_soon":"Coming Soon",
 
@@ -498,6 +501,7 @@
 		"account_username_save":"Save",
 		"account_avatar_select":"Select",
 		"account_avatar_update_button":"Upload",
+		"account_avatar_revoke_button":"Remove",
 
 		"account_email_head":"Emails",
 		"account_email_primary":"Primary",

@@ -8,13 +8,41 @@ conversations
 conversations_posts
 */
 
+var convoStmts ConvoStmts
+
+type ConvoStmts struct {
+	edit *sql.Stmt
+	create *sql.Stmt
+}
+
+func init() {
+	/*DbInits.Add(func(acc *qgen.Accumulator) error {
+		convoStmts = ConvoStmts{
+			edit: acc.Update("conversations").Set("participants = ?").Where("cid = ?").Prepare(),
+			create: acc.Insert("conversations").Columns("participants").Fields("?").Prepare(),
+		}
+		return acc.FirstError()
+	})*/
+}
+
 type Conversation struct {
 	ID int
 	Participants string
 }
 
+func (co *Conversation) Update() error {
+	_, err := convoStmts.edit.Exec(co.Participants, co.ID)
+	return err
+}
+
 func (co *Conversation) Create() (int, error) {
-	return 0, sql.ErrNoRows
+	res, err := convoStmts.create.Exec(co.Participants)
+	if err != nil {
+		return 0, err
+	}
+
+	lastID, err := res.LastInsertId()
+	return int(lastID), err
 }
 
 type ConversationPost struct {

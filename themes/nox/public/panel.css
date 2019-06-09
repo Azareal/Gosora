@@ -114,7 +114,7 @@
 	padding: 12px;
 }
 .grid_item a {
-	color: rgb(200,200,200);
+	color: rgb(195,195,195);
 }
 .stat_green {
 	background-color: rgb(68,88,68);
@@ -125,6 +125,25 @@
 .grid2 {
 	margin-top: 12px;
 }
+/*.panel_dashboard .grid_item {
+	text-align: center;
+}
+#dash-cpu, #dash-disk, #dash-ram, #dash-memused {
+	background-repeat: no-repeat;
+	padding-left: 61px;
+	background-position: left 12px top 50%;
+	background-size: 40px;
+}
+#dash-cpu {
+	background-image: url(./fa-svg/server-bg.svg);
+	background-size: 30px;
+}
+#dash-disk {
+	background-image: url(./fa-svg/hdd-bg.svg);
+}
+#dash-ram, #dash-memused {
+	background-image: url(./fa-svg/memory.svg);
+}*/
 
 .panel_buttons, .panel_floater {
 	margin-left: auto;
