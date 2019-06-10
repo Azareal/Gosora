@@ -98,7 +98,6 @@ func UsersEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, suid s
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
-
 	if targetUser.IsAdmin && !user.IsAdmin {
 		return c.LocalError("Only administrators can edit the account of other administrators.", w, r, user)
 	}
@@ -160,5 +159,82 @@ func UsersEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, suid s
 	} else {
 		http.Redirect(w, r, "/panel/users/edit/"+strconv.Itoa(targetUser.ID)+"?updated=1", http.StatusSeeOther)
 	}
+	return nil
+}
+
+func UsersAvatarSubmit(w http.ResponseWriter, r *http.Request, user c.User, suid string) c.RouteError {
+	_, ferr := c.SimplePanelUserCheck(w, r, &user)
+	if ferr != nil {
+		return ferr
+	}
+	if !user.Perms.EditUser {
+		return c.NoPermissions(w, r, user)
+	}
+
+	uid, err := strconv.Atoi(suid)
+	if err != nil {
+		return c.LocalError("The provided UserID is not a valid number.", w, r, user)
+	}
+
+	targetUser, err := c.Users.Get(uid)
+	if err == sql.ErrNoRows {
+		return c.LocalError("The user you're trying to edit doesn't exist.", w, r, user)
+	} else if err != nil {
+		return c.InternalError(err, w, r)
+	}
+	if targetUser.IsAdmin && !user.IsAdmin {
+		return c.LocalError("Only administrators can edit the account of other administrators.", w, r, user)
+	}
+
+	ext, ferr := c.UploadAvatar(w,r,user,targetUser.ID)
+	if ferr != nil {
+		return ferr
+	}
+
+	ferr = c.ChangeAvatar("." + ext, w, r, *targetUser)
+	if ferr != nil {
+		return ferr
+	}
+
+	// TODO: Only schedule a resize if the avatar isn't tiny
+	err = targetUser.ScheduleAvatarResize()
+	if err != nil {
+		return c.InternalError(err, w, r)
+	}
+
+	http.Redirect(w, r, "/panel/users/edit/"+strconv.Itoa(targetUser.ID)+"?updated=1", http.StatusSeeOther)
+	return nil
+}
+
+func UsersAvatarRemoveSubmit(w http.ResponseWriter, r *http.Request, user c.User, suid string) c.RouteError {
+	_, ferr := c.SimplePanelUserCheck(w, r, &user)
+	if ferr != nil {
+		return ferr
+	}
+	if !user.Perms.EditUser {
+		return c.NoPermissions(w, r, user)
+	}
+
+	uid, err := strconv.Atoi(suid)
+	if err != nil {
+		return c.LocalError("The provided UserID is not a valid number.", w, r, user)
+	}
+
+	targetUser, err := c.Users.Get(uid)
+	if err == sql.ErrNoRows {
+		return c.LocalError("The user you're trying to edit doesn't exist.", w, r, user)
+	} else if err != nil {
+		return c.InternalError(err, w, r)
+	}
+	if targetUser.IsAdmin && !user.IsAdmin {
+		return c.LocalError("Only administrators can edit the account of other administrators.", w, r, user)
+	}
+
+	ferr = c.ChangeAvatar("", w, r, *targetUser)
+	if ferr != nil {
+		return ferr
+	}
+
+	http.Redirect(w, r, "/panel/users/edit/"+strconv.Itoa(targetUser.ID)+"?updated=1", http.StatusSeeOther)
 	return nil
 }

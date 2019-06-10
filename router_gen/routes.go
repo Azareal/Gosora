@@ -199,6 +199,8 @@ func panelRoutes() *RouteGroup {
 		View("panel.Users", "/panel/users/"),
 		View("panel.UsersEdit", "/panel/users/edit/", "extraData"),
 		Action("panel.UsersEditSubmit", "/panel/users/edit/submit/", "extraData"),
+		UploadAction("panel.UsersAvatarSubmit", "/panel/users/avatar/submit/", "extraData").MaxSizeVar("int(c.Config.MaxRequestSize)"),
+		Action("panel.UsersAvatarRemoveSubmit", "/panel/users/avatar/remove/submit/", "extraData"),
 
 		View("panel.AnalyticsViews", "/panel/analytics/views/").Before("ParseForm"),
 		View("panel.AnalyticsRoutes", "/panel/analytics/routes/").Before("ParseForm"),

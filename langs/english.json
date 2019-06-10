@@ -796,6 +796,7 @@
 		"panel_users_activate":"Activate",
 
 		"panel_user_head":"User Editor",
+		"panel_user_avatar":"Avatar",
 		"panel_user_name":"Name",
 		"panel_user_name_placeholder":"Jane Doe",
 		"panel_user_password":"Password",

@@ -7,6 +7,9 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"os"
+	"io"
+	"regexp"
 
 	"github.com/Azareal/Gosora/common/phrases"
 )
@@ -320,6 +323,97 @@ func preRoute(w http.ResponseWriter, r *http.Request) (User, bool) {
 	}
 
 	return *usercpy, true
+}
+
+func UploadAvatar(w http.ResponseWriter, r *http.Request, user User, tuid int) (ext string, ferr RouteError) {
+	// We don't want multiple files
+	// TODO: Are we doing this correctly?
+	filenameMap := make(map[string]bool)
+	for _, fheaders := range r.MultipartForm.File {
+		for _, hdr := range fheaders {
+			if hdr.Filename == "" {
+				continue
+			}
+			filenameMap[hdr.Filename] = true
+		}
+	}
+	if len(filenameMap) > 1 {
+		return "", LocalError("You may only upload one avatar", w, r, user)
+	}
+
+	for _, fheaders := range r.MultipartForm.File {
+		for _, hdr := range fheaders {
+			if hdr.Filename == "" {
+				continue
+			}
+			infile, err := hdr.Open()
+			if err != nil {
+				return "", LocalError("Upload failed", w, r, user)
+			}
+			defer infile.Close()
+
+			if ext == "" {
+				extarr := strings.Split(hdr.Filename, ".")
+				if len(extarr) < 2 {
+					return "", LocalError("Bad file", w, r, user)
+				}
+				ext = extarr[len(extarr)-1]
+
+				// TODO: Can we do this without a regex?
+				reg, err := regexp.Compile("[^A-Za-z0-9]+")
+				if err != nil {
+					return "", LocalError("Bad file extension", w, r, user)
+				}
+				ext = reg.ReplaceAllString(ext, "")
+				ext = strings.ToLower(ext)
+
+				if !ImageFileExts.Contains(ext) {
+					return "", LocalError("You can only use an image for your avatar", w, r, user)
+				}
+			}
+
+			// TODO: Centralise this string, so we don't have to change it in two different places when it changes
+			outfile, err := os.Create("./uploads/avatar_" + strconv.Itoa(tuid) + "." + ext)
+			if err != nil {
+				return "", LocalError("Upload failed [File Creation Failed]", w, r, user)
+			}
+			defer outfile.Close()
+
+			_, err = io.Copy(outfile, infile)
+			if err != nil {
+				return "", LocalError("Upload failed [Copy Failed]", w, r, user)
+			}
+		}
+	}
+	if ext == "" {
+		return "", LocalError("No file", w, r, user)
+	}
+	return ext, nil
+}
+
+func ChangeAvatar(path string, w http.ResponseWriter, r *http.Request, user User) RouteError {
+	err := user.ChangeAvatar(path)
+	if err != nil {
+		return InternalError(err, w, r)
+	}
+
+	// Clean up the old avatar data, so we don't end up with too many dead files in /uploads/
+	if len(user.RawAvatar) > 2 {
+		if user.RawAvatar[0] == '.' && user.RawAvatar[1] == '.' {
+			err := os.Remove("./uploads/avatar_" + strconv.Itoa(user.ID) + "_tmp" + user.RawAvatar[1:])
+			if err != nil && !os.IsNotExist(err) {
+				LogWarning(err)
+				return LocalError("Something went wrong", w, r, user)
+			}
+			err = os.Remove("./uploads/avatar_" + strconv.Itoa(user.ID) + "_w48" + user.RawAvatar[1:])
+			if err != nil && !os.IsNotExist(err) {
+				LogWarning(err)
+				return LocalError("Something went wrong", w, r, user)
+			}
+		}
+	}
+
+	return nil
 }
 
 // SuperAdminOnly makes sure that only super admin can access certain critical panel routes

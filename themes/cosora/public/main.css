@@ -754,8 +754,6 @@ textarea {
 }
 .rowlist.bgavatars .rowitem {
 	flex-direction: column;
-}
-.rowlist.bgavatars .rowitem {
 	padding-top: 16px;
 	padding-bottom: 10px;
 }
@@ -780,6 +778,9 @@ textarea {
 .rowlist .rowTitle {
 	font-size: 20px;
 	margin-bottom: 3px;
+}
+.rowlist.bgavatars .rowAvatar {
+	margin-bottom: -4px;
 }
 .rowlist .panel_compactrow {
 	padding: 16px;

@@ -6,12 +6,9 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"html"
-	"io"
 	"log"
 	"math"
 	"net/http"
-	"os"
-	"regexp"
 	"strconv"
 	"strings"
 
@@ -431,93 +428,18 @@ func AccountEditAvatarSubmit(w http.ResponseWriter, r *http.Request, user c.User
 		return c.NoPermissions(w, r, user)
 	}
 
-	// We don't want multiple files
-	// TODO: Are we doing this correctly?
-	filenameMap := make(map[string]bool)
-	for _, fheaders := range r.MultipartForm.File {
-		for _, hdr := range fheaders {
-			if hdr.Filename == "" {
-				continue
-			}
-			filenameMap[hdr.Filename] = true
-		}
-	}
-	if len(filenameMap) > 1 {
-		return c.LocalError("You may only upload one avatar", w, r, user)
+	ext, ferr := c.UploadAvatar(w,r,user,user.ID)
+	if ferr != nil {
+		return ferr
 	}
 
-	var ext string
-	for _, fheaders := range r.MultipartForm.File {
-		for _, hdr := range fheaders {
-			if hdr.Filename == "" {
-				continue
-			}
-			infile, err := hdr.Open()
-			if err != nil {
-				return c.LocalError("Upload failed", w, r, user)
-			}
-			defer infile.Close()
-
-			if ext == "" {
-				extarr := strings.Split(hdr.Filename, ".")
-				if len(extarr) < 2 {
-					return c.LocalError("Bad file", w, r, user)
-				}
-				ext = extarr[len(extarr)-1]
-
-				// TODO: Can we do this without a regex?
-				reg, err := regexp.Compile("[^A-Za-z0-9]+")
-				if err != nil {
-					return c.LocalError("Bad file extension", w, r, user)
-				}
-				ext = reg.ReplaceAllString(ext, "")
-				ext = strings.ToLower(ext)
-
-				if !c.ImageFileExts.Contains(ext) {
-					return c.LocalError("You can only use an image for your avatar", w, r, user)
-				}
-			}
-
-			// TODO: Centralise this string, so we don't have to change it in two different places when it changes
-			outfile, err := os.Create("./uploads/avatar_" + strconv.Itoa(user.ID) + "." + ext)
-			if err != nil {
-				return c.LocalError("Upload failed [File Creation Failed]", w, r, user)
-			}
-			defer outfile.Close()
-
-			_, err = io.Copy(outfile, infile)
-			if err != nil {
-				return c.LocalError("Upload failed [Copy Failed]", w, r, user)
-			}
-		}
+	ferr = c.ChangeAvatar("." + ext, w, r, user)
+	if ferr != nil {
+		return ferr
 	}
-	if ext == "" {
-		return c.LocalError("No file", w, r, user)
-	}
-
-	err := user.ChangeAvatar("." + ext)
-	if err != nil {
-		return c.InternalError(err, w, r)
-	}
-
-	// Clean up the old avatar data, so we don't end up with too many dead files in /uploads/
-	if len(user.RawAvatar) > 2 {
-		if user.RawAvatar[0] == '.' && user.RawAvatar[1] == '.' {
-			err := os.Remove("./uploads/avatar_" + strconv.Itoa(user.ID) + "_tmp" + user.RawAvatar[1:])
-			if err != nil && !os.IsNotExist(err) {
-				c.LogWarning(err)
-				return c.LocalError("Something went wrong", w, r, user)
-			}
-			err = os.Remove("./uploads/avatar_" + strconv.Itoa(user.ID) + "_w48" + user.RawAvatar[1:])
-			if err != nil && !os.IsNotExist(err) {
-				c.LogWarning(err)
-				return c.LocalError("Something went wrong", w, r, user)
-			}
-		}
-	}
-
+	
 	// TODO: Only schedule a resize if the avatar isn't tiny
-	err = user.ScheduleAvatarResize()
+	err := user.ScheduleAvatarResize()
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -531,25 +453,9 @@ func AccountEditRevokeAvatarSubmit(w http.ResponseWriter, r *http.Request, user 
 		return ferr
 	}
 
-	err := user.ChangeAvatar("")
-	if err != nil {
-		return c.InternalError(err, w, r)
-	}
-
-	// Clean up the old avatar data, so we don't end up with too many dead files in /uploads/
-	if len(user.RawAvatar) > 2 {
-		if user.RawAvatar[0] == '.' && user.RawAvatar[1] == '.' {
-			err := os.Remove("./uploads/avatar_" + strconv.Itoa(user.ID) + "_tmp" + user.RawAvatar[1:])
-			if err != nil && !os.IsNotExist(err) {
-				c.LogWarning(err)
-				return c.LocalError("Something went wrong", w, r, user)
-			}
-			err = os.Remove("./uploads/avatar_" + strconv.Itoa(user.ID) + "_w48" + user.RawAvatar[1:])
-			if err != nil && !os.IsNotExist(err) {
-				c.LogWarning(err)
-				return c.LocalError("Something went wrong", w, r, user)
-			}
-		}
+	ferr = c.ChangeAvatar("", w, r, user)
+	if ferr != nil {
+		return ferr
 	}
 
 	http.Redirect(w, r, "/user/edit/?avatar_updated=1", http.StatusSeeOther)

@@ -95,8 +95,15 @@
 .alert {
 	margin-top: 18px;
 }
-.rowitem {
+.rowitem, .formitem.avataritem {
 	display: flex;
+}
+.formitem.avataritem {
+	flex-direction: column;
+}
+.avataritem .avatarbuttons {
+	margin-top: 7px;
+	margin-bottom: 3px;
 }
 
 .colstack_grid {
@@ -125,31 +132,12 @@
 .grid2 {
 	margin-top: 12px;
 }
-/*.panel_dashboard .grid_item {
-	text-align: center;
-}
-#dash-cpu, #dash-disk, #dash-ram, #dash-memused {
-	background-repeat: no-repeat;
-	padding-left: 61px;
-	background-position: left 12px top 50%;
-	background-size: 40px;
-}
-#dash-cpu {
-	background-image: url(./fa-svg/server-bg.svg);
-	background-size: 30px;
-}
-#dash-disk {
-	background-image: url(./fa-svg/hdd-bg.svg);
-}
-#dash-ram, #dash-memused {
-	background-image: url(./fa-svg/memory.svg);
-}*/
 
 .panel_buttons, .panel_floater {
 	margin-left: auto;
 }
 
-.colstack_right input, .colstack_right select, .colstack_right textarea {
+.colstack_right input, .colstack_right select, .colstack_right textarea, .formitem img {
 	padding: 4px;
 	padding-bottom: 3px;
 	padding-left: 6px;

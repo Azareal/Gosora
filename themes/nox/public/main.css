@@ -1074,7 +1074,7 @@ input[type=checkbox]:checked + label .sel {
 .rowlist.not_grid .rowitem {
 	flex-direction: row;
 }
-.rowlist.bgavatars .bgsub, .rowlist.bgavatars .rowTitle {
+.rowlist.bgavatars .bgsub, .rowlist.bgavatars .rowTitle, .rowlist.bgavatars .rowAvatar {
 	margin-left: auto;
 	margin-right: auto;
 }
@@ -1086,6 +1086,9 @@ input[type=checkbox]:checked + label .sel {
 .rowlist.bgavatars .rowTitle {
 	font-size: 18px;
 	margin-top: 4px;
+}
+.rowlist.bgavatars .rowAvatar {
+	margin-bottom: -4px;
 }
 .rowlist.bgavatars.not_grid .bgsub {
 	height: 28px;
