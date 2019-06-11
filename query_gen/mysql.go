@@ -265,15 +265,26 @@ func (a *MysqlAdapter) AddForeignKey(name string, table string, column string, f
 	return querystr, nil
 }
 
+var silen1 = len("INSERT INTO ``() VALUES () ")
 func (adapter *MysqlAdapter) SimpleInsert(name string, table string, columns string, fields string) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
 
-	var querystr = "INSERT INTO `" + table + "`("
+	var sb strings.Builder
+	sb.Grow(silen1 + len(table))
+	sb.WriteString("INSERT INTO `")
+	sb.WriteString(table)
+	sb.WriteString("`(")
 	if columns != "" {
-		querystr += adapter.buildColumns(columns) + ") VALUES ("
-		for _, field := range processFields(fields) {
+		sb.WriteString(adapter.buildColumns(columns))
+		sb.WriteString(") VALUES (")
+		fs := processFields(fields)
+		sb.Grow(len(fs) * 3)
+		for i, field := range fs {
+			if i != 0 {
+				sb.WriteString(",")
+			}
 			nameLen := len(field.Name)
 			if field.Name[0] == '"' && field.Name[nameLen-1] == '"' && nameLen >= 3 {
 				field.Name = "'" + field.Name[1:nameLen-1] + "'"
@@ -281,17 +292,17 @@ func (adapter *MysqlAdapter) SimpleInsert(name string, table string, columns str
 			if field.Name[0] == '\'' && field.Name[nameLen-1] == '\'' && nameLen >= 3 {
 				field.Name = "'" + strings.Replace(field.Name[1:nameLen-1], "'", "''", -1) + "'"
 			}
-			querystr += field.Name + ","
+			sb.WriteString(field.Name)
 		}
-		querystr = querystr[0 : len(querystr)-1]
+		sb.WriteString(")")
 	} else {
-		querystr += ") VALUES ("
+		sb.WriteString(") VALUES ()")
 	}
-	querystr += ")"
 
 	// TODO: Shunt the table name logic and associated stmt list up to the a higher layer to reduce the amount of unnecessary overhead in the builder / accumulator
-	adapter.pushStatement(name, "insert", querystr)
-	return querystr, nil
+	q := sb.String()
+	adapter.pushStatement(name, "insert", q)
+	return q, nil
 }
 
 func (adapter *MysqlAdapter) buildColumns(columns string) (querystr string) {
