@@ -377,6 +377,7 @@ func (adapter *MysqlAdapter) SimpleUpsert(name string, table string, columns str
 	return querystr, nil
 }
 
+var sulen1 = len("UPDATE `` SET ")
 func (adapter *MysqlAdapter) SimpleUpdate(up *updatePrebuilder) (string, error) {
 	if up.table == "" {
 		return "", errors.New("You need a name for this table")
@@ -384,31 +385,47 @@ func (adapter *MysqlAdapter) SimpleUpdate(up *updatePrebuilder) (string, error) 
 	if up.set == "" {
 		return "", errors.New("You need to set data in this update statement")
 	}
+	var sb strings.Builder
+	sb.Grow(sulen1 + len(up.table))
+	sb.WriteString("UPDATE `")
+	sb.WriteString(up.table)
+	sb.WriteString("` SET ")
 
-	var q = "UPDATE `" + up.table + "` SET "
-	for _, item := range processSet(up.set) {
-		q += "`" + item.Column + "` ="
+	set := processSet(up.set)
+	sb.Grow(len(set) * 6)
+	for i, item := range set {
+		if i != 0 {
+			sb.WriteString(",`")
+		} else {
+			sb.WriteString("`")
+		}
+		sb.WriteString(item.Column)
+		sb.WriteString("` =")
 		for _, token := range item.Expr {
 			switch token.Type {
 			case "function", "operator", "number", "substitute", "or":
-				q += " " + token.Contents
+				sb.WriteString(" ")
+				sb.WriteString(token.Contents)
 			case "column":
-				q += " `" + token.Contents + "`"
+				sb.WriteString(" `")
+				sb.WriteString(token.Contents)
+				sb.WriteString("`")
 			case "string":
-				q += " '" + token.Contents + "'"
+				sb.WriteString(" '")
+				sb.WriteString(token.Contents)
+				sb.WriteString("'")
 			}
 		}
-		q += ","
 	}
-	q = q[0 : len(q)-1]
 
 	whereStr, err := adapter.buildFlexiWhere(up.where,up.dateCutoff)
+	sb.WriteString(whereStr)
 	if err != nil {
-		return q, err
+		return sb.String(), err
 	}
-	q += whereStr
 
 	// TODO: Shunt the table name logic and associated stmt list up to the a higher layer to reduce the amount of unnecessary overhead in the builder / accumulator
+	q := sb.String()
 	adapter.pushStatement(up.name, "update", q)
 	return q, nil
 }
