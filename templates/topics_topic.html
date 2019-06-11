@@ -26,7 +26,7 @@
 		<div class="topic_right_inside">
 			<a href="{{.LastUser.Link}}"><img src="{{.LastUser.MicroAvatar}}" height=64 alt="Avatar" title="{{.LastUser.Name}}'s Avatar" aria-hidden="true" /></a>
 			<span>
-				<a href="{{.LastUser.Link}}" class="lastName" style="font-size: 14px;" title="{{.LastUser.Name}}">{{.LastUser.Name}}</a><br>
+				<a href="{{.LastUser.Link}}" class="lastName" title="{{.LastUser.Name}}">{{.LastUser.Name}}</a><br>
 				<a href="{{.Link}}?page={{.LastPage}}{{if .LastReplyID}}#post-{{.LastReplyID}}{{end}}" class="rowsmall lastReplyAt" title="{{abstime .LastReplyAt}}">{{reltime .LastReplyAt}}</a>
 			</span>
 		</div>

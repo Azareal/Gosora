@@ -865,6 +865,9 @@ input[type=checkbox]:checked + label.poll_option_label .sel {
 	margin-left: 8px;
 	margin-top: 12px;
 }
+.topic_right_inside .lastName {
+	font-size: 14px;
+}
 .topic_list .topic_row:last-child {
 	margin-bottom: 10px;
 }

@@ -535,6 +535,9 @@ input, select {
 	margin-top: 10px;
 	margin-left: 8px;
 }
+.topic_right_inside .lastName {
+	font-size: 14px;
+}
 .topic_middle {
 	display: none;
 }

@@ -892,6 +892,9 @@ textarea {
 	margin-top: 12px;
 	margin-left: 8px;
 }
+.topic_right_inside .lastName {
+	font-size: 14px;
+}
 
 .topic_sticky .topic_left, .topic_sticky .topic_right {
 	border-bottom: 2px solid hsl(51, 60%, 70%);

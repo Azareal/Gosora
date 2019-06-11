@@ -578,6 +578,9 @@ h2 {
 	line-height: 22px;
 	margin-top: -2px;
 }
+.topic_right_inside .lastName {
+	font-size: 14px;
+}
 .topic_right_inside .lastReplyAt, .topic_left .starter {
 	font-size: 14px;
 	line-height: 14px;
