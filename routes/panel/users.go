@@ -167,6 +167,7 @@ func UsersAvatarSubmit(w http.ResponseWriter, r *http.Request, user c.User, suid
 	if ferr != nil {
 		return ferr
 	}
+	// TODO: Check the UploadAvatars permission too?
 	if !user.Perms.EditUser {
 		return c.NoPermissions(w, r, user)
 	}

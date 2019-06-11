@@ -797,6 +797,9 @@
 
 		"panel_user_head":"User Editor",
 		"panel_user_avatar":"Avatar",
+		"panel_user_avatar_select":"Select",
+		"panel_user_avatar_upload":"Upload",
+		"panel_user_avatar_remove":"Remove",
 		"panel_user_name":"Name",
 		"panel_user_name_placeholder":"Jane Doe",
 		"panel_user_password":"Password",
