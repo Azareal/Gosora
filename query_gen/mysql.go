@@ -573,35 +573,57 @@ func (adapter *MysqlAdapter) SimpleSelect(name string, table string, columns str
 	return q, nil
 }
 
-func (adapter *MysqlAdapter) ComplexSelect(preBuilder *selectPrebuilder) (out string, err error) {
+func (a *MysqlAdapter) ComplexSelect(preBuilder *selectPrebuilder) (out string, err error) {
+	sb := &strings.Builder{}
+	err = a.complexSelect(preBuilder,sb)
+	out = sb.String()
+	a.pushStatement(preBuilder.name, "select", out)
+	return out, err
+}
+
+var cslen1 = len("SELECT  FROM ``")
+var cslen2 = len(" WHERE `` IN(")
+func (a *MysqlAdapter) complexSelect(preBuilder *selectPrebuilder, sb *strings.Builder) error {
 	if preBuilder.table == "" {
-		return "", errors.New("You need a name for this table")
+		return errors.New("You need a name for this table")
 	}
 	if len(preBuilder.columns) == 0 {
-		return "", errors.New("No columns found for ComplexSelect")
+		return errors.New("No columns found for ComplexSelect")
 	}
-	var q = "SELECT " + adapter.buildJoinColumns(preBuilder.columns)
+	
+	cols := a.buildJoinColumns(preBuilder.columns)
+	sb.Grow(cslen1 + len(cols) + len(preBuilder.table))
+	sb.WriteString("SELECT ")
+	sb.WriteString(cols)
+	sb.WriteString(" FROM `")
+	sb.WriteString(preBuilder.table)
+	sb.WriteRune('`')
 
-	var whereStr string
 	// TODO: Let callers have a Where() and a InQ()
 	if preBuilder.inChain != nil {
-		whereStr, err = adapter.ComplexSelect(preBuilder.inChain)
+		sb.Grow(cslen2 + len(preBuilder.inColumn))
+		sb.WriteString(" WHERE `")
+		sb.WriteString(preBuilder.inColumn)
+		sb.WriteString("` IN(")
+		err := a.complexSelect(preBuilder.inChain,sb)
 		if err != nil {
-			return q, err
+			return err
 		}
-		whereStr = " WHERE `" + preBuilder.inColumn + "` IN(" + whereStr + ")"
+		sb.WriteRune(')')
 	} else {
-		whereStr, err = adapter.buildFlexiWhere(preBuilder.where, preBuilder.dateCutoff)
+		whereStr, err := a.buildFlexiWhere(preBuilder.where, preBuilder.dateCutoff)
 		if err != nil {
-			return q, err
+			return err
 		}
+		sb.WriteString(whereStr)
 	}
 
-	q += " FROM `" + preBuilder.table + "`" + whereStr + adapter.buildOrderby(preBuilder.orderby) + adapter.buildLimit(preBuilder.limit)
-
-	q = strings.TrimSpace(q)
-	adapter.pushStatement(preBuilder.name, "select", q)
-	return q, nil
+	orderby := a.buildOrderby(preBuilder.orderby)
+	limit := a.buildLimit(preBuilder.limit)
+	sb.Grow(len(orderby) + len(limit))
+	sb.WriteString(orderby)
+	sb.WriteString(limit)
+	return nil
 }
 
 func (adapter *MysqlAdapter) SimpleLeftJoin(name string, table1 string, table2 string, columns string, joiners string, where string, orderby string, limit string) (string, error) {
