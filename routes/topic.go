@@ -366,7 +366,9 @@ func CreateTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.Ro
 		var pollInputItems = make(map[int]string)
 		for key, values := range r.Form {
 			for _, value := range values {
-				if strings.HasPrefix(key, "pollinputitem[") {
+				if !strings.HasPrefix(key, "pollinputitem[") {
+					continue
+				}
 					halves := strings.Split(key, "[")
 					if len(halves) != 2 {
 						return c.LocalError("Malformed pollinputitem", w, r, user)
@@ -387,20 +389,21 @@ func CreateTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.Ro
 							break
 						}
 					}
-				}
 			}
 		}
 
-		// Make sure the indices are sequential to avoid out of bounds issues
-		var seqPollInputItems = make(map[int]string)
-		for i := 0; i < len(pollInputItems); i++ {
-			seqPollInputItems[i] = pollInputItems[i]
-		}
+		if len(pollInputItems) > 0 {
+			// Make sure the indices are sequential to avoid out of bounds issues
+			var seqPollInputItems = make(map[int]string)
+			for i := 0; i < len(pollInputItems); i++ {
+				seqPollInputItems[i] = pollInputItems[i]
+			}
 
-		pollType := 0 // Basic single choice
-		_, err := c.Polls.Create(topic, pollType, seqPollInputItems)
-		if err != nil {
-			return c.LocalError("Failed to add poll to topic", w, r, user) // TODO: Might need to be an internal error as it could leave phantom polls?
+			pollType := 0 // Basic single choice
+			_, err := c.Polls.Create(topic, pollType, seqPollInputItems)
+			if err != nil {
+				return c.LocalError("Failed to add poll to topic", w, r, user) // TODO: Might need to be an internal error as it could leave phantom polls?
+			}
 		}
 	}
 
