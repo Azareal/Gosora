@@ -227,7 +227,7 @@ func init() {
 			deleteActivity:     acc.Delete("activity_stream").Where("elementID = ? AND elementType = 'topic'").Prepare(),
 			deleteActivitySubs: acc.Delete("activity_subscriptions").Where("targetID = ? AND targetType = 'topic'").Prepare(),
 			edit:               acc.Update("topics").Set("title = ?, content = ?, parsed_content = ?").Where("tid = ?").Prepare(), // TODO: Only run the content update bits on non-polls, does this matter?
-			setPoll:            acc.Update("topics").Set("content = '', parsed_content = '', poll = ?").Where("tid = ? AND poll = 0").Prepare(),
+			setPoll:            acc.Update("topics").Set("poll = ?").Where("tid = ? AND poll = 0").Prepare(),
 			createAction:       acc.Insert("replies").Columns("tid, actionType, ipaddress, createdBy, createdAt, lastUpdated, content, parsed_content").Fields("?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),'',''").Prepare(),
 
 			getTopicUser: acc.SimpleLeftJoin("topics", "users", "topics.title, topics.content, topics.createdBy, topics.createdAt, topics.lastReplyAt, topics.lastReplyBy, topics.lastReplyID, topics.is_closed, topics.sticky, topics.parentID, topics.ipaddress, topics.views, topics.postCount, topics.likeCount, topics.attachCount,topics.poll, users.name, users.avatar, users.group, users.url_prefix, users.url_name, users.level", "topics.createdBy = users.uid", "tid = ?", "", ""),
