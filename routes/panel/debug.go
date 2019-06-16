@@ -113,8 +113,9 @@ func Debug(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	if fErr != nil {
 		return c.InternalError(fErr,w,r)
 	}
+	gitSize, _ := c.DirSize("./.git")
 
-	debugDisk := c.DebugPageDisk{staticSize,attachSize,uploadsSize,logsSize,backupsSize}
+	debugDisk := c.DebugPageDisk{staticSize,attachSize,uploadsSize,logsSize,backupsSize,gitSize}
 
 	pi := c.PanelDebugPage{basePage, goVersion, dbVersion, uptime, openConnCount, qgen.Builder.GetAdapter().GetName(), goroutines, cpus, memStats, debugCache, debugDatabase, debugDisk}
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_dashboard_right", "debug_page", "panel_debug", pi})

@@ -642,6 +642,7 @@ type DebugPageDisk struct {
 	Avatars int
 	Logs int
 	Backups int
+	Git int
 }
 
 type PanelDebugPage struct {

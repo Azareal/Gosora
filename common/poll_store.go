@@ -90,38 +90,38 @@ func NewDefaultPollStore(cache PollCache) (*DefaultPollStore, error) {
 	}, acc.FirstError()
 }
 
-func (store *DefaultPollStore) Exists(id int) bool {
-	err := store.exists.QueryRow(id).Scan(&id)
+func (s *DefaultPollStore) Exists(id int) bool {
+	err := s.exists.QueryRow(id).Scan(&id)
 	if err != nil && err != ErrNoRows {
 		LogError(err)
 	}
 	return err != ErrNoRows
 }
 
-func (store *DefaultPollStore) Get(id int) (*Poll, error) {
-	poll, err := store.cache.Get(id)
+func (s *DefaultPollStore) Get(id int) (*Poll, error) {
+	poll, err := s.cache.Get(id)
 	if err == nil {
 		return poll, nil
 	}
 
 	poll = &Poll{ID: id}
 	var optionTxt []byte
-	err = store.get.QueryRow(id).Scan(&poll.ParentID, &poll.ParentTable, &poll.Type, &optionTxt, &poll.VoteCount)
+	err = s.get.QueryRow(id).Scan(&poll.ParentID, &poll.ParentTable, &poll.Type, &optionTxt, &poll.VoteCount)
 	if err != nil {
 		return nil, err
 	}
 
 	err = json.Unmarshal(optionTxt, &poll.Options)
 	if err == nil {
-		poll.QuickOptions = store.unpackOptionsMap(poll.Options)
-		store.cache.Set(poll)
+		poll.QuickOptions = s.unpackOptionsMap(poll.Options)
+		s.cache.Set(poll)
 	}
 	return poll, err
 }
 
 // TODO: Optimise the query to avoid preparing it on the spot? Maybe, use knowledge of the most common IN() parameter counts?
 // TODO: ID of 0 should always error?
-func (store *DefaultPollStore) BulkGetMap(ids []int) (list map[int]*Poll, err error) {
+func (s *DefaultPollStore) BulkGetMap(ids []int) (list map[int]*Poll, err error) {
 	var idCount = len(ids)
 	list = make(map[int]*Poll)
 	if idCount == 0 {
@@ -129,7 +129,7 @@ func (store *DefaultPollStore) BulkGetMap(ids []int) (list map[int]*Poll, err er
 	}
 
 	var stillHere []int
-	sliceList := store.cache.BulkGet(ids)
+	sliceList := s.cache.BulkGet(ids)
 	for i, sliceItem := range sliceList {
 		if sliceItem != nil {
 			list[sliceItem.ID] = sliceItem
@@ -170,8 +170,8 @@ func (store *DefaultPollStore) BulkGetMap(ids []int) (list map[int]*Poll, err er
 		if err != nil {
 			return list, err
 		}
-		poll.QuickOptions = store.unpackOptionsMap(poll.Options)
-		store.cache.Set(poll)
+		poll.QuickOptions = s.unpackOptionsMap(poll.Options)
+		s.cache.Set(poll)
 
 		list[poll.ID] = poll
 	}
@@ -205,27 +205,27 @@ func (store *DefaultPollStore) BulkGetMap(ids []int) (list map[int]*Poll, err er
 	return list, err
 }
 
-func (store *DefaultPollStore) Reload(id int) error {
+func (s *DefaultPollStore) Reload(id int) error {
 	poll := &Poll{ID: id}
 	var optionTxt []byte
-	err := store.get.QueryRow(id).Scan(&poll.ParentID, &poll.ParentTable, &poll.Type, &optionTxt, &poll.VoteCount)
+	err := s.get.QueryRow(id).Scan(&poll.ParentID, &poll.ParentTable, &poll.Type, &optionTxt, &poll.VoteCount)
 	if err != nil {
-		store.cache.Remove(id)
+		s.cache.Remove(id)
 		return err
 	}
 
 	err = json.Unmarshal(optionTxt, &poll.Options)
 	if err != nil {
-		store.cache.Remove(id)
+		s.cache.Remove(id)
 		return err
 	}
 
-	poll.QuickOptions = store.unpackOptionsMap(poll.Options)
-	_ = store.cache.Set(poll)
+	poll.QuickOptions = s.unpackOptionsMap(poll.Options)
+	_ = s.cache.Set(poll)
 	return nil
 }
 
-func (store *DefaultPollStore) unpackOptionsMap(rawOptions map[int]string) []PollOption {
+func (s *DefaultPollStore) unpackOptionsMap(rawOptions map[int]string) []PollOption {
 	options := make([]PollOption, len(rawOptions))
 	for id, option := range rawOptions {
 		options[id] = PollOption{id, option}
@@ -234,27 +234,27 @@ func (store *DefaultPollStore) unpackOptionsMap(rawOptions map[int]string) []Pol
 }
 
 // TODO: Use a transaction for this?
-func (store *DefaultPollStore) CastVote(optionIndex int, pollID int, uid int, ipaddress string) error {
-	_, err := store.addVote.Exec(pollID, uid, optionIndex, ipaddress)
+func (s *DefaultPollStore) CastVote(optionIndex int, pollID int, uid int, ipaddress string) error {
+	_, err := s.addVote.Exec(pollID, uid, optionIndex, ipaddress)
 	if err != nil {
 		return err
 	}
-	_, err = store.incrementVoteCount.Exec(pollID)
+	_, err = s.incrementVoteCount.Exec(pollID)
 	if err != nil {
 		return err
 	}
-	_, err = store.incrementVoteCountForOption.Exec(optionIndex, pollID)
+	_, err = s.incrementVoteCountForOption.Exec(optionIndex, pollID)
 	return err
 }
 
 // TODO: Use a transaction for this
-func (store *DefaultPollStore) Create(parent Pollable, pollType int, pollOptions map[int]string) (id int, err error) {
+func (s *DefaultPollStore) Create(parent Pollable, pollType int, pollOptions map[int]string) (id int, err error) {
 	pollOptionsTxt, err := json.Marshal(pollOptions)
 	if err != nil {
 		return 0, err
 	}
 
-	res, err := store.createPoll.Exec(parent.GetID(), parent.GetTable(), pollType, pollOptionsTxt)
+	res, err := s.createPoll.Exec(parent.GetID(), parent.GetTable(), pollType, pollOptionsTxt)
 	if err != nil {
 		return 0, err
 	}
@@ -265,23 +265,24 @@ func (store *DefaultPollStore) Create(parent Pollable, pollType int, pollOptions
 	}
 
 	for i := 0; i < len(pollOptions); i++ {
-		_, err := store.createPollOption.Exec(lastID, i)
+		_, err := s.createPollOption.Exec(lastID, i)
 		if err != nil {
 			return 0, err
 		}
 	}
+
 	return int(lastID), parent.SetPoll(int(lastID)) // TODO: Delete the poll (and options) if SetPoll fails
 }
 
-func (store *DefaultPollStore) SetCache(cache PollCache) {
-	store.cache = cache
+func (s *DefaultPollStore) SetCache(cache PollCache) {
+	s.cache = cache
 }
 
 // TODO: We're temporarily doing this so that you can do ucache != nil in getTopicUser. Refactor it.
-func (store *DefaultPollStore) GetCache() PollCache {
-	_, ok := store.cache.(*NullPollCache)
+func (s *DefaultPollStore) GetCache() PollCache {
+	_, ok := s.cache.(*NullPollCache)
 	if ok {
 		return nil
 	}
-	return store.cache
+	return s.cache
 }

@@ -146,7 +146,7 @@ go build "./cmd/install"
 
 install.exe
 
-go get github.com/mailru/easyjson/...
+go get -u github.com/mailru/easyjson/...
 
 easyjson -pkg common
 

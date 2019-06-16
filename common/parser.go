@@ -338,12 +338,13 @@ func PreparseMessage(msg string) string {
 			tags := allowedTags[char]
 			if len(tags) == 0 {
 				//fmt.Println("couldn't find char in allowedTags")
+				msg += "&"
 				if closeTag {
 					//msg += "&lt;/"
-					msg += "&"
+					//msg += "&"
 					i -= 5
 				} else {
-					msg += "&"
+					//msg += "&"
 					i -= 4
 				}
 				continue

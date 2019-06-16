@@ -62,6 +62,7 @@ type config struct {
 	SslPrivkey   string
 	SslFullchain string
 	HashAlgo     string // Defaults to bcrypt, and in the future, possibly something stronger
+	ConvoKey string
 
 	MaxRequestSizeStr  string
 	MaxRequestSize     int

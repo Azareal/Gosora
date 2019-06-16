@@ -184,6 +184,31 @@ func userStoreTest(t *testing.T, newUserID int) {
 		expect(t, user.ID == newUserID, fmt.Sprintf("user.ID does not match the requested UID. Got '%d' instead.", user.ID))
 	}
 
+	userList, _ = c.Users.BulkGetMap([]int{1,uid})
+	expect(t, len(userList) == 2, fmt.Sprintf("Returned map should have two results, not %d", len(userList)))
+
+	if ucache != nil {
+		expectIntToBeX(t, ucache.Length(), 2, "User cache length should be 2, not %d")
+		user, err = ucache.Get(1)
+		recordMustExist(t, err, "Couldn't find UID #%d in the cache", 1)
+		expect(t, user.ID == 1, fmt.Sprintf("user.ID does not match the requested UID. Got '%d' instead.", user.ID))
+		user, err = ucache.Get(newUserID)
+		recordMustExist(t, err, "Couldn't find UID #%d in the cache", newUserID)
+		expect(t, user.ID == newUserID, fmt.Sprintf("user.ID does not match the requested UID. Got '%d' instead.", user.ID))
+		ucache.Flush()
+	}
+
+	user, err = c.Users.Get(newUserID)
+	recordMustExist(t, err, "Couldn't find UID #%d", newUserID)
+	expectUser(user, newUserID, "Sam", 5, false, false, false, false)
+
+	if ucache != nil {
+		expectIntToBeX(t, ucache.Length(), 1, "User cache length should be 1, not %d")
+		user, err = ucache.Get(newUserID)
+		recordMustExist(t, err, "Couldn't find UID #%d in the cache", newUserID)
+		expect(t, user.ID == newUserID, fmt.Sprintf("user.ID does not match the requested UID. Got '%d' instead.", user.ID))
+	}
+
 	err = user.Activate()
 	expectNilErr(t, err)
 	expectIntToBeX(t, user.Group, 5, "Sam should still be in group 5 in this copy")
