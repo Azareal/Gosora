@@ -1,26 +1,26 @@
-		<input form="quick_post_form" id="has_poll_input" name="has_poll" value="0" type="hidden" />
-		<div class="formrow topic_content_row">
-			<div class="formitem">
-				<textarea form="quick_post_form" id="input_content" name="topic-content" placeholder="{{lang "quick_topic.content_placeholder"}}" required></textarea>
-			</div>
+<input form="quick_post_form" id="has_poll_input" name="has_poll" value="0" type="hidden" />
+<div class="formrow topic_content_row">
+	<div class="formitem">
+		<textarea form="quick_post_form" id="input_content" name="topic-content" placeholder="{{lang "quick_topic.content_placeholder"}}" required></textarea>
+	</div>
+</div>
+<div class="formrow poll_content_row auto_hide">
+	<div class="formitem">
+		<div class="pollinput" data-pollinput=0>
+			<input type="checkbox" disabled />
+			<label class="pollinputlabel"></label>
+			<input form="quick_post_form" name="pollinputitem[0]" class="pollinputinput" type="text" placeholder="{{lang "quick_topic.add_poll_option_first"}}" />
 		</div>
-		<div class="formrow poll_content_row auto_hide">
-			<div class="formitem">
-				<div class="pollinput" data-pollinput="0">
-					<input type="checkbox" disabled />
-					<label class="pollinputlabel"></label>
-					<input form="quick_post_form" name="pollinputitem[0]" class="pollinputinput" type="text" placeholder="{{lang "quick_topic.add_poll_option"}}" />
-				</div>
-			</div>
-		</div>
-		<div class="formrow quick_button_row">
-			<div class="formitem">
-				<button form="quick_post_form" class="formbutton">{{lang "quick_topic.create_topic_button"}}</button>
-				<button form="quick_post_form" class="formbutton" id="add_poll_button">{{lang "quick_topic.add_poll_button"}}</button>
-				{{if .CurrentUser.Perms.UploadFiles}}
-				<input name="upload_files" form="quick_post_form" id="upload_files" multiple type="file" class="auto_hide" />
-				<label for="upload_files" class="formbutton add_file_button">{{lang "quick_topic.add_file_button"}}</label>
-				<div id="upload_file_dock"></div>{{end}}
-				<button class="formbutton close_form">{{lang "quick_topic.cancel_button"}}</button>
-			</div>
-		</div>
+	</div>
+</div>
+<div class="formrow quick_button_row">
+	<div class="formitem">
+		<button form="quick_post_form" class="formbutton">{{lang "quick_topic.create_topic_button"}}</button>
+		<button form="quick_post_form" class="formbutton" id="add_poll_button">{{lang "quick_topic.add_poll_button"}}</button>
+		{{if .CurrentUser.Perms.UploadFiles}}
+		<input name="upload_files" form="quick_post_form" id="upload_files" multiple type="file" class="auto_hide" />
+		<label for="upload_files" class="formbutton add_file_button">{{lang "quick_topic.add_file_button"}}</label>
+		<div id="upload_file_dock"></div>{{end}}
+		<button class="formbutton close_form">{{lang "quick_topic.cancel_button"}}</button>
+	</div>
+</div>

@@ -1,6 +1,6 @@
 <div class="rowblock topic_reply_container">
 	<div class="userinfo" aria-label="{{lang "topic.your_information"}}">
-		<div class="avatar_item" style="background-image: url({{.CurrentUser.Avatar}}), url(/static/white-dot.jpg);background-position: 0px -10px;">&nbsp;</div>
+		<div class="avatar_item" style="background-image:url({{.CurrentUser.Avatar}}), url(/static/white-dot.jpg);background-position:0px -10px;">&nbsp;</div>
 		<div class="user_meta">
 			<a href="{{.CurrentUser.Link}}" class="the_name" rel="author">{{.CurrentUser.Name}}</a>
 			{{if .CurrentUser.Tag}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag">{{.CurrentUser.Tag}}</div><div class="tag_post"></div></div>{{else}}<div class="tag_block"><div class="tag_pre"></div><div class="post_tag post_level">{{level .CurrentUser.Level}}</div><div class="tag_post"></div></div>{{end}}
@@ -17,10 +17,10 @@
 		</div>
 		<div class="formrow poll_content_row auto_hide">
 			<div class="formitem">
-				<div class="pollinput" data-pollinput="0">
+				<div class="pollinput" data-pollinput=0>
 					<input type="checkbox" disabled />
 					<label class="pollinputlabel"></label>
-					<input form="quick_post_form" name="pollinputitem[0]" class="pollinputinput" type="text" placeholder="{{lang "topic.reply_add_poll_option"}}" />
+					<input form="quick_post_form" name="pollinputitem[0]" class="pollinputinput" type="text" placeholder="{{lang "topic.reply_add_poll_option_first"}}" />
 				</div>
 			</div>
 		</div>

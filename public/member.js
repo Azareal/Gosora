@@ -286,6 +286,7 @@
 		if(dataPollInput != (pollInputIndex-1)) return;
 		$(".poll_content_row .formitem").append(Template_topic_c_poll_input({
 			Index: pollInputIndex,
+			Place: phraseBox["topic"]["topic.reply_add_poll_option"].replace("%d",pollInputIndex),
 		}));
 		pollInputIndex++;
 		console.log("new pollInputIndex: ", pollInputIndex);

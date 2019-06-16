@@ -179,6 +179,7 @@ type TopicCAttachItem struct {
 }
 type TopicCPollInput struct {
 	Index int
+	Place string
 }
 
 type TopicPage struct {

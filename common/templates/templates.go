@@ -11,6 +11,7 @@ import (
 	"runtime/debug"
 	"strconv"
 	"strings"
+	"unicode"
 	"text/template/parse"
 	"time"
 )
@@ -106,7 +107,7 @@ func NewCTemplateSet(in string) *CTemplateSet {
 			"hasWidgets": true,
 			"elapsed":    true,
 			"lang":       true,
-			//"langf":true,
+			"langf":true,
 			"level":   true,
 			"bunit":   true,
 			"abstime": true,
@@ -1109,7 +1110,56 @@ ArgLoop:
 			notident = true
 			con.PushPhrase(len(c.langIndexToName) - 1)
 			break ArgLoop
-		// TODO: Implement langf
+		case "langf":
+			// TODO: Implement string literals properly
+			leftOperand := node.Args[pos+1].String()
+			if len(leftOperand) == 0 {
+				panic("The left operand for the language string cannot be left blank")
+			}
+			if leftOperand[0] != '"' {
+				panic("Phrase names cannot be dynamic")
+			}
+			
+			var olist []string
+			for i := pos+2; i < len(node.Args); i++ {
+				op := node.Args[i].String()
+				if op != "" {
+					if op[0] == '.' || op[0] == '$' {
+						panic("langf args cannot be dynamic")
+					}
+					if op[0] != '"' && !unicode.IsDigit(rune(op[0])) {
+						break
+					}
+					olist = append(olist,op)
+				}
+			}
+			if len(olist) == 0 {
+				panic("You must provide parameters for langf")
+			}
+
+			var ob = ","
+			for _, op := range olist {
+				allNum := true
+				for _, o := range op {
+					if !unicode.IsDigit(o) {
+						allNum = false
+					}
+				}
+				if allNum {
+					ob += strings.Replace(op,"\"","\\\"",-1) + ","
+				} else {
+					ob += ob + ","
+				}
+			}
+			if ob != "" {
+				ob = ob[:len(ob)-1]
+			}
+
+			// TODO: Implement string literals properly
+			// ! Slightly crude but it does the job
+			litString("phrases.GetTmplPhrasef("+leftOperand+ob+")", false)
+			c.importMap[langPkg] = langPkg
+			break ArgLoop
 		case "level":
 			// TODO: Implement level literals
 			leftOperand := node.Args[pos+1].String()

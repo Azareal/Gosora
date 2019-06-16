@@ -49,6 +49,11 @@ func (con *CContext) PushPhrase(langIndex int) (index int) {
 	return con.LastBufIndex()
 }
 
+func (con *CContext) PushPhrasef(langIndex int, args string) (index int) {
+	*con.OutBuf = append(*con.OutBuf, OutBufferFrame{args, "langf", con.TemplateName, langIndex, nil})
+	return con.LastBufIndex()
+}
+
 func (con *CContext) StartLoop(body string) (index int) {
 	con.LoopDepth++
 	return con.Push("startloop", body)
