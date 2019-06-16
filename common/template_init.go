@@ -43,7 +43,8 @@ type CTmpl struct {
 
 func genIntTmpl(name string) func(pi interface{}, w io.Writer) error {
 	return func(pi interface{}, w io.Writer) error {
-		mapping, ok := Themes[DefaultThemeBox.Load().(string)].TemplatesMap[name]
+		theme := Themes[DefaultThemeBox.Load().(string)]
+		mapping, ok := theme.TemplatesMap[name]
 		if !ok {
 			mapping = name
 		}
@@ -531,8 +532,8 @@ func compileJSTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName stri
 	tmpls.AddStd("paginator", "common.Paginator", Paginator{pageList, page, lastPage})
 
 	tmpls.AddStd("topic_c_edit_post", "common.TopicCEditPost", TopicCEditPost{ID: 0, Source: "", Ref: ""})
-
 	tmpls.AddStd("topic_c_attach_item", "common.TopicCAttachItem", TopicCAttachItem{ID: 1, ImgSrc: "", Path: "", FullPath: ""})
+	tmpls.AddStd("topic_c_poll_input", "common.TopicCPollInput", TopicCPollInput{Index:0})
 
 	tmpls.AddStd("notice", "string", "nonono")
 

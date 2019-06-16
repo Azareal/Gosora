@@ -284,8 +284,9 @@
 		console.log("dataPollInput: ", dataPollInput);
 		if(dataPollInput == undefined) return;
 		if(dataPollInput != (pollInputIndex-1)) return;
-
-		$(".poll_content_row .formitem").append("<div class='pollinput' data-pollinput='"+pollInputIndex+"'><input type='checkbox' disabled /><label class='pollinputlabel'></label><input form='quick_post_form' name='pollinputitem["+pollInputIndex+"]' class='pollinputinput' type='text' placeholder='Add new poll option' /></div>");
+		$(".poll_content_row .formitem").append(Template_topic_c_poll_input({
+			Index: pollInputIndex,
+		}));
 		pollInputIndex++;
 		console.log("new pollInputIndex: ", pollInputIndex);
 		$(".pollinputinput").off("click");

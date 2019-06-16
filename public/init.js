@@ -231,9 +231,10 @@ function fetchPhrases(plist) {
 	if(!panel) {
 		toLoad += 2;
 		if(loggedIn) {
-			toLoad += 2;
+			toLoad += 3;
 			notifyOnScriptW("template_topic_c_edit_post", () => q(!Template_topic_c_edit_post));
 			notifyOnScriptW("template_topic_c_attach_item", () => q(!Template_topic_c_attach_item));
+			notifyOnScriptW("template_topic_c_poll_input", () => q(!Template_topic_c_poll_input));
 		}
 		notifyOnScriptW("template_topics_topic", () => q(!Template_topics_topic));
 		notifyOnScriptW("template_paginator", () => q(!Template_paginator));

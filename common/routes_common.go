@@ -275,6 +275,7 @@ func PrepResources(user *User, header *Header, theme *Theme) {
 	if user.Loggedin {
 		addPreScript("topic_c_edit_post")
 		addPreScript("topic_c_attach_item")
+		addPreScript("topic_c_poll_input")
 	}
 }
 

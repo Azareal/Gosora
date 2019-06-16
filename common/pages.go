@@ -177,6 +177,9 @@ type TopicCAttachItem struct {
 	Path     string
 	FullPath string
 }
+type TopicCPollInput struct {
+	Index int
+}
 
 type TopicPage struct {
 	*Header

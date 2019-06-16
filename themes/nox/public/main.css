@@ -978,6 +978,12 @@ input[type=checkbox]:checked + label .sel {
 .poll_results {
 	margin-left: 12px;
 }
+.pollinput {
+	margin-bottom: 5px;
+}
+.pollinput:last-child {
+	margin-bottom: 12px;
+}
 
 .ip_item {
 	display: none;
