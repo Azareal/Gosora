@@ -92,16 +92,16 @@ func NewMemoryForumStore() (*MemoryForumStore, error) {
 
 // TODO: Rename to ReloadAll?
 // TODO: Add support for subforums
-func (mfs *MemoryForumStore) LoadForums() error {
+func (s *MemoryForumStore) LoadForums() error {
 	var forumView []*Forum
 	addForum := func(forum *Forum) {
-		mfs.forums.Store(forum.ID, forum)
+		s.forums.Store(forum.ID, forum)
 		if forum.Active && forum.Name != "" && forum.ParentType == "" {
 			forumView = append(forumView, forum)
 		}
 	}
 
-	rows, err := mfs.getAll.Query()
+	rows, err := s.getAll.Query()
 	if err != nil {
 		return err
 	}
@@ -109,25 +109,24 @@ func (mfs *MemoryForumStore) LoadForums() error {
 
 	var i = 0
 	for ; rows.Next(); i++ {
-		forum := &Forum{ID: 0, Active: true, Preset: "all"}
-		err = rows.Scan(&forum.ID, &forum.Name, &forum.Desc, &forum.Tmpl, &forum.Active, &forum.Order, &forum.Preset, &forum.ParentID, &forum.ParentType, &forum.TopicCount, &forum.LastTopicID, &forum.LastReplyerID)
+		f := &Forum{ID: 0, Active: true, Preset: "all"}
+		err = rows.Scan(&f.ID, &f.Name, &f.Desc, &f.Tmpl, &f.Active, &f.Order, &f.Preset, &f.ParentID, &f.ParentType, &f.TopicCount, &f.LastTopicID, &f.LastReplyerID)
 		if err != nil {
 			return err
 		}
 
-		if forum.Name == "" {
+		if f.Name == "" {
 			DebugLog("Adding a placeholder forum")
 		} else {
-			log.Printf("Adding the '%s' forum", forum.Name)
+			log.Printf("Adding the '%s' forum", f.Name)
 		}
 
-		forum.Link = BuildForumURL(NameToSlug(forum.Name), forum.ID)
-		forum.LastTopic = Topics.DirtyGet(forum.LastTopicID)
-		forum.LastReplyer = Users.DirtyGet(forum.LastReplyerID)
-
-		addForum(forum)
+		f.Link = BuildForumURL(NameToSlug(f.Name), f.ID)
+		f.LastTopic = Topics.DirtyGet(f.LastTopicID)
+		f.LastReplyer = Users.DirtyGet(f.LastReplyerID)
+		addForum(f)
 	}
-	mfs.forumView.Store(forumView)
+	s.forumView.Store(forumView)
 	TopicListThaw.Thaw()
 	return rows.Err()
 }
@@ -184,20 +183,20 @@ func (s *MemoryForumStore) Get(id int) (*Forum, error) {
 }
 
 func (s *MemoryForumStore) BypassGet(id int) (*Forum, error) {
-	var forum = &Forum{ID: id}
-	err := s.get.QueryRow(id).Scan(&forum.Name, &forum.Desc, &forum.Tmpl,&forum.Active, &forum.Order, &forum.Preset, &forum.ParentID, &forum.ParentType, &forum.TopicCount, &forum.LastTopicID, &forum.LastReplyerID)
+	var f = &Forum{ID: id}
+	err := s.get.QueryRow(id).Scan(&f.Name, &f.Desc, &f.Tmpl,&f.Active, &f.Order, &f.Preset, &f.ParentID, &f.ParentType, &f.TopicCount, &f.LastTopicID, &f.LastReplyerID)
 	if err != nil {
 		return nil, err
 	}
-	if forum.Name == "" {
+	if f.Name == "" {
 		return nil, ErrNoRows
 	}
-	forum.Link = BuildForumURL(NameToSlug(forum.Name), forum.ID)
-	forum.LastTopic = Topics.DirtyGet(forum.LastTopicID)
-	forum.LastReplyer = Users.DirtyGet(forum.LastReplyerID)
+	f.Link = BuildForumURL(NameToSlug(f.Name), f.ID)
+	f.LastTopic = Topics.DirtyGet(f.LastTopicID)
+	f.LastReplyer = Users.DirtyGet(f.LastReplyerID)
 	//TopicListThaw.Thaw()
 
-	return forum, err
+	return f, err
 }
 
 // TODO: Optimise this
@@ -263,10 +262,10 @@ func (s *MemoryForumStore) GetAllVisibleIDs() ([]int, error) {
 }
 
 // TODO: Implement sub-forums.
-/*func (mfs *MemoryForumStore) GetChildren(parentID int, parentType string) ([]*Forum,error) {
+/*func (s *MemoryForumStore) GetChildren(parentID int, parentType string) ([]*Forum,error) {
 	return nil, nil
 }
-func (mfs *MemoryForumStore) GetFirstChild(parentID int, parentType string) (*Forum,error) {
+func (s *MemoryForumStore) GetFirstChild(parentID int, parentType string) (*Forum,error) {
 	return nil, nil
 }*/
 

@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"testing"
 	"time"
+	"database/sql"
 
 	c "github.com/Azareal/Gosora/common"
 	"github.com/Azareal/Gosora/common/phrases"
@@ -752,6 +753,7 @@ func TestGroupStore(t *testing.T) {
 	group, err = c.Groups.Get(1)
 	recordMustExist(t, err, "Couldn't find GID #1")
 	expect(t, group.ID == 1, fmt.Sprintf("group.ID doesn't not match the requested GID. Got '%d' instead.'", group.ID))
+	expect(t,len(group.CanSee) > 0,"group.CanSee should not be zero")
 
 	expect(t, !c.Groups.Exists(-1), "GID #-1 shouldn't exist")
 	// 0 aka Unknown, for system posts and other oddities
@@ -771,6 +773,7 @@ func TestGroupStore(t *testing.T) {
 	expect(t, group.IsAdmin, "This should be an admin group")
 	expect(t, group.IsMod, "This should be a mod group")
 	expect(t, !group.IsBanned, "This shouldn't be a ban group")
+	// TODO: Add a proper CanSee test
 
 	isAdmin = false
 	isMod = true
@@ -806,8 +809,22 @@ func TestGroupStore(t *testing.T) {
 	expect(t, group.IsAdmin, "This should be an admin group")
 	expect(t, group.IsMod, "This should be a mod group")
 	expect(t, !group.IsBanned, "This shouldn't be a ban group")
+	expect(t, len(group.CanSee) == 0, "len(group.CanSee) should be 0")
 
 	err = group.ChangeRank(false, true, true)
+	expectNilErr(t, err)
+
+	forum, err := c.Forums.Get(2)
+	expectNilErr(t, err)
+	forumPerms, err := c.FPStore.GetCopy(2, gid)
+	if err == sql.ErrNoRows {
+		forumPerms = *c.BlankForumPerms()
+	} else if err != nil {
+		expectNilErr(t, err)
+	}
+	forumPerms.ViewTopic = true
+
+	err = forum.SetPerms(&forumPerms, "custom", gid)
 	expectNilErr(t, err)
 
 	group, err = c.Groups.Get(gid)
@@ -816,6 +833,9 @@ func TestGroupStore(t *testing.T) {
 	expect(t, !group.IsAdmin, "This shouldn't be an admin group")
 	expect(t, group.IsMod, "This should be a mod group")
 	expect(t, !group.IsBanned, "This shouldn't be a ban group")
+	expect(t, group.CanSee!=nil, "group.CanSee must not be nil")
+	expect(t, len(group.CanSee) > 0, "group.CanSee should not be zero")
+	canSee := group.CanSee
 
 	// Make sure the data is static
 	c.Groups.Reload(gid)
@@ -826,6 +846,24 @@ func TestGroupStore(t *testing.T) {
 	expect(t, !group.IsAdmin, "This shouldn't be an admin group")
 	expect(t, group.IsMod, "This should be a mod group")
 	expect(t, !group.IsBanned, "This shouldn't be a ban group")
+
+	// TODO: Don't enforce a specific order here
+	canSeeTest := func(a, b []int) bool {
+		if (a == nil) != (b == nil) {
+			return false
+		}
+		if len(a) != len(b) {
+			return false
+		}
+		for i := range a {
+			if a[i] != b[i] {
+				return false
+			}
+		}
+		return true
+	}
+
+	expect(t, canSeeTest(group.CanSee,canSee), "group.CanSee is not being reused")
 
 	// TODO: Test group deletion
 	// TODO: Test group reload

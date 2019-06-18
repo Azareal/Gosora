@@ -43,19 +43,19 @@ func NewMemoryForumPermsStore() (*MemoryForumPermsStore, error) {
 	}, acc.FirstError()
 }
 
-func (fps *MemoryForumPermsStore) Init() error {
+func (s *MemoryForumPermsStore) Init() error {
 	DebugLog("Initialising the forum perms store")
-	return fps.ReloadAll()
+	return s.ReloadAll()
 }
 
-func (fps *MemoryForumPermsStore) ReloadAll() error {
+func (s *MemoryForumPermsStore) ReloadAll() error {
 	DebugLog("Reloading the forum perms")
 	fids, err := Forums.GetAllIDs()
 	if err != nil {
 		return err
 	}
 	for _, fid := range fids {
-		err := fps.Reload(fid)
+		err := s.Reload(fid)
 		if err != nil {
 			return err
 		}
@@ -63,7 +63,7 @@ func (fps *MemoryForumPermsStore) ReloadAll() error {
 	return nil
 }
 
-func (fps *MemoryForumPermsStore) parseForumPerm(perms []byte) (pperms *ForumPerms, err error) {
+func (s *MemoryForumPermsStore) parseForumPerm(perms []byte) (pperms *ForumPerms, err error) {
 	DebugDetail("perms: ", string(perms))
 	pperms = BlankForumPerms()
 	err = json.Unmarshal(perms, &pperms)
@@ -73,9 +73,9 @@ func (fps *MemoryForumPermsStore) parseForumPerm(perms []byte) (pperms *ForumPer
 }
 
 // TODO: Need a more thread-safe way of doing this. Possibly with sync.Map?
-func (fps *MemoryForumPermsStore) Reload(fid int) error {
+func (s *MemoryForumPermsStore) Reload(fid int) error {
 	DebugLogf("Reloading the forum permissions for forum #%d", fid)
-	rows, err := fps.getByForum.Query(fid)
+	rows, err := s.getByForum.Query(fid)
 	if err != nil {
 		return err
 	}
@@ -92,7 +92,7 @@ func (fps *MemoryForumPermsStore) Reload(fid int) error {
 
 		DebugLog("gid: ", gid)
 		DebugLogf("perms: %+v\n", perms)
-		pperms, err := fps.parseForumPerm(perms)
+		pperms, err := s.parseForumPerm(perms)
 		if err != nil {
 			return err
 		}
@@ -101,13 +101,13 @@ func (fps *MemoryForumPermsStore) Reload(fid int) error {
 	}
 	DebugLogf("forumPerms: %+v\n", forumPerms)
 	if fid%2 == 0 {
-		fps.evenLock.Lock()
-		fps.evenForums[fid] = forumPerms
-		fps.evenLock.Unlock()
+		s.evenLock.Lock()
+		s.evenForums[fid] = forumPerms
+		s.evenLock.Unlock()
 	} else {
-		fps.oddLock.Lock()
-		fps.oddForums[fid] = forumPerms
-		fps.oddLock.Unlock()
+		s.oddLock.Lock()
+		s.oddForums[fid] = forumPerms
+		s.oddLock.Unlock()
 	}
 
 	groups, err := Groups.GetAll()
@@ -127,13 +127,13 @@ func (fps *MemoryForumPermsStore) Reload(fid int) error {
 			var forumPerms map[int]*ForumPerms
 			var ok bool
 			if fid%2 == 0 {
-				fps.evenLock.RLock()
-				forumPerms, ok = fps.evenForums[fid]
-				fps.evenLock.RUnlock()
+				s.evenLock.RLock()
+				forumPerms, ok = s.evenForums[fid]
+				s.evenLock.RUnlock()
 			} else {
-				fps.oddLock.RLock()
-				forumPerms, ok = fps.oddForums[fid]
-				fps.oddLock.RUnlock()
+				s.oddLock.RLock()
+				forumPerms, ok = s.oddForums[fid]
+				s.oddLock.RUnlock()
 			}
 
 			var forumPerm *ForumPerms
