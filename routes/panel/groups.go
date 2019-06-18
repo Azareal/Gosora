@@ -131,7 +131,6 @@ func GroupsEditPerms(w http.ResponseWriter, r *http.Request, user c.User, sgid s
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
-
 	if group.IsAdmin && !user.Perms.EditGroupAdmin {
 		return c.LocalError(phrases.GetErrorPhrase("panel_groups_cannot_edit_admin"), w, r, user)
 	}
@@ -211,7 +210,6 @@ func GroupsEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, sgid 
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
-
 	if group.IsAdmin && !user.Perms.EditGroupAdmin {
 		return c.LocalError(phrases.GetErrorPhrase("panel_groups_cannot_edit_admin"), w, r, user)
 	}
@@ -300,7 +298,6 @@ func GroupsEditPermsSubmit(w http.ResponseWriter, r *http.Request, user c.User, 
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
-
 	if group.IsAdmin && !user.Perms.EditGroupAdmin {
 		return c.LocalError(phrases.GetErrorPhrase("panel_groups_cannot_edit_admin"), w, r, user)
 	}

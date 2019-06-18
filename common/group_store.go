@@ -8,6 +8,7 @@ import (
 	"log"
 	"sort"
 	"sync"
+	"strconv"
 
 	"github.com/Azareal/Gosora/query_gen"
 )
@@ -95,8 +96,8 @@ func (mgs *MemoryGroupStore) LoadGroups() error {
 }
 
 // TODO: Hit the database when the item isn't in memory
-func (mgs *MemoryGroupStore) dirtyGetUnsafe(gid int) *Group {
-	group, ok := mgs.groups[gid]
+func (s *MemoryGroupStore) dirtyGetUnsafe(gid int) *Group {
+	group, ok := s.groups[gid]
 	if !ok {
 		return &blankGroup
 	}
@@ -104,10 +105,10 @@ func (mgs *MemoryGroupStore) dirtyGetUnsafe(gid int) *Group {
 }
 
 // TODO: Hit the database when the item isn't in memory
-func (mgs *MemoryGroupStore) DirtyGet(gid int) *Group {
-	mgs.RLock()
-	group, ok := mgs.groups[gid]
-	mgs.RUnlock()
+func (s *MemoryGroupStore) DirtyGet(gid int) *Group {
+	s.RLock()
+	group, ok := s.groups[gid]
+	s.RUnlock()
 	if !ok {
 		return &blankGroup
 	}
@@ -115,10 +116,10 @@ func (mgs *MemoryGroupStore) DirtyGet(gid int) *Group {
 }
 
 // TODO: Hit the database when the item isn't in memory
-func (mgs *MemoryGroupStore) Get(gid int) (*Group, error) {
-	mgs.RLock()
-	group, ok := mgs.groups[gid]
-	mgs.RUnlock()
+func (s *MemoryGroupStore) Get(gid int) (*Group, error) {
+	s.RLock()
+	group, ok := s.groups[gid]
+	s.RUnlock()
 	if !ok {
 		return nil, ErrNoRows
 	}
@@ -126,38 +127,49 @@ func (mgs *MemoryGroupStore) Get(gid int) (*Group, error) {
 }
 
 // TODO: Hit the database when the item isn't in memory
-func (mgs *MemoryGroupStore) GetCopy(gid int) (Group, error) {
-	mgs.RLock()
-	group, ok := mgs.groups[gid]
-	mgs.RUnlock()
+func (s *MemoryGroupStore) GetCopy(gid int) (Group, error) {
+	s.RLock()
+	group, ok := s.groups[gid]
+	s.RUnlock()
 	if !ok {
 		return blankGroup, ErrNoRows
 	}
 	return *group, nil
 }
 
-func (mgs *MemoryGroupStore) Reload(id int) error {
-	var group = &Group{ID: id}
-	err := mgs.get.QueryRow(id).Scan(&group.Name, &group.PermissionsText, &group.PluginPermsText, &group.IsMod, &group.IsAdmin, &group.IsBanned, &group.Tag)
+func (s *MemoryGroupStore) Reload(id int) error {
+	// TODO: Reload this data too
+	group, err := s.Get(id)
+	if err != nil {
+		LogError(errors.New("can't get cansee data for group #" + strconv.Itoa(id)))
+		return nil
+	}
+	canSee := group.CanSee
+	
+	group = &Group{ID: id, CanSee: canSee}
+	err = s.get.QueryRow(id).Scan(&group.Name, &group.PermissionsText, &group.PluginPermsText, &group.IsMod, &group.IsAdmin, &group.IsBanned, &group.Tag)
 	if err != nil {
 		return err
 	}
 
-	err = mgs.initGroup(group)
+	err = s.initGroup(group)
 	if err != nil {
 		LogError(err)
+		return nil
 	}
-	mgs.CacheSet(group)
-
-	err = RebuildGroupPermissions(id)
+	
+	// TODO: Do we really need this?
+	/*err = RebuildGroupPermissions(group)
 	if err != nil {
 		LogError(err)
-	}
+		return nil
+	}*/
+	s.CacheSet(group)
 	TopicListThaw.Thaw()
 	return nil
 }
 
-func (mgs *MemoryGroupStore) initGroup(group *Group) error {
+func (s *MemoryGroupStore) initGroup(group *Group) error {
 	err := json.Unmarshal(group.PermissionsText, &group.Perms)
 	if err != nil {
 		log.Printf("group: %+v\n", group)
@@ -180,25 +192,25 @@ func (mgs *MemoryGroupStore) initGroup(group *Group) error {
 		group.IsBanned = false
 	}
 
-	err = mgs.userCount.QueryRow(group.ID).Scan(&group.UserCount)
+	err = s.userCount.QueryRow(group.ID).Scan(&group.UserCount)
 	if err != sql.ErrNoRows {
 		return err
 	}
 	return nil
 }
 
-func (mgs *MemoryGroupStore) CacheSet(group *Group) error {
-	mgs.Lock()
-	mgs.groups[group.ID] = group
-	mgs.Unlock()
+func (s *MemoryGroupStore) CacheSet(group *Group) error {
+	s.Lock()
+	s.groups[group.ID] = group
+	s.Unlock()
 	return nil
 }
 
 // TODO: Hit the database when the item isn't in memory
-func (mgs *MemoryGroupStore) Exists(gid int) bool {
-	mgs.RLock()
-	group, ok := mgs.groups[gid]
-	mgs.RUnlock()
+func (s *MemoryGroupStore) Exists(gid int) bool {
+	s.RLock()
+	group, ok := s.groups[gid]
+	s.RUnlock()
 	return ok && group.Name != ""
 }
 
@@ -287,23 +299,23 @@ func (mgs *MemoryGroupStore) Create(name string, tag string, isAdmin bool, isMod
 	//return gid, TopicList.RebuildPermTree()
 }
 
-func (mgs *MemoryGroupStore) GetAll() (results []*Group, err error) {
+func (s *MemoryGroupStore) GetAll() (results []*Group, err error) {
 	var i int
-	mgs.RLock()
-	results = make([]*Group, len(mgs.groups))
-	for _, group := range mgs.groups {
+	s.RLock()
+	results = make([]*Group, len(s.groups))
+	for _, group := range s.groups {
 		results[i] = group
 		i++
 	}
-	mgs.RUnlock()
+	s.RUnlock()
 	sort.Sort(SortGroup(results))
 	return results, nil
 }
 
-func (mgs *MemoryGroupStore) GetAllMap() (map[int]*Group, error) {
-	mgs.RLock()
-	defer mgs.RUnlock()
-	return mgs.groups, nil
+func (s *MemoryGroupStore) GetAllMap() (map[int]*Group, error) {
+	s.RLock()
+	defer s.RUnlock()
+	return s.groups, nil
 }
 
 // ? - Set the lower and higher numbers to 0 to remove the bounds

@@ -171,7 +171,7 @@ func PresetToLang(preset string) string {
 
 // TODO: Is this racey?
 // TODO: Test this along with the rest of the perms system
-func RebuildGroupPermissions(gid int) error {
+func RebuildGroupPermissions(group *Group) error {
 	var permstr []byte
 	log.Print("Reloading a group")
 
@@ -182,7 +182,7 @@ func RebuildGroupPermissions(gid int) error {
 	}
 	defer getGroupPerms.Close()
 
-	err = getGroupPerms.QueryRow(gid).Scan(&permstr)
+	err = getGroupPerms.QueryRow(group.ID).Scan(&permstr)
 	if err != nil {
 		return err
 	}
@@ -191,11 +191,6 @@ func RebuildGroupPermissions(gid int) error {
 	//ExtData: make(map[string]bool),
 	}
 	err = json.Unmarshal(permstr, &tmpPerms)
-	if err != nil {
-		return err
-	}
-
-	group, err := Groups.Get(gid)
 	if err != nil {
 		return err
 	}

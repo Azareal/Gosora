@@ -13,14 +13,13 @@ func ForumList(w http.ResponseWriter, r *http.Request, user c.User, header *c.He
 	if skip || rerr != nil {
 		return rerr
 	}
-	
+
 	header.Title = phrases.GetTitlePhrase("forums")
 	header.Zone = "forums"
 	header.Path = "/forums/"
 	header.MetaDesc = header.Settings["meta_desc"].(string)
 
 	var err error
-	var forumList []c.Forum
 	var canSee []int
 	if user.IsSuperAdmin {
 		canSee, err = c.Forums.GetAllVisibleIDs()
@@ -36,6 +35,7 @@ func ForumList(w http.ResponseWriter, r *http.Request, user c.User, header *c.He
 		canSee = group.CanSee
 	}
 
+	var forumList []c.Forum
 	for _, fid := range canSee {
 		// Avoid data races by copying the struct into something we can freely mold without worrying about breaking something somewhere else
 		var forum = c.Forums.DirtyGet(fid).Copy()
@@ -43,11 +43,7 @@ func ForumList(w http.ResponseWriter, r *http.Request, user c.User, header *c.He
 			if forum.LastTopicID != 0 {
 				if forum.LastTopic.ID != 0 && forum.LastReplyer.ID != 0 {
 					forum.LastTopicTime = c.RelativeTime(forum.LastTopic.LastReplyAt)
-				} else {
-					forum.LastTopicTime = ""
 				}
-			} else {
-				forum.LastTopicTime = ""
 			}
 			header.Hooks.Hook("forums_frow_assign", &forum)
 			forumList = append(forumList, forum)

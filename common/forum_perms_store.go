@@ -166,35 +166,35 @@ func (fps *MemoryForumPermsStore) Reload(fid int) error {
 }
 
 // ! Throughput on this might be bad due to the excessive locking
-func (fps *MemoryForumPermsStore) GetAllMap() (bigMap map[int]map[int]*ForumPerms) {
+func (s *MemoryForumPermsStore) GetAllMap() (bigMap map[int]map[int]*ForumPerms) {
 	bigMap = make(map[int]map[int]*ForumPerms)
-	fps.evenLock.RLock()
-	for fid, subMap := range fps.evenForums {
+	s.evenLock.RLock()
+	for fid, subMap := range s.evenForums {
 		bigMap[fid] = subMap
 	}
-	fps.evenLock.RUnlock()
-	fps.oddLock.RLock()
-	for fid, subMap := range fps.oddForums {
+	s.evenLock.RUnlock()
+	s.oddLock.RLock()
+	for fid, subMap := range s.oddForums {
 		bigMap[fid] = subMap
 	}
-	fps.oddLock.RUnlock()
+	s.oddLock.RUnlock()
 	return bigMap
 }
 
 // TODO: Add a hook here and have plugin_guilds use it
 // TODO: Check if the forum exists?
 // TODO: Fix the races
-func (fps *MemoryForumPermsStore) Get(fid int, gid int) (fperms *ForumPerms, err error) {
+func (s *MemoryForumPermsStore) Get(fid int, gid int) (fperms *ForumPerms, err error) {
 	var fmap map[int]*ForumPerms
 	var ok bool
 	if fid%2 == 0 {
-		fps.evenLock.RLock()
-		fmap, ok = fps.evenForums[fid]
-		fps.evenLock.RUnlock()
+		s.evenLock.RLock()
+		fmap, ok = s.evenForums[fid]
+		s.evenLock.RUnlock()
 	} else {
-		fps.oddLock.RLock()
-		fmap, ok = fps.oddForums[fid]
-		fps.oddLock.RUnlock()
+		s.oddLock.RLock()
+		fmap, ok = s.oddForums[fid]
+		s.oddLock.RUnlock()
 	}
 	if !ok {
 		return fperms, ErrNoRows
@@ -209,8 +209,8 @@ func (fps *MemoryForumPermsStore) Get(fid int, gid int) (fperms *ForumPerms, err
 
 // TODO: Check if the forum exists?
 // TODO: Fix the races
-func (fps *MemoryForumPermsStore) GetCopy(fid int, gid int) (fperms ForumPerms, err error) {
-	fPermsPtr, err := fps.Get(fid, gid)
+func (s *MemoryForumPermsStore) GetCopy(fid int, gid int) (fperms ForumPerms, err error) {
+	fPermsPtr, err := s.Get(fid, gid)
 	if err != nil {
 		return fperms, err
 	}
