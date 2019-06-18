@@ -5,6 +5,7 @@ language: go
 go:
   - "1.11"
   - "1.12"
+  - master
 before_install:
   - cd $HOME
   - git clone https://github.com/Azareal/Gosora
