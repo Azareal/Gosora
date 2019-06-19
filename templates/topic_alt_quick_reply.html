@@ -9,7 +9,7 @@
 	<div class="rowblock topic_reply_form quick_create_form"  aria-label="{{lang "topic.reply_aria"}}">
 		<form id="quick_post_form" enctype="multipart/form-data" action="/reply/create/?session={{.CurrentUser.Session}}" method="post"></form>
 		<input form="quick_post_form" name="tid" value='{{.Topic.ID}}' type="hidden" />
-		<input form="quick_post_form" id="has_poll_input" name="has_poll" value="0" type="hidden" />
+		<input form="quick_post_form" id="has_poll_input" name="has_poll" value=0 type="hidden" />
 		<div class="formrow real_first_child">
 			<div class="formitem">
 				<textarea id="input_content" form="quick_post_form" name="reply-content" placeholder="{{lang "topic.reply_content_alt"}}" required></textarea>

@@ -52,6 +52,7 @@ func afterDBInit() (err error) {
 	if err != nil {
 		return err
 	}
+	log.Print("Exitted storeInit")
 
 	var uids []int
 	tcache := c.Topics.GetCache()
@@ -109,6 +110,7 @@ func afterDBInit() (err error) {
 		}
 	}
 
+	log.Print("Exitted afterDBInit")
 	return nil
 }
 
@@ -299,6 +301,8 @@ func storeInit() (err error) {
 	if err != nil {
 		return errors.WithStack(err)
 	}
+
+	log.Print("Initialising the meta store")
 	c.Meta, err = c.NewDefaultMetaStore(acc)
 	if err != nil {
 		return errors.WithStack(err)
@@ -514,6 +518,7 @@ func main() {
 	log.Print("Initialising the plugins")
 	c.InitPlugins()
 
+	log.Print("Setting up the signal handler")
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 	go func() {

@@ -731,6 +731,56 @@ func TestForumPermsStore(t *testing.T) {
 	if !c.PluginsInited {
 		c.InitPlugins()
 	}
+
+	var initialState = func() {
+	fid := 1
+	gid := 1
+	fperms, err := c.FPStore.Get(fid,gid)
+	expectNilErr(t,err)
+	expect(t,fperms.ViewTopic,"admins should be able to see reports")
+
+	fid = 1
+	gid = 2
+	fperms, err = c.FPStore.Get(fid,gid)
+	expectNilErr(t,err)
+	expect(t,fperms.ViewTopic,"mods should be able to see reports")
+
+	fid = 1
+	gid = 3
+	fperms, err = c.FPStore.Get(fid,gid)
+	expectNilErr(t,err)
+	expect(t,!fperms.ViewTopic,"members should not be able to see reports")
+
+	fid = 1
+	gid = 4
+	fperms, err = c.FPStore.Get(fid,gid)
+	expectNilErr(t,err)
+	expect(t,!fperms.ViewTopic,"banned users should not be able to see reports")
+
+	fid = 2
+	gid = 1
+	fperms, err = c.FPStore.Get(fid,gid)
+	expectNilErr(t,err)
+	expect(t,fperms.ViewTopic,"admins should be able to see general")
+
+	fid = 2
+	gid = 3
+	fperms, err = c.FPStore.Get(fid,gid)
+	expectNilErr(t,err)
+	expect(t,fperms.ViewTopic,"members should be able to see general")
+
+	fid = 2
+	gid = 6
+	fperms, err = c.FPStore.Get(fid,gid)
+	expectNilErr(t,err)
+	expect(t,fperms.ViewTopic,"guests should be able to see general")
+	}
+	initialState()
+
+	expectNilErr(t, c.FPStore.Reload(1))
+	initialState()
+	expectNilErr(t, c.FPStore.Reload(2))
+	initialState()
 }
 
 // TODO: Test the group permissions
@@ -833,8 +883,9 @@ func TestGroupStore(t *testing.T) {
 	expect(t, !group.IsAdmin, "This shouldn't be an admin group")
 	expect(t, group.IsMod, "This should be a mod group")
 	expect(t, !group.IsBanned, "This shouldn't be a ban group")
-	expect(t, group.CanSee!=nil, "group.CanSee must not be nil")
-	expect(t, len(group.CanSee) > 0, "group.CanSee should not be zero")
+	expect(t, group.CanSee != nil, "group.CanSee must not be nil")
+	expect(t, len(group.CanSee) == 1, "len(group.CanSee) should not be one")
+	expect(t, group.CanSee[0] == 2, "group.CanSee[0] should be 2")
 	canSee := group.CanSee
 
 	// Make sure the data is static

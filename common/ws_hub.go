@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"sync"
 	"time"
+	"log"
 
 	"github.com/gorilla/websocket"
 )
@@ -38,6 +39,7 @@ func init() {
 }
 
 func (hub *WsHubImpl) Start() {
+	log.Print("Setting up the WebSocket ticks")
 	ticker := time.NewTicker(time.Minute * 5)
 	defer func() {
 		ticker.Stop()

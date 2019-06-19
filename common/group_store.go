@@ -31,6 +31,7 @@ type GroupStore interface {
 
 type GroupCache interface {
 	CacheSet(group *Group) error
+	SetCanSee(gid int, canSee []int) error
 	Length() int
 }
 
@@ -158,12 +159,6 @@ func (s *MemoryGroupStore) Reload(id int) error {
 		return nil
 	}
 	
-	// TODO: Do we really need this?
-	/*err = RebuildGroupPermissions(group)
-	if err != nil {
-		LogError(err)
-		return nil
-	}*/
 	s.CacheSet(group)
 	TopicListThaw.Thaw()
 	return nil
@@ -199,6 +194,21 @@ func (s *MemoryGroupStore) initGroup(group *Group) error {
 	return nil
 }
 
+func (s *MemoryGroupStore) SetCanSee(gid int, canSee []int) error {
+	s.Lock()
+	group, ok := s.groups[gid]
+	if !ok {
+		s.Unlock()
+		return nil
+	}
+	ngroup := &Group{}
+	*ngroup = *group
+	ngroup.CanSee = canSee
+	s.groups[group.ID] = ngroup
+	s.Unlock()
+	return nil
+}
+
 func (s *MemoryGroupStore) CacheSet(group *Group) error {
 	s.Lock()
 	s.groups[group.ID] = group
@@ -216,7 +226,7 @@ func (s *MemoryGroupStore) Exists(gid int) bool {
 
 // ? Allow two groups with the same name?
 // TODO: Refactor this
-func (mgs *MemoryGroupStore) Create(name string, tag string, isAdmin bool, isMod bool, isBanned bool) (gid int, err error) {
+func (s *MemoryGroupStore) Create(name string, tag string, isAdmin bool, isMod bool, isBanned bool) (gid int, err error) {
 	var permstr = "{}"
 	tx, err := qgen.Builder.Begin()
 	if err != nil {
@@ -278,7 +288,6 @@ func (mgs *MemoryGroupStore) Create(name string, tag string, isAdmin bool, isMod
 	if err != nil {
 		return 0, err
 	}
-
 	err = tx.Commit()
 	if err != nil {
 		return 0, err
@@ -289,10 +298,10 @@ func (mgs *MemoryGroupStore) Create(name string, tag string, isAdmin bool, isMod
 		isBanned = false
 	}
 
-	mgs.Lock()
-	mgs.groups[gid] = &Group{gid, name, isMod, isAdmin, isBanned, tag, perms, []byte(permstr), pluginPerms, pluginPermsBytes, blankIntList, 0}
-	mgs.groupCount++
-	mgs.Unlock()
+	s.Lock()
+	s.groups[gid] = &Group{gid, name, isMod, isAdmin, isBanned, tag, perms, []byte(permstr), pluginPerms, pluginPermsBytes, blankIntList, 0}
+	s.groupCount++
+	s.Unlock()
 
 	TopicListThaw.Thaw()
 	return gid, FPStore.ReloadAll()

@@ -100,6 +100,7 @@ func (s *MemoryForumPermsStore) Reload(fid int) error {
 		forumPerms[gid] = pperms
 	}
 	DebugLogf("forumPerms: %+v\n", forumPerms)
+	
 	if fid%2 == 0 {
 		s.evenLock.Lock()
 		s.evenForums[fid] = forumPerms
@@ -119,9 +120,15 @@ func (s *MemoryForumPermsStore) Reload(fid int) error {
 		return err
 	}
 
+	gcache, ok := Groups.(GroupCache)
+	if !ok {
+		TopicListThaw.Thaw()
+		return nil
+	}
+	
 	for _, group := range groups {
 		DebugLogf("Updating the forum permissions for Group #%d", group.ID)
-		group.CanSee = []int{}
+		canSee := []int{}
 		for _, fid := range fids {
 			DebugDetailf("Forum #%+v\n", fid)
 			var forumPerms map[int]*ForumPerms
@@ -143,23 +150,24 @@ func (s *MemoryForumPermsStore) Reload(fid int) error {
 			forumPerm, ok = forumPerms[group.ID]
 			if !ok {
 				if group.Perms.ViewTopic {
-					group.CanSee = append(group.CanSee, fid)
+					canSee = append(canSee, fid)
 				}
 				continue
 			}
 
 			if forumPerm.Overrides {
 				if forumPerm.ViewTopic {
-					group.CanSee = append(group.CanSee, fid)
+					canSee = append(canSee, fid)
 				}
 			} else if group.Perms.ViewTopic {
-				group.CanSee = append(group.CanSee, fid)
+				canSee = append(canSee, fid)
 			}
 			DebugDetail("group.ID: ", group.ID)
 			DebugDetailf("forumPerm: %+v\n", forumPerm)
-			DebugDetail("group.CanSee: ", group.CanSee)
+			DebugDetail("canSee: ", canSee)
 		}
-		DebugDetailf("group.CanSee (length %d): %+v \n", len(group.CanSee), group.CanSee)
+		DebugDetailf("canSee (length %d): %+v \n", len(canSee), canSee)
+		gcache.SetCanSee(group.ID, canSee)
 	}
 	TopicListThaw.Thaw()
 	return nil
