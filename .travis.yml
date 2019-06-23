@@ -8,8 +8,8 @@ go:
   - master
 before_install:
   - cd $HOME
-  - git clone https://github.com/Azareal/Gosora
-  - cd Gosora
+  - git clone https://github.com/Azareal/Gosora gosora
+  - cd gosora
   - chmod -R 0777 .
   - mv ./config/config_example.json ./config/config.json
   - ./update-deps-linux

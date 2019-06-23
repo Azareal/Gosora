@@ -17,11 +17,9 @@ First, we need somewhere for the software to live, if you're familiar with Linux
 
 First, we'll navigate to our home folder by typing: `cd ~`
 
-And then, we'll going to pull a copy of Gosora off the git server with: `git clone https://github.com/Azareal/Gosora`
+And then, we'll going to pull a copy of Gosora off the git server with: `git clone https://github.com/Azareal/Gosora gosora`
 
-And now, we're going to rename the downloaded folder from Gosora to gosora because the uppercase letter bugs me with: `mv Gosora gosora`
-
-We can now hop into that folder with the same command we used for getting to the home folder:
+We can now hop into the newly created folder with the same command we used for getting to the home folder:
 
 `cd gosora`
 
@@ -62,9 +60,7 @@ Type in a strong password for the `gosora` user, please oh please... Don't use "
 
 `cd gosora`
 
-`git clone https://github.com/Azareal/Gosora`
-
-`mv Gosora src`
+`git clone https://github.com/Azareal/Gosora src`
 
 `chown -R gosora ../gosora`
 
@@ -114,7 +110,9 @@ Linux is similar, however you might need to use cd and mv a bit more like in the
 You also need to substitute the `gosora.exe` bits for `./Gosora` on Linux. For more info, you might want to take a gander inside the `./run-linux` and `./install-linux` shell files to see how they're implemented.
 
 ```bash
-git clone https://github.com/Azareal/Gosora
+git clone https://github.com/Azareal/Gosora gosora
+
+cd gosora
 
 go get -u github.com/mailru/easyjson/...
 
