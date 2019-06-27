@@ -786,6 +786,14 @@ textarea {
 	padding: 16px;
 }
 
+.loglist .to_left small {
+	margin-left: 2px;
+	font-size: 12px;
+}
+.loglist .to_right span {
+	font-size: 14px;
+}
+
 .topic_list .rowtopic {
 	font-size: 16px;
 	margin-right: 1px;

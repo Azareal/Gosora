@@ -343,6 +343,9 @@ h1, h2, h3, h4, h5 {
 	display: none;
 }
 
+.to_left {
+	float: left;
+}
 .to_right {
 	margin-left: auto;
 	float: right;
@@ -354,6 +357,13 @@ h1, h2, h3, h4, h5 {
 .datarow, .rowlist .rowitem {
 	padding-top: 10px;
 	padding-bottom: 10px;
+}
+.loglist .to_left small {
+	margin-left: 2px;
+	font-size: 12px;
+}
+.loglist .to_right span {
+	font-size: 14px;
 }
 .bgsub {
 	display: none;
@@ -570,10 +580,7 @@ input, select {
 .quick_create_form .quick_button_row .formitem {
 	display: flex;
 }
-.quick_create_form .formbutton:first-child {
-	margin-left: 0px;
-	margin-right: 5px;
-}
+.quick_create_form .formbutton:first-child,
 .quick_create_form .formbutton:not(:first-child) {
 	margin-left: 0px;
 	margin-right: 5px;

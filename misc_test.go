@@ -784,6 +784,7 @@ func TestForumPermsStore(t *testing.T) {
 }
 
 // TODO: Test the group permissions
+// TODO: Test group.CanSee for forum presets + group perms
 func TestGroupStore(t *testing.T) {
 	miscinit(t)
 	if !c.PluginsInited {
@@ -823,7 +824,7 @@ func TestGroupStore(t *testing.T) {
 	expect(t, group.IsAdmin, "This should be an admin group")
 	expect(t, group.IsMod, "This should be a mod group")
 	expect(t, !group.IsBanned, "This shouldn't be a ban group")
-	// TODO: Add a proper CanSee test
+	expect(t, len(group.CanSee) == 0, "group.CanSee should be empty")
 
 	isAdmin = false
 	isMod = true

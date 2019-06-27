@@ -1,17 +1,18 @@
 <div class="colstack_item colstack_head rowhead">
 	<div class="rowitem"><h1>{{lang "account_logins_head"}}</h1></div>
 </div>
-<div class="colstack_item rowlist">
+<div class="colstack_item rowlist loglist">
 	<!-- TODO: Do we need this inline CSS? -->
 	{{range .ItemList}}
 	<div class="rowitem{{if not .Success}} bg_red{{end}}">
-		<span style="float: left;">
+		<span class="to_left">
 			<span>{{if .Success}}{{lang "account_logins_success"}}{{else}}{{lang "account_logins_failure"}}"{{end}}</span><br />
-			<small style="margin-left: 2px;font-size: 12px;" title="{{.IPAddress}}">{{.IPAddress}}</small>
+			<small title="{{.IPAddress}}">{{.IPAddress}}</small>
 		</span>
 		<span class="to_right">
-			<span style="font-size: 14px;" title="{{.DoneAt}}">{{.DoneAt}}</span>
+			<span title="{{.DoneAt}}">{{.DoneAt}}</span>
 		</span>
+		<div style="clear:both;"></div>
 	</div>
 	{{end}}
 </div>

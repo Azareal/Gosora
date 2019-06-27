@@ -15,6 +15,9 @@ a {
 	color: #eeeeee;
 	text-decoration: none;
 }
+a:hover {
+	color: #cccccc;
+}
 
 nav.nav {
 	background: {{$darkest_bg}};
@@ -1109,6 +1112,10 @@ input[type=checkbox]:checked + label .sel {
 	font-size: 17px;
 	margin-left: 0px;
 	margin-top: 0px;
+}
+.loglist .to_left small {
+	margin-left: 2px;
+	font-size: 12px;
 }
 
 .ip_search_block {

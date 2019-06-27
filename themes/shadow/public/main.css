@@ -223,6 +223,9 @@ h1, h2, h3, h4, h5 {
 }
 
 /* Align to right in a flex head */
+.to_left {
+	float: left;
+}
 .to_right {
 	float: right;
 	margin-left: auto;
@@ -231,8 +234,7 @@ h1, h2, h3, h4, h5 {
 /* Topic View */
 
 /* TODO: How should we handle the sticky headers? */
-.topic_sticky_head {
-}
+.topic_sticky_head {}
 
 /* TODO: Add the avatars to the forum list */
 .forum_list .forum_nodesc {
@@ -514,6 +516,13 @@ textarea.large {
 }
 .rowlist .formrow, .rowlist .formrow:first-child {
 	margin-top: 0px;
+}
+.loglist .to_left small {
+	margin-left: 2px;
+	font-size: 12px;
+}
+.loglist .to_right span {
+	font-size: 14px;
 }
 
 input {
@@ -1166,10 +1175,7 @@ blockquote:first-child {
 	.topic_list .topic_left {
 		width: 100%;
 	}
-	.topic_list .topic_right {
-		display: none;
-	}
-	#poweredBy span {
+	.topic_list .topic_right, #poweredBy span {
 		display: none;
 	}
 }
