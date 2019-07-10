@@ -3,5 +3,5 @@ go generate
 echo Generating the JSON handlers
 easyjson -pkg common
 echo "Running tests"
-go build -o mssqlBuild -tags mssql
+go build -ldflags="-s -w" -o mssqlBuild -tags mssql
 go test -coverprofile c.out

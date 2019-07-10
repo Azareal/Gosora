@@ -28,5 +28,5 @@ if %errorlevel% neq 0 (
 
 echo Patching Gosora
 go generate
-go build ./patcher
+go build -ldflags="-s -w" ./patcher
 patcher.exe

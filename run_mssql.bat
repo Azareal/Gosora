@@ -15,7 +15,7 @@ if %errorlevel% neq 0 (
 )
 
 echo Building the router generator
-go build ./router_gen
+go build -ldflags="-s -w" ./router_gen
 if %errorlevel% neq 0 (
 	pause
 	exit /b %errorlevel%
@@ -28,7 +28,7 @@ if %errorlevel% neq 0 (
 )
 
 echo Building the query generator
-go build "./cmd/query_gen"
+go build -ldflags="-s -w" "./cmd/query_gen"
 if %errorlevel% neq 0 (
 	pause
 	exit /b %errorlevel%
@@ -44,7 +44,7 @@ echo Generating the JSON handlers
 easyjson -pkg common
 
 echo Building the executable
-go build -o gosora.exe -tags mssql
+go build -ldflags="-s -w" -o gosora.exe -tags mssql
 if %errorlevel% neq 0 (
 	pause
 	exit /b %errorlevel%
@@ -58,7 +58,7 @@ if %errorlevel% neq 0 (
 )
 
 echo Building the executable... again
-go build -o gosora.exe -tags mssql
+go build -ldflags="-s -w" -o gosora.exe -tags mssql
 if %errorlevel% neq 0 (
 	pause
 	exit /b %errorlevel%

@@ -9,5 +9,5 @@ git stash apply
 
 echo "Patching Gosora"
 go generate
-go build -o Patcher "./patcher"
+go build -ldflags="-s -w" -o Patcher "./patcher"
 ./Patcher
