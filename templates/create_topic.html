@@ -8,7 +8,7 @@
 		<div class="formrow real_first_child">
 			<div class="formitem formlabel"><a>{{lang "create_topic_board"}}</a></div>
 			<div class="formitem"><select form="quick_post_form" id="topic_board_input" name="topic-board">
-				{{range .ItemList}}<option {{if eq .ID $.FID}}selected{{end}} value="{{.ID}}">{{.Name}}</option>{{end}}
+				{{range .ItemList}}<option{{if eq .ID $.FID}} selected{{end}} value="{{.ID}}">{{.Name}}</option>{{end}}
 			</select></div>
 		</div>
 		<div class="formrow">

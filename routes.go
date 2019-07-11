@@ -193,22 +193,18 @@ func routeAPIPhrases(w http.ResponseWriter, r *http.Request, user c.User) c.Rout
 	// TODO: Don't make this too JSON dependent so that we can swap in newer more efficient formats
 	h := w.Header()
 	h.Set("Content-Type", "application/json")
-	h.Set("Cache-Control", cacheControlMaxAge) //Cache-Control: max-age=31536000
 
 	err := r.ParseForm()
 	if err != nil {
 		return c.PreErrorJS("Bad Form", w, r)
 	}
-	query := r.FormValue("query")
+	query := r.FormValue("q")
 	if query == "" {
 		return c.PreErrorJS("No query provided", w, r)
 	}
 
-	var negations []string
-	var positives []string
-
-	queryBits := strings.Split(query, ",")
-	for _, queryBit := range queryBits {
+	var negations, positives []string
+	for _, queryBit := range strings.Split(query, ",") {
 		queryBit = strings.TrimSpace(queryBit)
 		if queryBit[0] == '!' && len(queryBit) > 1 {
 			queryBit = strings.TrimPrefix(queryBit, "!")
@@ -230,6 +226,7 @@ func routeAPIPhrases(w http.ResponseWriter, r *http.Request, user c.User) c.Rout
 	if len(positives) == 0 {
 		return c.PreErrorJS("You haven't requested any phrases", w, r)
 	}
+	h.Set("Cache-Control", cacheControlMaxAge) //Cache-Control: max-age=31536000
 
 	var etag string
 	_, ok := w.(c.GzipResponseWriter)
@@ -240,6 +237,7 @@ func routeAPIPhrases(w http.ResponseWriter, r *http.Request, user c.User) c.Rout
 	}
 
 	var plist map[string]string
+	var doneHead = false
 	var posLoop = func(positive string) c.RouteError {
 		// ! Constrain it to a subset of phrases for now
 		for _, item := range phraseWhitelist {
@@ -251,11 +249,11 @@ func routeAPIPhrases(w http.ResponseWriter, r *http.Request, user c.User) c.Rout
 				} else {
 					ok = true
 					w.Header().Set("ETag", etag)
-					if match := r.Header.Get("If-None-Match"); match != "" {
-						if strings.Contains(match, etag) {
-							w.WriteHeader(http.StatusNotModified)
-							return nil
-						}
+					match := r.Header.Get("If-None-Match")
+					if match != "" && !doneHead && strings.Contains(match, etag) {
+						w.WriteHeader(http.StatusNotModified)
+						doneHead = true
+						return nil
 					}
 				}
 				break
@@ -309,7 +307,6 @@ func routeAPIPhrases(w http.ResponseWriter, r *http.Request, user c.User) c.Rout
 		return c.InternalError(err, w, r)
 	}
 	w.Write(jsonBytes)
-
 	return nil
 }
 

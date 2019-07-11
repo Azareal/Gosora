@@ -48,7 +48,6 @@ func UsersEdit(w http.ResponseWriter, r *http.Request, user c.User, suid string)
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
-
 	if targetUser.IsAdmin && !user.IsAdmin {
 		return c.LocalError("Only administrators can edit the account of an administrator.", w, r, user)
 	}
