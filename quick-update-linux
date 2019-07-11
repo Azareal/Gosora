@@ -4,5 +4,5 @@ git pull origin master
 git stash apply
 
 echo "Patching Gosora"
-go build -o Patcher "./patcher"
+go build -ldflags="-s -w" -o Patcher "./patcher"
 ./Patcher

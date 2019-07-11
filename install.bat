@@ -21,7 +21,7 @@ if %errorlevel% neq 0 (
 
 echo Building the installer
 go generate
-go build "./cmd/install"
+go build -ldflags="-s -w" "./cmd/install"
 if %errorlevel% neq 0 (
 	pause
 	exit /b %errorlevel%

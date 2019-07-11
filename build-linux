@@ -5,12 +5,12 @@ rm -f tmpl_client/template_*.go
 rm -f ./Gosora
 
 echo "Building the router generator"
-go build -o RouterGen "./router_gen"
+go build -ldflags="-s -w" -o RouterGen "./router_gen"
 echo "Running the router generator"
 ./RouterGen
 
 echo "Building the query generator"
-go build -o QueryGen "./cmd/query_gen"
+go build -ldflags="-s -w" -o QueryGen "./cmd/query_gen"
 echo "Running the query generator"
 ./QueryGen
 
@@ -19,7 +19,7 @@ easyjson -pkg common
 
 echo "Building Gosora"
 go generate
-go build -o Gosora
+go build -ldflags="-s -w" -o Gosora
 
 echo "Building the installer"
-go build -o Installer "./install"
+go build -ldflags="-s -w" -o Installer "./install"

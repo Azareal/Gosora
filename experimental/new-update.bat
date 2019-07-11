@@ -9,7 +9,7 @@ if %errorlevel% neq 0 (
 
 echo Building the updater
 go generate
-go build ./updater
+go build -ldflags="-s -w" ./updater
 if %errorlevel% neq 0 (
 	pause
 	exit /b %errorlevel%

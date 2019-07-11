@@ -4,7 +4,7 @@ easyjson -pkg common
 go get
 
 echo "Building the installer"
-go build -o Installer "./cmd/install"
+go build -ldflags="-s -w" -o Installer "./cmd/install"
 
 echo "Running the installer"
 ./Installer

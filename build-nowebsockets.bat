@@ -16,28 +16,28 @@ echo Generating the JSON handlers
 easyjson -pkg common
 
 echo Building the executable
-go build -o gosora.exe -tags no_ws
+go build -ldflags="-s -w" -o gosora.exe -tags no_ws
 if %errorlevel% neq 0 (
 	pause
 	exit /b %errorlevel%
 )
 
 echo Building the installer
-go build "./cmd/install"
+go build -ldflags="-s -w" "./cmd/install"
 if %errorlevel% neq 0 (
 	pause
 	exit /b %errorlevel%
 )
 
 echo Building the router generator
-go build ./router_gen
+go build -ldflags="-s -w" ./router_gen
 if %errorlevel% neq 0 (
 	pause
 	exit /b %errorlevel%
 )
 
 echo Building the query generator
-go build "./cmd/query_gen"
+go build -ldflags="-s -w" "./cmd/query_gen"
 if %errorlevel% neq 0 (
 	pause
 	exit /b %errorlevel%

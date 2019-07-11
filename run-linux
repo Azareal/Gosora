@@ -8,12 +8,12 @@ echo "Generating the dynamic code"
 go generate
 
 echo "Building the router generator"
-go build -o RouterGen "./router_gen"
+go build -ldflags="-s -w" -o RouterGen "./router_gen"
 echo "Running the router generator"
 ./RouterGen
 
 echo "Building the query generator"
-go build -o QueryGen "./cmd/query_gen"
+go build -ldflags="-s -w" -o QueryGen "./cmd/query_gen"
 echo "Running the query generator"
 ./QueryGen
 
@@ -21,13 +21,13 @@ echo "Generating the JSON handlers"
 easyjson -pkg common
 
 echo "Building Gosora"
-go build -o Gosora
+go build -ldflags="-s -w" -o Gosora
 
 echo "Building the templates"
 ./Gosora -build-templates
 
 echo "Building Gosora... Again"
-go build -o Gosora
+go build -ldflags="-s -w" -o Gosora
 
 echo "Running Gosora"
 ./Gosora

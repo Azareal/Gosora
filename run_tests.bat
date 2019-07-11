@@ -15,7 +15,7 @@ if %errorlevel% neq 0 (
 )
 
 echo Building the router generator
-go build ./router_gen
+go build -ldflags="-s -w" ./router_gen
 if %errorlevel% neq 0 (
 	pause
 	exit /b %errorlevel%
@@ -28,7 +28,7 @@ if %errorlevel% neq 0 (
 )
 
 echo Building the query generator
-go build "./cmd/query_gen"
+go build -ldflags="-s -w" "./cmd/query_gen"
 if %errorlevel% neq 0 (
 	pause
 	exit /b %errorlevel%
