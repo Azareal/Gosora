@@ -237,7 +237,7 @@ func routeAPIPhrases(w http.ResponseWriter, r *http.Request, user c.User) c.Rout
 	}
 
 	var plist map[string]string
-	var doneHead = false
+	var notModified = false
 	var posLoop = func(positive string) c.RouteError {
 		// ! Constrain it to a subset of phrases for now
 		for _, item := range phraseWhitelist {
@@ -250,9 +250,8 @@ func routeAPIPhrases(w http.ResponseWriter, r *http.Request, user c.User) c.Rout
 					ok = true
 					w.Header().Set("ETag", etag)
 					match := r.Header.Get("If-None-Match")
-					if match != "" && !doneHead && strings.Contains(match, etag) {
-						w.WriteHeader(http.StatusNotModified)
-						doneHead = true
+					if match != "" && strings.Contains(match, etag) {
+						notModified = true
 						return nil
 					}
 				}
@@ -273,6 +272,9 @@ func routeAPIPhrases(w http.ResponseWriter, r *http.Request, user c.User) c.Rout
 			if rerr != nil {
 				return rerr
 			}
+			if notModified {
+				break
+			}
 			pPhrases, ok := phrases.GetTmplPhrasesByPrefix(positive)
 			if !ok {
 				return c.PreErrorJS("No such prefix", w, r)
@@ -291,6 +293,10 @@ func routeAPIPhrases(w http.ResponseWriter, r *http.Request, user c.User) c.Rout
 			return c.PreErrorJS("No such prefix", w, r)
 		}
 		plist = pPhrases
+	}
+	if notModified {
+		w.WriteHeader(http.StatusNotModified)
+		return nil
 	}
 
 	for _, negation := range negations {
