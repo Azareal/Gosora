@@ -5,7 +5,7 @@ import (
 	"sync/atomic"
 
 	"github.com/Azareal/Gosora/common"
-	"github.com/Azareal/Gosora/query_gen"
+	qgen "github.com/Azareal/Gosora/query_gen"
 )
 
 // TODO: Rename this?
@@ -22,7 +22,7 @@ type DefaultViewCounter struct {
 func NewGlobalViewCounter(acc *qgen.Accumulator) (*DefaultViewCounter, error) {
 	counter := &DefaultViewCounter{
 		currentBucket: 0,
-		insert:        acc.Insert("viewchunks").Columns("count, createdAt").Fields("?,UTC_TIMESTAMP()").Prepare(),
+		insert:        acc.Insert("viewchunks").Columns("count,  createdAt, route").Fields("?,UTC_TIMESTAMP(),''").Prepare(),
 	}
 	common.AddScheduledFifteenMinuteTask(counter.Tick) // This is run once every fifteen minutes to match the frequency of the RouteViewCounter
 	//common.AddScheduledSecondTask(counter.Tick)
