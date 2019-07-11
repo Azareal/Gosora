@@ -237,17 +237,21 @@ func routeAPIPhrases(w http.ResponseWriter, r *http.Request, user c.User) c.Rout
 	}
 
 	var plist map[string]string
-	var notModified = false
+	var notModified, private bool
 	var posLoop = func(positive string) c.RouteError {
 		// ! Constrain it to a subset of phrases for now
 		for _, item := range phraseWhitelist {
 			if strings.HasPrefix(positive, item) {
 				// TODO: Break this down into smaller security boundaries based on control panel sections?
+				// TODO: Do we have to be so strict with panel phrases?
 				if strings.HasPrefix(positive, "panel") {
-					w.Header().Set("Cache-Control", "private")
+					private = true
 					ok = user.IsSuperMod
 				} else {
 					ok = true
+					if notModified {
+						return nil
+					}
 					w.Header().Set("ETag", etag)
 					match := r.Header.Get("If-None-Match")
 					if match != "" && strings.Contains(match, etag) {
@@ -272,9 +276,6 @@ func routeAPIPhrases(w http.ResponseWriter, r *http.Request, user c.User) c.Rout
 			if rerr != nil {
 				return rerr
 			}
-			if notModified {
-				break
-			}
 			pPhrases, ok := phrases.GetTmplPhrasesByPrefix(positive)
 			if !ok {
 				return c.PreErrorJS("No such prefix", w, r)
@@ -294,7 +295,10 @@ func routeAPIPhrases(w http.ResponseWriter, r *http.Request, user c.User) c.Rout
 		}
 		plist = pPhrases
 	}
-	if notModified {
+
+	if private {
+		w.Header().Set("Cache-Control", "private")
+	} else if notModified {
 		w.WriteHeader(http.StatusNotModified)
 		return nil
 	}
