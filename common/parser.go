@@ -16,6 +16,7 @@ import (
 // TODO: Somehow localise these?
 var SpaceGap = []byte("          ")
 var httpProtBytes = []byte("http://")
+var DoubleForwardSlash = []byte("//")
 var InvalidURL = []byte("<red>[Invalid URL]</red>")
 var InvalidTopic = []byte("<red>[Invalid Topic]</red>")
 var InvalidProfile = []byte("<red>[Invalid Profile]</red>")
@@ -531,7 +532,8 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 				sb.Write(bytesSinglequote)
 				sb.Write(urlMention)
 				sb.Write(bytesGreaterthan)
-				sb.WriteString("@" + menUser.Name)
+				sb.WriteByte('@')
+				sb.WriteString(menUser.Name)
 				sb.Write(URLClose)
 				lastItem = i
 				i--
@@ -560,10 +562,21 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 				urlLen, ok := PartialURLStringLen(msg[i:])
 				if len(msg) < i+urlLen {
 					//fmt.Println("o1")
-					sb.Write(InvalidURL)
+					if urlLen == 2 {
+						sb.Write(DoubleForwardSlash)
+					} else {
+						sb.Write(InvalidURL)
+					}
 					i += len(msg) - 1
 					lastItem = i
 					break
+				}
+				if urlLen == 2 {
+					sb.Write(DoubleForwardSlash)
+					i += urlLen
+					lastItem = i
+					i--
+					continue
 				}
 				//fmt.Println("msg[i:i+urlLen]:", "'"+msg[i:i+urlLen]+"'")
 				if !ok {
