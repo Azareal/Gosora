@@ -9,6 +9,10 @@ import (
 )
 
 func TestPreparser(t *testing.T) {
+	miscinit(t)
+	if !c.PluginsInited {
+		c.InitPlugins()
+	}
 	var msgList = &METriList{nil}
 
 	// Note: The open tag is evaluated without knowledge of the close tag for efficiency and simplicity, so the parser autofills the associated close tag when it finds an open tag without a partner
@@ -131,6 +135,10 @@ func TestPreparser(t *testing.T) {
 }
 
 func TestParser(t *testing.T) {
+	miscinit(t)
+	if !c.PluginsInited {
+		c.InitPlugins()
+	}
 	var msgList = &METriList{nil}
 
 	url := "github.com/Azareal/Gosora"

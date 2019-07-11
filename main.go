@@ -134,8 +134,16 @@ func storeInit() (err error) {
 	if err != nil {
 		return errors.WithStack(err)
 	}
+	/*c.Convos, err = c.NewDefaultConversationStore(acc)
+	if err != nil {
+		return errors.WithStack(err)
+	}*/
 
 	err = phrases.InitPhrases(c.Site.Language)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	err = c.InitEmoji()
 	if err != nil {
 		return errors.WithStack(err)
 	}
