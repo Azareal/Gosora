@@ -70,6 +70,9 @@ var hookTable = &HookTable{
 		"topic_create_frow_assign": nil,
 	},
 	map[string]func(...interface{}) interface{}{
+		//"convo_post_update":nil,
+		//"convo_post_create":nil,
+		
 		"forum_trow_assign":       nil,
 		"topics_topic_row_assign": nil,
 		//"topics_user_row_assign": nil,

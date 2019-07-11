@@ -130,17 +130,17 @@ rm -f ./Gosora
 
 go generate
 
-go build ./router_gen
+go build -ldflags="-s -w" ./router_gen
 
 router_gen.exe
 
-go build ./cmd/query_gen
+go build -ldflags="-s -w" ./cmd/query_gen
 
 query_gen.exe
 
-go build -o gosora.exe
+go build -ldflags="-s -w" -o gosora.exe
 
-go build "./cmd/install"
+go build -ldflags="-s -w" "./cmd/install"
 
 install.exe
 

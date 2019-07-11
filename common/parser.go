@@ -7,6 +7,9 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"io/ioutil"
+	"os"
+	"encoding/json"
 	"unicode/utf8"
 )
 
@@ -36,135 +39,59 @@ func init() {
 	urlReg = regexp.MustCompile(urlPattern)
 }
 
+var emojis map[string]string
+
+type emojiHolder struct {
+	Emojis []map[string]string `json:"emojis"`
+}
+
+func InitEmoji() error {
+	data, err := ioutil.ReadFile("./config/emoji_default.json")
+	if err != nil {
+		return err
+	}
+
+	var emoji emojiHolder
+	err = json.Unmarshal(data, &emoji)
+	if err != nil {
+		return err
+	}
+
+	emojis = make(map[string]string, len(emoji.Emojis))
+	for _, item := range emoji.Emojis {
+		for ikey, ival := range item {
+			emojis[ikey] = ival
+		}
+	}
+
+	data, err = ioutil.ReadFile("./config/emoji.json")
+	if err == os.ErrPermission || err == os.ErrClosed {
+		return err
+	} else if err != nil {
+		return nil
+	}
+
+	emoji = emojiHolder{}
+	err = json.Unmarshal(data, &emoji)
+	if err != nil {
+		return err
+	}
+
+	for _, item := range emoji.Emojis {
+		for ikey, ival := range item {
+			emojis[ikey] = ival
+		}
+	}
+	
+	return nil
+}
+
 // TODO: Write a test for this
 func shortcodeToUnicode(msg string) string {
 	//re := regexp.MustCompile(":(.):")
-	msg = strings.Replace(msg, ":grinning:", "😀", -1)
-	msg = strings.Replace(msg, ":grin:", "😁", -1)
-	msg = strings.Replace(msg, ":joy:", "😂", -1)
-	msg = strings.Replace(msg, ":rofl:", "🤣", -1)
-	msg = strings.Replace(msg, ":smiley:", "😃", -1)
-	msg = strings.Replace(msg, ":smile:", "😄", -1)
-	msg = strings.Replace(msg, ":sweat_smile:", "😅", -1)
-	msg = strings.Replace(msg, ":laughing:", "😆", -1)
-	msg = strings.Replace(msg, ":satisfied:", "😆", -1)
-	msg = strings.Replace(msg, ":wink:", "😉", -1)
-	msg = strings.Replace(msg, ":blush:", "😊", -1)
-	msg = strings.Replace(msg, ":yum:", "😋", -1)
-	msg = strings.Replace(msg, ":sunglasses:", "😎", -1)
-	msg = strings.Replace(msg, ":heart_eyes:", "😍", -1)
-	msg = strings.Replace(msg, ":kissing_heart:", "😘", -1)
-	msg = strings.Replace(msg, ":kissing:", "😗", -1)
-	msg = strings.Replace(msg, ":kissing_smiling_eyes:", "😙", -1)
-	msg = strings.Replace(msg, ":kissing_closed_eyes:", "😚", -1)
-	msg = strings.Replace(msg, ":relaxed:", "☺️", -1)
-	msg = strings.Replace(msg, ":slight_smile:", "🙂", -1)
-	msg = strings.Replace(msg, ":hugging:", "🤗", -1)
-	msg = strings.Replace(msg, ":thinking:", "🤔", -1)
-	msg = strings.Replace(msg, ":neutral_face:", "😐", -1)
-	msg = strings.Replace(msg, ":expressionless:", "😑", -1)
-	msg = strings.Replace(msg, ":no_mouth:", "😶", -1)
-	msg = strings.Replace(msg, ":rolling_eyes:", "🙄", -1)
-	msg = strings.Replace(msg, ":smirk:", "😏", -1)
-	msg = strings.Replace(msg, ":persevere:", "😣", -1)
-	msg = strings.Replace(msg, ":disappointed_relieved:", "😥", -1)
-	msg = strings.Replace(msg, ":open_mouth:", "😮", -1)
-	msg = strings.Replace(msg, ":zipper_mouth:", "🤐", -1)
-	msg = strings.Replace(msg, ":hushed:", "😯", -1)
-	msg = strings.Replace(msg, ":sleepy:", "😪", -1)
-	msg = strings.Replace(msg, ":tired_face:", "😫", -1)
-	msg = strings.Replace(msg, ":sleeping:", "😴", -1)
-	msg = strings.Replace(msg, ":relieved:", "😌", -1)
-	msg = strings.Replace(msg, ":nerd:", "🤓", -1)
-	msg = strings.Replace(msg, ":stuck_out_tongue:", "😛", -1)
-	msg = strings.Replace(msg, ":worried:", "😟", -1)
-	msg = strings.Replace(msg, ":drooling_face:", "🤤", -1)
-	msg = strings.Replace(msg, ":disappointed:", "😞", -1)
-	msg = strings.Replace(msg, ":astonished:", "😲", -1)
-	msg = strings.Replace(msg, ":slight_frown:", "🙁", -1)
-	msg = strings.Replace(msg, ":skull_crossbones:", "☠️", -1)
-	msg = strings.Replace(msg, ":skull:", "💀", -1)
-	msg = strings.Replace(msg, ":point_up:", "☝️", -1)
-	msg = strings.Replace(msg, ":v:", "✌️️", -1)
-	msg = strings.Replace(msg, ":writing_hand:", "✍️", -1)
-	msg = strings.Replace(msg, ":heart:", "❤️️", -1)
-	msg = strings.Replace(msg, ":heart_exclamation:", "❣️", -1)
-	msg = strings.Replace(msg, ":hotsprings:", "♨️", -1)
-	msg = strings.Replace(msg, ":airplane:", "✈️️", -1)
-	msg = strings.Replace(msg, ":hourglass:", "⌛", -1)
-	msg = strings.Replace(msg, ":watch:", "⌚", -1)
-	msg = strings.Replace(msg, ":comet:", "☄️", -1)
-	msg = strings.Replace(msg, ":snowflake:", "❄️", -1)
-	msg = strings.Replace(msg, ":cloud:", "☁️", -1)
-	msg = strings.Replace(msg, ":sunny:", "☀️", -1)
-	msg = strings.Replace(msg, ":spades:", "♠️", -1)
-	msg = strings.Replace(msg, ":hearts:", "♥️️", -1)
-	msg = strings.Replace(msg, ":diamonds:", "♦️", -1)
-	msg = strings.Replace(msg, ":clubs:", "♣️", -1)
-	msg = strings.Replace(msg, ":phone:", "☎️", -1)
-	msg = strings.Replace(msg, ":telephone:", "☎️", -1)
-	msg = strings.Replace(msg, ":biohazard:", "☣️", -1)
-	msg = strings.Replace(msg, ":radioactive:", "☢️", -1)
-	msg = strings.Replace(msg, ":scissors:", "✂️", -1)
-	msg = strings.Replace(msg, ":arrow_upper_right:", "↗️", -1)
-	msg = strings.Replace(msg, ":arrow_right:", "➡️", -1)
-	msg = strings.Replace(msg, ":arrow_lower_right:", "↘️", -1)
-	msg = strings.Replace(msg, ":arrow_lower_left:", "↙️", -1)
-	msg = strings.Replace(msg, ":arrow_upper_left:", "↖️", -1)
-	msg = strings.Replace(msg, ":arrow_up_down:", "↕️", -1)
-	msg = strings.Replace(msg, ":left_right_arrow:", "↔️", -1)
-	msg = strings.Replace(msg, ":leftwards_arrow_with_hook:", "↩️", -1)
-	msg = strings.Replace(msg, ":arrow_right_hook:", "↪️", -1)
-	msg = strings.Replace(msg, ":arrow_forward:", "▶️", -1)
-	msg = strings.Replace(msg, ":arrow_backward:", "◀️", -1)
-	msg = strings.Replace(msg, ":female:", "♀️", -1)
-	msg = strings.Replace(msg, ":male:", "♂️", -1)
-	msg = strings.Replace(msg, ":ballot_box_with_check:", "☑️", -1)
-	msg = strings.Replace(msg, ":heavy_check_mark:", "✔️️", -1)
-	msg = strings.Replace(msg, ":heavy_multiplication_x:", "✖️", -1)
-	msg = strings.Replace(msg, ":pisces:", "♓", -1)
-	msg = strings.Replace(msg, ":aquarius:", "♒", -1)
-	msg = strings.Replace(msg, ":capricorn:", "♑", -1)
-	msg = strings.Replace(msg, ":sagittarius:", "♐", -1)
-	msg = strings.Replace(msg, ":scorpius:", "♏", -1)
-	msg = strings.Replace(msg, ":libra:", "♎", -1)
-	msg = strings.Replace(msg, ":virgo:", "♍", -1)
-	msg = strings.Replace(msg, ":leo:", "♌", -1)
-	msg = strings.Replace(msg, ":cancer:", "♋", -1)
-	msg = strings.Replace(msg, ":gemini:", "♊", -1)
-	msg = strings.Replace(msg, ":taurus:", "♉", -1)
-	msg = strings.Replace(msg, ":aries:", "♈", -1)
-	msg = strings.Replace(msg, ":peace:", "☮️", -1)
-	msg = strings.Replace(msg, ":eight_spoked_asterisk:", "✳️", -1)
-	msg = strings.Replace(msg, ":eight_pointed_black_star:", "✴️", -1)
-	msg = strings.Replace(msg, ":snowman2:", "☃️", -1)
-	msg = strings.Replace(msg, ":umbrella2:", "☂️", -1)
-	msg = strings.Replace(msg, ":pencil2:", "✏️", -1)
-	msg = strings.Replace(msg, ":black_nib:", "✒️", -1)
-	msg = strings.Replace(msg, ":email:", "✉️", -1)
-	msg = strings.Replace(msg, ":envelope:", "✉️", -1)
-	msg = strings.Replace(msg, ":keyboard:", "⌨️", -1)
-	msg = strings.Replace(msg, ":white_small_square:", "▫️", -1)
-	msg = strings.Replace(msg, ":black_small_square:", "▪️", -1)
-	msg = strings.Replace(msg, ":secret:", "㊙️", -1)
-	msg = strings.Replace(msg, ":congratulations:", "㊗️", -1)
-	msg = strings.Replace(msg, ":m:", "Ⓜ️", -1)
-	msg = strings.Replace(msg, ":tm:", "™️️", -1)
-	msg = strings.Replace(msg, ":registered:", "®️", -1)
-	msg = strings.Replace(msg, ":copyright:", "©️", -1)
-	msg = strings.Replace(msg, ":wavy_dash:", "〰️", -1)
-	msg = strings.Replace(msg, ":bangbang:", "‼️", -1)
-	msg = strings.Replace(msg, ":sparkle:", "❇️", -1)
-	msg = strings.Replace(msg, ":star_of_david:", "✡️", -1)
-	msg = strings.Replace(msg, ":wheel_of_dharma:", "☸️", -1)
-	msg = strings.Replace(msg, ":yin_yang:", "☯️", -1)
-	msg = strings.Replace(msg, ":cross:", "✝️", -1)
-	msg = strings.Replace(msg, ":orthodox_cross:", "☦️", -1)
-	msg = strings.Replace(msg, ":star_and_crescent:", "☪️", -1)
-	msg = strings.Replace(msg, ":frowning2:", "☹️", -1)
-	msg = strings.Replace(msg, ":information_source:", "ℹ️", -1)
-	msg = strings.Replace(msg, ":interrobang:", "⁉️", -1)
-
+	for shortcode, emoji := range emojis {
+		msg = strings.Replace(msg, shortcode, emoji, -1)
+	}
 	return msg
 }
 
