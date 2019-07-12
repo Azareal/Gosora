@@ -28,7 +28,7 @@ func routes(r *Router) {
 	topicGroup := newRouteGroup("/topics/",
 		View("routes.TopicList", "/topics/"),
 		View("routes.TopicListMostViewed", "/topics/most-viewed/"),
-		MemberView("routes.CreateTopic", "/topics/create/", "extraData"),
+		MView("routes.CreateTopic", "/topics/create/", "extraData"),
 	)
 	r.AddGroup(topicGroup)
 
@@ -49,24 +49,47 @@ func userRoutes() *RouteGroup {
 	return newRouteGroup("/user/").Routes(
 		View("routes.ViewProfile", "/user/").LitBefore("req.URL.Path += extraData"),
 
-		MemberView("routes.AccountEdit", "/user/edit/"),
-		MemberView("routes.AccountEditPassword", "/user/edit/password/"),
+		Set("routes.AccountEdit","/user/edit",
+			MView("", "/"),
+			MView("Password", "/password/"),
+			Action("PasswordSubmit", "/password/submit/"), // TODO: Full test this
+			UploadAction("AvatarSubmit", "/avatar/submit/").MaxSizeVar("int(c.Config.MaxRequestSize)"),
+			Action("RevokeAvatarSubmit", "/avatar/revoke/submit/"),
+			Action("UsernameSubmit", "/username/submit/"), // TODO: Full test this
+			MView("MFA", "/mfa/"),
+			MView("MFASetup", "/mfa/setup/"),
+			Action("MFASetupSubmit", "/mfa/setup/submit/"),
+			Action("MFADisableSubmit", "/mfa/disable/submit/"),
+			MView("Email", "/email/"),
+			View("EmailTokenSubmit", "/token/", "extraData").NoHeader(),
+		),
+
+		/*MView("routes.AccountEdit", "/user/edit/"),
+		MView("routes.AccountEditPassword", "/user/edit/password/"),
 		Action("routes.AccountEditPasswordSubmit", "/user/edit/password/submit/"), // TODO: Full test this
 		UploadAction("routes.AccountEditAvatarSubmit", "/user/edit/avatar/submit/").MaxSizeVar("int(c.Config.MaxRequestSize)"),
 		Action("routes.AccountEditRevokeAvatarSubmit", "/user/edit/avatar/revoke/submit/"),
 		Action("routes.AccountEditUsernameSubmit", "/user/edit/username/submit/"), // TODO: Full test this
-		MemberView("routes.AccountEditMFA", "/user/edit/mfa/"),
-		MemberView("routes.AccountEditMFASetup", "/user/edit/mfa/setup/"),
+		MView("routes.AccountEditMFA", "/user/edit/mfa/"),
+		MView("routes.AccountEditMFASetup", "/user/edit/mfa/setup/"),
 		Action("routes.AccountEditMFASetupSubmit", "/user/edit/mfa/setup/submit/"),
 		Action("routes.AccountEditMFADisableSubmit", "/user/edit/mfa/disable/submit/"),
-		MemberView("routes.AccountEditEmail", "/user/edit/email/"),
-		View("routes.AccountEditEmailTokenSubmit", "/user/edit/token/", "extraData").NoHeader(),
+		MView("routes.AccountEditEmail", "/user/edit/email/"),
+		View("routes.AccountEditEmailTokenSubmit", "/user/edit/token/", "extraData").NoHeader(),*/
 
-		MemberView("routes.AccountLogins", "/user/edit/logins/"),
+		MView("routes.AccountLogins", "/user/edit/logins/"),
 
-		MemberView("routes.LevelList", "/user/levels/"),
-		//MemberView("routes.LevelRankings", "/user/rankings/"),
-		//MemberView("routes.Alerts", "/user/alerts/"),
+		MView("routes.LevelList", "/user/levels/"),
+		//MView("routes.LevelRankings", "/user/rankings/"),
+		//MView("routes.Alerts", "/user/alerts/"),
+		
+		/*MView("routes.Convos", "/user/convos/"),
+		MView("routes.ConvosCreate", "/user/convos/create/"),
+		MView("routes.Convo", "/user/convo/","extraData"),
+		Action("routes.ConvosCreateSubmit", "/user/convos/create/submit/"),
+		Action("routes.ConvosDeleteSubmit", "/user/convos/delete/submit/","extraData"),
+		Action("routes.ConvosCreateReplySubmit", "/user/convo/create/submit/"),
+		Action("routes.ConvosDeleteReplySubmit", "/user/convo/delete/submit/"),*/
 	)
 }
 
@@ -76,7 +99,7 @@ func usersRoutes() *RouteGroup {
 		Action("routes.BanUserSubmit", "/users/ban/submit/", "extraData"),
 		Action("routes.UnbanUser", "/users/unban/", "extraData"),
 		Action("routes.ActivateUser", "/users/activate/", "extraData"),
-		MemberView("routes.IPSearch", "/users/ips/"), // TODO: .Perms("ViewIPs")?
+		MView("routes.IPSearch", "/users/ips/"), // TODO: .Perms("ViewIPs")?
 	)
 }
 

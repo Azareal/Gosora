@@ -85,6 +85,14 @@ func View(fname string, path string, args ...string) *RouteImpl {
 	return route(fname, path, false, false, args...)
 }
 
+func MView(fname string, path string, args ...string) *RouteImpl {
+	route := route(fname, path, false, false, args...)
+	if !route.hasBefore("SuperModOnly", "AdminOnly") {
+		route.Before("MemberOnly")
+	}
+	return route
+}
+
 func MemberView(fname string, path string, args ...string) *RouteImpl {
 	route := route(fname, path, false, false, args...)
 	if !route.hasBefore("SuperModOnly", "AdminOnly") {
@@ -138,4 +146,14 @@ func (action *uploadAction) MaxSizeVar(varName string) *RouteImpl {
 			}`)
 	action.Route.Before("NoUploadSessionMismatch")
 	return action.Route
+}
+
+type RouteSet struct {
+	Name string
+	Path string
+	Items []*RouteImpl
+}
+
+func Set(name string, path string, routes ...*RouteImpl) RouteSet {
+	return RouteSet{name, path, routes}
 }

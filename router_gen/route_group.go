@@ -1,5 +1,7 @@
 package main
 
+import "strings"
+
 type RouteGroup struct {
 	Path      string
 	RouteList []*RouteImpl
@@ -9,17 +11,17 @@ type RouteGroup struct {
 }
 
 func newRouteGroup(path string, routes ...*RouteImpl) *RouteGroup {
-	group := &RouteGroup{Path: path}
+	g := &RouteGroup{Path: path}
 	for _, route := range routes {
-		route.Parent = group
-		group.RouteList = append(group.RouteList, route)
+		route.Parent = g
+		g.RouteList = append(g.RouteList, route)
 	}
-	return group
+	return g
 }
 
-func (group *RouteGroup) Not(path ...string) *RouteSubset {
-	routes := make([]*RouteImpl, len(group.RouteList))
-	copy(routes, group.RouteList)
+func (g *RouteGroup) Not(path ...string) *RouteSubset {
+	routes := make([]*RouteImpl, len(g.RouteList))
+	copy(routes, g.RouteList)
 	for i, route := range routes {
 		if inStringList(route.Path, path) {
 			routes = append(routes[:i], routes[i+1:]...)
@@ -37,29 +39,47 @@ func inStringList(needle string, list []string) bool {
 	return false
 }
 
-func (group *RouteGroup) NoHeader() *RouteGroup {
-	group.NoHead = true
-	return group
+func (g *RouteGroup) NoHeader() *RouteGroup {
+	g.NoHead = true
+	return g
 }
 
-func (group *RouteGroup) Before(lines ...string) *RouteGroup {
+func (g *RouteGroup) Before(lines ...string) *RouteGroup {
 	for _, line := range lines {
-		group.RunBefore = append(group.RunBefore, Runnable{line, false})
+		g.RunBefore = append(g.RunBefore, Runnable{line, false})
 	}
-	return group
+	return g
 }
 
-func (group *RouteGroup) LitBefore(lines ...string) *RouteGroup {
+func (g *RouteGroup) LitBefore(lines ...string) *RouteGroup {
 	for _, line := range lines {
-		group.RunBefore = append(group.RunBefore, Runnable{line, true})
+		g.RunBefore = append(g.RunBefore, Runnable{line, true})
 	}
-	return group
+	return g
 }
 
-func (group *RouteGroup) Routes(routes ...*RouteImpl) *RouteGroup {
+/*func (g *RouteGroup) Routes(routes ...*RouteImpl) *RouteGroup {
 	for _, route := range routes {
-		route.Parent = group
-		group.RouteList = append(group.RouteList, route)
+		route.Parent = g
+		g.RouteList = append(g.RouteList, route)
 	}
-	return group
+	return g
+}*/
+
+func (g *RouteGroup) Routes(routes ...interface{}) *RouteGroup {
+	for _, route := range routes {
+		switch r := route.(type) {
+		case *RouteImpl:
+			r.Parent = g
+			g.RouteList = append(g.RouteList, r)
+		case RouteSet:
+			for _, rr := range r.Items {
+				rr.Name = r.Name + rr.Name
+				rr.Path = strings.TrimSuffix(r.Path, "/") + "/" + strings.TrimPrefix(rr.Path, "/")
+				rr.Parent = g
+				g.RouteList = append(g.RouteList, rr)
+			}
+		}
+	}
+	return g
 }

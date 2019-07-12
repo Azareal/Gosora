@@ -386,15 +386,15 @@ func NewWriterIntercept(w http.ResponseWriter) *WriterIntercept {
 var wiMaxAge = "max-age=" + strconv.Itoa(int(c.Day))
 func (writ *WriterIntercept) WriteHeader(code int) {
 	if code == 200 {
-		writ.ResponseWriter.Header().Set("Cache-Control", wiMaxAge)
-		writ.ResponseWriter.Header().Set("Vary", "Accept-Encoding")
+		h := writ.ResponseWriter.Header()
+		h.Set("Cache-Control", wiMaxAge)
+		h.Set("Vary", "Accept-Encoding")
 	}
 	writ.ResponseWriter.WriteHeader(code)
 }
 
 // HTTPSRedirect is a connection handler which redirects all HTTP requests to HTTPS
-type HTTPSRedirect struct {
-}
+type HTTPSRedirect struct {}
 
 func (red *HTTPSRedirect) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Connection", "close")
