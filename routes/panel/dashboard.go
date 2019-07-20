@@ -6,6 +6,10 @@ import (
 	"net/http"
 	"strconv"
 	"runtime"
+	"encoding/json"
+	"time"
+	"sync"
+	"sync/atomic"
 
 	c "github.com/Azareal/Gosora/common"
 	p "github.com/Azareal/Gosora/common/phrases"
@@ -73,10 +77,10 @@ func Dashboard(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError
 	if ferr != nil {
 		return ferr
 	}
-	var unknown = p.GetTmplPhrase("panel_dashboard_unknown")
+	unknown := p.GetTmplPhrase("panel_dashboard_unknown")
 
 	// We won't calculate this on the spot anymore, as the system doesn't seem to like it if we do multiple fetches simultaneously. Should we constantly calculate this on a background thread? Perhaps, the watchdog to scale back heavy features under load? One plus side is that we'd get immediate CPU percentages here instead of waiting it to kick in with WebSockets
-	var cpustr = unknown
+	cpustr := unknown
 	var cpuColour string
 
 	lessThanSwitch := func(number int, lowerBound int, midBound int) string {
@@ -105,7 +109,6 @@ func Dashboard(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError
 		} else {
 			totstr = fmt.Sprintf("%.1f", totalCount)
 		}
-
 		if usedCount > totalCount {
 			usedCount = totalCount
 		}
@@ -153,31 +156,31 @@ func Dashboard(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError
 	}
 
 	// TODO: Allow for more complex phrase structures than just suffixes
-	var postCount = extractStat(stmts.todaysPostCount)
-	var postInterval = p.GetTmplPhrase("panel_dashboard_day_suffix")
-	var postColour = greaterThanSwitch(postCount, 5, 25)
+	postCount := extractStat(stmts.todaysPostCount)
+	postInterval := p.GetTmplPhrase("panel_dashboard_day_suffix")
+	postColour := greaterThanSwitch(postCount, 5, 25)
 
-	var topicCount = extractStat(stmts.todaysTopicCount)
-	var topicInterval = p.GetTmplPhrase("panel_dashboard_day_suffix")
-	var topicColour = greaterThanSwitch(topicCount, 0, 8)
+	topicCount := extractStat(stmts.todaysTopicCount)
+	topicInterval := p.GetTmplPhrase("panel_dashboard_day_suffix")
+	topicColour := greaterThanSwitch(topicCount, 0, 8)
 
-	var reportCount = extractStat(stmts.weeklyTopicCountByForum, c.ReportForumID)
-	var reportInterval = p.GetTmplPhrase("panel_dashboard_week_suffix")
+	reportCount := extractStat(stmts.weeklyTopicCountByForum, c.ReportForumID)
+	reportInterval := p.GetTmplPhrase("panel_dashboard_week_suffix")
 
-	var newUserCount = extractStat(stmts.todaysNewUserCount)
-	var newUserInterval = p.GetTmplPhrase("panel_dashboard_week_suffix")
+	newUserCount := extractStat(stmts.todaysNewUserCount)
+	newUserInterval := p.GetTmplPhrase("panel_dashboard_week_suffix")
 
 	// Did any of the extractStats fail?
 	if intErr != nil {
 		return c.InternalError(intErr, w, r)
 	}
 
-	var grid1 = []GE{}
-	var addElem1 = func(id string, href string, body string, order int, class string, back string, textColour string, tooltip string) {
+	grid1 := []GE{}
+	addElem1 := func(id string, href string, body string, order int, class string, back string, textColour string, tooltip string) {
 		grid1 = append(grid1, GE{id,href,body,order,class,back,textColour,tooltip})
 	}
-	var gridElements = []GE{}
-	var addElem = func(id string, href string, body string, order int, class string, back string, textColour string, tooltip string) {
+	gridElements := []GE{}
+	addElem := func(id string, href string, body string, order int, class string, back string, textColour string, tooltip string) {
 		gridElements = append(gridElements, GE{id,href,body,order,class,back,textColour,tooltip})
 	}
 
@@ -190,12 +193,18 @@ func Dashboard(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError
 	addElem1("dash-ram","", p.GetTmplPhrasef("panel_dashboard_ram",ramstr), 2, "grid_istat " + ramColour, "", "", p.GetTmplPhrase("panel_dashboard_ram_desc"))
 	addElem1("dash-memused","/panel/analytics/memory/", p.GetTmplPhrasef("panel_dashboard_memused",memCount, memUnit), 2, "grid_istat", "", "", p.GetTmplPhrase("panel_dashboard_memused_desc"))
 
-	dirSize, err := c.DirSize(".")
-	if err != nil {
-		return c.InternalError(err,w,r)
-	}
-	dirFloat, unit := c.ConvertByteUnit(float64(dirSize))
-	addElem1("dash-disk","", p.GetTmplPhrasef("panel_dashboard_disk",dirFloat, unit), 2, "grid_istat", "", "", p.GetTmplPhrase("panel_dashboard_disk_desc"))
+	/*dirSize := getDirSize()
+	if dirSize.Size != 0 {
+		dirFloat, unit := c.ConvertByteUnit(float64(dirSize.Size))
+		addElem1("dash-disk","", p.GetTmplPhrasef("panel_dashboard_disk", dirFloat, unit), 2, "grid_istat", "", "", p.GetTmplPhrase("panel_dashboard_disk_desc"))
+		dur := time.Since(dirSize.Time)
+		if dur.Seconds() > 3 {
+			startDirSizeTask()
+		}
+	} else {
+		addElem1("dash-disk","", p.GetTmplPhrase("panel_dashboard_disk_unknown"), 2, "grid_istat", "", "", p.GetTmplPhrase("panel_dashboard_disk_desc"))
+		startDirSizeTask()
+	}*/
 
 	if c.EnableWebsockets {
 		uonline := c.WsHub.UserCount()
@@ -203,9 +212,9 @@ func Dashboard(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError
 		totonline := uonline + gonline
 		//reqCount := 0
 
-		var onlineColour = greaterThanSwitch(totonline, 3, 10)
-		var onlineGuestsColour = greaterThanSwitch(gonline, 1, 10)
-		var onlineUsersColour = greaterThanSwitch(uonline, 1, 5)
+		onlineColour := greaterThanSwitch(totonline, 3, 10)
+		onlineGuestsColour := greaterThanSwitch(gonline, 1, 10)
+		onlineUsersColour := greaterThanSwitch(uonline, 1, 5)
 
 		totonline, totunit := c.ConvertFriendlyUnit(totonline)
 		uonline, uunit := c.ConvertFriendlyUnit(uonline)
@@ -232,4 +241,54 @@ func Dashboard(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError
 	}
 
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_dashboard_right","","panel_dashboard", c.DashGrids{grid1,gridElements}})
+}
+
+type dirSize struct {
+	Size int
+	Time time.Time
+}
+
+func init() {
+	cachedDirSize.Store(dirSize{0,time.Now()})
+}
+var cachedDirSize atomic.Value
+var dstMu sync.Mutex
+var dstMuGuess = 0
+func startDirSizeTask() {
+	if dstMuGuess==1 {
+		return
+	}
+	dstMu.Lock()
+	dstMuGuess = 1
+	go func() {
+		defer func () {
+			dstMuGuess = 0
+			dstMu.Unlock()
+		}()
+		dDirSize, err := c.DirSize(".")
+		if err != nil {
+			c.LogWarning(err)
+		}
+		cachedDirSize.Store(dirSize{dDirSize,time.Now()})
+	}()
+}
+
+func getDirSize() dirSize {
+	return cachedDirSize.Load().(dirSize)
+}
+
+type StatsDiskJson struct {
+	Total string `json:"total"`
+}
+
+func StatsDisk(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
+	dirSize := getDirSize()
+	dirFloat, unit := c.ConvertByteUnit(float64(dirSize.Size))
+	u := p.GetTmplPhrasef("unit", dirFloat, unit)
+	oBytes, err := json.Marshal(StatsDiskJson{u})
+	if err != nil {
+		return c.InternalErrorJS(err,w,r)
+	}
+	w.Write(oBytes)
+	return nil
 }
