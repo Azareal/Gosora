@@ -2290,8 +2290,9 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 			gzw, ok := w.(c.GzipResponseWriter)
 			if ok {
 				w = gzw.ResponseWriter
-				w.Header().Del("Content-Type")
-				w.Header().Del("Content-Encoding")
+				h := w.Header()
+				h.Del("Content-Type")
+				h.Del("Content-Encoding")
 			}
 			counters.RouteViewCounter.Bump(142)
 			req.URL.Path += extraData
@@ -2306,8 +2307,14 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					counters.RouteViewCounter.Bump(144)
 					return routes.RobotsTxt(w,req)
 				case "favicon.ico":
-					req.URL.Path = "/static"+req.URL.Path+extraData
-					//log.Print("req.URL.Path: ",req.URL.Path)
+					gzw, ok := w.(c.GzipResponseWriter)
+					if ok {
+						w = gzw.ResponseWriter
+						h := w.Header()
+						h.Del("Content-Type")
+						h.Del("Content-Encoding")
+					}
+					req.URL.Path = "/static/favicon.ico"
 					routes.StaticFile(w,req)
 					return nil
 				case "opensearch.xml":

@@ -20,7 +20,7 @@ var cacheControlMaxAgeWeek = "max-age=" + strconv.Itoa(int(c.Week)) // TODO: Mak
 func StaticFile(w http.ResponseWriter, r *http.Request) {
 	file, ok := c.StaticFiles.Get(r.URL.Path)
 	if !ok {
-		c.DebugLogf("Failed to find '%s'", r.URL.Path) // TODO: Use MicroNotFound? Might be better than the unneccessary overhead of sprintf
+		//c.DebugLogf("Failed to find '%s'", r.URL.Path) // TODO: Use MicroNotFound? Might be better than the unneccessary overhead of sprintf
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
@@ -43,7 +43,7 @@ func StaticFile(w http.ResponseWriter, r *http.Request) {
 
 	if strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") && file.GzipLength > 0 {
 		h.Set("Content-Encoding", "gzip")
-		h.Set("Content-Length", strconv.FormatInt(file.GzipLength, 10))
+		h.Set("Content-Length", file.StrGzipLength)
 		io.Copy(w, bytes.NewReader(file.GzipData)) // Use w.Write instead?
 	} else {
 		h.Set("Content-Length", strconv.FormatInt(file.Length, 10)) // Avoid doing a type conversion every time?
