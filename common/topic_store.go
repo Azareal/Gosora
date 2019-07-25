@@ -137,9 +137,9 @@ func (s *DefaultTopicStore) BulkGetMap(ids []int) (list map[int]*Topic, err erro
 
 	// TODO: Add a function for the qlist stuff
 	var qlist string
-	var idList []interface{}
-	for _, id := range ids {
-		idList = append(idList, strconv.Itoa(id))
+	idList := make([]interface{},len(ids))
+	for i, id := range ids {
+		idList[i] = strconv.Itoa(id)
 		qlist += "?,"
 	}
 	qlist = qlist[0 : len(qlist)-1]

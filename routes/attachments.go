@@ -35,11 +35,11 @@ func ShowAttachment(w http.ResponseWriter, r *http.Request, user c.User, filenam
 		return c.LocalError("Bad extension", w, r, user)
 	}
 
-	sectionID, err := strconv.Atoi(r.FormValue("sectionID"))
+	sectionID, err := strconv.Atoi(r.FormValue("sid"))
 	if err != nil {
 		return c.LocalError("The sectionID is not an integer", w, r, user)
 	}
-	var sectionTable = r.FormValue("sectionType")
+	sectionTable := r.FormValue("stype")
 
 	var originTable string
 	var originID, uploadedBy int

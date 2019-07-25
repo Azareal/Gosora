@@ -141,7 +141,7 @@ func (store *DefaultUserStore) GetOffset(offset int, perPage int) (users []*User
 
 // TODO: Optimise the query to avoid preparing it on the spot? Maybe, use knowledge of the most common IN() parameter counts?
 // TODO: ID of 0 should always error?
-func (mus *DefaultUserStore) BulkGetMap(ids []int) (list map[int]*User, err error) {
+func (s *DefaultUserStore) BulkGetMap(ids []int) (list map[int]*User, err error) {
 	var idCount = len(ids)
 	list = make(map[int]*User)
 	if idCount == 0 {
@@ -149,7 +149,7 @@ func (mus *DefaultUserStore) BulkGetMap(ids []int) (list map[int]*User, err erro
 	}
 
 	var stillHere []int
-	sliceList := mus.cache.BulkGet(ids)
+	sliceList := s.cache.BulkGet(ids)
 	if len(sliceList) > 0 {
 		for i, sliceItem := range sliceList {
 			if sliceItem != nil {
@@ -165,19 +165,19 @@ func (mus *DefaultUserStore) BulkGetMap(ids []int) (list map[int]*User, err erro
 	if len(ids) == 0 {
 		return list, nil
 	} else if len(ids) == 1 {
-		topic, err := mus.Get(ids[0])
+		user, err := s.Get(ids[0])
 		if err != nil {
 			return list, err
 		}
-		list[topic.ID] = topic
+		list[user.ID] = user
 		return list, nil
 	}
 
 	// TODO: Add a function for the qlist stuff
 	var qlist string
-	var idList []interface{}
-	for _, id := range ids {
-		idList = append(idList, strconv.Itoa(id))
+	idList := make([]interface{},len(ids))
+	for i, id := range ids {
+		idList[i] = strconv.Itoa(id)
 		qlist += "?,"
 	}
 	qlist = qlist[0 : len(qlist)-1]
@@ -189,14 +189,14 @@ func (mus *DefaultUserStore) BulkGetMap(ids []int) (list map[int]*User, err erro
 	defer rows.Close()
 
 	for rows.Next() {
-		user := &User{Loggedin: true}
-		err := rows.Scan(&user.ID, &user.Name, &user.Group, &user.Active, &user.IsSuperAdmin, &user.Session, &user.Email, &user.RawAvatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Liked, &user.LastIP, &user.TempGroup)
+		u := &User{Loggedin: true}
+		err := rows.Scan(&u.ID, &u.Name, &u.Group, &u.Active, &u.IsSuperAdmin, &u.Session, &u.Email, &u.RawAvatar, &u.Message, &u.URLPrefix, &u.URLName, &u.Level, &u.Score, &u.Liked, &u.LastIP, &u.TempGroup)
 		if err != nil {
 			return list, err
 		}
-		user.Init()
-		mus.cache.Set(user)
-		list[user.ID] = user
+		u.Init()
+		s.cache.Set(u)
+		list[u.ID] = u
 	}
 	err = rows.Err()
 	if err != nil {

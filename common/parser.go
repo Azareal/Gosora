@@ -610,14 +610,14 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 
 				// TODO: Reduce the amount of code duplication
 				if media.Type == "attach" {
-					addImage(media.URL + "?sectionID=" + strconv.Itoa(sectionID) + "&amp;sectionType=" + sectionType)
+					addImage(media.URL + "?sid=" + strconv.Itoa(sectionID) + "&amp;stype=" + sectionType)
 					continue
 				} else if media.Type == "image" {
 					addImage(media.URL)
 					continue
 				} else if media.Type == "aother" {
 					sb.Write(attachOpen)
-					sb.WriteString(media.URL + "?sectionID=" + strconv.Itoa(sectionID) + "&amp;sectionType=" + sectionType)
+					sb.WriteString(media.URL + "?sid=" + strconv.Itoa(sectionID) + "&amp;stype=" + sectionType)
 					sb.Write(attachClose)
 					i += urlLen
 					lastItem = i

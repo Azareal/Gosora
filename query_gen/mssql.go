@@ -1093,8 +1093,7 @@ func (adapter *MssqlAdapter) SimpleCount(name string, table string, where string
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
-
-	var querystr = "SELECT COUNT(*) AS [count] FROM [" + table + "]"
+	var querystr = "SELECT COUNT(*) FROM [" + table + "]"
 
 	// TODO: Add support for BETWEEN x.x
 	if len(where) != 0 {
