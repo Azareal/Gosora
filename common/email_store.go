@@ -1,7 +1,10 @@
 package common
 
-import "database/sql"
-import "github.com/Azareal/Gosora/query_gen"
+import (
+	"database/sql"
+
+	qgen "github.com/Azareal/Gosora/query_gen"
+)
 
 var Emails EmailStore
 
@@ -24,9 +27,9 @@ func NewDefaultEmailStore(acc *qgen.Accumulator) (*DefaultEmailStore, error) {
 	}, acc.FirstError()
 }
 
-func (store *DefaultEmailStore) GetEmailsByUser(user *User) (emails []Email, err error) {
+func (s *DefaultEmailStore) GetEmailsByUser(user *User) (emails []Email, err error) {
 	email := Email{UserID: user.ID}
-	rows, err := store.getEmailsByUser.Query(user.ID)
+	rows, err := s.getEmailsByUser.Query(user.ID)
 	if err != nil {
 		return emails, err
 	}
@@ -46,7 +49,7 @@ func (store *DefaultEmailStore) GetEmailsByUser(user *User) (emails []Email, err
 	return emails, rows.Err()
 }
 
-func (store *DefaultEmailStore) VerifyEmail(email string) error {
-	_, err := store.verifyEmail.Exec(email)
+func (s *DefaultEmailStore) VerifyEmail(email string) error {
+	_, err := s.verifyEmail.Exec(email)
 	return err
 }

@@ -5,7 +5,7 @@ import (
 	"errors"
 	"strconv"
 
-	"github.com/Azareal/Gosora/query_gen"
+	qgen "github.com/Azareal/Gosora/query_gen"
 )
 
 // TODO: Make the default report forum ID configurable
@@ -33,9 +33,9 @@ func NewDefaultReportStore(acc *qgen.Accumulator) (*DefaultReportStore, error) {
 }
 
 // ! There's a data race in this. If two users report one item at the exact same time, then both reports will go through
-func (store *DefaultReportStore) Create(title string, content string, user *User, itemType string, itemID int) (int, error) {
+func (s *DefaultReportStore) Create(title string, content string, user *User, itemType string, itemID int) (int, error) {
 	var count int
-	err := store.exists.QueryRow(itemType + "_" + strconv.Itoa(itemID)).Scan(&count)
+	err := s.exists.QueryRow(itemType+"_"+strconv.Itoa(itemID), ReportForumID).Scan(&count)
 	if err != nil && err != sql.ErrNoRows {
 		return 0, err
 	}
@@ -43,7 +43,7 @@ func (store *DefaultReportStore) Create(title string, content string, user *User
 		return 0, ErrAlreadyReported
 	}
 
-	res, err := store.create.Exec(title, content, ParseMessage(content, 0, ""), user.LastIP, user.ID, user.ID, itemType+"_"+strconv.Itoa(itemID), ReportForumID)
+	res, err := s.create.Exec(title, content, ParseMessage(content, 0, ""), user.LastIP, user.ID, user.ID, itemType+"_"+strconv.Itoa(itemID), ReportForumID)
 	if err != nil {
 		return 0, err
 	}

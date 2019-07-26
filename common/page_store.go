@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Azareal/Gosora/query_gen"
+	qgen "github.com/Azareal/Gosora/query_gen"
 )
 
 type CustomPageStmts struct {
@@ -121,28 +121,28 @@ func (s *DefaultPageStore) parseAllowedGroups(raw string, page *CustomPage) erro
 	return nil
 }
 
-func (store *DefaultPageStore) Get(id int) (*CustomPage, error) {
+func (s *DefaultPageStore) Get(id int) (*CustomPage, error) {
 	page := &CustomPage{ID: id}
 	rawAllowedGroups := ""
-	err := store.get.QueryRow(id).Scan(&page.Name, &page.Title, &page.Body, &rawAllowedGroups, &page.MenuID)
+	err := s.get.QueryRow(id).Scan(&page.Name, &page.Title, &page.Body, &rawAllowedGroups, &page.MenuID)
 	if err != nil {
 		return nil, err
 	}
-	return page, store.parseAllowedGroups(rawAllowedGroups, page)
+	return page, s.parseAllowedGroups(rawAllowedGroups, page)
 }
 
-func (store *DefaultPageStore) GetByName(name string) (*CustomPage, error) {
+func (s *DefaultPageStore) GetByName(name string) (*CustomPage, error) {
 	page := BlankCustomPage()
 	rawAllowedGroups := ""
-	err := store.getByName.QueryRow(name).Scan(&page.ID, &page.Name, &page.Title, &page.Body, &rawAllowedGroups, &page.MenuID)
+	err := s.getByName.QueryRow(name).Scan(&page.ID, &page.Name, &page.Title, &page.Body, &rawAllowedGroups, &page.MenuID)
 	if err != nil {
 		return nil, err
 	}
-	return page, store.parseAllowedGroups(rawAllowedGroups, page)
+	return page, s.parseAllowedGroups(rawAllowedGroups, page)
 }
 
-func (store *DefaultPageStore) GetOffset(offset int, perPage int) (pages []*CustomPage, err error) {
-	rows, err := store.getOffset.Query(offset, perPage)
+func (s *DefaultPageStore) GetOffset(offset int, perPage int) (pages []*CustomPage, err error) {
+	rows, err := s.getOffset.Query(offset, perPage)
 	if err != nil {
 		return pages, err
 	}
@@ -155,7 +155,7 @@ func (store *DefaultPageStore) GetOffset(offset int, perPage int) (pages []*Cust
 		if err != nil {
 			return pages, err
 		}
-		err = store.parseAllowedGroups(rawAllowedGroups, page)
+		err = s.parseAllowedGroups(rawAllowedGroups, page)
 		if err != nil {
 			return pages, err
 		}
@@ -165,11 +165,11 @@ func (store *DefaultPageStore) GetOffset(offset int, perPage int) (pages []*Cust
 }
 
 // Always returns nil as there's currently no cache
-func (store *DefaultPageStore) Reload(id int) error {
+func (s *DefaultPageStore) Reload(id int) error {
 	return nil
 }
 
-func (store *DefaultPageStore) Delete(id int) error {
-	_, err := store.delete.Exec(id)
+func (s *DefaultPageStore) Delete(id int) error {
+	_, err := s.delete.Exec(id)
 	return err
 }
