@@ -57,8 +57,7 @@ var wolLastUsers []*User
 func wolTick(widget *Widget) error {
 	w := httptest.NewRecorder()
 	users, ucount := wolGetUsers()
-
-	var inOld = func(id int) bool {
+	inOld := func(id int) bool {
 		for _, user := range wolLastUsers {
 			if id == user.ID {
 				return true

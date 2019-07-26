@@ -283,6 +283,23 @@ type ResetPage struct {
 	MFA   bool
 }
 
+type ConvoListPage struct {
+	*Header
+	Convos []*Conversation
+	Paginator
+}
+
+type ConvoViewPage struct {
+	*Header
+	Posts []*ConversationPost
+	Paginator
+}
+
+type ConvoCreatePage struct {
+	*Header
+	RecpName string
+}
+
 /* WIP for dyntmpl */
 type Panel struct {
 	*BasePanelPage

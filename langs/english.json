@@ -143,6 +143,8 @@
 		"account_logins":"Logins",
 		"account_penalties":"Penalties",
 		"account_level_list":"Level Progress",
+		"convos_head":"Conversations",
+		"convo_head":"Conversation",
 
 		"panel_dashboard":"Control Panel Dashboard",
 		"panel_forums":"Forum Manager",
@@ -328,6 +330,7 @@
 
 	"TmplPhrases": {
 		"pipe":"|",
+		"unit":"%.1f%s",
 
 		"menu_forums":"Forums",
 		"menu_topics":"Topics",
@@ -492,6 +495,7 @@
 		"account_menu_notifications":"Notifications",
 		"account_menu_logins":"Logins",
 		"account_menu_penalties":"Penalties",
+		"account_menu_messages":"Messages",
 
 		"account_coming_soon":"Coming Soon",
 
@@ -529,6 +533,11 @@
 		"account_logins_head":"Logins",
 		"account_logins_success":"Successful Login",
 		"account_logins_failure":"Failed Login",
+
+		"convos_head":"Conversations",
+		"convo_head":"Conversation",
+		"create_convo_head":"Create Conversation",
+		"create_convo_button":"Create Convo",
 
 		"areyousure_head":"Are you sure?",
 		"areyousure_continue":"Continue",
@@ -681,6 +690,7 @@
 		"paginator.next_page_aria":"Go to the next page",
 
 		"profile_login_for_options":"Login for options",
+		"profile_send_message":"Send Message",
 		"profile_add_friend":"Add Friend",
 		"profile_unban":"Unban",
 		"profile_ban":"Ban",
@@ -768,6 +778,7 @@
 		"panel_dashboard_memused":"Mem: %.1f%s",
 		"panel_dashboard_memused_desc":"The amount of memory likely being used by this instance",
 		"panel_dashboard_disk":"Disk: %.1f%s",
+		"panel_dashboard_disk_unknown":"Disk: ??",
 		"panel_dashboard_disk_desc":"The amount of disk space being used by this instance",
 		"panel_dashboard_online": "%d%s online",
 		"panel_dashboard_online_desc":"The number of people who are currently online",

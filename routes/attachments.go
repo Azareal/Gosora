@@ -30,7 +30,7 @@ func init() {
 
 func ShowAttachment(w http.ResponseWriter, r *http.Request, user c.User, filename string) c.RouteError {
 	filename = c.Stripslashes(filename)
-	var ext = filepath.Ext("./attachs/" + filename)
+	ext := filepath.Ext("./attachs/" + filename)
 	if !c.AllowedFileExts.Contains(strings.TrimPrefix(ext, ".")) {
 		return c.LocalError("Bad extension", w, r, user)
 	}

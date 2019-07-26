@@ -23,38 +23,38 @@ func NewDefaultMenuStore() *DefaultMenuStore {
 }
 
 // TODO: Add actual support for multiple menus
-func (store *DefaultMenuStore) GetAllMap() (out map[int]*MenuListHolder) {
+func (s *DefaultMenuStore) GetAllMap() (out map[int]*MenuListHolder) {
 	out = make(map[int]*MenuListHolder)
-	for mid, atom := range store.menus {
+	for mid, atom := range s.menus {
 		out[mid] = atom.Load().(*MenuListHolder)
 	}
 	return out
 }
 
-func (store *DefaultMenuStore) Get(mid int) (*MenuListHolder, error) {
-	aStore, ok := store.menus[mid]
+func (s *DefaultMenuStore) Get(mid int) (*MenuListHolder, error) {
+	aStore, ok := s.menus[mid]
 	if ok {
 		return aStore.Load().(*MenuListHolder), nil
 	}
 	return nil, ErrNoRows
 }
 
-func (store *DefaultMenuStore) Items(mid int) (mlist MenuItemList, err error) {
+func (s *DefaultMenuStore) Items(mid int) (mlist MenuItemList, err error) {
 	err = qgen.NewAcc().Select("menu_items").Columns("miid, name, htmlID, cssClass, position, path, aria, tooltip, order, tmplName, guestOnly, memberOnly, staffOnly, adminOnly").Where("mid = " + strconv.Itoa(mid)).Orderby("order ASC").Each(func(rows *sql.Rows) error {
-		var mitem = MenuItem{MenuID: mid}
-		err := rows.Scan(&mitem.ID, &mitem.Name, &mitem.HTMLID, &mitem.CSSClass, &mitem.Position, &mitem.Path, &mitem.Aria, &mitem.Tooltip, &mitem.Order, &mitem.TmplName, &mitem.GuestOnly, &mitem.MemberOnly, &mitem.SuperModOnly, &mitem.AdminOnly)
+		i := MenuItem{MenuID: mid}
+		err := rows.Scan(&i.ID, &i.Name, &i.HTMLID, &i.CSSClass, &i.Position, &i.Path, &i.Aria, &i.Tooltip, &i.Order, &i.TmplName, &i.GuestOnly, &i.MemberOnly, &i.SuperModOnly, &i.AdminOnly)
 		if err != nil {
 			return err
 		}
-		store.itemStore.Add(mitem)
-		mlist = append(mlist, mitem)
+		s.itemStore.Add(i)
+		mlist = append(mlist, i)
 		return nil
 	})
 	return mlist, err
 }
 
-func (store *DefaultMenuStore) Load(mid int) error {
-	mlist, err := store.Items(mid)
+func (s *DefaultMenuStore) Load(mid int) error {
+	mlist, err := s.Items(mid)
 	if err != nil {
 		return err
 	}
@@ -64,12 +64,12 @@ func (store *DefaultMenuStore) Load(mid int) error {
 		return err
 	}
 
-	var aStore = &atomic.Value{}
+	aStore := &atomic.Value{}
 	aStore.Store(hold)
-	store.menus[mid] = aStore
+	s.menus[mid] = aStore
 	return nil
 }
 
-func (store *DefaultMenuStore) ItemStore() *DefaultMenuItemStore {
-	return store.itemStore
+func (s *DefaultMenuStore) ItemStore() *DefaultMenuItemStore {
+	return s.itemStore
 }

@@ -1,0 +1,19 @@
+<div class="colstack_item colstack_head rowhead">
+	<div class="rowitem">
+		<h1>{{lang "create_convo_head"}}</h1>
+	</div>
+</div>
+<div class="colstack_item the_form">
+	<form action="/user/convos/create/submit/?session={{.CurrentUser.Session}}" method="post">
+		<div class="formrow real_first_child">
+			<div class="formitem formlabel"><a>Recipient/s</a></div>
+			<div class="formitem"><input name="recp" type="text"{{if .RecpName}} value="{{.RecpName}}"{{end}} /></div>
+		</div>
+		<div class="formrow">
+			<div class="formitem"><textarea name="body"></textarea></div>
+		</div>
+		<div class="formrow">
+			<div class="formitem"><button name="panel-button" class="formbutton form_middle_button">{{lang "create_convo_button"}}</button></div>
+		</div>
+	</form>
+</div>

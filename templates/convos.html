@@ -1,0 +1,17 @@
+<div class="colstack_item colstack_head rowhead">
+	<div class="rowitem">
+		<h1>{{lang "convos_head"}}</h1>
+		<h2>Create Convo</h2>
+	</div>
+</div>
+<div class="colstack_item">
+	{{range .Convos}}
+	<div class="rowitem">
+		<span class="to_left">
+			<a href="/user/convo/{{.ID}}">Message</a>
+		</span>
+		<span title="{{abstime .LastReplyAt}}" class="to_right">{{reltime .LastReplyAt}}</span>
+	</div>{{end}}
+	<div style="clear:both;"></div>
+</div>
+{{template "paginator.html" . }}

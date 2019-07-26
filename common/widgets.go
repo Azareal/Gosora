@@ -11,6 +11,7 @@ import (
 	"sync/atomic"
 
 	min "github.com/Azareal/Gosora/common/templates"
+	"github.com/pkg/errors"
 )
 
 // TODO: Clean this file up
@@ -292,12 +293,12 @@ func releaseWidgets(widgets []*Widget) {
 
 // TODO: Use atomics
 func setDock(dock string, widgets []*Widget) {
-	var dockHandle = func(dockWidgets []*Widget) {
+	dockHandle := func(dockWidgets []*Widget) {
 		widgetUpdateMutex.Lock()
 		DebugLog(dock, widgets)
 		releaseWidgets(dockWidgets)
 	}
-	var dockHandle2 = func(dockWidgets WidgetDock) WidgetDock {
+	dockHandle2 := func(dockWidgets WidgetDock) WidgetDock {
 		dockHandle(dockWidgets.Items)
 		if dockWidgets.Scheduler == nil {
 			dockWidgets.Scheduler = &WidgetScheduler{}
@@ -335,23 +336,23 @@ type WidgetScheduler struct {
 	store   atomic.Value
 }
 
-func (schedule *WidgetScheduler) Add(widget *Widget) {
-	schedule.widgets = append(schedule.widgets, widget)
+func (s *WidgetScheduler) Add(widget *Widget) {
+	s.widgets = append(s.widgets, widget)
 }
 
-func (schedule *WidgetScheduler) Store() {
-	schedule.store.Store(schedule.widgets)
+func (s *WidgetScheduler) Store() {
+	s.store.Store(s.widgets)
 }
 
-func (schedule *WidgetScheduler) Tick() error {
-	widgets := schedule.store.Load().([]*Widget)
+func (s *WidgetScheduler) Tick() error {
+	widgets := s.store.Load().([]*Widget)
 	for _, widget := range widgets {
 		if widget.TickFunc == nil {
 			continue
 		}
 		err := widget.TickFunc(widget)
 		if err != nil {
-			return err
+			return errors.WithStack(err)
 		}
 	}
 	return nil

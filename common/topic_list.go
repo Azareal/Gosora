@@ -60,10 +60,9 @@ func (tList *DefaultTopicList) Tick() error {
 	}
 	//fmt.Println("building topic list")
 
-	var oddLists = make(map[int]*TopicListHolder)
-	var evenLists = make(map[int]*TopicListHolder)
-
-	var addList = func(gid int, holder *TopicListHolder) {
+	oddLists := make(map[int]*TopicListHolder)
+	evenLists := make(map[int]*TopicListHolder)
+	addList := func(gid int, holder *TopicListHolder) {
 		if gid%2 == 0 {
 			evenLists[gid] = holder
 		} else {
@@ -76,15 +75,15 @@ func (tList *DefaultTopicList) Tick() error {
 		return err
 	}
 
-	var gidToCanSee = make(map[int]string)
-	var permTree = make(map[string][]int) // [string(canSee)]canSee
+	gidToCanSee := make(map[int]string)
+	permTree := make(map[string][]int) // [string(canSee)]canSee
 	for _, group := range allGroups {
 		// ? - Move the user count check to instance initialisation? Might require more book-keeping, particularly when a user moves into a zero user group
 		if group.UserCount == 0 && group.ID != GuestUser.Group {
 			continue
 		}
 
-		var canSee = make([]byte, len(group.CanSee))
+		canSee := make([]byte, len(group.CanSee))
 		for i, item := range group.CanSee {
 			canSee[i] = byte(item)
 		}
@@ -96,7 +95,7 @@ func (tList *DefaultTopicList) Tick() error {
 		gidToCanSee[group.ID] = sCanSee
 	}
 
-	var canSeeHolders = make(map[string]*TopicListHolder)
+	canSeeHolders := make(map[string]*TopicListHolder)
 	for name, canSee := range permTree {
 		topicList, forumList, paginator, err := tList.GetListByCanSee(canSee, 1, "", nil)
 		if err != nil {
