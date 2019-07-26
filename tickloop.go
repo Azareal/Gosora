@@ -23,7 +23,7 @@ func runTasks(tasks []func() error) {
 }
 
 func startTick() (abort bool) {
-	var isDBDown = atomic.LoadInt32(&c.IsDBDown)
+	isDBDown := atomic.LoadInt32(&c.IsDBDown)
 	err := db.Ping()
 	if err != nil {
 		// TODO: There's a bit of a race here, but it doesn't matter if this error appears multiple times in the logs as it's capped at three times, we just want to cut it down 99% of the time
@@ -58,8 +58,7 @@ func tickLoop(thumbChan chan bool) {
 		c.LogError(err)
 	}
 	lastDaily, _ := strconv.ParseInt(lastDailyStr, 10, 64)
-	now := time.Now().Unix()
-	low := now - (60 * 60 * 24)
+	low := time.Now().Unix() - (60 * 60 * 24)
 	if lastDaily < low {
 		dailies()
 	}

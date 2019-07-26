@@ -3,8 +3,8 @@ package common
 import "sync"
 
 type DefaultMenuItemStore struct {
-	items    map[int]MenuItem
-	itemLock sync.RWMutex
+	items map[int]MenuItem
+	lock  sync.RWMutex
 }
 
 func NewDefaultMenuItemStore() *DefaultMenuItemStore {
@@ -13,16 +13,16 @@ func NewDefaultMenuItemStore() *DefaultMenuItemStore {
 	}
 }
 
-func (store *DefaultMenuItemStore) Add(item MenuItem) {
-	store.itemLock.Lock()
-	defer store.itemLock.Unlock()
-	store.items[item.ID] = item
+func (s *DefaultMenuItemStore) Add(item MenuItem) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	s.items[item.ID] = item
 }
 
-func (store *DefaultMenuItemStore) Get(id int) (MenuItem, error) {
-	store.itemLock.RLock()
-	item, ok := store.items[id]
-	store.itemLock.RUnlock()
+func (s *DefaultMenuItemStore) Get(id int) (MenuItem, error) {
+	s.lock.RLock()
+	item, ok := s.items[id]
+	s.lock.RUnlock()
 	if ok {
 		return item, nil
 	}

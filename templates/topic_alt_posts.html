@@ -31,14 +31,14 @@
 		<div class="controls button_container{{if .LikeCount}} has_likes{{end}}">
 			<div class="action_button_left">
 			{{if $.CurrentUser.Loggedin}}
-				{{if $.CurrentUser.Perms.LikeItem}}<a href="/reply/like/submit/{{.ID}}?session={{$.CurrentUser.Session}}" class="action_button like_item {{if .Liked}}remove{{else}}add{{end}}_like" aria-label="{{lang "topic.post_like_aria"}}" data-action="like"></a>{{end}}
+				{{if $.CurrentUser.Perms.LikeItem}}<a href="/reply/like/submit/{{.ID}}?s={{$.CurrentUser.Session}}" class="action_button like_item {{if .Liked}}remove{{else}}add{{end}}_like" aria-label="{{lang "topic.post_like_aria"}}" data-action="like"></a>{{end}}
 				<a href="" class="action_button quote_item" aria-label="{{lang "topic.quote_aria"}}" data-action="quote"></a>
 				{{if not $.Topic.IsClosed or $.CurrentUser.Perms.CloseTopic}}
-				{{if $.CurrentUser.Perms.EditReply}}<a href="/reply/edit/submit/{{.ID}}?session={{$.CurrentUser.Session}}" class="action_button edit_item" aria-label="{{lang "topic.post_edit_aria"}}" data-action="edit"></a>{{end}}
+				{{if $.CurrentUser.Perms.EditReply}}<a href="/reply/edit/submit/{{.ID}}?s={{$.CurrentUser.Session}}" class="action_button edit_item" aria-label="{{lang "topic.post_edit_aria"}}" data-action="edit"></a>{{end}}
 				{{end}}
-				{{if $.CurrentUser.Perms.DeleteReply}}<a href="/reply/delete/submit/{{.ID}}?session={{$.CurrentUser.Session}}" class="action_button delete_item" aria-label="{{lang "topic.post_delete_aria"}}" data-action="delete"></a>{{end}}
+				{{if $.CurrentUser.Perms.DeleteReply}}<a href="/reply/delete/submit/{{.ID}}?s={{$.CurrentUser.Session}}" class="action_button delete_item" aria-label="{{lang "topic.post_delete_aria"}}" data-action="delete"></a>{{end}}
 				{{if $.CurrentUser.Perms.ViewIPs}}<a href="/users/ips/?ip={{.IPAddress}}" title="{{lang "topic.ip_full_tooltip"}}" class="action_button ip_item_button hide_on_big" aria-label="{{lang "topic.ip_full_aria"}}" data-action="ip"></a>{{end}}
-				<a href="/report/submit/{{.ID}}?session={{$.CurrentUser.Session}}&amp;type=reply" class="action_button report_item" aria-label="{{lang "topic.report_aria"}}" data-action="report"></a>
+				<a href="/report/submit/{{.ID}}?s={{$.CurrentUser.Session}}&amp;type=reply" class="action_button report_item" aria-label="{{lang "topic.report_aria"}}" data-action="report"></a>
 				<a href="#" class="action_button button_menu"></a>
 			{{end}}
 			</div>

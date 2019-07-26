@@ -470,7 +470,7 @@ func NoSessionMismatch(w http.ResponseWriter, r *http.Request, user User) RouteE
 	if err != nil {
 		return LocalError("Bad Form", w, r, user)
 	}
-	if r.FormValue("session") != user.Session {
+	if r.FormValue("session") != user.Session && r.FormValue("s") != user.Session {
 		return SecurityError(w, r, user)
 	}
 	return nil
@@ -496,7 +496,7 @@ func HandleUploadRoute(w http.ResponseWriter, r *http.Request, user User, maxFil
 }
 
 func NoUploadSessionMismatch(w http.ResponseWriter, r *http.Request, user User) RouteError {
-	if r.FormValue("session") != user.Session {
+	if r.FormValue("session") != user.Session && r.FormValue("s") != user.Session {
 		return SecurityError(w, r, user)
 	}
 	return nil

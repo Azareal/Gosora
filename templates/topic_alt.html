@@ -16,7 +16,7 @@
 		{{if .CurrentUser.Loggedin}}
 		{{if not .Topic.IsClosed or .CurrentUser.Perms.CloseTopic}}
 		{{if .CurrentUser.Perms.EditTopic}}
-		<form id="edit_topic_form" action='/topic/edit/submit/{{.Topic.ID}}?session={{.CurrentUser.Session}}' method="post"></form>
+		<form id="edit_topic_form" action='/topic/edit/submit/{{.Topic.ID}}?s={{.CurrentUser.Session}}' method="post"></form>
 		<input form="edit_topic_form" class='show_on_edit topic_name_input' name="topic_name" value='{{.Topic.Title}}' type="text" aria-label="{{lang "topic.title_input_aria"}}" />
 		<button form="edit_topic_form" name="topic-button" class="formbutton show_on_edit submit_edit">{{lang "topic.update_button"}}</button>
 		{{end}}
@@ -29,7 +29,7 @@
 </div>
 
 <div class="rowblock post_container">
-	{{if .Poll.ID}}<form id="poll_{{.Poll.ID}}_form" action="/poll/vote/{{.Poll.ID}}?session={{.CurrentUser.Session}}" method="post"></form>
+	{{if .Poll.ID}}<form id="poll_{{.Poll.ID}}_form" action="/poll/vote/{{.Poll.ID}}?s={{.CurrentUser.Session}}" method="post"></form>
 	<article class="rowitem passive deletable_block editable_parent post_item poll_item top_post hide_on_edit">
 		{{template "topic_alt_userinfo.html" .Topic }}
 		<div id="poll_voter_{{.Poll.ID}}" class="content_container poll_voter">
@@ -85,18 +85,18 @@
 			<div class="controls button_container{{if .Topic.LikeCount}} has_likes{{end}}">
 				<div class="action_button_left">
 				{{if .CurrentUser.Loggedin}}
-					{{if .CurrentUser.Perms.LikeItem}}<a href="/topic/like/submit/{{.Topic.ID}}?session={{.CurrentUser.Session}}" class="action_button like_item {{if .Topic.Liked}}remove{{else}}add{{end}}_like" aria-label="{{lang "topic.like_aria"}}" data-action="like"></a>{{end}}
+					{{if .CurrentUser.Perms.LikeItem}}<a href="/topic/like/submit/{{.Topic.ID}}?s={{.CurrentUser.Session}}" class="action_button like_item {{if .Topic.Liked}}remove{{else}}add{{end}}_like" aria-label="{{lang "topic.like_aria"}}" data-action="like"></a>{{end}}
 					<a href="" class="action_button quote_item" aria-label="{{lang "topic.quote_aria"}}" data-action="quote"></a>
 					{{if not .Topic.IsClosed or .CurrentUser.Perms.CloseTopic}}
 					{{if .CurrentUser.Perms.EditTopic}}<a href="/topic/edit/{{.Topic.ID}}" class="action_button open_edit" aria-label="{{lang "topic.edit_aria"}}" data-action="edit"></a>{{end}}
 					{{end}}
-					{{if .CurrentUser.Perms.DeleteTopic}}<a href="/topic/delete/submit/{{.Topic.ID}}?session={{.CurrentUser.Session}}" class="action_button delete_item" aria-label="{{lang "topic.delete_aria"}}" data-action="delete"></a>{{end}}
+					{{if .CurrentUser.Perms.DeleteTopic}}<a href="/topic/delete/submit/{{.Topic.ID}}?s={{.CurrentUser.Session}}" class="action_button delete_item" aria-label="{{lang "topic.delete_aria"}}" data-action="delete"></a>{{end}}
 					{{if .CurrentUser.Perms.CloseTopic}}
-					{{if .Topic.IsClosed}}<a href='/topic/unlock/submit/{{.Topic.ID}}?session={{.CurrentUser.Session}}' class="action_button unlock_item" data-action="unlock" aria-label="{{lang "topic.unlock_aria"}}"></a>{{else}}<a href='/topic/lock/submit/{{.Topic.ID}}?session={{.CurrentUser.Session}}' class="action_button lock_item" data-action="lock" aria-label="{{lang "topic.lock_aria"}}"></a>{{end}}{{end}}
+					{{if .Topic.IsClosed}}<a href='/topic/unlock/submit/{{.Topic.ID}}?s={{.CurrentUser.Session}}' class="action_button unlock_item" data-action="unlock" aria-label="{{lang "topic.unlock_aria"}}"></a>{{else}}<a href='/topic/lock/submit/{{.Topic.ID}}?s={{.CurrentUser.Session}}' class="action_button lock_item" data-action="lock" aria-label="{{lang "topic.lock_aria"}}"></a>{{end}}{{end}}
 					{{if .CurrentUser.Perms.PinTopic}}
-					{{if .Topic.Sticky}}<a href='/topic/unstick/submit/{{.Topic.ID}}?session={{.CurrentUser.Session}}' class="action_button unpin_item" data-action="unpin" aria-label="{{lang "topic.unpin_aria"}}"></a>{{else}}<a href='/topic/stick/submit/{{.Topic.ID}}?session={{.CurrentUser.Session}}' class="action_button pin_item" data-action="pin" aria-label="{{lang "topic.pin_aria"}}"></a>{{end}}{{end}}
+					{{if .Topic.Sticky}}<a href='/topic/unstick/submit/{{.Topic.ID}}?s={{.CurrentUser.Session}}' class="action_button unpin_item" data-action="unpin" aria-label="{{lang "topic.unpin_aria"}}"></a>{{else}}<a href='/topic/stick/submit/{{.Topic.ID}}?s={{.CurrentUser.Session}}' class="action_button pin_item" data-action="pin" aria-label="{{lang "topic.pin_aria"}}"></a>{{end}}{{end}}
 					{{if .CurrentUser.Perms.ViewIPs}}<a href="/users/ips/?ip={{.Topic.IPAddress}}" title="{{lang "topic.ip_full_tooltip"}}" class="action_button ip_item_button hide_on_big" aria-label="{{lang "topic.ip_full_aria"}}" data-action="ip"></a>{{end}}
-					<a href="/report/submit/{{.Topic.ID}}?session={{.CurrentUser.Session}}&type=topic" class="action_button report_item" aria-label="{{lang "topic.report_aria"}}" data-action="report"></a>
+					<a href="/report/submit/{{.Topic.ID}}?s={{.CurrentUser.Session}}&type=topic" class="action_button report_item" aria-label="{{lang "topic.report_aria"}}" data-action="report"></a>
 					<a href="#" class="action_button button_menu"></a>
 				{{end}}
 				</div>
