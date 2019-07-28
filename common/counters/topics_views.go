@@ -7,6 +7,7 @@ import (
 
 	c "github.com/Azareal/Gosora/common"
 	"github.com/Azareal/Gosora/query_gen"
+	"github.com/pkg/errors"
 )
 
 var TopicViewCounter *DefaultTopicViewCounter
@@ -23,68 +24,59 @@ type DefaultTopicViewCounter struct {
 
 func NewDefaultTopicViewCounter() (*DefaultTopicViewCounter, error) {
 	acc := qgen.NewAcc()
-	counter := &DefaultTopicViewCounter{
+	co := &DefaultTopicViewCounter{
 		oddTopics:  make(map[int]*RWMutexCounterBucket),
 		evenTopics: make(map[int]*RWMutexCounterBucket),
 		update:     acc.Update("topics").Set("views = views + ?").Where("tid = ?").Prepare(),
 	}
-	c.AddScheduledFifteenMinuteTask(counter.Tick) // Who knows how many topics we have queued up, we probably don't want this running too frequently
-	//c.AddScheduledSecondTask(counter.Tick)
-	c.AddShutdownTask(counter.Tick)
-	return counter, acc.FirstError()
+	c.AddScheduledFifteenMinuteTask(co.Tick) // Who knows how many topics we have queued up, we probably don't want this running too frequently
+	//c.AddScheduledSecondTask(co.Tick)
+	c.AddShutdownTask(co.Tick)
+	return co, acc.FirstError()
 }
 
-func (counter *DefaultTopicViewCounter) Tick() error {
+func (co *DefaultTopicViewCounter) Tick() error {
 	// TODO: Fold multiple 1 view topics into one query
 
-	counter.oddLock.RLock()
-	oddTopics := counter.oddTopics
-	counter.oddLock.RUnlock()
-	for topicID, topic := range oddTopics {
-		var count int
-		topic.RLock()
-		count = topic.counter
-		topic.RUnlock()
-		// TODO: Only delete the bucket when it's zero to avoid hitting popular topics?
-		counter.oddLock.Lock()
-		delete(counter.oddTopics, topicID)
-		counter.oddLock.Unlock()
-		err := counter.insertChunk(count, topicID)
-		if err != nil {
-			return err
+	cLoop := func(l *sync.RWMutex, m map[int]*RWMutexCounterBucket) error {
+		l.RLock()
+		for topicID, topic := range m {
+			l.RUnlock()
+			var count int
+			topic.RLock()
+			count = topic.counter
+			topic.RUnlock()
+			// TODO: Only delete the bucket when it's zero to avoid hitting popular topics?
+			l.Lock()
+			delete(m, topicID)
+			l.Unlock()
+			err := co.insertChunk(count, topicID)
+			if err != nil {
+				return errors.Wrap(errors.WithStack(err),"topicview counter")
+			}
+			l.RLock()
 		}
+		l.RUnlock()
+		return nil
 	}
-
-	counter.evenLock.RLock()
-	evenTopics := counter.evenTopics
-	counter.evenLock.RUnlock()
-	for topicID, topic := range evenTopics {
-		var count int
-		topic.RLock()
-		count = topic.counter
-		topic.RUnlock()
-		// TODO: Only delete the bucket when it's zero to avoid hitting popular topics?
-		counter.evenLock.Lock()
-		delete(counter.evenTopics, topicID)
-		counter.evenLock.Unlock()
-		err := counter.insertChunk(count, topicID)
-		if err != nil {
-			return err
-		}
+	err := cLoop(&co.oddLock,co.oddTopics)
+	if err != nil {
+		return err
 	}
-
-	return nil
+	return cLoop(&co.evenLock,co.evenTopics)
 }
 
 // TODO: Optimise this further. E.g. Using IN() on every one view topic. Rinse and repeat for two views, three views, four views and five views.
-func (counter *DefaultTopicViewCounter) insertChunk(count int, topicID int) error {
+func (co *DefaultTopicViewCounter) insertChunk(count int, topicID int) error {
 	if count == 0 {
 		return nil
 	}
 
 	c.DebugLogf("Inserting %d views into topic %d", count, topicID)
-	_, err := counter.update.Exec(count, topicID)
-	if err != nil {
+	_, err := co.update.Exec(count, topicID)
+	if err == sql.ErrNoRows {
+		return nil
+	} else if err != nil {
 		return err
 	}
 
@@ -92,7 +84,9 @@ func (counter *DefaultTopicViewCounter) insertChunk(count int, topicID int) erro
 	tcache := c.Topics.GetCache()
 	if tcache != nil {
 		topic, err := tcache.Get(topicID)
-		if err != nil {
+		if err == sql.ErrNoRows {
+			return nil
+		} else if err != nil {
 			return err
 		}
 		atomic.AddInt64(&topic.ViewCount, int64(count))
@@ -101,34 +95,34 @@ func (counter *DefaultTopicViewCounter) insertChunk(count int, topicID int) erro
 	return nil
 }
 
-func (counter *DefaultTopicViewCounter) Bump(topicID int) {
+func (co *DefaultTopicViewCounter) Bump(topicID int) {
 	// Is the ID even?
 	if topicID%2 == 0 {
-		counter.evenLock.RLock()
-		topic, ok := counter.evenTopics[topicID]
-		counter.evenLock.RUnlock()
+		co.evenLock.RLock()
+		topic, ok := co.evenTopics[topicID]
+		co.evenLock.RUnlock()
 		if ok {
 			topic.Lock()
 			topic.counter++
 			topic.Unlock()
 		} else {
-			counter.evenLock.Lock()
-			counter.evenTopics[topicID] = &RWMutexCounterBucket{counter: 1}
-			counter.evenLock.Unlock()
+			co.evenLock.Lock()
+			co.evenTopics[topicID] = &RWMutexCounterBucket{counter: 1}
+			co.evenLock.Unlock()
 		}
 		return
 	}
 
-	counter.oddLock.RLock()
-	topic, ok := counter.oddTopics[topicID]
-	counter.oddLock.RUnlock()
+	co.oddLock.RLock()
+	topic, ok := co.oddTopics[topicID]
+	co.oddLock.RUnlock()
 	if ok {
 		topic.Lock()
 		topic.counter++
 		topic.Unlock()
 	} else {
-		counter.oddLock.Lock()
-		counter.oddTopics[topicID] = &RWMutexCounterBucket{counter: 1}
-		counter.oddLock.Unlock()
+		co.oddLock.Lock()
+		co.oddTopics[topicID] = &RWMutexCounterBucket{counter: 1}
+		co.oddLock.Unlock()
 	}
 }
