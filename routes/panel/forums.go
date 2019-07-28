@@ -165,12 +165,12 @@ func ForumsEdit(w http.ResponseWriter, r *http.Request, user c.User, sfid string
 	if !user.Perms.ManageForums {
 		return c.NoPermissions(w, r, user)
 	}
-	basePage.Header.AddScriptAsync("panel_forum_edit.js")
-
+	
 	fid, err := strconv.Atoi(sfid)
 	if err != nil {
-		return c.LocalError("The provided Forum ID is not a valid number.", w, r, user)
+		return c.SimpleError(phrases.GetErrorPhrase("url_id_must_be_integer"),w,r,basePage.Header)
 	}
+	basePage.Header.AddScriptAsync("panel_forum_edit.js")
 
 	forum, err := c.Forums.Get(fid)
 	if err == sql.ErrNoRows {

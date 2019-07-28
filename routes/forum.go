@@ -32,7 +32,7 @@ func ViewForum(w http.ResponseWriter, r *http.Request, user c.User, header *c.He
 	page, _ := strconv.Atoi(r.FormValue("page"))
 	_, fid, err := ParseSEOURL(sfid)
 	if err != nil {
-		return c.PreError(phrases.GetErrorPhrase("url_id_must_be_integer"), w, r)
+		return c.SimpleError(phrases.GetErrorPhrase("url_id_must_be_integer"),w,r,header)
 	}
 
 	ferr := c.ForumUserCheck(header, w, r, &user, fid)

@@ -1,5 +1,4 @@
 {{template "header.html" . }}
-
 <div id="profile_container" class="colstack">
 
 <div id="profile_left_lane" class="colstack_left">
@@ -18,7 +17,7 @@
 					<div class="levelBit">
 						<a>{{level .ProfileOwner.Level}}</a>
 					</div>
-					<div class="progressWrap"{{if ne .CurrentScore 0}} style="width: 40%"{{end}}>
+					<div class="progressWrap"{{if ne .CurrentScore 0}} style="width:40%"{{end}}>
 						<div>{{.CurrentScore}} / {{.NextScore}}</div>
 					</div>
 				</div>
@@ -28,6 +27,9 @@
 			{{if not .CurrentUser.Loggedin}}<div class="rowitem passive">
 				<a class="profile_menu_item">{{lang "profile_login_for_options"}}</a>
 			</div>{{else}}
+			<!--<div class="rowitem passive">
+				<a href="/user/convos/create/" class="profile_menu_item">{{lang "profile_send_message"}}</a>
+			</div>-->
 			<!--<div class="rowitem passive">
 				<a class="profile_menu_item">{{lang "profile_add_friend"}}</a>
 			</div>-->
@@ -95,9 +97,9 @@
 {{if not .CurrentUser.IsBanned}}
 	<form id="profile_comments_form" class="hash_hide" action="/profile/reply/create/?session={{.CurrentUser.Session}}" method="post">
 		<input name="uid" value='{{.ProfileOwner.ID}}' type="hidden" />
-		<div class="colstack_item topic_reply_form" style="border-top: none;">
+		<div class="colstack_item topic_reply_form" style="border-top:none;">
 			<div class="formrow">
-				<div class="formitem"><textarea class="input_content" name="reply-content" placeholder="{{lang "profile_comments_form_content"}}"></textarea></div>
+				<div class="formitem"><textarea class="input_content" name="content" placeholder="{{lang "profile_comments_form_content"}}"></textarea></div>
 			</div>
 			<div class="formrow quick_button_row">
 				<div class="formitem"><button name="reply-button" class="formbutton">{{lang "profile_comments_form_button"}}</button></div>
@@ -106,12 +108,11 @@
 	</form>
 {{end}}
 {{else}}
-	<div class="colstack_item" style="border-top: none;">
+	<div class="colstack_item" style="border-top:none;">
 		<div class="rowitem passive">{{lang "profile_comments_form_guest"}}</div>
 	</div>
 {{end}}
 </div>
 
 </div>
-
 {{template "footer.html" . }}

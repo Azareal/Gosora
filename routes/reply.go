@@ -64,7 +64,7 @@ func CreateReplySubmit(w http.ResponseWriter, r *http.Request, user c.User) c.Ro
 		return c.NoPermissionsJSQ(w, r, user, js)
 	}
 
-	content := c.PreparseMessage(r.PostFormValue("reply-content"))
+	content := c.PreparseMessage(r.PostFormValue("content"))
 	// TODO: Fully parse the post and put that in the parsed column
 	rid, err := c.Rstore.Create(topic, content, user.LastIP, user.ID)
 	if err != nil {
@@ -86,8 +86,8 @@ func CreateReplySubmit(w http.ResponseWriter, r *http.Request, user c.User) c.Ro
 	}
 
 	if r.PostFormValue("has_poll") == "1" {
-		var maxPollOptions = 10
-		var pollInputItems = make(map[int]string)
+		maxPollOptions := 10
+		pollInputItems := make(map[int]string)
 		for key, values := range r.Form {
 			//c.DebugDetail("key: ", key)
 			//c.DebugDetailf("values: %+v\n", values)
@@ -466,7 +466,6 @@ func ProfileReplyCreateSubmit(w http.ResponseWriter, r *http.Request, user c.Use
 	if !user.Perms.ViewTopic || !user.Perms.CreateReply {
 		return c.NoPermissions(w, r, user)
 	}
-
 	uid, err := strconv.Atoi(r.PostFormValue("uid"))
 	if err != nil {
 		return c.LocalError("Invalid UID", w, r, user)
@@ -479,7 +478,10 @@ func ProfileReplyCreateSubmit(w http.ResponseWriter, r *http.Request, user c.Use
 		return c.InternalError(err, w, r)
 	}
 
-	content := c.PreparseMessage(r.PostFormValue("reply-content"))
+	content := c.PreparseMessage(r.PostFormValue("content"))
+	if len(content) == 0 {
+		return c.LocalError("You can't make a blank post", w, r, user)
+	}
 	// TODO: Fully parse the post and store it in the parsed column
 	_, err = c.Prstore.Create(profileOwner.ID, content, user.ID, user.LastIP)
 	if err != nil {
@@ -500,7 +502,6 @@ func ProfileReplyCreateSubmit(w http.ResponseWriter, r *http.Request, user c.Use
 
 func ProfileReplyEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, srid string) c.RouteError {
 	isJs := (r.PostFormValue("js") == "1")
-
 	rid, err := strconv.Atoi(srid)
 	if err != nil {
 		return c.LocalErrorJSQ("The provided Reply ID is not a valid number.", w, r, user, isJs)
