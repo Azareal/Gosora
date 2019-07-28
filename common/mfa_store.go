@@ -34,22 +34,22 @@ type MFAItem struct {
 	Scratch []string
 }
 
-func (item *MFAItem) BurnScratch(index int) error {
-	if index < 0 || len(item.Scratch) <= index {
+func (i *MFAItem) BurnScratch(index int) error {
+	if index < 0 || len(i.Scratch) <= index {
 		return ErrMFAScratchIndexOutOfBounds
 	}
 	newScratch, err := mfaCreateScratch()
 	if err != nil {
 		return err
 	}
-	item.Scratch[index] = newScratch
+	i.Scratch[index] = newScratch
 
-	_, err = mfaItemStmts.update.Exec(item.Scratch[0], item.Scratch[1], item.Scratch[2], item.Scratch[3], item.Scratch[4], item.Scratch[5], item.Scratch[6], item.Scratch[7], item.UID)
+	_, err = mfaItemStmts.update.Exec(i.Scratch[0], i.Scratch[1], i.Scratch[2], i.Scratch[3], i.Scratch[4], i.Scratch[5], i.Scratch[6], i.Scratch[7], i.UID)
 	return err
 }
 
-func (item *MFAItem) Delete() error {
-	_, err := mfaItemStmts.delete.Exec(item.UID)
+func (i *MFAItem) Delete() error {
+	_, err := mfaItemStmts.delete.Exec(i.UID)
 	return err
 }
 
@@ -76,16 +76,16 @@ func NewSQLMFAStore(acc *qgen.Accumulator) (*SQLMFAStore, error) {
 }
 
 // TODO: Write a test for this
-func (store *SQLMFAStore) Get(id int) (*MFAItem, error) {
-	item := MFAItem{UID: id, Scratch: make([]string, 8)}
-	err := store.get.QueryRow(id).Scan(&item.Secret, &item.Scratch[0], &item.Scratch[1], &item.Scratch[2], &item.Scratch[3], &item.Scratch[4], &item.Scratch[5], &item.Scratch[6], &item.Scratch[7])
-	return &item, err
+func (s *SQLMFAStore) Get(id int) (*MFAItem, error) {
+	i := MFAItem{UID: id, Scratch: make([]string, 8)}
+	err := s.get.QueryRow(id).Scan(&i.Secret, &i.Scratch[0], &i.Scratch[1], &i.Scratch[2], &i.Scratch[3], &i.Scratch[4], &i.Scratch[5], &i.Scratch[6], &i.Scratch[7])
+	return &i, err
 
 }
 
 // TODO: Write a test for this
-func (store *SQLMFAStore) Create(secret string, uid int) (err error) {
-	var params = make([]interface{}, 10)
+func (s *SQLMFAStore) Create(secret string, uid int) (err error) {
+	params := make([]interface{}, 10)
 	params[0] = uid
 	params[1] = secret
 	for i := 2; i < len(params); i++ {
@@ -96,6 +96,6 @@ func (store *SQLMFAStore) Create(secret string, uid int) (err error) {
 		params[i] = code
 	}
 
-	_, err = store.create.Exec(params...)
+	_, err = s.create.Exec(params...)
 	return err
 }

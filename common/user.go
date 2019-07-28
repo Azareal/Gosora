@@ -142,27 +142,27 @@ var userStmts UserStmts
 
 func init() {
 	DbInits.Add(func(acc *qgen.Accumulator) error {
-		var where = "uid = ?"
+		var w = "uid = ?"
 		userStmts = UserStmts{
-			activate:        acc.SimpleUpdate("users", "active = 1", where),
-			changeGroup:     acc.SimpleUpdate("users", "group = ?", where), // TODO: Implement user_count for users_groups here
-			delete:          acc.SimpleDelete("users", where),
-			setAvatar:       acc.Update("users").Set("avatar = ?").Where(where).Prepare(),
-			setUsername:     acc.Update("users").Set("name = ?").Where(where).Prepare(),
-			incrementTopics: acc.SimpleUpdate("users", "topics =  topics + ?", where),
-			updateLevel:     acc.SimpleUpdate("users", "level = ?", where),
-			update:          acc.Update("users").Set("name = ?, email = ?, group = ?").Where("uid = ?").Prepare(), // TODO: Implement user_count for users_groups on things which use this
+			activate:        acc.SimpleUpdate("users", "active = 1", w),
+			changeGroup:     acc.SimpleUpdate("users", "group = ?", w), // TODO: Implement user_count for users_groups here
+			delete:          acc.SimpleDelete("users", w),
+			setAvatar:       acc.Update("users").Set("avatar = ?").Where(w).Prepare(),
+			setUsername:     acc.Update("users").Set("name = ?").Where(w).Prepare(),
+			incrementTopics: acc.SimpleUpdate("users", "topics =  topics + ?", w),
+			updateLevel:     acc.SimpleUpdate("users", "level = ?", w),
+			update:          acc.Update("users").Set("name = ?, email = ?, group = ?").Where(w).Prepare(), // TODO: Implement user_count for users_groups on things which use this
 
-			incrementScore:     acc.SimpleUpdate("users", "score = score + ?", where),
-			incrementPosts:     acc.SimpleUpdate("users", "posts = posts + ?", where),
-			incrementBigposts:  acc.SimpleUpdate("users", "posts = posts + ?, bigposts = bigposts + ?", where),
-			incrementMegaposts: acc.SimpleUpdate("users", "posts = posts + ?, bigposts = bigposts + ?, megaposts = megaposts + ?", where),
-			incrementLiked:     acc.SimpleUpdate("users", "liked = liked + ?, lastLiked = UTC_TIMESTAMP()", where),
-			decrementLiked:     acc.SimpleUpdate("users", "liked = liked - ?", where),
+			incrementScore:     acc.SimpleUpdate("users", "score = score + ?", w),
+			incrementPosts:     acc.SimpleUpdate("users", "posts = posts + ?", w),
+			incrementBigposts:  acc.SimpleUpdate("users", "posts = posts + ?, bigposts = bigposts + ?", w),
+			incrementMegaposts: acc.SimpleUpdate("users", "posts = posts + ?, bigposts = bigposts + ?, megaposts = megaposts + ?", w),
+			incrementLiked:     acc.SimpleUpdate("users", "liked = liked + ?, lastLiked = UTC_TIMESTAMP()", w),
+			decrementLiked:     acc.SimpleUpdate("users", "liked = liked - ?", w),
 			//recalcLastLiked: acc...
-			updateLastIP: acc.SimpleUpdate("users", "last_ip = ?", where),
+			updateLastIP: acc.SimpleUpdate("users", "last_ip = ?", w),
 
-			setPassword: acc.Update("users").Set("password = ?, salt = ?").Where(where).Prepare(),
+			setPassword: acc.Update("users").Set("password = ?, salt = ?").Where(w).Prepare(),
 
 			scheduleAvatarResize: acc.Insert("users_avatar_queue").Columns("uid").Fields("?").Prepare(),
 		}

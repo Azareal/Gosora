@@ -51,8 +51,7 @@ func (reply *ProfileReply) Delete() error {
 
 func (reply *ProfileReply) SetBody(content string) error {
 	content = PreparseMessage(html.UnescapeString(content))
-	parsedContent := ParseMessage(content, 0, "")
-	_, err := profileReplyStmts.edit.Exec(content, parsedContent, reply.ID)
+	_, err := profileReplyStmts.edit.Exec(content, ParseMessage(content, 0, ""), reply.ID)
 	return err
 }
 

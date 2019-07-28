@@ -59,12 +59,12 @@ func NewMemoryGroupStore() (*MemoryGroupStore, error) {
 }
 
 // TODO: Move this query from the global stmt store into this store
-func (mgs *MemoryGroupStore) LoadGroups() error {
-	mgs.Lock()
-	defer mgs.Unlock()
-	mgs.groups[0] = &Group{ID: 0, Name: "Unknown"}
+func (s *MemoryGroupStore) LoadGroups() error {
+	s.Lock()
+	defer s.Unlock()
+	s.groups[0] = &Group{ID: 0, Name: "Unknown"}
 
-	rows, err := mgs.getAll.Query()
+	rows, err := s.getAll.Query()
 	if err != nil {
 		return err
 	}
@@ -72,26 +72,26 @@ func (mgs *MemoryGroupStore) LoadGroups() error {
 
 	i := 1
 	for ; rows.Next(); i++ {
-		group := &Group{ID: 0}
-		err := rows.Scan(&group.ID, &group.Name, &group.PermissionsText, &group.PluginPermsText, &group.IsMod, &group.IsAdmin, &group.IsBanned, &group.Tag)
+		g := &Group{ID: 0}
+		err := rows.Scan(&g.ID, &g.Name, &g.PermissionsText, &g.PluginPermsText, &g.IsMod, &g.IsAdmin, &g.IsBanned, &g.Tag)
 		if err != nil {
 			return err
 		}
 
-		err = mgs.initGroup(group)
+		err = s.initGroup(g)
 		if err != nil {
 			return err
 		}
-		mgs.groups[group.ID] = group
+		s.groups[g.ID] = g
 	}
 	err = rows.Err()
 	if err != nil {
 		return err
 	}
-	mgs.groupCount = i
+	s.groupCount = i
 
 	DebugLog("Binding the Not Loggedin Group")
-	GuestPerms = mgs.dirtyGetUnsafe(6).Perms
+	GuestPerms = s.dirtyGetUnsafe(6).Perms
 	TopicListThaw.Thaw()
 	return nil
 }
@@ -140,26 +140,26 @@ func (s *MemoryGroupStore) GetCopy(gid int) (Group, error) {
 
 func (s *MemoryGroupStore) Reload(id int) error {
 	// TODO: Reload this data too
-	group, err := s.Get(id)
+	g, err := s.Get(id)
 	if err != nil {
 		LogError(errors.New("can't get cansee data for group #" + strconv.Itoa(id)))
 		return nil
 	}
-	canSee := group.CanSee
+	canSee := g.CanSee
 	
-	group = &Group{ID: id, CanSee: canSee}
-	err = s.get.QueryRow(id).Scan(&group.Name, &group.PermissionsText, &group.PluginPermsText, &group.IsMod, &group.IsAdmin, &group.IsBanned, &group.Tag)
+	g = &Group{ID: id, CanSee: canSee}
+	err = s.get.QueryRow(id).Scan(&g.Name, &g.PermissionsText, &g.PluginPermsText, &g.IsMod, &g.IsAdmin, &g.IsBanned, &g.Tag)
 	if err != nil {
 		return err
 	}
 
-	err = s.initGroup(group)
+	err = s.initGroup(g)
 	if err != nil {
 		LogError(err)
 		return nil
 	}
 	
-	s.CacheSet(group)
+	s.CacheSet(g)
 	TopicListThaw.Thaw()
 	return nil
 }
@@ -227,7 +227,7 @@ func (s *MemoryGroupStore) Exists(gid int) bool {
 // ? Allow two groups with the same name?
 // TODO: Refactor this
 func (s *MemoryGroupStore) Create(name string, tag string, isAdmin bool, isMod bool, isBanned bool) (gid int, err error) {
-	var permstr = "{}"
+	permstr := "{}"
 	tx, err := qgen.Builder.Begin()
 	if err != nil {
 		return 0, err
@@ -249,10 +249,10 @@ func (s *MemoryGroupStore) Create(name string, tag string, isAdmin bool, isMod b
 	}
 	gid = int(gid64)
 
-	var perms = BlankPerms
-	var blankIntList []int
-	var pluginPerms = make(map[string]bool)
-	var pluginPermsBytes = []byte("{}")
+	perms := BlankPerms
+	blankIntList := []int{}
+	pluginPerms := make(map[string]bool)
+	pluginPermsBytes := []byte("{}")
 	GetHookTable().Vhook("create_group_preappend", &pluginPerms, &pluginPermsBytes)
 
 	// Generate the forum permissions based on the presets...
@@ -261,8 +261,8 @@ func (s *MemoryGroupStore) Create(name string, tag string, isAdmin bool, isMod b
 		return 0, err
 	}
 
-	var presetSet = make(map[int]string)
-	var permSet = make(map[int]*ForumPerms)
+	presetSet := make(map[int]string)
+	permSet := make(map[int]*ForumPerms)
 	for _, forum := range fdata {
 		var thePreset string
 		switch {
@@ -329,9 +329,9 @@ func (s *MemoryGroupStore) GetAllMap() (map[int]*Group, error) {
 
 // ? - Set the lower and higher numbers to 0 to remove the bounds
 // TODO: Might be a little slow right now, maybe we can cache the groups in a slice or break the map up into chunks
-func (mgs *MemoryGroupStore) GetRange(lower int, higher int) (groups []*Group, err error) {
+func (s *MemoryGroupStore) GetRange(lower int, higher int) (groups []*Group, err error) {
 	if lower == 0 && higher == 0 {
-		return mgs.GetAll()
+		return s.GetAll()
 	}
 
 	// TODO: Simplify these four conditionals into two
@@ -345,13 +345,13 @@ func (mgs *MemoryGroupStore) GetRange(lower int, higher int) (groups []*Group, e
 		}
 	}
 
-	mgs.RLock()
-	for gid, group := range mgs.groups {
+	s.RLock()
+	for gid, group := range s.groups {
 		if gid >= lower && (gid <= higher || higher == 0) {
 			groups = append(groups, group)
 		}
 	}
-	mgs.RUnlock()
+	s.RUnlock()
 	sort.Sort(SortGroup(groups))
 
 	return groups, nil

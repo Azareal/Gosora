@@ -212,7 +212,7 @@ func init() {
 	DbInits.Add(func(acc *qgen.Accumulator) error {
 		topicStmts = TopicStmts{
 			getRids:            acc.Select("replies").Columns("rid").Where("tid = ?").Orderby("rid ASC").Limit("?,?").Prepare(),
-			getReplies:         acc.SimpleLeftJoin("replies", "users", "replies.rid, replies.content, replies.createdBy, replies.createdAt, replies.lastEdit, replies.lastEditBy, users.avatar, users.name, users.group, users.url_prefix, users.url_name, users.level, replies.ipaddress, replies.likeCount, replies.attachCount, replies.actionType", "replies.createdBy = users.uid", "replies.tid = ?", "replies.rid ASC", "?,?"),
+			getReplies:         acc.SimpleLeftJoin("replies AS r", "users AS u", "r.rid, r.content, r.createdBy, r.createdAt, r.lastEdit, r.lastEditBy, u.avatar, u.name, u.group, u.url_prefix, u.url_name, u.level, r.ipaddress, r.likeCount, r.attachCount, r.actionType", "r.createdBy = u.uid", "r.tid = ?", "r.rid ASC", "?,?"),
 			addReplies:         acc.Update("topics").Set("postCount = postCount + ?, lastReplyBy = ?, lastReplyAt = UTC_TIMESTAMP()").Where("tid = ?").Prepare(),
 			updateLastReply:    acc.Update("topics").Set("lastReplyID = ?").Where("lastReplyID > ? AND tid = ?").Prepare(),
 			lock:               acc.Update("topics").Set("is_closed = 1").Where("tid = ?").Prepare(),
@@ -230,8 +230,8 @@ func init() {
 			setPoll:            acc.Update("topics").Set("poll = ?").Where("tid = ? AND poll = 0").Prepare(),
 			createAction:       acc.Insert("replies").Columns("tid, actionType, ipaddress, createdBy, createdAt, lastUpdated, content, parsed_content").Fields("?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),'',''").Prepare(),
 
-			getTopicUser: acc.SimpleLeftJoin("topics", "users", "topics.title, topics.content, topics.createdBy, topics.createdAt, topics.lastReplyAt, topics.lastReplyBy, topics.lastReplyID, topics.is_closed, topics.sticky, topics.parentID, topics.ipaddress, topics.views, topics.postCount, topics.likeCount, topics.attachCount,topics.poll, users.name, users.avatar, users.group, users.url_prefix, users.url_name, users.level", "topics.createdBy = users.uid", "tid = ?", "", ""),
-			getByReplyID: acc.SimpleLeftJoin("replies", "topics", "topics.tid, topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ipaddress, topics.views, topics.postCount, topics.likeCount, topics.poll, topics.data", "replies.tid = topics.tid", "rid = ?", "", ""),
+			getTopicUser: acc.SimpleLeftJoin("topics AS t", "users AS u", "t.title, t.content, t.createdBy, t.createdAt, t.lastReplyAt, t.lastReplyBy, t.lastReplyID, t.is_closed, t.sticky, t.parentID, t.ipaddress, t.views, t.postCount, t.likeCount, t.attachCount,t.poll, u.name, u.avatar, u.group, u.url_prefix, u.url_name, u.level", "t.createdBy = u.uid", "tid = ?", "", ""),
+			getByReplyID: acc.SimpleLeftJoin("replies AS r", "topics AS t", "t.tid, t.title, t.content, t.createdBy, t.createdAt, t.is_closed, t.sticky, t.parentID, t.ipaddress, t.views, t.postCount, t.likeCount, t.poll, t.data", "r.tid = t.tid", "rid = ?", "", ""),
 		}
 		return acc.FirstError()
 	})
@@ -422,6 +422,11 @@ func GetRidsForTopic(tid int, offset int) (rids []int, err error) {
 	return rids, rows.Err()
 }
 
+var aipost = ";&#xFE0E"
+var lockai = "&#x1F512"+aipost
+var unlockai = "&#x1F513"
+var stickai = "&#x1F4CC"
+var unstickai = "&#x1F4CC"+aipost
 func (ru *ReplyUser) Init() error {
 	ru.UserLink = BuildProfileURL(NameToSlug(ru.CreatedByName), ru.CreatedBy)
 	ru.ContentLines = strings.Count(ru.Content, "\n")
@@ -447,16 +452,16 @@ func (ru *ReplyUser) Init() error {
 		switch aarr[0] {
 		case "lock":
 			action = aarr[0]
-			ru.ActionIcon = "&#x1F512;&#xFE0E"
+			ru.ActionIcon = lockai
 		case "unlock":
 			action = aarr[0]
-			ru.ActionIcon = "&#x1F513;&#xFE0E"
+			ru.ActionIcon = unlockai
 		case "stick":
 			action = aarr[0]
-			ru.ActionIcon = "&#x1F4CC;&#xFE0E"
+			ru.ActionIcon = stickai
 		case "unstick":
 			action = aarr[0]
-			ru.ActionIcon = "&#x1F4CC;&#xFE0E"
+			ru.ActionIcon = unstickai
 		case "move":
 			if len(aarr) == 2 {
 				fid, _ := strconv.Atoi(aarr[1])

@@ -328,7 +328,7 @@ func CreateTopic(w http.ResponseWriter, r *http.Request, user c.User, header *c.
 func CreateTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	fid, err := strconv.Atoi(r.PostFormValue("topic-board"))
 	if err != nil {
-		return c.LocalError("The provided ForumID is not a valid number.", w, r, user)
+		return c.LocalError(phrases.GetErrorPhrase("id_must_be_integer"),w,r,user)
 	}
 	// TODO: Add hooks to make use of headerLite
 	lite, ferr := c.SimpleForumUserCheck(w, r, &user, fid)
@@ -863,13 +863,11 @@ func addTopicAction(action string, topic *c.Topic, user c.User) error {
 
 // TODO: Refactor this
 func LikeTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User, stid string) c.RouteError {
-	//fmt.Println("i1")
 	isJs := (r.PostFormValue("isJs") == "1")
 	tid, err := strconv.Atoi(stid)
 	if err != nil {
 		return c.PreErrorJSQ(phrases.GetErrorPhrase("id_must_be_integer"), w, r, isJs)
 	}
-	//fmt.Println("i2")
 
 	topic, err := c.Topics.Get(tid)
 	if err == sql.ErrNoRows {
@@ -877,7 +875,6 @@ func LikeTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User, stid s
 	} else if err != nil {
 		return c.InternalErrorJSQ(err, w, r, isJs)
 	}
-	//fmt.Println("i3")
 
 	// TODO: Add hooks to make use of headerLite
 	lite, ferr := c.SimpleForumUserCheck(w, r, &user, topic.ParentID)
@@ -890,7 +887,6 @@ func LikeTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User, stid s
 	if topic.CreatedBy == user.ID {
 		return c.LocalErrorJSQ("You can't like your own topics", w, r, user, isJs)
 	}
-	//fmt.Println("i4")
 
 	_, err = c.Users.Get(topic.CreatedBy)
 	if err != nil && err == sql.ErrNoRows {
@@ -898,7 +894,6 @@ func LikeTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User, stid s
 	} else if err != nil {
 		return c.InternalErrorJSQ(err, w, r, isJs)
 	}
-	//fmt.Println("i5")
 
 	score := 1
 	err = topic.Like(score, user.ID)
@@ -907,7 +902,6 @@ func LikeTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User, stid s
 	} else if err != nil {
 		return c.InternalErrorJSQ(err, w, r, isJs)
 	}
-	//fmt.Println("i6")
 
 	// ! Be careful about leaking per-route permission state with &user
 	alert := c.Alert{ActorID: user.ID, TargetUserID: topic.CreatedBy, Event: "like", ElementType: "topic", ElementID: tid, Actor: &user}
@@ -915,13 +909,11 @@ func LikeTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User, stid s
 	if err != nil {
 		return c.InternalErrorJSQ(err, w, r, isJs)
 	}
-	//fmt.Println("i7")
 
 	skip, rerr := lite.Hooks.VhookSkippable("action_end_like_topic", topic.ID, &user)
 	if skip || rerr != nil {
 		return rerr
 	}
-	//fmt.Println("i8")
 
 	if !isJs {
 		http.Redirect(w, r, "/topic/"+strconv.Itoa(tid), http.StatusSeeOther)

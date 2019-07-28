@@ -230,12 +230,13 @@ func AnalyticsViews(w http.ResponseWriter, r *http.Request, user c.User) c.Route
 		return c.InternalError(err, w, r)
 	}
 
-	var viewList []int64
-	var viewItems []c.PanelAnalyticsItem
-	for _, value := range revLabelList {
-		viewList = append(viewList, viewMap[value])
-		viewItems = append(viewItems, c.PanelAnalyticsItem{Time: value, Count: viewMap[value]})
+	viewList := make([]int64,len(revLabelList))
+	viewItems := make([]c.PanelAnalyticsItem,len(revLabelList))
+	for i, value := range revLabelList {
+		viewList[i] = viewMap[value]
+		viewItems[i] = c.PanelAnalyticsItem{Time: value, Count: viewMap[value]}
 	}
+	
 	graph := c.PanelTimeGraph{Series: [][]int64{viewList}, Labels: labelList}
 	c.DebugLogf("graph: %+v\n", graph)
 	var ttime string
