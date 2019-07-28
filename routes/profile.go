@@ -28,12 +28,6 @@ func init() {
 
 // TODO: Remove the View part of the name?
 func ViewProfile(w http.ResponseWriter, r *http.Request, user c.User, header *c.Header) c.RouteError {
-	// TODO: Preload this?
-	header.AddSheet(header.Theme.Name + "/profile.css")
-	if user.Loggedin {
-		header.AddScriptAsync("profile_member.js")
-	}
-
 	var err error
 	var replyCreatedAt time.Time
 	var replyContent, replyCreatedByName, replyAvatar string
@@ -43,7 +37,13 @@ func ViewProfile(w http.ResponseWriter, r *http.Request, user c.User, header *c.
 	// TODO: Do a 301 if it's the wrong username? Do a canonical too?
 	_, pid, err := ParseSEOURL(r.URL.Path[len("/user/"):])
 	if err != nil {
-		return c.LocalError("The provided UserID is not a valid number.", w, r, user)
+		return c.SimpleError(phrases.GetErrorPhrase("url_id_must_be_integer"),w,r,header)
+	}
+
+	// TODO: Preload this?
+	header.AddSheet(header.Theme.Name + "/profile.css")
+	if user.Loggedin {
+		header.AddScriptAsync("profile_member.js")
 	}
 
 	var puser *c.User

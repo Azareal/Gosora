@@ -212,16 +212,32 @@ func PreErrorJSQ(errmsg string, w http.ResponseWriter, r *http.Request, isJs boo
 
 // LocalError is an error shown to the end-user when something goes wrong and it's not the software's fault
 // TODO: Pass header in for this and similar errors instead of having to pass in both user and w? Would also allow for more stateful things, although this could be a problem
-func LocalError(errmsg string, w http.ResponseWriter, r *http.Request, user User) RouteError {
+/*func LocalError(errmsg string, w http.ResponseWriter, r *http.Request, user User) RouteError {
 	w.WriteHeader(500)
 	pi := ErrorPage{errorHeader(w, user, phrases.GetErrorPhrase("local_error_title")), errmsg}
+	handleErrorTemplate(w, r, pi)
+	return HandledRouteError()
+}*/
+
+func LocalError(errmsg string, w http.ResponseWriter, r *http.Request, user User) RouteError {
+	return SimpleError(errmsg, w, r, errorHeader(w, user, ""))
+}
+
+func SimpleError(errmsg string, w http.ResponseWriter, r *http.Request, header *Header) RouteError {
+	if header == nil {
+		header = errorHeader(w, GuestUser, phrases.GetErrorPhrase("local_error_title"))
+	} else {
+		header.Title = phrases.GetErrorPhrase("local_error_title")
+	}
+	w.WriteHeader(500)
+	pi := ErrorPage{header, errmsg}
 	handleErrorTemplate(w, r, pi)
 	return HandledRouteError()
 }
 
 func LocalErrorJSQ(errmsg string, w http.ResponseWriter, r *http.Request, user User, isJs bool) RouteError {
 	if !isJs {
-		return LocalError(errmsg, w, r, user)
+		return SimpleError(errmsg, w, r, errorHeader(w, user, ""))
 	}
 	return LocalErrorJS(errmsg, w, r)
 }

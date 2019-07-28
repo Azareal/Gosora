@@ -44,7 +44,7 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user c.User, header *c.He
 	page, _ := strconv.Atoi(r.FormValue("page"))
 	_, tid, err := ParseSEOURL(urlBit)
 	if err != nil {
-		return c.PreError(phrases.GetErrorPhrase("url_id_must_be_integer"), w, r)
+		return c.SimpleError(phrases.GetErrorPhrase("url_id_must_be_integer"),w,r,header)
 	}
 
 	// Get the topic...
@@ -369,26 +369,26 @@ func CreateTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.Ro
 				if !strings.HasPrefix(key, "pollinputitem[") {
 					continue
 				}
-					halves := strings.Split(key, "[")
-					if len(halves) != 2 {
-						return c.LocalError("Malformed pollinputitem", w, r, user)
-					}
-					halves[1] = strings.TrimSuffix(halves[1], "]")
+				halves := strings.Split(key, "[")
+				if len(halves) != 2 {
+					return c.LocalError("Malformed pollinputitem", w, r, user)
+				}
+				halves[1] = strings.TrimSuffix(halves[1], "]")
 
-					index, err := strconv.Atoi(halves[1])
-					if err != nil {
-						return c.LocalError("Malformed pollinputitem", w, r, user)
-					}
+				index, err := strconv.Atoi(halves[1])
+				if err != nil {
+					return c.LocalError("Malformed pollinputitem", w, r, user)
+				}
 
-					// If there are duplicates, then something has gone horribly wrong, so let's ignore them, this'll likely happen during an attack
-					_, exists := pollInputItems[index]
-					// TODO: Should we use SanitiseBody instead to keep the newlines?
-					if !exists && len(c.SanitiseSingleLine(value)) != 0 {
-						pollInputItems[index] = c.SanitiseSingleLine(value)
-						if len(pollInputItems) >= maxPollOptions {
-							break
-						}
+				// If there are duplicates, then something has gone horribly wrong, so let's ignore them, this'll likely happen during an attack
+				_, exists := pollInputItems[index]
+				// TODO: Should we use SanitiseBody instead to keep the newlines?
+				if !exists && len(c.SanitiseSingleLine(value)) != 0 {
+					pollInputItems[index] = c.SanitiseSingleLine(value)
+					if len(pollInputItems) >= maxPollOptions {
+						break
 					}
+				}
 			}
 		}
 
