@@ -5,8 +5,9 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/Azareal/Gosora/common"
+	c "github.com/Azareal/Gosora/common"
 	"github.com/Azareal/Gosora/query_gen"
+	"github.com/pkg/errors"
 )
 
 var ReferrerTracker *DefaultReferrerTracker
@@ -36,9 +37,9 @@ func NewDefaultReferrerTracker() (*DefaultReferrerTracker, error) {
 		even:   make(map[string]*ReferrerItem),
 		insert: acc.Insert("viewchunks_referrers").Columns("count, createdAt, domain").Fields("?,UTC_TIMESTAMP(),?").Prepare(), // TODO: Do something more efficient than doing a query for each referrer
 	}
-	common.AddScheduledFifteenMinuteTask(refTracker.Tick)
-	//common.AddScheduledSecondTask(refTracker.Tick)
-	common.AddShutdownTask(refTracker.Tick)
+	c.AddScheduledFifteenMinuteTask(refTracker.Tick)
+	//c.AddScheduledSecondTask(refTracker.Tick)
+	c.AddShutdownTask(refTracker.Tick)
 	return refTracker, acc.FirstError()
 }
 
@@ -50,50 +51,41 @@ func (ref *DefaultReferrerTracker) Tick() (err error) {
 		if count != 0 {
 			err := ref.insertChunk(referrer, count) // TODO: Bulk insert for speed?
 			if err != nil {
-				return err
+				return errors.Wrap(errors.WithStack(err),"ref counter")
 			}
 		}
-
 		delete(referrersToDelete, referrer)
 	}
 
 	//  Run the queries and schedule zero view refs for deletion from memory
-	ref.oddLock.Lock()
-	for referrer, counter := range ref.odd {
-		if counter.Count == 0 {
-			referrersToDelete[referrer] = counter
-			delete(ref.odd, referrer)
+	refLoop := func(l *sync.RWMutex, m map[string]*ReferrerItem) error {
+		l.Lock()
+		defer l.Unlock()
+		for referrer, counter := range m {
+			if counter.Count == 0 {
+				referrersToDelete[referrer] = counter
+				delete(m, referrer)
+			}
+			count := atomic.SwapInt64(&counter.Count, 0)
+			err := ref.insertChunk(referrer, count) // TODO: Bulk insert for speed?
+			if err != nil {
+				return errors.Wrap(errors.WithStack(err),"ref counter")
+			}
 		}
-		count := atomic.SwapInt64(&counter.Count, 0)
-		err := ref.insertChunk(referrer, count) // TODO: Bulk insert for speed?
-		if err != nil {
-			return err
-		}
+		return nil
 	}
-	ref.oddLock.Unlock()
-
-	ref.evenLock.Lock()
-	for referrer, counter := range ref.even {
-		if counter.Count == 0 {
-			referrersToDelete[referrer] = counter
-			delete(ref.even, referrer)
-		}
-		count := atomic.SwapInt64(&counter.Count, 0)
-		err := ref.insertChunk(referrer, count) // TODO: Bulk insert for speed?
-		if err != nil {
-			return err
-		}
+	err = refLoop(&ref.oddLock,ref.odd)
+	if err != nil {
+		return err
 	}
-	ref.evenLock.Unlock()
-
-	return nil
+	return refLoop(&ref.evenLock,ref.even)
 }
 
 func (ref *DefaultReferrerTracker) insertChunk(referrer string, count int64) error {
 	if count == 0 {
 		return nil
 	}
-	common.DebugDetailf("Inserting a viewchunk with a count of %d for referrer %s", count, referrer)
+	c.DebugDetailf("Inserting a vchunk with a count of %d for referrer %s", count, referrer)
 	_, err := ref.insert.Exec(count, referrer)
 	return err
 }

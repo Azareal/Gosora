@@ -1,13 +1,14 @@
 package counters
 
 import (
-	"time"
-	"sync"
-	"runtime"
 	"database/sql"
+	"runtime"
+	"sync"
+	"time"
 
 	c "github.com/Azareal/Gosora/common"
-	"github.com/Azareal/Gosora/query_gen"
+	qgen "github.com/Azareal/Gosora/query_gen"
+	"github.com/pkg/errors"
 )
 
 var MemoryCounter *DefaultMemoryCounter
@@ -15,19 +16,19 @@ var MemoryCounter *DefaultMemoryCounter
 type DefaultMemoryCounter struct {
 	insert *sql.Stmt
 
-	totMem uint64
-	totCount uint64
-	stackMem uint64
+	totMem     uint64
+	totCount   uint64
+	stackMem   uint64
 	stackCount uint64
-	heapMem uint64
-	heapCount uint64
+	heapMem    uint64
+	heapCount  uint64
 
 	sync.Mutex
 }
 
 func NewMemoryCounter(acc *qgen.Accumulator) (*DefaultMemoryCounter, error) {
 	co := &DefaultMemoryCounter{
-		insert:        acc.Insert("memchunks").Columns("count, stack, heap, createdAt").Fields("?,?,?,UTC_TIMESTAMP()").Prepare(),
+		insert: acc.Insert("memchunks").Columns("count, stack, heap, createdAt").Fields("?,?,?,UTC_TIMESTAMP()").Prepare(),
 	}
 	c.AddScheduledFifteenMinuteTask(co.Tick)
 	//c.AddScheduledSecondTask(co.Tick)
@@ -81,5 +82,8 @@ func (co *DefaultMemoryCounter) Tick() (err error) {
 
 	c.DebugLogf("Inserting a memchunk with a value of %d - %d - %d", avgMem, avgStack, avgHeap)
 	_, err = co.insert.Exec(avgMem, avgStack, avgHeap)
-	return err
+	if err != nil {
+		return errors.Wrap(errors.WithStack(err), "mem counter")
+	}
+	return nil
 }

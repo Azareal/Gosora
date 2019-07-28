@@ -6,6 +6,7 @@ import (
 
 	c "github.com/Azareal/Gosora/common"
 	"github.com/Azareal/Gosora/query_gen"
+	"github.com/pkg/errors"
 )
 
 var ForumViewCounter *DefaultForumViewCounter
@@ -23,95 +24,84 @@ type DefaultForumViewCounter struct {
 
 func NewDefaultForumViewCounter() (*DefaultForumViewCounter, error) {
 	acc := qgen.NewAcc()
-	counter := &DefaultForumViewCounter{
+	co := &DefaultForumViewCounter{
 		oddMap:  make(map[int]*RWMutexCounterBucket),
 		evenMap: make(map[int]*RWMutexCounterBucket),
 		insert:  acc.Insert("viewchunks_forums").Columns("count, createdAt, forum").Fields("?,UTC_TIMESTAMP(),?").Prepare(),
 	}
-	c.AddScheduledFifteenMinuteTask(counter.Tick) // There could be a lot of routes, so we don't want to be running this every second
-	//c.AddScheduledSecondTask(counter.Tick)
-	c.AddShutdownTask(counter.Tick)
-	return counter, acc.FirstError()
+	c.AddScheduledFifteenMinuteTask(co.Tick) // There could be a lot of routes, so we don't want to be running this every second
+	//c.AddScheduledSecondTask(co.Tick)
+	c.AddShutdownTask(co.Tick)
+	return co, acc.FirstError()
 }
 
-func (counter *DefaultForumViewCounter) Tick() error {
-	counter.oddLock.RLock()
-	oddMap := counter.oddMap
-	counter.oddLock.RUnlock()
-	for forumID, forum := range oddMap {
-		var count int
-		forum.RLock()
-		count = forum.counter
-		forum.RUnlock()
-		// TODO: Only delete the bucket when it's zero to avoid hitting popular forums?
-		counter.oddLock.Lock()
-		delete(counter.oddMap, forumID)
-		counter.oddLock.Unlock()
-		err := counter.insertChunk(count, forumID)
-		if err != nil {
-			return err
+func (co *DefaultForumViewCounter) Tick() error {
+	cLoop := func(l *sync.RWMutex, m map[int]*RWMutexCounterBucket) error {
+		l.RLock()
+		for forumID, forum := range m {
+			l.RUnlock()
+			var count int
+			forum.RLock()
+			count = forum.counter
+			forum.RUnlock()
+			// TODO: Only delete the bucket when it's zero to avoid hitting popular forums?
+			l.Lock()
+			delete(m, forumID)
+			l.Unlock()
+			err := co.insertChunk(count, forumID)
+			if err != nil {
+				return errors.Wrap(errors.WithStack(err),"forum counter")
+			}
+			l.RLock()
 		}
+		l.RUnlock()
+		return nil
 	}
-
-	counter.evenLock.RLock()
-	evenMap := counter.evenMap
-	counter.evenLock.RUnlock()
-	for forumID, forum := range evenMap {
-		var count int
-		forum.RLock()
-		count = forum.counter
-		forum.RUnlock()
-		// TODO: Only delete the bucket when it's zero to avoid hitting popular forums?
-		counter.evenLock.Lock()
-		delete(counter.evenMap, forumID)
-		counter.evenLock.Unlock()
-		err := counter.insertChunk(count, forumID)
-		if err != nil {
-			return err
-		}
+	err := cLoop(&co.oddLock,co.oddMap)
+	if err != nil {
+		return err
 	}
-
-	return nil
+	return cLoop(&co.evenLock,co.evenMap)
 }
 
-func (counter *DefaultForumViewCounter) insertChunk(count int, forum int) error {
+func (co *DefaultForumViewCounter) insertChunk(count int, forum int) error {
 	if count == 0 {
 		return nil
 	}
-	c.DebugLogf("Inserting a viewchunk with a count of %d for forum %d", count, forum)
-	_, err := counter.insert.Exec(count, forum)
+	c.DebugLogf("Inserting a vchunk with a count of %d for forum %d", count, forum)
+	_, err := co.insert.Exec(count, forum)
 	return err
 }
 
-func (counter *DefaultForumViewCounter) Bump(forumID int) {
+func (co *DefaultForumViewCounter) Bump(forumID int) {
 	// Is the ID even?
 	if forumID%2 == 0 {
-		counter.evenLock.RLock()
-		forum, ok := counter.evenMap[forumID]
-		counter.evenLock.RUnlock()
+		co.evenLock.RLock()
+		forum, ok := co.evenMap[forumID]
+		co.evenLock.RUnlock()
 		if ok {
 			forum.Lock()
 			forum.counter++
 			forum.Unlock()
 		} else {
-			counter.evenLock.Lock()
-			counter.evenMap[forumID] = &RWMutexCounterBucket{counter: 1}
-			counter.evenLock.Unlock()
+			co.evenLock.Lock()
+			co.evenMap[forumID] = &RWMutexCounterBucket{counter: 1}
+			co.evenLock.Unlock()
 		}
 		return
 	}
 
-	counter.oddLock.RLock()
-	forum, ok := counter.oddMap[forumID]
-	counter.oddLock.RUnlock()
+	co.oddLock.RLock()
+	forum, ok := co.oddMap[forumID]
+	co.oddLock.RUnlock()
 	if ok {
 		forum.Lock()
 		forum.counter++
 		forum.Unlock()
 	} else {
-		counter.oddLock.Lock()
-		counter.oddMap[forumID] = &RWMutexCounterBucket{counter: 1}
-		counter.oddLock.Unlock()
+		co.oddLock.Lock()
+		co.oddMap[forumID] = &RWMutexCounterBucket{counter: 1}
+		co.oddLock.Unlock()
 	}
 }
 

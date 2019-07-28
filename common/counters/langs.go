@@ -1,8 +1,12 @@
 package counters
 
-import "database/sql"
-import c "github.com/Azareal/Gosora/common"
-import "github.com/Azareal/Gosora/query_gen"
+import (
+	"database/sql"
+
+	c "github.com/Azareal/Gosora/common"
+	qgen "github.com/Azareal/Gosora/query_gen"
+	"github.com/pkg/errors"
+)
 
 var LangViewCounter *DefaultLangViewCounter
 
@@ -101,56 +105,56 @@ type DefaultLangViewCounter struct {
 }
 
 func NewDefaultLangViewCounter(acc *qgen.Accumulator) (*DefaultLangViewCounter, error) {
-	var langBuckets = make([]*RWMutexCounterBucket, len(langCodes))
+	langBuckets := make([]*RWMutexCounterBucket, len(langCodes))
 	for bucketID, _ := range langBuckets {
 		langBuckets[bucketID] = &RWMutexCounterBucket{counter: 0}
 	}
-	var codesToIndices = make(map[string]int)
+	codesToIndices := make(map[string]int, len(langCodes))
 	for index, code := range langCodes {
 		codesToIndices[code] = index
 	}
 
-	counter := &DefaultLangViewCounter{
+	co := &DefaultLangViewCounter{
 		buckets:        langBuckets,
 		codesToIndices: codesToIndices,
 		insert:         acc.Insert("viewchunks_langs").Columns("count, createdAt, lang").Fields("?,UTC_TIMESTAMP(),?").Prepare(),
 	}
 
-	c.AddScheduledFifteenMinuteTask(counter.Tick)
-	//c.AddScheduledSecondTask(counter.Tick)
-	c.AddShutdownTask(counter.Tick)
-	return counter, acc.FirstError()
+	c.AddScheduledFifteenMinuteTask(co.Tick)
+	//c.AddScheduledSecondTask(co.Tick)
+	c.AddShutdownTask(co.Tick)
+	return co, acc.FirstError()
 }
 
-func (counter *DefaultLangViewCounter) Tick() error {
-	for id, bucket := range counter.buckets {
+func (co *DefaultLangViewCounter) Tick() error {
+	for id, bucket := range co.buckets {
 		var count int
 		bucket.RLock()
 		count = bucket.counter
 		bucket.counter = 0 // TODO: Add a SetZero method to reduce the amount of duplicate code between the OS and agent counters?
 		bucket.RUnlock()
 
-		err := counter.insertChunk(count, id) // TODO: Bulk insert for speed?
+		err := co.insertChunk(count, id) // TODO: Bulk insert for speed?
 		if err != nil {
-			return err
+			return errors.Wrap(errors.WithStack(err), "langview counter")
 		}
 	}
 	return nil
 }
 
-func (counter *DefaultLangViewCounter) insertChunk(count int, id int) error {
+func (co *DefaultLangViewCounter) insertChunk(count int, id int) error {
 	if count == 0 {
 		return nil
 	}
-	var langCode = langCodes[id]
-	c.DebugLogf("Inserting a viewchunk with a count of %d for lang %s (%d)", count, langCode, id)
-	_, err := counter.insert.Exec(count, langCode)
+	langCode := langCodes[id]
+	c.DebugLogf("Inserting a vchunk with a count of %d for lang %s (%d)", count, langCode, id)
+	_, err := co.insert.Exec(count, langCode)
 	return err
 }
 
-func (counter *DefaultLangViewCounter) Bump(langCode string) (validCode bool) {
+func (co *DefaultLangViewCounter) Bump(langCode string) (validCode bool) {
 	validCode = true
-	id, ok := counter.codesToIndices[langCode]
+	id, ok := co.codesToIndices[langCode]
 	if !ok {
 		// TODO: Tell the caller that the code's invalid
 		id = 0 // Unknown
@@ -158,13 +162,13 @@ func (counter *DefaultLangViewCounter) Bump(langCode string) (validCode bool) {
 	}
 
 	// TODO: Test this check
-	c.DebugDetail("counter.buckets[", id, "]: ", counter.buckets[id])
-	if len(counter.buckets) <= id || id < 0 {
+	c.DebugDetail("co.buckets[", id, "]: ", co.buckets[id])
+	if len(co.buckets) <= id || id < 0 {
 		return validCode
 	}
-	counter.buckets[id].Lock()
-	counter.buckets[id].counter++
-	counter.buckets[id].Unlock()
+	co.buckets[id].Lock()
+	co.buckets[id].counter++
+	co.buckets[id].Unlock()
 
 	return validCode
 }
