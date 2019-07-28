@@ -48,11 +48,11 @@
 <div id="profile_right_lane" class="colstack_right">
 	{{if .CurrentUser.Loggedin}}
 	{{if .CurrentUser.Perms.BanUsers}}
-	<!-- TODO: Inline the display: none; CSS -->
-	<div id="ban_user_head" class="colstack_item colstack_head hash_hide ban_user_hash" style="display: none;">
+	<!-- TODO: Inline the display:none; CSS -->
+	<div id="ban_user_head" class="colstack_item colstack_head hash_hide ban_user_hash" style="display:none;">
 			<div class="rowitem"><h1><a>{{lang "profile_ban_user_head"}}</a></h1></div>
 	</div>
-	<form id="ban_user_form" class="hash_hide ban_user_hash" action="/users/ban/submit/{{.ProfileOwner.ID}}?session={{.CurrentUser.Session}}" method="post" style="display: none;">
+	<form id="ban_user_form" class="hash_hide ban_user_hash" action="/users/ban/submit/{{.ProfileOwner.ID}}?s={{.CurrentUser.Session}}" method="post" style="display:none;">
 	<div class="the_form">
 		{{/** TODO: Put a JS duration calculator here instead of this text? **/}}
 		<div class="colline">{{lang "profile_ban_user_notice"}}</div>
@@ -60,19 +60,19 @@
 			<div class="formrow real_first_child">
 				<div class="formitem formlabel"><a>{{lang "profile_ban_user_days"}}</a></div>
 				<div class="formitem">
-					<input name="ban-duration-days" type="number" value="0" min="0" />
+					<input name="ban-duration-days" type="number" value=0 min=0 />
 				</div>
 			</div>
 			<div class="formrow">
 				<div class="formitem formlabel"><a>{{lang "profile_ban_user_weeks"}}</a></div>
 				<div class="formitem">
-					<input name="ban-duration-weeks" type="number" value="0" min="0" />
+					<input name="ban-duration-weeks" type="number" value=0 min=0 />
 				</div>
 			</div>
 			<div class="formrow">
 				<div class="formitem formlabel"><a>{{lang "profile_ban_user_months"}}</a></div>
 				<div class="formitem">
-					<input name="ban-duration-months" type="number" value="0" min="0" />
+					<input name="ban-duration-months" type="number" value=0 min=0 />
 				</div>
 			</div>
 			{{/**<!--<div class="formrow">
@@ -95,7 +95,7 @@
 
 {{if .CurrentUser.Loggedin}}
 {{if not .CurrentUser.IsBanned}}
-	<form id="profile_comments_form" class="hash_hide" action="/profile/reply/create/?session={{.CurrentUser.Session}}" method="post">
+	<form id="profile_comments_form" class="hash_hide" action="/profile/reply/create/?s={{.CurrentUser.Session}}" method="post">
 		<input name="uid" value='{{.ProfileOwner.ID}}' type="hidden" />
 		<div class="colstack_item topic_reply_form" style="border-top:none;">
 			<div class="formrow">
