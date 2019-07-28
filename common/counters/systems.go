@@ -3,8 +3,9 @@ package counters
 import (
 	"database/sql"
 
-	"github.com/Azareal/Gosora/common"
-	"github.com/Azareal/Gosora/query_gen"
+	c "github.com/Azareal/Gosora/common"
+	qgen "github.com/Azareal/Gosora/query_gen"
+	"github.com/pkg/errors"
 )
 
 var OSViewCounter *DefaultOSViewCounter
@@ -19,49 +20,49 @@ func NewDefaultOSViewCounter(acc *qgen.Accumulator) (*DefaultOSViewCounter, erro
 	for bucketID, _ := range osBuckets {
 		osBuckets[bucketID] = &RWMutexCounterBucket{counter: 0}
 	}
-	counter := &DefaultOSViewCounter{
+	co := &DefaultOSViewCounter{
 		buckets: osBuckets,
 		insert:  acc.Insert("viewchunks_systems").Columns("count, createdAt, system").Fields("?,UTC_TIMESTAMP(),?").Prepare(),
 	}
-	common.AddScheduledFifteenMinuteTask(counter.Tick)
-	//common.AddScheduledSecondTask(counter.Tick)
-	common.AddShutdownTask(counter.Tick)
-	return counter, acc.FirstError()
+	c.AddScheduledFifteenMinuteTask(co.Tick)
+	//c.AddScheduledSecondTask(co.Tick)
+	c.AddShutdownTask(co.Tick)
+	return co, acc.FirstError()
 }
 
-func (counter *DefaultOSViewCounter) Tick() error {
-	for id, bucket := range counter.buckets {
+func (co *DefaultOSViewCounter) Tick() error {
+	for id, bucket := range co.buckets {
 		var count int
 		bucket.RLock()
 		count = bucket.counter
 		bucket.counter = 0 // TODO: Add a SetZero method to reduce the amount of duplicate code between the OS and agent counters?
 		bucket.RUnlock()
 
-		err := counter.insertChunk(count, id) // TODO: Bulk insert for speed?
+		err := co.insertChunk(count, id) // TODO: Bulk insert for speed?
 		if err != nil {
-			return err
+			return errors.Wrap(errors.WithStack(err), "system counter")
 		}
 	}
 	return nil
 }
 
-func (counter *DefaultOSViewCounter) insertChunk(count int, os int) error {
+func (co *DefaultOSViewCounter) insertChunk(count int, os int) error {
 	if count == 0 {
 		return nil
 	}
-	var osName = reverseOSMapEnum[os]
-	common.DebugLogf("Inserting a viewchunk with a count of %d for OS %s (%d)", count, osName, os)
-	_, err := counter.insert.Exec(count, osName)
+	osName := reverseOSMapEnum[os]
+	c.DebugLogf("Inserting a vchunk with a count of %d for OS %s (%d)", count, osName, os)
+	_, err := co.insert.Exec(count, osName)
 	return err
 }
 
-func (counter *DefaultOSViewCounter) Bump(id int) {
+func (co *DefaultOSViewCounter) Bump(id int) {
 	// TODO: Test this check
-	common.DebugDetail("counter.buckets[", id, "]: ", counter.buckets[id])
-	if len(counter.buckets) <= id || id < 0 {
+	c.DebugDetail("co.buckets[", id, "]: ", co.buckets[id])
+	if len(co.buckets) <= id || id < 0 {
 		return
 	}
-	counter.buckets[id].Lock()
-	counter.buckets[id].counter++
-	counter.buckets[id].Unlock()
+	co.buckets[id].Lock()
+	co.buckets[id].counter++
+	co.buckets[id].Unlock()
 }

@@ -3,8 +3,9 @@ package counters
 import (
 	"database/sql"
 
-	"github.com/Azareal/Gosora/common"
+	c "github.com/Azareal/Gosora/common"
 	qgen "github.com/Azareal/Gosora/query_gen"
+	"github.com/pkg/errors"
 )
 
 var RouteViewCounter *DefaultRouteViewCounter
@@ -16,53 +17,53 @@ type DefaultRouteViewCounter struct {
 }
 
 func NewDefaultRouteViewCounter(acc *qgen.Accumulator) (*DefaultRouteViewCounter, error) {
-	var routeBuckets = make([]*RWMutexCounterBucket, len(routeMapEnum))
+	routeBuckets := make([]*RWMutexCounterBucket, len(routeMapEnum))
 	for bucketID, _ := range routeBuckets {
 		routeBuckets[bucketID] = &RWMutexCounterBucket{counter: 0}
 	}
-	counter := &DefaultRouteViewCounter{
+	co := &DefaultRouteViewCounter{
 		buckets: routeBuckets,
 		insert:  acc.Insert("viewchunks").Columns("count, createdAt, route").Fields("?,UTC_TIMESTAMP(),?").Prepare(),
 	}
-	common.AddScheduledFifteenMinuteTask(counter.Tick) // There could be a lot of routes, so we don't want to be running this every second
-	//common.AddScheduledSecondTask(counter.Tick)
-	common.AddShutdownTask(counter.Tick)
-	return counter, acc.FirstError()
+	c.AddScheduledFifteenMinuteTask(co.Tick) // There could be a lot of routes, so we don't want to be running this every second
+	//c.AddScheduledSecondTask(co.Tick)
+	c.AddShutdownTask(co.Tick)
+	return co, acc.FirstError()
 }
 
-func (counter *DefaultRouteViewCounter) Tick() error {
-	for routeID, routeBucket := range counter.buckets {
+func (co *DefaultRouteViewCounter) Tick() error {
+	for routeID, routeBucket := range co.buckets {
 		var count int
 		routeBucket.RLock()
 		count = routeBucket.counter
 		routeBucket.counter = 0
 		routeBucket.RUnlock()
 
-		err := counter.insertChunk(count, routeID) // TODO: Bulk insert for speed?
+		err := co.insertChunk(count, routeID) // TODO: Bulk insert for speed?
 		if err != nil {
-			return err
+			return errors.Wrap(errors.WithStack(err), "route counter")
 		}
 	}
 	return nil
 }
 
-func (counter *DefaultRouteViewCounter) insertChunk(count int, route int) error {
+func (co *DefaultRouteViewCounter) insertChunk(count int, route int) error {
 	if count == 0 {
 		return nil
 	}
-	var routeName = reverseRouteMapEnum[route]
-	common.DebugLogf("Inserting a viewchunk with a count of %d for route %s (%d)", count, routeName, route)
-	_, err := counter.insert.Exec(count, routeName)
+	routeName := reverseRouteMapEnum[route]
+	c.DebugLogf("Inserting a vchunk with a count of %d for route %s (%d)", count, routeName, route)
+	_, err := co.insert.Exec(count, routeName)
 	return err
 }
 
-func (counter *DefaultRouteViewCounter) Bump(route int) {
+func (co *DefaultRouteViewCounter) Bump(route int) {
 	// TODO: Test this check
-	common.DebugDetail("counter.buckets[", route, "]: ", counter.buckets[route])
-	if len(counter.buckets) <= route || route < 0 {
+	c.DebugDetail("co.buckets[", route, "]: ", co.buckets[route])
+	if len(co.buckets) <= route || route < 0 {
 		return
 	}
-	counter.buckets[route].Lock()
-	counter.buckets[route].counter++
-	counter.buckets[route].Unlock()
+	co.buckets[route].Lock()
+	co.buckets[route].counter++
+	co.buckets[route].Unlock()
 }
