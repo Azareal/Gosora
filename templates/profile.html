@@ -34,11 +34,11 @@
 				<a class="profile_menu_item">{{lang "profile_add_friend"}}</a>
 			</div>-->
 			{{if (.CurrentUser.IsSuperMod) and not (.ProfileOwner.IsSuperMod) }}<div class="rowitem passive">
-				{{if .ProfileOwner.IsBanned }}<a href="/users/unban/{{.ProfileOwner.ID}}?session={{.CurrentUser.Session}}" class="profile_menu_item">{{lang "profile_unban"}}</a>
+				{{if .ProfileOwner.IsBanned}}<a href="/users/unban/{{.ProfileOwner.ID}}?s={{.CurrentUser.Session}}" class="profile_menu_item">{{lang "profile_unban"}}</a>
 			{{else}}<a href="#ban_user" class="profile_menu_item">{{lang "profile_ban"}}</a>{{end}}
 			</div>{{end}}
 			<div class="rowitem passive">
-				<a href="/report/submit/{{.ProfileOwner.ID}}?session={{.CurrentUser.Session}}&type=user" class="profile_menu_item report_item" aria-label="{{lang "profile_report_user_aria"}}" title="{{lang "profile_report_user_tooltip"}}"></a>
+				<a href="/report/submit/{{.ProfileOwner.ID}}?s={{.CurrentUser.Session}}&type=user" class="profile_menu_item report_item" aria-label="{{lang "profile_report_user_aria"}}" title="{{lang "profile_report_user_tooltip"}}"></a>
 			</div>
 			{{end}}
 		</div>

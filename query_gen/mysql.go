@@ -216,7 +216,7 @@ func (a *MysqlAdapter) AddIndex(name string, table string, iname string, colname
 		return "", errors.New("You need a name for the column")
 	}
 
-	querystr := "ALTER TABLE `" + table + "` ADD INDEX " + "`" + iname + "` (`" + colname + "`);"
+	querystr := "ALTER TABLE `" + table + "` ADD INDEX " + "`i_" + iname + "` (`" + colname + "`);"
 	// TODO: Shunt the table name logic and associated stmt list up to the a higher layer to reduce the amount of unnecessary overhead in the builder / accumulator
 	a.pushStatement(name, "add-index", querystr)
 	return querystr, nil
@@ -673,7 +673,18 @@ func (adapter *MysqlAdapter) SimpleLeftJoin(name string, table1 string, table2 s
 		return "", err
 	}
 
-	var querystr = "SELECT" + adapter.buildJoinColumns(columns) + " FROM `" + table1 + "` LEFT JOIN `" + table2 + "` ON " + adapter.buildJoiners(joiners) + whereStr + adapter.buildOrderby(orderby) + adapter.buildLimit(limit)
+	thalf1 := strings.Split(strings.Replace(table1," as ", " AS ",-1)," AS ")
+	var as1 string
+	if len(thalf1) == 2 {
+		as1 = " AS `"+ thalf1[1]+"`"
+	}
+	thalf2 := strings.Split(strings.Replace(table2," as ", " AS ",-1)," AS ")
+	var as2 string
+	if len(thalf2) == 2 {
+		as2 = " AS `"+ thalf2[1]+"`"
+	}
+
+	var querystr = "SELECT" + adapter.buildJoinColumns(columns) + " FROM `" + thalf1[0] + "`"+as1+" LEFT JOIN `" + thalf2[0] + "`"+as2+" ON " + adapter.buildJoiners(joiners) + whereStr + adapter.buildOrderby(orderby) + adapter.buildLimit(limit)
 
 	querystr = strings.TrimSpace(querystr)
 	adapter.pushStatement(name, "select", querystr)
@@ -808,7 +819,7 @@ func (adapter *MysqlAdapter) buildLimit(limit string) (q string) {
 	return q
 }
 
-func (adapter *MysqlAdapter) buildJoinColumns(columns string) (q string) {
+func (a *MysqlAdapter) buildJoinColumns(columns string) (q string) {
 	for _, column := range processColumns(columns) {
 		// TODO: Move the stirng and number logic to processColumns?
 		// TODO: Error if [0] doesn't exist
@@ -861,7 +872,7 @@ func (adapter *MysqlAdapter) SimpleCount(name string, table string, where string
 		return "", err
 	}
 
-	q = "SELECT COUNT(*) AS `count` FROM `" + table + "`" + whereStr + adapter.buildLimit(limit)
+	q = "SELECT COUNT(*) FROM `" + table + "`" + whereStr + adapter.buildLimit(limit)
 	q = strings.TrimSpace(q)
 	adapter.pushStatement(name, "select", q)
 	return q, nil

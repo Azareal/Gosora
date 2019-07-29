@@ -4,15 +4,15 @@
 <div id="panel_users" class="colstack_item rowlist bgavatars">
 	{{range .ItemList}}
 	<div class="rowitem" style="background-image:url('{{.Avatar}}');">
-		<a class="rowAvatar"{{if $.CurrentUser.Perms.EditUser}} href="/panel/users/edit/{{.ID}}?s={{$.CurrentUser.Session}}"{{end}}>
+		<a class="rowAvatar"{{if $.CurrentUser.Perms.EditUser}} href="/panel/users/edit/{{.ID}}"{{end}}>
 			<img class="bgsub" src="{{.Avatar}}" alt="Avatar" aria-hidden="true" />
 		</a>
-		<a class="rowTitle"{{if $.CurrentUser.Perms.EditUser}} href="/panel/users/edit/{{.ID}}?s={{$.CurrentUser.Session}}"{{end}}>{{.Name}}</a>
+		<a class="rowTitle"{{if $.CurrentUser.Perms.EditUser}} href="/panel/users/edit/{{.ID}}"{{end}}>{{.Name}}</a>
 		<span class="panel_floater">
 			<a href="{{.Link}}" class="tag-mini profile_url">{{lang "panel_users_profile"}}</a>
 			{{if (.Tag) and (.IsSuperMod)}}<span class="panel_tag">{{.Tag}}</span></span>{{end}}
-			{{if .IsBanned}}<a href="/users/unban/{{.ID}}?session={{$.CurrentUser.Session}}" class="panel_tag panel_right_button ban_button">{{lang "panel_users_unban"}}</a>{{else if not .IsSuperMod}}<a href="/user/{{.ID}}#ban_user" class="panel_tag panel_right_button ban_button">{{lang "panel_users_ban"}}</a>{{end}}
-			{{if not .Active}}<a href="/users/activate/{{.ID}}?session={{$.CurrentUser.Session}}" class="panel_tag panel_right_button">{{lang "panel_users_activate"}}</a>{{end}}
+			{{if .IsBanned}}<a href="/users/unban/{{.ID}}?s={{$.CurrentUser.Session}}" class="panel_tag panel_right_button ban_button">{{lang "panel_users_unban"}}</a>{{else if not .IsSuperMod}}<a href="/user/{{.ID}}#ban_user" class="panel_tag panel_right_button ban_button">{{lang "panel_users_ban"}}</a>{{end}}
+			{{if not .Active}}<a href="/users/activate/{{.ID}}?s={{$.CurrentUser.Session}}" class="panel_tag panel_right_button">{{lang "panel_users_activate"}}</a>{{end}}
 		</span>
 	</div>
 	{{end}}
