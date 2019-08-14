@@ -24,7 +24,8 @@ func ReportSubmit(w http.ResponseWriter, r *http.Request, user c.User, sitemID s
 
 	// TODO: Localise these titles and bodies
 	var title, content string
-	if itemType == "reply" {
+	switch itemType {
+	case "reply":
 		reply, err := c.Rstore.Get(itemID)
 		if err == sql.ErrNoRows {
 			return c.LocalError("We were unable to find the reported post", w, r, user)
@@ -41,7 +42,7 @@ func ReportSubmit(w http.ResponseWriter, r *http.Request, user c.User, sitemID s
 
 		title = "Reply: " + topic.Title
 		content = reply.Content + "\n\nOriginal Post: #rid-" + strconv.Itoa(itemID)
-	} else if itemType == "user-reply" {
+	case "user-reply":
 		userReply, err := c.Prstore.Get(itemID)
 		if err == sql.ErrNoRows {
 			return c.LocalError("We weren't able to find the reported post", w, r, user)
@@ -57,7 +58,7 @@ func ReportSubmit(w http.ResponseWriter, r *http.Request, user c.User, sitemID s
 		}
 		title = "Profile: " + profileOwner.Name
 		content = userReply.Content + "\n\nOriginal Post: @" + strconv.Itoa(userReply.ParentID)
-	} else if itemType == "topic" {
+	case "topic":
 		topic, err := c.Topics.Get(itemID)
 		if err == sql.ErrNoRows {
 			return c.NotFound(w, r, nil)
@@ -66,7 +67,27 @@ func ReportSubmit(w http.ResponseWriter, r *http.Request, user c.User, sitemID s
 		}
 		title = "Topic: " + topic.Title
 		content = topic.Content + "\n\nOriginal Post: #tid-" + strconv.Itoa(itemID)
-	} else {
+	case "convo-reply":
+		post := &c.ConversationPost{ID: itemID}
+		err := post.Fetch()
+		if err == sql.ErrNoRows {
+			return c.NotFound(w, r, nil)
+		} else if err != nil {
+			return c.InternalError(err, w, r)
+		}
+
+		post, err = c.ConvoPostProcess.OnLoad(post)
+		if err != nil {
+			return c.InternalError(err, w, r)
+		}
+		user, err := c.Users.Get(post.CreatedBy)
+		if err != nil {
+			return c.InternalError(err, w, r)
+		}
+
+		title = "Convo Post: " + user.Name
+		content = post.Body + "\n\nOriginal Post: #cpid-" + strconv.Itoa(itemID)
+	default:
 		_, hasHook := headerLite.Hooks.VhookNeedHook("report_preassign", &itemID, &itemType)
 		if hasHook {
 			return nil

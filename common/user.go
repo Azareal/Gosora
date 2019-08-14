@@ -472,7 +472,7 @@ func buildNoavatar(uid int, width int) string {
 		}
 	}
 	if !Config.DisableDefaultNoavatar && uid < 5 {
-		return "/static/n"+strconv.Itoa(uid)+"-"+strconv.Itoa(width)+".png?i=0"
+		return "/s/n"+strconv.Itoa(uid)+"-"+strconv.Itoa(width)+".png?i=0"
 	}
 	return strings.Replace(strings.Replace(Config.Noavatar, "{id}", strconv.Itoa(uid), 1), "{width}", strconv.Itoa(width), 1)
 }

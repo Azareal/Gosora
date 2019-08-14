@@ -362,7 +362,7 @@ func createTables(adapter qgen.Adapter) error {
 	)
 
 	//columns("participants, createdBy, createdAt, lastReplyBy, lastReplyAt").Where("cid = ?")
-	/*qgen.Install.CreateTable("conversations", "", "",
+	qgen.Install.CreateTable("conversations", "", "",
 		[]tC{
 			tC{"cid", "int", 0, false, true, ""},
 			tC{"createdBy", "int", 0, false, false, ""}, // TODO: Make this a foreign key
@@ -393,7 +393,7 @@ func createTables(adapter qgen.Adapter) error {
 			tC{"uid", "int", 0, false, false, ""},
 			tC{"cid", "int", 0, false, false, ""},
 		}, nil,
-	)*/
+	)
 
 	qgen.Install.CreateTable("activity_stream_matches", "", "",
 		[]tC{

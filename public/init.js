@@ -83,9 +83,9 @@ function asyncGetScript(source) {
 }
 
 function notifyOnScript(source) {
-	source = "/static/"+source;
+	source = "/s/"+source;
 	return new Promise((resolve, reject) => {
-		let ss = source.replace("/static/","");
+		let ss = source.replace("/s/","");
 		try {
 			let ssp = ss.charAt(0).toUpperCase() + ss.slice(1)
 			console.log("ssp:",ssp)
@@ -138,8 +138,8 @@ function loadScript(name, callback,fail) {
  	let parts = value.split("; current_theme=");
  	if (parts.length == 2) fname += "_"+ parts.pop().split(";").shift();
 	
-	let url = "/static/"+fname+".js"
-	let iurl = "/static/"+name+".js"
+	let url = "/s/"+fname+".js"
+	let iurl = "/s/"+name+".js"
 	asyncGetScript(url)
 		.then(callback)
 		.catch((e) => {
@@ -161,7 +161,7 @@ function loadScript(name, callback,fail) {
 
 /*
 function loadTmpl(name,callback) {
-	let url = "/static/"+name
+	let url = "/s/"+name
 	let worker = new Worker(url);
 }
 */

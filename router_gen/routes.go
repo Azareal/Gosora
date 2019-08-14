@@ -49,7 +49,7 @@ func userRoutes() *RouteGroup {
 	return newRouteGroup("/user/").Routes(
 		View("routes.ViewProfile", "/user/").LitBefore("req.URL.Path += extraData"),
 
-		Set("routes.AccountEdit","/user/edit",
+		Set("routes.AccountEdit", "/user/edit/",
 			MView("", "/"),
 			MView("Password", "/password/"),
 			Action("PasswordSubmit", "/password/submit/"), // TODO: Full test this
@@ -82,14 +82,15 @@ func userRoutes() *RouteGroup {
 		MView("routes.LevelList", "/user/levels/"),
 		//MView("routes.LevelRankings", "/user/rankings/"),
 		//MView("routes.Alerts", "/user/alerts/"),
-		
-		/*MView("routes.Convos", "/user/convos/"),
+
+		MView("routes.Convos", "/user/convos/"),
 		MView("routes.ConvosCreate", "/user/convos/create/"),
-		MView("routes.Convo", "/user/convo/","extraData"),
+		MView("routes.Convo", "/user/convo/", "extraData"),
 		Action("routes.ConvosCreateSubmit", "/user/convos/create/submit/"),
-		Action("routes.ConvosDeleteSubmit", "/user/convos/delete/submit/","extraData"),
+		Action("routes.ConvosDeleteSubmit", "/user/convos/delete/submit/", "extraData"),
 		Action("routes.ConvosCreateReplySubmit", "/user/convo/create/submit/"),
-		Action("routes.ConvosDeleteReplySubmit", "/user/convo/delete/submit/"),*/
+		Action("routes.ConvosDeleteReplySubmit", "/user/convo/delete/submit/","extraData"),
+		Action("routes.ConvosEditReplySubmit", "/user/convo/edit/submit/", "extraData"),
 	)
 }
 
@@ -171,6 +172,8 @@ func accountRoutes() *RouteGroup {
 func panelRoutes() *RouteGroup {
 	return newRouteGroup("/panel/").Before("SuperModOnly").NoHeader().Routes(
 		View("panel.Dashboard", "/panel/"),
+		//View("panel.StatsDisk", "/panel/stats/disk/"),
+
 		View("panel.Forums", "/panel/forums/"),
 		Action("panel.ForumsCreateSubmit", "/panel/forums/create/"),
 		Action("panel.ForumsDelete", "/panel/forums/delete/", "extraData"),

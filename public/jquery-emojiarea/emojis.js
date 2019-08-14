@@ -1,4 +1,4 @@
-$.emojiarea.path = '/static/smilies/emojiarea';
+$.emojiarea.path = '/s/smilies/emojiarea';
 $.emojiarea.icons = [{"name" : "<i class='icon-smile'></i>", "icons" : {':bowtie:' : 'bowtie.png',
 ':smile:' : 'smile.png',
 ':laughing:' : 'laughing.png',

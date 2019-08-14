@@ -1,11 +1,11 @@
 package common
 
 import (
-	"io"
-	"encoding/hex"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
+	"encoding/hex"
+	"io"
 )
 
 var ConvoPostProcess ConvoPostProcessor = NewDefaultConvoPostProcessor()
@@ -99,11 +99,15 @@ func (pr *AesConvoPostProcessor) OnSave(co *ConversationPost) (*ConversationPost
 }
 
 type ConversationPost struct {
-	ID   int
-	CID int
-	Body string
-	Post string // aes, ''
+	ID        int
+	CID       int
+	Body      string
+	Post      string // aes, ''
 	CreatedBy int
+}
+
+func (co *ConversationPost) Fetch() error {
+	return convoStmts.fetchPost.QueryRow(co.ID).Scan(&co.CID, &co.Body, &co.Post, &co.CreatedBy)
 }
 
 func (co *ConversationPost) Update() error {
@@ -122,11 +126,16 @@ func (co *ConversationPost) Create() (int, error) {
 		return 0, err
 	}
 	//GetHookTable().VhookNoRet("convo_post_create", lco)
-	res, err := convoStmts.createPost.Exec(lco.CID, lco.Body, lco.Post)
+	res, err := convoStmts.createPost.Exec(lco.CID, lco.Body, lco.Post, lco.CreatedBy)
 	if err != nil {
 		return 0, err
 	}
 
 	lastID, err := res.LastInsertId()
 	return int(lastID), err
+}
+
+func (co *ConversationPost) Delete() error {
+	_, err := convoStmts.deletePost.Exec(co.ID)
+	return err
 }

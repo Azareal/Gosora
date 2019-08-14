@@ -16,8 +16,6 @@
 	width: 64px;
 	height: 64px;
 	border-radius: 32px;
-	margin-left: auto;
-	margin-right: auto;
 }
 .nameRow {
 	display: flex;

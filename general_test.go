@@ -567,7 +567,7 @@ func BenchmarkRoutesSerial(b *testing.B) {
 		b.Log("Plugins have already been initialised, they can't be deinitialised so these tests will run with plugins on")
 	}
 	static_w := httptest.NewRecorder()
-	static_req := httptest.NewRequest("get","/static/global.js",bytes.NewReader(nil))
+	static_req := httptest.NewRequest("get","/s/global.js",bytes.NewReader(nil))
 	static_handler := http.HandlerFunc(route_static)
 
 	topic_w := httptest.NewRecorder()
@@ -1134,7 +1134,7 @@ func TestStaticRoute(t *testing.T) {
 	}
 
 	static_w := httptest.NewRecorder()
-	static_req := httptest.NewRequest("get","/static/global.js",bytes.NewReader(nil))
+	static_req := httptest.NewRequest("get","/s/global.js",bytes.NewReader(nil))
 	static_handler := http.HandlerFunc(route_static)
 
 	static_handler.ServeHTTP(static_w,static_req)

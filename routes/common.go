@@ -21,8 +21,8 @@ func ParseSEOURL(urlBit string) (slug string, id int, err error) {
 	return halves[0], tid, err
 }
 
-var slen1 = len("</static/>; rel=preload; as=script,")
-var slen2 = len("</static/>; rel=preload; as=style,")
+var slen1 = len("</s/>; rel=preload; as=script,")
+var slen2 = len("</s/>; rel=preload; as=style,")
 
 func doPush(w http.ResponseWriter, header *c.Header) {
 	//fmt.Println("in doPush")
@@ -32,7 +32,7 @@ func doPush(w http.ResponseWriter, header *c.Header) {
 		var push = func(in []string) {
 			sb.Grow((slen1 + 5) * len(in))
 			for _, path := range in {
-				sb.WriteString("</static/")
+				sb.WriteString("</s/")
 				sb.WriteString(path)
 				sb.WriteString(">; rel=preload; as=script,")
 			}
@@ -44,7 +44,7 @@ func doPush(w http.ResponseWriter, header *c.Header) {
 		if len(header.Stylesheets) > 0 {
 			sb.Grow((slen2 + 6) * len(header.Stylesheets))
 			for _, path := range header.Stylesheets {
-				sb.WriteString("</static/")
+				sb.WriteString("</s/")
 				sb.WriteString(path)
 				sb.WriteString(">; rel=preload; as=style,")
 			}
@@ -69,9 +69,9 @@ func doPush(w http.ResponseWriter, header *c.Header) {
 
 		var push = func(in []string) {
 			for _, path := range in {
-				//fmt.Println("pushing /static/" + path)
+				//fmt.Println("pushing /s/" + path)
 				// TODO: Avoid concatenating here
-				err := pusher.Push("/static/"+path, nil)
+				err := pusher.Push("/s/"+path, nil)
 				if err != nil {
 					break
 				}
@@ -116,7 +116,7 @@ func renderTemplate3(tmplName string, hookName string, w http.ResponseWriter, r 
 	h.Stylesheets = nil
 	c.PrepResources(&h.CurrentUser, h, h.Theme)
 	for _, ss := range s {
-		h.Stylesheets = append(h.Stylesheets,ss)
+		h.Stylesheets = append(h.Stylesheets, ss)
 	}
 
 	if h.CurrentUser.Loggedin {

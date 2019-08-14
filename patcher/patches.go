@@ -9,6 +9,7 @@ import (
 )
 
 type tblColumn = qgen.DBTableColumn
+type tC = tblColumn
 type tblKey = qgen.DBTableKey
 
 func init() {
@@ -35,6 +36,7 @@ func init() {
 	addPatch(20, patch20)
 	addPatch(21, patch21)
 	addPatch(22, patch22)
+	addPatch(23, patch23)
 }
 
 func patch0(scanner *bufio.Scanner) (err error) {
@@ -48,8 +50,8 @@ func patch0(scanner *bufio.Scanner) (err error) {
 	}
 
 	err = execStmt(qgen.Builder.CreateTable("menus", "", "",
-		[]tblColumn{
-			tblColumn{"mid", "int", 0, false, true, ""},
+		[]tC{
+			tC{"mid", "int", 0, false, true, ""},
 		},
 		[]tblKey{
 			tblKey{"mid", "primary","",false},
@@ -60,23 +62,23 @@ func patch0(scanner *bufio.Scanner) (err error) {
 	}
 
 	err = execStmt(qgen.Builder.CreateTable("menu_items", "", "",
-		[]tblColumn{
-			tblColumn{"miid", "int", 0, false, true, ""},
-			tblColumn{"mid", "int", 0, false, false, ""},
-			tblColumn{"name", "varchar", 200, false, false, ""},
-			tblColumn{"htmlID", "varchar", 200, false, false, "''"},
-			tblColumn{"cssClass", "varchar", 200, false, false, "''"},
-			tblColumn{"position", "varchar", 100, false, false, ""},
-			tblColumn{"path", "varchar", 200, false, false, "''"},
-			tblColumn{"aria", "varchar", 200, false, false, "''"},
-			tblColumn{"tooltip", "varchar", 200, false, false, "''"},
-			tblColumn{"tmplName", "varchar", 200, false, false, "''"},
-			tblColumn{"order", "int", 0, false, false, "0"},
+		[]tC{
+			tC{"miid", "int", 0, false, true, ""},
+			tC{"mid", "int", 0, false, false, ""},
+			tC{"name", "varchar", 200, false, false, ""},
+			tC{"htmlID", "varchar", 200, false, false, "''"},
+			tC{"cssClass", "varchar", 200, false, false, "''"},
+			tC{"position", "varchar", 100, false, false, ""},
+			tC{"path", "varchar", 200, false, false, "''"},
+			tC{"aria", "varchar", 200, false, false, "''"},
+			tC{"tooltip", "varchar", 200, false, false, "''"},
+			tC{"tmplName", "varchar", 200, false, false, "''"},
+			tC{"order", "int", 0, false, false, "0"},
 
-			tblColumn{"guestOnly", "boolean", 0, false, false, "0"},
-			tblColumn{"memberOnly", "boolean", 0, false, false, "0"},
-			tblColumn{"staffOnly", "boolean", 0, false, false, "0"},
-			tblColumn{"adminOnly", "boolean", 0, false, false, "0"},
+			tC{"guestOnly", "boolean", 0, false, false, "0"},
+			tC{"memberOnly", "boolean", 0, false, false, "0"},
+			tC{"staffOnly", "boolean", 0, false, false, "0"},
+			tC{"adminOnly", "boolean", 0, false, false, "0"},
 		},
 		[]tblKey{
 			tblKey{"miid", "primary","",false},
@@ -176,14 +178,14 @@ func patch2(scanner *bufio.Scanner) error {
 
 func patch3(scanner *bufio.Scanner) error {
 	return execStmt(qgen.Builder.CreateTable("registration_logs", "", "",
-		[]tblColumn{
-			tblColumn{"rlid", "int", 0, false, true, ""},
-			tblColumn{"username", "varchar", 100, false, false, ""},
-			tblColumn{"email", "varchar", 100, false, false, ""},
-			tblColumn{"failureReason", "varchar", 100, false, false, ""},
-			tblColumn{"success", "bool", 0, false, false, "0"}, // Did this attempt succeed?
-			tblColumn{"ipaddress", "varchar", 200, false, false, ""},
-			tblColumn{"doneAt", "createdAt", 0, false, false, ""},
+		[]tC{
+			tC{"rlid", "int", 0, false, true, ""},
+			tC{"username", "varchar", 100, false, false, ""},
+			tC{"email", "varchar", 100, false, false, ""},
+			tC{"failureReason", "varchar", 100, false, false, ""},
+			tC{"success", "bool", 0, false, false, "0"}, // Did this attempt succeed?
+			tC{"ipaddress", "varchar", 200, false, false, ""},
+			tC{"doneAt", "createdAt", 0, false, false, ""},
 		},
 		[]tblKey{
 			tblKey{"rlid", "primary","",false},
@@ -240,13 +242,13 @@ func patch4(scanner *bufio.Scanner) error {
 	}
 
 	err = execStmt(qgen.Builder.CreateTable("pages", "utf8mb4", "utf8mb4_general_ci",
-		[]tblColumn{
-			tblColumn{"pid", "int", 0, false, true, ""},
-			tblColumn{"name", "varchar", 200, false, false, ""},
-			tblColumn{"title", "varchar", 200, false, false, ""},
-			tblColumn{"body", "text", 0, false, false, ""},
-			tblColumn{"allowedGroups", "text", 0, false, false, ""},
-			tblColumn{"menuID", "int", 0, false, false, "-1"},
+		[]tC{
+			tC{"pid", "int", 0, false, true, ""},
+			tC{"name", "varchar", 200, false, false, ""},
+			tC{"title", "varchar", 200, false, false, ""},
+			tC{"body", "text", 0, false, false, ""},
+			tC{"allowedGroups", "text", 0, false, false, ""},
+			tC{"menuID", "int", 0, false, false, "-1"},
 		},
 		[]tblKey{
 			tblKey{"pid", "primary","",false},
@@ -278,18 +280,18 @@ func patch5(scanner *bufio.Scanner) error {
 	}
 
 	err = execStmt(qgen.Builder.CreateTable("users_2fa_keys", "utf8mb4", "utf8mb4_general_ci",
-		[]tblColumn{
-			tblColumn{"uid", "int", 0, false, false, ""},
-			tblColumn{"secret", "varchar", 100, false, false, ""},
-			tblColumn{"scratch1", "varchar", 50, false, false, ""},
-			tblColumn{"scratch2", "varchar", 50, false, false, ""},
-			tblColumn{"scratch3", "varchar", 50, false, false, ""},
-			tblColumn{"scratch4", "varchar", 50, false, false, ""},
-			tblColumn{"scratch5", "varchar", 50, false, false, ""},
-			tblColumn{"scratch6", "varchar", 50, false, false, ""},
-			tblColumn{"scratch7", "varchar", 50, false, false, ""},
-			tblColumn{"scratch8", "varchar", 50, false, false, ""},
-			tblColumn{"createdAt", "createdAt", 0, false, false, ""},
+		[]tC{
+			tC{"uid", "int", 0, false, false, ""},
+			tC{"secret", "varchar", 100, false, false, ""},
+			tC{"scratch1", "varchar", 50, false, false, ""},
+			tC{"scratch2", "varchar", 50, false, false, ""},
+			tC{"scratch3", "varchar", 50, false, false, ""},
+			tC{"scratch4", "varchar", 50, false, false, ""},
+			tC{"scratch5", "varchar", 50, false, false, ""},
+			tC{"scratch6", "varchar", 50, false, false, ""},
+			tC{"scratch7", "varchar", 50, false, false, ""},
+			tC{"scratch8", "varchar", 50, false, false, ""},
+			tC{"createdAt", "createdAt", 0, false, false, ""},
 		},
 		[]tblKey{
 			tblKey{"uid", "primary","",false},
@@ -308,8 +310,8 @@ func patch6(scanner *bufio.Scanner) error {
 
 func patch7(scanner *bufio.Scanner) error {
 	return execStmt(qgen.Builder.CreateTable("users_avatar_queue", "", "",
-		[]tblColumn{
-			tblColumn{"uid", "int", 0, false, false, ""}, // TODO: Make this a foreign key
+		[]tC{
+			tC{"uid", "int", 0, false, false, ""}, // TODO: Make this a foreign key
 		},
 		[]tblKey{
 			tblKey{"uid", "primary","",false},
@@ -371,8 +373,8 @@ func patch8(scanner *bufio.Scanner) error {
 		return err
 	}
 	return execStmt(qgen.Builder.CreateTable("updates", "", "",
-		[]tblColumn{
-			tblColumn{"dbVersion", "int", 0, false, false, "0"},
+		[]tC{
+			tC{"dbVersion", "int", 0, false, false, "0"},
 		},
 		[]tblKey{},
 	))
@@ -386,12 +388,12 @@ func patch9(scanner *bufio.Scanner) error {
 	}
 
 	return execStmt(qgen.Builder.CreateTable("login_logs", "", "",
-		[]tblColumn{
-			tblColumn{"lid", "int", 0, false, true, ""},
-			tblColumn{"uid", "int", 0, false, false, ""},
-			tblColumn{"success", "bool", 0, false, false, "0"}, // Did this attempt succeed?
-			tblColumn{"ipaddress", "varchar", 200, false, false, ""},
-			tblColumn{"doneAt", "createdAt", 0, false, false, ""},
+		[]tC{
+			tC{"lid", "int", 0, false, true, ""},
+			tC{"uid", "int", 0, false, false, ""},
+			tC{"success", "bool", 0, false, false, "0"}, // Did this attempt succeed?
+			tC{"ipaddress", "varchar", 200, false, false, ""},
+			tC{"doneAt", "createdAt", 0, false, false, ""},
 		},
 		[]tblKey{
 			tblKey{"lid", "primary","",false},
@@ -403,11 +405,11 @@ var acc = qgen.NewAcc
 var itoa = strconv.Itoa
 
 func patch10(scanner *bufio.Scanner) error {
-	err := execStmt(qgen.Builder.AddColumn("topics", tblColumn{"attachCount", "int", 0, false, false, "0"}, nil))
+	err := execStmt(qgen.Builder.AddColumn("topics", tC{"attachCount", "int", 0, false, false, "0"}, nil))
 	if err != nil {
 		return err
 	}
-	err = execStmt(qgen.Builder.AddColumn("topics", tblColumn{"lastReplyID", "int", 0, false, false, "0"}, nil))
+	err = execStmt(qgen.Builder.AddColumn("topics", tC{"lastReplyID", "int", 0, false, false, "0"}, nil))
 	if err != nil {
 		return err
 	}
@@ -443,7 +445,7 @@ func patch10(scanner *bufio.Scanner) error {
 }
 
 func patch11(scanner *bufio.Scanner) error {
-	err := execStmt(qgen.Builder.AddColumn("replies", tblColumn{"attachCount", "int", 0, false, false, "0"}, nil))
+	err := execStmt(qgen.Builder.AddColumn("replies", tC{"attachCount", "int", 0, false, false, "0"}, nil))
 	if err != nil {
 		return err
 	}
@@ -517,7 +519,7 @@ func patch12(scanner *bufio.Scanner) error {
 }
 
 func patch13(scanner *bufio.Scanner) error {
-	err := execStmt(qgen.Builder.AddColumn("widgets", tblColumn{"wid", "int", 0, false, true, ""}, &tblKey{"wid", "primary","",false}))
+	err := execStmt(qgen.Builder.AddColumn("widgets", tC{"wid", "int", 0, false, true, ""}, &tblKey{"wid", "primary","",false}))
 	if err != nil {
 		return err
 	}
@@ -548,18 +550,18 @@ func patch15(scanner *bufio.Scanner) error {
 
 func patch16(scanner *bufio.Scanner) error {
 	return execStmt(qgen.Builder.CreateTable("password_resets", "", "",
-		[]tblColumn{
-			tblColumn{"email", "varchar", 200, false, false, ""},
-			tblColumn{"uid", "int", 0, false, false, ""},             // TODO: Make this a foreign key
-			tblColumn{"validated", "varchar", 200, false, false, ""}, // Token given once the one-use token is consumed, used to prevent multiple people consuming the same one-use token
-			tblColumn{"token", "varchar", 200, false, false, ""},
-			tblColumn{"createdAt", "createdAt", 0, false, false, ""},
+		[]tC{
+			tC{"email", "varchar", 200, false, false, ""},
+			tC{"uid", "int", 0, false, false, ""},             // TODO: Make this a foreign key
+			tC{"validated", "varchar", 200, false, false, ""}, // Token given once the one-use token is consumed, used to prevent multiple people consuming the same one-use token
+			tC{"token", "varchar", 200, false, false, ""},
+			tC{"createdAt", "createdAt", 0, false, false, ""},
 		}, nil,
 	))
 }
 
 func patch17(scanner *bufio.Scanner) error {
-	err := execStmt(qgen.Builder.AddColumn("attachments", tblColumn{"extra", "varchar", 200, false, false, ""}, nil))
+	err := execStmt(qgen.Builder.AddColumn("attachments", tC{"extra", "varchar", 200, false, false, ""}, nil))
 	if err != nil {
 		return err
 	}
@@ -595,14 +597,14 @@ func patch17(scanner *bufio.Scanner) error {
 }
 
 func patch18(scanner *bufio.Scanner) error {
-	return execStmt(qgen.Builder.AddColumn("forums", tblColumn{"order", "int", 0, false, false, "0"}, nil))
+	return execStmt(qgen.Builder.AddColumn("forums", tC{"order", "int", 0, false, false, "0"}, nil))
 }
 
 func patch19(scanner *bufio.Scanner) error {
 	return execStmt(qgen.Builder.CreateTable("memchunks", "", "",
-		[]tblColumn{
-			tblColumn{"count", "int", 0, false, false, "0"},
-			tblColumn{"createdAt", "datetime", 0, false, false, ""},
+		[]tC{
+			tC{"count", "int", 0, false, false, "0"},
+			tC{"createdAt", "datetime", 0, false, false, ""},
 		}, nil,
 	))
 }
@@ -631,29 +633,82 @@ func patch20(scanner *bufio.Scanner) error {
 }
 
 func patch21(scanner *bufio.Scanner) error {
-	err := execStmt(qgen.Builder.AddColumn("memchunks", tblColumn{"stack", "int", 0, false, false, "0"}, nil))
+	err := execStmt(qgen.Builder.AddColumn("memchunks", tC{"stack", "int", 0, false, false, "0"}, nil))
 	if err != nil {
 		return err
 	}
 	
-	err = execStmt(qgen.Builder.AddColumn("memchunks", tblColumn{"heap", "int", 0, false, false, "0"}, nil))
+	err = execStmt(qgen.Builder.AddColumn("memchunks", tC{"heap", "int", 0, false, false, "0"}, nil))
 	if err != nil {
 		return err
 	}
 	
 	err = execStmt(qgen.Builder.CreateTable("meta", "", "",
-		[]tblColumn{
-			tblColumn{"name", "varchar", 200, false, false, ""},
-			tblColumn{"value", "varchar", 200, false, false, ""},
+		[]tC{
+			tC{"name", "varchar", 200, false, false, ""},
+			tC{"value", "varchar", 200, false, false, ""},
 		}, nil,
 	))
 	if err != nil {
 		return err
 	}
 
-	return execStmt(qgen.Builder.AddColumn("activity_stream", tblColumn{"createdAt", "createdAt", 0, false, false, ""}, nil))
+	return execStmt(qgen.Builder.AddColumn("activity_stream", tC{"createdAt", "createdAt", 0, false, false, ""}, nil))
 }
 
 func patch22(scanner *bufio.Scanner) error {
-	return execStmt(qgen.Builder.AddColumn("forums", tblColumn{"tmpl", "varchar", 200, false, false, "''"}, nil))
+	return execStmt(qgen.Builder.AddColumn("forums", tC{"tmpl", "varchar", 200, false, false, "''"}, nil))
+}
+
+func patch23(scanner *bufio.Scanner) error {
+	err := execStmt(qgen.Builder.DropTable("conversations"))
+	if err != nil {
+		return err
+	}
+	err = execStmt(qgen.Builder.CreateTable("conversations", "", "",
+		[]tC{
+			tC{"cid", "int", 0, false, true, ""},
+			tC{"createdBy", "int", 0, false, false, ""}, // TODO: Make this a foreign key
+			tC{"createdAt", "createdAt", 0, false, false, ""},
+			tC{"lastReplyAt", "datetime", 0, false, false, ""},
+			tC{"lastReplyBy", "int", 0, false, false, ""},
+		},
+		[]tblKey{
+			tblKey{"cid", "primary","",false},
+		},
+	))
+	if err != nil {
+		return err
+	}
+
+	err = execStmt(qgen.Builder.DropTable("conversations_posts"))
+	if err != nil {
+		return err
+	}
+	err = execStmt(qgen.Builder.CreateTable("conversations_posts", "", "",
+		[]tC{
+			tC{"pid", "int", 0, false, true, ""},
+			tC{"cid", "int", 0, false, false, ""},
+			tC{"createdBy", "int", 0, false, false, ""},
+			tC{"body", "varchar", 50, false, false, ""},
+			tC{"post", "varchar", 50, false, false, "''"},
+		},
+		[]tblKey{
+			tblKey{"pid", "primary","",false},
+		},
+	))
+	if err != nil {
+		return err
+	}
+
+	err = execStmt(qgen.Builder.DropTable("conversations_participants"))
+	if err != nil {
+		return err
+	}
+	return execStmt(qgen.Builder.CreateTable("conversations_participants", "", "",
+		[]tC{
+			tC{"uid", "int", 0, false, false, ""},
+			tC{"cid", "int", 0, false, false, ""},
+		}, nil,
+	))
 }

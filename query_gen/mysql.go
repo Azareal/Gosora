@@ -654,7 +654,7 @@ func (a *MysqlAdapter) complexSelect(preBuilder *selectPrebuilder, sb *strings.B
 	return nil
 }
 
-func (adapter *MysqlAdapter) SimpleLeftJoin(name string, table1 string, table2 string, columns string, joiners string, where string, orderby string, limit string) (string, error) {
+func (a *MysqlAdapter) SimpleLeftJoin(name string, table1 string, table2 string, columns string, joiners string, where string, orderby string, limit string) (string, error) {
 	if table1 == "" {
 		return "", errors.New("You need a name for the left table")
 	}
@@ -668,7 +668,7 @@ func (adapter *MysqlAdapter) SimpleLeftJoin(name string, table1 string, table2 s
 		return "", errors.New("No joiners found for SimpleLeftJoin")
 	}
 
-	whereStr, err := adapter.buildJoinWhere(where)
+	whereStr, err := a.buildJoinWhere(where)
 	if err != nil {
 		return "", err
 	}
@@ -684,14 +684,14 @@ func (adapter *MysqlAdapter) SimpleLeftJoin(name string, table1 string, table2 s
 		as2 = " AS `"+ thalf2[1]+"`"
 	}
 
-	var querystr = "SELECT" + adapter.buildJoinColumns(columns) + " FROM `" + thalf1[0] + "`"+as1+" LEFT JOIN `" + thalf2[0] + "`"+as2+" ON " + adapter.buildJoiners(joiners) + whereStr + adapter.buildOrderby(orderby) + adapter.buildLimit(limit)
+	q := "SELECT" + a.buildJoinColumns(columns) + " FROM `" + thalf1[0] + "`"+as1+" LEFT JOIN `" + thalf2[0] + "`"+as2+" ON " + a.buildJoiners(joiners) + whereStr + a.buildOrderby(orderby) + a.buildLimit(limit)
 
-	querystr = strings.TrimSpace(querystr)
-	adapter.pushStatement(name, "select", querystr)
-	return querystr, nil
+	q = strings.TrimSpace(q)
+	a.pushStatement(name, "select", q)
+	return q, nil
 }
 
-func (adapter *MysqlAdapter) SimpleInnerJoin(name string, table1 string, table2 string, columns string, joiners string, where string, orderby string, limit string) (string, error) {
+func (a *MysqlAdapter) SimpleInnerJoin(name string, table1 string, table2 string, columns string, joiners string, where string, orderby string, limit string) (string, error) {
 	if table1 == "" {
 		return "", errors.New("You need a name for the left table")
 	}
@@ -705,16 +705,27 @@ func (adapter *MysqlAdapter) SimpleInnerJoin(name string, table1 string, table2 
 		return "", errors.New("No joiners found for SimpleInnerJoin")
 	}
 
-	whereStr, err := adapter.buildJoinWhere(where)
+	whereStr, err := a.buildJoinWhere(where)
 	if err != nil {
 		return "", err
 	}
 
-	var querystr = "SELECT " + adapter.buildJoinColumns(columns) + " FROM `" + table1 + "` INNER JOIN `" + table2 + "` ON " + adapter.buildJoiners(joiners) + whereStr + adapter.buildOrderby(orderby) + adapter.buildLimit(limit)
+	thalf1 := strings.Split(strings.Replace(table1," as ", " AS ",-1)," AS ")
+	var as1 string
+	if len(thalf1) == 2 {
+		as1 = " AS `"+ thalf1[1]+"`"
+	}
+	thalf2 := strings.Split(strings.Replace(table2," as ", " AS ",-1)," AS ")
+	var as2 string
+	if len(thalf2) == 2 {
+		as2 = " AS `"+ thalf2[1]+"`"
+	}
 
-	querystr = strings.TrimSpace(querystr)
-	adapter.pushStatement(name, "select", querystr)
-	return querystr, nil
+	q := "SELECT " + a.buildJoinColumns(columns) + " FROM `" + thalf1[0] + "`"+as1+" INNER JOIN `" + thalf2[0] + "`"+as2+" ON " + a.buildJoiners(joiners) + whereStr + a.buildOrderby(orderby) + a.buildLimit(limit)
+
+	q = strings.TrimSpace(q)
+	a.pushStatement(name, "select", q)
+	return q, nil
 }
 
 func (adapter *MysqlAdapter) SimpleUpdateSelect(up *updatePrebuilder) (string, error) {
@@ -767,7 +778,7 @@ func (adapter *MysqlAdapter) SimpleInsertLeftJoin(name string, ins DBInsert, sel
 		return "", err
 	}
 
-	var q = "INSERT INTO `" + ins.Table + "`(" + adapter.buildColumns(ins.Columns) + ") SELECT" + adapter.buildJoinColumns(sel.Columns) + " FROM `" + sel.Table1 + "` LEFT JOIN `" + sel.Table2 + "` ON " + adapter.buildJoiners(sel.Joiners) + whereStr + adapter.buildOrderby(sel.Orderby) + adapter.buildLimit(sel.Limit)
+	q := "INSERT INTO `" + ins.Table + "`(" + adapter.buildColumns(ins.Columns) + ") SELECT" + adapter.buildJoinColumns(sel.Columns) + " FROM `" + sel.Table1 + "` LEFT JOIN `" + sel.Table2 + "` ON " + adapter.buildJoiners(sel.Joiners) + whereStr + adapter.buildOrderby(sel.Orderby) + adapter.buildLimit(sel.Limit)
 
 	q = strings.TrimSpace(q)
 	adapter.pushStatement(name, "insert", q)
@@ -856,7 +867,7 @@ func (adapter *MysqlAdapter) SimpleInsertInnerJoin(name string, ins DBInsert, se
 		return "", err
 	}
 
-	var q = "INSERT INTO `" + ins.Table + "`(" + adapter.buildColumns(ins.Columns) + ") SELECT" + adapter.buildJoinColumns(sel.Columns) + " FROM `" + sel.Table1 + "` INNER JOIN `" + sel.Table2 + "` ON " + adapter.buildJoiners(sel.Joiners) + whereStr + adapter.buildOrderby(sel.Orderby) + adapter.buildLimit(sel.Limit)
+	q := "INSERT INTO `" + ins.Table + "`(" + adapter.buildColumns(ins.Columns) + ") SELECT" + adapter.buildJoinColumns(sel.Columns) + " FROM `" + sel.Table1 + "` INNER JOIN `" + sel.Table2 + "` ON " + adapter.buildJoiners(sel.Joiners) + whereStr + adapter.buildOrderby(sel.Orderby) + adapter.buildLimit(sel.Limit)
 
 	q = strings.TrimSpace(q)
 	adapter.pushStatement(name, "insert", q)
@@ -882,13 +893,13 @@ func (adapter *MysqlAdapter) Builder() *prebuilder {
 	return &prebuilder{adapter}
 }
 
-func (adapter *MysqlAdapter) Write() error {
+func (a *MysqlAdapter) Write() error {
 	var stmts, body string
-	for _, name := range adapter.BufferOrder {
+	for _, name := range a.BufferOrder {
 		if name[0] == '_' {
 			continue
 		}
-		stmt := adapter.Buffer[name]
+		stmt := a.Buffer[name]
 		// ? - Table creation might be a little complex for Go to do outside a SQL file :(
 		if stmt.Type == "upsert" {
 			stmts += "\t" + name + " *qgen.MySQLUpsertCallback\n"
@@ -945,12 +956,12 @@ func _gen_mysql() (err error) {
 }
 
 // Internal methods, not exposed in the interface
-func (adapter *MysqlAdapter) pushStatement(name string, stype string, querystr string) {
+func (a *MysqlAdapter) pushStatement(name string, stype string, querystr string) {
 	if name == "" {
 		return
 	}
-	adapter.Buffer[name] = DBStmt{querystr, stype}
-	adapter.BufferOrder = append(adapter.BufferOrder, name)
+	a.Buffer[name] = DBStmt{querystr, stype}
+	a.BufferOrder = append(a.BufferOrder, name)
 }
 
 func (adapter *MysqlAdapter) stringyType(ctype string) bool {

@@ -31,7 +31,7 @@
 {{end}}
 
 <article {{scope "opening_post"}} itemscope itemtype="http://schema.org/CreativeWork" class="rowblock post_container top_post" aria-label="{{lang "topic.opening_post_aria"}}">
-	<div class="rowitem passive editable_parent post_item {{.Topic.ClassName}}" style="background-image: url({{.Topic.Avatar}}), url(/static/{{.Header.Theme.Name}}/post-avatar-bg.jpg);background-position: 0px {{if le .Topic.ContentLines 5}}-1{{end}}0px;background-repeat:no-repeat, repeat-y;">
+	<div class="rowitem passive editable_parent post_item {{.Topic.ClassName}}" style="background-image:url({{.Topic.Avatar}}), url(/s/{{.Header.Theme.Name}}/post-avatar-bg.jpg);background-position:0px {{if le .Topic.ContentLines 5}}-1{{end}}0px;background-repeat:no-repeat, repeat-y;">
 		<div class="hide_on_edit topic_content user_content" itemprop="text">{{.Topic.ContentHTML}}</div>
 		{{if .CurrentUser.Loggedin}}<textarea name="topic_content" class="show_on_edit topic_content_input edit_source">{{.Topic.Content}}</textarea>{{end}}
 

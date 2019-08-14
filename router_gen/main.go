@@ -593,6 +593,11 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		h.Set("X-Frame-Options", "deny")
 		h.Set("X-XSS-Protection", "1; mode=block") // TODO: Remove when we add a CSP? CSP's are horrendously glitchy things, tread with caution before removing
 		h.Set("X-Content-Type-Options", "nosniff")
+		if c.Config.RefNoRef || !c.Site.EnableSsl {
+			h.Set("Referrer-Policy","no-referrer")
+		} else {
+			h.Set("Referrer-Policy","strict-origin")
+		}
 	}
 	
 	if c.Dev.SuperDebug {
@@ -601,7 +606,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	// Increment the request counter
 	counters.GlobalViewCounter.Bump()
 	
-	if prefix == "/static" {
+	if prefix == "/s" { //old prefix: /static
 		counters.RouteViewCounter.Bump({{ index .AllRouteMap "routes.StaticFile" }})
 		req.URL.Path += extraData
 		routes.StaticFile(w, req)
@@ -753,14 +758,16 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		counters.LangViewCounter.Bump("none")
 	}
 
-	referrer := req.Header.Get("Referer") // Check the 'referrer' header too? :P
-	if referrer != "" {
-		// ? Optimise this a little?
-		referrer = strings.TrimPrefix(strings.TrimPrefix(referrer,"http://"),"https://")
-		referrer = strings.Split(referrer,"/")[0]
-		portless := strings.Split(referrer,":")[0]
-		if portless != "localhost" && portless != "127.0.0.1" && portless != c.Site.Host {
-			counters.ReferrerTracker.Bump(referrer)
+	if !c.Config.RefNoTrack {
+		referrer := req.Header.Get("Referer") // Check the 'referrer' header too? :P
+		if referrer != "" {
+			// ? Optimise this a little?
+			referrer = strings.TrimPrefix(strings.TrimPrefix(referrer,"http://"),"https://")
+			referrer = strings.Split(referrer,"/")[0]
+			portless := strings.Split(referrer,":")[0]
+			if portless != "localhost" && portless != "127.0.0.1" && portless != c.Site.Host {
+				counters.ReferrerTracker.Bump(referrer)
+			}
 		}
 	}
 	
@@ -840,7 +847,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						h.Del("Content-Type")
 						h.Del("Content-Encoding")
 					}
-					req.URL.Path = "/static/favicon.ico"
+					req.URL.Path = "/s/favicon.ico"
 					routes.StaticFile(w,req)
 					return nil
 				case "opensearch.xml":

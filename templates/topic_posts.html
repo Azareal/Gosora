@@ -5,7 +5,7 @@
 		<span itemprop="text">{{.ActionType}}</span>
 	</article>
 {{else}}
-	<article {{scope "post"}} id="post-{{.ID}}" itemscope itemtype="http://schema.org/CreativeWork" class="rowitem passive deletable_block editable_parent post_item {{.ClassName}}" style="background-image: url({{.Avatar}}), url(/static/{{$.Header.Theme.Name}}/post-avatar-bg.jpg);background-position: 0px {{if le .ContentLines 5}}-1{{end}}0px;background-repeat:no-repeat, repeat-y;">
+	<article {{scope "post"}} id="post-{{.ID}}" itemscope itemtype="http://schema.org/CreativeWork" class="rowitem passive deletable_block editable_parent post_item {{.ClassName}}" style="background-image:url({{.Avatar}}), url(/s/{{$.Header.Theme.Name}}/post-avatar-bg.jpg);background-position:0px {{if le .ContentLines 5}}-1{{end}}0px;background-repeat:no-repeat, repeat-y;">
 		{{/** TODO: We might end up with <br>s in the inline editor, fix this **/}}
 		<div class="editable_block user_content" itemprop="text">{{.ContentHtml}}</div>
 		{{if $.CurrentUser.Loggedin}}<div class="auto_hide edit_source">{{.Content}}</div>{{end}}

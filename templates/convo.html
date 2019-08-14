@@ -3,8 +3,4 @@
 		<h1>{{lang "convo_head"}}</h1>
 	</div>
 </div>
-{{range .Posts}}
-<div class="colstack_item">
-	<div class="rowitem">{{.Body}}</div>
-</div>
-{{end}}
+<div class="colstack_item hash_hide">{{template "convo_row.html" . }}</div>

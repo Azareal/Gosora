@@ -318,6 +318,8 @@
 		"password_reset_email_sent":"An email was sent to you. Please follow the steps within.",
 		"password_reset_token_token_verified":"Your password was successfully updated.",
 
+		"convo_dev":"Messages are currently under development. Some features may not work yet and your messages may be purged every now and then.",
+
 		"panel_forum_created":"The forum was successfully created.",
 		"panel_forum_deleted":"The forum was successfully deleted.",
 		"panel_forum_updated":"The forum was successfully updated.",

@@ -1,0 +1,30 @@
+.rowitem .topRow {
+	display: flex;
+	width: 100%;
+}
+.rowitem .userbit {
+	display: flex;
+}
+.rowitem .topRow .nameAndTitle {
+	display: flex;
+	flex-direction: column;
+	margin-left: 8px;
+}
+.nameAndTitle .real_username {
+	font-size: 17px;
+	line-height: 16px;
+}
+.userbit img {
+	width: 40px;
+	height: 40px;
+	border-radius: 24px;
+}
+.controls {
+	margin-left: auto;
+}
+.controls a {
+	margin-right: 8px;
+}
+.content_column {
+	margin-top: 5px;
+}

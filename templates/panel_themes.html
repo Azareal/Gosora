@@ -3,10 +3,10 @@
 	</div>
 	<div id="panel_primary_themes" class="colstack_item panel_themes complex_rowlist">
 		{{range .PrimaryThemes}}
-		<div class="theme_row rowitem editable_parent"{{if .FullImage}} style="background-image: url('/static/{{.FullImage}}');background-position: center;background-size: 50%;background-repeat: no-repeat;"{{end}}>
-			<span style="float: left;">
-				<a href="/panel/themes/{{.Name}}" class="editable_block" style="font-size: 17px;">{{.FriendlyName}}</a><br />
-				<small class="panel_theme_author" style="margin-left: 2px;">{{lang "panel_themes_author_prefix"}}<a href="//{{.URL}}">{{.Creator}}</a></small>
+		<div class="theme_row rowitem editable_parent"{{if .FullImage}} style="background-image:url('/s/{{.FullImage}}');background-position:center;background-size:50%;background-repeat:no-repeat;"{{end}}>
+			<span style="float:left;">
+				<a href="/panel/themes/{{.Name}}" class="editable_block" style="font-size:17px;">{{.FriendlyName}}</a><br />
+				<small class="panel_theme_author" style="margin-left:2px;">{{lang "panel_themes_author_prefix"}}<a href="//{{.URL}}">{{.Creator}}</a></small>
 			</span>
 			<span class="panel_floater">
 				{{if .MobileFriendly}}<span class="panel_tag panel_theme_mobile" title="{{lang "panel_themes_mobile_friendly_tooltip"}}" aria-label="{{lang "panel_themes_mobile_friendly_aria"}}">📱</span>{{end}}
@@ -22,10 +22,10 @@
 	</div>
 	<div id="panel_variant_themes" class="colstack_item panel_themes">
 		{{range .VariantThemes}}
-		<div class="theme_row rowitem editable_parent"{{if .FullImage}} style="background-image: url('/static/{{.FullImage}}');background-position: center;background-size: 50%;background-repeat: no-repeat;"{{end}}>
+		<div class="theme_row rowitem editable_parent"{{if .FullImage}} style="background-image:url('/s/{{.FullImage}}');background-position:center;background-size:50%;background-repeat:no-repeat;"{{end}}>
 			<span style="float: left;">
-				<a href="/panel/themes/{{.Name}}" class="editable_block" style="font-size: 17px;">{{.FriendlyName}}</a><br />
-				<small class="panel_theme_author" style="margin-left: 2px;">{{lang "panel_themes_author_prefix"}}<a href="//{{.URL}}">{{.Creator}}</a></small>
+				<a href="/panel/themes/{{.Name}}" class="editable_block" style="font-size:17px;">{{.FriendlyName}}</a><br />
+				<small class="panel_theme_author" style="margin-left:2px;">{{lang "panel_themes_author_prefix"}}<a href="//{{.URL}}">{{.Creator}}</a></small>
 			</span>
 			<span class="panel_floater">
 				{{if .MobileFriendly}}<span class="panel_tag panel_theme_mobile" title="{{lang "panel_themes_mobile_friendly_tooltip"}}" aria-label="{{lang "panel_themes_mobile_friendly_aria"}}">📱</span>{{end}}

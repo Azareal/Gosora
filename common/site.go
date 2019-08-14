@@ -104,6 +104,9 @@ type config struct {
 	DisableNoavatarRange   bool
 	DisableDefaultNoavatar bool
 
+	RefNoTrack bool
+	RefNoRef bool
+
 	Noavatar            string // ? - Move this into the settings table?
 	ItemsPerPage        int    // ? - Move this into the settings table?
 	MaxTopicTitleLength int

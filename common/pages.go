@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Azareal/Gosora/common/phrases"
+	p "github.com/Azareal/Gosora/common/phrases"
 )
 
 /*type HResource struct {
@@ -15,7 +15,7 @@ import (
 	Hash string
 }*/
 
-// TODO: Allow resources in spots other than /static/ and possibly even external domains (e.g. CDNs)
+// TODO: Allow resources in spots other than /s/ and possibly even external domains (e.g. CDNs)
 // TODO: Preload Trumboyg on Cosora on the forum list
 type Header struct {
 	Title string
@@ -50,9 +50,9 @@ type Header struct {
 	ExtData        ExtData
 }
 
-func (header *Header) AddScript(name string) {
+func (h *Header) AddScript(name string) {
 	// TODO: Use a secondary static file map to avoid this concatenation?
-	fname := "/static/" + name
+	fname := "/s/" + name
 	var oname string
 	if fname[0] == '/' && fname[1] != '/' {
 		file, ok := StaticFiles.Get(fname)
@@ -64,11 +64,11 @@ func (header *Header) AddScript(name string) {
 		oname = name
 	}
 	//log.Print("oname:", oname)
-	header.Scripts = append(header.Scripts, oname)
+	h.Scripts = append(h.Scripts, oname)
 }
 
-func (header *Header) AddPreScriptAsync(name string) {
-	fname := "/static/" + name
+func (h *Header) AddPreScriptAsync(name string) {
+	fname := "/s/" + name
 	var oname string
 	if fname[0] == '/' && fname[1] != '/' {
 		file, ok := StaticFiles.Get(fname)
@@ -79,11 +79,11 @@ func (header *Header) AddPreScriptAsync(name string) {
 	if oname == "" {
 		oname = name
 	}
-	header.PreScriptsAsync = append(header.PreScriptsAsync, oname)
+	h.PreScriptsAsync = append(h.PreScriptsAsync, oname)
 }
 
-func (header *Header) AddScriptAsync(name string) {
-	fname := "/static/" + name
+func (h *Header) AddScriptAsync(name string) {
+	fname := "/s/" + name
 	var oname string
 	if fname[0] == '/' && fname[1] != '/' {
 		file, ok := StaticFiles.Get(fname)
@@ -94,15 +94,15 @@ func (header *Header) AddScriptAsync(name string) {
 	if oname == "" {
 		oname = name
 	}
-	header.ScriptsAsync = append(header.ScriptsAsync, oname)
+	h.ScriptsAsync = append(h.ScriptsAsync, oname)
 }
 
-/*func (header *Header) Preload(name string) {
-	header.Preload = append(header.Preload, name)
+/*func (h *Header) Preload(name string) {
+	h.Preload = append(h.Preload, name)
 }*/
 
-func (header *Header) AddSheet(name string) {
-	fname := "/static/" + name
+func (h *Header) AddSheet(name string) {
+	fname := "/s/" + name
 	var oname string
 	if fname[0] == '/' && fname[1] != '/' {
 		file, ok := StaticFiles.Get(fname)
@@ -113,11 +113,11 @@ func (header *Header) AddSheet(name string) {
 	if oname == "" {
 		oname = name
 	}
-	header.Stylesheets = append(header.Stylesheets, oname)
+	h.Stylesheets = append(h.Stylesheets, oname)
 }
 
-func (header *Header) AddNotice(name string) {
-	header.NoticeList = append(header.NoticeList, phrases.GetNoticePhrase(name))
+func (h *Header) AddNotice(name string) {
+	h.NoticeList = append(h.NoticeList, p.GetNoticePhrase(name))
 }
 
 // TODO: Add this to routes which don't use templates. E.g. Json APIs.
@@ -289,9 +289,18 @@ type ConvoListPage struct {
 	Paginator
 }
 
+type ConvoViewRow struct {
+	*ConversationPost
+	User *User
+	ClassName string
+	ContentLines string
+}
+
 type ConvoViewPage struct {
 	*Header
-	Posts []*ConversationPost
+	Convo *Conversation
+	Posts []ConvoViewRow
+	CanModify bool
 	Paginator
 }
 

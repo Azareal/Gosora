@@ -351,6 +351,10 @@ h1, h2, h3, h4, h5 {
 .rowhead h1, .opthead h1, .colstack_head h1 {
 	font-size: 21px;
 }
+.rowhead h1 + h2, .opthead h1 + h2, .colstack_right .colstack_head .rowitem h1 + h2 {
+	margin-left: auto;
+}
+
 .sidebar .rowhead {
 	margin-left: 18px;
 	margin-top: 4px;
