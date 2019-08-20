@@ -193,7 +193,12 @@ func (c *CTemplateSet) CompileByLoggedin(name string, fileDir string, expects st
 	}
 	var importList string
 	for _, item := range c.importMap {
-		importList += "import \"" + item + "\"\n"
+		ispl := strings.Split(item," ")
+		if len(ispl) > 1 {
+			importList += "import "+ispl[0]+" \"" + ispl[1] + "\"\n"
+		} else {
+			importList += "import \"" + item + "\"\n"
+		}
 	}
 
 	fname := strings.TrimSuffix(name, filepath.Ext(name))
@@ -204,7 +209,7 @@ func (c *CTemplateSet) CompileByLoggedin(name string, fileDir string, expects st
 		}
 		fname += "_" + c.themeName
 	}
-	c.importMap["github.com/Azareal/Gosora/common"] = "github.com/Azareal/Gosora/common"
+	c.importMap["github.com/Azareal/Gosora/common"] = "c github.com/Azareal/Gosora/common"
 
 	stub = `package ` + c.config.PackageName + `
 ` + importList + `
@@ -215,14 +220,14 @@ import "errors"
 		stub += "// nolint\nfunc init() {\n"
 
 		if !c.config.SkipHandles && c.themeName == "" {
-			stub += "\tcommon.Template_" + fname + "_handle = Template_" + fname + "\n"
-			stub += "\tcommon.Ctemplates = append(common.Ctemplates,\"" + fname + "\")\n"
+			stub += "\tc.Template_" + fname + "_handle = Template_" + fname + "\n"
+			stub += "\tc.Ctemplates = append(c.Ctemplates,\"" + fname + "\")\n"
 		}
 
 		if !c.config.SkipTmplPtrMap {
 			stub += "tmpl := Template_" + fname + "\n"
-			stub += "\tcommon.TmplPtrMap[\"" + fname + "\"] = &tmpl\n"
-			stub += "\tcommon.TmplPtrMap[\"o_" + fname + "\"] = tmpl\n"
+			stub += "\tc.TmplPtrMap[\"" + fname + "\"] = &tmpl\n"
+			stub += "\tc.TmplPtrMap[\"o_" + fname + "\"] = tmpl\n"
 		}
 
 		stub += "}\n\n"
@@ -361,7 +366,7 @@ func (c *CTemplateSet) compile(name string, content string, expects string, expe
 	c.detailf("c.overridenRoots: %+v\n", c.overridenRoots)
 
 	var outBuf []OutBufferFrame
-	var rootHold = "tmpl_" + fname + "_vars"
+	rootHold := "tmpl_" + fname + "_vars"
 	con := CContext{
 		RootHolder:       rootHold,
 		VarHolder:        rootHold,
@@ -408,7 +413,12 @@ func (c *CTemplateSet) compile(name string, content string, expects string, expe
 	}
 	var importList string
 	for _, item := range c.importMap {
-		importList += "import \"" + item + "\"\n"
+		ispl := strings.Split(item," ")
+		if len(ispl) > 1 {
+			importList += "import "+ispl[0]+" \"" + ispl[1] + "\"\n"
+		} else {
+			importList += "import \"" + item + "\"\n"
+		}
 	}
 	var varString string
 	for _, varItem := range c.varList {
@@ -429,14 +439,14 @@ func (c *CTemplateSet) compile(name string, content string, expects string, expe
 		fout += "// nolint\nfunc init() {\n"
 
 		if !c.config.SkipHandles && c.themeName == "" {
-			fout += "\tcommon.Template_" + fname + "_handle = Template_" + fname + "\n"
-			fout += "\tcommon.Ctemplates = append(common.Ctemplates,\"" + fname + "\")\n"
+			fout += "\tc.Template_" + fname + "_handle = Template_" + fname + "\n"
+			fout += "\tc.Ctemplates = append(c.Ctemplates,\"" + fname + "\")\n"
 		}
 
 		if !c.config.SkipTmplPtrMap {
 			fout += "tmpl := Template_" + fname + "\n"
-			fout += "\tcommon.TmplPtrMap[\"" + fname + "\"] = &tmpl\n"
-			fout += "\tcommon.TmplPtrMap[\"o_" + fname + "\"] = tmpl\n"
+			fout += "\tc.TmplPtrMap[\"" + fname + "\"] = &tmpl\n"
+			fout += "\tc.TmplPtrMap[\"o_" + fname + "\"] = tmpl\n"
 		}
 		if len(c.langIndexToName) > 0 {
 			fout += "\t" + fname + "_tmpl_phrase_id = phrases.RegisterTmplPhraseNames([]string{\n"
@@ -456,7 +466,7 @@ func (c *CTemplateSet) compile(name string, content string, expects string, expe
 	}
 `
 		fout += `var iw http.ResponseWriter
-	gzw, ok := w.(common.GzipResponseWriter)
+	gzw, ok := w.(c.GzipResponseWriter)
 	if ok {
 		iw = gzw.ResponseWriter
 	}
@@ -1069,7 +1079,7 @@ ArgLoop:
 			val = val3
 
 			// TODO: Refactor this
-			litString("common.BuildWidget("+leftParam+","+rightParam+")", false)
+			litString("c.BuildWidget("+leftParam+","+rightParam+")", false)
 			break ArgLoop
 		case "hasWidgets":
 			// TODO: Implement string literals properly
@@ -1092,7 +1102,7 @@ ArgLoop:
 			val = val3
 
 			// TODO: Refactor this
-			out = "common.HasWidgets(" + leftParam + "," + rightParam + ")"
+			out = "c.HasWidgets(" + leftParam + "," + rightParam + ")"
 			literal = true
 			break ArgLoop
 		case "lang":
@@ -1178,7 +1188,7 @@ ArgLoop:
 				panic("The leftoperand for function buint cannot be left blank")
 			}
 			leftParam, _ := c.compileIfVarSub(con, leftOperand)
-			out = "{\nbyteFloat, unit := common.ConvertByteUnit(float64(" + leftParam + "))\n"
+			out = "{\nbyteFloat, unit := c.ConvertByteUnit(float64(" + leftParam + "))\n"
 			out += "w.Write(fmt.Sprintf(\"%.1f\", byteFloat) + unit)\n"
 			literal = true
 			break ArgLoop
@@ -1200,7 +1210,7 @@ ArgLoop:
 			}
 			leftParam, _ := c.compileIfVarSub(con, leftOperand)
 			// TODO: Refactor this
-			litString("common.RelativeTime("+leftParam+")", false)
+			litString("c.RelativeTime("+leftParam+")", false)
 			break ArgLoop
 		case "scope":
 			literal = true

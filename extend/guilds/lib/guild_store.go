@@ -6,7 +6,7 @@ import "github.com/Azareal/Gosora/query_gen"
 var Gstore GuildStore
 
 type GuildStore interface {
-	Get(guildID int) (guild *Guild, err error)
+	Get(id int) (guild *Guild, err error)
 	Create(name string, desc string, active bool, privacy int, uid int, fid int) (int, error)
 }
 
@@ -23,19 +23,19 @@ func NewSQLGuildStore() (*SQLGuildStore, error) {
 	}, acc.FirstError()
 }
 
-func (store *SQLGuildStore) Close() {
-	_ = store.get.Close()
-	_ = store.create.Close()
+func (s *SQLGuildStore) Close() {
+	_ = s.get.Close()
+	_ = s.create.Close()
 }
 
-func (store *SQLGuildStore) Get(guildID int) (guild *Guild, err error) {
-	guild = &Guild{ID: guildID}
-	err = store.get.QueryRow(guildID).Scan(&guild.Name, &guild.Desc, &guild.Active, &guild.Privacy, &guild.Joinable, &guild.Owner, &guild.MemberCount, &guild.MainForumID, &guild.Backdrop, &guild.CreatedAt, &guild.LastUpdateTime)
-	return guild, err
+func (s *SQLGuildStore) Get(id int) (guild *Guild, err error) {
+	g = &Guild{ID: id}
+	err = s.get.QueryRow(guildID).Scan(&g.Name, &g.Desc, &g.Active, &g.Privacy, &g.Joinable, &g.Owner, &g.MemberCount, &g.MainForumID, &g.Backdrop, &g.CreatedAt, &g.LastUpdateTime)
+	return g, err
 }
 
-func (store *SQLGuildStore) Create(name string, desc string, active bool, privacy int, uid int, fid int) (int, error) {
-	res, err := store.create.Exec(name, desc, active, privacy, uid, fid)
+func (s *SQLGuildStore) Create(name string, desc string, active bool, privacy int, uid int, fid int) (int, error) {
+	res, err := s.create.Exec(name, desc, active, privacy, uid, fid)
 	if err != nil {
 		return 0, err
 	}

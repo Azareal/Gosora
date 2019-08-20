@@ -3,7 +3,10 @@
 		<h1>{{lang "convo_head"}}</h1>
 	</div>
 </div>
-<div class="colstack_item hash_hide">{{template "convo_row.html" . }}</div>
+<div class="colstack_item parti">
+	<div class="rowitem">Participants: Blah, Blah 2, Blah 3</div>
+</div>
+<div class="colstack_item">{{template "convo_row.html" .}}</div>
 {{if not .CurrentUser.IsBanned}}
 <form action="/user/convo/create/submit/{{.Convo.ID}}?s={{.CurrentUser.Session}}" method="post">
 	<div class="colstack_item topic_reply_form" style="border-top:none;">

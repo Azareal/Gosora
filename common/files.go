@@ -180,7 +180,7 @@ func (list SFileList) JSTmplInit() error {
 		data = replace(data, "w.Write(", "out += ")
 		data = replace(data, "strconv.Itoa(", "")
 		data = replace(data, "strconv.FormatInt(", "")
-		data = replace(data, "common.", "")
+		data = replace(data, "c.", "")
 		data = replace(data, "phrases.", "")
 		data = replace(data, ", 10;", "")
 		data = replace(data, shortName+"_tmpl_phrase_id = RegisterTmplPhraseNames([]string{", "[")

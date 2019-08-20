@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/Azareal/Gosora/common"
+	c "github.com/Azareal/Gosora/common"
 	"github.com/Azareal/Gosora/extend/guilds/lib"
 )
 
@@ -9,21 +9,21 @@ import (
 
 // TODO: Add a plugin interface instead of having a bunch of argument to AddPlugin?
 func init() {
-	common.Plugins.Add(&common.Plugin{UName: "guilds", Name: "Guilds", Author: "Azareal", URL: "https://github.com/Azareal", Init: initGuilds, Deactivate: deactivateGuilds, Install: installGuilds})
+	c.Plugins.Add(&c.Plugin{UName: "guilds", Name: "Guilds", Author: "Azareal", URL: "https://github.com/Azareal", Init: initGuilds, Deactivate: deactivateGuilds, Install: installGuilds})
 
 	// TODO: Is it possible to avoid doing this when the plugin isn't activated?
-	common.PrebuildTmplList = append(common.PrebuildTmplList, guilds.PrebuildTmplList)
+	c.PrebuildTmplList = append(c.PrebuildTmplList, guilds.PrebuildTmplList)
 }
 
-func initGuilds(plugin *common.Plugin) (err error) {
-	plugin.AddHook("intercept_build_widgets", guilds.Widgets)
-	plugin.AddHook("trow_assign", guilds.TrowAssign)
-	plugin.AddHook("topic_create_pre_loop", guilds.TopicCreatePreLoop)
-	plugin.AddHook("pre_render_forum", guilds.PreRenderViewForum)
-	plugin.AddHook("simple_forum_check_pre_perms", guilds.ForumCheck)
-	plugin.AddHook("forum_check_pre_perms", guilds.ForumCheck)
+func initGuilds(pl *c.Plugin) (err error) {
+	pl.AddHook("intercept_build_widgets", guilds.Widgets)
+	pl.AddHook("trow_assign", guilds.TrowAssign)
+	pl.AddHook("topic_create_pre_loop", guilds.TopicCreatePreLoop)
+	pl.AddHook("pre_render_forum", guilds.PreRenderViewForum)
+	pl.AddHook("simple_forum_check_pre_perms", guilds.ForumCheck)
+	pl.AddHook("forum_check_pre_perms", guilds.ForumCheck)
 	// TODO: Auto-grant this perm to admins upon installation?
-	common.RegisterPluginPerm("CreateGuild")
+	c.RegisterPluginPerm("CreateGuild")
 	router.HandleFunc("/guilds/", guilds.RouteGuildList)
 	router.HandleFunc("/guild/", guilds.MiddleViewGuild)
 	router.HandleFunc("/guild/create/", guilds.RouteCreateGuild)
@@ -54,14 +54,14 @@ func initGuilds(plugin *common.Plugin) (err error) {
 	return acc.FirstError()
 }
 
-func deactivateGuilds(plugin *common.Plugin) {
-	plugin.RemoveHook("intercept_build_widgets", guilds.Widgets)
-	plugin.RemoveHook("trow_assign", guilds.TrowAssign)
-	plugin.RemoveHook("topic_create_pre_loop", guilds.TopicCreatePreLoop)
-	plugin.RemoveHook("pre_render_forum", guilds.PreRenderViewForum)
-	plugin.RemoveHook("simple_forum_check_pre_perms", guilds.ForumCheck)
-	plugin.RemoveHook("forum_check_pre_perms", guilds.ForumCheck)
-	common.DeregisterPluginPerm("CreateGuild")
+func deactivateGuilds(pl *common.Plugin) {
+	pl.RemoveHook("intercept_build_widgets", guilds.Widgets)
+	pl.RemoveHook("trow_assign", guilds.TrowAssign)
+	pl.RemoveHook("topic_create_pre_loop", guilds.TopicCreatePreLoop)
+	pl.RemoveHook("pre_render_forum", guilds.PreRenderViewForum)
+	pl.RemoveHook("simple_forum_check_pre_perms", guilds.ForumCheck)
+	pl.RemoveHook("forum_check_pre_perms", guilds.ForumCheck)
+	c.DeregisterPluginPerm("CreateGuild")
 	_ = router.RemoveFunc("/guilds/")
 	_ = router.RemoveFunc("/guild/")
 	_ = router.RemoveFunc("/guild/create/")
@@ -76,22 +76,23 @@ func deactivateGuilds(plugin *common.Plugin) {
 }
 
 // TODO: Stop accessing the query builder directly and add a feature in Gosora which is more easily reversed, if an error comes up during the installation process
+type tC = qgen.DBTableColumn
 func installGuilds(plugin *common.Plugin) error {
 	guildTableStmt, err := qgen.Builder.CreateTable("guilds", "utf8mb4", "utf8mb4_general_ci",
-		[]qgen.DBTableColumn{
-			qgen.DBTableColumn{"guildID", "int", 0, false, true, ""},
-			qgen.DBTableColumn{"name", "varchar", 100, false, false, ""},
-			qgen.DBTableColumn{"desc", "varchar", 200, false, false, ""},
-			qgen.DBTableColumn{"active", "boolean", 1, false, false, ""},
-			qgen.DBTableColumn{"privacy", "smallint", 0, false, false, ""},
-			qgen.DBTableColumn{"joinable", "smallint", 0, false, false, "0"},
-			qgen.DBTableColumn{"owner", "int", 0, false, false, ""},
-			qgen.DBTableColumn{"memberCount", "int", 0, false, false, ""},
-			qgen.DBTableColumn{"mainForum", "int", 0, false, false, "0"}, // The board the user lands on when they click on a group, we'll make it possible for group admins to change what users land on
-			//qgen.DBTableColumn{"boards","varchar",255,false,false,""}, // Cap the max number of boards at 8 to avoid overflowing the confines of a 64-bit integer?
-			qgen.DBTableColumn{"backdrop", "varchar", 200, false, false, ""}, // File extension for the uploaded file, or an external link
-			qgen.DBTableColumn{"createdAt", "createdAt", 0, false, false, ""},
-			qgen.DBTableColumn{"lastUpdateTime", "datetime", 0, false, false, ""},
+		[]tC{
+			tC{"guildID", "int", 0, false, true, ""},
+			tC{"name", "varchar", 100, false, false, ""},
+			tC{"desc", "varchar", 200, false, false, ""},
+			tC{"active", "boolean", 1, false, false, ""},
+			tC{"privacy", "smallint", 0, false, false, ""},
+			tC{"joinable", "smallint", 0, false, false, "0"},
+			tC{"owner", "int", 0, false, false, ""},
+			tC{"memberCount", "int", 0, false, false, ""},
+			tC{"mainForum", "int", 0, false, false, "0"}, // The board the user lands on when they click on a group, we'll make it possible for group admins to change what users land on
+			//tC{"boards","varchar",255,false,false,""}, // Cap the max number of boards at 8 to avoid overflowing the confines of a 64-bit integer?
+			tC{"backdrop", "varchar", 200, false, false, ""}, // File extension for the uploaded file, or an external link
+			tC{"createdAt", "createdAt", 0, false, false, ""},
+			tC{"lastUpdateTime", "datetime", 0, false, false, ""},
 		},
 		[]qgen.DBTableKey{
 			qgen.DBTableKey{"guildID", "primary"},
@@ -107,12 +108,12 @@ func installGuilds(plugin *common.Plugin) error {
 	}
 
 	guildMembersTableStmt, err := qgen.Builder.CreateTable("guilds_members", "", "",
-		[]qgen.DBTableColumn{
-			qgen.DBTableColumn{"guildID", "int", 0, false, false, ""},
-			qgen.DBTableColumn{"uid", "int", 0, false, false, ""},
-			qgen.DBTableColumn{"rank", "int", 0, false, false, "0"},  /* 0: Member. 1: Mod. 2: Admin. */
-			qgen.DBTableColumn{"posts", "int", 0, false, false, "0"}, /* Per-Group post count. Should we do some sort of score system? */
-			qgen.DBTableColumn{"joinedAt", "datetime", 0, false, false, ""},
+		[]tC{
+			tC{"guildID", "int", 0, false, false, ""},
+			tC{"uid", "int", 0, false, false, ""},
+			tC{"rank", "int", 0, false, false, "0"},  /* 0: Member. 1: Mod. 2: Admin. */
+			tC{"posts", "int", 0, false, false, "0"}, /* Per-Group post count. Should we do some sort of score system? */
+			tC{"joinedAt", "datetime", 0, false, false, ""},
 		}, nil,
 	)
 	if err != nil {
@@ -124,6 +125,6 @@ func installGuilds(plugin *common.Plugin) error {
 }
 
 // TO-DO; Implement an uninstallation system into Gosora. And a better installation system.
-func uninstallGuilds(plugin *common.Plugin) error {
+func uninstallGuilds(plugin *c.Plugin) error {
 	return nil
 }

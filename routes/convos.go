@@ -63,15 +63,15 @@ func Convo(w http.ResponseWriter, r *http.Request, user c.User, header *c.Header
 
 	pitems := make([]c.ConvoViewRow, len(posts))
 	for i, post := range posts {
-		user, err := c.Users.Get(post.CreatedBy)
+		uuser, err := c.Users.Get(post.CreatedBy)
 		if err != nil {
 			return c.InternalError(err, w, r)
 		}
-		pitems[i] = c.ConvoViewRow{post, user, "", "4"}
+		canModify := user.ID == post.CreatedBy || user.IsSuperMod
+		pitems[i] = c.ConvoViewRow{post, uuser, "", 4, canModify}
 	}
-	canModify := user.ID == convo.CreatedBy || user.IsSuperMod
 
-	pi := c.Account{header, "dashboard", "convo", c.ConvoViewPage{header, convo, pitems, canModify, c.Paginator{pageList, page, lastPage}}}
+	pi := c.Account{header, "dashboard", "convo", c.ConvoViewPage{header, convo, pitems, c.Paginator{pageList, page, lastPage}}}
 	return renderTemplate("account", w, r, header, pi)
 }
 
@@ -89,7 +89,7 @@ func ConvosCreateSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.R
 		return ferr
 	}
 	if user.IsBanned {
-		return c.NoPermissions(w,r,user)
+		return c.NoPermissions(w, r, user)
 	}
 
 	recps := c.SanitiseSingleLine(r.PostFormValue("recp"))
@@ -145,7 +145,7 @@ func ConvosCreateReplySubmit(w http.ResponseWriter, r *http.Request, user c.User
 		return ferr
 	}
 	if user.IsBanned {
-		return c.NoPermissions(w,r,user)
+		return c.NoPermissions(w, r, user)
 	}
 	cid, err := strconv.Atoi(scid)
 	if err != nil {
@@ -163,7 +163,7 @@ func ConvosCreateReplySubmit(w http.ResponseWriter, r *http.Request, user c.User
 		return c.NotFound(w, r, nil)
 	}
 	if !convo.Has(user.ID) {
-		return c.LocalError("You are not in this conversation.",w,r,user)
+		return c.LocalError("You are not in this conversation.", w, r, user)
 	}
 
 	body := c.PreparseMessage(r.PostFormValue("content"))
@@ -173,7 +173,7 @@ func ConvosCreateReplySubmit(w http.ResponseWriter, r *http.Request, user c.User
 		return c.InternalError(err, w, r)
 	}
 
-	http.Redirect(w, r, "/user/convo/" + strconv.Itoa(convo.ID), http.StatusSeeOther)
+	http.Redirect(w, r, "/user/convo/"+strconv.Itoa(convo.ID), http.StatusSeeOther)
 	return nil
 }
 
@@ -205,8 +205,8 @@ func ConvosDeleteReplySubmit(w http.ResponseWriter, r *http.Request, user c.User
 	if pcount == 0 {
 		return c.NotFound(w, r, nil)
 	}
-	if user.ID != convo.CreatedBy && !user.IsSuperMod {
-		return c.NoPermissions(w,r,user)
+	if user.ID != post.CreatedBy && !user.IsSuperMod {
+		return c.NoPermissions(w, r, user)
 	}
 
 	posts, err := convo.Posts(0, c.Config.ItemsPerPage)
@@ -259,8 +259,11 @@ func ConvosEditReplySubmit(w http.ResponseWriter, r *http.Request, user c.User, 
 	if pcount == 0 {
 		return c.NotFound(w, r, nil)
 	}
-	if user.ID != convo.CreatedBy && !user.IsSuperMod {
-		return c.NoPermissions(w,r,user)
+	if user.ID != post.CreatedBy && !user.IsSuperMod {
+		return c.NoPermissions(w, r, user)
+	}
+	if !convo.Has(user.ID) {
+		return c.LocalError("You are not in this conversation.", w, r, user)
 	}
 
 	post.Body = c.PreparseMessage(r.PostFormValue("edit_item"))

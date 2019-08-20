@@ -9,7 +9,7 @@
 			</span>
 		</div>
 		<span class="controls">
-			{{if $.CanModify}}
+			{{if .CanModify}}
 			<a href="/user/convo/edit/submit/{{.ID}}?s={{$.CurrentUser.Session}}" class="mod_button" title="{{lang "profile_comments_edit_tooltip"}}" aria-label="{{lang "profile_comments_edit_aria"}}"><button class="username edit_item edit_label"></button></a>
 			
 			<a href="/user/convo/delete/submit/{{.ID}}?s={{$.CurrentUser.Session}}" class="mod_button" title="{{lang "profile_comments_delete_tooltip"}}" aria-label="{{lang "profile_comments_delete_aria"}}"><button class="username delete_item delete_label"></button></a>

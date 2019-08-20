@@ -273,14 +273,15 @@ type ConvoViewRow struct {
 	*ConversationPost
 	User *User
 	ClassName string
-	ContentLines string
+	ContentLines int
+	
+	CanModify bool
 }
 
 type ConvoViewPage struct {
 	*Header
 	Convo *Conversation
 	Posts []ConvoViewRow
-	CanModify bool
 	Paginator
 }
 

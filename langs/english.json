@@ -143,8 +143,8 @@
 		"account_logins":"Logins",
 		"account_penalties":"Penalties",
 		"account_level_list":"Level Progress",
-		"convos_head":"Conversations",
-		"convo_head":"Conversation",
+		"convos":"Conversations",
+		"convo":"Conversation",
 
 		"panel_dashboard":"Control Panel Dashboard",
 		"panel_forums":"Forum Manager",
