@@ -10,10 +10,6 @@ import (
 	qgen "github.com/Azareal/Gosora/query_gen"
 )
 
-/*
-conversations
-conversations_posts
-*/
 var Convos ConversationStore
 var convoStmts ConvoStmts
 
@@ -24,6 +20,7 @@ type ConvoStmts struct {
 	edit       *sql.Stmt
 	create     *sql.Stmt
 	delete     *sql.Stmt
+	has *sql.Stmt
 
 	editPost   *sql.Stmt
 	createPost *sql.Stmt
@@ -38,8 +35,9 @@ func init() {
 			countPosts: acc.Count("conversations_posts").Where("cid = ?").Prepare(),
 			edit:       acc.Update("conversations").Set("lastReplyBy = ?, lastReplyAt = ?").Where("cid = ?").Prepare(),
 			create:     acc.Insert("conversations").Columns("createdAt, lastReplyAt").Fields("UTC_TIMESTAMP(),UTC_TIMESTAMP()").Prepare(),
+			has: acc.Count("conversations_participants").Where("uid = ? AND cid = ?").Prepare(),
 
-			editPost:   acc.Update("conversations_posts").Set("body = ?, post = ?").Where("cid = ?").Prepare(),
+			editPost:   acc.Update("conversations_posts").Set("body = ?, post = ?").Where("pid = ?").Prepare(),
 			createPost: acc.Insert("conversations_posts").Columns("cid, body, post, createdBy").Fields("?,?,?,?").Prepare(),
 			deletePost: acc.Delete("conversations_posts").Where("pid = ?").Prepare(),
 		}
@@ -84,6 +82,15 @@ func (co *Conversation) PostsCount() (count int) {
 		LogError(err)
 	}
 	return count
+}
+
+func (co *Conversation) Has(uid int) (in bool) {
+	var count int
+	err := convoStmts.has.QueryRow(uid, co.ID).Scan(&count)
+	if err != nil {
+		LogError(err)
+	}
+	return count > 0
 }
 
 func (co *Conversation) Update() error {

@@ -87,8 +87,8 @@ func userRoutes() *RouteGroup {
 		MView("routes.ConvosCreate", "/user/convos/create/"),
 		MView("routes.Convo", "/user/convo/", "extraData"),
 		Action("routes.ConvosCreateSubmit", "/user/convos/create/submit/"),
-		Action("routes.ConvosDeleteSubmit", "/user/convos/delete/submit/", "extraData"),
-		Action("routes.ConvosCreateReplySubmit", "/user/convo/create/submit/"),
+		//Action("routes.ConvosDeleteSubmit", "/user/convos/delete/submit/", "extraData"),
+		Action("routes.ConvosCreateReplySubmit", "/user/convo/create/submit/","extraData"),
 		Action("routes.ConvosDeleteReplySubmit", "/user/convo/delete/submit/","extraData"),
 		Action("routes.ConvosEditReplySubmit", "/user/convo/edit/submit/", "extraData"),
 	)

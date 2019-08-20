@@ -1,7 +1,7 @@
 <div class="colstack_item colstack_head rowhead">
 	<div class="rowitem">
 		<h1>{{lang "convos_head"}}</h1>
-		<h2><a href="/user/convos/create/">Create Convo</a></h2>
+		{{if not .CurrentUser.IsBanned}}<h2><a href="/user/convos/create/">Create Convo</a></h2>{{end}}
 	</div>
 </div>
 <div class="colstack_item">

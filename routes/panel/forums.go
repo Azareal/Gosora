@@ -144,7 +144,7 @@ func ForumsOrderSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.Ro
 	sitems := strings.TrimSuffix(strings.TrimPrefix(r.PostFormValue("items"), "{"), "}")
 	//fmt.Printf("sitems: %+v\n", sitems)
 
-	var updateMap = make(map[int]int)
+	updateMap := make(map[int]int)
 	for index, sfid := range strings.Split(sitems, ",") {
 		fid, err := strconv.Atoi(sfid)
 		if err != nil {
@@ -237,7 +237,7 @@ func ForumsEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, sfid 
 	forumPreset := c.StripInvalidPreset(r.PostFormValue("forum_preset"))
 	forumActive := r.PostFormValue("forum_active")
 
-	var active = false
+	active := false
 	if forumActive == "" {
 		active = forum.Active
 	} else if forumActive == "1" || forumActive == "Show" {

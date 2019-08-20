@@ -51,50 +51,35 @@ type Header struct {
 }
 
 func (h *Header) AddScript(name string) {
-	// TODO: Use a secondary static file map to avoid this concatenation?
-	fname := "/s/" + name
-	var oname string
-	if fname[0] == '/' && fname[1] != '/' {
-		file, ok := StaticFiles.Get(fname)
+	if name[0] == '/' && name[1] != '/' {
+		// TODO: Use a secondary static file map to avoid this concatenation?
+		file, ok := StaticFiles.Get("/s/" + name)
 		if ok {
-			oname = file.OName
+			name = file.OName
 		}
 	}
-	if oname == "" {
-		oname = name
-	}
-	//log.Print("oname:", oname)
-	h.Scripts = append(h.Scripts, oname)
+	//log.Print("name:", name)
+	h.Scripts = append(h.Scripts, name)
 }
 
 func (h *Header) AddPreScriptAsync(name string) {
-	fname := "/s/" + name
-	var oname string
-	if fname[0] == '/' && fname[1] != '/' {
-		file, ok := StaticFiles.Get(fname)
+	if name[0] == '/' && name[1] != '/' {
+		file, ok := StaticFiles.Get("/s/" + name)
 		if ok {
-			oname = file.OName
+			name = file.OName
 		}
 	}
-	if oname == "" {
-		oname = name
-	}
-	h.PreScriptsAsync = append(h.PreScriptsAsync, oname)
+	h.PreScriptsAsync = append(h.PreScriptsAsync, name)
 }
 
 func (h *Header) AddScriptAsync(name string) {
-	fname := "/s/" + name
-	var oname string
-	if fname[0] == '/' && fname[1] != '/' {
-		file, ok := StaticFiles.Get(fname)
+	if name[0] == '/' && name[1] != '/' {
+		file, ok := StaticFiles.Get("/s/" + name)
 		if ok {
-			oname = file.OName
+			name = file.OName
 		}
 	}
-	if oname == "" {
-		oname = name
-	}
-	h.ScriptsAsync = append(h.ScriptsAsync, oname)
+	h.ScriptsAsync = append(h.ScriptsAsync, name)
 }
 
 /*func (h *Header) Preload(name string) {
@@ -102,18 +87,13 @@ func (h *Header) AddScriptAsync(name string) {
 }*/
 
 func (h *Header) AddSheet(name string) {
-	fname := "/s/" + name
-	var oname string
-	if fname[0] == '/' && fname[1] != '/' {
-		file, ok := StaticFiles.Get(fname)
+	if name[0] == '/' && name[1] != '/' {
+		file, ok := StaticFiles.Get("/s/" + name)
 		if ok {
-			oname = file.OName
+			name = file.OName
 		}
 	}
-	if oname == "" {
-		oname = name
-	}
-	h.Stylesheets = append(h.Stylesheets, oname)
+	h.Stylesheets = append(h.Stylesheets, name)
 }
 
 func (h *Header) AddNotice(name string) {

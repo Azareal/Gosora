@@ -4,3 +4,15 @@
 	</div>
 </div>
 <div class="colstack_item hash_hide">{{template "convo_row.html" . }}</div>
+{{if not .CurrentUser.IsBanned}}
+<form action="/user/convo/create/submit/{{.Convo.ID}}?s={{.CurrentUser.Session}}" method="post">
+	<div class="colstack_item topic_reply_form" style="border-top:none;">
+		<div class="formrow">
+			<div class="formitem"><textarea class="input_content" name="content" placeholder="{{lang "profile_comments_form_content"}}"></textarea></div>
+		</div>
+		<div class="formrow quick_button_row">
+			<div class="formitem"><button name="reply-button" class="formbutton">{{lang "profile_comments_form_button"}}</button></div>
+		</div>
+	</div>
+</form>
+{{end}}

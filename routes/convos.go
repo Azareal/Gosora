@@ -88,6 +88,9 @@ func ConvosCreateSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.R
 	if ferr != nil {
 		return ferr
 	}
+	if user.IsBanned {
+		return c.NoPermissions(w,r,user)
+	}
 
 	recps := c.SanitiseSingleLine(r.PostFormValue("recp"))
 	body := c.PreparseMessage(r.PostFormValue("body"))
@@ -117,7 +120,7 @@ func ConvosCreateSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.R
 	return nil
 }
 
-func ConvosDeleteSubmit(w http.ResponseWriter, r *http.Request, user c.User, scid string) c.RouteError {
+/*func ConvosDeleteSubmit(w http.ResponseWriter, r *http.Request, user c.User, scid string) c.RouteError {
 	_, ferr := c.SimpleUserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
@@ -134,14 +137,43 @@ func ConvosDeleteSubmit(w http.ResponseWriter, r *http.Request, user c.User, sci
 
 	http.Redirect(w, r, "/user/convos/", http.StatusSeeOther)
 	return nil
-}
+}*/
 
-func ConvosCreateReplySubmit(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
+func ConvosCreateReplySubmit(w http.ResponseWriter, r *http.Request, user c.User, scid string) c.RouteError {
 	_, ferr := c.SimpleUserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
-	http.Redirect(w, r, "/user/convo/id", http.StatusSeeOther)
+	if user.IsBanned {
+		return c.NoPermissions(w,r,user)
+	}
+	cid, err := strconv.Atoi(scid)
+	if err != nil {
+		return c.LocalError(p.GetErrorPhrase("id_must_be_integer"), w, r, user)
+	}
+
+	convo, err := c.Convos.Get(cid)
+	if err == sql.ErrNoRows {
+		return c.NotFound(w, r, nil)
+	} else if err != nil {
+		return c.InternalError(err, w, r)
+	}
+	pcount := convo.PostsCount()
+	if pcount == 0 {
+		return c.NotFound(w, r, nil)
+	}
+	if !convo.Has(user.ID) {
+		return c.LocalError("You are not in this conversation.",w,r,user)
+	}
+
+	body := c.PreparseMessage(r.PostFormValue("content"))
+	post := &c.ConversationPost{CID: cid, Body: body, CreatedBy: user.ID}
+	_, err = post.Create()
+	if err != nil {
+		return c.InternalError(err, w, r)
+	}
+
+	http.Redirect(w, r, "/user/convo/" + strconv.Itoa(convo.ID), http.StatusSeeOther)
 	return nil
 }
 
@@ -173,6 +205,9 @@ func ConvosDeleteReplySubmit(w http.ResponseWriter, r *http.Request, user c.User
 	if pcount == 0 {
 		return c.NotFound(w, r, nil)
 	}
+	if user.ID != convo.CreatedBy && !user.IsSuperMod {
+		return c.NoPermissions(w,r,user)
+	}
 
 	posts, err := convo.Posts(0, c.Config.ItemsPerPage)
 	// TODO: Report a better error for no posts
@@ -200,6 +235,44 @@ func ConvosEditReplySubmit(w http.ResponseWriter, r *http.Request, user c.User, 
 	if ferr != nil {
 		return ferr
 	}
-	http.Redirect(w, r, "/user/convo/id", http.StatusSeeOther)
+	cpid, err := strconv.Atoi(scpid)
+	if err != nil {
+		return c.LocalError(p.GetErrorPhrase("id_must_be_integer"), w, r, user)
+	}
+	isJs := (r.PostFormValue("js") == "1")
+
+	post := &c.ConversationPost{ID: cpid}
+	err = post.Fetch()
+	if err == sql.ErrNoRows {
+		return c.NotFound(w, r, nil)
+	} else if err != nil {
+		return c.InternalError(err, w, r)
+	}
+
+	convo, err := c.Convos.Get(post.CID)
+	if err == sql.ErrNoRows {
+		return c.NotFound(w, r, nil)
+	} else if err != nil {
+		return c.InternalError(err, w, r)
+	}
+	pcount := convo.PostsCount()
+	if pcount == 0 {
+		return c.NotFound(w, r, nil)
+	}
+	if user.ID != convo.CreatedBy && !user.IsSuperMod {
+		return c.NoPermissions(w,r,user)
+	}
+
+	post.Body = c.PreparseMessage(r.PostFormValue("edit_item"))
+	err = post.Update()
+	if err != nil {
+		return c.InternalError(err, w, r)
+	}
+
+	if !isJs {
+		http.Redirect(w, r, "/user/convo/"+strconv.Itoa(post.CID), http.StatusSeeOther)
+	} else {
+		w.Write(successJSONBytes)
+	}
 	return nil
 }

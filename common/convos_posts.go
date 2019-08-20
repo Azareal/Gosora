@@ -106,6 +106,7 @@ type ConversationPost struct {
 	CreatedBy int
 }
 
+// TODO: Should we run OnLoad on this? Or maybe add a FetchMeta method to avoid having to decode the message when it's not necessary?
 func (co *ConversationPost) Fetch() error {
 	return convoStmts.fetchPost.QueryRow(co.ID).Scan(&co.CID, &co.Body, &co.Post, &co.CreatedBy)
 }
