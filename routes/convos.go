@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"errors"
 
 	c "github.com/Azareal/Gosora/common"
 	p "github.com/Azareal/Gosora/common/phrases"
@@ -61,17 +62,36 @@ func Convo(w http.ResponseWriter, r *http.Request, user c.User, header *c.Header
 		return c.InternalError(err, w, r)
 	}
 
+	uids, err := convo.Uids()
+	if err == sql.ErrNoRows {
+		return c.NotFound(w, r, header)
+	} else if err != nil {
+		return c.InternalError(err, w, r)
+	}
+	umap, err := c.Users.BulkGetMap(uids)
+	if err == sql.ErrNoRows {
+		return c.NotFound(w, r, header)
+	} else if err != nil {
+		return c.InternalError(err, w, r)
+	}
+	users := make([]*c.User,len(umap))
+	i := 0
+	for _, user := range umap {
+		users[i] = user
+		i++
+	}
+
 	pitems := make([]c.ConvoViewRow, len(posts))
 	for i, post := range posts {
-		uuser, err := c.Users.Get(post.CreatedBy)
-		if err != nil {
-			return c.InternalError(err, w, r)
+		uuser, ok := umap[post.CreatedBy]
+		if !ok {
+			return c.InternalError(errors.New("convo post creator not in umap"), w, r)
 		}
 		canModify := user.ID == post.CreatedBy || user.IsSuperMod
 		pitems[i] = c.ConvoViewRow{post, uuser, "", 4, canModify}
 	}
 
-	pi := c.Account{header, "dashboard", "convo", c.ConvoViewPage{header, convo, pitems, c.Paginator{pageList, page, lastPage}}}
+	pi := c.Account{header, "dashboard", "convo", c.ConvoViewPage{header, convo, pitems, users, c.Paginator{pageList, page, lastPage}}}
 	return renderTemplate("account", w, r, header, pi)
 }
 

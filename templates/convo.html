@@ -4,7 +4,10 @@
 	</div>
 </div>
 <div class="colstack_item parti">
-	<div class="rowitem">Participants: Blah, Blah 2, Blah 3</div>
+	<div class="rowitem">
+		<div>Participants:&nbsp;</div>
+		{{range .Users}}<div class="parti_user"><a href="{{.Link}}">{{.Name}}</a></div>&nbsp;{{end}}
+	</div>
 </div>
 <div class="colstack_item">{{template "convo_row.html" .}}</div>
 {{if not .CurrentUser.IsBanned}}

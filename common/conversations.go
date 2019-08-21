@@ -25,6 +25,8 @@ type ConvoStmts struct {
 	editPost   *sql.Stmt
 	createPost *sql.Stmt
 	deletePost *sql.Stmt
+
+	getUsers *sql.Stmt
 }
 
 func init() {
@@ -40,6 +42,8 @@ func init() {
 			editPost:   acc.Update("conversations_posts").Set("body = ?, post = ?").Where("pid = ?").Prepare(),
 			createPost: acc.Insert("conversations_posts").Columns("cid, body, post, createdBy").Fields("?,?,?,?").Prepare(),
 			deletePost: acc.Delete("conversations_posts").Where("pid = ?").Prepare(),
+
+			getUsers: acc.Select("conversations_participants").Columns("uid").Where("cid = ?").Prepare(),
 		}
 		return acc.FirstError()
 	})
@@ -82,6 +86,24 @@ func (co *Conversation) PostsCount() (count int) {
 		LogError(err)
 	}
 	return count
+}
+
+func (co *Conversation) Uids() (ids []int, err error) {
+	rows, err := convoStmts.getUsers.Query(co.ID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var id int
+		err := rows.Scan(&id)
+		if err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	return ids, rows.Err()
 }
 
 func (co *Conversation) Has(uid int) (in bool) {

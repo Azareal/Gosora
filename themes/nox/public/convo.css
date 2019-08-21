@@ -1,6 +1,12 @@
 .parti {
 	margin-bottom: 8px;
 }
+.parti .rowitem {
+	display: flex;
+}
+.parti_user:not(:last-child):after {
+	content: ",";
+}
 
 .rowitem .topRow {
 	display: flex;

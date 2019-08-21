@@ -348,9 +348,10 @@ func compileTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName string
 	accountPage := Account{header, "dashboard", "account_own_edit", inter}
 	tmpls.AddStd("account", "c.Account", accountPage)
 
+	parti := []*User{&user}
 	convo := &Conversation{1,user.ID,time.Now(),0,time.Now()}
 	convoItems := []ConvoViewRow{ConvoViewRow{&ConversationPost{1,1,"hey","",user.ID}, &user, "", 4, true}}
-	convoPage := ConvoViewPage{header, convo, convoItems, Paginator{[]int{1}, 1, 1}}
+	convoPage := ConvoViewPage{header, convo, convoItems, parti, Paginator{[]int{1}, 1, 1}}
 	tmpls.AddStd("convo", "c.ConvoViewPage", convoPage)
 
 	basePage := &BasePanelPage{header, PanelStats{}, "dashboard", ReportForumID}

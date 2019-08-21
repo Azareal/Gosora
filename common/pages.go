@@ -282,6 +282,7 @@ type ConvoViewPage struct {
 	*Header
 	Convo *Conversation
 	Posts []ConvoViewRow
+	Users []*User
 	Paginator
 }
 
