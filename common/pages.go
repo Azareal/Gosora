@@ -265,7 +265,7 @@ type ResetPage struct {
 
 type ConvoListPage struct {
 	*Header
-	Convos []*Conversation
+	Convos []*ConversationExtra
 	Paginator
 }
 

@@ -1,3 +1,7 @@
+.convos_item_user:not(:last-child):after {
+	content: ",";
+}
+
 .parti {
 	margin-bottom: 8px;
 }

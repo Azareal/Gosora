@@ -8,7 +8,7 @@
 	{{range .Convos}}
 	<div class="rowitem">
 		<span class="to_left">
-			<a href="/user/convo/{{.ID}}">Message</a>
+			<a href="/user/convo/{{.ID}}">{{range .Users}}<span class="convos_item_user">{{.Name}}</span>&nbsp;{{end}}</a></span></a>
 		</span>
 		<span title="{{abstime .LastReplyAt}}" class="to_right">{{reltime .LastReplyAt}}</span>
 	</div>{{end}}

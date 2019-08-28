@@ -5,11 +5,11 @@
 </div>
 <div class="colstack_item parti">
 	<div class="rowitem">
-		<div>Participants:&nbsp;</div>
+		<div>{{lang "convo_users"}}:&nbsp;</div>
 		{{range .Users}}<div class="parti_user"><a href="{{.Link}}">{{.Name}}</a></div>&nbsp;{{end}}
 	</div>
 </div>
-<div class="colstack_item">{{template "convo_row.html" .}}</div>
+<div class="colstack_item convo_row_box">{{template "convo_row.html" .}}</div>
 {{if not .CurrentUser.IsBanned}}
 <form action="/user/convo/create/submit/{{.Convo.ID}}?s={{.CurrentUser.Session}}" method="post">
 	<div class="colstack_item topic_reply_form" style="border-top:none;">

@@ -63,78 +63,67 @@ func NewDefaultUserStore(cache UserCache) (*DefaultUserStore, error) {
 	}, acc.FirstError()
 }
 
-func (mus *DefaultUserStore) DirtyGet(id int) *User {
-	user, err := mus.cache.Get(id)
+func (s *DefaultUserStore) DirtyGet(id int) *User {
+	user, err := s.Get(id)
 	if err == nil {
 		return user
 	}
-	/*if mus.OutOfBounds(id) {
+	/*if s.OutOfBounds(id) {
 		return BlankUser()
 	}*/
-
-	user = &User{ID: id, Loggedin: true}
-	err = mus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.Active, &user.IsSuperAdmin, &user.Session, &user.Email, &user.RawAvatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Liked, &user.LastIP, &user.TempGroup)
-
-	user.Init()
-	if err == nil {
-		mus.cache.Set(user)
-		return user
-	}
 	return BlankUser()
 }
 
 // TODO: Log weird cache errors? Not just here but in every *Cache?
-func (mus *DefaultUserStore) Get(id int) (*User, error) {
-	user, err := mus.cache.Get(id)
+func (s *DefaultUserStore) Get(id int) (*User, error) {
+	u, err := s.cache.Get(id)
 	if err == nil {
 		//log.Print("cached user")
 		//log.Print(string(debug.Stack()))
 		//log.Println("")
-		return user, nil
+		return u, nil
 	}
 	//log.Print("uncached user")
 
-	user = &User{ID: id, Loggedin: true}
-	err = mus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.Active, &user.IsSuperAdmin, &user.Session, &user.Email, &user.RawAvatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Liked, &user.LastIP, &user.TempGroup)
-
-	user.Init()
+	u = &User{ID: id, Loggedin: true}
+	err = s.get.QueryRow(id).Scan(&u.Name, &u.Group, &u.Active, &u.IsSuperAdmin, &u.Session, &u.Email, &u.RawAvatar, &u.Message, &u.URLPrefix, &u.URLName, &u.Level, &u.Score,&u.Liked, &u.LastIP, &u.TempGroup)
 	if err == nil {
-		mus.cache.Set(user)
+		u.Init()
+		s.cache.Set(u)
 	}
-	return user, err
+	return u, err
 }
 
 // TODO: Log weird cache errors? Not just here but in every *Cache?
 // ! This bypasses the cache, use frugally
-func (mus *DefaultUserStore) GetByName(name string) (*User, error) {
-	user := &User{Loggedin: true}
-	err := mus.getByName.QueryRow(name).Scan(&user.ID, &user.Name, &user.Group, &user.Active, &user.IsSuperAdmin, &user.Session, &user.Email, &user.RawAvatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Liked, &user.LastIP, &user.TempGroup)
-
-	user.Init()
+func (s *DefaultUserStore) GetByName(name string) (*User, error) {
+	u := &User{Loggedin: true}
+	err := s.getByName.QueryRow(name).Scan(&u.ID, &u.Name, &u.Group, &u.Active, &u.IsSuperAdmin, &u.Session, &u.Email, &u.RawAvatar, &u.Message, &u.URLPrefix, &u.URLName, &u.Level, &u.Score, &u.Liked, &u.LastIP, &u.TempGroup)
 	if err == nil {
-		mus.cache.Set(user)
+		u.Init()
+		s.cache.Set(u)
 	}
-	return user, err
+	return u, err
 }
 
 // TODO: Optimise this, so we don't wind up hitting the database every-time for small gaps
 // TODO: Make this a little more consistent with DefaultGroupStore's GetRange method
-func (store *DefaultUserStore) GetOffset(offset int, perPage int) (users []*User, err error) {
-	rows, err := store.getOffset.Query(offset, perPage)
+func (s *DefaultUserStore) GetOffset(offset int, perPage int) (users []*User, err error) {
+	rows, err := s.getOffset.Query(offset, perPage)
 	if err != nil {
 		return users, err
 	}
 	defer rows.Close()
 
 	for rows.Next() {
-		user := &User{Loggedin: true}
-		err := rows.Scan(&user.ID, &user.Name, &user.Group, &user.Active, &user.IsSuperAdmin, &user.Session, &user.Email, &user.RawAvatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Liked, &user.LastIP, &user.TempGroup)
+		u := &User{Loggedin: true}
+		err := rows.Scan(&u.ID, &u.Name, &u.Group, &u.Active, &u.IsSuperAdmin, &u.Session, &u.Email, &u.RawAvatar, &u.Message, &u.URLPrefix, &u.URLName, &u.Level, &u.Score, &u.Liked, &u.LastIP, &u.TempGroup)
 		if err != nil {
 			return nil, err
 		}
-		user.Init()
-		store.cache.Set(user)
-		users = append(users, user)
+		u.Init()
+		s.cache.Set(u)
+		users = append(users, u)
 	}
 	return users, rows.Err()
 }
@@ -142,7 +131,7 @@ func (store *DefaultUserStore) GetOffset(offset int, perPage int) (users []*User
 // TODO: Optimise the query to avoid preparing it on the spot? Maybe, use knowledge of the most common IN() parameter counts?
 // TODO: ID of 0 should always error?
 func (s *DefaultUserStore) BulkGetMap(ids []int) (list map[int]*User, err error) {
-	var idCount = len(ids)
+	idCount := len(ids)
 	list = make(map[int]*User)
 	if idCount == 0 {
 		return list, nil
@@ -173,16 +162,16 @@ func (s *DefaultUserStore) BulkGetMap(ids []int) (list map[int]*User, err error)
 		return list, nil
 	}
 
-	// TODO: Add a function for the qlist stuff
-	var qlist string
+	// TODO: Add a function for the q stuff
+	var q string
 	idList := make([]interface{},len(ids))
 	for i, id := range ids {
 		idList[i] = strconv.Itoa(id)
-		qlist += "?,"
+		q += "?,"
 	}
-	qlist = qlist[0 : len(qlist)-1]
+	q = q[0 : len(q)-1]
 
-	rows, err := qgen.NewAcc().Select("users").Columns("uid, name, group, active, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, liked, last_ip, temp_group").Where("uid IN(" + qlist + ")").Query(idList...)
+	rows, err := qgen.NewAcc().Select("users").Columns("uid,name,group,active,is_super_admin,session,email,avatar,message,url_prefix,url_name,level,score,liked,last_ip,temp_group").Where("uid IN(" + q + ")").Query(idList...)
 	if err != nil {
 		return list, err
 	}
@@ -221,29 +210,28 @@ func (s *DefaultUserStore) BulkGetMap(ids []int) (list map[int]*User, err error)
 	return list, err
 }
 
-func (mus *DefaultUserStore) BypassGet(id int) (*User, error) {
-	user := &User{ID: id, Loggedin: true}
-	err := mus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.Active, &user.IsSuperAdmin, &user.Session, &user.Email, &user.RawAvatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Liked, &user.LastIP, &user.TempGroup)
-
-	user.Init()
-	return user, err
+func (s *DefaultUserStore) BypassGet(id int) (*User, error) {
+	u := &User{ID: id, Loggedin: true}
+	err := s.get.QueryRow(id).Scan(&u.Name, &u.Group, &u.Active, &u.IsSuperAdmin, &u.Session, &u.Email, &u.RawAvatar, &u.Message, &u.URLPrefix, &u.URLName, &u.Level, &u.Score, &u.Liked, &u.LastIP, &u.TempGroup)
+	u.Init()
+	return u, err
 }
 
-func (mus *DefaultUserStore) Reload(id int) error {
-	user := &User{ID: id, Loggedin: true}
-	err := mus.get.QueryRow(id).Scan(&user.Name, &user.Group, &user.Active, &user.IsSuperAdmin, &user.Session, &user.Email, &user.RawAvatar, &user.Message, &user.URLPrefix, &user.URLName, &user.Level, &user.Score, &user.Liked, &user.LastIP, &user.TempGroup)
+func (s *DefaultUserStore) Reload(id int) error {
+	u := &User{ID: id, Loggedin: true}
+	err := s.get.QueryRow(id).Scan(&u.Name, &u.Group, &u.Active, &u.IsSuperAdmin, &u.Session, &u.Email, &u.RawAvatar, &u.Message, &u.URLPrefix, &u.URLName, &u.Level, &u.Score, &u.Liked, &u.LastIP, &u.TempGroup)
 	if err != nil {
-		mus.cache.Remove(id)
+		s.cache.Remove(id)
 		return err
 	}
-	user.Init()
-	_ = mus.cache.Set(user)
+	u.Init()
+	_ = s.cache.Set(u)
 	TopicListThaw.Thaw()
 	return nil
 }
 
-func (mus *DefaultUserStore) Exists(id int) bool {
-	err := mus.exists.QueryRow(id).Scan(&id)
+func (s *DefaultUserStore) Exists(id int) bool {
+	err := s.exists.QueryRow(id).Scan(&id)
 	if err != nil && err != ErrNoRows {
 		LogError(err)
 	}
@@ -252,7 +240,7 @@ func (mus *DefaultUserStore) Exists(id int) bool {
 
 // TODO: Change active to a bool?
 // TODO: Use unique keys for the usernames
-func (mus *DefaultUserStore) Create(username string, password string, email string, group int, active bool) (int, error) {
+func (s *DefaultUserStore) Create(username string, password string, email string, group int, active bool) (int, error) {
 	// TODO: Strip spaces?
 
 	// ? This number might be a little screwy with Unicode, but it's the only consistent thing we have, as Unicode characters can be any number of bytes in theory?
@@ -261,7 +249,7 @@ func (mus *DefaultUserStore) Create(username string, password string, email stri
 	}
 
 	// Is this username already taken..?
-	err := mus.usernameExists.QueryRow(username).Scan(&username)
+	err := s.usernameExists.QueryRow(username).Scan(&username)
 	if err != ErrNoRows {
 		return 0, ErrAccountExists
 	}
@@ -274,7 +262,7 @@ func (mus *DefaultUserStore) Create(username string, password string, email stri
 		return 0, err
 	}
 
-	res, err := mus.register.Exec(username, email, string(hashedPassword), salt, group, active)
+	res, err := s.register.Exec(username, email, string(hashedPassword), salt, group, active)
 	if err != nil {
 		return 0, err
 	}

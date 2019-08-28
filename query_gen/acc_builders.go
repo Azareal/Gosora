@@ -100,12 +100,12 @@ func (b *accUpdateBuilder) Prepare() *sql.Stmt {
 	return b.build.prepare(b.build.adapter.SimpleUpdate(b.up))
 }
 
-func (u *accUpdateBuilder) Exec(args ...interface{}) (res sql.Result, err error) {
-	query, err := u.build.adapter.SimpleUpdate(u.up)
+func (b *accUpdateBuilder) Exec(args ...interface{}) (res sql.Result, err error) {
+	query, err := b.build.adapter.SimpleUpdate(b.up)
 	if err != nil {
 		return res, err
 	}
-	return u.build.exec(query, args...)
+	return b.build.exec(query, args...)
 }
 
 type AccSelectBuilder struct {
@@ -145,7 +145,8 @@ func (b *AccSelectBuilder) In(column string, inList []int) *AccSelectBuilder {
 		return b
 	}
 
-	var where = column + " IN("
+	// TODO: Optimise this
+	where := column + " IN("
 	for _, item := range inList {
 		where += strconv.Itoa(item) + ","
 	}
@@ -156,6 +157,29 @@ func (b *AccSelectBuilder) In(column string, inList []int) *AccSelectBuilder {
 
 	b.where = where
 	return b
+}
+
+// TODO: Don't implement the SQL at the accumulator level but the adapter level
+func (b *AccSelectBuilder) InPQuery(column string, inList []int) (*sql.Rows, error) {
+	if len(inList) == 0 {
+		return nil, sql.ErrNoRows
+	}
+	// TODO: Optimise this
+	where := column + " IN("
+
+	idList := make([]interface{},len(inList))
+	for i, id := range inList {
+		idList[i] = strconv.Itoa(id)
+		where += "?,"
+	}
+	where = where[0 : len(where)-1] + ")"
+
+	if b.where != "" {
+		where += " AND " + b.where
+	}
+
+	b.where = where
+	return b.Query(idList...)
 }
 
 func (b *AccSelectBuilder) InQ(column string, subBuilder *AccSelectBuilder) *AccSelectBuilder {

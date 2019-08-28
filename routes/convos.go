@@ -2,10 +2,11 @@ package routes
 
 import (
 	"database/sql"
+	"errors"
 	"net/http"
 	"strconv"
 	"strings"
-	"errors"
+	//"log"
 
 	c "github.com/Azareal/Gosora/common"
 	p "github.com/Azareal/Gosora/common/phrases"
@@ -13,13 +14,15 @@ import (
 
 func Convos(w http.ResponseWriter, r *http.Request, user c.User, header *c.Header) c.RouteError {
 	accountEditHead("convos", w, r, &user, header)
+	header.AddSheet(header.Theme.Name + "/convo.css")
 	header.AddNotice("convo_dev")
 	ccount := c.Convos.GetUserCount(user.ID)
 	page, _ := strconv.Atoi(r.FormValue("page"))
 	offset, page, lastPage := c.PageOffset(ccount, page, c.Config.ItemsPerPage)
 	pageList := c.Paginate(page, lastPage, 5)
 
-	convos, err := c.Convos.GetUser(user.ID, offset)
+	convos, err := c.Convos.GetUserExtra(user.ID, offset)
+	//log.Printf("convos: %+v\n", convos)
 	if err == sql.ErrNoRows {
 		return c.NotFound(w, r, header)
 	} else if err != nil {
@@ -74,7 +77,7 @@ func Convo(w http.ResponseWriter, r *http.Request, user c.User, header *c.Header
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
-	users := make([]*c.User,len(umap))
+	users := make([]*c.User, len(umap))
 	i := 0
 	for _, user := range umap {
 		users[i] = user

@@ -81,7 +81,7 @@ func (s *MemoryForumPermsStore) Reload(fid int) error {
 	}
 	defer rows.Close()
 
-	var forumPerms = make(map[int]*ForumPerms)
+	forumPerms := make(map[int]*ForumPerms)
 	for rows.Next() {
 		var gid int
 		var perms []byte

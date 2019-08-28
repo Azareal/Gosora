@@ -16,7 +16,6 @@ import (
 )
 
 // TODO: Add the watchdog goroutine
-// TODO: Add BulkGetMap
 // TODO: Add some sort of update method
 // ? - Should we add stick, lock, unstick, and unlock methods? These might be better on the Topics not the TopicStore
 var Topics TopicStore
@@ -104,7 +103,7 @@ func (s *DefaultTopicStore) BypassGet(id int) (*Topic, error) {
 
 // TODO: Avoid duplicating much of this logic from user_store.go
 func (s *DefaultTopicStore) BulkGetMap(ids []int) (list map[int]*Topic, err error) {
-	var idCount = len(ids)
+	idCount := len(ids)
 	list = make(map[int]*Topic)
 	if idCount == 0 {
 		return list, nil
@@ -136,15 +135,15 @@ func (s *DefaultTopicStore) BulkGetMap(ids []int) (list map[int]*Topic, err erro
 	}
 
 	// TODO: Add a function for the qlist stuff
-	var qlist string
+	var q string
 	idList := make([]interface{},len(ids))
 	for i, id := range ids {
 		idList[i] = strconv.Itoa(id)
-		qlist += "?,"
+		q += "?,"
 	}
-	qlist = qlist[0 : len(qlist)-1]
+	q = q[0 : len(q)-1]
 
-	rows, err := qgen.NewAcc().Select("topics").Columns("tid, title, content, createdBy, createdAt, lastReplyBy, lastReplyAt, lastReplyID, is_closed, sticky, parentID, ipaddress, views, postCount, likeCount, attachCount, poll, data").Where("tid IN(" + qlist + ")").Query(idList...)
+	rows, err := qgen.NewAcc().Select("topics").Columns("tid,title,content,createdBy,createdAt,lastReplyBy,lastReplyAt,lastReplyID,is_closed,sticky,parentID,ipaddress,views,postCount,likeCount,attachCount,poll,data").Where("tid IN(" + q + ")").Query(idList...)
 	if err != nil {
 		return list, err
 	}

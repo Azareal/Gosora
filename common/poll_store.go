@@ -145,15 +145,15 @@ func (s *DefaultPollStore) BulkGetMap(ids []int) (list map[int]*Poll, err error)
 	}
 
 	// TODO: Add a function for the qlist stuff
-	var qlist string
+	var q string
 	idList := make([]interface{},len(ids))
 	for i, id := range ids {
 		idList[i] = strconv.Itoa(id)
-		qlist += "?,"
+		q += "?,"
 	}
-	qlist = qlist[0 : len(qlist)-1]
+	q = q[0 : len(q)-1]
 
-	rows, err := qgen.NewAcc().Select("polls").Columns("pollID, parentID, parentTable, type, options, votes").Where("pollID IN(" + qlist + ")").Query(idList...)
+	rows, err := qgen.NewAcc().Select("polls").Columns("pollID,parentID,parentTable,type,options,votes").Where("pollID IN(" + q + ")").Query(idList...)
 	if err != nil {
 		return list, err
 	}
