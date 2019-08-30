@@ -10,6 +10,7 @@ import (
 	"os"
 	"io"
 	"regexp"
+	"crypto/subtle"
 
 	"github.com/Azareal/Gosora/common/phrases"
 )
@@ -470,7 +471,11 @@ func NoSessionMismatch(w http.ResponseWriter, r *http.Request, user User) RouteE
 	if err != nil {
 		return LocalError("Bad Form", w, r, user)
 	}
-	if r.FormValue("session") != user.Session && r.FormValue("s") != user.Session {
+	sess := []byte(user.Session)
+	if len(sess) == 0 {
+		return SecurityError(w, r, user)
+	}
+	if subtle.ConstantTimeCompare([]byte(r.FormValue("session")), sess) != 1 && subtle.ConstantTimeCompare([]byte(r.FormValue("s")), sess) != 1 {
 		return SecurityError(w, r, user)
 	}
 	return nil
@@ -496,7 +501,11 @@ func HandleUploadRoute(w http.ResponseWriter, r *http.Request, user User, maxFil
 }
 
 func NoUploadSessionMismatch(w http.ResponseWriter, r *http.Request, user User) RouteError {
-	if r.FormValue("session") != user.Session && r.FormValue("s") != user.Session {
+	sess := []byte(user.Session)
+	if len(sess) == 0 {
+		return SecurityError(w, r, user)
+	}
+	if subtle.ConstantTimeCompare([]byte(r.FormValue("session")), sess) != 1 && subtle.ConstantTimeCompare([]byte(r.FormValue("s")), sess) != 1 {
 		return SecurityError(w, r, user)
 	}
 	return nil
