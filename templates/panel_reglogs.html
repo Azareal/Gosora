@@ -6,7 +6,7 @@
 	<div class="rowitem panel_compactrow{{if not .Success}} bg_red{{end}}">
 		<span class="to_left{{if not .Success}} panel_registration_attempt{{end}}">
 			<span>{{if not .Success}}{{lang "panel_logs_registration_attempt"}}: {{end}}{{.Username}} ({{lang "panel_logs_registration_email"}}: {{.Email}}){{if .ParsedReason}} ({{lang "panel_logs_registration_reason"}}: {{.ParsedReason}}){{end}}</span>
-			{{if $.CurrentUser.Perms.ViewIPs}}<br /><small title="{{.IPAddress}}">{{.IPAddress}}</small>{{end}}
+			{{if $.CurrentUser.Perms.ViewIPs}}<br /><small title="{{.IP}}">{{.IP}}</small>{{end}}
 		</span>
 		<span class="to_right">
 			<span title="{{.DoneAt}}">{{.DoneAt}}</span>

@@ -497,7 +497,7 @@ func topicStoreTest(t *testing.T, newID int) {
 		return ""
 	}
 
-	var testTopic = func(tid int, title string, content string, createdBy int, ip string, parentID int, isClosed bool, sticky bool) {
+	testTopic := func(tid int, title string, content string, createdBy int, ip string, parentID int, isClosed bool, sticky bool) {
 		topic, err = c.Topics.Get(tid)
 		recordMustExist(t, err, fmt.Sprintf("Couldn't find TID #%d", tid))
 		expect(t, topic.ID == tid, fmt.Sprintf("topic.ID does not match the requested TID. Got '%d' instead.", topic.ID))
@@ -505,7 +505,7 @@ func topicStoreTest(t *testing.T, newID int) {
 		expect(t, topic.Title == title, fmt.Sprintf("The topic's name should be '%s', not %s", title, topic.Title))
 		expect(t, topic.Content == content, fmt.Sprintf("The topic's body should be '%s', not %s", content, topic.Content))
 		expect(t, topic.CreatedBy == createdBy, fmt.Sprintf("The topic's creator should be %d, not %d", createdBy, topic.CreatedBy))
-		expect(t, topic.IPAddress == ip, fmt.Sprintf("The topic's IP Address should be '%s', not %s", ip, topic.IPAddress))
+		expect(t, topic.IP == ip, fmt.Sprintf("The topic's IP should be '%s', not %s", ip, topic.IP))
 		expect(t, topic.ParentID == parentID, fmt.Sprintf("The topic's parent forum should be %d, not %d", parentID, topic.ParentID))
 		expect(t, topic.IsClosed == isClosed, fmt.Sprintf("This topic should%s be locked", iFrag(topic.IsClosed)))
 		expect(t, topic.Sticky == sticky, fmt.Sprintf("This topic should%s be sticky", iFrag(topic.Sticky)))
@@ -933,16 +933,16 @@ func TestReplyStore(t *testing.T) {
 	_, err = c.Rstore.Get(0)
 	recordMustNotExist(t, err, "RID #0 shouldn't exist")
 
-	var replyTest2 = func(reply *c.Reply, err error, rid int, parentID int, createdBy int, content string, ip string) {
+	replyTest2 := func(reply *c.Reply, err error, rid int, parentID int, createdBy int, content string, ip string) {
 		expectNilErr(t, err)
 		expect(t, reply.ID == rid, fmt.Sprintf("RID #%d has the wrong ID. It should be %d not %d", rid, rid, reply.ID))
 		expect(t, reply.ParentID == parentID, fmt.Sprintf("The parent topic of RID #%d should be %d not %d", rid, parentID, reply.ParentID))
 		expect(t, reply.CreatedBy == createdBy, fmt.Sprintf("The creator of RID #%d should be %d not %d", rid, createdBy, reply.CreatedBy))
 		expect(t, reply.Content == content, fmt.Sprintf("The contents of RID #%d should be '%s' not %s", rid, content, reply.Content))
-		expect(t, reply.IPAddress == ip, fmt.Sprintf("The IPAddress of RID#%d should be '%s' not %s", rid, ip, reply.IPAddress))
+		expect(t, reply.IP == ip, fmt.Sprintf("The IP of RID#%d should be '%s' not %s", rid, ip, reply.IP))
 	}
 
-	var replyTest = func(rid int, parentID int, createdBy int, content string, ip string) {
+	replyTest := func(rid int, parentID int, createdBy int, content string, ip string) {
 		reply, err := c.Rstore.Get(rid)
 		replyTest2(reply, err, rid, parentID, createdBy, content, ip)
 		reply, err = c.Rstore.GetCache().Get(rid)
@@ -1043,7 +1043,7 @@ func TestProfileReplyStore(t *testing.T) {
 	expect(t, profileReply.ParentID == 1, fmt.Sprintf("The parent ID of the profile reply should be 1 not %d", profileReply.ParentID))
 	expect(t, profileReply.Content == "Haha", fmt.Sprintf("The profile reply's contents should be 'Haha' not '%s'", profileReply.Content))
 	expect(t, profileReply.CreatedBy == 1, fmt.Sprintf("The profile reply's creator should be 1 not %d", profileReply.CreatedBy))
-	expect(t, profileReply.IPAddress == "::1", fmt.Sprintf("The profile reply's IP Address should be '::1' not '%s'", profileReply.IPAddress))
+	expect(t, profileReply.IP == "::1", fmt.Sprintf("The profile reply's IP should be '::1' not '%s'", profileReply.IP))
 
 	err = profileReply.Delete()
 	expectNilErr(t, err)
@@ -1104,7 +1104,7 @@ func TestLogs(t *testing.T) {
 		expect(t, log.Action == "something", "log.Action is not something")
 		expect(t, log.ElementID == 0, "log.ElementID is not 0")
 		expect(t, log.ElementType == "bumblefly", "log.ElementType is not bumblefly")
-		expect(t, log.IPAddress == "::1", "log.IPAddress is not ::1")
+		expect(t, log.IP == "::1", "log.IP is not ::1")
 		expect(t, log.ActorID == 1, "log.ActorID is not 1")
 		// TODO: Add a test for log.DoneAt? Maybe throw in some dates and times which are clearly impossible but which may occur due to timezone bugs?
 	}

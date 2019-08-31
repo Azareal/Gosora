@@ -37,7 +37,7 @@
 				{{if $.CurrentUser.Perms.EditReply}}<a href="/reply/edit/submit/{{.ID}}?s={{$.CurrentUser.Session}}" class="action_button edit_item" aria-label="{{lang "topic.post_edit_aria"}}" data-action="edit"></a>{{end}}
 				{{end}}
 				{{if $.CurrentUser.Perms.DeleteReply}}<a href="/reply/delete/submit/{{.ID}}?s={{$.CurrentUser.Session}}" class="action_button delete_item" aria-label="{{lang "topic.post_delete_aria"}}" data-action="delete"></a>{{end}}
-				{{if $.CurrentUser.Perms.ViewIPs}}<a href="/users/ips/?ip={{.IPAddress}}" title="{{lang "topic.ip_full_tooltip"}}" class="action_button ip_item_button hide_on_big" aria-label="{{lang "topic.ip_full_aria"}}" data-action="ip"></a>{{end}}
+				{{if $.CurrentUser.Perms.ViewIPs}}<a href="/users/ips/?ip={{.IP}}" title="{{lang "topic.ip_full_tooltip"}}" class="action_button ip_item_button hide_on_big" aria-label="{{lang "topic.ip_full_aria"}}" data-action="ip"></a>{{end}}
 				<a href="/report/submit/{{.ID}}?s={{$.CurrentUser.Session}}&amp;type=reply" class="action_button report_item" aria-label="{{lang "topic.report_aria"}}" data-action="report"></a>
 				<a href="#" class="action_button button_menu"></a>
 			{{end}}
@@ -45,7 +45,7 @@
 			<div class="action_button_right">
 				<a class="action_button like_count hide_on_micro" aria-label="{{lang "topic.post_like_count_tooltip"}}">{{.LikeCount}}</a>
 				<a class="action_button created_at hide_on_mobile" title="{{abstime .CreatedAt}}">{{reltime .CreatedAt}}</a>
-				{{if $.CurrentUser.Loggedin}}{{if $.CurrentUser.Perms.ViewIPs}}<a href="/users/ips/?ip={{.IPAddress}}" title="IP Address" class="action_button ip_item hide_on_mobile" aria-hidden="true">{{.IPAddress}}</a>{{end}}{{end}}
+				{{if $.CurrentUser.Loggedin}}{{if $.CurrentUser.Perms.ViewIPs}}<a href="/users/ips/?ip={{.IP}}" title="IP Address" class="action_button ip_item hide_on_mobile" aria-hidden="true">{{.IP}}</a>{{end}}{{end}}
 			</div>
 		</div>
 		{{end}}

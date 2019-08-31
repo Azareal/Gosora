@@ -1,7 +1,7 @@
 /*
 *
 * Reply Resources File
-* Copyright Azareal 2016 - 2019
+* Copyright Azareal 2016 - 2020
 *
  */
 package common
@@ -37,7 +37,7 @@ type ReplyUser struct {
 	URLPrefix string
 	URLName   string
 	Level     int
-	//IPAddress     string
+	//IP     string
 	//Liked         bool
 	//LikeCount     int
 	//AttachCount int
@@ -57,7 +57,7 @@ type Reply struct {
 	LastEdit     int
 	LastEditBy   int
 	ContentLines int
-	IPAddress    string
+	IP    string
 	Liked        bool
 	LikeCount    int
 	AttachCount  int
@@ -94,9 +94,9 @@ func init() {
 
 // TODO: Write tests for this
 // TODO: Wrap these queries in a transaction to make sure the state is consistent
-func (reply *Reply) Like(uid int) (err error) {
+func (r *Reply) Like(uid int) (err error) {
 	var rid int // unused, just here to avoid mutating reply.ID
-	err = replyStmts.isLiked.QueryRow(uid, reply.ID).Scan(&rid)
+	err = replyStmts.isLiked.QueryRow(uid, r.ID).Scan(&rid)
 	if err != nil && err != ErrNoRows {
 		return err
 	} else if err != ErrNoRows {
@@ -104,66 +104,66 @@ func (reply *Reply) Like(uid int) (err error) {
 	}
 
 	score := 1
-	_, err = replyStmts.createLike.Exec(score, reply.ID, "replies", uid)
+	_, err = replyStmts.createLike.Exec(score, r.ID, "replies", uid)
 	if err != nil {
 		return err
 	}
-	_, err = replyStmts.addLikesToReply.Exec(1, reply.ID)
+	_, err = replyStmts.addLikesToReply.Exec(1, r.ID)
 	if err != nil {
 		return err
 	}
 	_, err = userStmts.incrementLiked.Exec(1, uid)
-	_ = Rstore.GetCache().Remove(reply.ID)
+	_ = Rstore.GetCache().Remove(r.ID)
 	return err
 }
 
-func (reply *Reply) Delete() error {
-	_, err := replyStmts.delete.Exec(reply.ID)
+func (r *Reply) Delete() error {
+	_, err := replyStmts.delete.Exec(r.ID)
 	if err != nil {
 		return err
 	}
 	// TODO: Move this bit to *Topic
-	_, err = replyStmts.removeRepliesFromTopic.Exec(1, reply.ParentID)
+	_, err = replyStmts.removeRepliesFromTopic.Exec(1, r.ParentID)
 	tcache := Topics.GetCache()
 	if tcache != nil {
-		tcache.Remove(reply.ParentID)
+		tcache.Remove(r.ParentID)
 	}
-	_ = Rstore.GetCache().Remove(reply.ID)
+	_ = Rstore.GetCache().Remove(r.ID)
 	return err
 }
 
-func (reply *Reply) SetPost(content string) error {
-	topic, err := reply.Topic()
+func (r *Reply) SetPost(content string) error {
+	topic, err := r.Topic()
 	if err != nil {
 		return err
 	}
 	content = PreparseMessage(html.UnescapeString(content))
 	parsedContent := ParseMessage(content, topic.ParentID, "forums")
-	_, err = replyStmts.edit.Exec(content, parsedContent, reply.ID) // TODO: Sniff if this changed anything to see if we hit an existing poll
-	_ = Rstore.GetCache().Remove(reply.ID)
+	_, err = replyStmts.edit.Exec(content, parsedContent, r.ID) // TODO: Sniff if this changed anything to see if we hit an existing poll
+	_ = Rstore.GetCache().Remove(r.ID)
 	return err
 }
 
 // TODO: Write tests for this
-func (reply *Reply) SetPoll(pollID int) error {
-	_, err := replyStmts.setPoll.Exec(pollID, reply.ID) // TODO: Sniff if this changed anything to see if we hit a poll
-	_ = Rstore.GetCache().Remove(reply.ID)
+func (r *Reply) SetPoll(pollID int) error {
+	_, err := replyStmts.setPoll.Exec(pollID, r.ID) // TODO: Sniff if this changed anything to see if we hit a poll
+	_ = Rstore.GetCache().Remove(r.ID)
 	return err
 }
 
-func (reply *Reply) Topic() (*Topic, error) {
-	return Topics.Get(reply.ParentID)
+func (r *Reply) Topic() (*Topic, error) {
+	return Topics.Get(r.ParentID)
 }
 
-func (reply *Reply) GetID() int {
-	return reply.ID
+func (r *Reply) GetID() int {
+	return r.ID
 }
 
-func (reply *Reply) GetTable() string {
+func (r *Reply) GetTable() string {
 	return "replies"
 }
 
 // Copy gives you a non-pointer concurrency safe copy of the reply
-func (reply *Reply) Copy() Reply {
-	return *reply
+func (r *Reply) Copy() Reply {
+	return *r
 }

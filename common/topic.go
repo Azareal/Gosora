@@ -38,7 +38,7 @@ type Topic struct {
 	LastReplyID int
 	ParentID    int
 	Status      string // Deprecated. Marked for removal.
-	IPAddress   string
+	IP   string
 	ViewCount   int64
 	PostCount   int
 	LikeCount   int
@@ -64,7 +64,7 @@ type TopicUser struct {
 	LastReplyID int
 	ParentID    int
 	Status      string // Deprecated. Marked for removal.
-	IPAddress   string
+	IP   string
 	ViewCount   int64
 	PostCount   int
 	LikeCount   int
@@ -106,7 +106,7 @@ type TopicsRow struct {
 	LastReplyID int
 	ParentID    int
 	Status      string // Deprecated. Marked for removal. -Is there anything we could use it for?
-	IPAddress   string
+	IP   string
 	ViewCount   int64
 	PostCount   int
 	LikeCount   int
@@ -151,8 +151,8 @@ type WsTopicsRow struct {
 }
 
 // TODO: Can we get the client side to render the relative times instead?
-func (row *TopicsRow) WebSockets() *WsTopicsRow {
-	return &WsTopicsRow{row.ID, row.Link, row.Title, row.CreatedBy, row.IsClosed, row.Sticky, row.CreatedAt, row.LastReplyAt, RelativeTime(row.LastReplyAt), row.LastReplyBy, row.LastReplyID, row.ParentID, row.ViewCount, row.PostCount, row.LikeCount, row.AttachCount, row.ClassName, row.Creator.WebSockets(), row.LastUser.WebSockets(), row.ForumName, row.ForumLink}
+func (r *TopicsRow) WebSockets() *WsTopicsRow {
+	return &WsTopicsRow{r.ID, r.Link, r.Title, r.CreatedBy, r.IsClosed, r.Sticky, r.CreatedAt, r.LastReplyAt, RelativeTime(r.LastReplyAt), r.LastReplyBy, r.LastReplyID, r.ParentID, r.ViewCount, r.PostCount, r.LikeCount, r.AttachCount, r.ClassName, r.Creator.WebSockets(), r.LastUser.WebSockets(), r.ForumName, r.ForumLink}
 }
 
 // TODO: Stop relying on so many struct types?
@@ -165,12 +165,12 @@ func (t *Topic) TopicsRow() *TopicsRow {
 	forumName := ""
 	forumLink := ""
 
-	return &TopicsRow{t.ID, t.Link, t.Title, t.Content, t.CreatedBy, t.IsClosed, t.Sticky, t.CreatedAt, t.LastReplyAt, t.LastReplyBy, t.LastReplyID, t.ParentID, t.Status, t.IPAddress, t.ViewCount, t.PostCount, t.LikeCount, t.AttachCount, lastPage, t.ClassName, t.Poll, t.Data, creator, "", contentLines, lastUser, forumName, forumLink, t.Rids}
+	return &TopicsRow{t.ID, t.Link, t.Title, t.Content, t.CreatedBy, t.IsClosed, t.Sticky, t.CreatedAt, t.LastReplyAt, t.LastReplyBy, t.LastReplyID, t.ParentID, t.Status, t.IP, t.ViewCount, t.PostCount, t.LikeCount, t.AttachCount, lastPage, t.ClassName, t.Poll, t.Data, creator, "", contentLines, lastUser, forumName, forumLink, t.Rids}
 }
 
 // ! Some data may be lost in the conversion
 func (t *TopicsRow) Topic() *Topic {
-	return &Topic{t.ID, t.Link, t.Title, t.Content, t.CreatedBy, t.IsClosed, t.Sticky, t.CreatedAt, t.LastReplyAt, t.LastReplyBy, t.LastReplyID, t.ParentID, t.Status, t.IPAddress, t.ViewCount, t.PostCount, t.LikeCount, t.AttachCount, t.ClassName, t.Poll, t.Data, t.Rids}
+	return &Topic{t.ID, t.Link, t.Title, t.Content, t.CreatedBy, t.IsClosed, t.Sticky, t.CreatedAt, t.LastReplyAt, t.LastReplyBy, t.LastReplyID, t.ParentID, t.Status, t.IP, t.ViewCount, t.PostCount, t.LikeCount, t.AttachCount, t.ClassName, t.Poll, t.Data, t.Rids}
 }
 
 // ! Not quite safe as Topic doesn't contain all the data needed to constructs a WsTopicsRow
@@ -239,99 +239,99 @@ func init() {
 
 // Flush the topic out of the cache
 // ? - We do a CacheRemove() here instead of mutating the pointer to avoid creating a race condition
-func (topic *Topic) cacheRemove() {
+func (t *Topic) cacheRemove() {
 	tcache := Topics.GetCache()
 	if tcache != nil {
-		tcache.Remove(topic.ID)
+		tcache.Remove(t.ID)
 	}
 	TopicListThaw.Thaw()
 }
 
 // TODO: Write a test for this
-func (topic *Topic) AddReply(rid int, uid int) (err error) {
-	_, err = topicStmts.addReplies.Exec(1, uid, topic.ID)
+func (t *Topic) AddReply(rid int, uid int) (err error) {
+	_, err = topicStmts.addReplies.Exec(1, uid, t.ID)
 	if err != nil {
 		return err
 	}
-	_, err = topicStmts.updateLastReply.Exec(rid, rid, topic.ID)
-	topic.cacheRemove()
+	_, err = topicStmts.updateLastReply.Exec(rid, rid, t.ID)
+	t.cacheRemove()
 	return err
 }
 
-func (topic *Topic) Lock() (err error) {
-	_, err = topicStmts.lock.Exec(topic.ID)
-	topic.cacheRemove()
+func (t *Topic) Lock() (err error) {
+	_, err = topicStmts.lock.Exec(t.ID)
+	t.cacheRemove()
 	return err
 }
 
-func (topic *Topic) Unlock() (err error) {
-	_, err = topicStmts.unlock.Exec(topic.ID)
-	topic.cacheRemove()
+func (t *Topic) Unlock() (err error) {
+	_, err = topicStmts.unlock.Exec(t.ID)
+	t.cacheRemove()
 	return err
 }
 
-func (topic *Topic) MoveTo(destForum int) (err error) {
-	_, err = topicStmts.moveTo.Exec(destForum, topic.ID)
-	topic.cacheRemove()
+func (t *Topic) MoveTo(destForum int) (err error) {
+	_, err = topicStmts.moveTo.Exec(destForum, t.ID)
+	t.cacheRemove()
 	if err != nil {
 		return err
 	}
-	err = Attachments.MoveTo(destForum, topic.ID, "topics")
+	err = Attachments.MoveTo(destForum, t.ID, "topics")
 	if err != nil {
 		return err
 	}
-	return Attachments.MoveToByExtra(destForum, "replies", strconv.Itoa(topic.ID))
+	return Attachments.MoveToByExtra(destForum, "replies", strconv.Itoa(t.ID))
 }
 
 // TODO: We might want more consistent terminology rather than using stick in some places and pin in others. If you don't understand the difference, there is none, they are one and the same.
-func (topic *Topic) Stick() (err error) {
-	_, err = topicStmts.stick.Exec(topic.ID)
-	topic.cacheRemove()
+func (t *Topic) Stick() (err error) {
+	_, err = topicStmts.stick.Exec(t.ID)
+	t.cacheRemove()
 	return err
 }
 
-func (topic *Topic) Unstick() (err error) {
-	_, err = topicStmts.unstick.Exec(topic.ID)
-	topic.cacheRemove()
+func (t *Topic) Unstick() (err error) {
+	_, err = topicStmts.unstick.Exec(t.ID)
+	t.cacheRemove()
 	return err
 }
 
 // TODO: Test this
 // TODO: Use a transaction for this
-func (topic *Topic) Like(score int, uid int) (err error) {
+func (t *Topic) Like(score int, uid int) (err error) {
 	var disp int // Unused
-	err = topicStmts.hasLikedTopic.QueryRow(uid, topic.ID).Scan(&disp)
+	err = topicStmts.hasLikedTopic.QueryRow(uid, t.ID).Scan(&disp)
 	if err != nil && err != ErrNoRows {
 		return err
 	} else if err != ErrNoRows {
 		return ErrAlreadyLiked
 	}
 
-	_, err = topicStmts.createLike.Exec(score, topic.ID, "topics", uid)
+	_, err = topicStmts.createLike.Exec(score, t.ID, "topics", uid)
 	if err != nil {
 		return err
 	}
 
-	_, err = topicStmts.addLikesToTopic.Exec(1, topic.ID)
+	_, err = topicStmts.addLikesToTopic.Exec(1, t.ID)
 	if err != nil {
 		return err
 	}
 	_, err = userStmts.incrementLiked.Exec(1, uid)
-	topic.cacheRemove()
+	t.cacheRemove()
 	return err
 }
 
 // TODO: Implement this
-func (topic *Topic) Unlike(uid int) error {
-	topic.cacheRemove()
+func (t *Topic) Unlike(uid int) error {
+	t.cacheRemove()
 	return nil
 }
 
 // TODO: Use a transaction here
-func (topic *Topic) Delete() error {
-	topicCreator, err := Users.Get(topic.CreatedBy)
+func (t *Topic) Delete() error {
+	topicCreator, err := Users.Get(t.CreatedBy)
 	if err == nil {
-		wcount := WordCount(topic.Content)
+		wcount := WordCount(t.Content)
 		err = topicCreator.DecreasePostStats(wcount, true)
 		if err != nil {
 			return err
@@ -340,26 +340,26 @@ func (topic *Topic) Delete() error {
 		return err
 	}
 
-	err = Forums.RemoveTopic(topic.ParentID)
+	err = Forums.RemoveTopic(t.ParentID)
 	if err != nil && err != ErrNoRows {
 		return err
 	}
 
-	_, err = topicStmts.delete.Exec(topic.ID)
-	topic.cacheRemove()
+	_, err = topicStmts.delete.Exec(t.ID)
+	t.cacheRemove()
 	if err != nil {
 		return err
 	}
-	_, err = topicStmts.deleteActivitySubs.Exec(topic.ID)
+	_, err = topicStmts.deleteActivitySubs.Exec(t.ID)
 	if err != nil {
 		return err
 	}
-	_, err = topicStmts.deleteActivity.Exec(topic.ID)
+	_, err = topicStmts.deleteActivity.Exec(t.ID)
 	return err
 }
 
 // TODO: Write tests for this
-func (topic *Topic) Update(name string, content string) error {
+func (t *Topic) Update(name string, content string) error {
 	name = SanitiseSingleLine(html.UnescapeString(name))
 	if name == "" {
 		return ErrNoTitle
@@ -370,25 +370,25 @@ func (topic *Topic) Update(name string, content string) error {
 	}
 
 	content = PreparseMessage(html.UnescapeString(content))
-	parsedContent := ParseMessage(content, topic.ParentID, "forums")
-	_, err := topicStmts.edit.Exec(name, content, parsedContent, topic.ID)
-	topic.cacheRemove()
+	parsedContent := ParseMessage(content, t.ParentID, "forums")
+	_, err := topicStmts.edit.Exec(name, content, parsedContent, t.ID)
+	t.cacheRemove()
 	return err
 }
 
-func (topic *Topic) SetPoll(pollID int) error {
-	_, err := topicStmts.setPoll.Exec(pollID, topic.ID) // TODO: Sniff if this changed anything to see if we hit an existing poll
-	topic.cacheRemove()
+func (t *Topic) SetPoll(pollID int) error {
+	_, err := topicStmts.setPoll.Exec(pollID, t.ID) // TODO: Sniff if this changed anything to see if we hit an existing poll
+	t.cacheRemove()
 	return err
 }
 
 // TODO: Have this go through the ReplyStore?
-func (topic *Topic) CreateActionReply(action string, ipaddress string, uid int) (err error) {
-	res, err := topicStmts.createAction.Exec(topic.ID, action, ipaddress, uid)
+func (t *Topic) CreateActionReply(action string, ip string, uid int) (err error) {
+	res, err := topicStmts.createAction.Exec(t.ID, action, ip, uid)
 	if err != nil {
 		return err
 	}
-	_, err = topicStmts.addReplies.Exec(1, uid, topic.ID)
+	_, err = topicStmts.addReplies.Exec(1, uid, t.ID)
 	if err != nil {
 		return err
 	}
@@ -397,8 +397,8 @@ func (topic *Topic) CreateActionReply(action string, ipaddress string, uid int) 
 		return err
 	}
 	rid := int(lid)
-	_, err = topicStmts.updateLastReply.Exec(rid, rid, topic.ID)
-	topic.cacheRemove()
+	_, err = topicStmts.updateLastReply.Exec(rid, rid, t.ID)
+	t.cacheRemove()
 	// ? - Update the last topic cache for the parent forum?
 	return err
 }
@@ -487,23 +487,23 @@ func (ru *ReplyUser) Init() error {
 }
 
 // TODO: Factor TopicUser into a *Topic and *User, as this starting to become overly complicated x.x
-func (topic *TopicUser) Replies(offset int, pFrag int, user *User) (rlist []*ReplyUser, ogdesc string, err error) {
+func (t *TopicUser) Replies(offset int, pFrag int, user *User) (rlist []*ReplyUser, ogdesc string, err error) {
 	var likedMap map[int]int
 	if user.Liked > 0 {
 		likedMap = make(map[int]int)
 	}
-	var likedQueryList = []int{user.ID}
+	likedQueryList := []int{user.ID}
 
 	var attachMap map[int]int
 	if user.Perms.EditReply {
 		attachMap = make(map[int]int)
 	}
-	var attachQueryList = []int{}
+	attachQueryList := []int{}
 
 	var rid int
-	if len(topic.Rids) > 0 {
+	if len(t.Rids) > 0 {
 		//log.Print("have rid")
-		rid = topic.Rids[0]
+		rid = t.Rids[0]
 	}
 	re, err := Rstore.GetCache().Get(rid)
 	ucache := Users.GetCache()
@@ -524,7 +524,7 @@ func (topic *TopicUser) Replies(offset int, pFrag int, user *User) (rlist []*Rep
 		if err != nil {
 			return nil, "", err
 		}
-		reply.ContentHtml = ParseMessage(reply.Content, topic.ParentID, "forums")
+		reply.ContentHtml = ParseMessage(reply.Content, t.ParentID, "forums")
 		// TODO: Do this more efficiently by avoiding the allocations entirely in ParseMessage, if there's nothing to do.
 		if reply.ContentHtml == reply.Content {
 			reply.ContentHtml = reply.Content
@@ -549,7 +549,7 @@ func (topic *TopicUser) Replies(offset int, pFrag int, user *User) (rlist []*Rep
 		hTbl.VhookNoRet("topic_reply_row_assign", &rlist, &reply)
 		rlist = append(rlist, reply)
 	} else {
-		rows, err := topicStmts.getReplies.Query(topic.ID, offset, Config.ItemsPerPage)
+		rows, err := topicStmts.getReplies.Query(t.ID, offset, Config.ItemsPerPage)
 		if err != nil {
 			return nil, "", err
 		}
@@ -557,7 +557,7 @@ func (topic *TopicUser) Replies(offset int, pFrag int, user *User) (rlist []*Rep
 
 		for rows.Next() {
 			reply = &ReplyUser{}
-			err := rows.Scan(&reply.ID, &reply.Content, &reply.CreatedBy, &reply.CreatedAt, &reply.LastEdit, &reply.LastEditBy, &reply.Avatar, &reply.CreatedByName, &reply.Group, &reply.URLPrefix, &reply.URLName, &reply.Level, &reply.IPAddress, &reply.LikeCount, &reply.AttachCount, &reply.ActionType)
+			err := rows.Scan(&reply.ID, &reply.Content, &reply.CreatedBy, &reply.CreatedAt, &reply.LastEdit, &reply.LastEditBy, &reply.Avatar, &reply.CreatedByName, &reply.Group, &reply.URLPrefix, &reply.URLName, &reply.Level, &reply.IP, &reply.LikeCount, &reply.AttachCount, &reply.ActionType)
 			if err != nil {
 				return nil, "", err
 			}
@@ -566,7 +566,7 @@ func (topic *TopicUser) Replies(offset int, pFrag int, user *User) (rlist []*Rep
 			if err != nil {
 				return nil, "", err
 			}
-			reply.ContentHtml = ParseMessage(reply.Content, topic.ParentID, "forums")
+			reply.ContentHtml = ParseMessage(reply.Content, t.ParentID, "forums")
 
 			if reply.ID == pFrag {
 				ogdesc = reply.Content
@@ -627,28 +627,28 @@ func (topic *TopicUser) Replies(offset int, pFrag int, user *User) (rlist []*Rep
 }
 
 // TODO: Test this
-func (topic *Topic) Author() (*User, error) {
-	return Users.Get(topic.CreatedBy)
+func (t *Topic) Author() (*User, error) {
+	return Users.Get(t.CreatedBy)
 }
 
-func (topic *Topic) GetID() int {
-	return topic.ID
+func (t *Topic) GetID() int {
+	return t.ID
 }
-func (topic *Topic) GetTable() string {
+func (t *Topic) GetTable() string {
 	return "topics"
 }
 
 // Copy gives you a non-pointer concurrency safe copy of the topic
-func (topic *Topic) Copy() Topic {
-	return *topic
+func (t *Topic) Copy() Topic {
+	return *t
 }
 
 // TODO: Load LastReplyAt and LastReplyID?
 func TopicByReplyID(rid int) (*Topic, error) {
-	topic := Topic{ID: 0}
-	err := topicStmts.getByReplyID.QueryRow(rid).Scan(&topic.ID, &topic.Title, &topic.Content, &topic.CreatedBy, &topic.CreatedAt, &topic.IsClosed, &topic.Sticky, &topic.ParentID, &topic.IPAddress, &topic.ViewCount, &topic.PostCount, &topic.LikeCount, &topic.Poll, &topic.Data)
-	topic.Link = BuildTopicURL(NameToSlug(topic.Title), topic.ID)
-	return &topic, err
+	t := Topic{ID: 0}
+	err := topicStmts.getByReplyID.QueryRow(rid).Scan(&t.ID, &t.Title, &t.Content, &t.CreatedBy, &t.CreatedAt, &t.IsClosed, &t.Sticky, &t.ParentID, &t.IP, &t.ViewCount, &t.PostCount, &t.LikeCount, &t.Poll, &t.Data)
+	t.Link = BuildTopicURL(NameToSlug(t.Title), t.ID)
+	return &t, err
 }
 
 // TODO: Refactor the caller to take a Topic and a User rather than a combined TopicUser
@@ -684,49 +684,49 @@ func GetTopicUser(user *User, tid int) (tu TopicUser, err error) {
 
 	tu = TopicUser{ID: tid}
 	// TODO: This misses some important bits...
-	err = topicStmts.getTopicUser.QueryRow(tid).Scan(&tu.Title, &tu.Content, &tu.CreatedBy, &tu.CreatedAt, &tu.LastReplyAt, &tu.LastReplyBy, &tu.LastReplyID, &tu.IsClosed, &tu.Sticky, &tu.ParentID, &tu.IPAddress, &tu.ViewCount, &tu.PostCount, &tu.LikeCount, &tu.AttachCount, &tu.Poll, &tu.CreatedByName, &tu.Avatar, &tu.Group, &tu.URLPrefix, &tu.URLName, &tu.Level)
+	err = topicStmts.getTopicUser.QueryRow(tid).Scan(&tu.Title, &tu.Content, &tu.CreatedBy, &tu.CreatedAt, &tu.LastReplyAt, &tu.LastReplyBy, &tu.LastReplyID, &tu.IsClosed, &tu.Sticky, &tu.ParentID, &tu.IP, &tu.ViewCount, &tu.PostCount, &tu.LikeCount, &tu.AttachCount, &tu.Poll, &tu.CreatedByName, &tu.Avatar, &tu.Group, &tu.URLPrefix, &tu.URLName, &tu.Level)
 	tu.Avatar, tu.MicroAvatar = BuildAvatar(tu.CreatedBy, tu.Avatar)
 	tu.Link = BuildTopicURL(NameToSlug(tu.Title), tu.ID)
 	tu.UserLink = BuildProfileURL(NameToSlug(tu.CreatedByName), tu.CreatedBy)
 	tu.Tag = Groups.DirtyGet(tu.Group).Tag
 
 	if tcache != nil {
-		theTopic := Topic{ID: tu.ID, Link: tu.Link, Title: tu.Title, Content: tu.Content, CreatedBy: tu.CreatedBy, IsClosed: tu.IsClosed, Sticky: tu.Sticky, CreatedAt: tu.CreatedAt, LastReplyAt: tu.LastReplyAt, LastReplyID: tu.LastReplyID, ParentID: tu.ParentID, IPAddress: tu.IPAddress, ViewCount: tu.ViewCount, PostCount: tu.PostCount, LikeCount: tu.LikeCount, AttachCount: tu.AttachCount, Poll: tu.Poll}
+		theTopic := Topic{ID: tu.ID, Link: tu.Link, Title: tu.Title, Content: tu.Content, CreatedBy: tu.CreatedBy, IsClosed: tu.IsClosed, Sticky: tu.Sticky, CreatedAt: tu.CreatedAt, LastReplyAt: tu.LastReplyAt, LastReplyID: tu.LastReplyID, ParentID: tu.ParentID, IP: tu.IP, ViewCount: tu.ViewCount, PostCount: tu.PostCount, LikeCount: tu.LikeCount, AttachCount: tu.AttachCount, Poll: tu.Poll}
 		//log.Printf("theTopic: %+v\n", theTopic)
 		_ = tcache.Set(&theTopic)
 	}
 	return tu, err
 }
 
-func copyTopicToTopicUser(topic *Topic, user *User) (tu TopicUser) {
-	tu.UserLink = user.Link
-	tu.CreatedByName = user.Name
-	tu.Group = user.Group
-	tu.Avatar = user.Avatar
-	tu.MicroAvatar = user.MicroAvatar
-	tu.URLPrefix = user.URLPrefix
-	tu.URLName = user.URLName
-	tu.Level = user.Level
+func copyTopicToTopicUser(t *Topic, u *User) (tu TopicUser) {
+	tu.UserLink = u.Link
+	tu.CreatedByName = u.Name
+	tu.Group = u.Group
+	tu.Avatar = u.Avatar
+	tu.MicroAvatar = u.MicroAvatar
+	tu.URLPrefix = u.URLPrefix
+	tu.URLName = u.URLName
+	tu.Level = u.Level
 
-	tu.ID = topic.ID
-	tu.Link = topic.Link
-	tu.Title = topic.Title
-	tu.Content = topic.Content
-	tu.CreatedBy = topic.CreatedBy
-	tu.IsClosed = topic.IsClosed
-	tu.Sticky = topic.Sticky
-	tu.CreatedAt = topic.CreatedAt
-	tu.LastReplyAt = topic.LastReplyAt
-	tu.LastReplyBy = topic.LastReplyBy
-	tu.ParentID = topic.ParentID
-	tu.IPAddress = topic.IPAddress
-	tu.ViewCount = topic.ViewCount
-	tu.PostCount = topic.PostCount
-	tu.LikeCount = topic.LikeCount
-	tu.AttachCount = topic.AttachCount
-	tu.Poll = topic.Poll
-	tu.Data = topic.Data
-	tu.Rids = topic.Rids
+	tu.ID = t.ID
+	tu.Link = t.Link
+	tu.Title = t.Title
+	tu.Content = t.Content
+	tu.CreatedBy = t.CreatedBy
+	tu.IsClosed = t.IsClosed
+	tu.Sticky = t.Sticky
+	tu.CreatedAt = t.CreatedAt
+	tu.LastReplyAt = t.LastReplyAt
+	tu.LastReplyBy = t.LastReplyBy
+	tu.ParentID = t.ParentID
+	tu.IP = t.IP
+	tu.ViewCount = t.ViewCount
+	tu.PostCount = t.PostCount
+	tu.LikeCount = t.LikeCount
+	tu.AttachCount = t.AttachCount
+	tu.Poll = t.Poll
+	tu.Data = t.Data
+	tu.Rids = t.Rids
 
 	return tu
 }

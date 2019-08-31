@@ -7,7 +7,7 @@
 	<div class="rowitem{{if not .Success}} bg_red{{end}}">
 		<span class="to_left">
 			<span>{{if .Success}}{{lang "account_logins_success"}}{{else}}{{lang "account_logins_failure"}}"{{end}}</span><br />
-			<small title="{{.IPAddress}}">{{.IPAddress}}</small>
+			<small title="{{.IP}}">{{.IP}}</small>
 		</span>
 		<span class="to_right">
 			<span title="{{.DoneAt}}">{{.DoneAt}}</span>

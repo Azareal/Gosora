@@ -14,13 +14,13 @@ type LogItem struct {
 	Action      string
 	ElementID   int
 	ElementType string
-	IPAddress   string
+	IP   string
 	ActorID     int
 	DoneAt      string
 }
 
 type LogStore interface {
-	Create(action string, elementID int, elementType string, ipaddress string, actorID int) (err error)
+	Create(action string, elementID int, elementType string, ip string, actorID int) (err error)
 	Count() int
 	GetOffset(offset int, perPage int) (logs []LogItem, err error)
 }
@@ -40,8 +40,8 @@ func NewModLogStore(acc *qgen.Accumulator) (*SQLModLogStore, error) {
 }
 
 // TODO: Make a store for this?
-func (s *SQLModLogStore) Create(action string, elementID int, elementType string, ipaddress string, actorID int) (err error) {
-	_, err = s.create.Exec(action, elementID, elementType, ipaddress, actorID)
+func (s *SQLModLogStore) Create(action string, elementID int, elementType string, ip string, actorID int) (err error) {
+	_, err = s.create.Exec(action, elementID, elementType, ip, actorID)
 	return err
 }
 
@@ -55,20 +55,20 @@ func (s *SQLModLogStore) Count() (count int) {
 
 func buildLogList(rows *sql.Rows) (logs []LogItem, err error) {
 	for rows.Next() {
-		var log LogItem
+		var l LogItem
 		var doneAt time.Time
-		err := rows.Scan(&log.Action, &log.ElementID, &log.ElementType, &log.IPAddress, &log.ActorID, &doneAt)
+		err := rows.Scan(&l.Action, &l.ElementID, &l.ElementType, &l.IP, &l.ActorID, &doneAt)
 		if err != nil {
 			return logs, err
 		}
-		log.DoneAt = doneAt.Format("2006-01-02 15:04:05")
-		logs = append(logs, log)
+		l.DoneAt = doneAt.Format("2006-01-02 15:04:05")
+		logs = append(logs, l)
 	}
 	return logs, rows.Err()
 }
 
-func (store *SQLModLogStore) GetOffset(offset int, perPage int) (logs []LogItem, err error) {
-	rows, err := store.getOffset.Query(offset, perPage)
+func (s *SQLModLogStore) GetOffset(offset int, perPage int) (logs []LogItem, err error) {
+	rows, err := s.getOffset.Query(offset, perPage)
 	if err != nil {
 		return logs, err
 	}
@@ -91,8 +91,8 @@ func NewAdminLogStore(acc *qgen.Accumulator) (*SQLAdminLogStore, error) {
 }
 
 // TODO: Make a store for this?
-func (s *SQLAdminLogStore) Create(action string, elementID int, elementType string, ipaddress string, actorID int) (err error) {
-	_, err = s.create.Exec(action, elementID, elementType, ipaddress, actorID)
+func (s *SQLAdminLogStore) Create(action string, elementID int, elementType string, ip string, actorID int) (err error) {
+	_, err = s.create.Exec(action, elementID, elementType, ip, actorID)
 	return err
 }
 

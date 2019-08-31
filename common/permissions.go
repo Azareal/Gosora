@@ -207,18 +207,18 @@ func OverridePerms(perms *Perms, status bool) {
 }
 
 // TODO: We need a better way of overriding forum perms rather than setting them one by one
-func OverrideForumPerms(perms *Perms, status bool) {
-	perms.ViewTopic = status
-	perms.LikeItem = status
-	perms.CreateTopic = status
-	perms.EditTopic = status
-	perms.DeleteTopic = status
-	perms.CreateReply = status
-	perms.EditReply = status
-	perms.DeleteReply = status
-	perms.PinTopic = status
-	perms.CloseTopic = status
-	perms.MoveTopic = status
+func OverrideForumPerms(p *Perms, status bool) {
+	p.ViewTopic = status
+	p.LikeItem = status
+	p.CreateTopic = status
+	p.EditTopic = status
+	p.DeleteTopic = status
+	p.CreateReply = status
+	p.EditReply = status
+	p.DeleteReply = status
+	p.PinTopic = status
+	p.CloseTopic = status
+	p.MoveTopic = status
 }
 
 func RegisterPluginPerm(name string) {

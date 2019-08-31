@@ -20,7 +20,7 @@ type ProfileReply struct {
 	LastEdit     int
 	LastEditBy   int
 	ContentLines int
-	IPAddress    string
+	IP    string
 }
 
 type ProfileReplyStmts struct {
@@ -44,18 +44,18 @@ func BlankProfileReply(id int) *ProfileReply {
 }
 
 // TODO: Write tests for this
-func (reply *ProfileReply) Delete() error {
-	_, err := profileReplyStmts.delete.Exec(reply.ID)
+func (r *ProfileReply) Delete() error {
+	_, err := profileReplyStmts.delete.Exec(r.ID)
 	return err
 }
 
-func (reply *ProfileReply) SetBody(content string) error {
+func (r *ProfileReply) SetBody(content string) error {
 	content = PreparseMessage(html.UnescapeString(content))
-	_, err := profileReplyStmts.edit.Exec(content, ParseMessage(content, 0, ""), reply.ID)
+	_, err := profileReplyStmts.edit.Exec(content, ParseMessage(content, 0, ""), r.ID)
 	return err
 }
 
 // TODO: We can get this from the topic store instead of a query which will always miss the cache...
-func (reply *ProfileReply) Creator() (*User, error) {
-	return Users.Get(reply.CreatedBy)
+func (r *ProfileReply) Creator() (*User, error) {
+	return Users.Get(r.CreatedBy)
 }

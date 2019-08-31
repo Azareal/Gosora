@@ -163,7 +163,7 @@ type ESTopic struct {
 	Title     string `json:"title"`
 	Content   string `json:"content"`
 	CreatedBy int    `json:"createdBy"`
-	IPAddress string `json:"ip"`
+	IP string `json:"ip"`
 }
 
 type ESReply struct {
@@ -171,7 +171,7 @@ type ESReply struct {
 	TID       int    `json:"tid"`
 	Content   string `json:"content"`
 	CreatedBy int    `json:"createdBy"`
-	IPAddress string `json:"ip"`
+	IP string `json:"ip"`
 }
 
 func setupData(client *elastic.Client) error {
@@ -198,12 +198,12 @@ func setupData(client *elastic.Client) error {
 
 		oi := 0
 		err := qgen.NewAcc().Select("topics").Cols("tid, title, content, createdBy, ipaddress").Each(func(rows *sql.Rows) error {
-			topic := ESTopic{}
-			err := rows.Scan(&topic.ID, &topic.Title, &topic.Content, &topic.CreatedBy, &topic.IPAddress)
+			t := ESTopic{}
+			err := rows.Scan(&t.ID, &t.Title, &t.Content, &t.CreatedBy, &t.IP)
 			if err != nil {
 				return err
 			}
-			tin[oi] <- topic
+			tin[oi] <- t
 			if oi < 3 {
 				oi++
 			}
@@ -234,12 +234,12 @@ func setupData(client *elastic.Client) error {
 		}
 		oi := 0
 		err := qgen.NewAcc().Select("replies").Cols("rid, tid, content, createdBy, ipaddress").Each(func(rows *sql.Rows) error {
-			reply := ESReply{}
-			err := rows.Scan(&reply.ID, &reply.TID, &reply.Content, &reply.CreatedBy, &reply.IPAddress)
+			r := ESReply{}
+			err := rows.Scan(&r.ID, &r.TID, &r.Content, &r.CreatedBy, &r.IP)
 			if err != nil {
 				return err
 			}
-			rin[oi] <- reply
+			rin[oi] <- r
 			if oi < 3 {
 				oi++
 			}

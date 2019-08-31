@@ -42,7 +42,7 @@ func (s *SQLReplyStore) Get(id int) (*Reply, error) {
 	}
 
 	r = &Reply{ID: id}
-	err = s.get.QueryRow(id).Scan(&r.ParentID, &r.Content, &r.CreatedBy, &r.CreatedAt, &r.LastEdit, &r.LastEditBy, &r.IPAddress, &r.LikeCount, &r.AttachCount, &r.ActionType)
+	err = s.get.QueryRow(id).Scan(&r.ParentID, &r.Content, &r.CreatedBy, &r.CreatedAt, &r.LastEdit, &r.LastEditBy, &r.IP, &r.LikeCount, &r.AttachCount, &r.ActionType)
 	if err == nil {
 		_ = s.cache.Set(r)
 	}
@@ -50,9 +50,9 @@ func (s *SQLReplyStore) Get(id int) (*Reply, error) {
 }
 
 // TODO: Write a test for this
-func (s *SQLReplyStore) Create(topic *Topic, content string, ipaddress string, uid int) (id int, err error) {
+func (s *SQLReplyStore) Create(t *Topic, content string, ip string, uid int) (rid int, err error) {
 	wcount := WordCount(content)
-	res, err := s.create.Exec(topic.ID, content, ParseMessage(content, topic.ParentID, "forums"), ipaddress, wcount, uid)
+	res, err := s.create.Exec(t.ID, content, ParseMessage(content, t.ParentID, "forums"), ip, wcount, uid)
 	if err != nil {
 		return 0, err
 	}
@@ -61,7 +61,8 @@ func (s *SQLReplyStore) Create(topic *Topic, content string, ipaddress string, u
 	if err != nil {
 		return 0, err
 	}
-	return int(lastID), topic.AddReply(int(lastID), uid)
+	rid = int(lastID)
+	return rid, t.AddReply(rid, uid)
 }
 
 // TODO: Write a test for this

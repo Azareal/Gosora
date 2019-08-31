@@ -16,7 +16,7 @@ type RegLogItem struct {
 	Email         string
 	FailureReason string
 	Success       bool
-	IPAddress     string
+	IP     string
 	DoneAt        string
 }
 
@@ -39,19 +39,19 @@ func init() {
 
 // TODO: Reload this item in the store, probably doesn't matter right now, but it might when we start caching this stuff in memory
 // ! Retroactive updates of date are not permitted for integrity reasons
-func (log *RegLogItem) Commit() error {
-	_, err := regLogStmts.update.Exec(log.Username, log.Email, log.FailureReason, log.Success, log.ID)
+func (l *RegLogItem) Commit() error {
+	_, err := regLogStmts.update.Exec(l.Username, l.Email, l.FailureReason, l.Success, l.ID)
 	return err
 }
 
-func (log *RegLogItem) Create() (id int, err error) {
-	res, err := regLogStmts.create.Exec(log.Username, log.Email, log.FailureReason, log.Success, log.IPAddress)
+func (l *RegLogItem) Create() (id int, err error) {
+	res, err := regLogStmts.create.Exec(l.Username, l.Email, l.FailureReason, l.Success, l.IP)
 	if err != nil {
 		return 0, err
 	}
 	id64, err := res.LastInsertId()
-	log.ID = int(id64)
-	return log.ID, err
+	l.ID = int(id64)
+	return l.ID, err
 }
 
 type RegLogStore interface {
@@ -79,22 +79,22 @@ func (s *SQLRegLogStore) Count() (count int) {
 	return count
 }
 
-func (store *SQLRegLogStore) GetOffset(offset int, perPage int) (logs []RegLogItem, err error) {
-	rows, err := store.getOffset.Query(offset, perPage)
+func (s *SQLRegLogStore) GetOffset(offset int, perPage int) (logs []RegLogItem, err error) {
+	rows, err := s.getOffset.Query(offset, perPage)
 	if err != nil {
 		return logs, err
 	}
 	defer rows.Close()
 
 	for rows.Next() {
-		var log RegLogItem
+		var l RegLogItem
 		var doneAt time.Time
-		err := rows.Scan(&log.ID, &log.Username, &log.Email, &log.FailureReason, &log.Success, &log.IPAddress, &doneAt)
+		err := rows.Scan(&l.ID, &l.Username, &l.Email, &l.FailureReason, &l.Success, &l.IP, &doneAt)
 		if err != nil {
 			return logs, err
 		}
-		log.DoneAt = doneAt.Format("2006-01-02 15:04:05")
-		logs = append(logs, log)
+		l.DoneAt = doneAt.Format("2006-01-02 15:04:05")
+		logs = append(logs, l)
 	}
 	return logs, rows.Err()
 }
@@ -103,7 +103,7 @@ type LoginLogItem struct {
 	ID        int
 	UID       int
 	Success   bool
-	IPAddress string
+	IP string
 	DoneAt    string
 }
 
@@ -126,19 +126,19 @@ func init() {
 
 // TODO: Reload this item in the store, probably doesn't matter right now, but it might when we start caching this stuff in memory
 // ! Retroactive updates of date are not permitted for integrity reasons
-func (log *LoginLogItem) Commit() error {
-	_, err := loginLogStmts.update.Exec(log.UID, log.Success, log.ID)
+func (l *LoginLogItem) Commit() error {
+	_, err := loginLogStmts.update.Exec(l.UID, l.Success, l.ID)
 	return err
 }
 
-func (log *LoginLogItem) Create() (id int, err error) {
-	res, err := loginLogStmts.create.Exec(log.UID, log.Success, log.IPAddress)
+func (l *LoginLogItem) Create() (id int, err error) {
+	res, err := loginLogStmts.create.Exec(l.UID, l.Success, l.IP)
 	if err != nil {
 		return 0, err
 	}
 	id64, err := res.LastInsertId()
-	log.ID = int(id64)
-	return log.ID, err
+	l.ID = int(id64)
+	return l.ID, err
 }
 
 type LoginLogStore interface {
@@ -177,22 +177,22 @@ func (s *SQLLoginLogStore) CountUser(uid int) (count int) {
 	return count
 }
 
-func (store *SQLLoginLogStore) GetOffset(uid int, offset int, perPage int) (logs []LoginLogItem, err error) {
-	rows, err := store.getOffsetByUser.Query(uid, offset, perPage)
+func (s *SQLLoginLogStore) GetOffset(uid int, offset int, perPage int) (logs []LoginLogItem, err error) {
+	rows, err := s.getOffsetByUser.Query(uid, offset, perPage)
 	if err != nil {
 		return logs, err
 	}
 	defer rows.Close()
 
 	for rows.Next() {
-		var log = LoginLogItem{UID: uid}
+		l := LoginLogItem{UID: uid}
 		var doneAt time.Time
-		err := rows.Scan(&log.ID, &log.Success, &log.IPAddress, &doneAt)
+		err := rows.Scan(&l.ID, &l.Success, &l.IP, &doneAt)
 		if err != nil {
 			return logs, err
 		}
-		log.DoneAt = doneAt.Format("2006-01-02 15:04:05")
-		logs = append(logs, log)
+		l.DoneAt = doneAt.Format("2006-01-02 15:04:05")
+		logs = append(logs, l)
 	}
 	return logs, rows.Err()
 }

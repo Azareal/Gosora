@@ -68,59 +68,59 @@ func init() {
 }
 
 // Copy gives you a non-pointer concurrency safe copy of the forum
-func (forum *Forum) Copy() (fcopy Forum) {
-	fcopy = *forum
+func (f *Forum) Copy() (fcopy Forum) {
+	fcopy = *f
 	return fcopy
 }
 
 // TODO: Write tests for this
-func (forum *Forum) Update(name string, desc string, active bool, preset string) error {
+func (f *Forum) Update(name string, desc string, active bool, preset string) error {
 	if name == "" {
-		name = forum.Name
+		name = f.Name
 	}
 	// TODO: Do a line sanitise? Does it matter?
 	preset = strings.TrimSpace(preset)
-	_, err := forumStmts.update.Exec(name, desc, active, preset, forum.ID)
+	_, err := forumStmts.update.Exec(name, desc, active, preset, f.ID)
 	if err != nil {
 		return err
 	}
-	if forum.Preset != preset && preset != "custom" && preset != "" {
-		err = PermmapToQuery(PresetToPermmap(preset), forum.ID)
+	if f.Preset != preset && preset != "custom" && preset != "" {
+		err = PermmapToQuery(PresetToPermmap(preset), f.ID)
 		if err != nil {
 			return err
 		}
 	}
-	_ = Forums.Reload(forum.ID)
+	_ = Forums.Reload(f.ID)
 	return nil
 }
 
-func (forum *Forum) SetPreset(preset string, gid int) error {
+func (f *Forum) SetPreset(preset string, gid int) error {
 	fperms, changed := GroupForumPresetToForumPerms(preset)
 	if changed {
-		return forum.SetPerms(fperms, preset, gid)
+		return f.SetPerms(fperms, preset, gid)
 	}
 	return nil
 }
 
 // TODO: Refactor this
-func (forum *Forum) SetPerms(fperms *ForumPerms, preset string, gid int) (err error) {
-	err = ReplaceForumPermsForGroup(gid, map[int]string{forum.ID: preset}, map[int]*ForumPerms{forum.ID: fperms})
+func (f *Forum) SetPerms(fperms *ForumPerms, preset string, gid int) (err error) {
+	err = ReplaceForumPermsForGroup(gid, map[int]string{f.ID: preset}, map[int]*ForumPerms{f.ID: fperms})
 	if err != nil {
 		LogError(err)
 		return errors.New("Unable to update the permissions")
 	}
 
 	// TODO: Add this and replaceForumPermsForGroup into a transaction?
-	_, err = forumStmts.setPreset.Exec("", forum.ID)
+	_, err = forumStmts.setPreset.Exec("", f.ID)
 	if err != nil {
 		LogError(err)
 		return errors.New("Unable to update the forum")
 	}
-	err = Forums.Reload(forum.ID)
+	err = Forums.Reload(f.ID)
 	if err != nil {
 		return errors.New("Unable to reload forum")
 	}
-	err = FPStore.Reload(forum.ID)
+	err = FPStore.Reload(f.ID)
 	if err != nil {
 		return errors.New("Unable to reload the forum permissions")
 	}

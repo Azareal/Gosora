@@ -95,7 +95,7 @@
 					{{if .Topic.IsClosed}}<a href='/topic/unlock/submit/{{.Topic.ID}}?s={{.CurrentUser.Session}}' class="action_button unlock_item" data-action="unlock" aria-label="{{lang "topic.unlock_aria"}}"></a>{{else}}<a href='/topic/lock/submit/{{.Topic.ID}}?s={{.CurrentUser.Session}}' class="action_button lock_item" data-action="lock" aria-label="{{lang "topic.lock_aria"}}"></a>{{end}}{{end}}
 					{{if .CurrentUser.Perms.PinTopic}}
 					{{if .Topic.Sticky}}<a href='/topic/unstick/submit/{{.Topic.ID}}?s={{.CurrentUser.Session}}' class="action_button unpin_item" data-action="unpin" aria-label="{{lang "topic.unpin_aria"}}"></a>{{else}}<a href='/topic/stick/submit/{{.Topic.ID}}?s={{.CurrentUser.Session}}' class="action_button pin_item" data-action="pin" aria-label="{{lang "topic.pin_aria"}}"></a>{{end}}{{end}}
-					{{if .CurrentUser.Perms.ViewIPs}}<a href="/users/ips/?ip={{.Topic.IPAddress}}" title="{{lang "topic.ip_full_tooltip"}}" class="action_button ip_item_button hide_on_big" aria-label="{{lang "topic.ip_full_aria"}}" data-action="ip"></a>{{end}}
+					{{if .CurrentUser.Perms.ViewIPs}}<a href="/users/ips/?ip={{.Topic.IP}}" title="{{lang "topic.ip_full_tooltip"}}" class="action_button ip_item_button hide_on_big" aria-label="{{lang "topic.ip_full_aria"}}" data-action="ip"></a>{{end}}
 					<a href="/report/submit/{{.Topic.ID}}?s={{.CurrentUser.Session}}&type=topic" class="action_button report_item" aria-label="{{lang "topic.report_aria"}}" data-action="report"></a>
 					<a href="#" class="action_button button_menu"></a>
 				{{end}}
@@ -103,7 +103,7 @@
 				<div class="action_button_right">
 					<a class="action_button like_count hide_on_micro" aria-label="{{lang "topic.like_count_aria"}}">{{.Topic.LikeCount}}</a>
 					<a class="action_button created_at hide_on_mobile" title="{{abstime .Topic.CreatedAt}}">{{reltime .Topic.CreatedAt}}</a>
-					{{if .CurrentUser.Perms.ViewIPs}}<a href="/users/ips/?ip={{.Topic.IPAddress}}" title="{{lang "topic.ip_full_tooltip"}}" class="action_button ip_item hide_on_mobile" aria-hidden="true">{{.Topic.IPAddress}}</a>{{end}}
+					{{if .CurrentUser.Perms.ViewIPs}}<a href="/users/ips/?ip={{.Topic.IP}}" title="{{lang "topic.ip_full_tooltip"}}" class="action_button ip_item hide_on_mobile" aria-hidden="true">{{.Topic.IP}}</a>{{end}}
 				</div>
 			</div>
 		</div><div style="clear:both;"></div>

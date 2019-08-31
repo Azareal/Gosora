@@ -116,11 +116,11 @@ func LogsMod(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
-	var llist = make([]c.PageLogItem, len(logs))
+	llist := make([]c.PageLogItem, len(logs))
 	for index, log := range logs {
 		actor := handleUnknownUser(c.Users.Get(log.ActorID))
 		action := modlogsElementType(log.Action, log.ElementType, log.ElementID, actor)
-		llist[index] = c.PageLogItem{Action: template.HTML(action), IPAddress: log.IPAddress, DoneAt: log.DoneAt}
+		llist[index] = c.PageLogItem{Action: template.HTML(action), IP: log.IP, DoneAt: log.DoneAt}
 	}
 
 	pageList := c.Paginate(page, lastPage, 5)
@@ -143,11 +143,11 @@ func LogsAdmin(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
-	var llist = make([]c.PageLogItem, len(logs))
+	llist := make([]c.PageLogItem, len(logs))
 	for index, log := range logs {
 		actor := handleUnknownUser(c.Users.Get(log.ActorID))
 		action := modlogsElementType(log.Action, log.ElementType, log.ElementID, actor)
-		llist[index] = c.PageLogItem{Action: template.HTML(action), IPAddress: log.IPAddress, DoneAt: log.DoneAt}
+		llist[index] = c.PageLogItem{Action: template.HTML(action), IP: log.IP, DoneAt: log.DoneAt}
 	}
 
 	pageList := c.Paginate(page, lastPage, 5)

@@ -53,45 +53,45 @@ func init() {
 	})
 }
 
-func (group *Group) ChangeRank(isAdmin bool, isMod bool, isBanned bool) (err error) {
-	_, err = groupStmts.updateGroupRank.Exec(isAdmin, isMod, isBanned, group.ID)
+func (g *Group) ChangeRank(isAdmin bool, isMod bool, isBanned bool) (err error) {
+	_, err = groupStmts.updateGroupRank.Exec(isAdmin, isMod, isBanned, g.ID)
 	if err != nil {
 		return err
 	}
-	Groups.Reload(group.ID)
+	Groups.Reload(g.ID)
 	return nil
 }
 
-func (group *Group) Update(name string, tag string) (err error) {
-	_, err = groupStmts.updateGroup.Exec(name, tag, group.ID)
+func (g *Group) Update(name string, tag string) (err error) {
+	_, err = groupStmts.updateGroup.Exec(name, tag, g.ID)
 	if err != nil {
 		return err
 	}
-	Groups.Reload(group.ID)
+	Groups.Reload(g.ID)
 	return nil
 }
 
 // Please don't pass arbitrary inputs to this method
-func (group *Group) UpdatePerms(perms map[string]bool) (err error) {
+func (g *Group) UpdatePerms(perms map[string]bool) (err error) {
 	pjson, err := json.Marshal(perms)
 	if err != nil {
 		return err
 	}
-	_, err = groupStmts.updateGroupPerms.Exec(pjson, group.ID)
+	_, err = groupStmts.updateGroupPerms.Exec(pjson, g.ID)
 	if err != nil {
 		return err
 	}
-	return Groups.Reload(group.ID)
+	return Groups.Reload(g.ID)
 }
 
 // Copy gives you a non-pointer concurrency safe copy of the group
-func (group *Group) Copy() Group {
-	return *group
+func (g *Group) Copy() Group {
+	return *g
 }
 
-func (group *Group) CopyPtr() (co *Group) {
+func (g *Group) CopyPtr() (co *Group) {
 	co = new(Group)
-	*co = *group
+	*co = *g
 	return co
 }
 

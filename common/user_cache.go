@@ -40,11 +40,11 @@ func NewMemoryUserCache(capacity int) *MemoryUserCache {
 }
 
 // TODO: Avoid deallocating topic list users
-func (mus *MemoryUserCache) DeallocOverflow(evictPriority bool) (evicted int) {
-	var toEvict = make([]int, 10)
-	var evIndex = 0
-	mus.RLock()
-	for _, user := range mus.items {
+func (s *MemoryUserCache) DeallocOverflow(evictPriority bool) (evicted int) {
+	toEvict := make([]int, 10)
+	evIndex := 0
+	s.RLock()
+	for _, user := range s.items {
 		if /*user.LastActiveAt < lastActiveCutoff && */ user.Score == 0 && !user.IsMod {
 			if EnableWebsockets && WsHub.HasUser(user.ID) {
 				continue
@@ -56,13 +56,13 @@ func (mus *MemoryUserCache) DeallocOverflow(evictPriority bool) (evicted int) {
 			}
 		}
 	}
-	mus.RUnlock()
+	s.RUnlock()
 
 	// Clear some of the less active users now with a bit more aggressiveness
 	if evIndex == 0 && evictPriority {
 		toEvict = make([]int, 20)
-		mus.RLock()
-		for _, user := range mus.items {
+		s.RLock()
+		for _, user := range s.items {
 			if user.Score < 100 && !user.IsMod {
 				if EnableWebsockets && WsHub.HasUser(user.ID) {
 					continue
@@ -74,11 +74,11 @@ func (mus *MemoryUserCache) DeallocOverflow(evictPriority bool) (evicted int) {
 				}
 			}
 		}
-		mus.RUnlock()
+		s.RUnlock()
 	}
 
 	// Remove zero IDs from the evictable list, so we don't waste precious cycles locked for those
-	var lastZero = -1
+	lastZero := -1
 	for i, uid := range toEvict {
 		if uid == 0 {
 			lastZero = i
@@ -88,15 +88,15 @@ func (mus *MemoryUserCache) DeallocOverflow(evictPriority bool) (evicted int) {
 		toEvict = toEvict[:lastZero]
 	}
 
-	mus.BulkRemove(toEvict)
+	s.BulkRemove(toEvict)
 	return len(toEvict)
 }
 
 // Get fetches a user by ID. Returns ErrNoRows if not present.
-func (mus *MemoryUserCache) Get(id int) (*User, error) {
-	mus.RLock()
-	item, ok := mus.items[id]
-	mus.RUnlock()
+func (s *MemoryUserCache) Get(id int) (*User, error) {
+	s.RLock()
+	item, ok := s.items[id]
+	s.RUnlock()
 	if ok {
 		return item, nil
 	}
@@ -104,19 +104,19 @@ func (mus *MemoryUserCache) Get(id int) (*User, error) {
 }
 
 // BulkGet fetches multiple users by their IDs. Indices without users will be set to nil, so make sure you check for those, we might want to change this behaviour to make it less confusing.
-func (mus *MemoryUserCache) BulkGet(ids []int) (list []*User) {
+func (s *MemoryUserCache) BulkGet(ids []int) (list []*User) {
 	list = make([]*User, len(ids))
-	mus.RLock()
+	s.RLock()
 	for i, id := range ids {
-		list[i] = mus.items[id]
+		list[i] = s.items[id]
 	}
-	mus.RUnlock()
+	s.RUnlock()
 	return list
 }
 
 // GetUnsafe fetches a user by ID. Returns ErrNoRows if not present. THIS METHOD IS NOT THREAD-SAFE.
-func (mus *MemoryUserCache) GetUnsafe(id int) (*User, error) {
-	item, ok := mus.items[id]
+func (s *MemoryUserCache) GetUnsafe(id int) (*User, error) {
+	item, ok := s.items[id]
 	if ok {
 		return item, nil
 	}
@@ -124,107 +124,107 @@ func (mus *MemoryUserCache) GetUnsafe(id int) (*User, error) {
 }
 
 // Set overwrites the value of a user in the cache, whether it's present or not. May return a capacity overflow error.
-func (mus *MemoryUserCache) Set(item *User) error {
-	mus.Lock()
-	user, ok := mus.items[item.ID]
+func (s *MemoryUserCache) Set(item *User) error {
+	s.Lock()
+	user, ok := s.items[item.ID]
 	if ok {
-		mus.Unlock()
+		s.Unlock()
 		*user = *item
-	} else if int(mus.length) >= mus.capacity {
-		mus.Unlock()
+	} else if int(s.length) >= s.capacity {
+		s.Unlock()
 		return ErrStoreCapacityOverflow
 	} else {
-		mus.items[item.ID] = item
-		mus.Unlock()
-		atomic.AddInt64(&mus.length, 1)
+		s.items[item.ID] = item
+		s.Unlock()
+		atomic.AddInt64(&s.length, 1)
 	}
 	return nil
 }
 
 // Add adds a user to the cache, similar to Set, but it's only intended for new items. This method might be deprecated in the near future, use Set. May return a capacity overflow error.
 // ? Is this redundant if we have Set? Are the efficiency wins worth this? Is this even used?
-func (mus *MemoryUserCache) Add(item *User) error {
-	mus.Lock()
-	if int(mus.length) >= mus.capacity {
-		mus.Unlock()
+func (s *MemoryUserCache) Add(item *User) error {
+	s.Lock()
+	if int(s.length) >= s.capacity {
+		s.Unlock()
 		return ErrStoreCapacityOverflow
 	}
-	mus.items[item.ID] = item
-	mus.length = int64(len(mus.items))
-	mus.Unlock()
+	s.items[item.ID] = item
+	s.length = int64(len(s.items))
+	s.Unlock()
 	return nil
 }
 
 // AddUnsafe is the unsafe version of Add. May return a capacity overflow error. THIS METHOD IS NOT THREAD-SAFE.
-func (mus *MemoryUserCache) AddUnsafe(item *User) error {
-	if int(mus.length) >= mus.capacity {
+func (s *MemoryUserCache) AddUnsafe(item *User) error {
+	if int(s.length) >= s.capacity {
 		return ErrStoreCapacityOverflow
 	}
-	mus.items[item.ID] = item
-	mus.length = int64(len(mus.items))
+	s.items[item.ID] = item
+	s.length = int64(len(s.items))
 	return nil
 }
 
 // Remove removes a user from the cache by ID, if they exist. Returns ErrNoRows if no items exist.
-func (mus *MemoryUserCache) Remove(id int) error {
-	mus.Lock()
-	_, ok := mus.items[id]
+func (s *MemoryUserCache) Remove(id int) error {
+	s.Lock()
+	_, ok := s.items[id]
 	if !ok {
-		mus.Unlock()
+		s.Unlock()
 		return ErrNoRows
 	}
-	delete(mus.items, id)
-	mus.Unlock()
-	atomic.AddInt64(&mus.length, -1)
+	delete(s.items, id)
+	s.Unlock()
+	atomic.AddInt64(&s.length, -1)
 	return nil
 }
 
 // RemoveUnsafe is the unsafe version of Remove. THIS METHOD IS NOT THREAD-SAFE.
-func (mus *MemoryUserCache) RemoveUnsafe(id int) error {
-	_, ok := mus.items[id]
+func (s *MemoryUserCache) RemoveUnsafe(id int) error {
+	_, ok := s.items[id]
 	if !ok {
 		return ErrNoRows
 	}
-	delete(mus.items, id)
-	atomic.AddInt64(&mus.length, -1)
+	delete(s.items, id)
+	atomic.AddInt64(&s.length, -1)
 	return nil
 }
 
-func (mus *MemoryUserCache) BulkRemove(ids []int) {
+func (s *MemoryUserCache) BulkRemove(ids []int) {
 	var rCount int64
-	mus.Lock()
+	s.Lock()
 	for _, id := range ids {
-		_, ok := mus.items[id]
+		_, ok := s.items[id]
 		if ok {
-			delete(mus.items, id)
+			delete(s.items, id)
 			rCount++
 		}
 	}
-	mus.Unlock()
-	atomic.AddInt64(&mus.length, -rCount)
+	s.Unlock()
+	atomic.AddInt64(&s.length, -rCount)
 }
 
 // Flush removes all the users from the cache, useful for tests.
-func (mus *MemoryUserCache) Flush() {
-	mus.Lock()
-	mus.items = make(map[int]*User)
-	mus.length = 0
-	mus.Unlock()
+func (s *MemoryUserCache) Flush() {
+	s.Lock()
+	s.items = make(map[int]*User)
+	s.length = 0
+	s.Unlock()
 }
 
 // ! Is this concurrent?
 // Length returns the number of users in the memory cache
-func (mus *MemoryUserCache) Length() int {
-	return int(mus.length)
+func (s *MemoryUserCache) Length() int {
+	return int(s.length)
 }
 
 // SetCapacity sets the maximum number of users which this cache can hold
-func (mus *MemoryUserCache) SetCapacity(capacity int) {
+func (s *MemoryUserCache) SetCapacity(capacity int) {
 	// Ints are moved in a single instruction, so this should be thread-safe
-	mus.capacity = capacity
+	s.capacity = capacity
 }
 
 // GetCapacity returns the maximum number of users this cache can hold
-func (mus *MemoryUserCache) GetCapacity() int {
-	return mus.capacity
+func (s *MemoryUserCache) GetCapacity() int {
+	return s.capacity
 }

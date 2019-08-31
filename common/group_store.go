@@ -22,7 +22,7 @@ type GroupStore interface {
 	Get(id int) (*Group, error)
 	GetCopy(id int) (Group, error)
 	Exists(id int) bool
-	Create(name string, tag string, isAdmin bool, isMod bool, isBanned bool) (int, error)
+	Create(name string, tag string, isAdmin bool, isMod bool, isBanned bool) (id int, err error)
 	GetAll() ([]*Group, error)
 	GetRange(lower int, higher int) ([]*Group, error)
 	Reload(id int) error // ? - Should we move this to GroupCache? It might require us to do some unnecessary casting though

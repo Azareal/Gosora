@@ -590,7 +590,7 @@ type PanelBackupPage struct {
 
 type PageLogItem struct {
 	Action    template.HTML
-	IPAddress string
+	IP string
 	DoneAt    string
 }
 

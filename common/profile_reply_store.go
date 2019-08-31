@@ -32,7 +32,7 @@ func NewSQLProfileReplyStore(acc *qgen.Accumulator) (*SQLProfileReplyStore, erro
 
 func (s *SQLProfileReplyStore) Get(id int) (*ProfileReply, error) {
 	r := ProfileReply{ID: id}
-	err := s.get.QueryRow(id).Scan(&r.ParentID, &r.Content, &r.CreatedBy, &r.CreatedAt, &r.LastEdit, &r.LastEditBy, &r.IPAddress)
+	err := s.get.QueryRow(id).Scan(&r.ParentID, &r.Content, &r.CreatedBy, &r.CreatedAt, &r.LastEdit, &r.LastEditBy, &r.IP)
 	return &r, err
 }
 

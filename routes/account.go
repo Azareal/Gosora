@@ -39,19 +39,17 @@ func AccountLoginSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.R
 	username := c.SanitiseSingleLine(r.PostFormValue("username"))
 	uid, err, requiresExtraAuth := c.Auth.Authenticate(username, r.PostFormValue("password"))
 	if err != nil {
-		{
-			// TODO: uid is currently set to 0 as authenticate fetches the user by username and password. Get the actual uid, so we can alert the user of attempted logins? What if someone takes advantage of the response times to deduce if an account exists?
-			logItem := &c.LoginLogItem{UID: uid, Success: false, IPAddress: user.LastIP}
-			_, err := logItem.Create()
-			if err != nil {
-				return c.InternalError(err, w, r)
-			}
+		// TODO: uid is currently set to 0 as authenticate fetches the user by username and password. Get the actual uid, so we can alert the user of attempted logins? What if someone takes advantage of the response times to deduce if an account exists?
+		logItem := &c.LoginLogItem{UID: uid, Success: false, IP: user.LastIP}
+		_, err := logItem.Create()
+		if err != nil {
+			return c.InternalError(err, w, r)
 		}
 		return c.LocalError(err.Error(), w, r, user)
 	}
 
 	// TODO: Take 2FA into account
-	logItem := &c.LoginLogItem{UID: uid, Success: true, IPAddress: user.LastIP}
+	logItem := &c.LoginLogItem{UID: uid, Success: true, IP: user.LastIP}
 	_, err = logItem.Create()
 	if err != nil {
 		return c.InternalError(err, w, r)
@@ -263,7 +261,7 @@ func AccountRegisterSubmit(w http.ResponseWriter, r *http.Request, user c.User) 
 		}
 	}
 
-	regLog := c.RegLogItem{Username: username, Email: email, FailureReason: regErrReason, Success: regSuccess, IPAddress: user.LastIP}
+	regLog := c.RegLogItem{Username: username, Email: email, FailureReason: regErrReason, Success: regSuccess, IP: user.LastIP}
 	_, err = regLog.Create()
 	if err != nil {
 		return c.InternalError(err, w, r)
