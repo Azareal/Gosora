@@ -29,7 +29,7 @@
 	
 	{{if .CurrentUser.Perms.CreateTopic}}
 	<div id="forum_topic_create_form" class="rowblock topic_create_form quick_create_form" style="display:none;" aria-label="{{lang "quick_topic.aria"}}">
-		<form id="quick_post_form" enctype="multipart/form-data" action="/topic/create/submit/?session={{.CurrentUser.Session}}" method="post"></form>
+		<form id="quick_post_form" enctype="multipart/form-data" action="/topic/create/submit/?s={{.CurrentUser.Session}}" method="post"></form>
 		<img class="little_row_avatar" src="{{.CurrentUser.MicroAvatar}}" height=64 alt="{{lang "quick_topic.avatar_alt"}}" title="{{lang "quick_topic.avatar_tooltip"}}" />
 		<input form="quick_post_form" id="topic_board_input" name="topic-board" value="{{.Forum.ID}}" type="hidden">
 		<div class="main_form">

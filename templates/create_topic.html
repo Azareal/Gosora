@@ -4,7 +4,7 @@
 		<div class="rowitem"><h1>{{lang "create_topic_head"}}</h1></div>
 	</div>
 	<div class="rowblock the_form">
-		<form id="quick_post_form" enctype="multipart/form-data" action="/topic/create/submit/?session={{.CurrentUser.Session}}" method="post"></form>
+		<form id="quick_post_form" enctype="multipart/form-data" action="/topic/create/submit/?s={{.CurrentUser.Session}}" method="post"></form>
 		<div class="formrow real_first_child">
 			<div class="formitem formlabel"><a>{{lang "create_topic_board"}}</a></div>
 			<div class="formitem"><select form="quick_post_form" id="topic_board_input" name="topic-board">

@@ -39,10 +39,10 @@ func NewMemoryTopicCache(capacity int) *MemoryTopicCache {
 }
 
 // Get fetches a topic by ID. Returns ErrNoRows if not present.
-func (mts *MemoryTopicCache) Get(id int) (*Topic, error) {
-	mts.RLock()
-	item, ok := mts.items[id]
-	mts.RUnlock()
+func (s *MemoryTopicCache) Get(id int) (*Topic, error) {
+	s.RLock()
+	item, ok := s.items[id]
+	s.RUnlock()
 	if ok {
 		return item, nil
 	}
@@ -50,8 +50,8 @@ func (mts *MemoryTopicCache) Get(id int) (*Topic, error) {
 }
 
 // GetUnsafe fetches a topic by ID. Returns ErrNoRows if not present. THIS METHOD IS NOT THREAD-SAFE.
-func (mts *MemoryTopicCache) GetUnsafe(id int) (*Topic, error) {
-	item, ok := mts.items[id]
+func (s *MemoryTopicCache) GetUnsafe(id int) (*Topic, error) {
+	item, ok := s.items[id]
 	if ok {
 		return item, nil
 	}
@@ -59,68 +59,68 @@ func (mts *MemoryTopicCache) GetUnsafe(id int) (*Topic, error) {
 }
 
 // BulkGet fetches multiple topics by their IDs. Indices without topics will be set to nil, so make sure you check for those, we might want to change this behaviour to make it less confusing.
-func (c *MemoryTopicCache) BulkGet(ids []int) (list []*Topic) {
+func (s *MemoryTopicCache) BulkGet(ids []int) (list []*Topic) {
 	list = make([]*Topic, len(ids))
-	c.RLock()
+	s.RLock()
 	for i, id := range ids {
-		list[i] = c.items[id]
+		list[i] = s.items[id]
 	}
-	c.RUnlock()
+	s.RUnlock()
 	return list
 }
 
 // Set overwrites the value of a topic in the cache, whether it's present or not. May return a capacity overflow error.
-func (mts *MemoryTopicCache) Set(item *Topic) error {
-	mts.Lock()
-	_, ok := mts.items[item.ID]
+func (s *MemoryTopicCache) Set(item *Topic) error {
+	s.Lock()
+	_, ok := s.items[item.ID]
 	if ok {
-		mts.items[item.ID] = item
-	} else if int(mts.length) >= mts.capacity {
-		mts.Unlock()
+		s.items[item.ID] = item
+	} else if int(s.length) >= s.capacity {
+		s.Unlock()
 		return ErrStoreCapacityOverflow
 	} else {
-		mts.items[item.ID] = item
-		atomic.AddInt64(&mts.length, 1)
+		s.items[item.ID] = item
+		atomic.AddInt64(&s.length, 1)
 	}
-	mts.Unlock()
+	s.Unlock()
 	return nil
 }
 
 // Add adds a topic to the cache, similar to Set, but it's only intended for new items. This method might be deprecated in the near future, use Set. May return a capacity overflow error.
 // ? Is this redundant if we have Set? Are the efficiency wins worth this? Is this even used?
-func (mts *MemoryTopicCache) Add(item *Topic) error {
-	mts.Lock()
-	if int(mts.length) >= mts.capacity {
-		mts.Unlock()
+func (s *MemoryTopicCache) Add(item *Topic) error {
+	s.Lock()
+	if int(s.length) >= s.capacity {
+		s.Unlock()
 		return ErrStoreCapacityOverflow
 	}
-	mts.items[item.ID] = item
-	mts.Unlock()
-	atomic.AddInt64(&mts.length, 1)
+	s.items[item.ID] = item
+	s.Unlock()
+	atomic.AddInt64(&s.length, 1)
 	return nil
 }
 
 // AddUnsafe is the unsafe version of Add. May return a capacity overflow error. THIS METHOD IS NOT THREAD-SAFE.
-func (mts *MemoryTopicCache) AddUnsafe(item *Topic) error {
-	if int(mts.length) >= mts.capacity {
+func (s *MemoryTopicCache) AddUnsafe(item *Topic) error {
+	if int(s.length) >= s.capacity {
 		return ErrStoreCapacityOverflow
 	}
-	mts.items[item.ID] = item
-	mts.length = int64(len(mts.items))
+	s.items[item.ID] = item
+	s.length = int64(len(s.items))
 	return nil
 }
 
 // Remove removes a topic from the cache by ID, if they exist. Returns ErrNoRows if no items exist.
-func (mts *MemoryTopicCache) Remove(id int) error {
-	mts.Lock()
-	_, ok := mts.items[id]
+func (s *MemoryTopicCache) Remove(id int) error {
+	s.Lock()
+	_, ok := s.items[id]
 	if !ok {
-		mts.Unlock()
+		s.Unlock()
 		return ErrNoRows
 	}
-	delete(mts.items, id)
-	mts.Unlock()
-	atomic.AddInt64(&mts.length, -1)
+	delete(s.items, id)
+	s.Unlock()
+	atomic.AddInt64(&s.length, -1)
 	return nil
 }
 

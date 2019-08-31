@@ -38,12 +38,7 @@ func (s *DefaultLikeStore) BulkExists(ids []int, sentBy int, targetType string) 
 		}
 		eids = append(eids,id)
 	}
-	err = rows.Err()
-	if err != nil {
-		return nil, err
-	}
-
-	return eids, nil
+	return eids, rows.Err()
 }
 
 // TODO: Write a test for this

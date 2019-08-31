@@ -40,10 +40,10 @@ func NewMemoryReplyCache(capacity int) *MemoryReplyCache {
 }
 
 // Get fetches a reply by ID. Returns ErrNoRows if not present.
-func (mts *MemoryReplyCache) Get(id int) (*Reply, error) {
-	mts.RLock()
-	item, ok := mts.items[id]
-	mts.RUnlock()
+func (s *MemoryReplyCache) Get(id int) (*Reply, error) {
+	s.RLock()
+	item, ok := s.items[id]
+	s.RUnlock()
 	if ok {
 		return item, nil
 	}
@@ -51,8 +51,8 @@ func (mts *MemoryReplyCache) Get(id int) (*Reply, error) {
 }
 
 // GetUnsafe fetches a reply by ID. Returns ErrNoRows if not present. THIS METHOD IS NOT THREAD-SAFE.
-func (mts *MemoryReplyCache) GetUnsafe(id int) (*Reply, error) {
-	item, ok := mts.items[id]
+func (s *MemoryReplyCache) GetUnsafe(id int) (*Reply, error) {
+	item, ok := s.items[id]
 	if ok {
 		return item, nil
 	}
@@ -60,69 +60,69 @@ func (mts *MemoryReplyCache) GetUnsafe(id int) (*Reply, error) {
 }
 
 // BulkGet fetches multiple replies by their IDs. Indices without replies will be set to nil, so make sure you check for those, we might want to change this behaviour to make it less confusing.
-func (c *MemoryReplyCache) BulkGet(ids []int) (list []*Reply) {
+func (s *MemoryReplyCache) BulkGet(ids []int) (list []*Reply) {
 	list = make([]*Reply, len(ids))
-	c.RLock()
+	s.RLock()
 	for i, id := range ids {
-		list[i] = c.items[id]
+		list[i] = s.items[id]
 	}
-	c.RUnlock()
+	s.RUnlock()
 	return list
 }
 
 // Set overwrites the value of a reply in the cache, whether it's present or not. May return a capacity overflow error.
-func (mts *MemoryReplyCache) Set(item *Reply) error {
-	mts.Lock()
-	_, ok := mts.items[item.ID]
+func (s *MemoryReplyCache) Set(item *Reply) error {
+	s.Lock()
+	_, ok := s.items[item.ID]
 	if ok {
-		mts.items[item.ID] = item
-	} else if int(mts.length) >= mts.capacity {
-		mts.Unlock()
+		s.items[item.ID] = item
+	} else if int(s.length) >= s.capacity {
+		s.Unlock()
 		return ErrStoreCapacityOverflow
 	} else {
-		mts.items[item.ID] = item
-		atomic.AddInt64(&mts.length, 1)
+		s.items[item.ID] = item
+		atomic.AddInt64(&s.length, 1)
 	}
-	mts.Unlock()
+	s.Unlock()
 	return nil
 }
 
 // Add adds a reply to the cache, similar to Set, but it's only intended for new items. This method might be deprecated in the near future, use Set. May return a capacity overflow error.
 // ? Is this redundant if we have Set? Are the efficiency wins worth this? Is this even used?
-func (mts *MemoryReplyCache) Add(item *Reply) error {
+func (s *MemoryReplyCache) Add(item *Reply) error {
 	log.Print("MemoryReplyCache.Add")
-	mts.Lock()
-	if int(mts.length) >= mts.capacity {
-		mts.Unlock()
+	s.Lock()
+	if int(s.length) >= s.capacity {
+		s.Unlock()
 		return ErrStoreCapacityOverflow
 	}
-	mts.items[item.ID] = item
-	mts.Unlock()
-	atomic.AddInt64(&mts.length, 1)
+	s.items[item.ID] = item
+	s.Unlock()
+	atomic.AddInt64(&s.length, 1)
 	return nil
 }
 
 // AddUnsafe is the unsafe version of Add. May return a capacity overflow error. THIS METHOD IS NOT THREAD-SAFE.
-func (mts *MemoryReplyCache) AddUnsafe(item *Reply) error {
-	if int(mts.length) >= mts.capacity {
+func (s *MemoryReplyCache) AddUnsafe(item *Reply) error {
+	if int(s.length) >= s.capacity {
 		return ErrStoreCapacityOverflow
 	}
-	mts.items[item.ID] = item
-	mts.length = int64(len(mts.items))
+	s.items[item.ID] = item
+	s.length = int64(len(s.items))
 	return nil
 }
 
 // Remove removes a reply from the cache by ID, if they exist. Returns ErrNoRows if no items exist.
-func (mts *MemoryReplyCache) Remove(id int) error {
-	mts.Lock()
-	_, ok := mts.items[id]
+func (s *MemoryReplyCache) Remove(id int) error {
+	s.Lock()
+	_, ok := s.items[id]
 	if !ok {
-		mts.Unlock()
+		s.Unlock()
 		return ErrNoRows
 	}
-	delete(mts.items, id)
-	mts.Unlock()
-	atomic.AddInt64(&mts.length, -1)
+	delete(s.items, id)
+	s.Unlock()
+	atomic.AddInt64(&s.length, -1)
 	return nil
 }
 
