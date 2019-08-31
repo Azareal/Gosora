@@ -6,6 +6,7 @@ import (
 	"runtime"
 	"sync"
 	"time"
+	"log"
 
 	p "github.com/Azareal/Gosora/common/phrases"
 )
@@ -51,7 +52,8 @@ type Header struct {
 }
 
 func (h *Header) AddScript(name string) {
-	if name[0] == '/' && name[1] != '/' {
+	if name[0] == '/' && name[1] == '/' {
+		} else {
 		// TODO: Use a secondary static file map to avoid this concatenation?
 		file, ok := StaticFiles.Get("/s/" + name)
 		if ok {
@@ -63,7 +65,8 @@ func (h *Header) AddScript(name string) {
 }
 
 func (h *Header) AddPreScriptAsync(name string) {
-	if name[0] == '/' && name[1] != '/' {
+	if name[0] == '/' && name[1] == '/' {
+		} else {
 		file, ok := StaticFiles.Get("/s/" + name)
 		if ok {
 			name = file.OName
@@ -73,7 +76,8 @@ func (h *Header) AddPreScriptAsync(name string) {
 }
 
 func (h *Header) AddScriptAsync(name string) {
-	if name[0] == '/' && name[1] != '/' {
+	if name[0] == '/' && name[1] == '/' {
+		} else {
 		file, ok := StaticFiles.Get("/s/" + name)
 		if ok {
 			name = file.OName
@@ -87,7 +91,8 @@ func (h *Header) AddScriptAsync(name string) {
 }*/
 
 func (h *Header) AddSheet(name string) {
-	if name[0] == '/' && name[1] != '/' {
+	if name[0] == '/' && name[1] == '/' {
+	} else {
 		file, ok := StaticFiles.Get("/s/" + name)
 		if ok {
 			name = file.OName

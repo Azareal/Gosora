@@ -1,0 +1,3 @@
+.convos_item_user:not(:last-child):after {
+	content: ",";
+}

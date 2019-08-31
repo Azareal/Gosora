@@ -1,0 +1,6 @@
+.rowhead .rowitem {
+	display: flex;
+}
+.convos_item_user:not(:last-child):after {
+	content: ",";
+}

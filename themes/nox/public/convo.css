@@ -1,5 +1,12 @@
+.rowhead .rowitem,
+.convos_list .rowitem {
+	display: flex;
+}
 .convos_item_user:not(:last-child):after {
 	content: ",";
+}
+.to_right {
+	margin-left: auto;
 }
 
 .parti {
