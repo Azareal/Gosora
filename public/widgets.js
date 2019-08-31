@@ -19,7 +19,7 @@ $(document).ready(() => {
 			event.preventDefault();
 			eparent.remove();
 			let formData = new URLSearchParams();
-			formData.append("session",me.User.Session);
+			formData.append("s",me.User.S);
 			let req = new XMLHttpRequest();
 			let target = this.closest("a").getAttribute("href");
 			req.open("POST",target,true);
@@ -58,7 +58,7 @@ $(document).ready(() => {
 		let pform = this.closest("form");
 		let data = new URLSearchParams();
 		for (const pair of new FormData(pform)) data.append(pair[0], pair[1]);
-		data.append("session",me.User.Session);
+		data.append("s",me.User.S);
 		var req = new XMLHttpRequest();
 		req.open("POST", pform.getAttribute("action"));
 		req.send(data);

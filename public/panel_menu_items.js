@@ -44,7 +44,7 @@ document.getElementById("panel_menu_items_order_button").addEventListener("click
 	}
 	// ? - Is encodeURIComponent the right function for this?
 	let spl = document.location.pathname.split("/");
-	req.open("POST","/panel/themes/menus/item/order/edit/submit/"+parseInt(spl[spl.length-1],10)+"?session=" + encodeURIComponent(me.User.Session));
+	req.open("POST","/panel/themes/menus/item/order/edit/submit/"+parseInt(spl[spl.length-1],10)+"?s=" + encodeURIComponent(me.User.S));
 	req.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
 	let items = "";
 	for(let i = 0; item = menuItems[i];i++) items += item+",";

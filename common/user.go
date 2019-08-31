@@ -57,13 +57,13 @@ type User struct {
 	TempGroup   int
 }
 
-func (user *User) WebSockets() *WsJSONUser {
-	var groupID = user.Group
-	if user.TempGroup != 0 {
-		groupID = user.TempGroup
+func (u *User) WebSockets() *WsJSONUser {
+	groupID := u.Group
+	if u.TempGroup != 0 {
+		groupID = u.TempGroup
 	}
 	// TODO: Do we want to leak the user's permissions? Users will probably be able to see their status from the group tags, but still
-	return &WsJSONUser{user.ID, user.Link, user.Name, groupID, user.IsMod, user.Avatar, user.MicroAvatar, user.Level, user.Score, user.Liked}
+	return &WsJSONUser{u.ID, u.Link, u.Name, groupID, u.IsMod, u.Avatar, u.MicroAvatar, u.Level, u.Score, u.Liked}
 }
 
 // Use struct tags to avoid having to define this? It really depends on the circumstances, sometimes we want the whole thing, sometimes... not.
@@ -80,12 +80,12 @@ type WsJSONUser struct {
 	Liked       int
 }
 
-func (user *User) Me() *MeUser {
-	var groupID = user.Group
-	if user.TempGroup != 0 {
-		groupID = user.TempGroup
+func (u *User) Me() *MeUser {
+	groupID := u.Group
+	if u.TempGroup != 0 {
+		groupID = u.TempGroup
 	}
-	return &MeUser{user.ID, user.Link, user.Name, groupID, user.Active, user.IsMod, user.IsSuperMod, user.IsAdmin, user.IsBanned, user.Session, user.Avatar, user.MicroAvatar, user.Tag, user.Level, user.Score, user.Liked}
+	return &MeUser{u.ID, u.Link, u.Name, groupID, u.Active, u.IsMod, u.IsSuperMod, u.IsAdmin, u.IsBanned, u.Session, u.Avatar, u.MicroAvatar, u.Tag, u.Level, u.Score, u.Liked}
 }
 
 // For when users need to see their own data, I've omitted some redundancies and less useful items, so we don't wind up sending them on every request
@@ -104,7 +104,7 @@ type MeUser struct {
 	//Perms       Perms
 	//PluginPerms map[string]bool
 
-	Session     string
+	S     string // Session
 	Avatar      string
 	MicroAvatar string
 	Tag         string
@@ -170,53 +170,53 @@ func init() {
 	})
 }
 
-func (user *User) Init() {
-	user.Avatar, user.MicroAvatar = BuildAvatar(user.ID, user.RawAvatar)
-	user.Link = BuildProfileURL(NameToSlug(user.Name), user.ID)
-	user.Tag = Groups.DirtyGet(user.Group).Tag
-	user.InitPerms()
+func (u *User) Init() {
+	u.Avatar, u.MicroAvatar = BuildAvatar(u.ID, u.RawAvatar)
+	u.Link = BuildProfileURL(NameToSlug(u.Name), u.ID)
+	u.Tag = Groups.DirtyGet(u.Group).Tag
+	u.InitPerms()
 }
 
 // TODO: Refactor this idiom into something shorter, maybe with a NullUserCache when one isn't set?
-func (user *User) CacheRemove() {
+func (u *User) CacheRemove() {
 	ucache := Users.GetCache()
 	if ucache != nil {
-		ucache.Remove(user.ID)
+		ucache.Remove(u.ID)
 	}
 	TopicListThaw.Thaw()
 }
 
-func (user *User) Ban(duration time.Duration, issuedBy int) error {
-	return user.ScheduleGroupUpdate(BanGroup, issuedBy, duration)
+func (u *User) Ban(duration time.Duration, issuedBy int) error {
+	return u.ScheduleGroupUpdate(BanGroup, issuedBy, duration)
 }
 
-func (user *User) Unban() error {
-	return user.RevertGroupUpdate()
+func (u *User) Unban() error {
+	return u.RevertGroupUpdate()
 }
 
-func (user *User) deleteScheduleGroupTx(tx *sql.Tx) error {
+func (u *User) deleteScheduleGroupTx(tx *sql.Tx) error {
 	deleteScheduleGroupStmt, err := qgen.Builder.SimpleDeleteTx(tx, "users_groups_scheduler", "uid = ?")
 	if err != nil {
 		return err
 	}
-	_, err = deleteScheduleGroupStmt.Exec(user.ID)
+	_, err = deleteScheduleGroupStmt.Exec(u.ID)
 	return err
 }
 
-func (user *User) setTempGroupTx(tx *sql.Tx, tempGroup int) error {
+func (u *User) setTempGroupTx(tx *sql.Tx, tempGroup int) error {
 	setTempGroupStmt, err := qgen.Builder.SimpleUpdateTx(tx, "users", "temp_group = ?", "uid = ?")
 	if err != nil {
 		return err
 	}
-	_, err = setTempGroupStmt.Exec(tempGroup, user.ID)
+	_, err = setTempGroupStmt.Exec(tempGroup, u.ID)
 	return err
 }
 
 // Make this more stateless?
-func (user *User) ScheduleGroupUpdate(gid int, issuedBy int, duration time.Duration) error {
-	var temporary bool
+func (u *User) ScheduleGroupUpdate(gid int, issuedBy int, duration time.Duration) error {
+	var temp bool
 	if duration.Nanoseconds() != 0 {
-		temporary = true
+		temp = true
 	}
 	revertAt := time.Now().Add(duration)
 
@@ -226,94 +226,94 @@ func (user *User) ScheduleGroupUpdate(gid int, issuedBy int, duration time.Durat
 	}
 	defer tx.Rollback()
 
-	err = user.deleteScheduleGroupTx(tx)
+	err = u.deleteScheduleGroupTx(tx)
 	if err != nil {
 		return err
 	}
 
-	createScheduleGroupTx, err := qgen.Builder.SimpleInsertTx(tx, "users_groups_scheduler", "uid, set_group, issued_by, issued_at, revert_at, temporary", "?,?,?,UTC_TIMESTAMP(),?,?")
+	createScheduleGroupTx, err := qgen.Builder.SimpleInsertTx(tx, "users_groups_scheduler", "uid,set_group,issued_by,issued_at,revert_at,temporary", "?,?,?,UTC_TIMESTAMP(),?,?")
 	if err != nil {
 		return err
 	}
-	_, err = createScheduleGroupTx.Exec(user.ID, gid, issuedBy, revertAt, temporary)
+	_, err = createScheduleGroupTx.Exec(u.ID, gid, issuedBy, revertAt, temp)
 	if err != nil {
 		return err
 	}
 
-	err = user.setTempGroupTx(tx, gid)
+	err = u.setTempGroupTx(tx, gid)
 	if err != nil {
 		return err
 	}
 	err = tx.Commit()
 
-	user.CacheRemove()
+	u.CacheRemove()
 	return err
 }
 
-func (user *User) RevertGroupUpdate() error {
+func (u *User) RevertGroupUpdate() error {
 	tx, err := qgen.Builder.Begin()
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback()
 
-	err = user.deleteScheduleGroupTx(tx)
+	err = u.deleteScheduleGroupTx(tx)
 	if err != nil {
 		return err
 	}
 
-	err = user.setTempGroupTx(tx, 0)
+	err = u.setTempGroupTx(tx, 0)
 	if err != nil {
 		return err
 	}
 	err = tx.Commit()
 
-	user.CacheRemove()
+	u.CacheRemove()
 	return err
 }
 
 // TODO: Use a transaction here
 // ? - Add a Deactivate method? Not really needed, if someone's been bad you could do a ban, I guess it might be useful, if someone says that email x isn't actually owned by the user in question?
-func (user *User) Activate() (err error) {
-	_, err = userStmts.activate.Exec(user.ID)
+func (u *User) Activate() (err error) {
+	_, err = userStmts.activate.Exec(u.ID)
 	if err != nil {
 		return err
 	}
-	_, err = userStmts.changeGroup.Exec(Config.DefaultGroup, user.ID)
-	user.CacheRemove()
+	_, err = userStmts.changeGroup.Exec(Config.DefaultGroup, u.ID)
+	u.CacheRemove()
 	return err
 }
 
 // TODO: Write tests for this
 // TODO: Delete this user's content too?
 // TODO: Expose this to the admin?
-func (user *User) Delete() error {
-	_, err := userStmts.delete.Exec(user.ID)
+func (u *User) Delete() error {
+	_, err := userStmts.delete.Exec(u.ID)
 	if err != nil {
 		return err
 	}
-	user.CacheRemove()
-	return err
+	u.CacheRemove()
+	return nil
 }
 
-func (user *User) bindStmt(stmt *sql.Stmt, params ...interface{}) (err error) {
-	params = append(params, user.ID)
+func (u *User) bindStmt(stmt *sql.Stmt, params ...interface{}) (err error) {
+	params = append(params, u.ID)
 	_, err = stmt.Exec(params...)
-	user.CacheRemove()
+	u.CacheRemove()
 	return err
 }
 
-func (user *User) ChangeName(username string) (err error) {
-	return user.bindStmt(userStmts.setUsername, username)
+func (u *User) ChangeName(name string) (err error) {
+	return u.bindStmt(userStmts.setUsername, name)
 }
 
-func (user *User) ChangeAvatar(avatar string) (err error) {
-	return user.bindStmt(userStmts.setAvatar, avatar)
+func (u *User) ChangeAvatar(avatar string) (err error) {
+	return u.bindStmt(userStmts.setAvatar, avatar)
 }
 
 // TODO: Abstract this with an interface so we can scale this with an actual dedicated queue in a real cluster
-func (user *User) ScheduleAvatarResize() (err error) {
-	_, err = userStmts.scheduleAvatarResize.Exec(user.ID)
+func (u *User) ScheduleAvatarResize() (err error) {
+	_, err = userStmts.scheduleAvatarResize.Exec(u.ID)
 	if err != nil {
 		// TODO: Do a more generic check so that we're not as tied to MySQL
 		me, ok := err.(*mysql.MySQLError)
@@ -328,29 +328,29 @@ func (user *User) ScheduleAvatarResize() (err error) {
 	return nil
 }
 
-func (user *User) ChangeGroup(group int) (err error) {
-	return user.bindStmt(userStmts.changeGroup, group)
+func (u *User) ChangeGroup(group int) (err error) {
+	return u.bindStmt(userStmts.changeGroup, group)
 }
 
 // ! Only updates the database not the *User for safety reasons
-func (user *User) UpdateIP(host string) error {
-	_, err := userStmts.updateLastIP.Exec(host, user.ID)
+func (u *User) UpdateIP(host string) error {
+	_, err := userStmts.updateLastIP.Exec(host, u.ID)
 	ucache := Users.GetCache()
 	if ucache != nil {
-		ucache.Remove(user.ID)
+		ucache.Remove(u.ID)
 	}
 	return err
 }
 
-func (user *User) Update(newname string, newemail string, newgroup int) (err error) {
-	return user.bindStmt(userStmts.update, newname, newemail, newgroup)
+func (u *User) Update(newname string, newemail string, newgroup int) (err error) {
+	return u.bindStmt(userStmts.update, newname, newemail, newgroup)
 }
 
-func (user *User) IncreasePostStats(wcount int, topic bool) (err error) {
+func (u *User) IncreasePostStats(wcount int, topic bool) (err error) {
 	var mod int
 	baseScore := 1
 	if topic {
-		_, err = userStmts.incrementTopics.Exec(1, user.ID)
+		_, err = userStmts.incrementTopics.Exec(1, u.ID)
 		if err != nil {
 			return err
 		}
@@ -359,34 +359,34 @@ func (user *User) IncreasePostStats(wcount int, topic bool) (err error) {
 
 	settings := SettingBox.Load().(SettingMap)
 	if wcount >= settings["megapost_min_words"].(int) {
-		_, err = userStmts.incrementMegaposts.Exec(1, 1, 1, user.ID)
+		_, err = userStmts.incrementMegaposts.Exec(1, 1, 1, u.ID)
 		mod = 4
 	} else if wcount >= settings["bigpost_min_words"].(int) {
-		_, err = userStmts.incrementBigposts.Exec(1, 1, user.ID)
+		_, err = userStmts.incrementBigposts.Exec(1, 1, u.ID)
 		mod = 1
 	} else {
-		_, err = userStmts.incrementPosts.Exec(1, user.ID)
+		_, err = userStmts.incrementPosts.Exec(1, u.ID)
 	}
 	if err != nil {
 		return err
 	}
 
-	_, err = userStmts.incrementScore.Exec(baseScore+mod, user.ID)
+	_, err = userStmts.incrementScore.Exec(baseScore+mod, u.ID)
 	if err != nil {
 		return err
 	}
-	//log.Print(user.Score + base_score + mod)
-	//log.Print(getLevel(user.Score + base_score + mod))
+	//log.Print(u.Score + baseScore + mod)
+	//log.Print(getLevel(u.Score + baseScore + mod))
 	// TODO: Use a transaction to prevent level desyncs?
-	_, err = userStmts.updateLevel.Exec(GetLevel(user.Score+baseScore+mod), user.ID)
+	_, err = userStmts.updateLevel.Exec(GetLevel(u.Score+baseScore+mod), u.ID)
 	return err
 }
 
-func (user *User) DecreasePostStats(wcount int, topic bool) (err error) {
+func (u *User) DecreasePostStats(wcount int, topic bool) (err error) {
 	var mod int
 	baseScore := -1
 	if topic {
-		_, err = userStmts.incrementTopics.Exec(-1, user.ID)
+		_, err = userStmts.incrementTopics.Exec(-1, u.ID)
 		if err != nil {
 			return err
 		}
@@ -395,56 +395,56 @@ func (user *User) DecreasePostStats(wcount int, topic bool) (err error) {
 
 	settings := SettingBox.Load().(SettingMap)
 	if wcount >= settings["megapost_min_words"].(int) {
-		_, err = userStmts.incrementMegaposts.Exec(-1, -1, -1, user.ID)
+		_, err = userStmts.incrementMegaposts.Exec(-1, -1, -1, u.ID)
 		mod = 4
 	} else if wcount >= settings["bigpost_min_words"].(int) {
-		_, err = userStmts.incrementBigposts.Exec(-1, -1, user.ID)
+		_, err = userStmts.incrementBigposts.Exec(-1, -1, u.ID)
 		mod = 1
 	} else {
-		_, err = userStmts.incrementPosts.Exec(-1, user.ID)
+		_, err = userStmts.incrementPosts.Exec(-1, u.ID)
 	}
 	if err != nil {
 		return err
 	}
 
-	_, err = userStmts.incrementScore.Exec(baseScore-mod, user.ID)
+	_, err = userStmts.incrementScore.Exec(baseScore-mod, u.ID)
 	if err != nil {
 		return err
 	}
 	// TODO: Use a transaction to prevent level desyncs?
-	_, err = userStmts.updateLevel.Exec(GetLevel(user.Score-baseScore-mod), user.ID)
+	_, err = userStmts.updateLevel.Exec(GetLevel(u.Score-baseScore-mod), u.ID)
 	return err
 }
 
 // Copy gives you a non-pointer concurrency safe copy of the user
-func (user *User) Copy() User {
-	return *user
+func (u *User) Copy() User {
+	return *u
 }
 
 // TODO: Write unit tests for this
-func (user *User) InitPerms() {
-	if user.TempGroup != 0 {
-		user.Group = user.TempGroup
+func (u *User) InitPerms() {
+	if u.TempGroup != 0 {
+		u.Group = u.TempGroup
 	}
 
-	group := Groups.DirtyGet(user.Group)
-	if user.IsSuperAdmin {
-		user.Perms = AllPerms
-		user.PluginPerms = AllPluginPerms
+	group := Groups.DirtyGet(u.Group)
+	if u.IsSuperAdmin {
+		u.Perms = AllPerms
+		u.PluginPerms = AllPluginPerms
 	} else {
-		user.Perms = group.Perms
-		user.PluginPerms = group.PluginPerms
+		u.Perms = group.Perms
+		u.PluginPerms = group.PluginPerms
 	}
 	/*if len(group.CanSee) == 0 {
 		panic("should not be zero")
 	}*/
 
-	user.IsAdmin = user.IsSuperAdmin || group.IsAdmin
-	user.IsSuperMod = user.IsAdmin || group.IsMod
-	user.IsMod = user.IsSuperMod
-	user.IsBanned = group.IsBanned
-	if user.IsBanned && user.IsSuperMod {
-		user.IsBanned = false
+	u.IsAdmin = u.IsSuperAdmin || group.IsAdmin
+	u.IsSuperMod = u.IsAdmin || group.IsMod
+	u.IsMod = u.IsSuperMod
+	u.IsBanned = group.IsBanned
+	if u.IsBanned && u.IsSuperMod {
+		u.IsBanned = false
 	}
 }
 

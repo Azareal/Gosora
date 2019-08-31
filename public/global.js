@@ -725,7 +725,7 @@ function mainInit(){
 
 			let formAction = $(this).closest('a').attr("href");
 			$.ajax({
-				url: formAction + "?session=" + me.User.Session,
+				url: formAction + "?s=" + me.User.S,
 				type: "POST",
 				dataType: "json",
 				error: ajaxError,
@@ -793,7 +793,7 @@ function mainInit(){
 			var formAction = $(this).closest('a').attr("href");
 			//console.log("Form Action:", formAction);
 			//console.log(outData);
-			$.ajax({ url: formAction + "?session=" + me.User.Session, type:"POST", dataType:"json", data: outData, error: ajaxError });
+			$.ajax({ url: formAction + "?s=" + me.User.S, type:"POST", dataType:"json", data: outData, error: ajaxError });
 			blockParent.find('.hide_on_edit').removeClass("edit_opened");
 			blockParent.find('.show_on_edit').removeClass("edit_opened");
 		});
@@ -853,7 +853,7 @@ function mainInit(){
 	$("#themeSelectorSelect").change(function(){
 		console.log("Changing the theme to " + this.options[this.selectedIndex].getAttribute("val"));
 		$.ajax({
-			url: this.form.getAttribute("action") + "?session=" + me.User.Session,
+			url: this.form.getAttribute("action") + "?s=" + me.User.S,
 			type: "POST",
 			dataType: "json",
 			data: { "newTheme": this.options[this.selectedIndex].getAttribute("val"), isJs: "1" },

@@ -68,7 +68,7 @@
 				console.log("hash",hash);
 
 				let formData = new FormData();
-				formData.append("session",me.User.Session);
+				formData.append("s",me.User.S);
 				for(let i = 0; i < this.files.length; i++) formData.append("upload_files",this.files[i]);
 				bindAttachManager();
 
@@ -183,7 +183,7 @@
 		
 	$(".attach_item_delete").click(function(){
 		let formData = new URLSearchParams();
-		formData.append("session",me.User.Session);
+		formData.append("s",me.User.S);
 	
 		let post = this.closest(".post_item");
 		let aidList = "";
@@ -233,7 +233,7 @@
 		});
 	
 		let bulkActionSender = function(action, selectedTopics, fragBit) {
-			let url = "/topic/"+action+"/submit/"+fragBit+"?session=" + me.User.Session;
+			let url = "/topic/"+action+"/submit/"+fragBit+"?s=" + me.User.S;
 			$.ajax({
 				url: url,
 				type: "POST",

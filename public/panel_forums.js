@@ -47,7 +47,7 @@ document.getElementById("panel_forums_order_button").addEventListener("click", (
 		console.trace();
 	}
 	// ? - Is encodeURIComponent the right function for this?
-	req.open("POST","/panel/forums/order/edit/submit/?session=" + encodeURIComponent(me.User.Session));
+	req.open("POST","/panel/forums/order/edit/submit/?s=" + encodeURIComponent(me.User.S));
 	req.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
 	let items = "";
 	for(let i = 0; item = forums[i];i++) items += item+",";

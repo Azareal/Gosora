@@ -251,7 +251,7 @@ function fetchPhrases(plist) {
 			runInitHook("pre_init");
 		});
 	} else {
-		me = {User:{ID:0,Session:""},Site:{"MaxRequestSize":0}};
+		me = {User:{ID:0,S:""},Site:{"MaxRequestSize":0}};
 		runInitHook("pre_init");
 	}
 })();

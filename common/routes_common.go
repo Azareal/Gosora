@@ -74,23 +74,23 @@ func forumUserCheck(header *Header, w http.ResponseWriter, r *http.Request, user
 }
 
 // TODO: Put this on the user instance? Do we really want forum specific logic in there? Maybe, a method which spits a new pointer with the same contents as user?
-func cascadeForumPerms(fperms *ForumPerms, user *User) {
-	if fperms.Overrides && !user.IsSuperAdmin {
-		user.Perms.ViewTopic = fperms.ViewTopic
-		user.Perms.LikeItem = fperms.LikeItem
-		user.Perms.CreateTopic = fperms.CreateTopic
-		user.Perms.EditTopic = fperms.EditTopic
-		user.Perms.DeleteTopic = fperms.DeleteTopic
-		user.Perms.CreateReply = fperms.CreateReply
-		user.Perms.EditReply = fperms.EditReply
-		user.Perms.DeleteReply = fperms.DeleteReply
-		user.Perms.PinTopic = fperms.PinTopic
-		user.Perms.CloseTopic = fperms.CloseTopic
-		user.Perms.MoveTopic = fperms.MoveTopic
+func cascadeForumPerms(fp *ForumPerms, u *User) {
+	if fp.Overrides && !u.IsSuperAdmin {
+		u.Perms.ViewTopic = fp.ViewTopic
+		u.Perms.LikeItem = fp.LikeItem
+		u.Perms.CreateTopic = fp.CreateTopic
+		u.Perms.EditTopic = fp.EditTopic
+		u.Perms.DeleteTopic = fp.DeleteTopic
+		u.Perms.CreateReply = fp.CreateReply
+		u.Perms.EditReply = fp.EditReply
+		u.Perms.DeleteReply = fp.DeleteReply
+		u.Perms.PinTopic = fp.PinTopic
+		u.Perms.CloseTopic = fp.CloseTopic
+		u.Perms.MoveTopic = fp.MoveTopic
 
-		if len(fperms.ExtData) != 0 {
-			for name, perm := range fperms.ExtData {
-				user.PluginPerms[name] = perm
+		if len(fp.ExtData) != 0 {
+			for name, perm := range fp.ExtData {
+				u.PluginPerms[name] = perm
 			}
 		}
 	}
@@ -151,7 +151,8 @@ func panelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (header 
 	stats.Themes = len(Themes)
 	stats.Reports = 0 // TODO: Do the report count. Only show open threads?
 
-	var addPreScript = func(name string) {
+	addPreScript := func(name string) {
+		// TODO: Optimise this by removing a superfluous string alloc
 		var tname string
 		if theme.OverridenMap != nil {
 			_, ok := theme.OverridenMap[name]
@@ -212,6 +213,7 @@ func userCheck(w http.ResponseWriter, r *http.Request, user *User) (header *Head
 		Writer:      w,
 		IsoCode:     phrases.GetLangPack().IsoCode,
 	}
+	// TODO: Optimise this by avoiding accessing a map string index
 	header.GoogSiteVerify = header.Settings["google_site_verify"].(string)
 
 	if user.IsBanned {
@@ -256,7 +258,8 @@ func PrepResources(user *User, header *Header, theme *Theme) {
 		}
 	}
 
-	var addPreScript = func(name string) {
+	addPreScript := func(name string) {
+		// TODO: Optimise this by removing a superfluous string alloc
 		var tname string
 		if theme.OverridenMap != nil {
 			//fmt.Printf("name %+v\n", name)
@@ -471,6 +474,7 @@ func NoSessionMismatch(w http.ResponseWriter, r *http.Request, user User) RouteE
 	if err != nil {
 		return LocalError("Bad Form", w, r, user)
 	}
+	// TODO: Try to eliminate some of these allocations
 	sess := []byte(user.Session)
 	if len(sess) == 0 {
 		return SecurityError(w, r, user)
@@ -501,6 +505,7 @@ func HandleUploadRoute(w http.ResponseWriter, r *http.Request, user User, maxFil
 }
 
 func NoUploadSessionMismatch(w http.ResponseWriter, r *http.Request, user User) RouteError {
+	// TODO: Try to eliminate some of these allocations
 	sess := []byte(user.Session)
 	if len(sess) == 0 {
 		return SecurityError(w, r, user)

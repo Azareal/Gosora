@@ -6,7 +6,7 @@
 	<div class="colstack_item colstack_head">
 		<div class="rowitem"><h1>{{.Name}}{{lang "panel_group_head_suffix"}}</h1></div>
 	</div>
-	<form action="/panel/groups/edit/perms/submit/{{.ID}}?session={{.CurrentUser.Session}}" method="post">
+	<form action="/panel/groups/edit/perms/submit/{{.ID}}?s={{.CurrentUser.Session}}" method="post">
 	{{if .CurrentUser.Perms.EditGroupLocalPerms}}
 	<div class="colstack_item rowlist formlist the_form panel_group_perms">
 		{{range .LocalPerms}}
