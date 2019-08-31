@@ -6,7 +6,6 @@ import (
 	"runtime"
 	"sync"
 	"time"
-	"log"
 
 	p "github.com/Azareal/Gosora/common/phrases"
 )
