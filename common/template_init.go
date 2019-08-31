@@ -120,7 +120,7 @@ func tmplInitHeaders(user User, user2 User, user3 User) (*Header, *Header, *Head
 	}
 
 	buildHeader := func(user User) *Header {
-		var head = &Header{Site: Site}
+		head := &Header{Site: Site}
 		*head = *header
 		head.CurrentUser = user
 		return head
@@ -157,7 +157,7 @@ func (hold TItemHold) AddStd(name string, expects string, expectsInt interface{}
 func CompileTemplates() error {
 	log.Print("Compiling the templates")
 	// TODO: Implement per-theme template overrides here too
-	var overriden = make(map[string]map[string]bool)
+	overriden := make(map[string]map[string]bool)
 	for _, theme := range Themes {
 		overriden[theme.Name] = make(map[string]bool)
 		log.Printf("theme.OverridenTemplates: %+v\n", theme.OverridenTemplates)
@@ -213,11 +213,11 @@ func compileCommons(c *tmpl.CTemplateSet, header *Header, header2 *Header, forum
 	now := time.Now()
 
 	// Convienience function to save a line here and there
-	var htitle = func(name string) *Header {
+	htitle := func(name string) *Header {
 		header.Title = name
 		return header
 	}
-	/*var htitle2 = func(name string) *Header {
+	/*htitle2 := func(name string) *Header {
 		header2.Title = name
 		return header2
 	}*/
@@ -285,7 +285,7 @@ func compileTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName string
 	}
 
 	// Convienience function to save a line here and there
-	var htitle = func(name string) *Header {
+	htitle := func(name string) *Header {
 		header.Title = name
 		return header
 	}
@@ -354,15 +354,19 @@ func compileTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName string
 	convoPage := ConvoViewPage{header, convo, convoItems, parti, Paginator{[]int{1}, 1, 1}}
 	tmpls.AddStd("convo", "c.ConvoViewPage", convoPage)
 
+	convos := []*ConversationExtra{&ConversationExtra{&Conversation{},[]*User{&user}}}
+	convoListPage := ConvoListPage{header, convos, Paginator{[]int{1}, 1, 1}}
+	tmpls.AddStd("convos", "c.ConvoListPage", convoListPage)
+
 	basePage := &BasePanelPage{header, PanelStats{}, "dashboard", ReportForumID}
 	tmpls.AddStd("panel", "c.Panel", Panel{basePage, "panel_dashboard_right", "", "panel_dashboard", inter})
 	ges := []GridElement{GridElement{"","", "", 1, "grid_istat", "", "", ""}}
 	tmpls.AddStd("panel_dashboard", "c.DashGrids", DashGrids{ges,ges})
 	//tmpls.AddStd("panel_analytics", "c.PanelAnalytics", Panel{basePage, "panel_dashboard_right","panel_dashboard", inter})
 
-	var writeTemplate = func(name string, content interface{}) {
+	writeTemplate := func(name string, content interface{}) {
 		log.Print("Writing template '" + name + "'")
-		var writeTmpl = func(name string, content string) {
+		writeTmpl := func(name string, content string) {
 			if content == "" {
 				return //log.Fatal("No content body for " + name)
 			}
@@ -430,7 +434,7 @@ func compileTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName string
 func CompileJSTemplates() error {
 	log.Print("Compiling the JS templates")
 	// TODO: Implement per-theme template overrides here too
-	var overriden = make(map[string]map[string]bool)
+	overriden := make(map[string]map[string]bool)
 	for _, theme := range Themes {
 		overriden[theme.Name] = make(map[string]bool)
 		log.Printf("theme.OverridenTemplates: %+v\n", theme.OverridenTemplates)
@@ -543,8 +547,8 @@ func compileJSTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName stri
 
 	tmpls.AddStd("notice", "string", "nonono")
 
-	var dirPrefix = "./tmpl_client/"
-	var writeTemplate = func(name string, content string) {
+	dirPrefix := "./tmpl_client/"
+	writeTemplate := func(name string, content string) {
 		log.Print("Writing template '" + name + "'")
 		if content == "" {
 			return //log.Fatal("No content body")
@@ -584,10 +588,10 @@ func compileJSTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName stri
 func getTemplateList(c *tmpl.CTemplateSet, wg *sync.WaitGroup, prefix string) string {
 	DebugLog("in getTemplateList")
 	pout := "\n// nolint\nfunc init() {\n"
-	var tFragCount = make(map[string]int)
-	var bodyMap = make(map[string]string) //map[body]fragmentPrefix
-	//var tmplMap = make(map[string]map[string]string) // map[tmpl]map[body]fragmentPrefix
-	var tmpCount = 0
+	tFragCount := make(map[string]int)
+	bodyMap := make(map[string]string) //map[body]fragmentPrefix
+	//tmplMap := make(map[string]map[string]string) // map[tmpl]map[body]fragmentPrefix
+	tmpCount := 0
 	for _, frag := range c.FragOut {
 		front := frag.TmplName + "_frags[" + strconv.Itoa(frag.Index) + "]"
 		DebugLog("front: ", front)
@@ -629,7 +633,7 @@ func getTemplateList(c *tmpl.CTemplateSet, wg *sync.WaitGroup, prefix string) st
 	}
 
 	out := "package " + c.GetConfig().PackageName + "\n\n"
-	var getterstr = "\n// nolint\nGetFrag = func(name string) [][]byte {\nswitch(name) {\n"
+	getterstr := "\n// nolint\nGetFrag = func(name string) [][]byte {\nswitch(name) {\n"
 	for templateName, count := range tFragCount {
 		out += "var " + templateName + "_frags = make([][]byte," + strconv.Itoa(count) + ")\n"
 		getterstr += "\tcase \"" + templateName + "\":\n"
@@ -804,8 +808,8 @@ func loadTemplates(tmpls *template.Template, themeName string) error {
 	if err != nil {
 		return err
 	}
-
-	var templateFileMap = make(map[string]int)
+	
+	templateFileMap := make(map[string]int)
 	for index, path := range templateFiles {
 		path = strings.Replace(path, "\\", "/", -1)
 		log.Print("templateFile: ", path)
