@@ -4,3 +4,93 @@
 .convos_item_user:not(:last-child):after {
 	content: ",";
 }
+
+.parti {
+	margin-bottom: 8px;
+	padding: 12px;
+}
+.parti .rowitem {
+	display: flex;
+}
+.parti_user:not(:last-child):after {
+	content: ",";
+}
+
+.convo_row_box .topRow {
+	display: flex;
+}
+.convo_row_box .topRow .controls {
+	padding-top: 16px;
+	padding-right: 16px;
+}
+.convo_row_box .content_column {
+	margin-bottom: 16px;
+}
+.convo_row_box button {
+	background: inherit;
+	color: var(--lighter-text-color);
+	padding-left: 8px;
+	padding-right: 8px;
+	cursor: pointer;
+}
+.convo_row_box button:hover {
+	color: var(--light-text-color);
+}
+.convo_row_box button.edit_item:after,
+.convo_row_box button.delete_item:after,
+.convo_row_box button.report_item:after {
+	font: normal normal normal 14px/1 FontAwesome;
+}
+.convo_row_box button.edit_item:after {
+	content: "\f040";
+}
+.convo_row_box button.delete_item:after {
+	content: "\f1f8";
+}
+.convo_row_box button.report_item:after {
+	content: "\f024";
+}
+.convo_row_box {
+	margin-bottom: 12px;
+}
+.convo_row_box:empty {
+	display: none !important;
+}
+.convo_row_box .rowitem {
+	background-image: none !important;
+}
+.convo_row_box .comment:not(:last-child) {
+	margin-bottom: 8px;
+}
+.convo_row_box .comment .userbit {
+	display: flex;
+	margin-left: 14px;
+	margin-top: 14px;
+	margin-bottom: 8px;
+}
+.convo_row_box .comment img {
+	width: 40px;
+	height: 40px;
+	border-radius: 62px;
+	margin-right: 8px;
+}
+.convo_row_box .comment .nameAndTitle {
+	display: flex;
+	flex-direction: column;
+	margin-top: 2px;
+}
+.convo_row_box .comment .nameAndTitle .user_tag {
+	font-size: 15px;
+}
+.convo_row_box .comment .content_column {
+	padding-left: 14px;
+	padding-right: 14px;
+	display: flex;
+	width: 100%
+}
+.convo_row_box .comment .controls {
+	margin-left: auto;
+}
+/*#profile_comments_form .topic_reply_form {
+	border-top: 1px solid var(--element-border-color) !important;
+}*/
