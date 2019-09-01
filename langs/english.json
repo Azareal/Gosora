@@ -537,9 +537,11 @@
 		"account_logins_failure":"Failed Login",
 
 		"convos_head":"Conversations",
+		"convos_create":"Create Convo",
 		"convo_head":"Conversation",
 		"convo_users":"Participants",
 		"create_convo_head":"Create Conversation",
+		"create_convo_recp":"Recipient/s",
 		"create_convo_button":"Create Convo",
 
 		"areyousure_head":"Are you sure?",

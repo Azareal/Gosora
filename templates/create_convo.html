@@ -6,7 +6,7 @@
 <div class="colstack_item the_form">
 	<form action="/user/convos/create/submit/?s={{.CurrentUser.Session}}" method="post">
 		<div class="formrow real_first_child">
-			<div class="formitem formlabel"><a>Recipient/s</a></div>
+			<div class="formitem formlabel"><a>{{lang "create_convo_recp"}}</a></div>
 			<div class="formitem"><input name="recp" type="text"{{if .RecpName}} value="{{.RecpName}}"{{end}} /></div>
 		</div>
 		<div class="formrow">
