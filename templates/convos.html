@@ -1,9 +1,28 @@
 <div class="colstack_item colstack_head rowhead">
 	<div class="rowitem">
 		<h1>{{lang "convos_head"}}</h1>
-		{{if not .CurrentUser.IsBanned}}<h2><a href="/user/convos/create/">Create Convo</a></h2>{{end}}
+		{{if not .CurrentUser.IsBanned}}<h2><a class="create_convo_link" href="/user/convos/create/">Create Convo</a></h2>{{end}}
 	</div>
 </div>
+{{if not .CurrentUser.IsBanned}}
+<div class="colstack_item the_form convo_create_form auto_hide">
+	<form action="/user/convos/create/submit/?s={{.CurrentUser.Session}}" method="post">
+		<div class="formrow real_first_child">
+			<div class="formitem formlabel"><a>Recipient/s</a></div>
+			<div class="formitem"><input name="recp" type="text" /></div>
+		</div>
+		<div class="formrow">
+			<div class="formitem"><textarea name="body"></textarea></div>
+		</div>
+		<div class="formrow">
+			<div class="formitem">
+				<button name="panel-button" class="formbutton form_middle_button">{{lang "create_convo_button"}}</button>
+				<button class="formbutton close_form">{{lang "quick_topic.cancel_button"}}</button>
+			</div>
+		</div>
+	</form>
+</div>
+{{end}}
 <div class="colstack_item convos_list">
 	{{range .Convos}}
 	<div class="rowitem">

@@ -2,6 +2,12 @@
 .convos_list .rowitem {
 	display: flex;
 }
+.convo_create_form {
+	margin-bottom: 8px;
+}
+.close_form {
+	margin-left: 8px;
+}
 .convos_item_user:not(:last-child):after {
 	content: ",";
 }

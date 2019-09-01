@@ -14,6 +14,7 @@ import (
 
 func Convos(w http.ResponseWriter, r *http.Request, user c.User, header *c.Header) c.RouteError {
 	accountEditHead("convos", w, r, &user, header)
+	header.AddScript("convo.js")
 	header.AddSheet(header.Theme.Name + "/convo.css")
 	header.AddNotice("convo_dev")
 	ccount := c.Convos.GetUserCount(user.ID)
@@ -124,7 +125,7 @@ func ConvosCreateSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.R
 			break
 		}
 
-		u, err := c.Users.GetByName(recp)
+		u, err := c.Users.GetByName(strings.TrimSpace(recp))
 		if err == sql.ErrNoRows {
 			return c.LocalError("One of the recipients doesn't exist", w, r, user)
 		} else if err != nil {

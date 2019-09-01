@@ -53,14 +53,14 @@
 		</div>
 	</form>
 </div>
-<div class="rowblock topic_create_form quick_create_form" style="display:none;" aria-label="{{lang "quick_topic.aria"}}">
+<div class="rowblock topic_create_form quick_create_form auto_hide" aria-label="{{lang "quick_topic.aria"}}">
 	<form name="topic_create_form_form" id="quick_post_form" enctype="multipart/form-data" action="/topic/create/submit/?s={{.CurrentUser.Session}}" method="post"></form>
 	<img class="little_row_avatar" src="{{.CurrentUser.MicroAvatar}}" height=64 alt="{{lang "quick_topic.avatar_alt"}}" title="{{lang "quick_topic.avatar_tooltip"}}" />
 	<div class="main_form">
 		<div class="topic_meta">
 			<div class="formrow topic_board_row real_first_child">
 				<div class="formitem"><select form="quick_post_form" id="topic_board_input" name="topic-board">
-					{{range .ForumList}}<option {{if eq .ID $.DefaultForum}}selected{{end}} value="{{.ID}}">{{.Name}}</option>{{end}}
+					{{range .ForumList}}<option{{if eq .ID $.DefaultForum}} selected{{end}} value="{{.ID}}">{{.Name}}</option>{{end}}
 				</select></div>
 			</div>
 			<div class="formrow topic_name_row">

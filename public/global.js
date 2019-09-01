@@ -843,11 +843,11 @@ function mainInit(){
 
 	$(".create_topic_link").click((event) => {
 		event.preventDefault();
-		$(".topic_create_form").show();
+		$(".topic_create_form").removeClass("auto_hide");
 	});
 	$(".topic_create_form .close_form").click((event) => {
 		event.preventDefault();
-		$(".topic_create_form").hide();
+		$(".topic_create_form").addClass("auto_hide");
 	});
 
 	$("#themeSelectorSelect").change(function(){
