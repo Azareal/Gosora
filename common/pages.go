@@ -579,6 +579,20 @@ type PanelEditGroupPermsPage struct {
 	GlobalPerms []NameLangToggle
 }
 
+type GroupPromotionExtend struct {
+	*GroupPromotion
+	FromGroup *Group
+	ToGroup *Group
+}
+
+type PanelEditGroupPromotionsPage struct {
+	*BasePanelPage
+	ID int
+	Name string
+	Promotions []*GroupPromotionExtend
+	Groups []*Group
+}
+
 type BackupItem struct {
 	SQLURL string
 

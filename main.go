@@ -138,6 +138,10 @@ func storeInit() (err error) {
 	if err != nil {
 		return errors.WithStack(err)
 	}
+	c.GroupPromotions, err = c.NewDefaultGroupPromotionStore(acc)
+	if err != nil {
+		return errors.WithStack(err)
+	}
 
 	err = phrases.InitPhrases(c.Site.Language)
 	if err != nil {

@@ -25,8 +25,8 @@ func NewDefaultActivityStream(acc *qgen.Accumulator) (*DefaultActivityStream, er
 	}, acc.FirstError()
 }
 
-func (s *DefaultActivityStream) Add(alert Alert) (int, error) {
-	res, err := s.add.Exec(alert.ActorID, alert.TargetUserID, alert.Event, alert.ElementType, alert.ElementID)
+func (s *DefaultActivityStream) Add(a Alert) (int, error) {
+	res, err := s.add.Exec(a.ActorID, a.TargetUserID, a.Event, a.ElementType, a.ElementID)
 	if err != nil {
 		return 0, err
 	}
@@ -36,7 +36,7 @@ func (s *DefaultActivityStream) Add(alert Alert) (int, error) {
 }
 
 func (s *DefaultActivityStream) Get(id int) (Alert, error) {
-	var a = Alert{ASID: id}
+	a := Alert{ASID: id}
 	err := s.get.QueryRow(id).Scan(&a.ActorID, &a.TargetUserID, &a.Event, &a.ElementType, &a.ElementID, &a.CreatedAt)
 	return a, err
 }

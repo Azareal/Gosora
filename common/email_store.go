@@ -28,7 +28,7 @@ func NewDefaultEmailStore(acc *qgen.Accumulator) (*DefaultEmailStore, error) {
 }
 
 func (s *DefaultEmailStore) GetEmailsByUser(user *User) (emails []Email, err error) {
-	email := Email{UserID: user.ID}
+	e := Email{UserID: user.ID}
 	rows, err := s.getEmailsByUser.Query(user.ID)
 	if err != nil {
 		return emails, err
@@ -36,15 +36,15 @@ func (s *DefaultEmailStore) GetEmailsByUser(user *User) (emails []Email, err err
 	defer rows.Close()
 
 	for rows.Next() {
-		err := rows.Scan(&email.Email, &email.Validated, &email.Token)
+		err := rows.Scan(&e.Email, &e.Validated, &e.Token)
 		if err != nil {
 			return emails, err
 		}
 
-		if email.Email == user.Email {
-			email.Primary = true
+		if e.Email == user.Email {
+			e.Primary = true
 		}
-		emails = append(emails, email)
+		emails = append(emails, e)
 	}
 	return emails, rows.Err()
 }

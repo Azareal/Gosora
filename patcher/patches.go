@@ -37,6 +37,7 @@ func init() {
 	addPatch(21, patch21)
 	addPatch(22, patch22)
 	addPatch(23, patch23)
+	addPatch(24, patch24)
 }
 
 func patch0(scanner *bufio.Scanner) (err error) {
@@ -710,5 +711,27 @@ func patch23(scanner *bufio.Scanner) error {
 			tC{"uid", "int", 0, false, false, ""},
 			tC{"cid", "int", 0, false, false, ""},
 		}, nil,
+	))
+}
+
+func patch24(scanner *bufio.Scanner) error {
+	err := execStmt(qgen.Builder.DropTable("users_groups_promotions"))
+	if err != nil {
+		return err
+	}
+	return execStmt(qgen.Builder.CreateTable("users_groups_promotions", "", "",
+		[]tC{
+			tC{"pid", "int", 0, false, true, ""},
+			tC{"from_gid", "int", 0, false, false, ""},
+			tC{"to_gid", "int", 0, false, false, ""},
+			tC{"two_way", "boolean",0,false,false,"0"}, // If a user no longer meets the requirements for this promotion then they will be demoted if this flag is set
+
+			// Requirements
+			tC{"level", "int", 0, false, false, ""},
+			tC{"minTime", "int", 0, false, false, ""}, // How long someone needs to have been in their current group before being promoted
+		},
+		[]tblKey{
+			tblKey{"pid", "primary","",false},
+		},
 	))
 }

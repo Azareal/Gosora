@@ -30,7 +30,7 @@
 			<a href="/user/convo/{{.ID}}">{{range .Users}}<span class="convos_item_user">{{.Name}}</span>&nbsp;{{end}}</a></span></a>
 		</span>
 		<span title="{{abstime .LastReplyAt}}" class="to_right">{{reltime .LastReplyAt}}</span>
+		<div style="clear:both;"></div>
 	</div>{{end}}
-	<div style="clear:both;"></div>
 </div>
 {{template "paginator.html" . }}

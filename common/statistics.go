@@ -18,15 +18,15 @@ func NewDefaultStatStore() *DefaultStatStore {
 	return &DefaultStatStore{}
 }
 
-func (store *DefaultStatStore) LookupInt(name string, duration int, unit string) (int, error) {
+func (s *DefaultStatStore) LookupInt(name string, duration int, unit string) (int, error) {
 	switch name {
 	case "postCount":
-		return store.countTable("replies", duration, unit)
+		return s.countTable("replies", duration, unit)
 	}
 	return 0, errors.New("The requested stat doesn't exist")
 }
 
-func (store *DefaultStatStore) countTable(table string, duration int, unit string) (stat int, err error) {
+func (s *DefaultStatStore) countTable(table string, duration int, unit string) (stat int, err error) {
 	/*counter := qgen.NewAcc().Count("replies").DateCutoff("createdAt", 1, "day").Prepare()
 	if acc.FirstError() != nil {
 		return 0, acc.FirstError()

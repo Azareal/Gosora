@@ -1,7 +1,10 @@
 package common
 
-import "database/sql"
-import "github.com/Azareal/Gosora/query_gen"
+import (
+	"database/sql"
+
+	qgen "github.com/Azareal/Gosora/query_gen"
+)
 
 var Subscriptions SubscriptionStore
 
@@ -21,7 +24,7 @@ func NewDefaultSubscriptionStore() (*DefaultSubscriptionStore, error) {
 	}, acc.FirstError()
 }
 
-func (store *DefaultSubscriptionStore) Add(uid int, elementID int, elementType string) error {
-	_, err := store.add.Exec(uid, elementID, elementType)
+func (s *DefaultSubscriptionStore) Add(uid int, elementID int, elementType string) error {
+	_, err := s.add.Exec(uid, elementID, elementType)
 	return err
 }

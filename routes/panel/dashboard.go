@@ -29,8 +29,7 @@ type dashStmts struct {
 // TODO: Stop hard-coding these queries
 func dashMySQLStmts() (stmts dashStmts, err error) {
 	db := qgen.Builder.GetConn()
-
-	var prepareStmt = func(table string, ext string, dur string) *sql.Stmt {
+	prepareStmt := func(table string, ext string, dur string) *sql.Stmt {
 		if err != nil {
 			return nil
 		}
@@ -51,8 +50,7 @@ func dashMySQLStmts() (stmts dashStmts, err error) {
 // TODO: Stop hard-coding these queries
 func dashMSSQLStmts() (stmts dashStmts, err error) {
 	db := qgen.Builder.GetConn()
-
-	var prepareStmt = func(table string, ext string, dur string) *sql.Stmt {
+	prepareStmt := func(table string, ext string, dur string) *sql.Stmt {
 		if err != nil {
 			return nil
 		}
@@ -134,7 +132,7 @@ func Dashboard(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError
 
 	// TODO: Add a stat store for this?
 	var intErr error
-	var extractStat = func(stmt *sql.Stmt, args ...interface{}) (stat int) {
+	extractStat := func(stmt *sql.Stmt, args ...interface{}) (stat int) {
 		err := stmt.QueryRow(args...).Scan(&stat)
 		if err != nil && err != sql.ErrNoRows {
 			intErr = err

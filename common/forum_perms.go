@@ -229,8 +229,8 @@ func ForumPermsToGroupForumPreset(fperms *ForumPerms) string {
 	if !fperms.ViewTopic {
 		return "no_access"
 	}
-	var canPost = (fperms.LikeItem && fperms.CreateTopic && fperms.CreateReply)
-	var canModerate = (canPost && fperms.EditTopic && fperms.DeleteTopic && fperms.EditReply && fperms.DeleteReply && fperms.PinTopic && fperms.CloseTopic && fperms.MoveTopic)
+	canPost := (fperms.LikeItem && fperms.CreateTopic && fperms.CreateReply)
+	canModerate := (canPost && fperms.EditTopic && fperms.DeleteTopic && fperms.EditReply && fperms.DeleteReply && fperms.PinTopic && fperms.CloseTopic && fperms.MoveTopic)
 	if canModerate {
 		return "can_moderate"
 	}

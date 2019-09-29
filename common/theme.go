@@ -145,8 +145,8 @@ func (theme *Theme) AddThemeStaticFiles() error {
 		var ext = filepath.Ext(path)
 		if ext == ".css" && len(data) != 0 {
 			var b bytes.Buffer
-			var pieces = strings.Split(path, "/")
-			var filename = pieces[len(pieces)-1]
+			pieces := strings.Split(path, "/")
+			filename := pieces[len(pieces)-1]
 			// TODO: Prepare resource templates for each loaded langpack?
 			err = theme.ResourceTemplates.ExecuteTemplate(&b, filename, CSSData{Phrases: phraseMap})
 			if err != nil {

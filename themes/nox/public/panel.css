@@ -50,7 +50,7 @@
 	background-color: rgb(72, 72, 72);
 	padding-top: 12px;
 	padding-bottom: 12px;
-	padding-right: 20px;
+	padding-right: 22px;
 	padding-left: 20px;
 }
 .above_right img {
@@ -274,6 +274,9 @@ select + .timeRangeSelector {
 	order: 2;
 	margin-top: 8px;
 	margin-right: auto;
+}
+.panel_group_promotions .formitem {
+	display: flex;
 }
 
 .perm_preset_no_access:before {

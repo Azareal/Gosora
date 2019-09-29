@@ -1,3 +1,19 @@
 .convos_item_user:not(:last-child):after {
 	content: ",";
 }
+
+.parti {
+	margin-bottom: 8px;
+}
+.parti .rowitem {
+	display: flex;
+}
+.parti_user:not(:last-child):after {
+	content: ",";
+}
+
+.convo_row_box .rowitem {
+	background-repeat: no-repeat, repeat-y;
+	background-size: 128px;
+	padding-left: 136px;
+}

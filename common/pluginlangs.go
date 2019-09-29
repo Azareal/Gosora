@@ -46,7 +46,6 @@ func InitPluginLangs() error {
 	for _, pluginLang := range pluginLangs {
 		pluginLang.Init()
 	}
-
 	pluginList, err := GetPluginFiles()
 	if err != nil {
 		return err
@@ -80,7 +79,7 @@ func InitPluginLangs() error {
 			return errors.New("Couldn't find a main file for plugin '" + pluginItem + "'")
 		}
 
-		var ext = filepath.Ext(plugin.Main)
+		ext := filepath.Ext(plugin.Main)
 		pluginLang, err := ExtToPluginLang(ext)
 		if err != nil {
 			return err

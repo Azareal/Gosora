@@ -376,9 +376,15 @@ func (u *User) IncreasePostStats(wcount int, topic bool) (err error) {
 		return err
 	}
 	//log.Print(u.Score + baseScore + mod)
-	//log.Print(getLevel(u.Score + baseScore + mod))
 	// TODO: Use a transaction to prevent level desyncs?
-	_, err = userStmts.updateLevel.Exec(GetLevel(u.Score+baseScore+mod), u.ID)
+	level := GetLevel(u.Score+baseScore+mod)
+	//log.Print(level)
+	_, err = userStmts.updateLevel.Exec(level, u.ID)
+	if err != nil {
+		return err
+	}
+	err = GroupPromotions.PromoteIfEligible(u,level)
+	u.CacheRemove()
 	return err
 }
 
@@ -413,6 +419,7 @@ func (u *User) DecreasePostStats(wcount int, topic bool) (err error) {
 	}
 	// TODO: Use a transaction to prevent level desyncs?
 	_, err = userStmts.updateLevel.Exec(GetLevel(u.Score-baseScore-mod), u.ID)
+	u.CacheRemove()
 	return err
 }
 

@@ -47,7 +47,7 @@ func (hub *WsHubImpl) Start() {
 
 	go func() {
 		for {
-			var item = func(lock *sync.RWMutex, userMap map[int]*WSUser) {
+			item := func(lock *sync.RWMutex, userMap map[int]*WSUser) {
 				lock.RLock()
 				defer lock.RUnlock()
 				// TODO: Copy to temporary slice for less contention?

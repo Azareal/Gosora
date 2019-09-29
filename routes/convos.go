@@ -263,7 +263,7 @@ func ConvosEditReplySubmit(w http.ResponseWriter, r *http.Request, user c.User, 
 	if err != nil {
 		return c.LocalError(p.GetErrorPhrase("id_must_be_integer"), w, r, user)
 	}
-	isJs := (r.PostFormValue("js") == "1")
+	js := (r.PostFormValue("js") == "1")
 
 	post := &c.ConversationPost{ID: cpid}
 	err = post.Fetch()
@@ -296,7 +296,7 @@ func ConvosEditReplySubmit(w http.ResponseWriter, r *http.Request, user c.User, 
 		return c.InternalError(err, w, r)
 	}
 
-	if !isJs {
+	if !js {
 		http.Redirect(w, r, "/user/convo/"+strconv.Itoa(post.CID), http.StatusSeeOther)
 	} else {
 		w.Write(successJSONBytes)

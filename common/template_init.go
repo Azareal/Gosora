@@ -289,14 +289,14 @@ func compileTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName string
 		header.Title = name
 		return header
 	}
-	tmpls := TItemHold(make(map[string]TItem))
-	err = compileCommons(c, header, header2, forumList, tmpls)
+	t := TItemHold(make(map[string]TItem))
+	err = compileCommons(c, header, header2, forumList, t)
 	if err != nil {
 		return err
 	}
 
 	ppage := ProfilePage{htitle("User 526"), replyList, user, 0, 0} // TODO: Use the score from user to generate the currentScore and nextScore
-	tmpls.Add("profile", "c.ProfilePage", ppage)
+	t.Add("profile", "c.ProfilePage", ppage)
 
 	var topicsList []*TopicsRow
 	topicsList = append(topicsList, &TopicsRow{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, now, now, user3.ID, 1, 1, "", "127.0.0.1", 1, 0, 1, 1, 0, "classname", 0, "", &user2, "", 0, &user3, "General", "/forum/general.2", nil})
@@ -331,38 +331,38 @@ func compileTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName string
 		}
 
 		if typ == "1" {
-			tmpls.Add(sp[0], sp[1], pi)
+			t.Add(sp[0], sp[1], pi)
 		} else {
-			tmpls.AddStd(sp[0], sp[1], pi)
+			t.AddStd(sp[0], sp[1], pi)
 		}
 	}
 
-	tmpls.AddStd("login", "c.Page", Page{htitle("Login Page"), tList, nil})
-	tmpls.AddStd("register", "c.Page", Page{htitle("Registration Page"), tList, "nananana"})
-	tmpls.AddStd("error", "c.ErrorPage", ErrorPage{htitle("Error"), "A problem has occurred in the system."})
+	t.AddStd("login", "c.Page", Page{htitle("Login Page"), tList, nil})
+	t.AddStd("register", "c.Page", Page{htitle("Registration Page"), tList, "nananana"})
+	t.AddStd("error", "c.ErrorPage", ErrorPage{htitle("Error"), "A problem has occurred in the system."})
 
 	ipSearchPage := IPSearchPage{htitle("IP Search"), map[int]*User{1: &user2}, "::1"}
-	tmpls.AddStd("ip_search", "c.IPSearchPage", ipSearchPage)
+	t.AddStd("ip_search", "c.IPSearchPage", ipSearchPage)
 
 	var inter nobreak
 	accountPage := Account{header, "dashboard", "account_own_edit", inter}
-	tmpls.AddStd("account", "c.Account", accountPage)
+	t.AddStd("account", "c.Account", accountPage)
 
 	parti := []*User{&user}
 	convo := &Conversation{1,user.ID,time.Now(),0,time.Now()}
 	convoItems := []ConvoViewRow{ConvoViewRow{&ConversationPost{1,1,"hey","",user.ID}, &user, "", 4, true}}
 	convoPage := ConvoViewPage{header, convo, convoItems, parti, Paginator{[]int{1}, 1, 1}}
-	tmpls.AddStd("convo", "c.ConvoViewPage", convoPage)
+	t.AddStd("convo", "c.ConvoViewPage", convoPage)
 
 	convos := []*ConversationExtra{&ConversationExtra{&Conversation{},[]*User{&user}}}
 	convoListPage := ConvoListPage{header, convos, Paginator{[]int{1}, 1, 1}}
-	tmpls.AddStd("convos", "c.ConvoListPage", convoListPage)
+	t.AddStd("convos", "c.ConvoListPage", convoListPage)
 
 	basePage := &BasePanelPage{header, PanelStats{}, "dashboard", ReportForumID}
-	tmpls.AddStd("panel", "c.Panel", Panel{basePage, "panel_dashboard_right", "", "panel_dashboard", inter})
+	t.AddStd("panel", "c.Panel", Panel{basePage, "panel_dashboard_right", "", "panel_dashboard", inter})
 	ges := []GridElement{GridElement{"","", "", 1, "grid_istat", "", "", ""}}
-	tmpls.AddStd("panel_dashboard", "c.DashGrids", DashGrids{ges,ges})
-	//tmpls.AddStd("panel_analytics", "c.PanelAnalytics", Panel{basePage, "panel_dashboard_right","panel_dashboard", inter})
+	t.AddStd("panel_dashboard", "c.DashGrids", DashGrids{ges,ges})
+	//t.AddStd("panel_analytics", "c.PanelAnalytics", Panel{basePage, "panel_dashboard_right","panel_dashboard", inter})
 
 	writeTemplate := func(name string, content interface{}) {
 		log.Print("Writing template '" + name + "'")
@@ -409,7 +409,7 @@ func compileTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName string
 	}
 
 	log.Print("Writing the templates")
-	for name, titem := range tmpls {
+	for name, titem := range t {
 		log.Print("Writing " + name)
 		varList := make(map[string]tmpl.VarItem)
 		if titem.LoggedIn {
@@ -444,15 +444,15 @@ func CompileJSTemplates() error {
 	}
 	log.Printf("overriden: %+v\n", overriden)
 
-	var config tmpl.CTemplateConfig
-	config.Minify = Config.MinifyTemplates
-	config.Debug = Dev.DebugMode
-	config.SuperDebug = Dev.TemplateDebug
-	config.SkipHandles = true
-	config.SkipTmplPtrMap = true
-	config.SkipInitBlock = false
-	config.PackageName = "tmpl"
-
+	config := tmpl.CTemplateConfig{
+		Minify: Config.MinifyTemplates,
+		Debug: Dev.DebugMode,
+		SuperDebug: Dev.TemplateDebug,
+		SkipHandles: true,
+		SkipTmplPtrMap: true,
+		SkipInitBlock: false,
+		PackageName: "tmpl",
+	}
 	c := tmpl.NewCTemplateSet("js")
 	c.SetConfig(config)
 	c.SetBuildTags("!no_templategen")
@@ -509,10 +509,10 @@ func compileJSTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName stri
 	// TODO: Fix the import loop so we don't have to use this hack anymore
 	c.SetBuildTags("!no_templategen,tmplgentopic")
 
-	tmpls := TItemHold(make(map[string]TItem))
+	t := TItemHold(make(map[string]TItem))
 
 	topicsRow := &TopicsRow{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, now, now, user3.ID, 1, 1, "", "127.0.0.1", 1, 0, 1, 0, 1, "classname", 0, "", &user2, "", 0, &user3, "General", "/forum/general.2", nil}
-	tmpls.AddStd("topics_topic", "c.TopicsRow", topicsRow)
+	t.AddStd("topics_topic", "c.TopicsRow", topicsRow)
 
 	poll := Poll{ID: 1, Type: 0, Options: map[int]string{0: "Nothing", 1: "Something"}, Results: map[int]int{0: 5, 1: 2}, QuickOptions: []PollOption{
 		PollOption{0, "Nothing"},
@@ -533,19 +533,25 @@ func compileJSTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName stri
 	header.Title = "Topic Name"
 	tpage := TopicPage{header, replyList, topic, &Forum{ID: 1, Name: "Hahaha"}, poll, Paginator{[]int{1}, 1, 1}}
 	tpage.Forum.Link = BuildForumURL(NameToSlug(tpage.Forum.Name), tpage.Forum.ID)
-	tmpls.AddStd("topic_posts", "c.TopicPage", tpage)
-	tmpls.AddStd("topic_alt_posts", "c.TopicPage", tpage)
+	t.AddStd("topic_posts", "c.TopicPage", tpage)
+	t.AddStd("topic_alt_posts", "c.TopicPage", tpage)
 
 	itemsPerPage := 25
 	_, page, lastPage := PageOffset(20, 1, itemsPerPage)
 	pageList := Paginate(page, lastPage, 5)
-	tmpls.AddStd("paginator", "c.Paginator", Paginator{pageList, page, lastPage})
+	t.AddStd("paginator", "c.Paginator", Paginator{pageList, page, lastPage})
 
-	tmpls.AddStd("topic_c_edit_post", "c.TopicCEditPost", TopicCEditPost{ID: 0, Source: "", Ref: ""})
-	tmpls.AddStd("topic_c_attach_item", "c.TopicCAttachItem", TopicCAttachItem{ID: 1, ImgSrc: "", Path: "", FullPath: ""})
-	tmpls.AddStd("topic_c_poll_input", "c.TopicCPollInput", TopicCPollInput{Index:0})
+	t.AddStd("topic_c_edit_post", "c.TopicCEditPost", TopicCEditPost{ID: 0, Source: "", Ref: ""})
+	t.AddStd("topic_c_attach_item", "c.TopicCAttachItem", TopicCAttachItem{ID: 1, ImgSrc: "", Path: "", FullPath: ""})
+	t.AddStd("topic_c_poll_input", "c.TopicCPollInput", TopicCPollInput{Index:0})
 
-	tmpls.AddStd("notice", "string", "nonono")
+	parti := []*User{&user}
+	convo := &Conversation{1,user.ID,time.Now(),0,time.Now()}
+	convoItems := []ConvoViewRow{ConvoViewRow{&ConversationPost{1,1,"hey","",user.ID}, &user, "", 4, true}}
+	convoPage := ConvoViewPage{header, convo, convoItems, parti, Paginator{[]int{1}, 1, 1}}
+	t.AddStd("convo", "c.ConvoViewPage", convoPage)
+
+	t.AddStd("notice", "string", "nonono")
 
 	dirPrefix := "./tmpl_client/"
 	writeTemplate := func(name string, content string) {
@@ -568,7 +574,7 @@ func compileJSTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName stri
 	}
 
 	log.Print("Writing the templates")
-	for name, titem := range tmpls {
+	for name, titem := range t {
 		log.Print("Writing " + name)
 		varList := make(map[string]tmpl.VarItem)
 		tmpl, err := c.Compile(name+".html", "templates/", titem.Expects, titem.ExpectsInt, varList)
@@ -802,22 +808,22 @@ func initDefaultTmplFuncMap() {
 	DefaultTemplateFuncMap = fmap
 }
 
-func loadTemplates(tmpls *template.Template, themeName string) error {
-	tmpls.Funcs(DefaultTemplateFuncMap)
-	templateFiles, err := filepath.Glob("templates/*.html")
+func loadTemplates(t *template.Template, themeName string) error {
+	t.Funcs(DefaultTemplateFuncMap)
+	tFiles, err := filepath.Glob("templates/*.html")
 	if err != nil {
 		return err
 	}
 	
-	templateFileMap := make(map[string]int)
-	for index, path := range templateFiles {
+	tFileMap := make(map[string]int)
+	for index, path := range tFiles {
 		path = strings.Replace(path, "\\", "/", -1)
 		log.Print("templateFile: ", path)
 		if skipCTmpl(path) {
 			log.Print("skipping")
 			continue
 		}
-		templateFileMap[path] = index
+		tFileMap[path] = index
 	}
 
 	overrideFiles, err := filepath.Glob("templates/overrides/*.html")
@@ -831,13 +837,13 @@ func loadTemplates(tmpls *template.Template, themeName string) error {
 			log.Print("skipping")
 			continue
 		}
-		index, ok := templateFileMap["templates/"+strings.TrimPrefix(path, "templates/overrides/")]
+		index, ok := tFileMap["templates/"+strings.TrimPrefix(path, "templates/overrides/")]
 		if !ok {
 			log.Print("not ok: templates/" + strings.TrimPrefix(path, "templates/overrides/"))
-			templateFiles = append(templateFiles, path)
+			tFiles = append(tFiles, path)
 			continue
 		}
-		templateFiles[index] = path
+		tFiles[index] = path
 	}
 
 	if themeName != "" {
@@ -852,18 +858,18 @@ func loadTemplates(tmpls *template.Template, themeName string) error {
 				log.Print("skipping")
 				continue
 			}
-			index, ok := templateFileMap["templates/"+strings.TrimPrefix(path, "themes/"+themeName+"/overrides/")]
+			index, ok := tFileMap["templates/"+strings.TrimPrefix(path, "themes/"+themeName+"/overrides/")]
 			if !ok {
 				log.Print("not ok: templates/" + strings.TrimPrefix(path, "themes/"+themeName+"/overrides/"))
-				templateFiles = append(templateFiles, path)
+				tFiles = append(tFiles, path)
 				continue
 			}
-			templateFiles[index] = path
+			tFiles[index] = path
 		}
 	}
 
-	template.Must(tmpls.ParseFiles(templateFiles...))
-	template.Must(tmpls.ParseGlob("pages/*"))
+	template.Must(t.ParseFiles(tFiles...))
+	template.Must(t.ParseGlob("pages/*"))
 	return nil
 }
 

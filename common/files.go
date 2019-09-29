@@ -212,7 +212,7 @@ func (list SFileList) JSTmplInit() error {
 
 		fragset := tmpl.GetFrag(shortName)
 		if fragset != nil {
-			var sfrags = []byte("let " + shortName + "_frags = [];\n")
+			sfrags := []byte("let " + shortName + "_frags = [];\n")
 			for _, frags := range fragset {
 				sfrags = append(sfrags, []byte(shortName+"_frags.push(`"+string(frags)+"`);\n")...)
 			}
@@ -229,7 +229,7 @@ func (list SFileList) JSTmplInit() error {
 
 		path = tmplName + ".js"
 		DebugLog("js path: ", path)
-		var ext = filepath.Ext("/tmpl_client/" + path)
+		ext := filepath.Ext("/tmpl_client/" + path)
 		gzipData, err := CompressBytesGzip(data)
 		if err != nil {
 			return err
@@ -306,7 +306,7 @@ func (list SFileList) Add(path string, prefix string) error {
 		return err
 	}
 
-	var ext = filepath.Ext(path)
+	ext := filepath.Ext(path)
 	path = strings.TrimPrefix(path, prefix)
 	gzipData, err := CompressBytesGzip(data)
 	if err != nil {

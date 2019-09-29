@@ -18,23 +18,23 @@ type SingleServerThaw struct {
 }
 
 func NewSingleServerThaw() *SingleServerThaw {
-	thaw := &SingleServerThaw{}
+	t := &SingleServerThaw{}
 	if Config.ServerCount == 1 {
-		AddScheduledSecondTask(thaw.Tick)
+		AddScheduledSecondTask(t.Tick)
 	}
-	return thaw
+	return t
 }
 
-func (thaw *SingleServerThaw) Thawed() bool {
+func (t *SingleServerThaw) Thawed() bool {
 	if Config.ServerCount == 1 {
-		return thaw.DefaultThaw.Thawed()
+		return t.DefaultThaw.Thawed()
 	}
 	return true
 }
 
-func (thaw *SingleServerThaw) Thaw() {
+func (t *SingleServerThaw) Thaw() {
 	if Config.ServerCount == 1 {
-		thaw.DefaultThaw.Thaw()
+		t.DefaultThaw.Thaw()
 	}
 }
 
@@ -43,24 +43,24 @@ type DefaultThaw struct {
 }
 
 func NewDefaultThaw() *DefaultThaw {
-	thaw := &DefaultThaw{}
-	AddScheduledSecondTask(thaw.Tick)
-	return thaw
+	t := &DefaultThaw{}
+	AddScheduledSecondTask(t.Tick)
+	return t
 }
 
 // Decrement the thawed counter once a second until it goes cold
-func (thaw *DefaultThaw) Tick() error {
-	prior := thaw.thawed
+func (t *DefaultThaw) Tick() error {
+	prior := t.thawed
 	if prior > 0 {
-		atomic.StoreInt64(&thaw.thawed, prior-1)
+		atomic.StoreInt64(&t.thawed, prior-1)
 	}
 	return nil
 }
 
-func (thaw *DefaultThaw) Thawed() bool {
-	return thaw.thawed > 0
+func (t *DefaultThaw) Thawed() bool {
+	return t.thawed > 0
 }
 
-func (thaw *DefaultThaw) Thaw() {
-	atomic.StoreInt64(&thaw.thawed, 5)
+func (t *DefaultThaw) Thaw() {
+	atomic.StoreInt64(&t.thawed, 5)
 }

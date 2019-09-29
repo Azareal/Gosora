@@ -248,6 +248,9 @@ func panelRoutes() *RouteGroup {
 
 		View("panel.Groups", "/panel/groups/"),
 		View("panel.GroupsEdit", "/panel/groups/edit/", "extraData"),
+		View("panel.GroupsEditPromotions", "/panel/groups/edit/promotions/", "extraData"),
+		Action("panel.GroupsPromotionsCreateSubmit", "/panel/groups/promotions/create/submit/","extraData"),
+		Action("panel.GroupsPromotionsDeleteSubmit", "/panel/groups/promotions/delete/submit/","extraData"),
 		View("panel.GroupsEditPerms", "/panel/groups/edit/perms/", "extraData"),
 		Action("panel.GroupsEditSubmit", "/panel/groups/edit/submit/", "extraData"),
 		Action("panel.GroupsEditPermsSubmit", "/panel/groups/edit/perms/submit/", "extraData"),

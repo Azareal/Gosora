@@ -42,7 +42,7 @@ func (r *DefaultPasswordResetter) ValidateToken(uid int, token string) error {
 	}
 	defer rows.Close()
 
-	var success = false
+	success := false
 	for rows.Next() {
 		var rtoken string
 		err := rows.Scan(&rtoken)

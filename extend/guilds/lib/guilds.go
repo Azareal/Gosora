@@ -408,7 +408,7 @@ func TopicCreatePreLoop(args ...interface{}) interface{} {
 
 // TODO: Add privacy options
 // TODO: Add support for multiple boards and add per-board simplified permissions
-// TODO: Take isJs into account for routes which expect JSON responses
+// TODO: Take js into account for routes which expect JSON responses
 func ForumCheck(args ...interface{}) (skip bool, rerr c.RouteError) {
 	var r = args[1].(*http.Request)
 	var fid = args[3].(*int)
@@ -416,7 +416,7 @@ func ForumCheck(args ...interface{}) (skip bool, rerr c.RouteError) {
 
 	if forum.ParentType == "guild" {
 		var err error
-		var w = args[0].(http.ResponseWriter)
+		w := args[0].(http.ResponseWriter)
 		guildItem, ok := r.Context().Value("guilds_current_group").(*Guild)
 		if !ok {
 			guildItem, err = Gstore.Get(forum.ParentID)
@@ -429,7 +429,7 @@ func ForumCheck(args ...interface{}) (skip bool, rerr c.RouteError) {
 			r = r.WithContext(context.WithValue(r.Context(), "guilds_current_group", guildItem))
 		}
 
-		var user = args[2].(*c.User)
+		user := args[2].(*c.User)
 		var rank int
 		var posts int
 		var joinedAt string
@@ -474,15 +474,14 @@ func ForumCheck(args ...interface{}) (skip bool, rerr c.RouteError) {
 // TODO: Override redirects? I don't think this is needed quite yet
 
 func Widgets(args ...interface{}) interface{} {
-	var zone = args[0].(string)
-	var header = args[2].(*c.Header)
-	var request = args[3].(*http.Request)
-
+	zone := args[0].(string)
+	header := args[2].(*c.Header)
+	request := args[3].(*http.Request)
 	if zone != "view_forum" {
 		return false
 	}
 
-	var forum = args[1].(*c.Forum)
+	forum := args[1].(*c.Forum)
 	if forum.ParentType == "guild" {
 		// This is why I hate using contexts, all the daisy chains and interface casts x.x
 		guildItem, ok := request.Context().Value("guilds_current_group").(*Guild)

@@ -329,14 +329,14 @@ func (s *MemoryForumStore) UpdateLastTopic(tid int, uid int, fid int) error {
 	return s.Reload(fid)
 }
 
-func (s *MemoryForumStore) Create(forumName string, forumDesc string, active bool, preset string) (int, error) {
-	if forumName == "" {
+func (s *MemoryForumStore) Create(name string, desc string, active bool, preset string) (int, error) {
+	if name == "" {
 		return 0, ErrBlankName
 	}
 	forumCreateMutex.Lock()
 	defer forumCreateMutex.Unlock()
 
-	res, err := s.create.Exec(forumName, forumDesc, active, preset)
+	res, err := s.create.Exec(name, desc, active, preset)
 	if err != nil {
 		return 0, err
 	}

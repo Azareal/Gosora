@@ -69,6 +69,22 @@ func createTables(adapter qgen.Adapter) error {
 		},
 	)
 
+	qgen.Install.CreateTable("users_groups_promotions", mysqlPre, mysqlCol,
+		[]tC{
+			tC{"pid", "int", 0, false, true, ""},
+			tC{"from_gid", "int", 0, false, false, ""},
+			tC{"to_gid", "int", 0, false, false, ""},
+			tC{"two_way", "boolean",0,false,false,"0"}, // If a user no longer meets the requirements for this promotion then they will be demoted if this flag is set
+
+			// Requirements
+			tC{"level", "int", 0, false, false, ""},
+			tC{"minTime", "int", 0, false, false, ""}, // How long someone needs to have been in their current group before being promoted
+		},
+		[]tblKey{
+			tblKey{"pid", "primary","",false},
+		},
+	)
+
 	qgen.Install.CreateTable("users_2fa_keys", mysqlPre, mysqlCol,
 		[]tC{
 			tC{"uid", "int", 0, false, false, ""},

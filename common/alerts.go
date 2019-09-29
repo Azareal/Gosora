@@ -96,7 +96,7 @@ func BuildAlert(alert Alert, user User /* The current user */) (out string, err 
 	}
 
 	var url, area string
-	var phraseName = "." + alert.ElementType
+	phraseName := "." + alert.ElementType
 	switch alert.ElementType {
 	case "topic":
 		topic, err := Topics.Get(alert.ElementID)

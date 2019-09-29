@@ -32,9 +32,8 @@ func NewDefaultIPSearcher() (*DefaultIPSearcher, error) {
 
 func (searcher *DefaultIPSearcher) Lookup(ip string) (uids []int, err error) {
 	var uid int
-	var reqUserList = make(map[int]bool)
-
-	var runQuery = func(stmt *sql.Stmt) error {
+	reqUserList := make(map[int]bool)
+	runQuery := func(stmt *sql.Stmt) error {
 		rows, err := stmt.Query(ip)
 		if err != nil {
 			return err

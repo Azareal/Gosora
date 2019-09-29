@@ -16,7 +16,7 @@ type Email struct {
 }
 
 func SendValidationEmail(username string, email string, token string) error {
-	var schema = "http"
+	schema := "http"
 	if Site.EnableSsl {
 		schema += "s"
 	}
