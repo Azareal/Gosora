@@ -20,7 +20,7 @@ func Backups(w http.ResponseWriter, r *http.Request, user c.User, backupURL stri
 		// We don't want them trying to break out of this directory, it shouldn't hurt since it's a super admin, but it's always good to practice good security hygiene, especially if this is one of many instances on a managed server not controlled by the superadmin/s
 		backupURL = c.Stripslashes(backupURL)
 
-		var ext = filepath.Ext("./backups/" + backupURL)
+		ext := filepath.Ext("./backups/" + backupURL)
 		if ext != ".sql" && ext != ".zip" {
 			return c.NotFound(w, r, basePage.Header)
 		}
@@ -50,12 +50,12 @@ func Backups(w http.ResponseWriter, r *http.Request, user c.User, backupURL stri
 		return c.InternalError(err, w, r)
 	}
 	for _, backupFile := range backupFiles {
-		var ext = filepath.Ext(backupFile.Name())
+		ext := filepath.Ext(backupFile.Name())
 		if ext != ".sql" {
 			continue
 		}
 		backupList = append(backupList, c.BackupItem{backupFile.Name(), backupFile.ModTime()})
 	}
 
-	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage,"","","panel_backups", c.PanelBackupPage{basePage, backupList}})
+	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "", "", "panel_backups", c.PanelBackupPage{basePage, backupList}})
 }

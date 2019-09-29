@@ -12,8 +12,8 @@ var tList []interface{}
 var successJSONBytes = []byte(`{"success":"1"}`)
 
 // We're trying to reduce the amount of boilerplate in here, so I added these two functions, they might wind up circulating outside this file in the future
-func successRedirect(dest string, w http.ResponseWriter, r *http.Request, isJs bool) c.RouteError {
-	if !isJs {
+func successRedirect(dest string, w http.ResponseWriter, r *http.Request, js bool) c.RouteError {
+	if !js {
 		http.Redirect(w, r, dest, http.StatusSeeOther)
 	} else {
 		w.Write(successJSONBytes)

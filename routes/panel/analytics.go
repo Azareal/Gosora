@@ -24,67 +24,68 @@ type AnalyticsTimeRange struct {
 }
 
 func analyticsTimeRange(rawTimeRange string) (*AnalyticsTimeRange, error) {
-	timeRange := &AnalyticsTimeRange{}
-	timeRange.Quantity = 6
-	timeRange.Unit = "hour"
-	timeRange.Slices = 12
-	timeRange.SliceWidth = 60 * 30
-	timeRange.Range = "six-hours"
+	tRange := &AnalyticsTimeRange{
+		Quantity: 6,
+		Unit: "hour",
+		Slices: 12,
+		SliceWidth: 60 * 30,
+		Range: "six-hours",
+	}
 
 	switch rawTimeRange {
 	// This might be pushing it, we might want to come up with a more efficient scheme for dealing with large timeframes like this
 	case "one-year":
-		timeRange.Quantity = 12
-		timeRange.Unit = "month"
-		timeRange.Slices = 12
-		timeRange.SliceWidth = 60 * 60 * 24 * 30
-		timeRange.Range = "one-year"
+		tRange.Quantity = 12
+		tRange.Unit = "month"
+		tRange.Slices = 12
+		tRange.SliceWidth = 60 * 60 * 24 * 30
+		tRange.Range = "one-year"
 	case "three-months":
-		timeRange.Quantity = 90
-		timeRange.Unit = "day"
-		timeRange.Slices = 30
-		timeRange.SliceWidth = 60 * 60 * 24 * 3
-		timeRange.Range = "three-months"
+		tRange.Quantity = 90
+		tRange.Unit = "day"
+		tRange.Slices = 30
+		tRange.SliceWidth = 60 * 60 * 24 * 3
+		tRange.Range = "three-months"
 	case "one-month":
-		timeRange.Quantity = 30
-		timeRange.Unit = "day"
-		timeRange.Slices = 30
-		timeRange.SliceWidth = 60 * 60 * 24
-		timeRange.Range = "one-month"
+		tRange.Quantity = 30
+		tRange.Unit = "day"
+		tRange.Slices = 30
+		tRange.SliceWidth = 60 * 60 * 24
+		tRange.Range = "one-month"
 	case "one-week":
-		timeRange.Quantity = 7
-		timeRange.Unit = "day"
-		timeRange.Slices = 14
-		timeRange.SliceWidth = 60 * 60 * 12
-		timeRange.Range = "one-week"
+		tRange.Quantity = 7
+		tRange.Unit = "day"
+		tRange.Slices = 14
+		tRange.SliceWidth = 60 * 60 * 12
+		tRange.Range = "one-week"
 	case "two-days": // Two days is experimental
-		timeRange.Quantity = 2
-		timeRange.Unit = "day"
-		timeRange.Slices = 24
-		timeRange.SliceWidth = 60 * 60 * 2
-		timeRange.Range = "two-days"
+		tRange.Quantity = 2
+		tRange.Unit = "day"
+		tRange.Slices = 24
+		tRange.SliceWidth = 60 * 60 * 2
+		tRange.Range = "two-days"
 	case "one-day":
-		timeRange.Quantity = 1
-		timeRange.Unit = "day"
-		timeRange.Slices = 24
-		timeRange.SliceWidth = 60 * 60
-		timeRange.Range = "one-day"
+		tRange.Quantity = 1
+		tRange.Unit = "day"
+		tRange.Slices = 24
+		tRange.SliceWidth = 60 * 60
+		tRange.Range = "one-day"
 	case "twelve-hours":
-		timeRange.Quantity = 12
-		timeRange.Slices = 24
-		timeRange.Range = "twelve-hours"
+		tRange.Quantity = 12
+		tRange.Slices = 24
+		tRange.Range = "twelve-hours"
 	case "six-hours", "":
 	default:
-		return timeRange, errors.New("Unknown time range")
+		return tRange, errors.New("Unknown time range")
 	}
-	return timeRange, nil
+	return tRange, nil
 }
 
 func analyticsTimeRangeToLabelList(timeRange *AnalyticsTimeRange) (revLabelList []int64, labelList []int64, viewMap map[int64]int64) {
 	viewMap = make(map[int64]int64)
-	var currentTime = time.Now().Unix()
+	currentTime := time.Now().Unix()
 	for i := 1; i <= timeRange.Slices; i++ {
-		var label = currentTime - int64(i*timeRange.SliceWidth)
+		label := currentTime - int64(i*timeRange.SliceWidth)
 		revLabelList = append(revLabelList, label)
 		viewMap[label] = 0
 	}
@@ -103,7 +104,7 @@ func analyticsRowsToViewMap(rows *sql.Rows, labelList []int64, viewMap map[int64
 		if err != nil {
 			return viewMap, err
 		}
-		var unixCreatedAt = createdAt.Unix()
+		unixCreatedAt := createdAt.Unix()
 		// TODO: Bulk log this
 		if c.Dev.SuperDebug {
 			log.Print("count: ", count)
@@ -134,14 +135,14 @@ func analyticsRowsToAverageMap(rows *sql.Rows, labelList []int64, avgMap map[int
 		if err != nil {
 			return avgMap, err
 		}
-		var unixCreatedAt = createdAt.Unix()
+		unixCreatedAt := createdAt.Unix()
 		// TODO: Bulk log this
 		if c.Dev.SuperDebug {
 			log.Print("count: ", count)
 			log.Print("createdAt: ", createdAt)
 			log.Print("unixCreatedAt: ", unixCreatedAt)
 		}
-		var pAvgMap = make(map[int64]pAvg)
+		pAvgMap := make(map[int64]pAvg)
 		for _, value := range labelList {
 			if unixCreatedAt > value {
 				prev := pAvgMap[value]
@@ -167,7 +168,7 @@ func analyticsRowsToAverageMap2(rows *sql.Rows, labelList []int64, avgMap map[in
 		if err != nil {
 			return avgMap, err
 		}
-		var unixCreatedAt = createdAt.Unix()
+		unixCreatedAt := createdAt.Unix()
 		// TODO: Bulk log this
 		if c.Dev.SuperDebug {
 			log.Print("stack: ", stack)
@@ -180,7 +181,7 @@ func analyticsRowsToAverageMap2(rows *sql.Rows, labelList []int64, avgMap map[in
 		} else if typ == 2 {
 			stack = 0
 		}
-		var pAvgMap = make(map[int64]pAvg)
+		pAvgMap := make(map[int64]pAvg)
 		for _, value := range labelList {
 			if unixCreatedAt > value {
 				prev := pAvgMap[value]
@@ -198,14 +199,14 @@ func analyticsRowsToAverageMap2(rows *sql.Rows, labelList []int64, avgMap map[in
 }
 
 func PreAnalyticsDetail(w http.ResponseWriter, r *http.Request, user *c.User) (*c.BasePanelPage, c.RouteError) {
-	basePage, ferr := buildBasePage(w, r, user, "analytics", "analytics")
+	bPage, ferr := buildBasePage(w, r, user, "analytics", "analytics")
 	if ferr != nil {
 		return nil, ferr
 	}
-	basePage.AddSheet("chartist/chartist.min.css")
-	basePage.AddScript("chartist/chartist.min.js")
-	basePage.AddScriptAsync("analytics.js")
-	return basePage, nil
+	bPage.AddSheet("chartist/chartist.min.css")
+	bPage.AddScript("chartist/chartist.min.js")
+	bPage.AddScriptAsync("analytics.js")
+	return bPage, nil
 }
 
 func AnalyticsViews(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {

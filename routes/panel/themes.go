@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	c "github.com/Azareal/Gosora/common"
-	"github.com/Azareal/Gosora/common/phrases"
+	p "github.com/Azareal/Gosora/common/phrases"
 )
 
 func Themes(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
@@ -76,7 +76,7 @@ func ThemesMenus(w http.ResponseWriter, r *http.Request, user c.User) c.RouteErr
 	for mid, list := range c.Menus.GetAllMap() {
 		var name = ""
 		if mid == 1 {
-			name = phrases.GetTmplPhrase("panel_themes_menus_main")
+			name = p.GetTmplPhrase("panel_themes_menus_main")
 		}
 		menuList = append(menuList, c.PanelMenuListItem{
 			Name:      name,
@@ -102,7 +102,7 @@ func ThemesMenusEdit(w http.ResponseWriter, r *http.Request, user c.User, smid s
 
 	mid, err := strconv.Atoi(smid)
 	if err != nil {
-		return c.LocalError(phrases.GetErrorPhrase("url_id_must_be_integer"), w, r, user)
+		return c.LocalError(p.GetErrorPhrase("url_id_must_be_integer"), w, r, user)
 	}
 
 	menuHold, err := c.Menus.Get(mid)
@@ -114,7 +114,7 @@ func ThemesMenusEdit(w http.ResponseWriter, r *http.Request, user c.User, smid s
 
 	var menuList []c.MenuItem
 	for _, item := range menuHold.List {
-		var menuTmpls = map[string]c.MenuTmpl{
+		menuTmpls := map[string]c.MenuTmpl{
 			item.TmplName: menuHold.Parse(item.Name, []byte("{{.Name}}")),
 		}
 		var renderBuffer [][]byte
@@ -147,7 +147,7 @@ func ThemesMenuItemEdit(w http.ResponseWriter, r *http.Request, user c.User, sit
 
 	itemID, err := strconv.Atoi(sitemID)
 	if err != nil {
-		return c.LocalError(phrases.GetErrorPhrase("url_id_must_be_integer"), w, r, user)
+		return c.LocalError(p.GetErrorPhrase("url_id_must_be_integer"), w, r, user)
 	}
 
 	menuItem, err := c.Menus.ItemStore().Get(itemID)
@@ -160,50 +160,50 @@ func ThemesMenuItemEdit(w http.ResponseWriter, r *http.Request, user c.User, sit
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage,"","","panel_themes_menus_item_edit", &c.PanelMenuItemPage{basePage, menuItem}})
 }
 
-func themesMenuItemSetters(r *http.Request, menuItem c.MenuItem) c.MenuItem {
-	var getItem = func(name string) string {
+func themesMenuItemSetters(r *http.Request, mItem c.MenuItem) c.MenuItem {
+	getItem := func(name string) string {
 		return c.SanitiseSingleLine(r.PostFormValue("item-" + name))
 	}
-	menuItem.Name = getItem("name")
-	menuItem.HTMLID = getItem("htmlid")
-	menuItem.CSSClass = getItem("cssclass")
-	menuItem.Position = getItem("position")
-	if menuItem.Position != "left" && menuItem.Position != "right" {
-		menuItem.Position = "left"
+	mItem.Name = getItem("name")
+	mItem.HTMLID = getItem("htmlid")
+	mItem.CSSClass = getItem("cssclass")
+	mItem.Position = getItem("position")
+	if mItem.Position != "left" && mItem.Position != "right" {
+		mItem.Position = "left"
 	}
-	menuItem.Path = getItem("path")
-	menuItem.Aria = getItem("aria")
-	menuItem.Tooltip = getItem("tooltip")
-	menuItem.TmplName = getItem("tmplname")
+	mItem.Path = getItem("path")
+	mItem.Aria = getItem("aria")
+	mItem.Tooltip = getItem("tooltip")
+	mItem.TmplName = getItem("tmplname")
 
 	switch getItem("permissions") {
 	case "everyone":
-		menuItem.GuestOnly = false
-		menuItem.MemberOnly = false
-		menuItem.SuperModOnly = false
-		menuItem.AdminOnly = false
+		mItem.GuestOnly = false
+		mItem.MemberOnly = false
+		mItem.SuperModOnly = false
+		mItem.AdminOnly = false
 	case "guest-only":
-		menuItem.GuestOnly = true
-		menuItem.MemberOnly = false
-		menuItem.SuperModOnly = false
-		menuItem.AdminOnly = false
+		mItem.GuestOnly = true
+		mItem.MemberOnly = false
+		mItem.SuperModOnly = false
+		mItem.AdminOnly = false
 	case "member-only":
-		menuItem.GuestOnly = false
-		menuItem.MemberOnly = true
-		menuItem.SuperModOnly = false
-		menuItem.AdminOnly = false
+		mItem.GuestOnly = false
+		mItem.MemberOnly = true
+		mItem.SuperModOnly = false
+		mItem.AdminOnly = false
 	case "supermod-only":
-		menuItem.GuestOnly = false
-		menuItem.MemberOnly = true
-		menuItem.SuperModOnly = true
-		menuItem.AdminOnly = false
+		mItem.GuestOnly = false
+		mItem.MemberOnly = true
+		mItem.SuperModOnly = true
+		mItem.AdminOnly = false
 	case "admin-only":
-		menuItem.GuestOnly = false
-		menuItem.MemberOnly = true
-		menuItem.SuperModOnly = true
-		menuItem.AdminOnly = true
+		mItem.GuestOnly = false
+		mItem.MemberOnly = true
+		mItem.SuperModOnly = true
+		mItem.AdminOnly = true
 	}
-	return menuItem
+	return mItem
 }
 
 func ThemesMenuItemEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, sitemID string) c.RouteError {
@@ -211,30 +211,30 @@ func ThemesMenuItemEditSubmit(w http.ResponseWriter, r *http.Request, user c.Use
 	if ferr != nil {
 		return ferr
 	}
-	isJs := (r.PostFormValue("js") == "1")
+	js := (r.PostFormValue("js") == "1")
 	if !user.Perms.ManageThemes {
-		return c.NoPermissionsJSQ(w, r, user, isJs)
+		return c.NoPermissionsJSQ(w, r, user, js)
 	}
 
 	itemID, err := strconv.Atoi(sitemID)
 	if err != nil {
-		return c.LocalErrorJSQ(phrases.GetErrorPhrase("id_must_be_integer"), w, r, user, isJs)
+		return c.LocalErrorJSQ(p.GetErrorPhrase("id_must_be_integer"), w, r, user, js)
 	}
 
 	menuItem, err := c.Menus.ItemStore().Get(itemID)
 	if err == sql.ErrNoRows {
-		return c.LocalErrorJSQ("This item doesn't exist.", w, r, user, isJs)
+		return c.LocalErrorJSQ("This item doesn't exist.", w, r, user, js)
 	} else if err != nil {
-		return c.InternalErrorJSQ(err, w, r, isJs)
+		return c.InternalErrorJSQ(err, w, r, js)
 	}
 	//menuItem = menuItem.Copy() // If we switch this for a pointer, we might need this as a scratchpad
 	menuItem = themesMenuItemSetters(r, menuItem)
 
 	err = menuItem.Commit()
 	if err != nil {
-		return c.InternalErrorJSQ(err, w, r, isJs)
+		return c.InternalErrorJSQ(err, w, r, js)
 	}
-	return successRedirect("/panel/themes/menus/item/edit/"+strconv.Itoa(itemID), w, r, isJs)
+	return successRedirect("/panel/themes/menus/item/edit/"+strconv.Itoa(itemID), w, r, js)
 }
 
 func ThemesMenuItemCreateSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
@@ -243,26 +243,26 @@ func ThemesMenuItemCreateSubmit(w http.ResponseWriter, r *http.Request, user c.U
 		return ferr
 	}
 
-	isJs := (r.PostFormValue("js") == "1")
+	js := (r.PostFormValue("js") == "1")
 	if !user.Perms.ManageThemes {
-		return c.NoPermissionsJSQ(w, r, user, isJs)
+		return c.NoPermissionsJSQ(w, r, user, js)
 	}
 	smenuID := r.PostFormValue("mid")
 	if smenuID == "" {
-		return c.LocalErrorJSQ("No menuID provided", w, r, user, isJs)
+		return c.LocalErrorJSQ("No menuID provided", w, r, user, js)
 	}
 	menuID, err := strconv.Atoi(smenuID)
 	if err != nil {
-		return c.LocalErrorJSQ(phrases.GetErrorPhrase("id_must_be_integer"), w, r, user, isJs)
+		return c.LocalErrorJSQ(p.GetErrorPhrase("id_must_be_integer"), w, r, user, js)
 	}
 
 	menuItem := c.MenuItem{MenuID: menuID}
 	menuItem = themesMenuItemSetters(r, menuItem)
 	itemID, err := menuItem.Create()
 	if err != nil {
-		return c.InternalErrorJSQ(err, w, r, isJs)
+		return c.InternalErrorJSQ(err, w, r, js)
 	}
-	return successRedirect("/panel/themes/menus/item/edit/"+strconv.Itoa(itemID), w, r, isJs)
+	return successRedirect("/panel/themes/menus/item/edit/"+strconv.Itoa(itemID), w, r, js)
 }
 
 func ThemesMenuItemDeleteSubmit(w http.ResponseWriter, r *http.Request, user c.User, sitemID string) c.RouteError {
@@ -270,28 +270,28 @@ func ThemesMenuItemDeleteSubmit(w http.ResponseWriter, r *http.Request, user c.U
 	if ferr != nil {
 		return ferr
 	}
-	isJs := (r.PostFormValue("js") == "1")
+	js := (r.PostFormValue("js") == "1")
 	if !user.Perms.ManageThemes {
-		return c.NoPermissionsJSQ(w, r, user, isJs)
+		return c.NoPermissionsJSQ(w, r, user, js)
 	}
 
 	itemID, err := strconv.Atoi(sitemID)
 	if err != nil {
-		return c.LocalErrorJSQ(phrases.GetErrorPhrase("id_must_be_integer"), w, r, user, isJs)
+		return c.LocalErrorJSQ(p.GetErrorPhrase("id_must_be_integer"), w, r, user, js)
 	}
 	menuItem, err := c.Menus.ItemStore().Get(itemID)
 	if err == sql.ErrNoRows {
-		return c.LocalErrorJSQ("This item doesn't exist.", w, r, user, isJs)
+		return c.LocalErrorJSQ("This item doesn't exist.", w, r, user, js)
 	} else if err != nil {
-		return c.InternalErrorJSQ(err, w, r, isJs)
+		return c.InternalErrorJSQ(err, w, r, js)
 	}
 	//menuItem = menuItem.Copy() // If we switch this for a pointer, we might need this as a scratchpad
 
 	err = menuItem.Delete()
 	if err != nil {
-		return c.InternalErrorJSQ(err, w, r, isJs)
+		return c.InternalErrorJSQ(err, w, r, js)
 	}
-	return successRedirect("/panel/themes/menus/", w, r, isJs)
+	return successRedirect("/panel/themes/menus/", w, r, js)
 }
 
 func ThemesMenuItemOrderSubmit(w http.ResponseWriter, r *http.Request, user c.User, smid string) c.RouteError {
@@ -299,36 +299,36 @@ func ThemesMenuItemOrderSubmit(w http.ResponseWriter, r *http.Request, user c.Us
 	if ferr != nil {
 		return ferr
 	}
-	isJs := (r.PostFormValue("js") == "1")
+	js := (r.PostFormValue("js") == "1")
 	if !user.Perms.ManageThemes {
-		return c.NoPermissionsJSQ(w, r, user, isJs)
+		return c.NoPermissionsJSQ(w, r, user, js)
 	}
 
 	mid, err := strconv.Atoi(smid)
 	if err != nil {
-		return c.LocalErrorJSQ(phrases.GetErrorPhrase("id_must_be_integer"), w, r, user, isJs)
+		return c.LocalErrorJSQ(p.GetErrorPhrase("id_must_be_integer"), w, r, user, js)
 	}
 	menuHold, err := c.Menus.Get(mid)
 	if err == sql.ErrNoRows {
-		return c.LocalErrorJSQ("Can't find menu", w, r, user, isJs)
+		return c.LocalErrorJSQ("Can't find menu", w, r, user, js)
 	} else if err != nil {
-		return c.InternalErrorJSQ(err, w, r, isJs)
+		return c.InternalErrorJSQ(err, w, r, js)
 	}
 
 	sitems := strings.TrimSuffix(strings.TrimPrefix(r.PostFormValue("items"), "{"), "}")
 	//fmt.Printf("sitems: %+v\n", sitems)
 
-	var updateMap = make(map[int]int)
+	updateMap := make(map[int]int)
 	for index, smiid := range strings.Split(sitems, ",") {
 		miid, err := strconv.Atoi(smiid)
 		if err != nil {
-			return c.LocalErrorJSQ("Invalid integer in menu item list", w, r, user, isJs)
+			return c.LocalErrorJSQ("Invalid integer in menu item list", w, r, user, js)
 		}
 		updateMap[miid] = index
 	}
 	menuHold.UpdateOrder(updateMap)
 
-	return successRedirect("/panel/themes/menus/edit/"+strconv.Itoa(mid), w, r, isJs)
+	return successRedirect("/panel/themes/menus/edit/"+strconv.Itoa(mid), w, r, js)
 }
 
 func ThemesWidgets(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
@@ -402,59 +402,59 @@ func ThemesWidgetsEditSubmit(w http.ResponseWriter, r *http.Request, user c.User
 	if ferr != nil {
 		return ferr
 	}
-	isJs := (r.PostFormValue("js") == "1")
+	js := (r.PostFormValue("js") == "1")
 	if !user.Perms.ManageThemes {
-		return c.NoPermissionsJSQ(w, r, user, isJs)
+		return c.NoPermissionsJSQ(w, r, user, js)
 	}
 
 	wid, err := strconv.Atoi(swid)
 	if err != nil {
-		return c.LocalErrorJSQ(phrases.GetErrorPhrase("id_must_be_integer"), w, r, user, isJs)
+		return c.LocalErrorJSQ(p.GetErrorPhrase("id_must_be_integer"), w, r, user, js)
 	}
 
 	widget, err := c.Widgets.Get(wid)
 	if err == sql.ErrNoRows {
-		return c.NotFoundJSQ(w, r, nil, isJs)
+		return c.NotFoundJSQ(w, r, nil, js)
 	} else if err != nil {
-		return c.InternalErrorJSQ(err, w, r, isJs)
+		return c.InternalErrorJSQ(err, w, r, js)
 	}
 
 	ewidget, err := widgetsParseInputs(r, widget.Copy())
 	if err != nil {
-		return c.LocalErrorJSQ(err.Error(), w, r, user, isJs)
+		return c.LocalErrorJSQ(err.Error(), w, r, user, js)
 	}
 
 	err = ewidget.Commit()
 	if err != nil {
-		return c.InternalErrorJSQ(err, w, r, isJs)
+		return c.InternalErrorJSQ(err, w, r, js)
 	}
 
-	return successRedirect("/panel/themes/widgets/", w, r, isJs)
+	return successRedirect("/panel/themes/widgets/", w, r, js)
 }
 
 // ThemesWidgetsCreateSubmit is an action which is triggered when someone sends a create request for a widget
 func ThemesWidgetsCreateSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	//fmt.Println("in ThemesWidgetsCreateSubmit")
-	isJs := (r.PostFormValue("js") == "1")
+	js := (r.PostFormValue("js") == "1")
 	_, ferr := c.SimplePanelUserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
 	if !user.Perms.ManageThemes {
-		return c.NoPermissionsJSQ(w, r, user, isJs)
+		return c.NoPermissionsJSQ(w, r, user, js)
 	}
 
 	ewidget, err := widgetsParseInputs(r, &c.Widget{})
 	if err != nil {
-		return c.LocalErrorJSQ(err.Error(), w, r, user, isJs)
+		return c.LocalErrorJSQ(err.Error(), w, r, user, js)
 	}
 
 	err = ewidget.Create()
 	if err != nil {
-		return c.InternalErrorJSQ(err, w, r, isJs)
+		return c.InternalErrorJSQ(err, w, r, js)
 	}
 
-	return successRedirect("/panel/themes/widgets/", w, r, isJs)
+	return successRedirect("/panel/themes/widgets/", w, r, js)
 }
 
 func ThemesWidgetsDeleteSubmit(w http.ResponseWriter, r *http.Request, user c.User, swid string) c.RouteError {
@@ -462,14 +462,14 @@ func ThemesWidgetsDeleteSubmit(w http.ResponseWriter, r *http.Request, user c.Us
 	if ferr != nil {
 		return ferr
 	}
-	isJs := (r.PostFormValue("js") == "1")
+	js := (r.PostFormValue("js") == "1")
 	if !user.Perms.ManageThemes {
-		return c.NoPermissionsJSQ(w, r, user, isJs)
+		return c.NoPermissionsJSQ(w, r, user, js)
 	}
 
 	wid, err := strconv.Atoi(swid)
 	if err != nil {
-		return c.LocalErrorJSQ(phrases.GetErrorPhrase("id_must_be_integer"), w, r, user, isJs)
+		return c.LocalErrorJSQ(p.GetErrorPhrase("id_must_be_integer"), w, r, user, js)
 	}
 	widget, err := c.Widgets.Get(wid)
 	if err == sql.ErrNoRows {
@@ -483,5 +483,5 @@ func ThemesWidgetsDeleteSubmit(w http.ResponseWriter, r *http.Request, user c.Us
 		return c.InternalError(err, w, r)
 	}
 
-	return successRedirect("/panel/themes/widgets/", w, r, isJs)
+	return successRedirect("/panel/themes/widgets/", w, r, js)
 }

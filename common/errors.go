@@ -93,8 +93,8 @@ func FromError(err error) RouteError {
 	return &RouteErrorImpl{err.Error(), "", false, false, false}
 }
 
-func ErrorJSQ(errmsg string, isJs bool) RouteError {
-	return &RouteErrorImpl{errmsg, "", false, isJs, false}
+func ErrorJSQ(errmsg string, js bool) RouteError {
+	return &RouteErrorImpl{errmsg, "", false, js, false}
 }
 
 func SysError(errmsg string) RouteError {
@@ -146,8 +146,8 @@ func InternalError(err error, w http.ResponseWriter, r *http.Request) RouteError
 
 // InternalErrorJSQ is the JSON "maybe" version of InternalError which can handle both JSON and normal requests
 // ? - Add a user parameter?
-func InternalErrorJSQ(err error, w http.ResponseWriter, r *http.Request, isJs bool) RouteError {
-	if !isJs {
+func InternalErrorJSQ(err error, w http.ResponseWriter, r *http.Request, js bool) RouteError {
+	if !js {
 		return InternalError(err, w, r)
 	}
 	return InternalErrorJS(err, w, r)
@@ -203,8 +203,8 @@ func PreErrorJS(errmsg string, w http.ResponseWriter, r *http.Request) RouteErro
 	return HandledRouteError()
 }
 
-func PreErrorJSQ(errmsg string, w http.ResponseWriter, r *http.Request, isJs bool) RouteError {
-	if !isJs {
+func PreErrorJSQ(errmsg string, w http.ResponseWriter, r *http.Request, js bool) RouteError {
+	if !js {
 		return PreError(errmsg, w, r)
 	}
 	return PreErrorJS(errmsg, w, r)
@@ -235,8 +235,8 @@ func SimpleError(errmsg string, w http.ResponseWriter, r *http.Request, header *
 	return HandledRouteError()
 }
 
-func LocalErrorJSQ(errmsg string, w http.ResponseWriter, r *http.Request, user User, isJs bool) RouteError {
-	if !isJs {
+func LocalErrorJSQ(errmsg string, w http.ResponseWriter, r *http.Request, user User, js bool) RouteError {
+	if !js {
 		return SimpleError(errmsg, w, r, errorHeader(w, user, ""))
 	}
 	return LocalErrorJS(errmsg, w, r)
@@ -257,8 +257,8 @@ func NoPermissions(w http.ResponseWriter, r *http.Request, user User) RouteError
 	return HandledRouteError()
 }
 
-func NoPermissionsJSQ(w http.ResponseWriter, r *http.Request, user User, isJs bool) RouteError {
-	if !isJs {
+func NoPermissionsJSQ(w http.ResponseWriter, r *http.Request, user User, js bool) RouteError {
+	if !js {
 		return NoPermissions(w, r, user)
 	}
 	return NoPermissionsJS(w, r, user)
@@ -280,8 +280,8 @@ func Banned(w http.ResponseWriter, r *http.Request, user User) RouteError {
 
 // nolint
 // BannedJSQ is the version of the banned error page which handles both JavaScript requests and normal page loads
-func BannedJSQ(w http.ResponseWriter, r *http.Request, user User, isJs bool) RouteError {
-	if !isJs {
+func BannedJSQ(w http.ResponseWriter, r *http.Request, user User, js bool) RouteError {
+	if !js {
 		return Banned(w, r, user)
 	}
 	return BannedJS(w, r, user)
@@ -294,8 +294,8 @@ func BannedJS(w http.ResponseWriter, r *http.Request, user User) RouteError {
 }
 
 // nolint
-func LoginRequiredJSQ(w http.ResponseWriter, r *http.Request, user User, isJs bool) RouteError {
-	if !isJs {
+func LoginRequiredJSQ(w http.ResponseWriter, r *http.Request, user User, js bool) RouteError {
+	if !js {
 		return LoginRequired(w, r, user)
 	}
 	return LoginRequiredJS(w, r, user)
@@ -373,8 +373,8 @@ func CustomError(errmsg string, errcode int, errtitle string, w http.ResponseWri
 }
 
 // CustomErrorJSQ is a version of CustomError which lets us handle both JSON and regular pages depending on how it's being accessed
-func CustomErrorJSQ(errmsg string, errcode int, errtitle string, w http.ResponseWriter, r *http.Request, header *Header, user User, isJs bool) RouteError {
-	if !isJs {
+func CustomErrorJSQ(errmsg string, errcode int, errtitle string, w http.ResponseWriter, r *http.Request, header *Header, user User, js bool) RouteError {
+	if !js {
 		return CustomError(errmsg, errcode, errtitle, w, r, header, user)
 	}
 	return CustomErrorJS(errmsg, errcode, w, r, user)

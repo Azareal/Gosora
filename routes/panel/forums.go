@@ -30,9 +30,9 @@ func Forums(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	}
 
 	// ? - Should we generate something similar to the forumView? It might be a little overkill for a page which is rarely loaded in comparison to /forums/
-	for _, forum := range forums {
-		if forum.Name != "" && forum.ParentID == 0 {
-			fadmin := c.ForumAdmin{forum.ID, forum.Name, forum.Desc, forum.Active, forum.Preset, forum.TopicCount, c.PresetToLang(forum.Preset)}
+	for _, f := range forums {
+		if f.Name != "" && f.ParentID == 0 {
+			fadmin := c.ForumAdmin{f.ID, f.Name, f.Desc, f.Active, f.Preset, f.TopicCount, c.PresetToLang(f.Preset)}
 			if fadmin.Preset == "" {
 				fadmin.Preset = "custom"
 			}
@@ -137,9 +137,9 @@ func ForumsOrderSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.Ro
 	if ferr != nil {
 		return ferr
 	}
-	isJs := (r.PostFormValue("js") == "1")
+	js := (r.PostFormValue("js") == "1")
 	if !user.Perms.ManageForums {
-		return c.NoPermissionsJSQ(w, r, user, isJs)
+		return c.NoPermissionsJSQ(w, r, user, js)
 	}
 	sitems := strings.TrimSuffix(strings.TrimPrefix(r.PostFormValue("items"), "{"), "}")
 	//fmt.Printf("sitems: %+v\n", sitems)
@@ -148,13 +148,13 @@ func ForumsOrderSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.Ro
 	for index, sfid := range strings.Split(sitems, ",") {
 		fid, err := strconv.Atoi(sfid)
 		if err != nil {
-			return c.LocalErrorJSQ("Invalid integer in forum list", w, r, user, isJs)
+			return c.LocalErrorJSQ("Invalid integer in forum list", w, r, user, js)
 		}
 		updateMap[fid] = index
 	}
 	c.Forums.UpdateOrder(updateMap)
 
-	return successRedirect("/panel/forums/", w, r, isJs)
+	return successRedirect("/panel/forums/", w, r, js)
 }
 
 func ForumsEdit(w http.ResponseWriter, r *http.Request, user c.User, sfid string) c.RouteError {
@@ -218,38 +218,38 @@ func ForumsEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, sfid 
 	if !user.Perms.ManageForums {
 		return c.NoPermissions(w, r, user)
 	}
-	isJs := (r.PostFormValue("js") == "1")
+	js := (r.PostFormValue("js") == "1")
 
 	fid, err := strconv.Atoi(sfid)
 	if err != nil {
-		return c.LocalErrorJSQ("The provided Forum ID is not a valid number.", w, r, user, isJs)
+		return c.LocalErrorJSQ("The provided Forum ID is not a valid number.", w, r, user, js)
 	}
 
 	forum, err := c.Forums.Get(fid)
 	if err == sql.ErrNoRows {
-		return c.LocalErrorJSQ("The forum you're trying to edit doesn't exist.", w, r, user, isJs)
+		return c.LocalErrorJSQ("The forum you're trying to edit doesn't exist.", w, r, user, js)
 	} else if err != nil {
-		return c.InternalErrorJSQ(err, w, r, isJs)
+		return c.InternalErrorJSQ(err, w, r, js)
 	}
 
-	forumName := r.PostFormValue("forum_name")
-	forumDesc := r.PostFormValue("forum_desc")
-	forumPreset := c.StripInvalidPreset(r.PostFormValue("forum_preset"))
-	forumActive := r.PostFormValue("forum_active")
+	fname := r.PostFormValue("forum_name")
+	fdesc := r.PostFormValue("forum_desc")
+	fpreset := c.StripInvalidPreset(r.PostFormValue("forum_preset"))
+	factive := r.PostFormValue("forum_active")
 
 	active := false
-	if forumActive == "" {
+	if factive == "" {
 		active = forum.Active
-	} else if forumActive == "1" || forumActive == "Show" {
+	} else if factive == "1" || factive == "Show" {
 		active = true
 	}
 
-	err = forum.Update(forumName, forumDesc, active, forumPreset)
+	err = forum.Update(fname, fdesc, active, fpreset)
 	if err != nil {
-		return c.InternalErrorJSQ(err, w, r, isJs)
+		return c.InternalErrorJSQ(err, w, r, js)
 	}
 	// ? Should we redirect to the forum editor instead?
-	return successRedirect("/panel/forums/", w, r, isJs)
+	return successRedirect("/panel/forums/", w, r, js)
 }
 
 func ForumsEditPermsSubmit(w http.ResponseWriter, r *http.Request, user c.User, sfid string) c.RouteError {
@@ -260,32 +260,32 @@ func ForumsEditPermsSubmit(w http.ResponseWriter, r *http.Request, user c.User, 
 	if !user.Perms.ManageForums {
 		return c.NoPermissions(w, r, user)
 	}
-	isJs := (r.PostFormValue("js") == "1")
+	js := (r.PostFormValue("js") == "1")
 
 	fid, err := strconv.Atoi(sfid)
 	if err != nil {
-		return c.LocalErrorJSQ("The provided Forum ID is not a valid number.", w, r, user, isJs)
+		return c.LocalErrorJSQ("The provided Forum ID is not a valid number.", w, r, user, js)
 	}
 
 	gid, err := strconv.Atoi(r.PostFormValue("gid"))
 	if err != nil {
-		return c.LocalErrorJSQ("Invalid Group ID", w, r, user, isJs)
+		return c.LocalErrorJSQ("Invalid Group ID", w, r, user, js)
 	}
 
 	forum, err := c.Forums.Get(fid)
 	if err == sql.ErrNoRows {
-		return c.LocalErrorJSQ("This forum doesn't exist", w, r, user, isJs)
+		return c.LocalErrorJSQ("This forum doesn't exist", w, r, user, js)
 	} else if err != nil {
-		return c.InternalErrorJSQ(err, w, r, isJs)
+		return c.InternalErrorJSQ(err, w, r, js)
 	}
 
 	permPreset := c.StripInvalidGroupForumPreset(r.PostFormValue("perm_preset"))
 	err = forum.SetPreset(permPreset, gid)
 	if err != nil {
-		return c.LocalErrorJSQ(err.Error(), w, r, user, isJs)
+		return c.LocalErrorJSQ(err.Error(), w, r, user, js)
 	}
 
-	return successRedirect("/panel/forums/edit/"+strconv.Itoa(fid)+"?updated=1", w, r, isJs)
+	return successRedirect("/panel/forums/edit/"+strconv.Itoa(fid)+"?updated=1", w, r, js)
 }
 
 // A helper function for the Advanced portion of the Forum Perms Editor
@@ -333,9 +333,9 @@ func ForumsEditPermsAdvance(w http.ResponseWriter, r *http.Request, user c.User,
 		forum.Preset = "custom"
 	}
 
-	forumPerms, err := c.FPStore.Get(fid, gid)
+	fp, err := c.FPStore.Get(fid, gid)
 	if err == sql.ErrNoRows {
-		forumPerms = c.BlankForumPerms()
+		fp = c.BlankForumPerms()
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -344,21 +344,21 @@ func ForumsEditPermsAdvance(w http.ResponseWriter, r *http.Request, user c.User,
 
 	// TODO: Load the phrases in bulk for efficiency?
 	// TODO: Reduce the amount of code duplication between this and the group editor. Also, can we grind this down into one line or use a code generator to stay current more easily?
-	var addNameLangToggle = func(permStr string, perm bool) {
+	addNameLangToggle := func(permStr string, perm bool) {
 		formattedPermList = append(formattedPermList, c.NameLangToggle{permStr, phrases.GetLocalPermPhrase(permStr), perm})
 	}
-	addNameLangToggle("ViewTopic", forumPerms.ViewTopic)
-	addNameLangToggle("LikeItem", forumPerms.LikeItem)
-	addNameLangToggle("CreateTopic", forumPerms.CreateTopic)
+	addNameLangToggle("ViewTopic", fp.ViewTopic)
+	addNameLangToggle("LikeItem", fp.LikeItem)
+	addNameLangToggle("CreateTopic", fp.CreateTopic)
 	//<--
-	addNameLangToggle("EditTopic", forumPerms.EditTopic)
-	addNameLangToggle("DeleteTopic", forumPerms.DeleteTopic)
-	addNameLangToggle("CreateReply", forumPerms.CreateReply)
-	addNameLangToggle("EditReply", forumPerms.EditReply)
-	addNameLangToggle("DeleteReply", forumPerms.DeleteReply)
-	addNameLangToggle("PinTopic", forumPerms.PinTopic)
-	addNameLangToggle("CloseTopic", forumPerms.CloseTopic)
-	addNameLangToggle("MoveTopic", forumPerms.MoveTopic)
+	addNameLangToggle("EditTopic", fp.EditTopic)
+	addNameLangToggle("DeleteTopic", fp.DeleteTopic)
+	addNameLangToggle("CreateReply", fp.CreateReply)
+	addNameLangToggle("EditReply", fp.EditReply)
+	addNameLangToggle("DeleteReply", fp.DeleteReply)
+	addNameLangToggle("PinTopic", fp.PinTopic)
+	addNameLangToggle("CloseTopic", fp.CloseTopic)
+	addNameLangToggle("MoveTopic", fp.MoveTopic)
 
 	if r.FormValue("updated") == "1" {
 		basePage.AddNotice("panel_forum_perms_updated")
@@ -376,7 +376,7 @@ func ForumsEditPermsAdvanceSubmit(w http.ResponseWriter, r *http.Request, user c
 	if !user.Perms.ManageForums {
 		return c.NoPermissions(w, r, user)
 	}
-	isJs := (r.PostFormValue("js") == "1")
+	js := (r.PostFormValue("js") == "1")
 
 	fid, gid, err := forumPermsExtractDash(paramList)
 	if err != nil {
@@ -390,35 +390,35 @@ func ForumsEditPermsAdvanceSubmit(w http.ResponseWriter, r *http.Request, user c
 		return c.InternalError(err, w, r)
 	}
 
-	forumPerms, err := c.FPStore.GetCopy(fid, gid)
+	fp, err := c.FPStore.GetCopy(fid, gid)
 	if err == sql.ErrNoRows {
-		forumPerms = *c.BlankForumPerms()
+		fp = *c.BlankForumPerms()
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
 
-	var extractPerm = func(name string) bool {
+	extractPerm := func(name string) bool {
 		pvalue := r.PostFormValue("forum-perm-" + name)
 		return (pvalue == "1")
 	}
 
 	// TODO: Generate this code?
-	forumPerms.ViewTopic = extractPerm("ViewTopic")
-	forumPerms.LikeItem = extractPerm("LikeItem")
-	forumPerms.CreateTopic = extractPerm("CreateTopic")
-	forumPerms.EditTopic = extractPerm("EditTopic")
-	forumPerms.DeleteTopic = extractPerm("DeleteTopic")
-	forumPerms.CreateReply = extractPerm("CreateReply")
-	forumPerms.EditReply = extractPerm("EditReply")
-	forumPerms.DeleteReply = extractPerm("DeleteReply")
-	forumPerms.PinTopic = extractPerm("PinTopic")
-	forumPerms.CloseTopic = extractPerm("CloseTopic")
-	forumPerms.MoveTopic = extractPerm("MoveTopic")
+	fp.ViewTopic = extractPerm("ViewTopic")
+	fp.LikeItem = extractPerm("LikeItem")
+	fp.CreateTopic = extractPerm("CreateTopic")
+	fp.EditTopic = extractPerm("EditTopic")
+	fp.DeleteTopic = extractPerm("DeleteTopic")
+	fp.CreateReply = extractPerm("CreateReply")
+	fp.EditReply = extractPerm("EditReply")
+	fp.DeleteReply = extractPerm("DeleteReply")
+	fp.PinTopic = extractPerm("PinTopic")
+	fp.CloseTopic = extractPerm("CloseTopic")
+	fp.MoveTopic = extractPerm("MoveTopic")
 
-	err = forum.SetPerms(&forumPerms, "custom", gid)
+	err = forum.SetPerms(&fp, "custom", gid)
 	if err != nil {
-		return c.LocalErrorJSQ(err.Error(), w, r, user, isJs)
+		return c.LocalErrorJSQ(err.Error(), w, r, user, js)
 	}
 
-	return successRedirect("/panel/forums/edit/perms/"+strconv.Itoa(fid)+"-"+strconv.Itoa(gid)+"?updated=1", w, r, isJs)
+	return successRedirect("/panel/forums/edit/perms/"+strconv.Itoa(fid)+"-"+strconv.Itoa(gid)+"?updated=1", w, r, js)
 }
