@@ -1,7 +1,5 @@
 echo "Installing the dependencies"
-go get -u github.com/mailru/easyjson/...
-easyjson -pkg common
-go get
+./update-deps-linux
 
 echo "Building the installer"
 go build -ldflags="-s -w" -o Installer "./cmd/install"

@@ -1,9 +1,19 @@
 echo "Updating the dependencies"
-cp ./common/common_easyjson.tgo ./common/common_easyjson.go
+{
+	cp ./common/common_easyjson.tgo ./common/common_easyjson.go
+} || {
+	echo "Failed to copy bundled generated easyjson file"
+}
 go get
 {
 	easyjson -pkg common
 } || {
 	echo "Defaulting to bundled generated easyjson file"
 }
-go get
+
+{
+	go get
+} || {
+	go get -u github.com/mailru/easyjson/...
+	go get
+}
