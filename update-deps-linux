@@ -1,5 +1,5 @@
 echo "Updating the dependencies"
 cp ./common/common_easyjson.tgo ./common/common_easyjson.go
 go get -u github.com/mailru/easyjson/...
-easyjson -pkg common
+easyjson -pkg common || 0
 go get
