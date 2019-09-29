@@ -8,9 +8,13 @@ echo "Updating the dependencies"
 {
 	GO111MODULE="off"
 	go get -u github.com/mailru/easyjson/...
-	easyjson -pkg common
 } || {
 	echo "Defaulting to bundled generated easyjson file"
 }
 GO111MODULE="auto"
+{
+	easyjson -pkg common
+} || {
+	echo "Defaulting to bundled generated easyjson file"
+}
 go get
