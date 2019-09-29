@@ -1,4 +1,3 @@
 echo "Building the patcher"
 go generate
-go get
 go build -ldflags="-s -w" -o Patcher "./patcher"
