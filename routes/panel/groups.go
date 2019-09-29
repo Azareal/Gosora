@@ -205,6 +205,32 @@ func GroupsPromotionsCreateSubmit(w http.ResponseWriter, r *http.Request, user c
 		return c.LocalError("level must be integer", w, r, user)
 	}
 
+	g, err := c.Groups.Get(from)
+	if err == sql.ErrNoRows {
+		return c.LocalError("No such group.",w, r, user)
+	} else if err != nil {
+		return c.InternalError(err, w, r)
+	}
+	if g.IsAdmin && !user.Perms.EditGroupAdmin {
+		return c.LocalError(p.GetErrorPhrase("panel_groups_cannot_edit_admin"), w, r, user)
+	}
+	if g.IsMod && !user.Perms.EditGroupSuperMod {
+		return c.LocalError(p.GetErrorPhrase("panel_groups_cannot_edit_supermod"), w, r, user)
+	}
+
+	g, err = c.Groups.Get(to)
+	if err == sql.ErrNoRows {
+		return c.LocalError("No such group.",w, r, user)
+	} else if err != nil {
+		return c.InternalError(err, w, r)
+	}
+	if g.IsAdmin && !user.Perms.EditGroupAdmin {
+		return c.LocalError(p.GetErrorPhrase("panel_groups_cannot_edit_admin"), w, r, user)
+	}
+	if g.IsMod && !user.Perms.EditGroupSuperMod {
+		return c.LocalError(p.GetErrorPhrase("panel_groups_cannot_edit_supermod"), w, r, user)
+	}
+
 	_, err = c.GroupPromotions.Create(from, to, twoWay, level)
 	if err != nil {
 		return c.InternalError(err,w,r)
