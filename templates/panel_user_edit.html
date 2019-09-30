@@ -2,9 +2,9 @@
 	<div class="rowitem"><h1>{{lang "panel_user_head"}}</h1></div>
 </div>
 <div id="panel_user" class="colstack_item the_form">
-	<form id="user_form" action="/panel/users/edit/submit/{{.Something.ID}}?session={{.CurrentUser.Session}}" method="post"></form>
-	<form id="avatar_form" enctype="multipart/form-data" action="/panel/users/avatar/submit/{{.Something.ID}}?session={{.CurrentUser.Session}}" method="post"></form>
-	<form id="remove_avatar_form" action="/panel/users/avatar/remove/submit/{{.Something.ID}}?session={{.CurrentUser.Session}}" method="post"></form>
+	<form id="user_form" action="/panel/users/edit/submit/{{.Something.ID}}?s={{.CurrentUser.Session}}" method="post"></form>
+	<form id="avatar_form" enctype="multipart/form-data" action="/panel/users/avatar/submit/{{.Something.ID}}?s={{.CurrentUser.Session}}" method="post"></form>
+	<form id="remove_avatar_form" action="/panel/users/avatar/remove/submit/{{.Something.ID}}?s={{.CurrentUser.Session}}" method="post"></form>
 	<div class="formrow">
 		<div class="formitem formlabel"><a>{{lang "panel_user_avatar"}}</a></div>
 		<div class="formitem avataritem">

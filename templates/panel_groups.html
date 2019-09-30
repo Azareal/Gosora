@@ -1,49 +1,49 @@
-	<div class="colstack_item colstack_head">
-		<div class="rowitem"><h1>{{lang "panel_groups_head"}}</h1></div>
-	</div>
-	<div id="panel_groups" class="colstack_item rowlist">
-		{{range .ItemList}}
-		<div class="rowitem panel_compactrow editable_parent">
-			<a{{if .CanEdit}} href="/panel/groups/edit/{{.ID}}"{{end}} class="panel_upshift">{{.Name}}</a>
-			<span class="panel_floater">
-				{{if .RankClass}}<a class="panel_tag panel_rank_tag panel_rank_tag_{{.RankClass}}" title="{{.Rank}}" aria-label="{{lang "panel_groups_rank_prefix"}}{{.Rank}}"></a>
-				{{else}}<span class="panel_tag">{{.Rank}}</span>{{end}}
+<div class="colstack_item colstack_head">
+	<div class="rowitem"><h1>{{lang "panel_groups_head"}}</h1></div>
+</div>
+<div id="panel_groups" class="colstack_item rowlist">
+	{{range .ItemList}}
+	<div class="rowitem panel_compactrow editable_parent">
+		<a{{if .CanEdit}} href="/panel/groups/edit/{{.ID}}"{{end}} class="panel_upshift">{{.Name}}</a>
+		<span class="panel_floater">
+			{{if .RankClass}}<a class="panel_tag panel_rank_tag panel_rank_tag_{{.RankClass}}" title="{{.Rank}}" aria-label="{{lang "panel_groups_rank_prefix"}}{{.Rank}}"></a>
+			{{else}}<span class="panel_tag">{{.Rank}}</span>{{end}}
 
-				{{if .CanEdit}}<a href="/panel/groups/edit/{{.ID}}" class="panel_tag panel_right_button edit_button" aria-label="{{lang "panel_groups_edit_group_button_aria"}}"></a>{{end}}
-			</span>
-		</div>
-		{{end}}
-	</div>
-	{{template "paginator.html" . }}
-	
-	{{if .CurrentUser.Perms.EditGroup}}
-	<div class="colstack_item colstack_head">
-		<div class="rowitem"><h1>{{lang "panel_groups_create_head"}}</h1></div>
-	</div>
-	<div class="colstack_item the_form">
-		<form action="/panel/groups/create/?session={{.CurrentUser.Session}}" method="post">
-			<div class="formrow">
-				<div class="formitem formlabel"><a>{{lang "panel_groups_create_name"}}</a></div>
-				<div class="formitem"><input name="group-name" type="text" placeholder="{{lang "panel_groups_create_name_placeholder"}}" /></div>
-			</div>
-			<div class="formrow">
-				<div class="formitem formlabel"><a>{{lang "panel_groups_create_type"}}</a></div>
-				<div class="formitem">
-					<select name="group-type"{{if not .CurrentUser.Perms.EditGroupGlobalPerms}} disabled{{end}}>
-						<option selected>Member</option>
-						<option{{if not .CurrentUser.Perms.EditGroupSuperMod}} disabled{{end}}>Mod</option>
-						<option{{if not .CurrentUser.Perms.EditGroupAdmin}} disabled{{end}}>Admin</option>
-						<option>Banned</option>
-					</select>
-				</div>
-			</div>
-			<div class="formrow">
-				<div class="formitem formlabel"><a>{{lang "panel_groups_create_tag"}}</a></div>
-				<div class="formitem"><input name="group-tag" type="text" /></div>
-			</div>
-			<div class="formrow form_button_row">
-				<div class="formitem"><button name="panel-button" class="formbutton">{{lang "panel_groups_create_create_group_button"}}</button></div>
-			</div>
-		</form>
+			{{if .CanEdit}}<a href="/panel/groups/edit/{{.ID}}" class="panel_tag panel_right_button edit_button" aria-label="{{lang "panel_groups_edit_group_button_aria"}}"></a>{{end}}
+		</span>
 	</div>
 	{{end}}
+</div>
+{{template "paginator.html" . }}
+	
+{{if .CurrentUser.Perms.EditGroup}}
+<div class="colstack_item colstack_head">
+	<div class="rowitem"><h1>{{lang "panel_groups_create_head"}}</h1></div>
+</div>
+<div class="colstack_item the_form">
+	<form action="/panel/groups/create/?s={{.CurrentUser.Session}}" method="post">
+		<div class="formrow">
+			<div class="formitem formlabel"><a>{{lang "panel_groups_create_name"}}</a></div>
+			<div class="formitem"><input name="group-name" type="text" placeholder="{{lang "panel_groups_create_name_placeholder"}}" /></div>
+		</div>
+		<div class="formrow">
+			<div class="formitem formlabel"><a>{{lang "panel_groups_create_type"}}</a></div>
+			<div class="formitem">
+				<select name="group-type"{{if not .CurrentUser.Perms.EditGroupGlobalPerms}} disabled{{end}}>
+					<option selected>Member</option>
+					<option{{if not .CurrentUser.Perms.EditGroupSuperMod}} disabled{{end}}>Mod</option>
+					<option{{if not .CurrentUser.Perms.EditGroupAdmin}} disabled{{end}}>Admin</option>
+					<option>Banned</option>
+				</select>
+			</div>
+		</div>
+		<div class="formrow">
+			<div class="formitem formlabel"><a>{{lang "panel_groups_create_tag"}}</a></div>
+			<div class="formitem"><input name="group-tag" type="text" /></div>
+		</div>
+		<div class="formrow form_button_row">
+			<div class="formitem"><button name="panel-button" class="formbutton">{{lang "panel_groups_create_button"}}</button></div>
+		</div>
+	</form>
+</div>
+{{end}}

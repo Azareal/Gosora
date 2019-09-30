@@ -18,7 +18,7 @@ type Widget struct {
 </div>
 <div id="panel_widgets_{{$name}}" class="colstack_item rowlist panel_widgets">
 	{{range $widget := $dock}}
-	<div id="widget_{{$widget.ID}}" class="rowitem panel_compactrow editable_parent widget_item {{if not .Enabled}}bg_red{{end}}">
+	<div id="widget_{{$widget.ID}}" class="rowitem panel_compactrow editable_parent widget_item{{if not .Enabled}} bg_red{{end}}">
 		<div class="widget_normal editable_block hide_on_block_edit">
 			<a href="/panel/themes/widgets/edit/{{$widget.ID}}" class="panel_upshift">{{$widget.Type}} <span class="widget_disabled">({{lang "panel_themes_widgets_disabled"}})</span></a>
 			<a class="panel_compacttext to_right">{{$widget.Location}}</a>
@@ -44,7 +44,7 @@ type Widget struct {
 		</div>
 		<div class="widget_edit show_on_block_edit">
 			<form action="/panel/themes/widgets/create/submit/" method="post">
-			<input name="session" value="{{.CurrentUser.Session}}" type="hidden" />
+			<input name="s" value="{{.CurrentUser.Session}}" type="hidden" />
 			<input class="wside" name="wside" value="" type="hidden" />
 			{{template "panel_themes_widgets_widget.html" .BlankWidget }}
 			</form>
