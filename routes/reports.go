@@ -14,7 +14,7 @@ func ReportSubmit(w http.ResponseWriter, r *http.Request, user c.User, sitemID s
 	if ferr != nil {
 		return ferr
 	}
-	isJs := (r.PostFormValue("isJs") == "1")
+	js := (r.PostFormValue("js") == "1")
 
 	itemID, err := strconv.Atoi(sitemID)
 	if err != nil {
@@ -104,7 +104,7 @@ func ReportSubmit(w http.ResponseWriter, r *http.Request, user c.User, sitemID s
 	}
 	counters.PostCounter.Bump()
 
-	if !isJs {
+	if !js {
 		// TODO: Redirect back to where we came from
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 	} else {

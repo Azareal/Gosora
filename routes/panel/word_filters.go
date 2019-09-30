@@ -25,7 +25,7 @@ func WordFilters(w http.ResponseWriter, r *http.Request, user c.User) c.RouteErr
 	}
 
 	pi := c.PanelPage{basePage, tList, filterList}
-	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage,"","","panel_word_filters",&pi})
+	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "", "", "panel_word_filters", &pi})
 }
 
 func WordFiltersCreateSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
@@ -36,23 +36,23 @@ func WordFiltersCreateSubmit(w http.ResponseWriter, r *http.Request, user c.User
 	if !user.Perms.EditSettings {
 		return c.NoPermissions(w, r, user)
 	}
-	isJs := (r.PostFormValue("js") == "1")
+	js := (r.PostFormValue("js") == "1")
 
 	// ? - We're not doing a full sanitise here, as it would be useful if admins were able to put down rules for replacing things with HTML, etc.
 	find := strings.TrimSpace(r.PostFormValue("find"))
 	if find == "" {
-		return c.LocalErrorJSQ("You need to specify what word you want to match", w, r, user, isJs)
+		return c.LocalErrorJSQ("You need to specify what word you want to match", w, r, user, js)
 	}
 
 	// Unlike with find, it's okay if we leave this blank, as this means that the admin wants to remove the word entirely with no replacement
-	replacement := strings.TrimSpace(r.PostFormValue("replacement"))
+	replace := strings.TrimSpace(r.PostFormValue("replacement"))
 
-	err := c.WordFilters.Create(find, replacement)
+	err := c.WordFilters.Create(find, replace)
 	if err != nil {
-		return c.InternalErrorJSQ(err, w, r, isJs)
+		return c.InternalErrorJSQ(err, w, r, js)
 	}
 
-	return successRedirect("/panel/settings/word-filters/", w, r, isJs)
+	return successRedirect("/panel/settings/word-filters/", w, r, js)
 }
 
 // TODO: Implement this as a non-JS fallback
@@ -67,7 +67,7 @@ func WordFiltersEdit(w http.ResponseWriter, r *http.Request, user c.User, wfid s
 	_ = wfid
 
 	pi := c.PanelPage{basePage, tList, nil}
-	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage,"","","panel_word_filters_edit",&pi})
+	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "", "", "panel_word_filters_edit", &pi})
 }
 
 func WordFiltersEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, wfid string) c.RouteError {
@@ -75,28 +75,26 @@ func WordFiltersEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, 
 	if ferr != nil {
 		return ferr
 	}
-	// TODO: Either call it isJs or js rather than flip-flopping back and forth across the routes x.x
-	isJs := (r.PostFormValue("isJs") == "1")
+	js := (r.PostFormValue("js") == "1")
 	if !user.Perms.EditSettings {
-		return c.NoPermissionsJSQ(w, r, user, isJs)
+		return c.NoPermissionsJSQ(w, r, user, js)
 	}
 
 	id, err := strconv.Atoi(wfid)
 	if err != nil {
-		return c.LocalErrorJSQ("The word filter ID must be an integer.", w, r, user, isJs)
+		return c.LocalErrorJSQ("The word filter ID must be an integer.", w, r, user, js)
 	}
 
 	find := strings.TrimSpace(r.PostFormValue("find"))
 	if find == "" {
-		return c.LocalErrorJSQ("You need to specify what word you want to match", w, r, user, isJs)
+		return c.LocalErrorJSQ("You need to specify what word you want to match", w, r, user, js)
 	}
-
 	// Unlike with find, it's okay if we leave this blank, as this means that the admin wants to remove the word entirely with no replacement
-	replacement := strings.TrimSpace(r.PostFormValue("replacement"))
+	replace := strings.TrimSpace(r.PostFormValue("replacement"))
 
-	err = c.WordFilters.Update(id, find, replacement)
+	err = c.WordFilters.Update(id, find, replace)
 	if err != nil {
-		return c.InternalErrorJSQ(err, w, r, isJs)
+		return c.InternalErrorJSQ(err, w, r, js)
 	}
 
 	http.Redirect(w, r, "/panel/settings/word-filters/", http.StatusSeeOther)
@@ -109,19 +107,19 @@ func WordFiltersDeleteSubmit(w http.ResponseWriter, r *http.Request, user c.User
 		return ferr
 	}
 
-	isJs := (r.PostFormValue("isJs") == "1")
+	js := (r.PostFormValue("js") == "1")
 	if !user.Perms.EditSettings {
-		return c.NoPermissionsJSQ(w, r, user, isJs)
+		return c.NoPermissionsJSQ(w, r, user, js)
 	}
 
 	id, err := strconv.Atoi(wfid)
 	if err != nil {
-		return c.LocalErrorJSQ("The word filter ID must be an integer.", w, r, user, isJs)
+		return c.LocalErrorJSQ("The word filter ID must be an integer.", w, r, user, js)
 	}
 
 	err = c.WordFilters.Delete(id)
 	if err == sql.ErrNoRows {
-		return c.LocalErrorJSQ("This word filter doesn't exist", w, r, user, isJs)
+		return c.LocalErrorJSQ("This word filter doesn't exist", w, r, user, js)
 	}
 
 	http.Redirect(w, r, "/panel/settings/word-filters/", http.StatusSeeOther)

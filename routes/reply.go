@@ -118,7 +118,7 @@ func CreateReplySubmit(w http.ResponseWriter, r *http.Request, user c.User) c.Ro
 		}
 
 		// Make sure the indices are sequential to avoid out of bounds issues
-		var seqPollInputItems = make(map[int]string)
+		seqPollInputItems := make(map[int]string)
 		for i := 0; i < len(pollInputItems); i++ {
 			seqPollInputItems[i] = pollInputItems[i]
 		}
@@ -282,24 +282,24 @@ func ReplyEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, srid s
 // TODO: Refactor this
 // TODO: Disable stat updates in posts handled by plugin_guilds
 func ReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user c.User, srid string) c.RouteError {
-	isJs := (r.PostFormValue("isJs") == "1")
+	js := (r.PostFormValue("js") == "1")
 	rid, err := strconv.Atoi(srid)
 	if err != nil {
-		return c.PreErrorJSQ("The provided Reply ID is not a valid number.", w, r, isJs)
+		return c.PreErrorJSQ("The provided Reply ID is not a valid number.", w, r, js)
 	}
 
 	reply, err := c.Rstore.Get(rid)
 	if err == sql.ErrNoRows {
-		return c.PreErrorJSQ("The reply you tried to delete doesn't exist.", w, r, isJs)
+		return c.PreErrorJSQ("The reply you tried to delete doesn't exist.", w, r, js)
 	} else if err != nil {
-		return c.InternalErrorJSQ(err, w, r, isJs)
+		return c.InternalErrorJSQ(err, w, r, js)
 	}
 
 	topic, err := c.Topics.Get(reply.ParentID)
 	if err == sql.ErrNoRows {
-		return c.PreErrorJSQ("The parent topic doesn't exist.", w, r, isJs)
+		return c.PreErrorJSQ("The parent topic doesn't exist.", w, r, js)
 	} else if err != nil {
-		return c.InternalErrorJSQ(err, w, r, isJs)
+		return c.InternalErrorJSQ(err, w, r, js)
 	}
 
 	// TODO: Add hooks to make use of headerLite
@@ -308,12 +308,12 @@ func ReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user c.User, srid
 		return ferr
 	}
 	if !user.Perms.ViewTopic || !user.Perms.DeleteReply {
-		return c.NoPermissionsJSQ(w, r, user, isJs)
+		return c.NoPermissionsJSQ(w, r, user, js)
 	}
 
 	err = reply.Delete()
 	if err != nil {
-		return c.InternalErrorJSQ(err, w, r, isJs)
+		return c.InternalErrorJSQ(err, w, r, js)
 	}
 
 	skip, rerr := lite.Hooks.VhookSkippable("action_end_delete_reply", reply.ID, &user)
@@ -322,7 +322,7 @@ func ReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user c.User, srid
 	}
 
 	//log.Printf("Reply #%d was deleted by c.User #%d", rid, user.ID)
-	if !isJs {
+	if !js {
 		http.Redirect(w, r, "/topic/"+strconv.Itoa(reply.ParentID), http.StatusSeeOther)
 	} else {
 		w.Write(successJSONBytes)
@@ -334,15 +334,15 @@ func ReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user c.User, srid
 		wcount := c.WordCount(reply.Content)
 		err = replyCreator.DecreasePostStats(wcount, false)
 		if err != nil {
-			return c.InternalErrorJSQ(err, w, r, isJs)
+			return c.InternalErrorJSQ(err, w, r, js)
 		}
 	} else if err != sql.ErrNoRows {
-		return c.InternalErrorJSQ(err, w, r, isJs)
+		return c.InternalErrorJSQ(err, w, r, js)
 	}
 
 	err = c.ModLogs.Create("delete", reply.ParentID, "reply", user.LastIP, user.ID)
 	if err != nil {
-		return c.InternalErrorJSQ(err, w, r, isJs)
+		return c.InternalErrorJSQ(err, w, r, js)
 	}
 	return nil
 }
@@ -501,34 +501,34 @@ func ProfileReplyCreateSubmit(w http.ResponseWriter, r *http.Request, user c.Use
 }
 
 func ProfileReplyEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, srid string) c.RouteError {
-	isJs := (r.PostFormValue("js") == "1")
+	js := (r.PostFormValue("js") == "1")
 	rid, err := strconv.Atoi(srid)
 	if err != nil {
-		return c.LocalErrorJSQ("The provided Reply ID is not a valid number.", w, r, user, isJs)
+		return c.LocalErrorJSQ("The provided Reply ID is not a valid number.", w, r, user, js)
 	}
 
 	reply, err := c.Prstore.Get(rid)
 	if err == sql.ErrNoRows {
-		return c.PreErrorJSQ("The target reply doesn't exist.", w, r, isJs)
+		return c.PreErrorJSQ("The target reply doesn't exist.", w, r, js)
 	} else if err != nil {
-		return c.InternalErrorJSQ(err, w, r, isJs)
+		return c.InternalErrorJSQ(err, w, r, js)
 	}
 
 	creator, err := c.Users.Get(reply.CreatedBy)
 	if err != nil {
-		return c.InternalErrorJSQ(err, w, r, isJs)
+		return c.InternalErrorJSQ(err, w, r, js)
 	}
 	// ? Does the admin understand that this group perm affects this?
 	if user.ID != creator.ID && !user.Perms.EditReply {
-		return c.NoPermissionsJSQ(w, r, user, isJs)
+		return c.NoPermissionsJSQ(w, r, user, js)
 	}
 
 	err = reply.SetBody(r.PostFormValue("edit_item"))
 	if err != nil {
-		return c.InternalErrorJSQ(err, w, r, isJs)
+		return c.InternalErrorJSQ(err, w, r, js)
 	}
 
-	if !isJs {
+	if !js {
 		http.Redirect(w, r, "/user/"+strconv.Itoa(creator.ID)+"#reply-"+strconv.Itoa(rid), http.StatusSeeOther)
 	} else {
 		w.Write(successJSONBytes)
@@ -537,35 +537,34 @@ func ProfileReplyEditSubmit(w http.ResponseWriter, r *http.Request, user c.User,
 }
 
 func ProfileReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user c.User, srid string) c.RouteError {
-	isJs := (r.PostFormValue("isJs") == "1")
-
+	js := (r.PostFormValue("js") == "1")
 	rid, err := strconv.Atoi(srid)
 	if err != nil {
-		return c.LocalErrorJSQ("The provided Reply ID is not a valid number.", w, r, user, isJs)
+		return c.LocalErrorJSQ("The provided Reply ID is not a valid number.", w, r, user, js)
 	}
 
 	reply, err := c.Prstore.Get(rid)
 	if err == sql.ErrNoRows {
-		return c.PreErrorJSQ("The target reply doesn't exist.", w, r, isJs)
+		return c.PreErrorJSQ("The target reply doesn't exist.", w, r, js)
 	} else if err != nil {
-		return c.InternalErrorJSQ(err, w, r, isJs)
+		return c.InternalErrorJSQ(err, w, r, js)
 	}
 
 	creator, err := c.Users.Get(reply.CreatedBy)
 	if err != nil {
-		return c.InternalErrorJSQ(err, w, r, isJs)
+		return c.InternalErrorJSQ(err, w, r, js)
 	}
 	if user.ID != creator.ID && !user.Perms.DeleteReply {
-		return c.NoPermissionsJSQ(w, r, user, isJs)
+		return c.NoPermissionsJSQ(w, r, user, js)
 	}
 
 	err = reply.Delete()
 	if err != nil {
-		return c.InternalErrorJSQ(err, w, r, isJs)
+		return c.InternalErrorJSQ(err, w, r, js)
 	}
 	//log.Printf("The profile post '%d' was deleted by c.User #%d", reply.ID, user.ID)
 
-	if !isJs {
+	if !js {
 		//http.Redirect(w,r, "/user/" + strconv.Itoa(creator.ID), http.StatusSeeOther)
 	} else {
 		w.Write(successJSONBytes)
@@ -574,25 +573,25 @@ func ProfileReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user c.Use
 }
 
 func ReplyLikeSubmit(w http.ResponseWriter, r *http.Request, user c.User, srid string) c.RouteError {
-	isJs := (r.PostFormValue("isJs") == "1")
+	js := (r.PostFormValue("js") == "1")
 
 	rid, err := strconv.Atoi(srid)
 	if err != nil {
-		return c.PreErrorJSQ("The provided Reply ID is not a valid number.", w, r, isJs)
+		return c.PreErrorJSQ("The provided Reply ID is not a valid number.", w, r, js)
 	}
 
 	reply, err := c.Rstore.Get(rid)
 	if err == sql.ErrNoRows {
-		return c.PreErrorJSQ("You can't like something which doesn't exist!", w, r, isJs)
+		return c.PreErrorJSQ("You can't like something which doesn't exist!", w, r, js)
 	} else if err != nil {
-		return c.InternalErrorJSQ(err, w, r, isJs)
+		return c.InternalErrorJSQ(err, w, r, js)
 	}
 
 	topic, err := c.Topics.Get(reply.ParentID)
 	if err == sql.ErrNoRows {
-		return c.PreErrorJSQ("The parent topic doesn't exist.", w, r, isJs)
+		return c.PreErrorJSQ("The parent topic doesn't exist.", w, r, js)
 	} else if err != nil {
-		return c.InternalErrorJSQ(err, w, r, isJs)
+		return c.InternalErrorJSQ(err, w, r, js)
 	}
 
 	// TODO: Add hooks to make use of headerLite
@@ -601,31 +600,31 @@ func ReplyLikeSubmit(w http.ResponseWriter, r *http.Request, user c.User, srid s
 		return ferr
 	}
 	if !user.Perms.ViewTopic || !user.Perms.LikeItem {
-		return c.NoPermissionsJSQ(w, r, user, isJs)
+		return c.NoPermissionsJSQ(w, r, user, js)
 	}
 	if reply.CreatedBy == user.ID {
-		return c.LocalErrorJSQ("You can't like your own replies", w, r, user, isJs)
+		return c.LocalErrorJSQ("You can't like your own replies", w, r, user, js)
 	}
 
 	_, err = c.Users.Get(reply.CreatedBy)
 	if err != nil && err != sql.ErrNoRows {
-		return c.LocalErrorJSQ("The target user doesn't exist", w, r, user, isJs)
+		return c.LocalErrorJSQ("The target user doesn't exist", w, r, user, js)
 	} else if err != nil {
-		return c.InternalErrorJSQ(err, w, r, isJs)
+		return c.InternalErrorJSQ(err, w, r, js)
 	}
 
 	err = reply.Like(user.ID)
 	if err == c.ErrAlreadyLiked {
-		return c.LocalErrorJSQ("You've already liked this!", w, r, user, isJs)
+		return c.LocalErrorJSQ("You've already liked this!", w, r, user, js)
 	} else if err != nil {
-		return c.InternalErrorJSQ(err, w, r, isJs)
+		return c.InternalErrorJSQ(err, w, r, js)
 	}
 
 	// ! Be careful about leaking per-route permission state with &user
 	alert := c.Alert{ActorID: user.ID, TargetUserID: reply.CreatedBy, Event: "like", ElementType: "post", ElementID: rid, Actor: &user}
 	err = c.AddActivityAndNotifyTarget(alert)
 	if err != nil {
-		return c.InternalErrorJSQ(err, w, r, isJs)
+		return c.InternalErrorJSQ(err, w, r, js)
 	}
 
 	skip, rerr := lite.Hooks.VhookSkippable("action_end_like_reply", reply.ID, &user)
@@ -633,7 +632,7 @@ func ReplyLikeSubmit(w http.ResponseWriter, r *http.Request, user c.User, srid s
 		return rerr
 	}
 
-	if !isJs {
+	if !js {
 		http.Redirect(w, r, "/topic/"+strconv.Itoa(reply.ParentID), http.StatusSeeOther)
 	} else {
 		_, _ = w.Write(successJSONBytes)

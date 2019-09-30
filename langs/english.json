@@ -552,7 +552,7 @@
 		"create_topic_name":"Topic Name",
 		"create_topic_content":"Content",
 		"create_topic_placeholder":"Insert content here",
-		"create_topic_create_topic_button":"Create Topic",
+		"create_topic_create_button":"Create Topic",
 		"create_topic_add_file_button":"Add File",
 
 		"quick_topic.aria":"Quick Topic Form",
@@ -561,8 +561,8 @@
 		"quick_topic.whatsup":"What's up?",
 		"quick_topic.content_placeholder":"Insert post here",
 		"quick_topic.add_poll_option_first":"Poll option #0",
-		"quick_topic.create_topic_button":"Create Topic",
-		"quick_topic.create_topic_button_short":"New Topic",
+		"quick_topic.create_button":"Create Topic",
+		"quick_topic.create_button_short":"New Topic",
 		"quick_topic.add_poll_button":"Add Poll",
 		"quick_topic.add_file_button":"Add File",
 		"quick_topic.cancel_button":"Cancel",
@@ -870,7 +870,7 @@
 		"panel_groups_create_name_placeholder":"Administrator",
 		"panel_groups_create_type":"Type",
 		"panel_groups_create_tag":"Tag",
-		"panel_groups_create_create_group_button":"Add Group",
+		"panel_groups_create_button":"Add Group",
 
 		"panel_group_menu_head":"Group Editor",
 		"panel_group_menu_general":"General",
@@ -885,6 +885,13 @@
 		"panel_group_update_button":"Update Group",
 		"panel_group_extended_permissions":"Extended Permissions",
 
+		"panel_group_promotions_create_head":"Add Promotion",
+		"panel_group_promotions_from":"From",
+		"panel_group_promotions_to":"To",
+		"panel_group_promotions_two_way":"Two Way",
+		"panel_group_promotions_level":"Level",
+		"panel_group_promotions_create_button":"Add Promotion",
+
 		"panel_word_filters_head":"Word Filters",
 		"panel_word_filters_to":"to",
 		"panel_word_filters_edit_button_aria":"Edit Word Filter",
@@ -896,7 +903,7 @@
 		"panel_word_filters_create_find_placeholder":"fuck",
 		"panel_word_filters_create_replacement":"Replacement",
 		"panel_word_filters_create_replacement_placeholder":"fudge",
-		"panel_word_filters_create_create_word_filter_button":"Add Filter",
+		"panel_word_filters_create_button":"Add Filter",
 
 		"panel_pages_head":"Page Manager",
 		"panel_pages_edit_button_aria":"Edit Page",
@@ -908,7 +915,7 @@
 		"panel_pages_create_title":"Title",
 		"panel_pages_create_title_placeholder":"Frequently Asked Questions",
 		"panel_pages_create_body_placeholder":"We understand you have a lot of questions.",
-		"panel_pages_create_submit_button":"Create Page",
+		"panel_pages_create_button":"Create Page",
 
 		"panel_pages_edit_head":"Page Editor",
 		"panel_pages_name":"Name",

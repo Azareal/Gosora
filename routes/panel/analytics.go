@@ -1052,7 +1052,7 @@ func AnalyticsLanguages(w http.ResponseWriter, r *http.Request, user c.User) c.R
 	ovList := analyticsVMapToOVList(vMap)
 
 	ex := strings.Split(r.FormValue("ex"), ",")
-	var inEx = func(name string) bool {
+	inEx := func(name string) bool {
 		for _, e := range ex {
 			if e == name {
 				return true
@@ -1134,7 +1134,7 @@ func AnalyticsReferrers(w http.ResponseWriter, r *http.Request, user c.User) c.R
 	}
 	showSpam := r.FormValue("spam") == "1"
 
-	var isSpammy = func(domain string) bool {
+	isSpammy := func(domain string) bool {
 		for _, substr := range c.SpammyDomainBits {
 			if strings.Contains(domain, substr) {
 				return true

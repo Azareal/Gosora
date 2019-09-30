@@ -10,14 +10,14 @@ import (
 	p "github.com/Azareal/Gosora/common/phrases"
 )
 
-func Groups(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
-	basePage, ferr := buildBasePage(w, r, &user, "groups", "groups")
+func Groups(w http.ResponseWriter, r *http.Request, u c.User) c.RouteError {
+	bPage, ferr := buildBasePage(w, r, &u, "groups", "groups")
 	if ferr != nil {
 		return ferr
 	}
 	page, _ := strconv.Atoi(r.FormValue("page"))
 	perPage := 15
-	offset, page, lastPage := c.PageOffset(basePage.Stats.Groups, page, perPage)
+	offset, page, lastPage := c.PageOffset(bPage.Stats.Groups, page, perPage)
 
 	// Skip the 'Unknown' group
 	offset++
@@ -25,7 +25,7 @@ func Groups(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	var count int
 	var groupList []c.GroupAdmin
 	groups, _ := c.Groups.GetRange(offset, 0)
-	for _, group := range groups {
+	for _, g := range groups {
 		if count == perPage {
 			break
 		}
@@ -33,33 +33,33 @@ func Groups(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 		var rankClass string
 		var canDelete = false
 
-		// TODO: Use a switch for this
 		// TODO: Localise this
-		if group.IsAdmin {
+		switch {
+		case g.IsAdmin:
 			rank = "Admin"
 			rankClass = "admin"
-		} else if group.IsMod {
+		case g.IsMod:
 			rank = "Mod"
 			rankClass = "mod"
-		} else if group.IsBanned {
+		case g.IsBanned:
 			rank = "Banned"
 			rankClass = "banned"
-		} else if group.ID == 6 {
+		case g.ID == 6:
 			rank = "Guest"
 			rankClass = "guest"
-		} else {
+		default:
 			rank = "Member"
 			rankClass = "member"
 		}
 
-		canEdit := user.Perms.EditGroup && (!group.IsAdmin || user.Perms.EditGroupAdmin) && (!group.IsMod || user.Perms.EditGroupSuperMod)
-		groupList = append(groupList, c.GroupAdmin{group.ID, group.Name, rank, rankClass, canEdit, canDelete})
+		canEdit := u.Perms.EditGroup && (!g.IsAdmin || u.Perms.EditGroupAdmin) && (!g.IsMod || u.Perms.EditGroupSuperMod)
+		groupList = append(groupList, c.GroupAdmin{g.ID, g.Name, rank, rankClass, canEdit, canDelete})
 		count++
 	}
 
 	pageList := c.Paginate(page, lastPage, 5)
-	pi := c.PanelGroupPage{basePage, groupList, c.Paginator{pageList, page, lastPage}}
-	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage,"","","panel_groups",&pi})
+	pi := c.PanelGroupPage{bPage, groupList, c.Paginator{pageList, page, lastPage}}
+	return renderTemplate("panel", w, r, bPage.Header, c.Panel{bPage, "", "", "panel_groups", &pi})
 }
 
 func GroupsEdit(w http.ResponseWriter, r *http.Request, user c.User, sgid string) c.RouteError {
@@ -75,38 +75,32 @@ func GroupsEdit(w http.ResponseWriter, r *http.Request, user c.User, sgid string
 	if err != nil {
 		return c.LocalError(p.GetErrorPhrase("url_id_must_be_integer"), w, r, user)
 	}
-
-	group, err := c.Groups.Get(gid)
+	g, err := c.Groups.Get(gid)
 	if err == sql.ErrNoRows {
 		//log.Print("aaaaa monsters")
 		return c.NotFound(w, r, basePage.Header)
-	} else if err != nil {
-		return c.InternalError(err, w, r)
 	}
-
-	if group.IsAdmin && !user.Perms.EditGroupAdmin {
-		return c.LocalError(p.GetErrorPhrase("panel_groups_cannot_edit_admin"), w, r, user)
-	}
-	if group.IsMod && !user.Perms.EditGroupSuperMod {
-		return c.LocalError(p.GetErrorPhrase("panel_groups_cannot_edit_supermod"), w, r, user)
+	ferr = groupCheck(w,r,user,g,err)
+	if ferr != nil {
+		return ferr
 	}
 
 	var rank string
 	switch {
-	case group.IsAdmin:
+	case g.IsAdmin:
 		rank = "Admin"
-	case group.IsMod:
+	case g.IsMod:
 		rank = "Mod"
-	case group.IsBanned:
+	case g.IsBanned:
 		rank = "Banned"
-	case group.ID == 6:
+	case g.ID == 6:
 		rank = "Guest"
 	default:
 		rank = "Member"
 	}
-	disableRank := !user.Perms.EditGroupGlobalPerms || (group.ID == 6)
+	disableRank := !user.Perms.EditGroupGlobalPerms || (g.ID == 6)
 
-	pi := c.PanelEditGroupPage{basePage, group.ID, group.Name, group.Tag, rank, disableRank}
+	pi := c.PanelEditGroupPage{basePage, g.ID, g.Name, g.Tag, rank, disableRank}
 	return renderTemplate("panel_group_edit", w, r, basePage.Header, pi)
 }
 
@@ -123,19 +117,14 @@ func GroupsEditPromotions(w http.ResponseWriter, r *http.Request, user c.User, s
 	if err != nil {
 		return c.LocalError(p.GetErrorPhrase("url_id_must_be_integer"), w, r, user)
 	}
-
 	g, err := c.Groups.Get(gid)
 	if err == sql.ErrNoRows {
 		//log.Print("aaaaa monsters")
 		return c.NotFound(w, r, basePage.Header)
-	} else if err != nil {
-		return c.InternalError(err, w, r)
 	}
-	if g.IsAdmin && !user.Perms.EditGroupAdmin {
-		return c.LocalError(p.GetErrorPhrase("panel_groups_cannot_edit_admin"), w, r, user)
-	}
-	if g.IsMod && !user.Perms.EditGroupSuperMod {
-		return c.LocalError(p.GetErrorPhrase("panel_groups_cannot_edit_supermod"), w, r, user)
+	ferr = groupCheck(w,r,user,g,err)
+	if ferr != nil {
+		return ferr
 	}
 
 	promotions, err := c.GroupPromotions.GetByGroup(g.ID)
@@ -146,13 +135,13 @@ func GroupsEditPromotions(w http.ResponseWriter, r *http.Request, user c.User, s
 	for i, promote := range promotions {
 		fg, err := c.Groups.Get(promote.From)
 		if err == sql.ErrNoRows {
-			fg = &c.Group{Name:"Deleted Group"}
+			fg = &c.Group{Name: "Deleted Group"}
 		} else if err != nil {
 			return c.InternalError(err, w, r)
 		}
 		tg, err := c.Groups.Get(promote.To)
 		if err == sql.ErrNoRows {
-			tg = &c.Group{Name:"Deleted Group"}
+			tg = &c.Group{Name: "Deleted Group"}
 		} else if err != nil {
 			return c.InternalError(err, w, r)
 		}
@@ -178,6 +167,21 @@ func GroupsEditPromotions(w http.ResponseWriter, r *http.Request, user c.User, s
 
 	pi := c.PanelEditGroupPromotionsPage{basePage, g.ID, g.Name, promoteExt, groupList}
 	return renderTemplate("panel_group_edit_promotions", w, r, basePage.Header, pi)
+}
+
+func groupCheck(w http.ResponseWriter, r *http.Request, user c.User, g *c.Group, err error) c.RouteError {
+	if err == sql.ErrNoRows {
+		return c.LocalError("No such group.", w, r, user)
+	} else if err != nil {
+		return c.InternalError(err, w, r)
+	}
+	if g.IsAdmin && !user.Perms.EditGroupAdmin {
+		return c.LocalError(p.GetErrorPhrase("panel_groups_cannot_edit_admin"), w, r, user)
+	}
+	if g.IsMod && !user.Perms.EditGroupSuperMod {
+		return c.LocalError(p.GetErrorPhrase("panel_groups_cannot_edit_supermod"), w, r, user)
+	}
+	return nil
 }
 
 func GroupsPromotionsCreateSubmit(w http.ResponseWriter, r *http.Request, user c.User, sgid string) c.RouteError {
@@ -206,36 +210,20 @@ func GroupsPromotionsCreateSubmit(w http.ResponseWriter, r *http.Request, user c
 	}
 
 	g, err := c.Groups.Get(from)
-	if err == sql.ErrNoRows {
-		return c.LocalError("No such group.",w, r, user)
-	} else if err != nil {
-		return c.InternalError(err, w, r)
+	ferr := groupCheck(w, r, user, g, err)
+	if err != nil {
+		return ferr
 	}
-	if g.IsAdmin && !user.Perms.EditGroupAdmin {
-		return c.LocalError(p.GetErrorPhrase("panel_groups_cannot_edit_admin"), w, r, user)
-	}
-	if g.IsMod && !user.Perms.EditGroupSuperMod {
-		return c.LocalError(p.GetErrorPhrase("panel_groups_cannot_edit_supermod"), w, r, user)
-	}
-
 	g, err = c.Groups.Get(to)
-	if err == sql.ErrNoRows {
-		return c.LocalError("No such group.",w, r, user)
-	} else if err != nil {
-		return c.InternalError(err, w, r)
+	ferr = groupCheck(w, r, user, g, err)
+	if err != nil {
+		return ferr
 	}
-	if g.IsAdmin && !user.Perms.EditGroupAdmin {
-		return c.LocalError(p.GetErrorPhrase("panel_groups_cannot_edit_admin"), w, r, user)
-	}
-	if g.IsMod && !user.Perms.EditGroupSuperMod {
-		return c.LocalError(p.GetErrorPhrase("panel_groups_cannot_edit_supermod"), w, r, user)
-	}
-
 	_, err = c.GroupPromotions.Create(from, to, twoWay, level)
 	if err != nil {
-		return c.InternalError(err,w,r)
+		return c.InternalError(err, w, r)
 	}
-	
+
 	http.Redirect(w, r, "/panel/groups/edit/promotions/"+strconv.Itoa(gid), http.StatusSeeOther)
 	return nil
 }
@@ -246,7 +234,7 @@ func GroupsPromotionsDeleteSubmit(w http.ResponseWriter, r *http.Request, user c
 	}
 	spl := strings.Split(sspl, "-")
 	if len(spl) < 2 {
-		return c.LocalError("need two params",w,r,user)
+		return c.LocalError("need two params", w, r, user)
 	}
 	gid, err := strconv.Atoi(spl[0])
 	if err != nil {
@@ -257,9 +245,26 @@ func GroupsPromotionsDeleteSubmit(w http.ResponseWriter, r *http.Request, user c
 		return c.LocalError(p.GetErrorPhrase("url_id_must_be_integer"), w, r, user)
 	}
 
+	pro, err := c.GroupPromotions.Get(pid)
+	if err == sql.ErrNoRows {
+		return c.LocalError("That group promotion doesn't exist", w, r, user)
+	} else if err != nil {
+		return c.InternalError(err, w, r)
+	}
+
+	g, err := c.Groups.Get(pro.From)
+	ferr := groupCheck(w, r, user, g, err)
+	if err != nil {
+		return ferr
+	}
+	g, err = c.Groups.Get(pro.To)
+	ferr = groupCheck(w, r, user, g, err)
+	if err != nil {
+		return ferr
+	}
 	err = c.GroupPromotions.Delete(pid)
 	if err != nil {
-		return c.InternalError(err,w,r)
+		return c.InternalError(err, w, r)
 	}
 
 	http.Redirect(w, r, "/panel/groups/edit/promotions/"+strconv.Itoa(gid), http.StatusSeeOther)
@@ -360,14 +365,10 @@ func GroupsEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, sgid 
 	if err == sql.ErrNoRows {
 		//log.Print("aaaaa monsters")
 		return c.NotFound(w, r, nil)
-	} else if err != nil {
-		return c.InternalError(err, w, r)
 	}
-	if group.IsAdmin && !user.Perms.EditGroupAdmin {
-		return c.LocalError(p.GetErrorPhrase("panel_groups_cannot_edit_admin"), w, r, user)
-	}
-	if group.IsMod && !user.Perms.EditGroupSuperMod {
-		return c.LocalError(p.GetErrorPhrase("panel_groups_cannot_edit_supermod"), w, r, user)
+	ferr = groupCheck(w, r, user, group, err)
+	if ferr != nil {
+		return ferr
 	}
 
 	gname := r.FormValue("group-name")
@@ -447,31 +448,24 @@ func GroupsEditPermsSubmit(w http.ResponseWriter, r *http.Request, user c.User, 
 	if err == sql.ErrNoRows {
 		//log.Print("aaaaa monsters o.o")
 		return c.NotFound(w, r, nil)
-	} else if err != nil {
-		return c.InternalError(err, w, r)
 	}
-	if group.IsAdmin && !user.Perms.EditGroupAdmin {
-		return c.LocalError(p.GetErrorPhrase("panel_groups_cannot_edit_admin"), w, r, user)
-	}
-	if group.IsMod && !user.Perms.EditGroupSuperMod {
-		return c.LocalError(p.GetErrorPhrase("panel_groups_cannot_edit_supermod"), w, r, user)
+	ferr = groupCheck(w, r, user, group, err)
+	if ferr != nil {
+		return ferr
 	}
 
+	// TODO: Don't unset perms we don't have permission to set?
 	pmap := make(map[string]bool)
-
-	if user.Perms.EditGroupLocalPerms {
-		for _, perm := range c.LocalPermList {
-			pvalue := r.PostFormValue("group-perm-" + perm)
-			pmap[perm] = (pvalue == "1")
+	pCheck := func(hasPerm bool, perms []string) {
+		if hasPerm {
+			for _, perm := range perms {
+				pvalue := r.PostFormValue("group-perm-" + perm)
+				pmap[perm] = (pvalue == "1")
+			}
 		}
 	}
-
-	if user.Perms.EditGroupGlobalPerms {
-		for _, perm := range c.GlobalPermList {
-			pvalue := r.PostFormValue("group-perm-" + perm)
-			pmap[perm] = (pvalue == "1")
-		}
-	}
+	pCheck(user.Perms.EditGroupLocalPerms, c.LocalPermList)
+	pCheck(user.Perms.EditGroupGlobalPerms, c.GlobalPermList)
 
 	err = group.UpdatePerms(pmap)
 	if err != nil {
@@ -499,19 +493,19 @@ func GroupsCreateSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.R
 
 	var isAdmin, isMod, isBanned bool
 	if user.Perms.EditGroupGlobalPerms {
-		groupType := r.PostFormValue("group-type")
-		if groupType == "Admin" {
+		switch r.PostFormValue("group-type") {
+		case "Admin":
 			if !user.Perms.EditGroupAdmin {
 				return c.LocalError(p.GetErrorPhrase("panel_groups_create_cannot_designate_admin"), w, r, user)
 			}
 			isAdmin = true
 			isMod = true
-		} else if groupType == "Mod" {
+		case "Mod":
 			if !user.Perms.EditGroupSuperMod {
 				return c.LocalError(p.GetErrorPhrase("panel_groups_create_cannot_designate_supermod"), w, r, user)
 			}
 			isMod = true
-		} else if groupType == "Banned" {
+		case "Banned":
 			isBanned = true
 		}
 	}

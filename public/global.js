@@ -436,7 +436,7 @@ function mainInit(){
 			url: target,
 			type: "POST",
 			dataType: "json",
-			data: { isJs: 1 },
+			data: { js: 1 },
 			error: ajaxError,
 			success: function (data, status, xhr) {
 				if("success" in data && data["success"] == "1") return;
@@ -729,7 +729,7 @@ function mainInit(){
 				type: "POST",
 				dataType: "json",
 				error: ajaxError,
-				data: { isJs: "1", edit_item: newContent }
+				data: { js: "1", edit_item: newContent }
 			});
 		});
 	});
@@ -771,7 +771,7 @@ function mainInit(){
 
 		$(".submit_edit").click(function(event) {
 			event.preventDefault();
-			var outData = {isJs: "1"}
+			var outData = {js: "1"}
 			var blockParent = $(this).closest('.editable_parent');
 			blockParent.find('.editable_block').each(function() {
 				var fieldName = this.getAttribute("data-field");
@@ -856,7 +856,7 @@ function mainInit(){
 			url: this.form.getAttribute("action") + "?s=" + me.User.S,
 			type: "POST",
 			dataType: "json",
-			data: { "newTheme": this.options[this.selectedIndex].getAttribute("val"), isJs: "1" },
+			data: { "newTheme": this.options[this.selectedIndex].getAttribute("val"), js: "1" },
 			error: ajaxError,
 			success: function (data, status, xhr) {
 				console.log("Theme successfully switched");

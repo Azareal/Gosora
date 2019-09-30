@@ -508,17 +508,17 @@ func uploadFilesWithHash(w http.ResponseWriter, r *http.Request, user c.User, di
 // TODO: Update the stats after edits so that we don't under or over decrement stats during deletes
 // TODO: Disable stat updates in posts handled by plugin_guilds
 func EditTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User, stid string) c.RouteError {
-	isJs := (r.PostFormValue("js") == "1")
+	js := (r.PostFormValue("js") == "1")
 	tid, err := strconv.Atoi(stid)
 	if err != nil {
-		return c.PreErrorJSQ(phrases.GetErrorPhrase("id_must_be_integer"), w, r, isJs)
+		return c.PreErrorJSQ(phrases.GetErrorPhrase("id_must_be_integer"), w, r, js)
 	}
 
 	topic, err := c.Topics.Get(tid)
 	if err == sql.ErrNoRows {
-		return c.PreErrorJSQ("The topic you tried to edit doesn't exist.", w, r, isJs)
+		return c.PreErrorJSQ("The topic you tried to edit doesn't exist.", w, r, js)
 	} else if err != nil {
-		return c.InternalErrorJSQ(err, w, r, isJs)
+		return c.InternalErrorJSQ(err, w, r, js)
 	}
 
 	// TODO: Add hooks to make use of headerLite
@@ -527,10 +527,10 @@ func EditTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User, stid s
 		return ferr
 	}
 	if !user.Perms.ViewTopic || !user.Perms.EditTopic {
-		return c.NoPermissionsJSQ(w, r, user, isJs)
+		return c.NoPermissionsJSQ(w, r, user, js)
 	}
 	if topic.IsClosed && !user.Perms.CloseTopic {
-		return c.NoPermissionsJSQ(w, r, user, isJs)
+		return c.NoPermissionsJSQ(w, r, user, js)
 	}
 
 	err = topic.Update(r.PostFormValue("topic_name"), r.PostFormValue("topic_content"))
@@ -538,26 +538,26 @@ func EditTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User, stid s
 	if err != nil {
 		switch err {
 		case c.ErrNoTitle:
-			return c.LocalErrorJSQ("This topic doesn't have a title", w, r, user, isJs)
+			return c.LocalErrorJSQ("This topic doesn't have a title", w, r, user, js)
 		case c.ErrLongTitle:
-			return c.LocalErrorJSQ("The length of the title is too long, max: "+strconv.Itoa(c.Config.MaxTopicTitleLength), w, r, user, isJs)
+			return c.LocalErrorJSQ("The length of the title is too long, max: "+strconv.Itoa(c.Config.MaxTopicTitleLength), w, r, user, js)
 		case c.ErrNoBody:
-			return c.LocalErrorJSQ("This topic doesn't have a body", w, r, user, isJs)
+			return c.LocalErrorJSQ("This topic doesn't have a body", w, r, user, js)
 		}
-		return c.InternalErrorJSQ(err, w, r, isJs)
+		return c.InternalErrorJSQ(err, w, r, js)
 	}
 
 	err = c.Forums.UpdateLastTopic(topic.ID, user.ID, topic.ParentID)
 	if err != nil && err != sql.ErrNoRows {
-		return c.InternalErrorJSQ(err, w, r, isJs)
+		return c.InternalErrorJSQ(err, w, r, js)
 	}
 
 	// TODO: Avoid the load to get this faster?
 	topic, err = c.Topics.Get(topic.ID)
 	if err == sql.ErrNoRows {
-		return c.PreErrorJSQ("The updated topic doesn't exist.", w, r, isJs)
+		return c.PreErrorJSQ("The updated topic doesn't exist.", w, r, js)
 	} else if err != nil {
-		return c.InternalErrorJSQ(err, w, r, isJs)
+		return c.InternalErrorJSQ(err, w, r, js)
 	}
 
 	skip, rerr := lite.Hooks.VhookSkippable("action_end_edit_topic", topic.ID, &user)
@@ -565,12 +565,12 @@ func EditTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User, stid s
 		return rerr
 	}
 
-	if !isJs {
+	if !js {
 		http.Redirect(w, r, "/topic/"+strconv.Itoa(tid), http.StatusSeeOther)
 	} else {
 		outBytes, err := json.Marshal(JsonReply{c.ParseMessage(topic.Content, topic.ParentID, "forums")})
 		if err != nil {
-			return c.InternalErrorJSQ(err, w, r, isJs)
+			return c.InternalErrorJSQ(err, w, r, js)
 		}
 		w.Write(outBytes)
 	}
@@ -582,7 +582,7 @@ func EditTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User, stid s
 func DeleteTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	// TODO: Move this to some sort of middleware
 	var tids []int
-	var isJs = false
+	js := false
 	if c.ReqIsJson(r) {
 		if r.Body == nil {
 			return c.PreErrorJS("No request body", w, r)
@@ -591,7 +591,7 @@ func DeleteTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.Ro
 		if err != nil {
 			return c.PreErrorJS("We weren't able to parse your data", w, r)
 		}
-		isJs = true
+		js = true
 	} else {
 		tid, err := strconv.Atoi(r.URL.Path[len("/topic/delete/submit/"):])
 		if err != nil {
@@ -600,15 +600,15 @@ func DeleteTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.Ro
 		tids = append(tids, tid)
 	}
 	if len(tids) == 0 {
-		return c.LocalErrorJSQ("You haven't provided any IDs", w, r, user, isJs)
+		return c.LocalErrorJSQ("You haven't provided any IDs", w, r, user, js)
 	}
 
 	for _, tid := range tids {
 		topic, err := c.Topics.Get(tid)
 		if err == sql.ErrNoRows {
-			return c.PreErrorJSQ("The topic you tried to delete doesn't exist.", w, r, isJs)
+			return c.PreErrorJSQ("The topic you tried to delete doesn't exist.", w, r, js)
 		} else if err != nil {
-			return c.InternalErrorJSQ(err, w, r, isJs)
+			return c.InternalErrorJSQ(err, w, r, js)
 		}
 
 		// TODO: Add hooks to make use of headerLite
@@ -617,24 +617,24 @@ func DeleteTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.Ro
 			return ferr
 		}
 		if !user.Perms.ViewTopic || !user.Perms.DeleteTopic {
-			return c.NoPermissionsJSQ(w, r, user, isJs)
+			return c.NoPermissionsJSQ(w, r, user, js)
 		}
 
 		// We might be able to handle this err better
 		err = topic.Delete()
 		if err != nil {
-			return c.InternalErrorJSQ(err, w, r, isJs)
+			return c.InternalErrorJSQ(err, w, r, js)
 		}
 
 		err = c.ModLogs.Create("delete", tid, "topic", user.LastIP, user.ID)
 		if err != nil {
-			return c.InternalErrorJSQ(err, w, r, isJs)
+			return c.InternalErrorJSQ(err, w, r, js)
 		}
 
 		// ? - We might need to add soft-delete before we can do an action reply for this
 		/*_, err = stmts.createActionReply.Exec(tid,"delete",ipaddress,user.ID)
 		if err != nil {
-			return c.InternalErrorJSQ(err,w,r,isJs)
+			return c.InternalErrorJSQ(err,w,r,js)
 		}*/
 
 		// TODO: Do a bulk delete action hook?
@@ -712,7 +712,7 @@ func UnstickTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User, sti
 func LockTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	// TODO: Move this to some sort of middleware
 	var tids []int
-	var isJs = false
+	js := false
 	if c.ReqIsJson(r) {
 		if r.Body == nil {
 			return c.PreErrorJS("No request body", w, r)
@@ -721,7 +721,7 @@ func LockTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.Rout
 		if err != nil {
 			return c.PreErrorJS("We weren't able to parse your data", w, r)
 		}
-		isJs = true
+		js = true
 	} else {
 		tid, err := strconv.Atoi(r.URL.Path[len("/topic/lock/submit/"):])
 		if err != nil {
@@ -730,15 +730,15 @@ func LockTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.Rout
 		tids = append(tids, tid)
 	}
 	if len(tids) == 0 {
-		return c.LocalErrorJSQ("You haven't provided any IDs", w, r, user, isJs)
+		return c.LocalErrorJSQ("You haven't provided any IDs", w, r, user, js)
 	}
 
 	for _, tid := range tids {
 		topic, err := c.Topics.Get(tid)
 		if err == sql.ErrNoRows {
-			return c.PreErrorJSQ("The topic you tried to lock doesn't exist.", w, r, isJs)
+			return c.PreErrorJSQ("The topic you tried to lock doesn't exist.", w, r, js)
 		} else if err != nil {
-			return c.InternalErrorJSQ(err, w, r, isJs)
+			return c.InternalErrorJSQ(err, w, r, js)
 		}
 
 		// TODO: Add hooks to make use of headerLite
@@ -747,17 +747,17 @@ func LockTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.Rout
 			return ferr
 		}
 		if !user.Perms.ViewTopic || !user.Perms.CloseTopic {
-			return c.NoPermissionsJSQ(w, r, user, isJs)
+			return c.NoPermissionsJSQ(w, r, user, js)
 		}
 
 		err = topic.Lock()
 		if err != nil {
-			return c.InternalErrorJSQ(err, w, r, isJs)
+			return c.InternalErrorJSQ(err, w, r, js)
 		}
 
 		err = addTopicAction("lock", topic, user)
 		if err != nil {
-			return c.InternalErrorJSQ(err, w, r, isJs)
+			return c.InternalErrorJSQ(err, w, r, js)
 		}
 
 		// TODO: Do a bulk lock action hook?
@@ -863,17 +863,17 @@ func addTopicAction(action string, topic *c.Topic, user c.User) error {
 
 // TODO: Refactor this
 func LikeTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User, stid string) c.RouteError {
-	isJs := (r.PostFormValue("isJs") == "1")
+	js := (r.PostFormValue("js") == "1")
 	tid, err := strconv.Atoi(stid)
 	if err != nil {
-		return c.PreErrorJSQ(phrases.GetErrorPhrase("id_must_be_integer"), w, r, isJs)
+		return c.PreErrorJSQ(phrases.GetErrorPhrase("id_must_be_integer"), w, r, js)
 	}
 
 	topic, err := c.Topics.Get(tid)
 	if err == sql.ErrNoRows {
-		return c.PreErrorJSQ("The requested topic doesn't exist.", w, r, isJs)
+		return c.PreErrorJSQ("The requested topic doesn't exist.", w, r, js)
 	} else if err != nil {
-		return c.InternalErrorJSQ(err, w, r, isJs)
+		return c.InternalErrorJSQ(err, w, r, js)
 	}
 
 	// TODO: Add hooks to make use of headerLite
@@ -882,32 +882,32 @@ func LikeTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User, stid s
 		return ferr
 	}
 	if !user.Perms.ViewTopic || !user.Perms.LikeItem {
-		return c.NoPermissionsJSQ(w, r, user, isJs)
+		return c.NoPermissionsJSQ(w, r, user, js)
 	}
 	if topic.CreatedBy == user.ID {
-		return c.LocalErrorJSQ("You can't like your own topics", w, r, user, isJs)
+		return c.LocalErrorJSQ("You can't like your own topics", w, r, user, js)
 	}
 
 	_, err = c.Users.Get(topic.CreatedBy)
 	if err != nil && err == sql.ErrNoRows {
-		return c.LocalErrorJSQ("The target user doesn't exist", w, r, user, isJs)
+		return c.LocalErrorJSQ("The target user doesn't exist", w, r, user, js)
 	} else if err != nil {
-		return c.InternalErrorJSQ(err, w, r, isJs)
+		return c.InternalErrorJSQ(err, w, r, js)
 	}
 
 	score := 1
 	err = topic.Like(score, user.ID)
 	if err == c.ErrAlreadyLiked {
-		return c.LocalErrorJSQ("You already liked this", w, r, user, isJs)
+		return c.LocalErrorJSQ("You already liked this", w, r, user, js)
 	} else if err != nil {
-		return c.InternalErrorJSQ(err, w, r, isJs)
+		return c.InternalErrorJSQ(err, w, r, js)
 	}
 
 	// ! Be careful about leaking per-route permission state with &user
 	alert := c.Alert{ActorID: user.ID, TargetUserID: topic.CreatedBy, Event: "like", ElementType: "topic", ElementID: tid, Actor: &user}
 	err = c.AddActivityAndNotifyTarget(alert)
 	if err != nil {
-		return c.InternalErrorJSQ(err, w, r, isJs)
+		return c.InternalErrorJSQ(err, w, r, js)
 	}
 
 	skip, rerr := lite.Hooks.VhookSkippable("action_end_like_topic", topic.ID, &user)
@@ -915,7 +915,7 @@ func LikeTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User, stid s
 		return rerr
 	}
 
-	if !isJs {
+	if !js {
 		http.Redirect(w, r, "/topic/"+strconv.Itoa(tid), http.StatusSeeOther)
 	} else {
 		_, _ = w.Write(successJSONBytes)

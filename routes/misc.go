@@ -83,19 +83,19 @@ func CustomPage(w http.ResponseWriter, r *http.Request, user c.User, header *c.H
 // TODO: Set the cookie domain
 func ChangeTheme(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	//headerLite, _ := SimpleUserCheck(w, r, &user)
-	// TODO: Rename isJs to something else, just in case we rewrite the JS side in WebAssembly?
-	isJs := (r.PostFormValue("isJs") == "1")
+	// TODO: Rename js to something else, just in case we rewrite the JS side in WebAssembly?
+	js := (r.PostFormValue("js") == "1")
 	newTheme := c.SanitiseSingleLine(r.PostFormValue("newTheme"))
 
 	theme, ok := c.Themes[newTheme]
 	if !ok || theme.HideFromThemes {
-		return c.LocalErrorJSQ("That theme doesn't exist", w, r, user, isJs)
+		return c.LocalErrorJSQ("That theme doesn't exist", w, r, user, js)
 	}
 
 	cookie := http.Cookie{Name: "current_theme", Value: newTheme, Path: "/", MaxAge: int(c.Year)}
 	http.SetCookie(w, &cookie)
 
-	if !isJs {
+	if !js {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 	} else {
 		_, _ = w.Write(successJSONBytes)

@@ -486,7 +486,7 @@ h2 {
 	white-space: nowrap;
 }
 .topic_list_title_block .create_topic_opt a:before {
-	content: "{{lang "quick_topic.create_topic_button" . }}";
+	content: "{{lang "quick_topic.create_button" . }}";
 }
 .topic_list_title_block .mod_opt a:before {
 	content: "{{lang "topic_list.moderate" . }}";
@@ -1312,7 +1312,7 @@ input[type=checkbox]:checked + label .sel {
 		display: none;
 	}
 	.topic_list_title_block .create_topic_opt a:before {
-		content: "{{lang "quick_topic.create_topic_button_short" . }}";
+		content: "{{lang "quick_topic.create_button_short" . }}";
 	}
 	.topic_list_title_block .mod_opt a:before {
 		content: "{{lang "topic_list.moderate_short" . }}";
