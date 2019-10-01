@@ -281,8 +281,8 @@ func CreateTopic(w http.ResponseWriter, r *http.Request, user c.User, header *c.
 
 	// Lock this to the forum being linked?
 	// Should we always put it in strictmode when it's linked from another forum? Well, the user might end up changing their mind on what forum they want to post in and it would be a hassle, if they had to switch pages, even if it is a single click for many (exc. mobile)
-	var strictmode bool
-	header.Hooks.VhookNoRet("topic_create_pre_loop", w, r, fid, &header, &user, &strictmode)
+	var strict bool
+	header.Hooks.VhookNoRet("topic_create_pre_loop", w, r, fid, &header, &user, &strict)
 
 	// TODO: Re-add support for plugin_guilds
 	var forumList []c.Forum
@@ -306,7 +306,7 @@ func CreateTopic(w http.ResponseWriter, r *http.Request, user c.User, header *c.
 	// TODO: plugin_superadmin needs to be able to override this loop. Skip flag on topic_create_pre_loop?
 	for _, ffid := range canSee {
 		// TODO: Surely, there's a better way of doing this. I've added it in for now to support plugin_guilds, but we really need to clean this up
-		if strictmode && ffid != fid {
+		if strict && ffid != fid {
 			continue
 		}
 
@@ -339,10 +339,10 @@ func CreateTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.Ro
 		return c.NoPermissions(w, r, user)
 	}
 
-	topicName := c.SanitiseSingleLine(r.PostFormValue("topic-name"))
+	tname := c.SanitiseSingleLine(r.PostFormValue("topic-name"))
 	content := c.PreparseMessage(r.PostFormValue("topic-content"))
 	// TODO: Fully parse the post and store it in the parsed column
-	tid, err := c.Topics.Create(fid, topicName, content, user.ID, user.LastIP)
+	tid, err := c.Topics.Create(fid, tname, content, user.ID, user.LastIP)
 	if err != nil {
 		switch err {
 		case c.ErrNoRows:
@@ -362,8 +362,8 @@ func CreateTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.Ro
 		return c.LocalError("Unable to load the topic", w, r, user)
 	}
 	if r.PostFormValue("has_poll") == "1" {
-		var maxPollOptions = 10
-		var pollInputItems = make(map[int]string)
+		maxPollOptions := 10
+		pollInputItems := make(map[int]string)
 		for key, values := range r.Form {
 			for _, value := range values {
 				if !strings.HasPrefix(key, "pollinputitem[") {
@@ -394,7 +394,7 @@ func CreateTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.Ro
 
 		if len(pollInputItems) > 0 {
 			// Make sure the indices are sequential to avoid out of bounds issues
-			var seqPollInputItems = make(map[int]string)
+			seqPollInputItems := make(map[int]string)
 			for i := 0; i < len(pollInputItems); i++ {
 				seqPollInputItems[i] = pollInputItems[i]
 			}
@@ -666,7 +666,7 @@ func topicActionPre(stid string, action string, w http.ResponseWriter, r *http.R
 		return nil, nil, c.PreError(phrases.GetErrorPhrase("id_must_be_integer"), w, r)
 	}
 
-	topic, err := c.Topics.Get(tid)
+	t, err := c.Topics.Get(tid)
 	if err == sql.ErrNoRows {
 		return nil, nil, c.PreError("The topic you tried to "+action+" doesn't exist.", w, r)
 	} else if err != nil {
@@ -674,12 +674,11 @@ func topicActionPre(stid string, action string, w http.ResponseWriter, r *http.R
 	}
 
 	// TODO: Add hooks to make use of headerLite
-	lite, ferr := c.SimpleForumUserCheck(w, r, &user, topic.ParentID)
+	lite, ferr := c.SimpleForumUserCheck(w, r, &user, t.ParentID)
 	if ferr != nil {
 		return nil, nil, ferr
 	}
-
-	return topic, lite, nil
+	return t, lite, nil
 }
 
 func topicActionPost(err error, action string, w http.ResponseWriter, r *http.Request, lite *c.HeaderLite, topic *c.Topic, user c.User) c.RouteError {
@@ -698,15 +697,15 @@ func topicActionPost(err error, action string, w http.ResponseWriter, r *http.Re
 	return nil
 }
 
-func UnstickTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User, stid string) c.RouteError {
-	topic, lite, rerr := topicActionPre(stid, "unpin", w, r, user)
+func UnstickTopicSubmit(w http.ResponseWriter, r *http.Request, u c.User, stid string) c.RouteError {
+	t, lite, rerr := topicActionPre(stid, "unpin", w, r, u)
 	if rerr != nil {
 		return rerr
 	}
-	if !user.Perms.ViewTopic || !user.Perms.PinTopic {
-		return c.NoPermissions(w, r, user)
+	if !u.Perms.ViewTopic || !u.Perms.PinTopic {
+		return c.NoPermissions(w, r, u)
 	}
-	return topicActionPost(topic.Unstick(), "unstick", w, r, lite, topic, user)
+	return topicActionPost(t.Unstick(), "unstick", w, r, lite, t, u)
 }
 
 func LockTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
@@ -773,15 +772,15 @@ func LockTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.Rout
 	return nil
 }
 
-func UnlockTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User, stid string) c.RouteError {
-	topic, lite, rerr := topicActionPre(stid, "unlock", w, r, user)
+func UnlockTopicSubmit(w http.ResponseWriter, r *http.Request, u c.User, stid string) c.RouteError {
+	t, lite, rerr := topicActionPre(stid, "unlock", w, r, u)
 	if rerr != nil {
 		return rerr
 	}
-	if !user.Perms.ViewTopic || !user.Perms.CloseTopic {
-		return c.NoPermissions(w, r, user)
+	if !u.Perms.ViewTopic || !u.Perms.CloseTopic {
+		return c.NoPermissions(w, r, u)
 	}
-	return topicActionPost(topic.Unlock(), "unlock", w, r, lite, topic, user)
+	return topicActionPost(t.Unlock(), "unlock", w, r, lite, t, u)
 }
 
 // ! JS only route
@@ -853,12 +852,12 @@ func MoveTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User, sfid s
 	return nil
 }
 
-func addTopicAction(action string, topic *c.Topic, user c.User) error {
-	err := c.ModLogs.Create(action, topic.ID, "topic", user.LastIP, user.ID)
+func addTopicAction(action string, t *c.Topic, u c.User) error {
+	err := c.ModLogs.Create(action, t.ID, "topic", u.LastIP, u.ID)
 	if err != nil {
 		return err
 	}
-	return topic.CreateActionReply(action, user.LastIP, user.ID)
+	return t.CreateActionReply(action, u.LastIP, u.ID)
 }
 
 // TODO: Refactor this

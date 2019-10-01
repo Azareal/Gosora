@@ -2,9 +2,9 @@ package common
 
 import (
 	"encoding/json"
+	"log"
 	"sync"
 	"time"
-	"log"
 
 	"github.com/gorilla/websocket"
 )
@@ -38,7 +38,7 @@ func init() {
 	}
 }
 
-func (hub *WsHubImpl) Start() {
+func (h *WsHubImpl) Start() {
 	log.Print("Setting up the WebSocket ticks")
 	ticker := time.NewTicker(time.Minute * 5)
 	defer func() {
@@ -47,9 +47,9 @@ func (hub *WsHubImpl) Start() {
 
 	go func() {
 		for {
-			item := func(lock *sync.RWMutex, userMap map[int]*WSUser) {
-				lock.RLock()
-				defer lock.RUnlock()
+			item := func(l *sync.RWMutex, userMap map[int]*WSUser) {
+				l.RLock()
+				defer l.RUnlock()
 				// TODO: Copy to temporary slice for less contention?
 				for _, user := range userMap {
 					user.Ping()
@@ -57,40 +57,40 @@ func (hub *WsHubImpl) Start() {
 			}
 			select {
 			case <-ticker.C:
-				item(&hub.evenUserLock, hub.evenOnlineUsers)
-				item(&hub.oddUserLock, hub.oddOnlineUsers)
+				item(&h.evenUserLock, h.evenOnlineUsers)
+				item(&h.oddUserLock, h.oddOnlineUsers)
 			}
 		}
 	}()
 	if Config.DisableLiveTopicList {
 		return
 	}
-	hub.lastTick = time.Now()
-	AddScheduledSecondTask(hub.Tick)
+	h.lastTick = time.Now()
+	AddScheduledSecondTask(h.Tick)
 }
 
 // This Tick is separate from the admin one, as we want to process that in parallel with this due to the blocking calls to gopsutil
-func (hub *WsHubImpl) Tick() error {
-	return wsTopicListTick(hub)
+func (h *WsHubImpl) Tick() error {
+	return wsTopicListTick(h)
 }
 
-func wsTopicListTick(hub *WsHubImpl) error {
+func wsTopicListTick(h *WsHubImpl) error {
 	// Avoid hitting GetList when the topic list hasn't changed
-	if !TopicListThaw.Thawed() && hub.lastTopicList != nil {
+	if !TopicListThaw.Thawed() && h.lastTopicList != nil {
 		return nil
 	}
 	tickStart := time.Now()
-	
+
 	// Don't waste CPU time if nothing has happened
 	// TODO: Get a topic list method which strips stickies?
 	tList, _, _, err := TopicList.GetList(1, "", nil)
 	if err != nil {
-		hub.lastTick = tickStart
+		h.lastTick = tickStart
 		return err // TODO: Do we get ErrNoRows here?
 	}
 	defer func() {
-		hub.lastTick = tickStart
-		hub.lastTopicList = tList
+		h.lastTick = tickStart
+		h.lastTopicList = tList
 	}()
 	if len(tList) == 0 {
 		return nil
@@ -99,11 +99,11 @@ func wsTopicListTick(hub *WsHubImpl) error {
 	// TODO: Optimise this by only sniffing the top non-sticky
 	// TODO: Optimise this by getting back an unsorted list so we don't have to hop around the stickies
 	// TODO: Add support for new stickies / replies to them
-	if len(tList) == len(hub.lastTopicList) {
-		var hasItem = false
+	if len(tList) == len(h.lastTopicList) {
+		hasItem := false
 		for j, tItem := range tList {
 			if !tItem.Sticky {
-				if tItem.ID != hub.lastTopicList[j].ID || !tItem.LastReplyAt.Equal(hub.lastTopicList[j].LastReplyAt) {
+				if tItem.ID != h.lastTopicList[j].ID || !tItem.LastReplyAt.Equal(h.lastTopicList[j].LastReplyAt) {
 					hasItem = true
 				}
 			}
@@ -122,9 +122,9 @@ func wsTopicListTick(hub *WsHubImpl) error {
 	}
 
 	// Copy these over so we close this loop as fast as possible so we can release the read lock, especially if the group gets are backed by calls to the database
-	var groupIDs = make(map[int]bool)
-	var currentWatchers = make([]*WSUser, len(topicListWatchers))
-	var i = 0
+	groupIDs := make(map[int]bool)
+	currentWatchers := make([]*WSUser, len(topicListWatchers))
+	i := 0
 	for wsUser, _ := range topicListWatchers {
 		currentWatchers[i] = wsUser
 		groupIDs[wsUser.User.Group] = true
@@ -132,8 +132,8 @@ func wsTopicListTick(hub *WsHubImpl) error {
 	}
 	topicListMutex.RUnlock()
 
-	var groups = make(map[int]*Group)
-	var canSeeMap = make(map[string][]int)
+	groups := make(map[int]*Group)
+	canSeeMap := make(map[string][]int)
 	for groupID, _ := range groupIDs {
 		group, err := Groups.Get(groupID)
 		if err != nil {
@@ -142,14 +142,14 @@ func wsTopicListTick(hub *WsHubImpl) error {
 		}
 		groups[group.ID] = group
 
-		var canSee = make([]byte, len(group.CanSee))
+		canSee := make([]byte, len(group.CanSee))
 		for i, item := range group.CanSee {
 			canSee[i] = byte(item)
 		}
 		canSeeMap[string(canSee)] = group.CanSee
 	}
 
-	var canSeeRenders = make(map[string][]byte)
+	canSeeRenders := make(map[string][]byte)
 	for name, canSee := range canSeeMap {
 		topicList, forumList, _, err := TopicList.GetListByCanSee(canSee, 1, "", nil)
 		if err != nil {
@@ -161,7 +161,7 @@ func wsTopicListTick(hub *WsHubImpl) error {
 		_ = forumList // Might use this later after we get the base feature working
 
 		if topicList[0].Sticky {
-			var lastSticky = 0
+			lastSticky := 0
 			for i, row := range topicList {
 				if !row.Sticky {
 					lastSticky = i
@@ -175,7 +175,7 @@ func wsTopicListTick(hub *WsHubImpl) error {
 		}
 
 		// TODO: Compare to previous tick to eliminate unnecessary work and data
-		var wsTopicList = make([]*WsTopicsRow, len(topicList))
+		wsTopicList := make([]*WsTopicsRow, len(topicList))
 		for i, topicRow := range topicList {
 			wsTopicList[i] = topicRow.WebSockets()
 		}
@@ -191,7 +191,7 @@ func wsTopicListTick(hub *WsHubImpl) error {
 	//fmt.Println("writing to the clients")
 	for _, wsUser := range currentWatchers {
 		group := groups[wsUser.User.Group]
-		var canSee = make([]byte, len(group.CanSee))
+		canSee := make([]byte, len(group.CanSee))
 		for i, item := range group.CanSee {
 			canSee[i] = byte(item)
 		}
@@ -213,38 +213,39 @@ func wsTopicListTick(hub *WsHubImpl) error {
 	return nil
 }
 
-func (hub *WsHubImpl) GuestCount() int {
-	defer hub.GuestLock.RUnlock()
-	hub.GuestLock.RLock()
-	return len(hub.OnlineGuests)
+func (h *WsHubImpl) GuestCount() int {
+	h.GuestLock.RLock()
+	defer h.GuestLock.RUnlock()
+	return len(h.OnlineGuests)
 }
 
-func (hub *WsHubImpl) UserCount() (count int) {
-	hub.evenUserLock.RLock()
-	count += len(hub.evenOnlineUsers)
-	hub.evenUserLock.RUnlock()
-	hub.oddUserLock.RLock()
-	count += len(hub.oddOnlineUsers)
-	hub.oddUserLock.RUnlock()
+func (h *WsHubImpl) UserCount() (count int) {
+	h.evenUserLock.RLock()
+	count += len(h.evenOnlineUsers)
+	h.evenUserLock.RUnlock()
+	h.oddUserLock.RLock()
+	count += len(h.oddOnlineUsers)
+	h.oddUserLock.RUnlock()
 	return count
 }
 
-func (hub *WsHubImpl) HasUser(uid int) (exists bool) {
-	hub.evenUserLock.RLock()
-	_, exists = hub.evenOnlineUsers[uid]
-	hub.evenUserLock.RUnlock()
+func (h *WsHubImpl) HasUser(uid int) (exists bool) {
+	h.evenUserLock.RLock()
+	_, exists = h.evenOnlineUsers[uid]
+	h.evenUserLock.RUnlock()
 	if exists {
 		return exists
 	}
-	hub.oddUserLock.RLock()
-	_, exists = hub.oddOnlineUsers[uid]
-	hub.oddUserLock.RUnlock()
+	h.oddUserLock.RLock()
+	_, exists = h.oddOnlineUsers[uid]
+	h.oddUserLock.RUnlock()
 	return exists
 }
 
-func (hub *WsHubImpl) broadcastMessage(msg string) error {
-	var userLoop = func(users map[int]*WSUser, mutex *sync.RWMutex) error {
-		defer mutex.RUnlock()
+func (h *WsHubImpl) broadcastMessage(msg string) error {
+	userLoop := func(users map[int]*WSUser, m *sync.RWMutex) error {
+		m.RLock()
+		defer m.RUnlock()
 		for _, wsUser := range users {
 			err := wsUser.WriteAll(msg)
 			if err != nil {
@@ -254,25 +255,23 @@ func (hub *WsHubImpl) broadcastMessage(msg string) error {
 		return nil
 	}
 	// TODO: Can we move this RLock inside the closure safely?
-	hub.evenUserLock.RLock()
-	err := userLoop(hub.evenOnlineUsers, &hub.evenUserLock)
+	err := userLoop(h.evenOnlineUsers, &h.evenUserLock)
 	if err != nil {
 		return err
 	}
-	hub.oddUserLock.RLock()
-	return userLoop(hub.oddOnlineUsers, &hub.oddUserLock)
+	return userLoop(h.oddOnlineUsers, &h.oddUserLock)
 }
 
-func (hub *WsHubImpl) getUser(uid int) (wsUser *WSUser, err error) {
+func (h *WsHubImpl) getUser(uid int) (wsUser *WSUser, err error) {
 	var ok bool
 	if uid%2 == 0 {
-		hub.evenUserLock.RLock()
-		wsUser, ok = hub.evenOnlineUsers[uid]
-		hub.evenUserLock.RUnlock()
+		h.evenUserLock.RLock()
+		wsUser, ok = h.evenOnlineUsers[uid]
+		h.evenUserLock.RUnlock()
 	} else {
-		hub.oddUserLock.RLock()
-		wsUser, ok = hub.oddOnlineUsers[uid]
-		hub.oddUserLock.RUnlock()
+		h.oddUserLock.RLock()
+		wsUser, ok = h.oddOnlineUsers[uid]
+		h.oddUserLock.RUnlock()
 	}
 	if !ok {
 		return nil, errWsNouser
@@ -281,20 +280,20 @@ func (hub *WsHubImpl) getUser(uid int) (wsUser *WSUser, err error) {
 }
 
 // Warning: For efficiency, some of the *WSUsers may be nil pointers, DO NOT EXPORT
-func (hub *WsHubImpl) getUsers(uids []int) (wsUsers []*WSUser, err error) {
+func (h *WsHubImpl) getUsers(uids []int) (wsUsers []*WSUser, err error) {
 	if len(uids) == 0 {
 		return nil, errWsNouser
 	}
-	var appender = func(lock *sync.RWMutex, users map[int]*WSUser) {
-		lock.RLock()
-		defer lock.RUnlock()
+	appender := func(l *sync.RWMutex, users map[int]*WSUser) {
+		l.RLock()
+		defer l.RUnlock()
 		// We don't want to keep a lock on this for too long, so we'll accept some nil pointers
 		for _, uid := range uids {
 			wsUsers = append(wsUsers, users[uid])
 		}
 	}
-	appender(&hub.evenUserLock, hub.evenOnlineUsers)
-	appender(&hub.oddUserLock, hub.oddOnlineUsers)
+	appender(&h.evenUserLock, h.evenOnlineUsers)
+	appender(&h.oddUserLock, h.oddOnlineUsers)
 	if len(wsUsers) == 0 {
 		return nil, errWsNouser
 	}
@@ -302,32 +301,32 @@ func (hub *WsHubImpl) getUsers(uids []int) (wsUsers []*WSUser, err error) {
 }
 
 // For Widget WOL, please avoid using this as it might wind up being really long and slow without the right safeguards
-func (hub *WsHubImpl) AllUsers() (users []*User) {
-	var appender = func(lock *sync.RWMutex, userMap map[int]*WSUser) {
-		lock.RLock()
-		defer lock.RUnlock()
+func (h *WsHubImpl) AllUsers() (users []*User) {
+	appender := func(l *sync.RWMutex, userMap map[int]*WSUser) {
+		l.RLock()
+		defer l.RUnlock()
 		for _, user := range userMap {
 			users = append(users, user.User)
 		}
 	}
-	appender(&hub.evenUserLock, hub.evenOnlineUsers)
-	appender(&hub.oddUserLock, hub.oddOnlineUsers)
+	appender(&h.evenUserLock, h.evenOnlineUsers)
+	appender(&h.oddUserLock, h.oddOnlineUsers)
 	return users
 }
 
-func (hub *WsHubImpl) removeUser(uid int) {
+func (h *WsHubImpl) removeUser(uid int) {
 	if uid%2 == 0 {
-		hub.evenUserLock.Lock()
-		delete(hub.evenOnlineUsers, uid)
-		hub.evenUserLock.Unlock()
+		h.evenUserLock.Lock()
+		delete(h.evenOnlineUsers, uid)
+		h.evenUserLock.Unlock()
 	} else {
-		hub.oddUserLock.Lock()
-		delete(hub.oddOnlineUsers, uid)
-		hub.oddUserLock.Unlock()
+		h.oddUserLock.Lock()
+		delete(h.oddOnlineUsers, uid)
+		h.oddUserLock.Unlock()
 	}
 }
 
-func (hub *WsHubImpl) AddConn(user User, conn *websocket.Conn) (*WSUser, error) {
+func (h *WsHubImpl) AddConn(user User, conn *websocket.Conn) (*WSUser, error) {
 	if user.ID == 0 {
 		wsUser := new(WSUser)
 		wsUser.User = new(User)
@@ -348,11 +347,11 @@ func (hub *WsHubImpl) AddConn(user User, conn *websocket.Conn) (*WSUser, error) 
 	var mutex *sync.RWMutex
 	var theMap map[int]*WSUser
 	if user.ID%2 == 0 {
-		mutex = &hub.evenUserLock
-		theMap = hub.evenOnlineUsers
+		mutex = &h.evenUserLock
+		theMap = h.evenOnlineUsers
 	} else {
-		mutex = &hub.oddUserLock
-		theMap = hub.oddOnlineUsers
+		mutex = &h.oddUserLock
+		theMap = h.oddOnlineUsers
 	}
 
 	mutex.Lock()
@@ -370,25 +369,25 @@ func (hub *WsHubImpl) AddConn(user User, conn *websocket.Conn) (*WSUser, error) 
 	return wsUser, nil
 }
 
-func (hub *WsHubImpl) RemoveConn(wsUser *WSUser, conn *websocket.Conn) {
+func (h *WsHubImpl) RemoveConn(wsUser *WSUser, conn *websocket.Conn) {
 	wsUser.RemoveSocket(conn)
 	wsUser.Lock()
 	if len(wsUser.Sockets) == 0 {
-		hub.removeUser(wsUser.User.ID)
+		h.removeUser(wsUser.User.ID)
 	}
 	wsUser.Unlock()
 }
 
-func (hub *WsHubImpl) PushMessage(targetUser int, msg string) error {
-	wsUser, err := hub.getUser(targetUser)
+func (h *WsHubImpl) PushMessage(targetUser int, msg string) error {
+	wsUser, err := h.getUser(targetUser)
 	if err != nil {
 		return err
 	}
 	return wsUser.WriteAll(msg)
 }
 
-func (hub *WsHubImpl) pushAlert(targetUser int, alert Alert) error {
-	wsUser, err := hub.getUser(targetUser)
+func (h *WsHubImpl) pushAlert(targetUser int, alert Alert) error {
+	wsUser, err := h.getUser(targetUser)
 	if err != nil {
 		return err
 	}
@@ -399,8 +398,8 @@ func (hub *WsHubImpl) pushAlert(targetUser int, alert Alert) error {
 	return wsUser.WriteAll(astr)
 }
 
-func (hub *WsHubImpl) pushAlerts(users []int, alert Alert) error {
-	wsUsers, err := hub.getUsers(users)
+func (h *WsHubImpl) pushAlerts(users []int, alert Alert) error {
+	wsUsers, err := h.getUsers(users)
 	if err != nil {
 		return err
 	}

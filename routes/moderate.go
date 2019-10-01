@@ -15,7 +15,7 @@ func IPSearch(w http.ResponseWriter, r *http.Request, user c.User, header *c.Hea
 	}
 
 	// TODO: Reject IP Addresses with illegal characters
-	var ip = c.SanitiseSingleLine(r.FormValue("ip"))
+	ip := c.SanitiseSingleLine(r.FormValue("ip"))
 	uids, err := c.IPSearch.Lookup(ip)
 	if err != nil {
 		return c.InternalError(err, w, r)

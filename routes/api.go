@@ -37,7 +37,7 @@ func SitemapXml(w http.ResponseWriter, r *http.Request) c.RouteError {
 	if c.Site.EnableSsl {
 		sslBit = "s"
 	}
-	var sitemapItem = func(path string) {
+	sitemapItem := func(path string) {
 		w.Write([]byte(`<sitemap>
 	<loc>http` + sslBit + `://` + c.Site.URL + "/" + path + `</loc>
 </sitemap>
@@ -72,10 +72,10 @@ var fuzzySitemapRoutes = map[string]FuzzyRoute{
 }
 
 func sitemapSwitch(w http.ResponseWriter, r *http.Request) c.RouteError {
-	var path = r.URL.Path[len("/sitemaps/"):]
+	path := r.URL.Path[len("/sitemaps/"):]
 	for name, fuzzy := range fuzzySitemapRoutes {
 		if strings.HasPrefix(path, name) && strings.HasSuffix(path, ".xml") {
-			var spath = strings.TrimPrefix(path, name)
+			spath := strings.TrimPrefix(path, name)
 			spath = strings.TrimSuffix(spath, ".xml")
 			page, err := strconv.Atoi(spath)
 			if err != nil {
@@ -99,7 +99,7 @@ func SitemapForums(w http.ResponseWriter, r *http.Request) c.RouteError {
 	if c.Site.EnableSsl {
 		sslBit = "s"
 	}
-	var sitemapItem = func(path string) {
+	sitemapItem := func(path string) {
 		w.Write([]byte(`<url>
 	<loc>http` + sslBit + `://` + c.Site.URL + path + `</loc>
 </url>
@@ -116,9 +116,9 @@ func SitemapForums(w http.ResponseWriter, r *http.Request) c.RouteError {
 
 	for _, fid := range group.CanSee {
 		// Avoid data races by copying the struct into something we can freely mold without worrying about breaking something somewhere else
-		var forum = c.Forums.DirtyGet(fid).Copy()
-		if forum.ParentID == 0 && forum.Name != "" && forum.Active {
-			sitemapItem(c.BuildForumURL(c.NameToSlug(forum.Name), forum.ID))
+		f := c.Forums.DirtyGet(fid).Copy()
+		if f.ParentID == 0 && f.Name != "" && f.Active {
+			sitemapItem(c.BuildForumURL(c.NameToSlug(f.Name), f.ID))
 		}
 	}
 
@@ -133,7 +133,7 @@ func SitemapTopics(w http.ResponseWriter, r *http.Request) c.RouteError {
 	if c.Site.EnableSsl {
 		sslBit = "s"
 	}
-	var sitemapItem = func(path string) {
+	sitemapItem := func(path string) {
 		w.Write([]byte(`<sitemap>
 	<loc>http` + sslBit + `://` + c.Site.URL + "/" + path + `</loc>
 </sitemap>
@@ -158,7 +158,7 @@ func SitemapTopics(w http.ResponseWriter, r *http.Request) c.RouteError {
 		return c.InternalErrorXML(err, w, r)
 	}
 
-	var pageCount = topicCount / sitemapPageCap
+	pageCount := topicCount / sitemapPageCap
 	//log.Print("topicCount", topicCount)
 	//log.Print("pageCount", pageCount)
 	writeXMLHeader(w, r)
@@ -201,7 +201,7 @@ func SitemapTopic(w http.ResponseWriter, r *http.Request, page int) c.RouteError
 		return c.InternalErrorXML(err, w, r)
 	}
 
-	var pageCount = topicCount / sitemapPageCap
+	pageCount := topicCount / sitemapPageCap
 	//log.Print("topicCount", topicCount)
 	//log.Print("pageCount", pageCount)
 	//log.Print("page",page)
@@ -243,7 +243,6 @@ func APIMe(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	w.Header().Set("Cache-Control", "private")
 
 	me := JsonMe{(&user).Me(), MeSite{c.Site.MaxRequestSize}}
-
 	jsonBytes, err := json.Marshal(me)
 	if err != nil {
 		return c.InternalErrorJS(err, w, r)
@@ -258,13 +257,13 @@ func OpenSearchXml(w http.ResponseWriter, r *http.Request) c.RouteError {
 	if c.Site.EnableSsl {
 		furl += "s"
 	}
-	furl += "://"+c.Site.URL
+	furl += "://" + c.Site.URL
 	w.Write([]byte(`<OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/" xmlns:moz="http://www.mozilla.org/2006/browser/search/">
-	<ShortName>`+c.Site.Name+`</ShortName>
+	<ShortName>` + c.Site.Name + `</ShortName>
 	<InputEncoding>UTF-8</InputEncoding>
-	<Url type="text/html" template="`+furl+`/topics/?q={searchTerms}" />
-	<Url type="application/opensearchdescription+xml" rel="self" template="`+furl+`/opensearch.xml" />
-	<moz:SearchForm>`+furl+`</moz:SearchForm>
+	<Url type="text/html" template="` + furl + `/topics/?q={searchTerms}" />
+	<Url type="application/opensearchdescription+xml" rel="self" template="` + furl + `/opensearch.xml" />
+	<moz:SearchForm>` + furl + `</moz:SearchForm>
 </OpenSearchDescription>`))
 	return nil
 }

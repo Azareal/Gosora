@@ -35,15 +35,15 @@ func ShowAttachment(w http.ResponseWriter, r *http.Request, user c.User, filenam
 		return c.LocalError("Bad extension", w, r, user)
 	}
 
-	sectionID, err := strconv.Atoi(r.FormValue("sid"))
+	sid, err := strconv.Atoi(r.FormValue("sid"))
 	if err != nil {
-		return c.LocalError("The sectionID is not an integer", w, r, user)
+		return c.LocalError("The sid is not an integer", w, r, user)
 	}
 	sectionTable := r.FormValue("stype")
 
 	var originTable string
 	var originID, uploadedBy int
-	err = attachmentStmts.get.QueryRow(filename, sectionID, sectionTable).Scan(&sectionID, &sectionTable, &originID, &originTable, &uploadedBy, &filename)
+	err = attachmentStmts.get.QueryRow(filename, sid, sectionTable).Scan(&sid, &sectionTable, &originID, &originTable, &uploadedBy, &filename)
 	if err == sql.ErrNoRows {
 		return c.NotFound(w, r, nil)
 	} else if err != nil {
@@ -51,7 +51,7 @@ func ShowAttachment(w http.ResponseWriter, r *http.Request, user c.User, filenam
 	}
 
 	if sectionTable == "forums" {
-		_, ferr := c.SimpleForumUserCheck(w, r, &user, sectionID)
+		_, ferr := c.SimpleForumUserCheck(w, r, &user, sid)
 		if ferr != nil {
 			return ferr
 		}
@@ -70,7 +70,7 @@ func ShowAttachment(w http.ResponseWriter, r *http.Request, user c.User, filenam
 		w.Header().Set("Cache-Control", "max-age="+strconv.Itoa(int(c.Year)))
 	} else {
 		guest := c.GuestUser
-		_, ferr := c.SimpleForumUserCheck(w, r, &guest, sectionID)
+		_, ferr := c.SimpleForumUserCheck(w, r, &guest, sid)
 		if ferr != nil {
 			return ferr
 		}

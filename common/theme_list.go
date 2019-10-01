@@ -53,7 +53,6 @@ func init() {
 
 func NewThemeList() (themes ThemeList, err error) {
 	themes = make(map[string]*Theme)
-
 	themeFiles, err := ioutil.ReadDir("./themes")
 	if err != nil {
 		return themes, err
@@ -76,7 +75,7 @@ func NewThemeList() (themes ThemeList, err error) {
 			return themes, err
 		}
 
-		var theme = &Theme{Name: ""}
+		theme := &Theme{Name: ""}
 		err = json.Unmarshal(themeFile, theme)
 		if err != nil {
 			return themes, err
@@ -151,7 +150,7 @@ func NewThemeList() (themes ThemeList, err error) {
 				if override.IsDir() {
 					continue
 				}
-				var ext = filepath.Ext(themePath + "/overrides/" + override.Name())
+				ext := filepath.Ext(themePath + "/overrides/" + override.Name())
 				log.Print("attempting to add " + themePath + "/overrides/" + override.Name())
 				if ext != ".html" {
 					log.Print("not a html file")
@@ -192,7 +191,7 @@ func NewThemeList() (themes ThemeList, err error) {
 
 // TODO: Make the initThemes and LoadThemes functions less confusing
 // ? - Delete themes which no longer exist in the themes folder from the database?
-func (themes ThemeList) LoadActiveStatus() error {
+func (t ThemeList) LoadActiveStatus() error {
 	ChangeDefaultThemeMutex.Lock()
 	defer ChangeDefaultThemeMutex.Unlock()
 
@@ -211,7 +210,7 @@ func (themes ThemeList) LoadActiveStatus() error {
 		}
 
 		// Was the theme deleted at some point?
-		theme, ok := themes[uname]
+		theme, ok := t[uname]
 		if !ok {
 			continue
 		}
@@ -226,13 +225,13 @@ func (themes ThemeList) LoadActiveStatus() error {
 			theme.Active = false
 		}
 
-		themes[uname] = theme
+		t[uname] = theme
 	}
 	return rows.Err()
 }
 
-func (themes ThemeList) LoadStaticFiles() error {
-	for _, theme := range themes {
+func (t ThemeList) LoadStaticFiles() error {
+	for _, theme := range t {
 		err := theme.LoadStaticFiles()
 		if err != nil {
 			return err

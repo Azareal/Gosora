@@ -290,10 +290,10 @@ var adminStatsMutex sync.RWMutex
 func adminStatsTicker() {
 	time.Sleep(time.Second)
 
-	var lastUonline = -1
-	var lastGonline = -1
-	var lastTotonline = -1
-	var lastCPUPerc = -1
+	lastUonline := -1
+	lastGonline := -1
+	lastTotonline := -1
+	lastCPUPerc := -1
 	var lastAvailableRAM int64 = -1
 	var noStatUpdates, noRAMUpdates bool
 

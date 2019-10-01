@@ -35,9 +35,9 @@ func NewSQLSearcher(acc *qgen.Accumulator) (*SQLSearcher, error) {
 	}, acc.FirstError()
 }
 
-func (search *SQLSearcher) queryAll(q string) ([]int, error) {
+func (s *SQLSearcher) queryAll(q string) ([]int, error) {
 	var ids []int
-	var run = func(stmt *sql.Stmt, q ...interface{}) error {
+	run := func(stmt *sql.Stmt, q ...interface{}) error {
 		rows, err := stmt.Query(q...)
 		if err == sql.ErrNoRows {
 			return nil
@@ -57,11 +57,11 @@ func (search *SQLSearcher) queryAll(q string) ([]int, error) {
 		return rows.Err()
 	}
 
-	err := run(search.queryReplies, q)
+	err := run(s.queryReplies, q)
 	if err != nil {
 		return nil, err
 	}
-	err = run(search.queryTopics, q, q)
+	err = run(s.queryTopics, q, q)
 	if err != nil {
 		return nil, err
 	}
@@ -71,11 +71,11 @@ func (search *SQLSearcher) queryAll(q string) ([]int, error) {
 	return ids, err
 }
 
-func (search *SQLSearcher) Query(q string, zones []int) (ids []int, err error) {
+func (s *SQLSearcher) Query(q string, zones []int) (ids []int, err error) {
 	if len(zones) == 0 {
 		return nil, nil
 	}
-	var run = func(rows *sql.Rows, err error) error {
+	run := func(rows *sql.Rows, err error) error {
 		if err == sql.ErrNoRows {
 			return nil
 		} else if err != nil {
@@ -95,7 +95,7 @@ func (search *SQLSearcher) Query(q string, zones []int) (ids []int, err error) {
 	}
 
 	if len(zones) == 1 {
-		err = run(search.queryZone.Query(q, q, q, zones[0]))
+		err = run(s.queryZone.Query(q, q, q, zones[0]))
 	} else {
 		var zList string
 		for _, zone := range zones {
@@ -128,6 +128,6 @@ func NewElasticSearchSearcher() (*ElasticSearchSearcher, error) {
 	return &ElasticSearchSearcher{}, nil
 }
 
-func (search *ElasticSearchSearcher) Query(q string, zones []int) ([]int, error) {
+func (s *ElasticSearchSearcher) Query(q string, zones []int) ([]int, error) {
 	return nil, nil
 }

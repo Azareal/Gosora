@@ -22,8 +22,8 @@ type WSUserSocket struct {
 	Page string
 }
 
-func (wsUser *WSUser) Ping() error {
-	for _, socket := range wsUser.Sockets {
+func (u *WSUser) Ping() error {
+	for _, socket := range u.Sockets {
 		if socket == nil {
 			continue
 		}
@@ -36,9 +36,9 @@ func (wsUser *WSUser) Ping() error {
 	return nil
 }
 
-func (wsUser *WSUser) WriteAll(msg string) error {
+func (u *WSUser) WriteAll(msg string) error {
 	msgbytes := []byte(msg)
-	for _, socket := range wsUser.Sockets {
+	for _, socket := range u.Sockets {
 		if socket == nil {
 			continue
 		}
@@ -52,14 +52,14 @@ func (wsUser *WSUser) WriteAll(msg string) error {
 	return nil
 }
 
-func (wsUser *WSUser) WriteToPage(msg string, page string) error {
-	return wsUser.WriteToPageBytes([]byte(msg), page)
+func (u *WSUser) WriteToPage(msg string, page string) error {
+	return u.WriteToPageBytes([]byte(msg), page)
 }
 
 // Inefficient as it looks for sockets for a page even if there are none
-func (wsUser *WSUser) WriteToPageBytes(msg []byte, page string) error {
+func (u *WSUser) WriteToPageBytes(msg []byte, page string) error {
 	var success bool
-	for _, socket := range wsUser.Sockets {
+	for _, socket := range u.Sockets {
 		if socket == nil {
 			continue
 		}
@@ -80,34 +80,34 @@ func (wsUser *WSUser) WriteToPageBytes(msg []byte, page string) error {
 	return nil
 }
 
-func (wsUser *WSUser) AddSocket(conn *websocket.Conn, page string) {
-	wsUser.Lock()
+func (u *WSUser) AddSocket(conn *websocket.Conn, page string) {
+	u.Lock()
 	// If the number of the sockets is small, then we can keep the size of the slice mostly static and just walk through it looking for empty slots
-	if len(wsUser.Sockets) < 6 {
-		for i, socket := range wsUser.Sockets {
+	if len(u.Sockets) < 6 {
+		for i, socket := range u.Sockets {
 			if socket == nil {
-				wsUser.Sockets[i] = &WSUserSocket{conn, page}
-				wsUser.Unlock()
-				//fmt.Printf("%+v\n", wsUser.Sockets)
+				u.Sockets[i] = &WSUserSocket{conn, page}
+				u.Unlock()
+				//fmt.Printf("%+v\n", u.Sockets)
 				return
 			}
 		}
 	}
-	wsUser.Sockets = append(wsUser.Sockets, &WSUserSocket{conn, page})
-	//fmt.Printf("%+v\n", wsUser.Sockets)
-	wsUser.Unlock()
+	u.Sockets = append(u.Sockets, &WSUserSocket{conn, page})
+	//fmt.Printf("%+v\n", u.Sockets)
+	u.Unlock()
 }
 
-func (wsUser *WSUser) RemoveSocket(conn *websocket.Conn) {
-	wsUser.Lock()
-	if len(wsUser.Sockets) < 6 {
-		for i, socket := range wsUser.Sockets {
+func (u *WSUser) RemoveSocket(conn *websocket.Conn) {
+	u.Lock()
+	if len(u.Sockets) < 6 {
+		for i, socket := range u.Sockets {
 			if socket == nil {
 				continue
 			}
 			if socket.conn == conn {
-				wsUser.Sockets[i] = nil
-				wsUser.Unlock()
+				u.Sockets[i] = nil
+				u.Unlock()
 				//fmt.Printf("%+v\n", wsUser.Sockets)
 				return
 			}
@@ -115,25 +115,25 @@ func (wsUser *WSUser) RemoveSocket(conn *websocket.Conn) {
 	}
 
 	var key int
-	for i, socket := range wsUser.Sockets {
+	for i, socket := range u.Sockets {
 		if socket.conn == conn {
 			key = i
 			break
 		}
 	}
-	wsUser.Sockets = append(wsUser.Sockets[:key], wsUser.Sockets[key+1:]...)
-	//fmt.Printf("%+v\n", wsUser.Sockets)
+	u.Sockets = append(u.Sockets[:key], u.Sockets[key+1:]...)
+	//fmt.Printf("%+v\n", u.Sockets)
 
-	wsUser.Unlock()
+	u.Unlock()
 }
 
-func (wsUser *WSUser) SetPageForSocket(conn *websocket.Conn, page string) error {
+func (u *WSUser) SetPageForSocket(conn *websocket.Conn, page string) error {
 	if conn == nil {
 		return ErrInvalidSocket
 	}
 
-	wsUser.Lock()
-	for _, socket := range wsUser.Sockets {
+	u.Lock()
+	for _, socket := range u.Sockets {
 		if socket == nil {
 			continue
 		}
@@ -141,15 +141,15 @@ func (wsUser *WSUser) SetPageForSocket(conn *websocket.Conn, page string) error 
 			socket.Page = page
 		}
 	}
-	wsUser.Unlock()
+	u.Unlock()
 
 	return nil
 }
 
-func (wsUser *WSUser) InPage(page string) bool {
-	wsUser.Lock()
-	defer wsUser.Unlock()
-	for _, socket := range wsUser.Sockets {
+func (u *WSUser) InPage(page string) bool {
+	u.Lock()
+	defer u.Unlock()
+	for _, socket := range u.Sockets {
 		if socket == nil {
 			continue
 		}
@@ -160,10 +160,10 @@ func (wsUser *WSUser) InPage(page string) bool {
 	return false
 }
 
-func (wsUser *WSUser) FinalizePage(page string, handle func()) {
-	wsUser.Lock()
-	defer wsUser.Unlock()
-	for _, socket := range wsUser.Sockets {
+func (u *WSUser) FinalizePage(page string, handle func()) {
+	u.Lock()
+	defer u.Unlock()
+	for _, socket := range u.Sockets {
 		if socket == nil {
 			continue
 		}

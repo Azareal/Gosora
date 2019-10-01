@@ -198,7 +198,7 @@ func ReplaceForumPermsForGroupTx(tx *sql.Tx, gid int, presetSets map[int]string,
 		return err
 	}
 
-	addForumPermsToGroupTx, err := qgen.Builder.SimpleInsertTx(tx, "forums_permissions", "gid, fid, preset, permissions", "?,?,?,?")
+	addForumPermsToGroupTx, err := qgen.Builder.SimpleInsertTx(tx, "forums_permissions", "gid,fid,preset,permissions", "?,?,?,?")
 	if err != nil {
 		return err
 	}
@@ -222,19 +222,19 @@ func ReplaceForumPermsForGroupTx(tx *sql.Tx, gid int, presetSets map[int]string,
 
 // TODO: Refactor this and write tests for it
 // TODO: We really need to improve the thread safety of this
-func ForumPermsToGroupForumPreset(fperms *ForumPerms) string {
-	if !fperms.Overrides {
+func ForumPermsToGroupForumPreset(fp *ForumPerms) string {
+	if !fp.Overrides {
 		return "default"
 	}
-	if !fperms.ViewTopic {
+	if !fp.ViewTopic {
 		return "no_access"
 	}
-	canPost := (fperms.LikeItem && fperms.CreateTopic && fperms.CreateReply)
-	canModerate := (canPost && fperms.EditTopic && fperms.DeleteTopic && fperms.EditReply && fperms.DeleteReply && fperms.PinTopic && fperms.CloseTopic && fperms.MoveTopic)
+	canPost := (fp.LikeItem && fp.CreateTopic && fp.CreateReply)
+	canModerate := (canPost && fp.EditTopic && fp.DeleteTopic && fp.EditReply && fp.DeleteReply && fp.PinTopic && fp.CloseTopic && fp.MoveTopic)
 	if canModerate {
 		return "can_moderate"
 	}
-	if fperms.EditTopic || fperms.DeleteTopic || fperms.EditReply || fperms.DeleteReply || fperms.PinTopic || fperms.CloseTopic || fperms.MoveTopic {
+	if fp.EditTopic || fp.DeleteTopic || fp.EditReply || fp.DeleteReply || fp.PinTopic || fp.CloseTopic || fp.MoveTopic {
 		//if !canPost {
 		return "custom"
 		//}
@@ -244,7 +244,7 @@ func ForumPermsToGroupForumPreset(fperms *ForumPerms) string {
 	if canPost {
 		return "can_post"
 	}
-	if fperms.ViewTopic && !fperms.LikeItem && !fperms.CreateTopic && !fperms.CreateReply {
+	if fp.ViewTopic && !fp.LikeItem && !fp.CreateTopic && !fp.CreateReply {
 		return "read_only"
 	}
 	return "custom"

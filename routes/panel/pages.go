@@ -81,7 +81,6 @@ func PagesEdit(w http.ResponseWriter, r *http.Request, user c.User, spid string)
 	if err != nil {
 		return c.LocalError("Page ID needs to be an integer", w, r, user)
 	}
-
 	page, err := c.Pages.Get(pid)
 	if err == sql.ErrNoRows {
 		return c.NotFound(w, r, basePage.Header)
@@ -103,7 +102,6 @@ func PagesEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, spid s
 	if err != nil {
 		return c.LocalError("Page ID needs to be an integer", w, r, user)
 	}
-
 	pname := r.PostFormValue("name")
 	if pname == "" {
 		return c.LocalError("No name was provided for this page", w, r, user)
@@ -143,7 +141,6 @@ func PagesDeleteSubmit(w http.ResponseWriter, r *http.Request, user c.User, spid
 	if err != nil {
 		return c.LocalError("Page ID needs to be an integer", w, r, user)
 	}
-
 	err = c.Pages.Delete(pid)
 	if err != nil {
 		return c.InternalError(err, w, r)

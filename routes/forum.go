@@ -7,8 +7,8 @@ import (
 
 	c "github.com/Azareal/Gosora/common"
 	"github.com/Azareal/Gosora/common/counters"
-	"github.com/Azareal/Gosora/common/phrases"
-	"github.com/Azareal/Gosora/query_gen"
+	p "github.com/Azareal/Gosora/common/phrases"
+	qgen "github.com/Azareal/Gosora/query_gen"
 )
 
 type ForumStmts struct {
@@ -32,7 +32,7 @@ func ViewForum(w http.ResponseWriter, r *http.Request, user c.User, header *c.He
 	page, _ := strconv.Atoi(r.FormValue("page"))
 	_, fid, err := ParseSEOURL(sfid)
 	if err != nil {
-		return c.SimpleError(phrases.GetErrorPhrase("url_id_must_be_integer"),w,r,header)
+		return c.SimpleError(p.GetErrorPhrase("url_id_must_be_integer"), w, r, header)
 	}
 
 	ferr := c.ForumUserCheck(header, w, r, &user, fid)
@@ -66,23 +66,23 @@ func ViewForum(w http.ResponseWriter, r *http.Request, user c.User, header *c.He
 
 	// TODO: Use something other than TopicsRow as we don't need to store the forum name and link on each and every topic item?
 	var topicList []*c.TopicsRow
-	var reqUserList = make(map[int]bool)
+	reqUserList := make(map[int]bool)
 	for rows.Next() {
-		var topicItem = c.TopicsRow{ID: 0}
-		err := rows.Scan(&topicItem.ID, &topicItem.Title, &topicItem.Content, &topicItem.CreatedBy, &topicItem.IsClosed, &topicItem.Sticky, &topicItem.CreatedAt, &topicItem.LastReplyAt, &topicItem.LastReplyBy, &topicItem.LastReplyID, &topicItem.ParentID, &topicItem.ViewCount, &topicItem.PostCount, &topicItem.LikeCount)
+		t := c.TopicsRow{ID: 0}
+		err := rows.Scan(&t.ID, &t.Title, &t.Content, &t.CreatedBy, &t.IsClosed, &t.Sticky, &t.CreatedAt, &t.LastReplyAt, &t.LastReplyBy, &t.LastReplyID, &t.ParentID, &t.ViewCount, &t.PostCount, &t.LikeCount)
 		if err != nil {
 			return c.InternalError(err, w, r)
 		}
 
-		topicItem.Link = c.BuildTopicURL(c.NameToSlug(topicItem.Title), topicItem.ID)
+		t.Link = c.BuildTopicURL(c.NameToSlug(t.Title), t.ID)
 		// TODO: Create a specialised function with a bit less overhead for getting the last page for a post count
-		_, _, lastPage := c.PageOffset(topicItem.PostCount, 1, c.Config.ItemsPerPage)
-		topicItem.LastPage = lastPage
+		_, _, lastPage := c.PageOffset(t.PostCount, 1, c.Config.ItemsPerPage)
+		t.LastPage = lastPage
 
-		header.Hooks.VhookNoRet("forum_trow_assign", &topicItem, &forum)
-		topicList = append(topicList, &topicItem)
-		reqUserList[topicItem.CreatedBy] = true
-		reqUserList[topicItem.LastReplyBy] = true
+		header.Hooks.VhookNoRet("forum_trow_assign", &t, &forum)
+		topicList = append(topicList, &t)
+		reqUserList[t.CreatedBy] = true
+		reqUserList[t.LastReplyBy] = true
 	}
 	err = rows.Err()
 	if err != nil {
@@ -90,7 +90,7 @@ func ViewForum(w http.ResponseWriter, r *http.Request, user c.User, header *c.He
 	}
 
 	// Convert the user ID map to a slice, then bulk load the users
-	var idSlice = make([]int, len(reqUserList))
+	idSlice := make([]int, len(reqUserList))
 	var i int
 	for userID := range reqUserList {
 		idSlice[i] = userID
@@ -105,9 +105,9 @@ func ViewForum(w http.ResponseWriter, r *http.Request, user c.User, header *c.He
 
 	// Second pass to the add the user data
 	// TODO: Use a pointer to TopicsRow instead of TopicsRow itself?
-	for _, topicItem := range topicList {
-		topicItem.Creator = userList[topicItem.CreatedBy]
-		topicItem.LastUser = userList[topicItem.LastReplyBy]
+	for _, t := range topicList {
+		t.Creator = userList[t.CreatedBy]
+		t.LastUser = userList[t.LastReplyBy]
 	}
 	header.Zone = "view_forum"
 	header.ZoneID = forum.ID
@@ -128,8 +128,8 @@ func ViewForum(w http.ResponseWriter, r *http.Request, user c.User, header *c.He
 	if tmpl == "" {
 		ferr = renderTemplate("forum", w, r, header, pi)
 	} else {
-		tmpl = "forum_"+tmpl
-		err = renderTemplate3(tmpl, tmpl,w, r, header, pi)
+		tmpl = "forum_" + tmpl
+		err = renderTemplate3(tmpl, tmpl, w, r, header, pi)
 		if err != nil {
 			ferr = renderTemplate("forum", w, r, header, pi)
 		}

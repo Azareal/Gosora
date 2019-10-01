@@ -10,8 +10,8 @@ import (
 
 	c "github.com/Azareal/Gosora/common"
 	"github.com/Azareal/Gosora/common/counters"
-	"github.com/Azareal/Gosora/common/phrases"
-	"github.com/Azareal/Gosora/query_gen"
+	p "github.com/Azareal/Gosora/common/phrases"
+	qgen "github.com/Azareal/Gosora/query_gen"
 )
 
 type ReplyStmts struct {
@@ -353,7 +353,7 @@ func ReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user c.User, srid
 func AddAttachToReplySubmit(w http.ResponseWriter, r *http.Request, user c.User, srid string) c.RouteError {
 	rid, err := strconv.Atoi(srid)
 	if err != nil {
-		return c.LocalErrorJS(phrases.GetErrorPhrase("id_must_be_integer"), w, r)
+		return c.LocalErrorJS(p.GetErrorPhrase("id_must_be_integer"), w, r)
 	}
 
 	reply, err := c.Rstore.Get(rid)
@@ -410,7 +410,7 @@ func AddAttachToReplySubmit(w http.ResponseWriter, r *http.Request, user c.User,
 func RemoveAttachFromReplySubmit(w http.ResponseWriter, r *http.Request, user c.User, srid string) c.RouteError {
 	rid, err := strconv.Atoi(srid)
 	if err != nil {
-		return c.LocalErrorJS(phrases.GetErrorPhrase("id_must_be_integer"), w, r)
+		return c.LocalErrorJS(p.GetErrorPhrase("id_must_be_integer"), w, r)
 	}
 
 	reply, err := c.Rstore.Get(rid)
@@ -443,7 +443,7 @@ func RemoveAttachFromReplySubmit(w http.ResponseWriter, r *http.Request, user c.
 	for _, said := range saids {
 		aid, err := strconv.Atoi(said)
 		if err != nil {
-			return c.LocalErrorJS(phrases.GetErrorPhrase("id_must_be_integer"), w, r)
+			return c.LocalErrorJS(p.GetErrorPhrase("id_must_be_integer"), w, r)
 		}
 		rerr := deleteAttachment(w, r, user, aid, true)
 		if rerr != nil {
@@ -574,7 +574,6 @@ func ProfileReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user c.Use
 
 func ReplyLikeSubmit(w http.ResponseWriter, r *http.Request, user c.User, srid string) c.RouteError {
 	js := (r.PostFormValue("js") == "1")
-
 	rid, err := strconv.Atoi(srid)
 	if err != nil {
 		return c.PreErrorJSQ("The provided Reply ID is not a valid number.", w, r, js)

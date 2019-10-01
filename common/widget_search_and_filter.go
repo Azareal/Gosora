@@ -32,9 +32,9 @@ func widgetSearchAndFilter(widget *Widget, hvars interface{}) (out string, err e
 	}
 
 	for _, fid := range canSee {
-		forum := Forums.DirtyGet(fid)
-		if forum.ParentID == 0 && forum.Name != "" && forum.Active {
-			forums = append(forums, filterForum{forum, (header.Zone == "view_forum" || header.Zone == "topics") && header.ZoneID == forum.ID})
+		f := Forums.DirtyGet(fid)
+		if f.ParentID == 0 && f.Name != "" && f.Active {
+			forums = append(forums, filterForum{f, (header.Zone == "view_forum" || header.Zone == "topics") && header.ZoneID == f.ID})
 		}
 	}
 
