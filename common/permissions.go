@@ -45,50 +45,50 @@ var GlobalPermList = []string{
 // Permission Structure: ActionComponent[Subcomponent]Flag
 type Perms struct {
 	// Global Permissions
-	BanUsers              bool
-	ActivateUsers         bool
-	EditUser              bool
-	EditUserEmail         bool
-	EditUserPassword      bool
-	EditUserGroup         bool
-	EditUserGroupSuperMod bool
-	EditUserGroupAdmin    bool
-	EditGroup             bool
-	EditGroupLocalPerms   bool
-	EditGroupGlobalPerms  bool
-	EditGroupSuperMod     bool
-	EditGroupAdmin        bool
-	ManageForums          bool // This could be local, albeit limited for per-forum managers?
-	EditSettings          bool
-	ManageThemes          bool
-	ManagePlugins         bool
-	ViewAdminLogs         bool
-	ViewIPs               bool
+	BanUsers              bool `json:",omitempty"`
+	ActivateUsers         bool `json:",omitempty"`
+	EditUser              bool `json:",omitempty"`
+	EditUserEmail         bool `json:",omitempty"`
+	EditUserPassword      bool `json:",omitempty"`
+	EditUserGroup         bool `json:",omitempty"`
+	EditUserGroupSuperMod bool `json:",omitempty"`
+	EditUserGroupAdmin    bool `json:",omitempty"`
+	EditGroup             bool `json:",omitempty"`
+	EditGroupLocalPerms   bool `json:",omitempty"`
+	EditGroupGlobalPerms  bool `json:",omitempty"`
+	EditGroupSuperMod     bool `json:",omitempty"`
+	EditGroupAdmin        bool `json:",omitempty"`
+	ManageForums          bool `json:",omitempty"` // This could be local, albeit limited for per-forum managers?
+	EditSettings          bool `json:",omitempty"`
+	ManageThemes          bool `json:",omitempty"`
+	ManagePlugins         bool `json:",omitempty"`
+	ViewAdminLogs         bool `json:",omitempty"`
+	ViewIPs               bool `json:",omitempty"`
 
 	// Global non-staff permissions
-	UploadFiles   bool
-	UploadAvatars bool
-	UseConvos     bool
+	UploadFiles   bool `json:",omitempty"`
+	UploadAvatars bool `json:",omitempty"`
+	UseConvos     bool `json:",omitempty"`
 
 	// Forum permissions
-	ViewTopic bool
-	//ViewOwnTopic bool
-	LikeItem    bool
-	CreateTopic bool
-	EditTopic   bool
-	DeleteTopic bool
-	CreateReply bool
-	//CreateReplyToOwn bool
-	EditReply bool
-	//EditOwnReply bool
-	DeleteReply bool
-	//DeleteOwnReply bool
-	PinTopic   bool
-	CloseTopic bool
-	//CloseOwnTopic bool
-	MoveTopic bool
+	ViewTopic bool `json:",omitempty"`
+	//ViewOwnTopic bool `json:",omitempty"`
+	LikeItem    bool `json:",omitempty"`
+	CreateTopic bool `json:",omitempty"`
+	EditTopic   bool `json:",omitempty"`
+	DeleteTopic bool `json:",omitempty"`
+	CreateReply bool `json:",omitempty"`
+	//CreateReplyToOwn bool `json:",omitempty"`
+	EditReply bool `json:",omitempty"`
+	//EditOwnReply bool `json:",omitempty"`
+	DeleteReply bool `json:",omitempty"`
+	//DeleteOwnReply bool `json:",omitempty"`
+	PinTopic   bool `json:",omitempty"`
+	CloseTopic bool `json:",omitempty"`
+	//CloseOwnTopic bool `json:",omitempty"`
+	MoveTopic bool `json:",omitempty"`
 
-	//ExtData map[string]bool
+	//ExtData map[string]bool `json:",omitempty"`
 }
 
 func init() {

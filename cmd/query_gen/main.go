@@ -2,12 +2,14 @@
 package main // import "github.com/Azareal/Gosora/query_gen"
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
 	"runtime/debug"
 	"strconv"
 
+	c "github.com/Azareal/Gosora/common"
 	qgen "github.com/Azareal/Gosora/query_gen"
 )
 
@@ -175,18 +177,42 @@ func seedTables(adapter qgen.Adapter) error {
 		MoveTopic
 	*/
 
-	// TODO: Set the permissions on a struct and then serialize the struct and insert that instead of writing raw JSON
-	qgen.Install.SimpleInsert("users_groups", "name, permissions, plugin_perms, is_mod, is_admin, tag", `'Administrator','{"BanUsers":true,"ActivateUsers":true,"EditUser":true,"EditUserEmail":true,"EditUserPassword":true,"EditUserGroup":true,"EditUserGroupSuperMod":true,"EditUserGroupAdmin":false,"EditGroup":true,"EditGroupLocalPerms":true,"EditGroupGlobalPerms":true,"EditGroupSuperMod":true,"EditGroupAdmin":false,"ManageForums":true,"EditSettings":true,"ManageThemes":true,"ManagePlugins":true,"ViewAdminLogs":true,"ViewIPs":true,"UploadFiles":true,"UploadAvatars":true,"UseConvos":true,"ViewTopic":true,"LikeItem":true,"CreateTopic":true,"EditTopic":true,"DeleteTopic":true,"CreateReply":true,"EditReply":true,"DeleteReply":true,"PinTopic":true,"CloseTopic":true,"MoveTopic":true}','{}',1,1,"Admin"`)
+	p := func(perms c.Perms) string {
+		jBytes, err := json.Marshal(perms)
+		if err != nil {
+			panic(err)
+		}
+		return string(jBytes)
+	}
+	addGroup := func(name string, perms c.Perms, mod bool, admin bool, banned bool, tag string) {
+		mi, ai, bi := "0", "0", "0"
+		if mod {
+			mi = "1"
+		}
+		if admin {
+			ai = "1"
+		}
+		if banned {
+			bi = "1"
+		}
+		qgen.Install.SimpleInsert("users_groups", "name, permissions, plugin_perms, is_mod, is_admin, is_banned, tag", `'`+name+`','`+p(perms)+`','{}',`+mi+`,`+ai+`,`+bi+`,"`+tag+`"`)
+	}
 
-	qgen.Install.SimpleInsert("users_groups", "name, permissions, plugin_perms, is_mod, tag", `'Moderator','{"BanUsers":true,"ActivateUsers":false,"EditUser":true,"EditUserEmail":false,"EditUserGroup":true,"ViewIPs":true,"UploadFiles":true,"UploadAvatars":true,"UseConvos":true,"ViewTopic":true,"LikeItem":true,"CreateTopic":true,"EditTopic":true,"DeleteTopic":true,"CreateReply":true,"EditReply":true,"DeleteReply":true,"PinTopic":true,"CloseTopic":true,"MoveTopic":true}','{}',1,"Mod"`)
+	perms := c.AllPerms
+	perms.EditUserGroupAdmin = false
+	perms.EditGroupAdmin = false
+	addGroup("Administrator", perms, true, true, false, "Admin")
 
-	qgen.Install.SimpleInsert("users_groups", "name, permissions, plugin_perms", `'Member','{"UploadFiles":true,"UploadAvatars":true,"UseConvos":true,"ViewTopic":true,"LikeItem":true,"CreateTopic":true,"CreateReply":true}','{}'`)
+	perms = c.Perms{BanUsers: true, ActivateUsers: true, EditUser: true, EditUserEmail: false, EditUserGroup: true, ViewIPs: true, UploadFiles: true, UploadAvatars: true, UseConvos: true, ViewTopic: true, LikeItem: true, CreateTopic: true, EditTopic: true, DeleteTopic: true, CreateReply: true, EditReply: true, DeleteReply: true, PinTopic: true, CloseTopic: true, MoveTopic: true}
+	addGroup("Moderator", perms, true, false, false, "Mod")
 
-	qgen.Install.SimpleInsert("users_groups", "name, permissions, plugin_perms, is_banned", `'Banned','{"ViewTopic":true}','{}',1`)
+	perms = c.Perms{UploadFiles: true, UploadAvatars: true, UseConvos: true, ViewTopic: true, LikeItem: true, CreateTopic: true, CreateReply: true}
+	addGroup("Member", perms, false, false, false, "")
 
-	qgen.Install.SimpleInsert("users_groups", "name, permissions, plugin_perms", `'Awaiting Activation','{"ViewTopic":true}','{}'`)
-
-	qgen.Install.SimpleInsert("users_groups", "name, permissions, plugin_perms, tag", `'Not Loggedin','{"ViewTopic":true}','{}','Guest'`)
+	perms = c.Perms{ViewTopic: true}
+	addGroup("Banned", perms, false, false, true, "")
+	addGroup("Awaiting Activation", perms, false, false, false, "")
+	addGroup("Not Loggedin", perms, false, false, false, "Guest")
 
 	//
 	// TODO: Stop processFields() from stripping the spaces in the descriptions in the next commit

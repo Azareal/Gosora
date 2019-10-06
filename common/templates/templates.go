@@ -11,9 +11,9 @@ import (
 	"runtime/debug"
 	"strconv"
 	"strings"
-	"unicode"
 	"text/template/parse"
 	"time"
+	"unicode"
 )
 
 // TODO: Turn this file into a library
@@ -107,15 +107,15 @@ func NewCTemplateSet(in string) *CTemplateSet {
 			"hasWidgets": true,
 			"elapsed":    true,
 			"lang":       true,
-			"langf":true,
-			"level":   true,
-			"bunit":   true,
-			"abstime": true,
-			"reltime": true,
-			"scope":   true,
-			"dyntmpl": true,
-			"index":   true,
-			"flush":   true,
+			"langf":      true,
+			"level":      true,
+			"bunit":      true,
+			"abstime":    true,
+			"reltime":    true,
+			"scope":      true,
+			"dyntmpl":    true,
+			"index":      true,
+			"flush":      true,
 		},
 		logger:  log.New(f, "", log.LstdFlags),
 		loggerf: f,
@@ -193,9 +193,9 @@ func (c *CTemplateSet) CompileByLoggedin(name string, fileDir string, expects st
 	}
 	var importList string
 	for _, item := range c.importMap {
-		ispl := strings.Split(item," ")
+		ispl := strings.Split(item, " ")
 		if len(ispl) > 1 {
-			importList += "import "+ispl[0]+" \"" + ispl[1] + "\"\n"
+			importList += "import " + ispl[0] + " \"" + ispl[1] + "\"\n"
 		} else {
 			importList += "import \"" + item + "\"\n"
 		}
@@ -284,8 +284,7 @@ func (c *CTemplateSet) Compile(name string, fileDir string, expects string, expe
 
 func (c *CTemplateSet) compile(name string, content string, expects string, expectsInt interface{}, varList map[string]VarItem, imports ...string) (out string, err error) {
 	defer func() {
-		r := recover()
-		if r != nil {
+		if r := recover(); r != nil {
 			fmt.Println(r)
 			debug.PrintStack()
 			err := c.loggerf.Sync()
@@ -313,7 +312,7 @@ func (c *CTemplateSet) compile(name string, content string, expects string, expe
 	c.stats = make(map[string]int)
 
 	tree := parse.New(name, c.funcMap)
-	var treeSet = make(map[string]*parse.Tree)
+	treeSet := make(map[string]*parse.Tree)
 	tree, err = tree.Parse(content, "{{", "}}", treeSet, c.funcMap)
 	if err != nil {
 		return "", err
@@ -413,9 +412,9 @@ func (c *CTemplateSet) compile(name string, content string, expects string, expe
 	}
 	var importList string
 	for _, item := range c.importMap {
-		ispl := strings.Split(item," ")
+		ispl := strings.Split(item, " ")
 		if len(ispl) > 1 {
-			importList += "import "+ispl[0]+" \"" + ispl[1] + "\"\n"
+			importList += "import " + ispl[0] + " \"" + ispl[1] + "\"\n"
 		} else {
 			importList += "import \"" + item + "\"\n"
 		}
@@ -481,9 +480,9 @@ func (c *CTemplateSet) compile(name string, content string, expects string, expe
 	}
 	fout += varString
 
-	var skipped = make(map[string]*SkipBlock) // map[templateName]*SkipBlock{map[atIndexAndAfter]skipThisMuch,lastCount}
+	skipped := make(map[string]*SkipBlock) // map[templateName]*SkipBlock{map[atIndexAndAfter]skipThisMuch,lastCount}
 
-	var writeTextFrame = func(tmplName string, index int) {
+	writeTextFrame := func(tmplName string, index int) {
 		out := "w.Write(" + tmplName + "_frags[" + strconv.Itoa(index) + "]" + ")\n"
 		c.detail("writing ", out)
 		fout += out
@@ -531,7 +530,7 @@ func (c *CTemplateSet) compile(name string, content string, expects string, expe
 	}
 	fout += "return nil\n}\n"
 
-	var writeFrag = func(tmplName string, index int, body string) {
+	writeFrag := func(tmplName string, index int, body string) {
 		//c.detail("writing ", fragmentPrefix)
 		c.FragOut = append(c.FragOut, OutFrag{tmplName, index, body})
 	}
@@ -704,7 +703,7 @@ func (c *CTemplateSet) compileRangeNode(con CContext, node *parse.RangeNode) {
 	c.detail("Expr:", expr)
 	c.detail("Range Kind Switch!")
 
-	var startIf = func(item reflect.Value, useCopy bool) {
+	startIf := func(item reflect.Value, useCopy bool) {
 		con.Push("startif", "if len("+expr+") != 0 {\n")
 		startIndex := con.StartLoop("for _, item := range " + expr + " {\n")
 		ccon := con
@@ -812,7 +811,7 @@ func (c *CTemplateSet) compileSubSwitch(con CContext, node *parse.CommandNode) {
 		}
 
 		var assLines string
-		var multiline = false
+		multiline := false
 		for _, id := range n.Ident {
 			c.detail("Data Kind:", cur.Kind().String())
 			c.detail("Field Bit:", id)
@@ -1023,7 +1022,7 @@ func (c *CTemplateSet) compareJoin(con CContext, pos int, node *parse.CommandNod
 
 func (c *CTemplateSet) compileIdentSwitch(con CContext, node *parse.CommandNode) (out string, val reflect.Value, literal bool, notident bool) {
 	c.dumpCall("compileIdentSwitch", con, node)
-	var litString = func(inner string, bytes bool) {
+	litString := func(inner string, bytes bool) {
 		if !bytes {
 			inner = "StringToBytes(" + inner + ")"
 		}
@@ -1129,9 +1128,9 @@ ArgLoop:
 			if leftOperand[0] != '"' {
 				panic("Phrase names cannot be dynamic")
 			}
-			
+
 			var olist []string
-			for i := pos+2; i < len(node.Args); i++ {
+			for i := pos + 2; i < len(node.Args); i++ {
 				op := node.Args[i].String()
 				if op != "" {
 					if op[0] == '.' || op[0] == '$' {
@@ -1140,14 +1139,14 @@ ArgLoop:
 					if op[0] != '"' && !unicode.IsDigit(rune(op[0])) {
 						break
 					}
-					olist = append(olist,op)
+					olist = append(olist, op)
 				}
 			}
 			if len(olist) == 0 {
 				panic("You must provide parameters for langf")
 			}
 
-			var ob = ","
+			ob := ","
 			for _, op := range olist {
 				allNum := true
 				for _, o := range op {
@@ -1156,7 +1155,7 @@ ArgLoop:
 					}
 				}
 				if allNum {
-					ob += strings.Replace(op,"\"","\\\"",-1) + ","
+					ob += strings.Replace(op, "\"", "\\\"", -1) + ","
 				} else {
 					ob += ob + ","
 				}
@@ -1316,8 +1315,8 @@ func (c *CTemplateSet) compileIfVarSub(con CContext, varname string) (out string
 		return varname, cur
 	}
 
-	var stepInterface = func() {
-		var nobreak = (cur.Type().Name() == "nobreak")
+	stepInterface := func() {
+		nobreak := (cur.Type().Name() == "nobreak")
 		c.detailf("cur.Type().Name(): %+v\n", cur.Type().Name())
 		if cur.Kind() == reflect.Interface && !nobreak {
 			cur = cur.Elem()
@@ -1345,7 +1344,7 @@ func (c *CTemplateSet) compileIfVarSub(con CContext, varname string) (out string
 	}
 	bits[0] = strings.TrimPrefix(bits[0], "$")
 
-	var dumpKind = func(pre string) {
+	dumpKind := func(pre string) {
 		c.detail(pre+" Kind:", cur.Kind())
 		c.detail(pre+" Type:", cur.Type().Name())
 	}
@@ -1484,12 +1483,12 @@ func (c *CTemplateSet) retCall(name string, params ...interface{}) {
 }
 
 func buildUserExprs(holder string) ([]string, []string) {
-	var userExprs = []string{
+	userExprs := []string{
 		holder + ".CurrentUser.Loggedin",
 		holder + ".CurrentUser.IsSuperMod",
 		holder + ".CurrentUser.IsAdmin",
 	}
-	var negUserExprs = []string{
+	negUserExprs := []string{
 		"!" + holder + ".CurrentUser.Loggedin",
 		"!" + holder + ".CurrentUser.IsSuperMod",
 		"!" + holder + ".CurrentUser.IsAdmin",

@@ -54,7 +54,7 @@ func NewDefaultWordFilterStore(acc *qgen.Accumulator) (*DefaultWordFilterStore, 
 
 // ReloadAll drops all the items in the memory cache and replaces them with fresh copies from the database
 func (s *DefaultWordFilterStore) ReloadAll() error {
-	var wordFilters = make(map[int]*WordFilter)
+	wordFilters := make(map[int]*WordFilter)
 	filters, err := s.bypassGetAll()
 	if err != nil {
 		return err
@@ -77,12 +77,12 @@ func (s *DefaultWordFilterStore) bypassGetAll() (filters []*WordFilter, err erro
 	defer rows.Close()
 
 	for rows.Next() {
-		filter := &WordFilter{ID: 0}
-		err := rows.Scan(&filter.ID, &filter.Find, &filter.Replacement)
+		f := &WordFilter{ID: 0}
+		err := rows.Scan(&f.ID, &f.Find, &f.Replacement)
 		if err != nil {
 			return filters, err
 		}
-		filters = append(filters, filter)
+		filters = append(filters, f)
 	}
 	return filters, rows.Err()
 }
@@ -93,8 +93,8 @@ func (s *DefaultWordFilterStore) GetAll() (filters map[int]*WordFilter, err erro
 }
 
 // Create adds a new word filter to the database and refreshes the memory cache
-func (s *DefaultWordFilterStore) Create(find string, replacement string) error {
-	_, err := s.create.Exec(find, replacement)
+func (s *DefaultWordFilterStore) Create(find string, replace string) error {
+	_, err := s.create.Exec(find, replace)
 	if err != nil {
 		return err
 	}
@@ -110,8 +110,8 @@ func (s *DefaultWordFilterStore) Delete(id int) error {
 	return s.ReloadAll()
 }
 
-func (s *DefaultWordFilterStore) Update(id int, find string, replacement string) error {
-	_, err := s.update.Exec(find, replacement, id)
+func (s *DefaultWordFilterStore) Update(id int, find string, replace string) error {
+	_, err := s.update.Exec(find, replace, id)
 	if err != nil {
 		return err
 	}

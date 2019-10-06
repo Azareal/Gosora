@@ -26,9 +26,7 @@
 		{{end}}
 	</div>
 </div>
-{{if .Poll.ID}}
-{{template "topic_poll.html" . }}
-{{end}}
+{{if .Poll.ID}}{{template "topic_poll.html" . }}{{end}}
 
 <article {{scope "opening_post"}} itemscope itemtype="http://schema.org/CreativeWork" class="rowblock post_container top_post" aria-label="{{lang "topic.opening_post_aria"}}">
 	<div class="rowitem passive editable_parent post_item {{.Topic.ClassName}}" style="background-image:url({{.Topic.Avatar}}), url(/s/{{.Header.Theme.Name}}/post-avatar-bg.jpg);background-position:0px {{if le .Topic.ContentLines 5}}-1{{end}}0px;background-repeat:no-repeat,repeat-y;">
