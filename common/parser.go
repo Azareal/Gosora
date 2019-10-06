@@ -862,8 +862,7 @@ func parseMediaString(data string) (media MediaEmbed, ok bool) {
 	port := url.Port()
 	query := url.Query()
 
-	// TODO: Treat 127.0.0.1 and [::1] as localhost too
-	samesite := hostname == "localhost" || hostname == Site.URL
+	samesite := hostname == "localhost" || hostname == "127.0.0.1" || hostname == "::1" || hostname == Site.URL
 	if samesite {
 		hostname = strings.Split(Site.URL, ":")[0]
 		// ?- Test this as I'm not sure it'll do what it should. If someone's running SSL on port 80 or non-SSL on port 443 then... Well... They're in far worse trouble than this...

@@ -2,13 +2,13 @@ package main
 
 import (
 	"bytes"
+	"database/sql"
 	"fmt"
 	"net/http/httptest"
 	"runtime/debug"
 	"strconv"
 	"testing"
 	"time"
-	"database/sql"
 
 	c "github.com/Azareal/Gosora/common"
 	"github.com/Azareal/Gosora/common/phrases"
@@ -183,7 +183,7 @@ func userStoreTest(t *testing.T, newUserID int) {
 		expect(t, user.ID == newUserID, fmt.Sprintf("user.ID does not match the requested UID. Got '%d' instead.", user.ID))
 	}
 
-	userList, _ = c.Users.BulkGetMap([]int{1,uid})
+	userList, _ = c.Users.BulkGetMap([]int{1, uid})
 	expect(t, len(userList) == 2, fmt.Sprintf("Returned map should have two results, not %d", len(userList)))
 
 	if ucache != nil {
@@ -597,16 +597,16 @@ func TestForumStore(t *testing.T) {
 
 	// Forum reload test, kind of hacky but gets the job done
 	/*
-	CacheGet(id int) (*Forum, error)
-	CacheSet(forum *Forum) error
+		CacheGet(id int) (*Forum, error)
+		CacheSet(forum *Forum) error
 	*/
-	expect(t,ok,"ForumCache should be available")
+	expect(t, ok, "ForumCache should be available")
 	forum.Name = "nanana"
 	fcache.CacheSet(forum)
 	forum, err = c.Forums.Get(2)
 	recordMustExist(t, err, "Couldn't find FID #2")
 	expect(t, forum.Name == "nanana", fmt.Sprintf("The faux name should be nanana not %s", forum.Name))
-	expectNilErr(t,c.Forums.Reload(2))
+	expectNilErr(t, c.Forums.Reload(2))
 	forum, err = c.Forums.Get(2)
 	recordMustExist(t, err, "Couldn't find FID #2")
 	expect(t, forum.Name == "General", fmt.Sprintf("The proper name should be 2 not %s", forum.Name))
@@ -731,23 +731,23 @@ func TestForumPermsStore(t *testing.T) {
 	}
 
 	f := func(fid int, gid int, msg string, inv ...bool) {
-		fp, err := c.FPStore.Get(fid,gid)
-		expectNilErr(t,err)
+		fp, err := c.FPStore.Get(fid, gid)
+		expectNilErr(t, err)
 		vt := fp.ViewTopic
 		if len(inv) > 0 && inv[0] == true {
 			vt = !vt
 		}
-		expect(t,vt,msg)
+		expect(t, vt, msg)
 	}
 
 	initialState := func() {
-		f(1,1,"admins should be able to see reports")
-		f(1,2,"mods should be able to see reports")
-		f(1,3,"members should not be able to see reports",true)
-		f(1,4,"banned users should not be able to see reports",true)
-		f(2,1,"admins should be able to see general")
-		f(2,3,"members should be able to see general")
-		f(2,6,"guests should be able to see general")
+		f(1, 1, "admins should be able to see reports")
+		f(1, 2, "mods should be able to see reports")
+		f(1, 3, "members should not be able to see reports", true)
+		f(1, 4, "banned users should not be able to see reports", true)
+		f(2, 1, "admins should be able to see general")
+		f(2, 3, "members should be able to see general")
+		f(2, 6, "guests should be able to see general")
 	}
 	initialState()
 
@@ -778,7 +778,7 @@ func TestGroupStore(t *testing.T) {
 	group, err = c.Groups.Get(1)
 	recordMustExist(t, err, "Couldn't find GID #1")
 	expect(t, group.ID == 1, fmt.Sprintf("group.ID doesn't not match the requested GID. Got '%d' instead.'", group.ID))
-	expect(t,len(group.CanSee) > 0,"group.CanSee should not be zero")
+	expect(t, len(group.CanSee) > 0, "group.CanSee should not be zero")
 
 	expect(t, !c.Groups.Exists(-1), "GID #-1 shouldn't exist")
 	// 0 aka Unknown, for system posts and other oddities
@@ -889,7 +889,7 @@ func TestGroupStore(t *testing.T) {
 		return true
 	}
 
-	expect(t, canSeeTest(group.CanSee,canSee), "group.CanSee is not being reused")
+	expect(t, canSeeTest(group.CanSee, canSee), "group.CanSee is not being reused")
 
 	// TODO: Test group deletion
 	// TODO: Test group reload
@@ -1030,7 +1030,7 @@ func TestProfileReplyStore(t *testing.T) {
 func TestActivityStream(t *testing.T) {
 	miscinit(t)
 
-	expect(t,c.Activity.Count()==0,"activity stream count should be 0")
+	expect(t, c.Activity.Count() == 0, "activity stream count should be 0")
 
 	_, err := c.Activity.Get(-1)
 	recordMustNotExist(t, err, "activity item -1 shouldn't exist")
@@ -1041,17 +1041,17 @@ func TestActivityStream(t *testing.T) {
 
 	a := c.Alert{ActorID: 1, TargetUserID: 1, Event: "like", ElementType: "topic", ElementID: 1}
 	id, err := c.Activity.Add(a)
-	expectNilErr(t,err)
-	expect(t,id==1,"new activity item id should be 1")
+	expectNilErr(t, err)
+	expect(t, id == 1, "new activity item id should be 1")
 
-	expect(t,c.Activity.Count()==1,"activity stream count should be 1")
+	expect(t, c.Activity.Count() == 1, "activity stream count should be 1")
 	alert, err := c.Activity.Get(1)
-	expectNilErr(t,err)
-	expect(t,alert.ActorID==1,"alert actorid should be 1")
-	expect(t,alert.TargetUserID==1,"alert targetuserid should be 1")
-	expect(t,alert.Event=="like","alert event type should be like")
-	expect(t,alert.ElementType=="topic","alert element type should be topic")
-	expect(t,alert.ElementID==1,"alert element id should be 1")
+	expectNilErr(t, err)
+	expect(t, alert.ActorID == 1, "alert actorid should be 1")
+	expect(t, alert.TargetUserID == 1, "alert targetuserid should be 1")
+	expect(t, alert.Event == "like", "alert event type should be like")
+	expect(t, alert.ElementType == "topic", "alert element type should be topic")
+	expect(t, alert.ElementID == 1, "alert element id should be 1")
 }
 
 func TestLogs(t *testing.T) {
@@ -1217,35 +1217,41 @@ func TestPluginManager(t *testing.T) {
 	expectNilErr(t, plugin.SetActive(false))
 
 	// Hook tests
-	expect(t, c.GetHookTable().Sshook("haha", "ho") == "ho", "Sshook shouldn't have anything bound to it yet")
+	ht := func() *c.HookTable {
+		return c.GetHookTable()
+	}
+	expect(t, ht().Sshook("haha", "ho") == "ho", "Sshook shouldn't have anything bound to it yet")
 	handle := func(in string) (out string) {
 		return in + "hi"
 	}
 	plugin.AddHook("haha", handle)
-	expect(t, c.GetHookTable().Sshook("haha", "ho") == "hohi", "Sshook didn't give hohi")
+	expect(t, ht().Sshook("haha", "ho") == "hohi", "Sshook didn't give hohi")
 	plugin.RemoveHook("haha", handle)
-	expect(t, c.GetHookTable().Sshook("haha", "ho") == "ho", "Sshook shouldn't have anything bound to it anymore")
+	expect(t, ht().Sshook("haha", "ho") == "ho", "Sshook shouldn't have anything bound to it anymore")
 
-	expect(t, c.GetHookTable().Hook("haha", "ho") == "ho", "Hook shouldn't have anything bound to it yet")
+	expect(t, ht().Hook("haha", "ho") == "ho", "Hook shouldn't have anything bound to it yet")
 	handle2 := func(inI interface{}) (out interface{}) {
 		return inI.(string) + "hi"
 	}
 	plugin.AddHook("hehe", handle2)
-	expect(t, c.GetHookTable().Hook("hehe", "ho").(string) == "hohi", "Hook didn't give hohi")
+	expect(t, ht().Hook("hehe", "ho").(string) == "hohi", "Hook didn't give hohi")
 	plugin.RemoveHook("hehe", handle2)
-	expect(t, c.GetHookTable().Hook("hehe", "ho").(string) == "ho", "Hook shouldn't have anything bound to it anymore")
+	expect(t, ht().Hook("hehe", "ho").(string) == "ho", "Hook shouldn't have anything bound to it anymore")
 
 	// TODO: Add tests for more hook types
 }
 
 func TestPhrases(t *testing.T) {
+	getPhrase := phrases.GetGlobalPermPhrase
 	tp := func(name string, expects string) {
-		expect(t, phrases.GetGlobalPermPhrase(name) == expects, "Not the expected phrase")
+		res := getPhrase(name)
+		expect(t, res == expects, "Not the expected phrase, got '"+res+"' instead")
 	}
-	tp("BanUsers","Can ban users")
-	tp("NoSuchPerm","{lang.perms[NoSuchPerm]}")
-	tp("ViewTopic","Can view topics")
-	tp("NoSuchPerm","{lang.perms[NoSuchPerm]}")
+	tp("BanUsers", "Can ban users")
+	tp("NoSuchPerm", "{lang.perms[NoSuchPerm]}")
+	getPhrase = phrases.GetLocalPermPhrase
+	tp("ViewTopic", "Can view topics")
+	tp("NoSuchPerm", "{lang.perms[NoSuchPerm]}")
 
 	// TODO: Cover the other phrase types, also try switching between languages to see if anything strange happens
 }

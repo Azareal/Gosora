@@ -5,7 +5,7 @@ import (
 	//"log"
 	"net/http/httptest"
 
-	"github.com/Azareal/Gosora/common/phrases"
+	p "github.com/Azareal/Gosora/common/phrases"
 	min "github.com/Azareal/Gosora/common/templates"
 )
 
@@ -16,8 +16,8 @@ type wolUsers struct {
 	UserCount int
 }
 
-func wolInit(widget *Widget, schedule *WidgetScheduler) error {
-	schedule.Add(widget)
+func wolInit(w *Widget, schedule *WidgetScheduler) error {
+	schedule.Add(w)
 	return nil
 }
 
@@ -34,22 +34,22 @@ func wolGetUsers() ([]*User, int) {
 	return users, ucount
 }
 
-func wolBuild(widget *Widget, hvars interface{}) (string, error) {
+func wolBuild(w *Widget, hvars interface{}) (string, error) {
 	users, ucount := wolGetUsers()
-	wol := &wolUsers{hvars.(*Header), phrases.GetTmplPhrase("widget.online_name"), users, ucount}
+	wol := &wolUsers{hvars.(*Header), p.GetTmplPhrase("widget.online_name"), users, ucount}
 	err := wol.Header.Theme.RunTmpl("widget_online", wol, wol.Header.Writer)
 	return "", err
 }
 
-func wolRender(widget *Widget, hvars interface{}) (string, error) {
-	iTickMask := widget.TickMask.Load()
+func wolRender(w *Widget, hvars interface{}) (string, error) {
+	iTickMask := w.TickMask.Load()
 	if iTickMask != nil {
 		tickMask := iTickMask.(*Widget)
 		if tickMask != nil {
 			return tickMask.Body, nil
 		}
 	}
-	return wolBuild(widget, hvars)
+	return wolBuild(w, hvars)
 }
 
 var wolLastUsers []*User
@@ -88,7 +88,7 @@ func wolTick(widget *Widget) error {
 	//log.Printf("users: %+v\n", users)
 	//log.Printf("wolLastUsers: %+v\n", wolLastUsers)
 
-	wol := &wolUsers{SimpleDefaultHeader(w), phrases.GetTmplPhrase("widget.online_name"), users, ucount}
+	wol := &wolUsers{SimpleDefaultHeader(w), p.GetTmplPhrase("widget.online_name"), users, ucount}
 	err := wol.Header.Theme.RunTmpl("widget_online", wol, wol.Header.Writer)
 	if err != nil {
 		return err

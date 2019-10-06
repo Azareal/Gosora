@@ -48,7 +48,7 @@ type NameTextPair struct {
 	Text template.HTML
 }
 
-func preparseWidget(widget *Widget, wdata string) (err error) {
+func preparseWidget(w *Widget, wdata string) (err error) {
 	prebuildWidget := func(name string, data interface{}) (string, error) {
 		var b bytes.Buffer
 		err := DefaultTemplates.ExecuteTemplate(&b, name+".html", data)
@@ -60,48 +60,48 @@ func preparseWidget(widget *Widget, wdata string) (err error) {
 	}
 
 	sbytes := []byte(wdata)
-	widget.Literal = true
+	w.Literal = true
 	// TODO: Split these hard-coded items out of this file and into the files for the individual widget types
-	switch widget.Type {
+	switch w.Type {
 	case "simple", "about":
 		var tmp NameTextPair
 		err = json.Unmarshal(sbytes, &tmp)
 		if err != nil {
 			return err
 		}
-		widget.Body, err = prebuildWidget("widget_"+widget.Type, tmp)
+		w.Body, err = prebuildWidget("widget_"+w.Type, tmp)
 	case "search_and_filter":
-		widget.Literal = false
-		widget.BuildFunc = widgetSearchAndFilter
+		w.Literal = false
+		w.BuildFunc = widgetSearchAndFilter
 	case "wol":
-		widget.Literal = false
-		widget.InitFunc = wolInit
-		widget.BuildFunc = wolRender
-		widget.TickFunc = wolTick
+		w.Literal = false
+		w.InitFunc = wolInit
+		w.BuildFunc = wolRender
+		w.TickFunc = wolTick
 	case "wol_context":
-		widget.Literal = false
-		widget.BuildFunc = wolContextRender
+		w.Literal = false
+		w.BuildFunc = wolContextRender
 	default:
-		widget.Body = wdata
+		w.Body = wdata
 	}
 
 	// TODO: Test this
 	// TODO: Should we toss this through a proper parser rather than crudely replacing it?
-	widget.Location = strings.Replace(widget.Location, " ", "", -1)
-	widget.Location = strings.Replace(widget.Location, "frontend", "!panel", -1)
-	widget.Location = strings.Replace(widget.Location, "!!", "", -1)
+	w.Location = strings.Replace(w.Location, " ", "", -1)
+	w.Location = strings.Replace(w.Location, "frontend", "!panel", -1)
+	w.Location = strings.Replace(w.Location, "!!", "", -1)
 
 	// Skip blank zones
-	var locs = strings.Split(widget.Location, "|")
+	locs := strings.Split(w.Location, "|")
 	if len(locs) > 0 {
-		widget.Location = ""
+		w.Location = ""
 		for _, loc := range locs {
 			if loc == "" {
 				continue
 			}
-			widget.Location += loc + "|"
+			w.Location += loc + "|"
 		}
-		widget.Location = widget.Location[:len(widget.Location)-1]
+		w.Location = w.Location[:len(w.Location)-1]
 	}
 
 	return err
@@ -139,13 +139,13 @@ func HasDock(dock string) bool {
 }
 
 // TODO: Find a more optimimal way of doing this...
-func HasWidgets(dock string, header *Header) bool {
-	if !header.Theme.HasDock(dock) {
+func HasWidgets(dock string, h *Header) bool {
+	if !h.Theme.HasDock(dock) {
 		return false
 	}
 
 	// Let themes forcibly override this slot
-	sbody := header.Theme.BuildDock(dock)
+	sbody := h.Theme.BuildDock(dock)
 	if sbody != "" {
 		return true
 	}
@@ -167,25 +167,24 @@ func HasWidgets(dock string, header *Header) bool {
 		if !widget.Enabled {
 			continue
 		}
-		if widget.Allowed(header.Zone,header.ZoneID) {
+		if widget.Allowed(h.Zone, h.ZoneID) {
 			wcount++
 		}
 	}
 	return wcount > 0
 }
 
-func BuildWidget(dock string, header *Header) (sbody string) {
-	var widgets []*Widget
-	if !header.Theme.HasDock(dock) {
+func BuildWidget(dock string, h *Header) (sbody string) {
+	if !h.Theme.HasDock(dock) {
 		return ""
 	}
-
 	// Let themes forcibly override this slot
-	sbody = header.Theme.BuildDock(dock)
+	sbody = h.Theme.BuildDock(dock)
 	if sbody != "" {
 		return sbody
 	}
 
+	var widgets []*Widget
 	switch dock {
 	case "leftOfNav":
 		widgets = Docks.LeftOfNav
@@ -195,7 +194,7 @@ func BuildWidget(dock string, header *Header) (sbody string) {
 		// 1 = id for the default menu
 		mhold, err := Menus.Get(1)
 		if err == nil {
-			err := mhold.Build(header.Writer, &header.CurrentUser, header.Path)
+			err := mhold.Build(h.Writer, &h.CurrentUser, h.Path)
 			if err != nil {
 				LogError(err)
 			}
@@ -211,8 +210,8 @@ func BuildWidget(dock string, header *Header) (sbody string) {
 		if !widget.Enabled {
 			continue
 		}
-		if widget.Allowed(header.Zone,header.ZoneID) {
-			item, err := widget.Build(header)
+		if widget.Allowed(h.Zone, h.ZoneID) {
+			item, err := widget.Build(h)
 			if err != nil {
 				LogError(err)
 			}
@@ -230,52 +229,46 @@ func getDockWidgets(dock string) (widgets []*Widget, err error) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var widget = &Widget{Position: 0, Side: dock}
-		err = rows.Scan(&widget.ID, &widget.Position, &widget.Type, &widget.Enabled, &widget.Location, &widget.RawBody)
+		w := &Widget{Position: 0, Side: dock}
+		err = rows.Scan(&w.ID, &w.Position, &w.Type, &w.Enabled, &w.Location, &w.RawBody)
 		if err != nil {
 			return nil, err
 		}
 
-		err = preparseWidget(widget, widget.RawBody)
+		err = preparseWidget(w, w.RawBody)
 		if err != nil {
 			return nil, err
 		}
-		Widgets.set(widget)
-		widgets = append(widgets, widget)
+		Widgets.set(w)
+		widgets = append(widgets, w)
 	}
 	return widgets, rows.Err()
 }
 
 // TODO: Make a store for this?
-func InitWidgets() error {
-	leftOfNavWidgets, err := getDockWidgets("leftOfNav")
-	if err != nil {
-		return err
-	}
-	rightOfNavWidgets, err := getDockWidgets("rightOfNav")
-	if err != nil {
-		return err
-	}
-	leftSidebarWidgets, err := getDockWidgets("leftSidebar")
-	if err != nil {
-		return err
-	}
-	rightSidebarWidgets, err := getDockWidgets("rightSidebar")
-	if err != nil {
-		return err
-	}
-	footerWidgets, err := getDockWidgets("footer")
-	if err != nil {
-		return err
-	}
-
+func InitWidgets() (fi error) {
 	// TODO: Let themes set default values for widget docks, and let them lock in particular places with their stuff, e.g. leftOfNav and rightOfNav
+	f := func(name string) {
+		if fi != nil {
+			return
+		}
+		dock, err := getDockWidgets(name)
+		if err != nil {
+			fi = err
+			return
+		}
+		setDock(name, dock)
+	}
+	
+	f("leftOfNav")
+	f("rightOfNav")
+	f("leftSidebar")
+	f("rightSidebar")
+	f("footer")
+	if fi != nil {
+		return fi
+	}
 
-	setDock("leftOfNav", leftOfNavWidgets)
-	setDock("rightOfNav", rightOfNavWidgets)
-	setDock("leftSidebar", leftSidebarWidgets)
-	setDock("rightSidebar", rightSidebarWidgets)
-	setDock("footer", footerWidgets)
 	AddScheduledSecondTask(Docks.LeftSidebar.Scheduler.Tick)
 	AddScheduledSecondTask(Docks.RightSidebar.Scheduler.Tick)
 	AddScheduledSecondTask(Docks.Footer.Scheduler.Tick)
@@ -294,7 +287,6 @@ func releaseWidgets(widgets []*Widget) {
 // TODO: Use atomics
 func setDock(dock string, widgets []*Widget) {
 	dockHandle := func(dockWidgets []*Widget) {
-		widgetUpdateMutex.Lock()
 		DebugLog(dock, widgets)
 		releaseWidgets(dockWidgets)
 	}
@@ -311,6 +303,8 @@ func setDock(dock string, widgets []*Widget) {
 		dockWidgets.Scheduler.Store()
 		return WidgetDock{widgets, dockWidgets.Scheduler}
 	}
+	widgetUpdateMutex.Lock()
+	defer widgetUpdateMutex.Unlock()
 	switch dock {
 	case "leftOfNav":
 		dockHandle(Docks.LeftOfNav)
@@ -328,7 +322,6 @@ func setDock(dock string, widgets []*Widget) {
 		fmt.Printf("bad dock '%s'\n", dock)
 		return
 	}
-	widgetUpdateMutex.Unlock()
 }
 
 type WidgetScheduler struct {
@@ -336,8 +329,8 @@ type WidgetScheduler struct {
 	store   atomic.Value
 }
 
-func (s *WidgetScheduler) Add(widget *Widget) {
-	s.widgets = append(s.widgets, widget)
+func (s *WidgetScheduler) Add(w *Widget) {
+	s.widgets = append(s.widgets, w)
 }
 
 func (s *WidgetScheduler) Store() {

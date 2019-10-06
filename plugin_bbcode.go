@@ -60,8 +60,8 @@ func bbcodeRegexParse(msg string) string {
 	msg = bbcodeItalic.ReplaceAllString(msg, "<i>$1</i>")
 	msg = bbcodeUnderline.ReplaceAllString(msg, "<u>$1</u>")
 	msg = bbcodeStrike.ReplaceAllString(msg, "<s>$1</s>")
-	msg = bbcodeURL.ReplaceAllString(msg, "<a href=''$1$2//$3' rel='nofollow'>$1$2//$3</i>")
-	msg = bbcodeURLLabel.ReplaceAllString(msg, "<a href=''$1$2//$3' rel='nofollow'>$4</i>")
+	msg = bbcodeURL.ReplaceAllString(msg, "<a href=''$1$2//$3' rel='ugc'>$1$2//$3</i>")
+	msg = bbcodeURLLabel.ReplaceAllString(msg, "<a href=''$1$2//$3' rel='ugc'>$4</i>")
 	msg = bbcodeQuotes.ReplaceAllString(msg, "<blockquote>$1</blockquote>")
 	msg = bbcodeH1.ReplaceAllString(msg, "<h2>$1</h2>")
 	//msg = bbcodeCode.ReplaceAllString(msg,"<span class='codequotes'>$1</span>")
@@ -198,8 +198,8 @@ func bbcodeParseWithoutCode(msg string) string {
 	// Copy the new complex parser over once the rough edges have been smoothed over
 	if complexBbc {
 		msg = string(msgbytes)
-		msg = bbcodeURL.ReplaceAllString(msg, "<a href='$1$2//$3' rel='nofollow'>$1$2//$3</i>")
-		msg = bbcodeURLLabel.ReplaceAllString(msg, "<a href='$1$2//$3' rel='nofollow'>$4</i>")
+		msg = bbcodeURL.ReplaceAllString(msg, "<a href='$1$2//$3' rel='ugc'>$1$2//$3</i>")
+		msg = bbcodeURLLabel.ReplaceAllString(msg, "<a href='$1$2//$3' rel='ugc'>$4</i>")
 		msg = bbcodeQuotes.ReplaceAllString(msg, "<blockquote>$1</blockquote>")
 		return bbcodeCode.ReplaceAllString(msg, "<span class='codequotes'>$1</span>")
 	}
@@ -325,8 +325,8 @@ func bbcodeFullParse(msg string) string {
 		}
 
 		// TODO: Optimise these
-		//msg = bbcode_url.ReplaceAllString(msg,"<a href=\"$1$2//$3\" rel=\"nofollow\">$1$2//$3</i>")
-		msg = bbcodeURLLabel.ReplaceAllString(msg, "<a href='$1$2//$3' rel='nofollow'>$4</i>")
+		//msg = bbcode_url.ReplaceAllString(msg,"<a href=\"$1$2//$3\" rel=\"ugc\">$1$2//$3</i>")
+		msg = bbcodeURLLabel.ReplaceAllString(msg, "<a href='$1$2//$3' rel='ugc'>$4</i>")
 		msg = bbcodeQuotes.ReplaceAllString(msg, "<blockquote>$1</blockquote>")
 		msg = bbcodeCode.ReplaceAllString(msg, "<span class='codequotes'>$1</span>")
 		msg = bbcodeH1.ReplaceAllString(msg, "<h2>$1</h2>")
