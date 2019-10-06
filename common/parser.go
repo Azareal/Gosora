@@ -23,6 +23,7 @@ var InvalidProfile = []byte("<red>[Invalid Profile]</red>")
 var InvalidForum = []byte("<red>[Invalid Forum]</red>")
 var unknownMedia = []byte("<red>[Unknown Media]</red>")
 var URLOpen = []byte("<a href='")
+var URLOpenUser = []byte("<a rel='ugc' href='")
 var URLOpen2 = []byte("'>")
 var bytesSinglequote = []byte("'")
 var bytesGreaterthan = []byte(">")
@@ -33,6 +34,8 @@ var imageOpen2 = []byte("\"><img src='")
 var imageClose = []byte("' class='postImage' /></a>")
 var attachOpen = []byte("<a download class='attach' href=\"")
 var attachClose = []byte("\">Attachment</a>")
+var sidParam = []byte("?sid=")
+var stypeParam = []byte("&amp;stype=")
 var urlPattern = `(?s)([ {1}])((http|https|ftp|mailto)*)(:{??)\/\/([\.a-zA-Z\/]+)([ {1}])`
 var urlReg *regexp.Regexp
 
@@ -598,7 +601,8 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 				}
 				//fmt.Println("p2")
 
-				var addImage = func(url string) {
+				addImage := func(url string) {
+					sb.Grow(len(imageOpen) + len(url) + len(url) + len(imageOpen2) + len(imageClose))
 					sb.Write(imageOpen)
 					sb.WriteString(url)
 					sb.Write(imageOpen2)
@@ -609,6 +613,7 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 				}
 
 				// TODO: Reduce the amount of code duplication
+				// TODO: Avoid allocating a string for media.Type?
 				if media.Type == "attach" {
 					addImage(media.URL + "?sid=" + strconv.Itoa(sectionID) + "&amp;stype=" + sectionType)
 					continue
@@ -617,7 +622,11 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 					continue
 				} else if media.Type == "aother" {
 					sb.Write(attachOpen)
-					sb.WriteString(media.URL + "?sid=" + strconv.Itoa(sectionID) + "&amp;stype=" + sectionType)
+					sb.WriteString(media.URL)
+					sb.Write(sidParam)
+					sb.WriteString(strconv.Itoa(sectionID))
+					sb.Write(stypeParam)
+					sb.WriteString(sectionType)
 					sb.Write(attachClose)
 					i += urlLen
 					lastItem = i
@@ -634,7 +643,13 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 				}
 				//fmt.Println("p3")
 
-				sb.Write(URLOpen)
+				// TODO: Add support for rel="ugc"
+				sb.Grow(len(URLOpen) + (len(msg[i : i+urlLen]) * 2) + len(URLOpen2) + len(URLClose))
+				if media.Trusted {
+					sb.Write(URLOpen)
+				} else {
+					sb.Write(URLOpenUser)
+				}
 				sb.WriteString(msg[i : i+urlLen])
 				sb.Write(URLOpen2)
 				sb.WriteString(msg[i : i+urlLen])
@@ -828,6 +843,8 @@ type MediaEmbed struct {
 	Type string //image
 	URL  string
 	Body string
+
+	Trusted bool // samesite urls
 }
 
 // TODO: Write a test for this
@@ -846,7 +863,7 @@ func parseMediaString(data string) (media MediaEmbed, ok bool) {
 	query := url.Query()
 
 	// TODO: Treat 127.0.0.1 and [::1] as localhost too
-	var samesite = hostname == "localhost" || hostname == Site.URL
+	samesite := hostname == "localhost" || hostname == Site.URL
 	if samesite {
 		hostname = strings.Split(Site.URL, ":")[0]
 		// ?- Test this as I'm not sure it'll do what it should. If someone's running SSL on port 80 or non-SSL on port 443 then... Well... They're in far worse trouble than this...
@@ -858,6 +875,7 @@ func parseMediaString(data string) (media MediaEmbed, ok bool) {
 	if scheme == "" {
 		scheme = "http"
 	}
+	media.Trusted = samesite
 
 	path := url.EscapedPath()
 	pathFrags := strings.Split(path, "/")
@@ -869,12 +887,12 @@ func parseMediaString(data string) (media MediaEmbed, ok bool) {
 				sport = ":" + port
 			}
 			media.URL = scheme + "://" + hostname + sport + path
-			var extarr = strings.Split(path, ".")
+			extarr := strings.Split(path, ".")
 			if len(extarr) == 0 {
 				// TODO: Write a unit test for this
 				return media, false
 			}
-			var ext = extarr[len(extarr)-1]
+			ext := extarr[len(extarr)-1]
 			if ImageFileExts.Contains(ext) {
 				media.Type = "attach"
 			} else {
