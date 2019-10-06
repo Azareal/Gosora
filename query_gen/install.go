@@ -30,81 +30,81 @@ type installer struct {
 	plugins      []QueryPlugin
 }
 
-func (install *installer) SetAdapter(name string) error {
+func (ins *installer) SetAdapter(name string) error {
 	adap, err := GetAdapter(name)
 	if err != nil {
 		return err
 	}
-	install.SetAdapterInstance(adap)
+	ins.SetAdapterInstance(adap)
 	return nil
 }
 
-func (install *installer) SetAdapterInstance(adapter Adapter) {
-	install.adapter = adapter
-	install.instructions = []DBInstallInstruction{}
+func (ins *installer) SetAdapterInstance(adapter Adapter) {
+	ins.adapter = adapter
+	ins.instructions = []DBInstallInstruction{}
 }
 
-func (install *installer) AddPlugins(plugins ...QueryPlugin) {
-	install.plugins = append(install.plugins, plugins...)
+func (ins *installer) AddPlugins(plugins ...QueryPlugin) {
+	ins.plugins = append(ins.plugins, plugins...)
 }
 
-func (install *installer) CreateTable(table string, charset string, collation string, columns []DBTableColumn, keys []DBTableKey) error {
+func (ins *installer) CreateTable(table string, charset string, collation string, columns []DBTableColumn, keys []DBTableKey) error {
 	tableStruct := &DBInstallTable{table, charset, collation, columns, keys}
-	err := install.RunHook("CreateTableStart", tableStruct)
+	err := ins.RunHook("CreateTableStart", tableStruct)
 	if err != nil {
 		return err
 	}
-	res, err := install.adapter.CreateTable("", table, charset, collation, columns, keys)
+	res, err := ins.adapter.CreateTable("", table, charset, collation, columns, keys)
 	if err != nil {
 		return err
 	}
-	err = install.RunHook("CreateTableAfter", tableStruct)
+	err = ins.RunHook("CreateTableAfter", tableStruct)
 	if err != nil {
 		return err
 	}
-	install.instructions = append(install.instructions, DBInstallInstruction{table, res, "create-table"})
-	install.tables = append(install.tables, tableStruct)
+	ins.instructions = append(ins.instructions, DBInstallInstruction{table, res, "create-table"})
+	ins.tables = append(ins.tables, tableStruct)
 	return nil
 }
 
 // TODO: Let plugins manipulate the parameters like in CreateTable
-func (install *installer) AddIndex(table string, iname string, colname string) error {
-	err := install.RunHook("AddIndexStart", table, iname, colname)
+func (ins *installer) AddIndex(table string, iname string, colname string) error {
+	err := ins.RunHook("AddIndexStart", table, iname, colname)
 	if err != nil {
 		return err
 	}
-	res, err := install.adapter.AddIndex("", table, iname, colname)
+	res, err := ins.adapter.AddIndex("", table, iname, colname)
 	if err != nil {
 		return err
 	}
-	err = install.RunHook("AddIndexAfter", table, iname, colname)
+	err = ins.RunHook("AddIndexAfter", table, iname, colname)
 	if err != nil {
 		return err
 	}
-	install.instructions = append(install.instructions, DBInstallInstruction{table, res, "index"})
+	ins.instructions = append(ins.instructions, DBInstallInstruction{table, res, "index"})
 	return nil
 }
 
 // TODO: Let plugins manipulate the parameters like in CreateTable
-func (install *installer) SimpleInsert(table string, columns string, fields string) error {
-	err := install.RunHook("SimpleInsertStart", table, columns, fields)
+func (ins *installer) SimpleInsert(table string, columns string, fields string) error {
+	err := ins.RunHook("SimpleInsertStart", table, columns, fields)
 	if err != nil {
 		return err
 	}
-	res, err := install.adapter.SimpleInsert("", table, columns, fields)
+	res, err := ins.adapter.SimpleInsert("", table, columns, fields)
 	if err != nil {
 		return err
 	}
-	err = install.RunHook("SimpleInsertAfter", table, columns, fields, res)
+	err = ins.RunHook("SimpleInsertAfter", table, columns, fields, res)
 	if err != nil {
 		return err
 	}
-	install.instructions = append(install.instructions, DBInstallInstruction{table, res, "insert"})
+	ins.instructions = append(ins.instructions, DBInstallInstruction{table, res, "insert"})
 	return nil
 }
 
-func (install *installer) RunHook(name string, args ...interface{}) error {
-	for _, plugin := range install.plugins {
+func (ins *installer) RunHook(name string, args ...interface{}) error {
+	for _, plugin := range ins.plugins {
 		err := plugin.Hook(name, args...)
 		if err != nil {
 			return err
@@ -113,12 +113,12 @@ func (install *installer) RunHook(name string, args ...interface{}) error {
 	return nil
 }
 
-func (install *installer) Write() error {
+func (ins *installer) Write() error {
 	var inserts string
 	// We can't escape backticks, so we have to dump it out a file at a time
-	for _, instr := range install.instructions {
+	for _, instr := range ins.instructions {
 		if instr.Type == "create-table" {
-			err := writeFile("./schema/"+install.adapter.GetName()+"/query_"+instr.Table+".sql", instr.Contents)
+			err := writeFile("./schema/"+ins.adapter.GetName()+"/query_"+instr.Table+".sql", instr.Contents)
 			if err != nil {
 				return err
 			}
@@ -127,12 +127,12 @@ func (install *installer) Write() error {
 		}
 	}
 
-	err := writeFile("./schema/"+install.adapter.GetName()+"/inserts.sql", inserts)
+	err := writeFile("./schema/"+ins.adapter.GetName()+"/inserts.sql", inserts)
 	if err != nil {
 		return err
 	}
 
-	for _, plugin := range install.plugins {
+	for _, plugin := range ins.plugins {
 		err := plugin.Write()
 		if err != nil {
 			return err

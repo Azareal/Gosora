@@ -113,7 +113,7 @@ func (r *Reply) Like(uid int) (err error) {
 	if err != nil {
 		return err
 	}
-	_, err = userStmts.incrementLiked.Exec(1, uid)
+	_, err = userStmts.incLiked.Exec(1, uid)
 	_ = Rstore.GetCache().Remove(r.ID)
 	return err
 }

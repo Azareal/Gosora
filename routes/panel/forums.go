@@ -137,7 +137,7 @@ func ForumsOrderSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.Ro
 	if ferr != nil {
 		return ferr
 	}
-	js := (r.PostFormValue("js") == "1")
+	js := r.PostFormValue("js") == "1"
 	if !user.Perms.ManageForums {
 		return c.NoPermissionsJSQ(w, r, user, js)
 	}
@@ -218,7 +218,7 @@ func ForumsEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, sfid 
 	if !user.Perms.ManageForums {
 		return c.NoPermissions(w, r, user)
 	}
-	js := (r.PostFormValue("js") == "1")
+	js := r.PostFormValue("js") == "1"
 
 	fid, err := strconv.Atoi(sfid)
 	if err != nil {
@@ -260,7 +260,7 @@ func ForumsEditPermsSubmit(w http.ResponseWriter, r *http.Request, user c.User, 
 	if !user.Perms.ManageForums {
 		return c.NoPermissions(w, r, user)
 	}
-	js := (r.PostFormValue("js") == "1")
+	js := r.PostFormValue("js") == "1"
 
 	fid, err := strconv.Atoi(sfid)
 	if err != nil {

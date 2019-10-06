@@ -106,8 +106,7 @@ func gloinit() (err error) {
 }
 
 func init() {
-	err := gloinit()
-	if err != nil {
+	if err := gloinit(); err != nil {
 		log.Print("Something bad happened")
 		//debug.PrintStack()
 		log.Fatalf("%+v\n", err)

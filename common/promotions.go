@@ -6,7 +6,7 @@ import (
 	qgen "github.com/Azareal/Gosora/query_gen"
 )
 
-var GroupPromotions *DefaultGroupPromotionStore
+var GroupPromotions GroupPromotionStore
 
 type GroupPromotion struct {
 	ID     int
@@ -15,15 +15,16 @@ type GroupPromotion struct {
 	TwoWay bool
 
 	Level   int
+	Posts   int
 	MinTime int
 }
 
 type GroupPromotionStore interface {
-	GetByGroup() ([]*GroupPromotion, error)
+	GetByGroup(gid int) (gps []*GroupPromotion, err error)
 	Get(id int) (*GroupPromotion, error)
-	PromoteIfEligible(u *User, level int) error
+	PromoteIfEligible(u *User, level int, posts int) error
 	Delete(id int) error
-	Create(from int, to int, twoWay bool, level int) (int, error)
+	Create(from int, to int, twoWay bool, level int, posts int) (int, error)
 }
 
 type DefaultGroupPromotionStore struct {
@@ -39,13 +40,13 @@ type DefaultGroupPromotionStore struct {
 func NewDefaultGroupPromotionStore(acc *qgen.Accumulator) (*DefaultGroupPromotionStore, error) {
 	ugp := "users_groups_promotions"
 	return &DefaultGroupPromotionStore{
-		getByGroup: acc.Select(ugp).Columns("pid, from_gid, to_gid, two_way, level, minTime").Where("from_gid=? OR to_gid=?").Prepare(),
-		get:        acc.Select(ugp).Columns("from_gid, to_gid, two_way, level, minTime").Where("pid = ?").Prepare(),
+		getByGroup: acc.Select(ugp).Columns("pid, from_gid, to_gid, two_way, level, posts, minTime").Where("from_gid=? OR to_gid=?").Prepare(),
+		get:        acc.Select(ugp).Columns("from_gid, to_gid, two_way, level, posts, minTime").Where("pid = ?").Prepare(),
 		delete:     acc.Delete(ugp).Where("pid = ?").Prepare(),
-		create:     acc.Insert(ugp).Columns("from_gid, to_gid, two_way, level, minTime").Fields("?,?,?,?,?").Prepare(),
+		create:     acc.Insert(ugp).Columns("from_gid, to_gid, two_way, level, posts, minTime").Fields("?,?,?,?,?,?").Prepare(),
 
-		getByUser:  acc.Select(ugp).Columns("pid, to_gid, two_way, level, minTime").Where("from_gid=? AND level>=?").Orderby("level DESC").Limit("1").Prepare(),
-		updateUser: acc.Update("users").Set("group = ?").Where("level >= ?").Prepare(),
+		getByUser:  acc.Select(ugp).Columns("pid, to_gid, two_way, level, posts, minTime").Where("from_gid=? AND level>=? AND posts>=?").Orderby("level DESC").Limit("1").Prepare(),
+		updateUser: acc.Update("users").Set("group = ?").Where("level >= ? AND posts >= ?").Prepare(),
 	}, acc.FirstError()
 }
 
@@ -58,7 +59,7 @@ func (s *DefaultGroupPromotionStore) GetByGroup(gid int) (gps []*GroupPromotion,
 
 	for rows.Next() {
 		g := &GroupPromotion{}
-		err := rows.Scan(&g.ID, &g.From, &g.To, &g.TwoWay, &g.Level, &g.MinTime)
+		err := rows.Scan(&g.ID, &g.From, &g.To, &g.TwoWay, &g.Level, &g.Posts, &g.MinTime)
 		if err != nil {
 			return nil, err
 		}
@@ -75,22 +76,22 @@ func (s *DefaultGroupPromotionStore) Get(id int) (*GroupPromotion, error) {
 	}*/
 
 	g := &GroupPromotion{ID: id}
-	err := s.get.QueryRow(id).Scan(&g.From, &g.To, &g.TwoWay, &g.Level, &g.MinTime)
+	err := s.get.QueryRow(id).Scan(&g.From, &g.To, &g.TwoWay, &g.Level, &g.Posts, &g.MinTime)
 	if err == nil {
 		//s.cache.Set(u)
 	}
 	return g, err
 }
 
-func (s *DefaultGroupPromotionStore) PromoteIfEligible(u *User, level int) error {
+func (s *DefaultGroupPromotionStore) PromoteIfEligible(u *User, level int, posts int) error {
 	g := &GroupPromotion{From: u.Group}
-	err := s.getByUser.QueryRow(u.Group, level).Scan(&g.ID, &g.To, &g.TwoWay, &g.Level, &g.MinTime)
+	err := s.getByUser.QueryRow(u.Group, level, posts).Scan(&g.ID, &g.To, &g.TwoWay, &g.Level, &g.Posts, &g.MinTime)
 	if err == sql.ErrNoRows {
 		return nil
 	} else if err != nil {
 		return err
 	}
-	_, err = s.updateUser.Exec(g.To, g.Level)
+	_, err = s.updateUser.Exec(g.To, g.Level, g.Posts)
 	return err
 }
 
@@ -99,8 +100,8 @@ func (s *DefaultGroupPromotionStore) Delete(id int) error {
 	return err
 }
 
-func (s *DefaultGroupPromotionStore) Create(from int, to int, twoWay bool, level int) (int, error) {
-	res, err := s.create.Exec(from, to, twoWay, level, 0)
+func (s *DefaultGroupPromotionStore) Create(from int, to int, twoWay bool, level int, posts int) (int, error) {
+	res, err := s.create.Exec(from, to, twoWay, level, posts, 0)
 	if err != nil {
 		return 0, err
 	}

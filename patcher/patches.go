@@ -38,6 +38,7 @@ func init() {
 	addPatch(22, patch22)
 	addPatch(23, patch23)
 	addPatch(24, patch24)
+	addPatch(25, patch25)
 }
 
 func patch0(scanner *bufio.Scanner) (err error) {
@@ -734,4 +735,8 @@ func patch24(scanner *bufio.Scanner) error {
 			tblKey{"pid", "primary","",false},
 		},
 	))
+}
+
+func patch25(scanner *bufio.Scanner) error {
+	return execStmt(qgen.Builder.AddColumn("users_groups_promotions", tC{"posts", "int", 0, false, false, "0"}, nil))
 }

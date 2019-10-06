@@ -208,6 +208,10 @@ func GroupsPromotionsCreateSubmit(w http.ResponseWriter, r *http.Request, user c
 	if err != nil {
 		return c.LocalError("level must be integer", w, r, user)
 	}
+	posts, err := strconv.Atoi(r.FormValue("posts"))
+	if err != nil {
+		return c.LocalError("posts must be integer", w, r, user)
+	}
 
 	g, err := c.Groups.Get(from)
 	ferr := groupCheck(w, r, user, g, err)
@@ -219,7 +223,7 @@ func GroupsPromotionsCreateSubmit(w http.ResponseWriter, r *http.Request, user c
 	if err != nil {
 		return ferr
 	}
-	_, err = c.GroupPromotions.Create(from, to, twoWay, level)
+	_, err = c.GroupPromotions.Create(from, to, twoWay, level, posts)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -300,50 +304,50 @@ func GroupsEditPerms(w http.ResponseWriter, r *http.Request, user c.User, sgid s
 
 	// TODO: Load the phrases in bulk for efficiency?
 	var localPerms []c.NameLangToggle
-	addLocalPerm := func(permStr string, perm bool) {
+	addPerm := func(permStr string, perm bool) {
 		localPerms = append(localPerms, c.NameLangToggle{permStr, p.GetPermPhrase(permStr), perm})
 	}
 
-	addLocalPerm("ViewTopic", g.Perms.ViewTopic)
-	addLocalPerm("LikeItem", g.Perms.LikeItem)
-	addLocalPerm("CreateTopic", g.Perms.CreateTopic)
+	addPerm("ViewTopic", g.Perms.ViewTopic)
+	addPerm("LikeItem", g.Perms.LikeItem)
+	addPerm("CreateTopic", g.Perms.CreateTopic)
 	//<--
-	addLocalPerm("EditTopic", g.Perms.EditTopic)
-	addLocalPerm("DeleteTopic", g.Perms.DeleteTopic)
-	addLocalPerm("CreateReply", g.Perms.CreateReply)
-	addLocalPerm("EditReply", g.Perms.EditReply)
-	addLocalPerm("DeleteReply", g.Perms.DeleteReply)
-	addLocalPerm("PinTopic", g.Perms.PinTopic)
-	addLocalPerm("CloseTopic", g.Perms.CloseTopic)
-	addLocalPerm("MoveTopic", g.Perms.MoveTopic)
+	addPerm("EditTopic", g.Perms.EditTopic)
+	addPerm("DeleteTopic", g.Perms.DeleteTopic)
+	addPerm("CreateReply", g.Perms.CreateReply)
+	addPerm("EditReply", g.Perms.EditReply)
+	addPerm("DeleteReply", g.Perms.DeleteReply)
+	addPerm("PinTopic", g.Perms.PinTopic)
+	addPerm("CloseTopic", g.Perms.CloseTopic)
+	addPerm("MoveTopic", g.Perms.MoveTopic)
 
 	var globalPerms []c.NameLangToggle
-	addGlobalPerm := func(permStr string, perm bool) {
+	addPerm = func(permStr string, perm bool) {
 		globalPerms = append(globalPerms, c.NameLangToggle{permStr, p.GetPermPhrase(permStr), perm})
 	}
 
-	addGlobalPerm("BanUsers", g.Perms.BanUsers)
-	addGlobalPerm("ActivateUsers", g.Perms.ActivateUsers)
-	addGlobalPerm("EditUser", g.Perms.EditUser)
-	addGlobalPerm("EditUserEmail", g.Perms.EditUserEmail)
-	addGlobalPerm("EditUserPassword", g.Perms.EditUserPassword)
-	addGlobalPerm("EditUserGroup", g.Perms.EditUserGroup)
-	addGlobalPerm("EditUserGroupSuperMod", g.Perms.EditUserGroupSuperMod)
-	addGlobalPerm("EditUserGroupAdmin", g.Perms.EditUserGroupAdmin)
-	addGlobalPerm("EditGroup", g.Perms.EditGroup)
-	addGlobalPerm("EditGroupLocalPerms", g.Perms.EditGroupLocalPerms)
-	addGlobalPerm("EditGroupGlobalPerms", g.Perms.EditGroupGlobalPerms)
-	addGlobalPerm("EditGroupSuperMod", g.Perms.EditGroupSuperMod)
-	addGlobalPerm("EditGroupAdmin", g.Perms.EditGroupAdmin)
-	addGlobalPerm("ManageForums", g.Perms.ManageForums)
-	addGlobalPerm("EditSettings", g.Perms.EditSettings)
-	addGlobalPerm("ManageThemes", g.Perms.ManageThemes)
-	addGlobalPerm("ManagePlugins", g.Perms.ManagePlugins)
-	addGlobalPerm("ViewAdminLogs", g.Perms.ViewAdminLogs)
-	addGlobalPerm("ViewIPs", g.Perms.ViewIPs)
-	addGlobalPerm("UploadFiles", g.Perms.UploadFiles)
-	addGlobalPerm("UploadAvatars", g.Perms.UploadAvatars)
-	addGlobalPerm("UseConvos", g.Perms.UseConvos)
+	addPerm("BanUsers", g.Perms.BanUsers)
+	addPerm("ActivateUsers", g.Perms.ActivateUsers)
+	addPerm("EditUser", g.Perms.EditUser)
+	addPerm("EditUserEmail", g.Perms.EditUserEmail)
+	addPerm("EditUserPassword", g.Perms.EditUserPassword)
+	addPerm("EditUserGroup", g.Perms.EditUserGroup)
+	addPerm("EditUserGroupSuperMod", g.Perms.EditUserGroupSuperMod)
+	addPerm("EditUserGroupAdmin", g.Perms.EditUserGroupAdmin)
+	addPerm("EditGroup", g.Perms.EditGroup)
+	addPerm("EditGroupLocalPerms", g.Perms.EditGroupLocalPerms)
+	addPerm("EditGroupGlobalPerms", g.Perms.EditGroupGlobalPerms)
+	addPerm("EditGroupSuperMod", g.Perms.EditGroupSuperMod)
+	addPerm("EditGroupAdmin", g.Perms.EditGroupAdmin)
+	addPerm("ManageForums", g.Perms.ManageForums)
+	addPerm("EditSettings", g.Perms.EditSettings)
+	addPerm("ManageThemes", g.Perms.ManageThemes)
+	addPerm("ManagePlugins", g.Perms.ManagePlugins)
+	addPerm("ViewAdminLogs", g.Perms.ViewAdminLogs)
+	addPerm("ViewIPs", g.Perms.ViewIPs)
+	addPerm("UploadFiles", g.Perms.UploadFiles)
+	addPerm("UploadAvatars", g.Perms.UploadAvatars)
+	addPerm("UseConvos", g.Perms.UseConvos)
 
 	pi := c.PanelEditGroupPermsPage{basePage, g.ID, g.Name, localPerms, globalPerms}
 	return renderTemplate("panel_group_edit_perms", w, r, basePage.Header, pi)

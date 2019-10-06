@@ -318,7 +318,7 @@ func (t *Topic) Like(score int, uid int) (err error) {
 	if err != nil {
 		return err
 	}
-	_, err = userStmts.incrementLiked.Exec(1, uid)
+	_, err = userStmts.incLiked.Exec(1, uid)
 	t.cacheRemove()
 	return err
 }

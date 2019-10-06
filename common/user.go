@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Azareal/Gosora/query_gen"
+	qgen "github.com/Azareal/Gosora/query_gen"
 	"github.com/go-sql-driver/mysql"
 )
 
@@ -51,6 +51,7 @@ type User struct {
 	Tag         string
 	Level       int
 	Score       int
+	Posts       int
 	Liked       int
 	LastIP      string // ! This part of the UserCache data might fall out of date
 	LastAgent   string // ! Temporary hack, don't use
@@ -104,7 +105,7 @@ type MeUser struct {
 	//Perms       Perms
 	//PluginPerms map[string]bool
 
-	S     string // Session
+	S           string // Session
 	Avatar      string
 	MicroAvatar string
 	Tag         string
@@ -114,24 +115,24 @@ type MeUser struct {
 }
 
 type UserStmts struct {
-	activate        *sql.Stmt
-	changeGroup     *sql.Stmt
-	delete          *sql.Stmt
-	setAvatar       *sql.Stmt
-	setUsername     *sql.Stmt
-	incrementTopics *sql.Stmt
-	updateLevel     *sql.Stmt
-	update          *sql.Stmt
+	activate    *sql.Stmt
+	changeGroup *sql.Stmt
+	delete      *sql.Stmt
+	setAvatar   *sql.Stmt
+	setUsername *sql.Stmt
+	incTopics   *sql.Stmt
+	updateLevel *sql.Stmt
+	update      *sql.Stmt
 
 	// TODO: Split these into a sub-struct
-	incrementScore     *sql.Stmt
-	incrementPosts     *sql.Stmt
-	incrementBigposts  *sql.Stmt
-	incrementMegaposts *sql.Stmt
-	incrementLiked     *sql.Stmt
+	incScore     *sql.Stmt
+	incPosts     *sql.Stmt
+	incBigposts  *sql.Stmt
+	incMegaposts *sql.Stmt
+	incLiked     *sql.Stmt
 
-	decrementLiked *sql.Stmt
-	updateLastIP   *sql.Stmt
+	decLiked     *sql.Stmt
+	updateLastIP *sql.Stmt
 
 	setPassword *sql.Stmt
 
@@ -142,23 +143,23 @@ var userStmts UserStmts
 
 func init() {
 	DbInits.Add(func(acc *qgen.Accumulator) error {
-		var w = "uid = ?"
+		w := "uid = ?"
 		userStmts = UserStmts{
-			activate:        acc.SimpleUpdate("users", "active = 1", w),
-			changeGroup:     acc.SimpleUpdate("users", "group = ?", w), // TODO: Implement user_count for users_groups here
-			delete:          acc.SimpleDelete("users", w),
-			setAvatar:       acc.Update("users").Set("avatar = ?").Where(w).Prepare(),
-			setUsername:     acc.Update("users").Set("name = ?").Where(w).Prepare(),
-			incrementTopics: acc.SimpleUpdate("users", "topics =  topics + ?", w),
-			updateLevel:     acc.SimpleUpdate("users", "level = ?", w),
-			update:          acc.Update("users").Set("name = ?, email = ?, group = ?").Where(w).Prepare(), // TODO: Implement user_count for users_groups on things which use this
+			activate:    acc.SimpleUpdate("users", "active = 1", w),
+			changeGroup: acc.SimpleUpdate("users", "group = ?", w), // TODO: Implement user_count for users_groups here
+			delete:      acc.SimpleDelete("users", w),
+			setAvatar:   acc.Update("users").Set("avatar = ?").Where(w).Prepare(),
+			setUsername: acc.Update("users").Set("name = ?").Where(w).Prepare(),
+			incTopics:   acc.SimpleUpdate("users", "topics =  topics + ?", w),
+			updateLevel: acc.SimpleUpdate("users", "level = ?", w),
+			update:      acc.Update("users").Set("name = ?, email = ?, group = ?").Where(w).Prepare(), // TODO: Implement user_count for users_groups on things which use this
 
-			incrementScore:     acc.SimpleUpdate("users", "score = score + ?", w),
-			incrementPosts:     acc.SimpleUpdate("users", "posts = posts + ?", w),
-			incrementBigposts:  acc.SimpleUpdate("users", "posts = posts + ?, bigposts = bigposts + ?", w),
-			incrementMegaposts: acc.SimpleUpdate("users", "posts = posts + ?, bigposts = bigposts + ?, megaposts = megaposts + ?", w),
-			incrementLiked:     acc.SimpleUpdate("users", "liked = liked + ?, lastLiked = UTC_TIMESTAMP()", w),
-			decrementLiked:     acc.SimpleUpdate("users", "liked = liked - ?", w),
+			incScore:     acc.Update("users").Set("score = score + ?").Where(w).Prepare(),
+			incPosts:     acc.Update("users").Set("posts = posts + ?").Where(w).Prepare(),
+			incBigposts:  acc.Update("users").Set("posts = posts + ?, bigposts = bigposts + ?").Where(w).Prepare(),
+			incMegaposts: acc.Update("users").Set("posts = posts + ?, bigposts = bigposts + ?, megaposts = megaposts + ?").Where(w).Prepare(),
+			incLiked:     acc.Update("users").Set("liked = liked + ?, lastLiked = UTC_TIMESTAMP()").Where(w).Prepare(),
+			decLiked:     acc.Update("users").Set("liked = liked - ?").Where(w).Prepare(),
 			//recalcLastLiked: acc...
 			updateLastIP: acc.SimpleUpdate("users", "last_ip = ?", w),
 
@@ -342,15 +343,15 @@ func (u *User) UpdateIP(host string) error {
 	return err
 }
 
-func (u *User) Update(newname string, newemail string, newgroup int) (err error) {
-	return u.bindStmt(userStmts.update, newname, newemail, newgroup)
+func (u *User) Update(name string, email string, group int) (err error) {
+	return u.bindStmt(userStmts.update, name, email, group)
 }
 
 func (u *User) IncreasePostStats(wcount int, topic bool) (err error) {
 	var mod int
 	baseScore := 1
 	if topic {
-		_, err = userStmts.incrementTopics.Exec(1, u.ID)
+		_, err = userStmts.incTopics.Exec(1, u.ID)
 		if err != nil {
 			return err
 		}
@@ -359,31 +360,31 @@ func (u *User) IncreasePostStats(wcount int, topic bool) (err error) {
 
 	settings := SettingBox.Load().(SettingMap)
 	if wcount >= settings["megapost_min_words"].(int) {
-		_, err = userStmts.incrementMegaposts.Exec(1, 1, 1, u.ID)
+		_, err = userStmts.incMegaposts.Exec(1, 1, 1, u.ID)
 		mod = 4
 	} else if wcount >= settings["bigpost_min_words"].(int) {
-		_, err = userStmts.incrementBigposts.Exec(1, 1, u.ID)
+		_, err = userStmts.incBigposts.Exec(1, 1, u.ID)
 		mod = 1
 	} else {
-		_, err = userStmts.incrementPosts.Exec(1, u.ID)
+		_, err = userStmts.incPosts.Exec(1, u.ID)
 	}
 	if err != nil {
 		return err
 	}
 
-	_, err = userStmts.incrementScore.Exec(baseScore+mod, u.ID)
+	_, err = userStmts.incScore.Exec(baseScore+mod, u.ID)
 	if err != nil {
 		return err
 	}
 	//log.Print(u.Score + baseScore + mod)
 	// TODO: Use a transaction to prevent level desyncs?
-	level := GetLevel(u.Score+baseScore+mod)
+	level := GetLevel(u.Score + baseScore + mod)
 	//log.Print(level)
 	_, err = userStmts.updateLevel.Exec(level, u.ID)
 	if err != nil {
 		return err
 	}
-	err = GroupPromotions.PromoteIfEligible(u,level)
+	err = GroupPromotions.PromoteIfEligible(u, level, u.Posts+1)
 	u.CacheRemove()
 	return err
 }
@@ -392,7 +393,7 @@ func (u *User) DecreasePostStats(wcount int, topic bool) (err error) {
 	var mod int
 	baseScore := -1
 	if topic {
-		_, err = userStmts.incrementTopics.Exec(-1, u.ID)
+		_, err = userStmts.incTopics.Exec(-1, u.ID)
 		if err != nil {
 			return err
 		}
@@ -401,19 +402,19 @@ func (u *User) DecreasePostStats(wcount int, topic bool) (err error) {
 
 	settings := SettingBox.Load().(SettingMap)
 	if wcount >= settings["megapost_min_words"].(int) {
-		_, err = userStmts.incrementMegaposts.Exec(-1, -1, -1, u.ID)
+		_, err = userStmts.incMegaposts.Exec(-1, -1, -1, u.ID)
 		mod = 4
 	} else if wcount >= settings["bigpost_min_words"].(int) {
-		_, err = userStmts.incrementBigposts.Exec(-1, -1, u.ID)
+		_, err = userStmts.incBigposts.Exec(-1, -1, u.ID)
 		mod = 1
 	} else {
-		_, err = userStmts.incrementPosts.Exec(-1, u.ID)
+		_, err = userStmts.incPosts.Exec(-1, u.ID)
 	}
 	if err != nil {
 		return err
 	}
 
-	_, err = userStmts.incrementScore.Exec(baseScore-mod, u.ID)
+	_, err = userStmts.incScore.Exec(baseScore-mod, u.ID)
 	if err != nil {
 		return err
 	}
@@ -479,7 +480,7 @@ func buildNoavatar(uid int, width int) string {
 		}
 	}
 	if !Config.DisableDefaultNoavatar && uid < 5 {
-		return "/s/n"+strconv.Itoa(uid)+"-"+strconv.Itoa(width)+".png?i=0"
+		return "/s/n" + strconv.Itoa(uid) + "-" + strconv.Itoa(width) + ".png?i=0"
 	}
 	return strings.Replace(strings.Replace(Config.Noavatar, "{id}", strconv.Itoa(uid), 1), "{width}", strconv.Itoa(width), 1)
 }

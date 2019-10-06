@@ -9,8 +9,14 @@ type tblColumn = qgen.DBTableColumn
 type tC = tblColumn
 type tblKey = qgen.DBTableKey
 
-func createTables(adapter qgen.Adapter) error {
-	qgen.Install.CreateTable("users", mysqlPre, mysqlCol,
+func createTables(adapter qgen.Adapter) (err error) {
+	createTable := func(table string, charset string, collation string, columns []qgen.DBTableColumn, keys []qgen.DBTableKey) {
+		if err != nil {
+			return
+		}
+		err = qgen.Install.CreateTable(table, charset, collation, columns, keys)
+	}
+	createTable("users", mysqlPre, mysqlCol,
 		[]tC{
 			tC{"uid", "int", 0, false, true, ""},
 			tC{"name", "varchar", 100, false, false, ""},
@@ -51,7 +57,7 @@ func createTables(adapter qgen.Adapter) error {
 		},
 	)
 
-	qgen.Install.CreateTable("users_groups", mysqlPre, mysqlCol,
+	createTable("users_groups", mysqlPre, mysqlCol,
 		[]tC{
 			tC{"gid", "int", 0, false, true, ""},
 			tC{"name", "varchar", 100, false, false, ""},
@@ -69,7 +75,7 @@ func createTables(adapter qgen.Adapter) error {
 		},
 	)
 
-	qgen.Install.CreateTable("users_groups_promotions", mysqlPre, mysqlCol,
+	createTable("users_groups_promotions", mysqlPre, mysqlCol,
 		[]tC{
 			tC{"pid", "int", 0, false, true, ""},
 			tC{"from_gid", "int", 0, false, false, ""},
@@ -78,6 +84,7 @@ func createTables(adapter qgen.Adapter) error {
 
 			// Requirements
 			tC{"level", "int", 0, false, false, ""},
+			tC{"posts", "int", 0, false, false, "0"},
 			tC{"minTime", "int", 0, false, false, ""}, // How long someone needs to have been in their current group before being promoted
 		},
 		[]tblKey{
@@ -85,7 +92,7 @@ func createTables(adapter qgen.Adapter) error {
 		},
 	)
 
-	qgen.Install.CreateTable("users_2fa_keys", mysqlPre, mysqlCol,
+	createTable("users_2fa_keys", mysqlPre, mysqlCol,
 		[]tC{
 			tC{"uid", "int", 0, false, false, ""},
 			tC{"secret", "varchar", 100, false, false, ""},
@@ -110,7 +117,7 @@ func createTables(adapter qgen.Adapter) error {
 	// TODO: Add a mod-queue and other basic auto-mod features. This is needed for awaiting activation and the mod_queue penalty flag
 	// TODO: Add a penalty type where a user is stopped from creating plugin_guilds social groups
 	// TODO: Shadow bans. We will probably have a CanShadowBan permission for this, as we *really* don't want people using this lightly.
-	/*qgen.Install.CreateTable("users_penalties","","",
+	/*createTable("users_penalties","","",
 		[]tC{
 			tC{"uid","int",0,false,false,""},
 			tC{"element_id","int",0,false,false,""},
@@ -134,7 +141,7 @@ func createTables(adapter qgen.Adapter) error {
 		}, nil,
 	)*/
 
-	qgen.Install.CreateTable("users_groups_scheduler", "", "",
+	createTable("users_groups_scheduler", "", "",
 		[]tC{
 			tC{"uid", "int", 0, false, false, ""},
 			tC{"set_group", "int", 0, false, false, ""},
@@ -150,7 +157,7 @@ func createTables(adapter qgen.Adapter) error {
 	)
 
 	// TODO: Can we use a piece of software dedicated to persistent queues for this rather than relying on the database for it?
-	qgen.Install.CreateTable("users_avatar_queue", "", "",
+	createTable("users_avatar_queue", "", "",
 		[]tC{
 			tC{"uid", "int", 0, false, false, ""}, // TODO: Make this a foreign key
 		},
@@ -160,7 +167,7 @@ func createTables(adapter qgen.Adapter) error {
 	)
 
 	// TODO: Should we add a users prefix to this table to fit the "unofficial convention"?
-	qgen.Install.CreateTable("emails", "", "",
+	createTable("emails", "", "",
 		[]tC{
 			tC{"email", "varchar", 200, false, false, ""},
 			tC{"uid", "int", 0, false, false, ""}, // TODO: Make this a foreign key
@@ -171,7 +178,7 @@ func createTables(adapter qgen.Adapter) error {
 
 	// TODO: Allow for patterns in domains, if the bots try to shake things up there?
 	/*
-		qgen.Install.CreateTable("email_domain_blacklist", "", "",
+		createTable("email_domain_blacklist", "", "",
 			[]tC{
 				tC{"domain", "varchar", 200, false, false, ""},
 				tC{"gtld", "boolean", 0, false, false, "0"},
@@ -183,7 +190,7 @@ func createTables(adapter qgen.Adapter) error {
 	*/
 
 	// TODO: Implement password resets
-	qgen.Install.CreateTable("password_resets", "", "",
+	createTable("password_resets", "", "",
 		[]tC{
 			tC{"email", "varchar", 200, false, false, ""},
 			tC{"uid", "int", 0, false, false, ""},             // TODO: Make this a foreign key
@@ -193,7 +200,7 @@ func createTables(adapter qgen.Adapter) error {
 		}, nil,
 	)
 
-	qgen.Install.CreateTable("forums", mysqlPre, mysqlCol,
+	createTable("forums", mysqlPre, mysqlCol,
 		[]tC{
 			tC{"fid", "int", 0, false, true, ""},
 			tC{"name", "varchar", 100, false, false, ""},
@@ -213,7 +220,7 @@ func createTables(adapter qgen.Adapter) error {
 		},
 	)
 
-	qgen.Install.CreateTable("forums_permissions", "", "",
+	createTable("forums_permissions", "", "",
 		[]tC{
 			tC{"fid", "int", 0, false, false, ""},
 			tC{"gid", "int", 0, false, false, ""},
@@ -226,7 +233,7 @@ func createTables(adapter qgen.Adapter) error {
 		},
 	)
 
-	qgen.Install.CreateTable("topics", mysqlPre, mysqlCol,
+	createTable("topics", mysqlPre, mysqlCol,
 		[]tC{
 			tC{"tid", "int", 0, false, true, ""},
 			tC{"title", "varchar", 100, false, false, ""}, // TODO: Increase the max length to 200?
@@ -263,7 +270,7 @@ func createTables(adapter qgen.Adapter) error {
 		},
 	)
 
-	qgen.Install.CreateTable("replies", mysqlPre, mysqlCol,
+	createTable("replies", mysqlPre, mysqlCol,
 		[]tC{
 			tC{"rid", "int", 0, false, true, ""},  // TODO: Rename to replyID?
 			tC{"tid", "int", 0, false, false, ""}, // TODO: Rename to topicID?
@@ -287,7 +294,7 @@ func createTables(adapter qgen.Adapter) error {
 		},
 	)
 
-	qgen.Install.CreateTable("attachments", mysqlPre, mysqlCol,
+	createTable("attachments", mysqlPre, mysqlCol,
 		[]tC{
 			tC{"attachID", "int", 0, false, true, ""},
 			tC{"sectionID", "int", 0, false, false, "0"},
@@ -303,7 +310,7 @@ func createTables(adapter qgen.Adapter) error {
 		},
 	)
 
-	qgen.Install.CreateTable("revisions", mysqlPre, mysqlCol,
+	createTable("revisions", mysqlPre, mysqlCol,
 		[]tC{
 			tC{"reviseID", "int", 0, false, true, ""},
 			tC{"content", "text", 0, false, false, ""},
@@ -317,7 +324,7 @@ func createTables(adapter qgen.Adapter) error {
 		},
 	)
 
-	qgen.Install.CreateTable("polls", mysqlPre, mysqlCol,
+	createTable("polls", mysqlPre, mysqlCol,
 		[]tC{
 			tC{"pollID", "int", 0, false, true, ""},
 			tC{"parentID", "int", 0, false, false, "0"},
@@ -331,7 +338,7 @@ func createTables(adapter qgen.Adapter) error {
 		},
 	)
 
-	qgen.Install.CreateTable("polls_options", "", "",
+	createTable("polls_options", "", "",
 		[]tC{
 			tC{"pollID", "int", 0, false, false, ""},
 			tC{"option", "int", 0, false, false, "0"},
@@ -339,7 +346,7 @@ func createTables(adapter qgen.Adapter) error {
 		}, nil,
 	)
 
-	qgen.Install.CreateTable("polls_votes", mysqlPre, mysqlCol,
+	createTable("polls_votes", mysqlPre, mysqlCol,
 		[]tC{
 			tC{"pollID", "int", 0, false, false, ""},
 			tC{"uid", "int", 0, false, false, ""}, // TODO: Make this a foreign key
@@ -349,7 +356,7 @@ func createTables(adapter qgen.Adapter) error {
 		}, nil,
 	)
 
-	qgen.Install.CreateTable("users_replies", mysqlPre, mysqlCol,
+	createTable("users_replies", mysqlPre, mysqlCol,
 		[]tC{
 			tC{"rid", "int", 0, false, true, ""},
 			tC{"uid", "int", 0, false, false, ""}, // TODO: Make this a foreign key
@@ -366,7 +373,7 @@ func createTables(adapter qgen.Adapter) error {
 		},
 	)
 
-	qgen.Install.CreateTable("likes", "", "",
+	createTable("likes", "", "",
 		[]tC{
 			tC{"weight", "tinyint", 0, false, false, "1"},
 			tC{"targetItem", "int", 0, false, false, ""},
@@ -378,7 +385,7 @@ func createTables(adapter qgen.Adapter) error {
 	)
 
 	//columns("participants, createdBy, createdAt, lastReplyBy, lastReplyAt").Where("cid = ?")
-	qgen.Install.CreateTable("conversations", "", "",
+	createTable("conversations", "", "",
 		[]tC{
 			tC{"cid", "int", 0, false, true, ""},
 			tC{"createdBy", "int", 0, false, false, ""}, // TODO: Make this a foreign key
@@ -391,7 +398,7 @@ func createTables(adapter qgen.Adapter) error {
 		},
 	)
 
-	qgen.Install.CreateTable("conversations_posts", "", "",
+	createTable("conversations_posts", "", "",
 		[]tC{
 			tC{"pid", "int", 0, false, true, ""},
 			tC{"cid", "int", 0, false, false, ""},
@@ -404,14 +411,14 @@ func createTables(adapter qgen.Adapter) error {
 		},
 	)
 
-	qgen.Install.CreateTable("conversations_participants", "", "",
+	createTable("conversations_participants", "", "",
 		[]tC{
 			tC{"uid", "int", 0, false, false, ""},
 			tC{"cid", "int", 0, false, false, ""},
 		}, nil,
 	)
 
-	qgen.Install.CreateTable("activity_stream_matches", "", "",
+	createTable("activity_stream_matches", "", "",
 		[]tC{
 			tC{"watcher", "int", 0, false, false, ""}, // TODO: Make this a foreign key
 			tC{"asid", "int", 0, false, false, ""},    // TODO: Make this a foreign key
@@ -421,7 +428,7 @@ func createTables(adapter qgen.Adapter) error {
 		},
 	)
 
-	qgen.Install.CreateTable("activity_stream", "", "",
+	createTable("activity_stream", "", "",
 		[]tC{
 			tC{"asid", "int", 0, false, true, ""},
 			tC{"actor", "int", 0, false, false, ""},            /* the one doing the act */ // TODO: Make this a foreign key
@@ -436,7 +443,7 @@ func createTables(adapter qgen.Adapter) error {
 		},
 	)
 
-	qgen.Install.CreateTable("activity_subscriptions", "", "",
+	createTable("activity_subscriptions", "", "",
 		[]tC{
 			tC{"user", "int", 0, false, false, ""},            // TODO: Make this a foreign key
 			tC{"targetID", "int", 0, false, false, ""},        /* the ID of the element being acted upon */
@@ -446,7 +453,7 @@ func createTables(adapter qgen.Adapter) error {
 	)
 
 	/* Due to MySQL's design, we have to drop the unique keys for table settings, plugins, and themes down from 200 to 180 or it will error */
-	qgen.Install.CreateTable("settings", "", "",
+	createTable("settings", "", "",
 		[]tC{
 			tC{"name", "varchar", 180, false, false, ""},
 			tC{"content", "varchar", 250, false, false, ""},
@@ -458,7 +465,7 @@ func createTables(adapter qgen.Adapter) error {
 		},
 	)
 
-	qgen.Install.CreateTable("word_filters", "", "",
+	createTable("word_filters", "", "",
 		[]tC{
 			tC{"wfid", "int", 0, false, true, ""},
 			tC{"find", "varchar", 200, false, false, ""},
@@ -469,7 +476,7 @@ func createTables(adapter qgen.Adapter) error {
 		},
 	)
 
-	qgen.Install.CreateTable("plugins", "", "",
+	createTable("plugins", "", "",
 		[]tC{
 			tC{"uname", "varchar", 180, false, false, ""},
 			tC{"active", "boolean", 0, false, false, "0"},
@@ -480,7 +487,7 @@ func createTables(adapter qgen.Adapter) error {
 		},
 	)
 
-	qgen.Install.CreateTable("themes", "", "",
+	createTable("themes", "", "",
 		[]tC{
 			tC{"uname", "varchar", 180, false, false, ""},
 			tC{"default", "boolean", 0, false, false, "0"},
@@ -491,7 +498,7 @@ func createTables(adapter qgen.Adapter) error {
 		},
 	)
 
-	qgen.Install.CreateTable("widgets", "", "",
+	createTable("widgets", "", "",
 		[]tC{
 			tC{"wid", "int", 0, false, true, ""},
 			tC{"position", "int", 0, false, false, ""},
@@ -506,7 +513,7 @@ func createTables(adapter qgen.Adapter) error {
 		},
 	)
 
-	qgen.Install.CreateTable("menus", "", "",
+	createTable("menus", "", "",
 		[]tC{
 			tC{"mid", "int", 0, false, true, ""},
 		},
@@ -515,7 +522,7 @@ func createTables(adapter qgen.Adapter) error {
 		},
 	)
 
-	qgen.Install.CreateTable("menu_items", "", "",
+	createTable("menu_items", "", "",
 		[]tC{
 			tC{"miid", "int", 0, false, true, ""},
 			tC{"mid", "int", 0, false, false, ""},
@@ -539,7 +546,7 @@ func createTables(adapter qgen.Adapter) error {
 		},
 	)
 
-	qgen.Install.CreateTable("pages", mysqlPre, mysqlCol,
+	createTable("pages", mysqlPre, mysqlCol,
 		[]tC{
 			tC{"pid", "int", 0, false, true, ""},
 			//tC{"path", "varchar", 200, false, false, ""},
@@ -555,7 +562,7 @@ func createTables(adapter qgen.Adapter) error {
 		},
 	)
 
-	qgen.Install.CreateTable("registration_logs", "", "",
+	createTable("registration_logs", "", "",
 		[]tC{
 			tC{"rlid", "int", 0, false, true, ""},
 			tC{"username", "varchar", 100, false, false, ""},
@@ -570,7 +577,7 @@ func createTables(adapter qgen.Adapter) error {
 		},
 	)
 
-	qgen.Install.CreateTable("login_logs", "", "",
+	createTable("login_logs", "", "",
 		[]tC{
 			tC{"lid", "int", 0, false, true, ""},
 			tC{"uid", "int", 0, false, false, ""},
@@ -583,7 +590,7 @@ func createTables(adapter qgen.Adapter) error {
 		},
 	)
 
-	qgen.Install.CreateTable("moderation_logs", "", "",
+	createTable("moderation_logs", "", "",
 		[]tC{
 			tC{"action", "varchar", 100, false, false, ""},
 			tC{"elementID", "int", 0, false, false, ""},
@@ -594,7 +601,7 @@ func createTables(adapter qgen.Adapter) error {
 		}, nil,
 	)
 
-	qgen.Install.CreateTable("administration_logs", "", "",
+	createTable("administration_logs", "", "",
 		[]tC{
 			tC{"action", "varchar", 100, false, false, ""},
 			tC{"elementID", "int", 0, false, false, ""},
@@ -605,7 +612,7 @@ func createTables(adapter qgen.Adapter) error {
 		}, nil,
 	)
 
-	qgen.Install.CreateTable("viewchunks", "", "",
+	createTable("viewchunks", "", "",
 		[]tC{
 			tC{"count", "int", 0, false, false, "0"},
 			tC{"createdAt", "datetime", 0, false, false, ""},
@@ -613,7 +620,7 @@ func createTables(adapter qgen.Adapter) error {
 		}, nil,
 	)
 
-	qgen.Install.CreateTable("viewchunks_agents", "", "",
+	createTable("viewchunks_agents", "", "",
 		[]tC{
 			tC{"count", "int", 0, false, false, "0"},
 			tC{"createdAt", "datetime", 0, false, false, ""},
@@ -622,7 +629,7 @@ func createTables(adapter qgen.Adapter) error {
 		}, nil,
 	)
 
-	qgen.Install.CreateTable("viewchunks_systems", "", "",
+	createTable("viewchunks_systems", "", "",
 		[]tC{
 			tC{"count", "int", 0, false, false, "0"},
 			tC{"createdAt", "datetime", 0, false, false, ""},
@@ -630,7 +637,7 @@ func createTables(adapter qgen.Adapter) error {
 		}, nil,
 	)
 
-	qgen.Install.CreateTable("viewchunks_langs", "", "",
+	createTable("viewchunks_langs", "", "",
 		[]tC{
 			tC{"count", "int", 0, false, false, "0"},
 			tC{"createdAt", "datetime", 0, false, false, ""},
@@ -638,7 +645,7 @@ func createTables(adapter qgen.Adapter) error {
 		}, nil,
 	)
 
-	qgen.Install.CreateTable("viewchunks_referrers", "", "",
+	createTable("viewchunks_referrers", "", "",
 		[]tC{
 			tC{"count", "int", 0, false, false, "0"},
 			tC{"createdAt", "datetime", 0, false, false, ""},
@@ -646,7 +653,7 @@ func createTables(adapter qgen.Adapter) error {
 		}, nil,
 	)
 
-	qgen.Install.CreateTable("viewchunks_forums", "", "",
+	createTable("viewchunks_forums", "", "",
 		[]tC{
 			tC{"count", "int", 0, false, false, "0"},
 			tC{"createdAt", "datetime", 0, false, false, ""},
@@ -654,7 +661,7 @@ func createTables(adapter qgen.Adapter) error {
 		}, nil,
 	)
 
-	qgen.Install.CreateTable("topicchunks", "", "",
+	createTable("topicchunks", "", "",
 		[]tC{
 			tC{"count", "int", 0, false, false, "0"},
 			tC{"createdAt", "datetime", 0, false, false, ""},
@@ -662,7 +669,7 @@ func createTables(adapter qgen.Adapter) error {
 		}, nil,
 	)
 
-	qgen.Install.CreateTable("postchunks", "", "",
+	createTable("postchunks", "", "",
 		[]tC{
 			tC{"count", "int", 0, false, false, "0"},
 			tC{"createdAt", "datetime", 0, false, false, ""},
@@ -670,7 +677,7 @@ func createTables(adapter qgen.Adapter) error {
 		}, nil,
 	)
 
-	qgen.Install.CreateTable("memchunks", "", "",
+	createTable("memchunks", "", "",
 		[]tC{
 			tC{"count", "int", 0, false, false, "0"},
 			tC{"stack", "int", 0, false, false, "0"},
@@ -679,24 +686,24 @@ func createTables(adapter qgen.Adapter) error {
 		}, nil,
 	)
 
-	qgen.Install.CreateTable("sync", "", "",
+	createTable("sync", "", "",
 		[]tC{
 			tC{"last_update", "datetime", 0, false, false, ""},
 		}, nil,
 	)
 
-	qgen.Install.CreateTable("updates", "", "",
+	createTable("updates", "", "",
 		[]tC{
 			tC{"dbVersion", "int", 0, false, false, "0"},
 		}, nil,
 	)
 
-	qgen.Install.CreateTable("meta", "", "",
+	createTable("meta", "", "",
 		[]tC{
 			tC{"name", "varchar", 200, false, false, ""},
 			tC{"value", "varchar", 200, false, false, ""},
 		}, nil,
 	)
 
-	return nil
+	return err
 }

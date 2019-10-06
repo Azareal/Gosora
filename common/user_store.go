@@ -53,9 +53,9 @@ func NewDefaultUserStore(cache UserCache) (*DefaultUserStore, error) {
 	// TODO: Add an admin version of registerStmt with more flexibility?
 	return &DefaultUserStore{
 		cache:          cache,
-		get:            acc.SimpleSelect("users", "name, group, active, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, liked, last_ip, temp_group", "uid = ?", "", ""),
-		getByName:      acc.Select("users").Columns("uid, name, group, active, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, liked, last_ip, temp_group").Where("name = ?").Prepare(),
-		getOffset:      acc.Select("users").Columns("uid, name, group, active, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, liked, last_ip, temp_group").Orderby("uid ASC").Limit("?,?").Prepare(),
+		get:            acc.SimpleSelect("users", "name, group, active, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, posts, liked, last_ip, temp_group", "uid = ?", "", ""),
+		getByName:      acc.Select("users").Columns("uid, name, group, active, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, posts, liked, last_ip, temp_group").Where("name = ?").Prepare(),
+		getOffset:      acc.Select("users").Columns("uid, name, group, active, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, posts, liked, last_ip, temp_group").Orderby("uid ASC").Limit("?,?").Prepare(),
 		exists:         acc.SimpleSelect("users", "uid", "uid = ?", "", ""),
 		register:       acc.Insert("users").Columns("name, email, password, salt, group, is_super_admin, session, active, message, createdAt, lastActiveAt, lastLiked, oldestItemLikedCreatedAt").Fields("?,?,?,?,?,0,'',?,'',UTC_TIMESTAMP(),UTC_TIMESTAMP(),UTC_TIMESTAMP(),UTC_TIMESTAMP()").Prepare(), // TODO: Implement user_count on users_groups here
 		usernameExists: acc.SimpleSelect("users", "name", "name = ?", "", ""),
@@ -86,7 +86,7 @@ func (s *DefaultUserStore) Get(id int) (*User, error) {
 	//log.Print("uncached user")
 
 	u = &User{ID: id, Loggedin: true}
-	err = s.get.QueryRow(id).Scan(&u.Name, &u.Group, &u.Active, &u.IsSuperAdmin, &u.Session, &u.Email, &u.RawAvatar, &u.Message, &u.URLPrefix, &u.URLName, &u.Level, &u.Score,&u.Liked, &u.LastIP, &u.TempGroup)
+	err = s.get.QueryRow(id).Scan(&u.Name, &u.Group, &u.Active, &u.IsSuperAdmin, &u.Session, &u.Email, &u.RawAvatar, &u.Message, &u.URLPrefix, &u.URLName, &u.Level, &u.Score, &u.Posts,&u.Liked, &u.LastIP, &u.TempGroup)
 	if err == nil {
 		u.Init()
 		s.cache.Set(u)
@@ -98,7 +98,7 @@ func (s *DefaultUserStore) Get(id int) (*User, error) {
 // ! This bypasses the cache, use frugally
 func (s *DefaultUserStore) GetByName(name string) (*User, error) {
 	u := &User{Loggedin: true}
-	err := s.getByName.QueryRow(name).Scan(&u.ID, &u.Name, &u.Group, &u.Active, &u.IsSuperAdmin, &u.Session, &u.Email, &u.RawAvatar, &u.Message, &u.URLPrefix, &u.URLName, &u.Level, &u.Score, &u.Liked, &u.LastIP, &u.TempGroup)
+	err := s.getByName.QueryRow(name).Scan(&u.ID, &u.Name, &u.Group, &u.Active, &u.IsSuperAdmin, &u.Session, &u.Email, &u.RawAvatar, &u.Message, &u.URLPrefix, &u.URLName, &u.Level, &u.Score, &u.Posts,&u.Liked, &u.LastIP, &u.TempGroup)
 	if err == nil {
 		u.Init()
 		s.cache.Set(u)
@@ -117,7 +117,7 @@ func (s *DefaultUserStore) GetOffset(offset int, perPage int) (users []*User, er
 
 	for rows.Next() {
 		u := &User{Loggedin: true}
-		err := rows.Scan(&u.ID, &u.Name, &u.Group, &u.Active, &u.IsSuperAdmin, &u.Session, &u.Email, &u.RawAvatar, &u.Message, &u.URLPrefix, &u.URLName, &u.Level, &u.Score, &u.Liked, &u.LastIP, &u.TempGroup)
+		err := rows.Scan(&u.ID, &u.Name, &u.Group, &u.Active, &u.IsSuperAdmin, &u.Session, &u.Email, &u.RawAvatar, &u.Message, &u.URLPrefix, &u.URLName, &u.Level, &u.Score, &u.Posts, &u.Liked, &u.LastIP, &u.TempGroup)
 		if err != nil {
 			return nil, err
 		}
@@ -171,7 +171,7 @@ func (s *DefaultUserStore) BulkGetMap(ids []int) (list map[int]*User, err error)
 	}
 	q = q[0 : len(q)-1]
 
-	rows, err := qgen.NewAcc().Select("users").Columns("uid,name,group,active,is_super_admin,session,email,avatar,message,url_prefix,url_name,level,score,liked,last_ip,temp_group").Where("uid IN(" + q + ")").Query(idList...)
+	rows, err := qgen.NewAcc().Select("users").Columns("uid,name,group,active,is_super_admin,session,email,avatar,message,url_prefix,url_name,level,score,posts,liked,last_ip,temp_group").Where("uid IN(" + q + ")").Query(idList...)
 	if err != nil {
 		return list, err
 	}
@@ -179,7 +179,7 @@ func (s *DefaultUserStore) BulkGetMap(ids []int) (list map[int]*User, err error)
 
 	for rows.Next() {
 		u := &User{Loggedin: true}
-		err := rows.Scan(&u.ID, &u.Name, &u.Group, &u.Active, &u.IsSuperAdmin, &u.Session, &u.Email, &u.RawAvatar, &u.Message, &u.URLPrefix, &u.URLName, &u.Level, &u.Score, &u.Liked, &u.LastIP, &u.TempGroup)
+		err := rows.Scan(&u.ID, &u.Name, &u.Group, &u.Active, &u.IsSuperAdmin, &u.Session, &u.Email, &u.RawAvatar, &u.Message, &u.URLPrefix, &u.URLName, &u.Level, &u.Score, &u.Posts, &u.Liked, &u.LastIP, &u.TempGroup)
 		if err != nil {
 			return list, err
 		}
@@ -212,19 +212,19 @@ func (s *DefaultUserStore) BulkGetMap(ids []int) (list map[int]*User, err error)
 
 func (s *DefaultUserStore) BypassGet(id int) (*User, error) {
 	u := &User{ID: id, Loggedin: true}
-	err := s.get.QueryRow(id).Scan(&u.Name, &u.Group, &u.Active, &u.IsSuperAdmin, &u.Session, &u.Email, &u.RawAvatar, &u.Message, &u.URLPrefix, &u.URLName, &u.Level, &u.Score, &u.Liked, &u.LastIP, &u.TempGroup)
-	u.Init()
+	err := s.get.QueryRow(id).Scan(&u.Name, &u.Group, &u.Active, &u.IsSuperAdmin, &u.Session, &u.Email, &u.RawAvatar, &u.Message, &u.URLPrefix, &u.URLName, &u.Level, &u.Score, &u.Posts, &u.Liked, &u.LastIP, &u.TempGroup)
+	if err == nil {
+		u.Init()
+	}
 	return u, err
 }
 
 func (s *DefaultUserStore) Reload(id int) error {
-	u := &User{ID: id, Loggedin: true}
-	err := s.get.QueryRow(id).Scan(&u.Name, &u.Group, &u.Active, &u.IsSuperAdmin, &u.Session, &u.Email, &u.RawAvatar, &u.Message, &u.URLPrefix, &u.URLName, &u.Level, &u.Score, &u.Liked, &u.LastIP, &u.TempGroup)
+	u, err := s.BypassGet(id)
 	if err != nil {
 		s.cache.Remove(id)
 		return err
 	}
-	u.Init()
 	_ = s.cache.Set(u)
 	TopicListThaw.Thaw()
 	return nil
