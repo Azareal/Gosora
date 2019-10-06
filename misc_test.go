@@ -1239,9 +1239,8 @@ func TestPluginManager(t *testing.T) {
 }
 
 func TestPhrases(t *testing.T) {
-	getPhrase := phrases.GetGlobalPermPhrase
 	tp := func(name string, expects string) {
-		expect(t, getPhrase(name) == expects, "Not the expected phrase")
+		expect(t, phrases.GetGlobalPermPhrase(name) == expects, "Not the expected phrase")
 	}
 	tp("BanUsers","Can ban users")
 	tp("NoSuchPerm","{lang.perms[NoSuchPerm]}")
