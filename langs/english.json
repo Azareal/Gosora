@@ -884,6 +884,9 @@
 		"panel_group_update_button":"Update Group",
 		"panel_group_extended_permissions":"Extended Permissions",
 
+		"panel_group_promotions_level_prefix":"level ",
+		"panel_group_promotions_posts_prefix":"posts ",
+		"panel_group_promotions_delete_button":"Delete",
 		"panel_group_promotions_create_head":"Add Promotion",
 		"panel_group_promotions_from":"From",
 		"panel_group_promotions_to":"To",

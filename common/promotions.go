@@ -45,7 +45,7 @@ func NewDefaultGroupPromotionStore(acc *qgen.Accumulator) (*DefaultGroupPromotio
 		delete:     acc.Delete(ugp).Where("pid = ?").Prepare(),
 		create:     acc.Insert(ugp).Columns("from_gid, to_gid, two_way, level, posts, minTime").Fields("?,?,?,?,?,?").Prepare(),
 
-		getByUser:  acc.Select(ugp).Columns("pid, to_gid, two_way, level, posts, minTime").Where("from_gid=? AND level>=? AND posts>=?").Orderby("level DESC").Limit("1").Prepare(),
+		getByUser:  acc.Select(ugp).Columns("pid, to_gid, two_way, level, posts, minTime").Where("from_gid=? AND level<=? AND posts<=?").Orderby("level DESC").Limit("1").Prepare(),
 		updateUser: acc.Update("users").Set("group = ?").Where("level >= ? AND posts >= ?").Prepare(),
 	}, acc.FirstError()
 }

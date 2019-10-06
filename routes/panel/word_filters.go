@@ -19,12 +19,12 @@ func WordFilters(w http.ResponseWriter, r *http.Request, user c.User) c.RouteErr
 	}
 
 	// TODO: What if this list gets too long?
-	filterList, err := c.WordFilters.GetAll()
+	filters, err := c.WordFilters.GetAll()
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
 
-	pi := c.PanelPage{basePage, tList, filterList}
+	pi := c.PanelPage{basePage, tList, filters}
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "", "", "panel_word_filters", &pi})
 }
 
@@ -36,7 +36,7 @@ func WordFiltersCreateSubmit(w http.ResponseWriter, r *http.Request, user c.User
 	if !user.Perms.EditSettings {
 		return c.NoPermissions(w, r, user)
 	}
-	js := (r.PostFormValue("js") == "1")
+	js := r.PostFormValue("js") == "1"
 
 	// ? - We're not doing a full sanitise here, as it would be useful if admins were able to put down rules for replacing things with HTML, etc.
 	find := strings.TrimSpace(r.PostFormValue("find"))
@@ -45,7 +45,7 @@ func WordFiltersCreateSubmit(w http.ResponseWriter, r *http.Request, user c.User
 	}
 
 	// Unlike with find, it's okay if we leave this blank, as this means that the admin wants to remove the word entirely with no replacement
-	replace := strings.TrimSpace(r.PostFormValue("replacement"))
+	replace := strings.TrimSpace(r.PostFormValue("replace"))
 
 	err := c.WordFilters.Create(find, replace)
 	if err != nil {
@@ -75,7 +75,7 @@ func WordFiltersEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, 
 	if ferr != nil {
 		return ferr
 	}
-	js := (r.PostFormValue("js") == "1")
+	js := r.PostFormValue("js") == "1"
 	if !user.Perms.EditSettings {
 		return c.NoPermissionsJSQ(w, r, user, js)
 	}
@@ -90,7 +90,7 @@ func WordFiltersEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, 
 		return c.LocalErrorJSQ("You need to specify what word you want to match", w, r, user, js)
 	}
 	// Unlike with find, it's okay if we leave this blank, as this means that the admin wants to remove the word entirely with no replacement
-	replace := strings.TrimSpace(r.PostFormValue("replacement"))
+	replace := strings.TrimSpace(r.PostFormValue("replace"))
 
 	err = c.WordFilters.Update(id, find, replace)
 	if err != nil {

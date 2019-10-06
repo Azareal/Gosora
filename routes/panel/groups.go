@@ -197,10 +197,12 @@ func GroupsPromotionsCreateSubmit(w http.ResponseWriter, r *http.Request, user c
 	if err != nil {
 		return c.LocalError("from must be integer", w, r, user)
 	}
-
 	to, err := strconv.Atoi(r.FormValue("to"))
 	if err != nil {
 		return c.LocalError("to must be integer", w, r, user)
+	}
+	if from == to {
+		return c.LocalError("the from group and to group cannot be the same",w,r,user)
 	}
 	twoWay := r.FormValue("two-way") == "1"
 
