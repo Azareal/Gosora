@@ -374,8 +374,7 @@ func BenchmarkBadRouteGuestRouteParallelWithRouter(b *testing.B) {
 
 func binit(b *testing.B) {
 	b.ReportAllocs()
-	err := gloinit()
-	if err != nil {
+	if err := gloinit(); err != nil {
 		b.Fatal(err)
 	}
 }
@@ -785,8 +784,7 @@ func BenchmarkRoutesSerial(b *testing.B) {
 
 func BenchmarkQueryTopicParallel(b *testing.B) {
 	b.ReportAllocs()
-	err := gloinit()
-	if err != nil {
+	if err := gloinit(); err != nil {
 		b.Fatal(err)
 	}
 
@@ -807,8 +805,7 @@ func BenchmarkQueryTopicParallel(b *testing.B) {
 
 func BenchmarkQueryPreparedTopicParallel(b *testing.B) {
 	b.ReportAllocs()
-	err := gloinit()
-	if err != nil {
+	if err := gloinit(); err != nil {
 		b.Fatal(err)
 	}
 
@@ -836,8 +833,7 @@ func BenchmarkQueryPreparedTopicParallel(b *testing.B) {
 
 func BenchmarkUserGet(b *testing.B) {
 	b.ReportAllocs()
-	err := gloinit()
-	if err != nil {
+	if err := gloinit(); err != nil {
 		b.Fatal(err)
 	}
 
@@ -855,8 +851,7 @@ func BenchmarkUserGet(b *testing.B) {
 
 func BenchmarkUserBypassGet(b *testing.B) {
 	b.ReportAllocs()
-	err := gloinit()
-	if err != nil {
+	if err := gloinit(); err != nil {
 		b.Fatal(err)
 	}
 
@@ -972,149 +967,62 @@ func BenchmarkParserSerial(b *testing.B) {
 
 func BenchmarkBBCodePluginWithRegexpSerial(b *testing.B) {
 	b.ReportAllocs()
-	b.Run("empty_post", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			_ = bbcodeRegexParse("")
-		}
-	})
-	b.Run("short_post", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			_ = bbcodeRegexParse("Hey everyone, how's it going?")
-		}
-	})
-	b.Run("one_smily", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			_ = bbcodeRegexParse("Hey everyone, how's it going? :)")
-		}
-	})
-	b.Run("five_smilies", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			_ = bbcodeRegexParse("Hey everyone, how's it going? :):):):):)")
-		}
-	})
-	b.Run("ten_smilies", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			_ = bbcodeRegexParse("Hey everyone, how's it going? :):):):):):):):):):)")
-		}
-	})
-	b.Run("twenty_smilies", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			_ = bbcodeRegexParse("Hey everyone, how's it going? :):):):):):):):):):):):):):):):):):):):)")
-		}
-	})
-	b.Run("one_bold", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			_ = bbcodeRegexParse("[b]H[/b]ey everyone, how's it going?")
-		}
-	})
-	b.Run("five_bold", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			_ = bbcodeRegexParse("[b]H[/b][b]e[/b][b]y[/b] [b]e[/b][b]v[/b]eryone, how's it going?")
-		}
-	})
-	b.Run("ten_bold", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			_ = bbcodeRegexParse("[b]H[/b][b]e[/b][b]y[/b] [b]e[/b][b]v[/b][b]e[/b][b]r[/b][b]y[/b][b]o[/b][b]n[/b]e, how's it going?")
-		}
-	})
+	f := func(name string, msg string) {
+		b.Run(name, func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				_ = bbcodeRegexParse(msg)
+			}
+		})
+	}
+	f("empty_post","")
+	f("short_post","Hey everyone, how's it going?")
+	f("one_smily","Hey everyone, how's it going? :)")
+	f("five_smilies","Hey everyone, how's it going? :):):):):)")
+	f("ten_smilies","Hey everyone, how's it going? :):):):):):):):):):)")
+	f("twenty_smilies","Hey everyone, how's it going? :):):):):):):):):):):):):):):):):):):):)")
+	f("one_bold","[b]H[/b]ey everyone, how's it going?")
+	f("five_bold","[b]H[/b][b]e[/b][b]y[/b] [b]e[/b][b]v[/b]eryone, how's it going?")
+	f("ten_bold","[b]H[/b][b]e[/b][b]y[/b] [b]e[/b][b]v[/b][b]e[/b][b]r[/b][b]y[/b][b]o[/b][b]n[/b]e, how's it going?")
 }
 
 func BenchmarkBBCodePluginWithoutCodeTagSerial(b *testing.B) {
 	b.ReportAllocs()
-	b.Run("empty_post", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			_ = bbcodeParseWithoutCode("")
-		}
-	})
-	b.Run("short_post", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			_ = bbcodeParseWithoutCode("Hey everyone, how's it going?")
-		}
-	})
-	b.Run("one_smily", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			_ = bbcodeParseWithoutCode("Hey everyone, how's it going? :)")
-		}
-	})
-	b.Run("five_smilies", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			_ = bbcodeParseWithoutCode("Hey everyone, how's it going? :):):):):)")
-		}
-	})
-	b.Run("ten_smilies", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			_ = bbcodeParseWithoutCode("Hey everyone, how's it going? :):):):):):):):):):)")
-		}
-	})
-	b.Run("twenty_smilies", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			_ = bbcodeParseWithoutCode("Hey everyone, how's it going? :):):):):):):):):):):):):):):):):):):):)")
-		}
-	})
-	b.Run("one_bold", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			_ = bbcodeParseWithoutCode("[b]H[/b]ey everyone, how's it going?")
-		}
-	})
-	b.Run("five_bold", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			_ = bbcodeParseWithoutCode("[b]H[/b][b]e[/b][b]y[/b] [b]e[/b][b]v[/b]eryone, how's it going?")
-		}
-	})
-	b.Run("ten_bold", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			_ = bbcodeParseWithoutCode("[b]H[/b][b]e[/b][b]y[/b] [b]e[/b][b]v[/b][b]e[/b][b]r[/b][b]y[/b][b]o[/b][b]n[/b]e, how's it going?")
-		}
-	})
+	f := func(name string, msg string) {
+		b.Run(name, func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				_ = bbcodeParseWithoutCode(msg)
+			}
+		})
+	}
+	f("empty_post","")
+	f("short_post","Hey everyone, how's it going?")
+	f("one_smily","Hey everyone, how's it going? :)")
+	f("five_smilies","Hey everyone, how's it going? :):):):):)")
+	f("ten_smilies","Hey everyone, how's it going? :):):):):):):):):):)")
+	f("twenty_smilies","Hey everyone, how's it going? :):):):):):):):):):):):):):):):):):):):)")
+	f("one_bold","[b]H[/b]ey everyone, how's it going?")
+	f("five_bold","[b]H[/b][b]e[/b][b]y[/b] [b]e[/b][b]v[/b]eryone, how's it going?")
+	f("ten_bold","[b]H[/b][b]e[/b][b]y[/b] [b]e[/b][b]v[/b][b]e[/b][b]r[/b][b]y[/b][b]o[/b][b]n[/b]e, how's it going?")
 }
 
 func BenchmarkBBCodePluginWithFullParserSerial(b *testing.B) {
 	b.ReportAllocs()
-	b.Run("empty_post", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			_ = bbcodeFullParse("")
-		}
-	})
-	b.Run("short_post", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			_ = bbcodeFullParse("Hey everyone, how's it going?")
-		}
-	})
-	b.Run("one_smily", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			_ = bbcodeFullParse("Hey everyone, how's it going? :)")
-		}
-	})
-	b.Run("five_smilies", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			_ = bbcodeFullParse("Hey everyone, how's it going? :):):):):)")
-		}
-	})
-	b.Run("ten_smilies", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			_ = bbcodeFullParse("Hey everyone, how's it going? :):):):):):):):):):)")
-		}
-	})
-	b.Run("twenty_smilies", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			_ = bbcodeFullParse("Hey everyone, how's it going? :):):):):):):):):):):):):):):):):):):):)")
-		}
-	})
-	b.Run("one_bold", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			_ = bbcodeFullParse("[b]H[/b]ey everyone, how's it going?")
-		}
-	})
-	b.Run("five_bold", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			_ = bbcodeFullParse("[b]H[/b][b]e[/b][b]y[/b] [b]e[/b][b]v[/b]eryone, how's it going?")
-		}
-	})
-	b.Run("ten_bold", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			_ = bbcodeFullParse("[b]H[/b][b]e[/b][b]y[/b] [b]e[/b][b]v[/b][b]e[/b][b]r[/b][b]y[/b][b]o[/b][b]n[/b]e, how's it going?")
-		}
-	})
+	f := func(name string, msg string) {
+		b.Run(name, func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				_ = bbcodeFullParse(msg)
+			}
+		})
+	}
+	f("empty_post","")
+	f("short_post","Hey everyone, how's it going?")
+	f("one_smily","Hey everyone, how's it going? :)")
+	f("five_smilies","Hey everyone, how's it going? :):):):):)")
+	f("ten_smilies","Hey everyone, how's it going? :):):):):):):):):):)")
+	f("twenty_smilies","Hey everyone, how's it going? :):):):):):):):):):):):):):):):):):):):)")
+	f("one_bold","[b]H[/b]ey everyone, how's it going?")
+	f("five_bold","[b]H[/b][b]e[/b][b]y[/b] [b]e[/b][b]v[/b]eryone, how's it going?")
+	f("ten_bold","[b]H[/b][b]e[/b][b]y[/b] [b]e[/b][b]v[/b][b]e[/b][b]r[/b][b]y[/b][b]o[/b][b]n[/b]e, how's it going?")
 }
 
 func TestLevels(t *testing.T) {
@@ -1209,19 +1117,19 @@ func TestForumsAdminRoute(t *testing.T) {
 	if !admin.Is_Admin {
 		t.Fatal("UID1 is not an admin")
 	}
-	admin_uid_cookie := http.Cookie{Name:"uid",Value:"1",Path:"/",MaxAge: year}
-	admin_session_cookie := http.Cookie{Name:"session",Value: admin.Session,Path:"/",MaxAge: year}
+	adminUidCookie := http.Cookie{Name:"uid",Value:"1",Path:"/",MaxAge: year}
+	adminSessionCookie := http.Cookie{Name:"session",Value: admin.Session,Path:"/",MaxAge: year}
 
-	forums_w := httptest.NewRecorder()
-	forums_req := httptest.NewRequest("get","/forums/",bytes.NewReader(nil))
-	forums_req_admin := forums_req
-	forums_req_admin.AddCookie(&admin_uid_cookie)
-	forums_req_admin.AddCookie(&admin_session_cookie)
-	forums_handler := http.HandlerFunc(route_forums)
+	forumsW := httptest.NewRecorder()
+	forumsReq := httptest.NewRequest("get","/forums/",bytes.NewReader(nil))
+	forumsReqAdmin := forums_req
+	forumsReqAdmin.AddCookie(&adminUidCookie)
+	forumsReqAdmin.AddCookie(&adminSessionCookie)
+	forumsHandler := http.HandlerFunc(route_forums)
 
-	forums_handler.ServeHTTP(forums_w,forums_req_admin)
-	if forums_w.Code != 200 {
-		t.Fatal(forums_w.Body)
+	forumsHandler.ServeHTTP(forumsW,forumsReqAdmin)
+	if forumsW.Code != 200 {
+		t.Fatal(forumsW.Body)
 	}
 }
 
@@ -1316,7 +1224,7 @@ func TestForumsGuestRoute(t *testing.T) {
 
 func TestSplittyThing(t *testing.T) {
 	var extraData string
-	var path = "/pages/hohoho"
+	path := "/pages/hohoho"
 	t.Log("Raw Path:", path)
 	if path[len(path)-1] != '/' {
 		extraData = path[strings.LastIndexByte(path, '/')+1:]

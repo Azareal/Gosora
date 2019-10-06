@@ -15,8 +15,7 @@ import (
 )
 
 func miscinit(t *testing.T) {
-	err := gloinit()
-	if err != nil {
+	if err := gloinit(); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -85,7 +84,7 @@ func userStoreTest(t *testing.T, newUserID int) {
 	user, err := c.Users.Get(1)
 	recordMustExist(t, err, "Couldn't find UID #1")
 
-	var expectW = func(cond bool, expec bool, prefix string, suffix string) {
+	expectW := func(cond bool, expec bool, prefix string, suffix string) {
 		midfix := "should not be"
 		if expec {
 			midfix = "should be"
@@ -94,15 +93,15 @@ func userStoreTest(t *testing.T, newUserID int) {
 	}
 
 	// TODO: Add email checks too? Do them separately?
-	var expectUser = func(user *c.User, uid int, name string, group int, super bool, admin bool, mod bool, banned bool) {
-		expect(t, user.ID == uid, fmt.Sprintf("user.ID should be %d. Got '%d' instead.", uid, user.ID))
-		expect(t, user.Name == name, fmt.Sprintf("user.Name should be '%s', not '%s'", name, user.Name))
-		expectW(user.Group == group, true, user.Name, "in group"+strconv.Itoa(group))
-		expectW(user.IsSuperAdmin == super, super, user.Name, "a super admin")
-		expectW(user.IsAdmin == admin, admin, user.Name, "an admin")
-		expectW(user.IsSuperMod == mod, mod, user.Name, "a super mod")
-		expectW(user.IsMod == mod, mod, user.Name, "a mod")
-		expectW(user.IsBanned == banned, banned, user.Name, "banned")
+	expectUser := func(u *c.User, uid int, name string, group int, super bool, admin bool, mod bool, banned bool) {
+		expect(t, u.ID == uid, fmt.Sprintf("u.ID should be %d. Got '%d' instead.", uid, u.ID))
+		expect(t, u.Name == name, fmt.Sprintf("u.Name should be '%s', not '%s'", name, u.Name))
+		expectW(u.Group == group, true, u.Name, "in group"+strconv.Itoa(group))
+		expectW(u.IsSuperAdmin == super, super, u.Name, "a super admin")
+		expectW(u.IsAdmin == admin, admin, u.Name, "an admin")
+		expectW(u.IsSuperMod == mod, mod, u.Name, "a super mod")
+		expectW(u.IsMod == mod, mod, u.Name, "a mod")
+		expectW(u.IsBanned == banned, banned, u.Name, "banned")
 	}
 	expectUser(user, 1, "Admin", 1, true, true, true, false)
 
@@ -111,7 +110,6 @@ func userStoreTest(t *testing.T, newUserID int) {
 
 	if ucache != nil {
 		expectIntToBeX(t, ucache.Length(), 1, "User cache length should be 1, not %d")
-
 		_, err = ucache.Get(-1)
 		recordMustNotExist(t, err, "UID #-1 shouldn't exist, even in the cache")
 		_, err = ucache.Get(0)
@@ -167,7 +165,7 @@ func userStoreTest(t *testing.T, newUserID int) {
 	expect(t, isCacheLengthZero(ucache), fmt.Sprintf("User cache length should be 0, not %d", cacheLength(ucache)))
 	expectIntToBeX(t, c.Users.Count(), 1, "The number of users should be one, not %d")
 
-	var awaitingActivation = 5
+	awaitingActivation := 5
 	// TODO: Write tests for the registration validators
 	uid, err := c.Users.Create("Sam", "ReallyBadPassword", "sam@localhost.loc", awaitingActivation, false)
 	expectNilErr(t, err)
@@ -215,7 +213,7 @@ func userStoreTest(t *testing.T, newUserID int) {
 	expectIntToBeX(t, user.Group, 5, "Sam should still be in group 5 in this copy")
 
 	// ? - What if we change the caching mechanism so it isn't hard purged and reloaded? We'll deal with that when we come to it, but for now, this is a sign of a cache bug
-	var afterUserFlush = func(uid int) {
+	afterUserFlush := func(uid int) {
 		if ucache != nil {
 			expectIntToBeX(t, ucache.Length(), 0, "User cache length should be 0, not %d")
 			_, err = ucache.Get(uid)
@@ -252,15 +250,15 @@ func userStoreTest(t *testing.T, newUserID int) {
 	recordMustExist(t, err, "Couldn't find UID #%d", newUserID)
 	expectUser(user, newUserID, "Sam", c.Config.DefaultGroup, false, false, false, false)
 
-	var reportsForumID = 1 // TODO: Use the constant in common?
-	var generalForumID = 2
+	reportsForumID := 1 // TODO: Use the constant in common?
+	generalForumID := 2
 	dummyResponseRecorder := httptest.NewRecorder()
 	bytesBuffer := bytes.NewBuffer([]byte(""))
 	dummyRequest1 := httptest.NewRequest("", "/forum/"+strconv.Itoa(reportsForumID), bytesBuffer)
 	dummyRequest2 := httptest.NewRequest("", "/forum/"+strconv.Itoa(generalForumID), bytesBuffer)
 	var user2 *c.User
 
-	var changeGroupTest = func(oldGroup int, newGroup int) {
+	changeGroupTest := func(oldGroup int, newGroup int) {
 		err = user.ChangeGroup(newGroup)
 		expectNilErr(t, err)
 		// ! I don't think ChangeGroup should be changing the value of user... Investigate this.
@@ -272,7 +270,7 @@ func userStoreTest(t *testing.T, newUserID int) {
 		*user2 = *user
 	}
 
-	var changeGroupTest2 = func(rank string, firstShouldBe bool, secondShouldBe bool) {
+	changeGroupTest2 := func(rank string, firstShouldBe bool, secondShouldBe bool) {
 		head, err := c.UserCheck(dummyResponseRecorder, dummyRequest1, user)
 		if err != nil {
 			t.Fatal(err)
@@ -490,7 +488,7 @@ func topicStoreTest(t *testing.T, newID int) {
 	count = c.Topics.Count()
 	expect(t, count == 2, fmt.Sprintf("Global count for topics should be 2, not %d", count))
 
-	var iFrag = func(cond bool) string {
+	iFrag := func(cond bool) string {
 		if !cond {
 			return "n't"
 		}
@@ -513,7 +511,7 @@ func topicStoreTest(t *testing.T, newID int) {
 	}
 
 	tcache := c.Topics.GetCache()
-	var shouldNotBeIn = func(tid int) {
+	shouldNotBeIn := func(tid int) {
 		if tcache != nil {
 			_, err = tcache.Get(tid)
 			recordMustNotExist(t, err, "Topic cache should be empty")
@@ -581,7 +579,7 @@ func TestForumStore(t *testing.T) {
 	// TODO: Check the preset and forum permissions
 	expect(t, forum.Name == "Reports", fmt.Sprintf("FID #0 is named '%s' and not 'Reports'", forum.Name))
 	expect(t, !forum.Active, fmt.Sprintf("The reports forum shouldn't be active"))
-	var expectDesc = "All the reports go here"
+	expectDesc := "All the reports go here"
 	expect(t, forum.Desc == expectDesc, fmt.Sprintf("The forum description should be '%s' not '%s'", expectDesc, forum.Desc))
 	forum, err = c.Forums.BypassGet(1)
 	recordMustExist(t, err, "Couldn't find FID #1")
@@ -732,48 +730,24 @@ func TestForumPermsStore(t *testing.T) {
 		c.InitPlugins()
 	}
 
-	var initialState = func() {
-	fid := 1
-	gid := 1
-	fperms, err := c.FPStore.Get(fid,gid)
-	expectNilErr(t,err)
-	expect(t,fperms.ViewTopic,"admins should be able to see reports")
+	f := func(fid int, gid int, msg string, inv ...bool) {
+		fp, err := c.FPStore.Get(fid,gid)
+		expectNilErr(t,err)
+		vt := fp.ViewTopic
+		if len(inv) > 0 && inv[0] == true {
+			vt = !vt
+		}
+		expect(t,vt,msg)
+	}
 
-	fid = 1
-	gid = 2
-	fperms, err = c.FPStore.Get(fid,gid)
-	expectNilErr(t,err)
-	expect(t,fperms.ViewTopic,"mods should be able to see reports")
-
-	fid = 1
-	gid = 3
-	fperms, err = c.FPStore.Get(fid,gid)
-	expectNilErr(t,err)
-	expect(t,!fperms.ViewTopic,"members should not be able to see reports")
-
-	fid = 1
-	gid = 4
-	fperms, err = c.FPStore.Get(fid,gid)
-	expectNilErr(t,err)
-	expect(t,!fperms.ViewTopic,"banned users should not be able to see reports")
-
-	fid = 2
-	gid = 1
-	fperms, err = c.FPStore.Get(fid,gid)
-	expectNilErr(t,err)
-	expect(t,fperms.ViewTopic,"admins should be able to see general")
-
-	fid = 2
-	gid = 3
-	fperms, err = c.FPStore.Get(fid,gid)
-	expectNilErr(t,err)
-	expect(t,fperms.ViewTopic,"members should be able to see general")
-
-	fid = 2
-	gid = 6
-	fperms, err = c.FPStore.Get(fid,gid)
-	expectNilErr(t,err)
-	expect(t,fperms.ViewTopic,"guests should be able to see general")
+	initialState := func() {
+		f(1,1,"admins should be able to see reports")
+		f(1,2,"mods should be able to see reports")
+		f(1,3,"members should not be able to see reports",true)
+		f(1,4,"banned users should not be able to see reports",true)
+		f(2,1,"admins should be able to see general")
+		f(2,3,"members should be able to see general")
+		f(2,6,"guests should be able to see general")
 	}
 	initialState()
 
@@ -811,9 +785,9 @@ func TestGroupStore(t *testing.T) {
 	expect(t, c.Groups.Exists(0), "GID #0 should exist")
 	expect(t, c.Groups.Exists(1), "GID #1 should exist")
 
-	var isAdmin = true
-	var isMod = true
-	var isBanned = false
+	isAdmin := true
+	isMod := true
+	isBanned := false
 	gid, err := c.Groups.Create("Testing", "Test", isAdmin, isMod, isBanned)
 	expectNilErr(t, err)
 	expect(t, c.Groups.Exists(gid), "The group we just made doesn't exist")
@@ -1032,7 +1006,7 @@ func TestProfileReplyStore(t *testing.T) {
 	//err = profileReply.Delete()
 	//expect(t,err != nil,"You shouldn't be able to delete profile replies which don't exist")
 
-	var profileID = 1
+	profileID := 1
 	prid, err := c.Prstore.Create(profileID, "Haha", 1, "::1")
 	expectNilErr(t, err)
 	expect(t, prid == 1, "The first profile reply should have an ID of 1")
@@ -1265,10 +1239,14 @@ func TestPluginManager(t *testing.T) {
 }
 
 func TestPhrases(t *testing.T) {
-	expect(t, phrases.GetGlobalPermPhrase("BanUsers") == "Can ban users", "Not the expected phrase")
-	expect(t, phrases.GetGlobalPermPhrase("NoSuchPerm") == "{lang.perms[NoSuchPerm]}", "Not the expected phrase")
-	expect(t, phrases.GetLocalPermPhrase("ViewTopic") == "Can view topics", "Not the expected phrase")
-	expect(t, phrases.GetLocalPermPhrase("NoSuchPerm") == "{lang.perms[NoSuchPerm]}", "Not the expected phrase")
+	getPhrase := phrases.GetGlobalPermPhrase
+	tp := func(name string, expects string) {
+		expect(t, getPhrase(name) == expects, "Not the expected phrase")
+	}
+	tp("BanUsers","Can ban users")
+	tp("NoSuchPerm","{lang.perms[NoSuchPerm]}")
+	tp("ViewTopic","Can view topics")
+	tp("NoSuchPerm","{lang.perms[NoSuchPerm]}")
 
 	// TODO: Cover the other phrase types, also try switching between languages to see if anything strange happens
 }
@@ -1326,34 +1304,33 @@ func TestWordFilters(t *testing.T) {
 
 // TODO: Expand upon the valid characters which can go in URLs?
 func TestSlugs(t *testing.T) {
-	var res string
-	var msgList = &MEPairList{nil}
+	l := &MEPairList{nil}
 	c.Config.BuildSlugs = true // Flip this switch, otherwise all the tests will fail
 
-	msgList.Add("Unknown", "unknown")
-	msgList.Add("Unknown2", "unknown2")
-	msgList.Add("Unknown ", "unknown")
-	msgList.Add("Unknown 2", "unknown-2")
-	msgList.Add("Unknown  2", "unknown-2")
-	msgList.Add("Admin Alice", "admin-alice")
-	msgList.Add("Admin_Alice", "adminalice")
-	msgList.Add("Admin_Alice-", "adminalice")
-	msgList.Add("-Admin_Alice-", "adminalice")
-	msgList.Add("-Admin@Alice-", "adminalice")
-	msgList.Add("-Admin😀Alice-", "adminalice")
-	msgList.Add("u", "u")
-	msgList.Add("", "untitled")
-	msgList.Add(" ", "untitled")
-	msgList.Add("-", "untitled")
-	msgList.Add("--", "untitled")
-	msgList.Add("é", "é")
-	msgList.Add("-é-", "é")
-	msgList.Add("-你好-", "untitled")
-	msgList.Add("-こにちは-", "untitled")
+	l.Add("Unknown", "unknown")
+	l.Add("Unknown2", "unknown2")
+	l.Add("Unknown ", "unknown")
+	l.Add("Unknown 2", "unknown-2")
+	l.Add("Unknown  2", "unknown-2")
+	l.Add("Admin Alice", "admin-alice")
+	l.Add("Admin_Alice", "adminalice")
+	l.Add("Admin_Alice-", "adminalice")
+	l.Add("-Admin_Alice-", "adminalice")
+	l.Add("-Admin@Alice-", "adminalice")
+	l.Add("-Admin😀Alice-", "adminalice")
+	l.Add("u", "u")
+	l.Add("", "untitled")
+	l.Add(" ", "untitled")
+	l.Add("-", "untitled")
+	l.Add("--", "untitled")
+	l.Add("é", "é")
+	l.Add("-é-", "é")
+	l.Add("-你好-", "untitled")
+	l.Add("-こにちは-", "untitled")
 
-	for _, item := range msgList.Items {
+	for _, item := range l.Items {
 		t.Log("Testing string '" + item.Msg + "'")
-		res = c.NameToSlug(item.Msg)
+		res := c.NameToSlug(item.Msg)
 		if res != item.Expects {
 			t.Error("Bad output:", "'"+res+"'")
 			t.Error("Expected:", item.Expects)
@@ -1523,14 +1500,14 @@ type METriList struct {
 	Items []METri
 }
 
-func (tlist *METriList) Add(args ...string) {
+func (l *METriList) Add(args ...string) {
 	if len(args) < 2 {
 		panic("need 2 or more args")
 	}
 	if len(args) > 2 {
-		tlist.Items = append(tlist.Items, METri{args[0], args[1], args[2]})
+		l.Items = append(l.Items, METri{args[0], args[1], args[2]})
 	} else {
-		tlist.Items = append(tlist.Items, METri{"", args[0], args[1]})
+		l.Items = append(l.Items, METri{"", args[0], args[1]})
 	}
 }
 
@@ -1544,37 +1521,36 @@ type CountTestList struct {
 	Items []CountTest
 }
 
-func (tlist *CountTestList) Add(name string, msg string, expects int) {
-	tlist.Items = append(tlist.Items, CountTest{name, msg, expects})
+func (l *CountTestList) Add(name string, msg string, expects int) {
+	l.Items = append(l.Items, CountTest{name, msg, expects})
 }
 
 func TestWordCount(t *testing.T) {
-	var msgList = &CountTestList{nil}
+	l := &CountTestList{nil}
+	l.Add("blank", "", 0)
+	l.Add("single-letter", "h", 1)
+	l.Add("single-kana", "お", 1)
+	l.Add("single-letter-words", "h h", 2)
+	l.Add("two-letter", "h", 1)
+	l.Add("two-kana", "おは", 1)
+	l.Add("two-letter-words", "hh hh", 2)
+	l.Add("", "h,h", 2)
+	l.Add("", "h,,h", 2)
+	l.Add("", "h, h", 2)
+	l.Add("", "  h, h", 2)
+	l.Add("", "h, h  ", 2)
+	l.Add("", "  h, h  ", 2)
+	l.Add("", "h,  h", 2)
+	l.Add("", "h\nh", 2)
+	l.Add("", "h\"h", 2)
+	l.Add("", "h[r]h", 3)
+	l.Add("", "お,お", 2)
+	l.Add("", "お、お", 2)
+	l.Add("", "お\nお", 2)
+	l.Add("", "お”お", 2)
+	l.Add("", "お「あ」お", 3)
 
-	msgList.Add("blank", "", 0)
-	msgList.Add("single-letter", "h", 1)
-	msgList.Add("single-kana", "お", 1)
-	msgList.Add("single-letter-words", "h h", 2)
-	msgList.Add("two-letter", "h", 1)
-	msgList.Add("two-kana", "おは", 1)
-	msgList.Add("two-letter-words", "hh hh", 2)
-	msgList.Add("", "h,h", 2)
-	msgList.Add("", "h,,h", 2)
-	msgList.Add("", "h, h", 2)
-	msgList.Add("", "  h, h", 2)
-	msgList.Add("", "h, h  ", 2)
-	msgList.Add("", "  h, h  ", 2)
-	msgList.Add("", "h,  h", 2)
-	msgList.Add("", "h\nh", 2)
-	msgList.Add("", "h\"h", 2)
-	msgList.Add("", "h[r]h", 3)
-	msgList.Add("", "お,お", 2)
-	msgList.Add("", "お、お", 2)
-	msgList.Add("", "お\nお", 2)
-	msgList.Add("", "お”お", 2)
-	msgList.Add("", "お「あ」お", 3)
-
-	for _, item := range msgList.Items {
+	for _, item := range l.Items {
 		res := c.WordCount(item.Msg)
 		if res != item.Expects {
 			if item.Name != "" {

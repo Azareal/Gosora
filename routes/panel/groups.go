@@ -80,7 +80,7 @@ func GroupsEdit(w http.ResponseWriter, r *http.Request, user c.User, sgid string
 		//log.Print("aaaaa monsters")
 		return c.NotFound(w, r, basePage.Header)
 	}
-	ferr = groupCheck(w,r,user,g,err)
+	ferr = groupCheck(w, r, user, g, err)
 	if ferr != nil {
 		return ferr
 	}
@@ -122,7 +122,7 @@ func GroupsEditPromotions(w http.ResponseWriter, r *http.Request, user c.User, s
 		//log.Print("aaaaa monsters")
 		return c.NotFound(w, r, basePage.Header)
 	}
-	ferr = groupCheck(w,r,user,g,err)
+	ferr = groupCheck(w, r, user, g, err)
 	if ferr != nil {
 		return ferr
 	}
@@ -343,6 +343,7 @@ func GroupsEditPerms(w http.ResponseWriter, r *http.Request, user c.User, sgid s
 	addGlobalPerm("ViewIPs", g.Perms.ViewIPs)
 	addGlobalPerm("UploadFiles", g.Perms.UploadFiles)
 	addGlobalPerm("UploadAvatars", g.Perms.UploadAvatars)
+	addGlobalPerm("UseConvos", g.Perms.UseConvos)
 
 	pi := c.PanelEditGroupPermsPage{basePage, g.ID, g.Name, localPerms, globalPerms}
 	return renderTemplate("panel_group_edit_perms", w, r, basePage.Header, pi)

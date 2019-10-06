@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/Azareal/Gosora/common"
+	c "github.com/Azareal/Gosora/common"
 )
 
 // go test -v
@@ -20,61 +20,61 @@ type MEPairList struct {
 	Items []MEPair
 }
 
-func (tlist *MEPairList) Add(msg string, expects string) {
-	tlist.Items = append(tlist.Items, MEPair{msg, expects})
+func (l *MEPairList) Add(msg string, expects string) {
+	l.Items = append(l.Items, MEPair{msg, expects})
 }
 
 func TestBBCodeRender(t *testing.T) {
 	//t.Skip()
-	err := initBbcode(common.Plugins["bbcode"])
+	err := initBbcode(c.Plugins["bbcode"])
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	var res string
-	var msgList = &MEPairList{nil}
-	msgList.Add("", "")
-	msgList.Add(" ", " ")
-	msgList.Add("  ", "  ")
-	msgList.Add("   ", "   ")
-	msgList.Add("[b]", "<b></b>")
-	msgList.Add("[b][/b]", "<b></b>")
-	msgList.Add("hi", "hi")
-	msgList.Add("😀", "😀")
-	msgList.Add("[b]😀[/b]", "<b>😀</b>")
-	msgList.Add("[b]😀😀😀[/b]", "<b>😀😀😀</b>")
-	msgList.Add("[b]hi[/b]", "<b>hi</b>")
-	msgList.Add("[u]hi[/u]", "<u>hi</u>")
-	msgList.Add("[i]hi[/i]", "<i>hi</i>")
-	msgList.Add("[s]hi[/s]", "<s>hi</s>")
-	msgList.Add("[c]hi[/c]", "[c]hi[/c]")
-	msgList.Add("[h1]hi", "[h1]hi")
-	msgList.Add("[h1]hi[/h1]", "<h2>hi</h2>")
+	l := &MEPairList{nil}
+	l.Add("", "")
+	l.Add(" ", " ")
+	l.Add("  ", "  ")
+	l.Add("   ", "   ")
+	l.Add("[b]", "<b></b>")
+	l.Add("[b][/b]", "<b></b>")
+	l.Add("hi", "hi")
+	l.Add("😀", "😀")
+	l.Add("[b]😀[/b]", "<b>😀</b>")
+	l.Add("[b]😀😀😀[/b]", "<b>😀😀😀</b>")
+	l.Add("[b]hi[/b]", "<b>hi</b>")
+	l.Add("[u]hi[/u]", "<u>hi</u>")
+	l.Add("[i]hi[/i]", "<i>hi</i>")
+	l.Add("[s]hi[/s]", "<s>hi</s>")
+	l.Add("[c]hi[/c]", "[c]hi[/c]")
+	l.Add("[h1]hi", "[h1]hi")
+	l.Add("[h1]hi[/h1]", "<h2>hi</h2>")
 	if !testing.Short() {
-		//msgList.Add("[b]hi[/i]", "[b]hi[/i]")
-		//msgList.Add("[/b]hi[b]", "[/b]hi[b]")
-		//msgList.Add("[/b]hi[/b]", "[/b]hi[/b]")
-		//msgList.Add("[b][b]hi[/b]", "<b>hi</b>")
-		//msgList.Add("[b][b]hi", "[b][b]hi")
-		//msgList.Add("[b][b][b]hi", "[b][b][b]hi")
-		//msgList.Add("[/b]hi", "[/b]hi")
+		//l.Add("[b]hi[/i]", "[b]hi[/i]")
+		//l.Add("[/b]hi[b]", "[/b]hi[b]")
+		//l.Add("[/b]hi[/b]", "[/b]hi[/b]")
+		//l.Add("[b][b]hi[/b]", "<b>hi</b>")
+		//l.Add("[b][b]hi", "[b][b]hi")
+		//l.Add("[b][b][b]hi", "[b][b][b]hi")
+		//l.Add("[/b]hi", "[/b]hi")
 	}
-	msgList.Add("[code]hi[/code]", "<span class='codequotes'>hi</span>")
-	msgList.Add("[code][b]hi[/b][/code]", "<span class='codequotes'>[b]hi[/b]</span>")
-	msgList.Add("[code][b]hi[/code][/b]", "<span class='codequotes'>[b]hi</span>[/b]")
-	msgList.Add("[quote]hi[/quote]", "<blockquote>hi</blockquote>")
-	msgList.Add("[quote][b]hi[/b][/quote]", "<blockquote><b>hi</b></blockquote>")
-	msgList.Add("[quote][b]h[/b][/quote]", "<blockquote><b>h</b></blockquote>")
-	msgList.Add("[quote][b][/b][/quote]", "<blockquote><b></b></blockquote>")
-	msgList.Add("[url][/url]", "<a href=''></a>")
-	msgList.Add("[url]https://github.com/Azareal/Gosora[/url]", "<a href='https://github.com/Azareal/Gosora'>https://github.com/Azareal/Gosora</a>")
-	msgList.Add("[url]http://github.com/Azareal/Gosora[/url]", "<a href='http://github.com/Azareal/Gosora'>http://github.com/Azareal/Gosora</a>")
-	msgList.Add("[url]//github.com/Azareal/Gosora[/url]", "<a href='//github.com/Azareal/Gosora'>//github.com/Azareal/Gosora</a>")
-	msgList.Add("-你好-", "-你好-")
-	msgList.Add("[i]-你好-[/i]", "<i>-你好-</i>") // TODO: More of these Unicode tests? Emoji, Chinese, etc.?
+	l.Add("[code]hi[/code]", "<span class='codequotes'>hi</span>")
+	l.Add("[code][b]hi[/b][/code]", "<span class='codequotes'>[b]hi[/b]</span>")
+	l.Add("[code][b]hi[/code][/b]", "<span class='codequotes'>[b]hi</span>[/b]")
+	l.Add("[quote]hi[/quote]", "<blockquote>hi</blockquote>")
+	l.Add("[quote][b]hi[/b][/quote]", "<blockquote><b>hi</b></blockquote>")
+	l.Add("[quote][b]h[/b][/quote]", "<blockquote><b>h</b></blockquote>")
+	l.Add("[quote][b][/b][/quote]", "<blockquote><b></b></blockquote>")
+	l.Add("[url][/url]", "<a href=''></a>")
+	l.Add("[url]https://github.com/Azareal/Gosora[/url]", "<a href='https://github.com/Azareal/Gosora'>https://github.com/Azareal/Gosora</a>")
+	l.Add("[url]http://github.com/Azareal/Gosora[/url]", "<a href='http://github.com/Azareal/Gosora'>http://github.com/Azareal/Gosora</a>")
+	l.Add("[url]//github.com/Azareal/Gosora[/url]", "<a href='//github.com/Azareal/Gosora'>//github.com/Azareal/Gosora</a>")
+	l.Add("-你好-", "-你好-")
+	l.Add("[i]-你好-[/i]", "<i>-你好-</i>") // TODO: More of these Unicode tests? Emoji, Chinese, etc.?
 
 	t.Log("Testing bbcodeFullParse")
-	for _, item := range msgList.Items {
+	for _, item := range l.Items {
 		res = bbcodeFullParse(item.Msg)
 		if res != item.Expects {
 			t.Error("Testing string '" + item.Msg + "'")
@@ -83,77 +83,26 @@ func TestBBCodeRender(t *testing.T) {
 		}
 	}
 
-	var msg string
-	var expects string
-
-	msg = "[rand][/rand]"
-	expects = "<red>[Invalid Number]</red>[rand][/rand]"
-	t.Log("Testing string '" + msg + "'")
-	res = bbcodeFullParse(msg)
-	if res != expects {
-		t.Error("Bad output:", "'"+res+"'")
-		t.Error("Expected:", "'"+expects+"'")
+	f := func(msg, expects string) {
+		t.Log("Testing string '" + msg + "'")
+		res := bbcodeFullParse(msg)
+		if res != expects {
+			t.Error("Bad output:", "'"+res+"'")
+			t.Error("Expected:", "'"+expects+"'")
+		}
 	}
+	f("[rand][/rand]","<red>[Invalid Number]</red>[rand][/rand]")
+	f("[rand]-1[/rand]","<red>[No Negative Numbers]</red>[rand]-1[/rand]")
+	f("[rand]-01[/rand]","<red>[No Negative Numbers]</red>[rand]-01[/rand]")
+	f("[rand]NaN[/rand]","<red>[Invalid Number]</red>[rand]NaN[/rand]")
+	f("[rand]Inf[/rand]","<red>[Invalid Number]</red>[rand]Inf[/rand]")
+	f("[rand]+[/rand]","<red>[Invalid Number]</red>[rand]+[/rand]")
+	f("[rand]1+1[/rand]","<red>[Invalid Number]</red>[rand]1+1[/rand]")
 
-	msg = "[rand]-1[/rand]"
-	expects = "<red>[No Negative Numbers]</red>[rand]-1[/rand]"
+	msg := "[rand]1[/rand]"
 	t.Log("Testing string '" + msg + "'")
 	res = bbcodeFullParse(msg)
-	if res != expects {
-		t.Error("Bad output:", "'"+res+"'")
-		t.Error("Expected:", "'"+expects+"'")
-	}
-
-	msg = "[rand]-01[/rand]"
-	expects = "<red>[No Negative Numbers]</red>[rand]-01[/rand]"
-	t.Log("Testing string '" + msg + "'")
-	res = bbcodeFullParse(msg)
-	if res != expects {
-		t.Error("Bad output:", "'"+res+"'")
-		t.Error("Expected:", "'"+expects+"'")
-	}
-
-	msg = "[rand]NaN[/rand]"
-	expects = "<red>[Invalid Number]</red>[rand]NaN[/rand]"
-	t.Log("Testing string '" + msg + "'")
-	res = bbcodeFullParse(msg)
-	if res != expects {
-		t.Error("Bad output:", "'"+res+"'")
-		t.Error("Expected:", "'"+expects+"'")
-	}
-
-	msg = "[rand]Inf[/rand]"
-	expects = "<red>[Invalid Number]</red>[rand]Inf[/rand]"
-	t.Log("Testing string '" + msg + "'")
-	res = bbcodeFullParse(msg)
-	if res != expects {
-		t.Error("Bad output:", "'"+res+"'")
-		t.Error("Expected:", "'"+expects+"'")
-	}
-
-	msg = "[rand]+[/rand]"
-	expects = "<red>[Invalid Number]</red>[rand]+[/rand]"
-	t.Log("Testing string '" + msg + "'")
-	res = bbcodeFullParse(msg)
-	if res != expects {
-		t.Error("Bad output:", "'"+res+"'")
-		t.Error("Expected:", "'"+expects+"'")
-	}
-
-	msg = "[rand]1+1[/rand]"
-	expects = "<red>[Invalid Number]</red>[rand]1+1[/rand]"
-	t.Log("Testing string '" + msg + "'")
-	res = bbcodeFullParse(msg)
-	if res != expects {
-		t.Error("Bad output:", "'"+res+"'")
-		t.Error("Expected:", "'"+expects+"'")
-	}
-
-	var conv int
-	msg = "[rand]1[/rand]"
-	t.Log("Testing string '" + msg + "'")
-	res = bbcodeFullParse(msg)
-	conv, err = strconv.Atoi(res)
+	conv, err := strconv.Atoi(res)
 	if err != nil || (conv > 1 || conv < 0) {
 		t.Error("Bad output:", "'"+res+"'")
 		t.Error("Expected a number in the range 0-1")
@@ -205,7 +154,7 @@ func TestBBCodeRender(t *testing.T) {
 	}
 
 	/*t.Log("Testing bbcode_regex_parse")
-	for _, item := range msgList {
+	for _, item := range l.Items {
 		t.Log("Testing string '" + item.Msg + "'")
 		res = bbcodeRegexParse(item.Msg)
 		if res != item.Expects {
@@ -217,94 +166,92 @@ func TestBBCodeRender(t *testing.T) {
 
 func TestMarkdownRender(t *testing.T) {
 	//t.Skip()
-	err := initMarkdown(common.Plugins["markdown"])
+	err := initMarkdown(c.Plugins["markdown"])
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	var res string
-	var msgList = &MEPairList{nil}
-	var msgList2 = &MEPairList{nil}
+	l := &MEPairList{nil}
+	l2 := &MEPairList{nil}
 	// TODO: Fix more of these odd cases
-	msgList.Add("", "")
-	msgList.Add(" ", " ")
-	msgList.Add("  ", "  ")
-	msgList.Add("   ", "   ")
-	msgList.Add("\t", "\t")
-	msgList.Add("\n", "\n")
-	msgList.Add("*", "*")
-	msgList.Add("`", "`")
-	//msgList.Add("**", "<i></i>")
-	msgList.Add("h", "h")
-	msgList.Add("hi", "hi")
-	msgList.Add("**h**", "<b>h</b>")
-	msgList.Add("**hi**", "<b>hi</b>")
-	msgList.Add("_h_", "<u>h</u>")
-	msgList.Add("_hi_", "<u>hi</u>")
-	msgList.Add("*h*", "<i>h</i>")
-	msgList.Add("*hi*", "<i>hi</i>")
-	msgList.Add("~h~", "<s>h</s>")
-	msgList.Add("~hi~", "<s>hi</s>")
-	msgList.Add("`hi`", "<blockquote>hi</blockquote>")
+	l.Add("", "")
+	l.Add(" ", " ")
+	l.Add("  ", "  ")
+	l.Add("   ", "   ")
+	l.Add("\t", "\t")
+	l.Add("\n", "\n")
+	l.Add("*", "*")
+	l.Add("`", "`")
+	//l.Add("**", "<i></i>")
+	l.Add("h", "h")
+	l.Add("hi", "hi")
+	l.Add("**h**", "<b>h</b>")
+	l.Add("**hi**", "<b>hi</b>")
+	l.Add("_h_", "<u>h</u>")
+	l.Add("_hi_", "<u>hi</u>")
+	l.Add("*h*", "<i>h</i>")
+	l.Add("*hi*", "<i>hi</i>")
+	l.Add("~h~", "<s>h</s>")
+	l.Add("~hi~", "<s>hi</s>")
+	l.Add("`hi`", "<blockquote>hi</blockquote>")
 	// TODO: Hide the backslash after escaping the item
 	// TODO: Doesn't behave consistently with d in-front of it
-	msgList2.Add("\\`hi`", "\\`hi`")
-	msgList2.Add("#", "#")
-	msgList2.Add("#h", "<h2>h</h2>")
-	msgList2.Add("#hi", "<h2>hi</h2>")
-	msgList2.Add("# hi", "<h2>hi</h2>")
-	msgList2.Add("#      hi", "<h2>hi</h2>")
-	msgList.Add("\n#", "\n#")
-	msgList.Add("\n#h", "\n<h2>h</h2>")
-	msgList.Add("\n#hi", "\n<h2>hi</h2>")
-	msgList.Add("\n#h\n", "\n<h2>h</h2>")
-	msgList.Add("\n#hi\n", "\n<h2>hi</h2>")
-	msgList.Add("*hi**", "<i>hi</i>*")
-	msgList.Add("**hi***", "<b>hi</b>*")
-	//msgList.Add("**hi*", "*<i>hi</i>")
-	msgList.Add("***hi***", "<b><i>hi</i></b>")
-	msgList.Add("***h***", "<b><i>h</i></b>")
-	msgList.Add("\\***h**\\*", "*<b>h</b>*")
-	msgList.Add("\\*\\**h*\\*\\*", "**<i>h</i>**")
-	msgList.Add("\\*hi\\*", "*hi*")
-	msgList.Add("d\\*hi\\*", "d*hi*")
-	msgList.Add("\\*hi\\*d", "*hi*d")
-	msgList.Add("d\\*hi\\*d", "d*hi*d")
-	msgList.Add("\\", "\\")
-	msgList.Add("\\\\", "\\\\")
-	msgList.Add("\\d", "\\d")
-	msgList.Add("\\\\d", "\\\\d")
-	msgList.Add("\\\\\\d", "\\\\\\d")
-	msgList.Add("d\\", "d\\")
-	msgList.Add("\\d\\", "\\d\\")
-	msgList.Add("*_hi_*", "<i><u>hi</u></i>")
-	msgList.Add("*~hi~*", "<i><s>hi</s></i>")
-	//msgList.Add("~*hi*~", "<s><i>hi</i></s>")
-	//msgList.Add("~ *hi* ~", "<s> <i>hi</i> </s>")
-	msgList.Add("_~hi~_", "<u><s>hi</s></u>")
-	msgList.Add("***~hi~***", "<b><i><s>hi</s></i></b>")
-	msgList.Add("**", "**")
-	msgList.Add("***", "***")
-	msgList.Add("****", "****")
-	msgList.Add("*****", "*****")
-	msgList.Add("******", "******")
-	msgList.Add("*******", "*******")
-	msgList.Add("~~", "~~")
-	msgList.Add("~~~", "~~~")
-	msgList.Add("~~~~", "~~~~")
-	msgList.Add("~~~~~", "~~~~~")
-	msgList.Add("__", "__")
-	msgList.Add("___", "___")
-	msgList.Add("_ _", "<u> </u>")
-	msgList.Add("* *", "<i> </i>")
-	msgList.Add("** **", "<b> </b>")
-	msgList.Add("*** ***", "<b><i> </i></b>")
-	msgList.Add("-你好-", "-你好-")
-	msgList.Add("*-你好-*", "<i>-你好-</i>") // TODO: More of these Unicode tests? Emoji, Chinese, etc.?
+	l2.Add("\\`hi`", "\\`hi`")
+	l2.Add("#", "#")
+	l2.Add("#h", "<h2>h</h2>")
+	l2.Add("#hi", "<h2>hi</h2>")
+	l2.Add("# hi", "<h2>hi</h2>")
+	l2.Add("#      hi", "<h2>hi</h2>")
+	l.Add("\n#", "\n#")
+	l.Add("\n#h", "\n<h2>h</h2>")
+	l.Add("\n#hi", "\n<h2>hi</h2>")
+	l.Add("\n#h\n", "\n<h2>h</h2>")
+	l.Add("\n#hi\n", "\n<h2>hi</h2>")
+	l.Add("*hi**", "<i>hi</i>*")
+	l.Add("**hi***", "<b>hi</b>*")
+	//l.Add("**hi*", "*<i>hi</i>")
+	l.Add("***hi***", "<b><i>hi</i></b>")
+	l.Add("***h***", "<b><i>h</i></b>")
+	l.Add("\\***h**\\*", "*<b>h</b>*")
+	l.Add("\\*\\**h*\\*\\*", "**<i>h</i>**")
+	l.Add("\\*hi\\*", "*hi*")
+	l.Add("d\\*hi\\*", "d*hi*")
+	l.Add("\\*hi\\*d", "*hi*d")
+	l.Add("d\\*hi\\*d", "d*hi*d")
+	l.Add("\\", "\\")
+	l.Add("\\\\", "\\\\")
+	l.Add("\\d", "\\d")
+	l.Add("\\\\d", "\\\\d")
+	l.Add("\\\\\\d", "\\\\\\d")
+	l.Add("d\\", "d\\")
+	l.Add("\\d\\", "\\d\\")
+	l.Add("*_hi_*", "<i><u>hi</u></i>")
+	l.Add("*~hi~*", "<i><s>hi</s></i>")
+	//l.Add("~*hi*~", "<s><i>hi</i></s>")
+	//l.Add("~ *hi* ~", "<s> <i>hi</i> </s>")
+	l.Add("_~hi~_", "<u><s>hi</s></u>")
+	l.Add("***~hi~***", "<b><i><s>hi</s></i></b>")
+	l.Add("**", "**")
+	l.Add("***", "***")
+	l.Add("****", "****")
+	l.Add("*****", "*****")
+	l.Add("******", "******")
+	l.Add("*******", "*******")
+	l.Add("~~", "~~")
+	l.Add("~~~", "~~~")
+	l.Add("~~~~", "~~~~")
+	l.Add("~~~~~", "~~~~~")
+	l.Add("__", "__")
+	l.Add("___", "___")
+	l.Add("_ _", "<u> </u>")
+	l.Add("* *", "<i> </i>")
+	l.Add("** **", "<b> </b>")
+	l.Add("*** ***", "<b><i> </i></b>")
+	l.Add("-你好-", "-你好-")
+	l.Add("*-你好-*", "<i>-你好-</i>") // TODO: More of these Unicode tests? Emoji, Chinese, etc.?
 
-	for _, item := range msgList.Items {
-		res = markdownParse(item.Msg)
-		if res != item.Expects {
+	for _, item := range l.Items {
+		if res := markdownParse(item.Msg); res != item.Expects {
 			t.Error("Testing string '" + item.Msg + "'")
 			t.Error("Bad output:", "'"+res+"'")
 			//t.Error("Ouput in bytes:", []byte(res))
@@ -312,9 +259,8 @@ func TestMarkdownRender(t *testing.T) {
 		}
 	}
 
-	for _, item := range msgList2.Items {
-		res = markdownParse(item.Msg)
-		if res != item.Expects {
+	for _, item := range l2.Items {
+		if res := markdownParse(item.Msg); res != item.Expects {
 			t.Error("Testing string '" + item.Msg + "'")
 			t.Error("Bad output:", "'"+res+"'")
 			//t.Error("Ouput in bytes:", []byte(res))
@@ -322,9 +268,8 @@ func TestMarkdownRender(t *testing.T) {
 		}
 	}
 
-	/*for _, item := range msgList.Items {
-		res = markdownParse("\n" + item.Msg)
-		if res != "\n"+item.Expects {
+	/*for _, item := range l.Items {
+		if res := markdownParse("\n" + item.Msg); res != "\n"+item.Expects {
 			t.Error("Testing string '\n" + item.Msg + "'")
 			t.Error("Bad output:", "'"+res+"'")
 			//t.Error("Ouput in bytes:", []byte(res))
@@ -332,9 +277,8 @@ func TestMarkdownRender(t *testing.T) {
 		}
 	}
 
-	for _, item := range msgList.Items {
-		res = markdownParse("\t" + item.Msg)
-		if res != "\t"+item.Expects {
+	for _, item := range l.Items {
+		if res := markdownParse("\t" + item.Msg); res != "\t"+item.Expects {
 			t.Error("Testing string '\t" + item.Msg + "'")
 			t.Error("Bad output:", "'"+res+"'")
 			//t.Error("Ouput in bytes:", []byte(res))
@@ -342,9 +286,8 @@ func TestMarkdownRender(t *testing.T) {
 		}
 	}*/
 
-	for _, item := range msgList.Items {
-		res = markdownParse("d" + item.Msg)
-		if res != "d"+item.Expects {
+	for _, item := range l.Items {
+		if res := markdownParse("d" + item.Msg); res != "d"+item.Expects {
 			t.Error("Testing string 'd" + item.Msg + "'")
 			t.Error("Bad output:", "'"+res+"'")
 			//t.Error("Ouput in bytes:", []byte(res))

@@ -54,14 +54,14 @@ func init() {
 	})
 }
 
-func (setting *Setting) Copy() (out *Setting) {
+func (s *Setting) Copy() (out *Setting) {
 	out = &Setting{Name: ""}
-	*out = *setting
+	*out = *s
 	return out
 }
 
 func LoadSettings() error {
-	var sBox = SettingMap(make(map[string]interface{}))
+	sBox := SettingMap(make(map[string]interface{}))
 	settings, err := sBox.BypassGetAll()
 	if err != nil {
 		return err
@@ -122,9 +122,9 @@ func (sBox SettingMap) ParseSetting(sname string, scontent string, stype string,
 }
 
 func (sBox SettingMap) BypassGet(name string) (*Setting, error) {
-	setting := &Setting{Name: name}
-	err := settingStmts.get.QueryRow(name).Scan(&setting.Content, &setting.Type, &setting.Constraint)
-	return setting, err
+	s := &Setting{Name: name}
+	err := settingStmts.get.QueryRow(name).Scan(&s.Content, &s.Type, &s.Constraint)
+	return s, err
 }
 
 func (sBox SettingMap) BypassGetAll() (settingList []*Setting, err error) {
@@ -135,18 +135,18 @@ func (sBox SettingMap) BypassGetAll() (settingList []*Setting, err error) {
 	defer rows.Close()
 
 	for rows.Next() {
-		setting := &Setting{Name: ""}
-		err := rows.Scan(&setting.Name, &setting.Content, &setting.Type, &setting.Constraint)
+		s := &Setting{Name: ""}
+		err := rows.Scan(&s.Name, &s.Content, &s.Type, &s.Constraint)
 		if err != nil {
 			return nil, err
 		}
-		settingList = append(settingList, setting)
+		settingList = append(settingList, s)
 	}
 	return settingList, rows.Err()
 }
 
 func (sBox SettingMap) Update(name string, content string) RouteError {
-	setting, err := sBox.BypassGet(name)
+	s, err := sBox.BypassGet(name)
 	if err == ErrNoRows {
 		return FromError(err)
 	} else if err != nil {
@@ -154,7 +154,7 @@ func (sBox SettingMap) Update(name string, content string) RouteError {
 	}
 
 	// TODO: Why is this here and not in a common function?
-	if setting.Type == "bool" {
+	if s.Type == "bool" {
 		if content == "on" || content == "1" {
 			content = "1"
 		} else {
@@ -162,7 +162,7 @@ func (sBox SettingMap) Update(name string, content string) RouteError {
 		}
 	}
 
-	err = sBox.ParseSetting(name, content, setting.Type, setting.Constraint)
+	err = sBox.ParseSetting(name, content, s.Type, s.Constraint)
 	if err != nil {
 		return FromError(err)
 	}

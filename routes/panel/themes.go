@@ -34,7 +34,7 @@ func Themes(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	}
 
 	pi := c.PanelThemesPage{basePage, pThemeList, vThemeList}
-	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage,"panel_themes","","panel_themes",&pi})
+	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_themes", "", "panel_themes", &pi})
 }
 
 func ThemesSetDefault(w http.ResponseWriter, r *http.Request, user c.User, uname string) c.RouteError {
@@ -74,7 +74,7 @@ func ThemesMenus(w http.ResponseWriter, r *http.Request, user c.User) c.RouteErr
 
 	var menuList []c.PanelMenuListItem
 	for mid, list := range c.Menus.GetAllMap() {
-		var name = ""
+		name := ""
 		if mid == 1 {
 			name = p.GetTmplPhrase("panel_themes_menus_main")
 		}
@@ -85,7 +85,7 @@ func ThemesMenus(w http.ResponseWriter, r *http.Request, user c.User) c.RouteErr
 		})
 	}
 
-	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage,"","","panel_themes_menus", &c.PanelMenuListPage{basePage, menuList}})
+	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "", "", "panel_themes_menus", &c.PanelMenuListPage{basePage, menuList}})
 }
 
 func ThemesMenusEdit(w http.ResponseWriter, r *http.Request, user c.User, smid string) c.RouteError {
@@ -132,7 +132,7 @@ func ThemesMenusEdit(w http.ResponseWriter, r *http.Request, user c.User, smid s
 		menuList = append(menuList, item)
 	}
 
-	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage,"","","panel_themes_menus_items", &c.PanelMenuPage{basePage, mid, menuList}})
+	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "", "", "panel_themes_menus_items", &c.PanelMenuPage{basePage, mid, menuList}})
 }
 
 func ThemesMenuItemEdit(w http.ResponseWriter, r *http.Request, user c.User, sitemID string) c.RouteError {
@@ -157,53 +157,53 @@ func ThemesMenuItemEdit(w http.ResponseWriter, r *http.Request, user c.User, sit
 		return c.InternalError(err, w, r)
 	}
 
-	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage,"","","panel_themes_menus_item_edit", &c.PanelMenuItemPage{basePage, menuItem}})
+	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "", "", "panel_themes_menus_item_edit", &c.PanelMenuItemPage{basePage, menuItem}})
 }
 
-func themesMenuItemSetters(r *http.Request, mItem c.MenuItem) c.MenuItem {
+func themesMenuItemSetters(r *http.Request, i c.MenuItem) c.MenuItem {
 	getItem := func(name string) string {
 		return c.SanitiseSingleLine(r.PostFormValue("item-" + name))
 	}
-	mItem.Name = getItem("name")
-	mItem.HTMLID = getItem("htmlid")
-	mItem.CSSClass = getItem("cssclass")
-	mItem.Position = getItem("position")
-	if mItem.Position != "left" && mItem.Position != "right" {
-		mItem.Position = "left"
+	i.Name = getItem("name")
+	i.HTMLID = getItem("htmlid")
+	i.CSSClass = getItem("cssclass")
+	i.Position = getItem("position")
+	if i.Position != "left" && i.Position != "right" {
+		i.Position = "left"
 	}
-	mItem.Path = getItem("path")
-	mItem.Aria = getItem("aria")
-	mItem.Tooltip = getItem("tooltip")
-	mItem.TmplName = getItem("tmplname")
+	i.Path = getItem("path")
+	i.Aria = getItem("aria")
+	i.Tooltip = getItem("tooltip")
+	i.TmplName = getItem("tmplname")
 
 	switch getItem("permissions") {
 	case "everyone":
-		mItem.GuestOnly = false
-		mItem.MemberOnly = false
-		mItem.SuperModOnly = false
-		mItem.AdminOnly = false
+		i.GuestOnly = false
+		i.MemberOnly = false
+		i.SuperModOnly = false
+		i.AdminOnly = false
 	case "guest-only":
-		mItem.GuestOnly = true
-		mItem.MemberOnly = false
-		mItem.SuperModOnly = false
-		mItem.AdminOnly = false
+		i.GuestOnly = true
+		i.MemberOnly = false
+		i.SuperModOnly = false
+		i.AdminOnly = false
 	case "member-only":
-		mItem.GuestOnly = false
-		mItem.MemberOnly = true
-		mItem.SuperModOnly = false
-		mItem.AdminOnly = false
+		i.GuestOnly = false
+		i.MemberOnly = true
+		i.SuperModOnly = false
+		i.AdminOnly = false
 	case "supermod-only":
-		mItem.GuestOnly = false
-		mItem.MemberOnly = true
-		mItem.SuperModOnly = true
-		mItem.AdminOnly = false
+		i.GuestOnly = false
+		i.MemberOnly = true
+		i.SuperModOnly = true
+		i.AdminOnly = false
 	case "admin-only":
-		mItem.GuestOnly = false
-		mItem.MemberOnly = true
-		mItem.SuperModOnly = true
-		mItem.AdminOnly = true
+		i.GuestOnly = false
+		i.MemberOnly = true
+		i.SuperModOnly = true
+		i.AdminOnly = true
 	}
-	return mItem
+	return i
 }
 
 func ThemesMenuItemEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, sitemID string) c.RouteError {
@@ -211,7 +211,7 @@ func ThemesMenuItemEditSubmit(w http.ResponseWriter, r *http.Request, user c.Use
 	if ferr != nil {
 		return ferr
 	}
-	js := (r.PostFormValue("js") == "1")
+	js := r.PostFormValue("js") == "1"
 	if !user.Perms.ManageThemes {
 		return c.NoPermissionsJSQ(w, r, user, js)
 	}
@@ -243,7 +243,7 @@ func ThemesMenuItemCreateSubmit(w http.ResponseWriter, r *http.Request, user c.U
 		return ferr
 	}
 
-	js := (r.PostFormValue("js") == "1")
+	js := r.PostFormValue("js") == "1"
 	if !user.Perms.ManageThemes {
 		return c.NoPermissionsJSQ(w, r, user, js)
 	}
@@ -270,7 +270,7 @@ func ThemesMenuItemDeleteSubmit(w http.ResponseWriter, r *http.Request, user c.U
 	if ferr != nil {
 		return ferr
 	}
-	js := (r.PostFormValue("js") == "1")
+	js := r.PostFormValue("js") == "1"
 	if !user.Perms.ManageThemes {
 		return c.NoPermissionsJSQ(w, r, user, js)
 	}
@@ -299,7 +299,7 @@ func ThemesMenuItemOrderSubmit(w http.ResponseWriter, r *http.Request, user c.Us
 	if ferr != nil {
 		return ferr
 	}
-	js := (r.PostFormValue("js") == "1")
+	js := r.PostFormValue("js") == "1"
 	if !user.Perms.ManageThemes {
 		return c.NoPermissionsJSQ(w, r, user, js)
 	}
@@ -341,14 +341,14 @@ func ThemesWidgets(w http.ResponseWriter, r *http.Request, user c.User) c.RouteE
 	}
 	basePage.Header.AddScript("widgets.js")
 
-	var docks = make(map[string][]c.WidgetEdit)
+	docks := make(map[string][]c.WidgetEdit)
 	for _, name := range c.GetDockList() {
 		if name == "leftOfNav" || name == "rightOfNav" {
 			continue
 		}
 		var widgets []c.WidgetEdit
 		for _, widget := range c.GetDock(name) {
-			var data = make(map[string]string)
+			data := make(map[string]string)
 			err := json.Unmarshal([]byte(widget.RawBody), &data)
 			if err != nil {
 				return c.InternalError(err, w, r)
@@ -359,12 +359,12 @@ func ThemesWidgets(w http.ResponseWriter, r *http.Request, user c.User) c.RouteE
 	}
 
 	pi := c.PanelWidgetListPage{basePage, docks, c.WidgetEdit{&c.Widget{ID: 0, Type: "simple"}, make(map[string]string)}}
-	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage,"","","panel_themes_widgets", pi})
+	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "", "", "panel_themes_widgets", pi})
 }
 
 func widgetsParseInputs(r *http.Request, widget *c.Widget) (*c.WidgetEdit, error) {
-	var data = make(map[string]string)
-	widget.Enabled = (r.FormValue("wenabled") == "1")
+	data := make(map[string]string)
+	widget.Enabled = r.FormValue("wenabled") == "1"
 	widget.Location = r.FormValue("wlocation")
 	if widget.Location == "" {
 		return nil, errors.New("You need to specify a location for this widget.")
@@ -374,7 +374,7 @@ func widgetsParseInputs(r *http.Request, widget *c.Widget) (*c.WidgetEdit, error
 		return nil, errors.New("The widget dock you specified doesn't exist.")
 	}
 
-	var wtype = r.FormValue("wtype")
+	wtype := r.FormValue("wtype")
 	switch wtype {
 	case "simple", "about":
 		data["Name"] = r.FormValue("wname")
@@ -402,7 +402,7 @@ func ThemesWidgetsEditSubmit(w http.ResponseWriter, r *http.Request, user c.User
 	if ferr != nil {
 		return ferr
 	}
-	js := (r.PostFormValue("js") == "1")
+	js := r.PostFormValue("js") == "1"
 	if !user.Perms.ManageThemes {
 		return c.NoPermissionsJSQ(w, r, user, js)
 	}
@@ -435,7 +435,7 @@ func ThemesWidgetsEditSubmit(w http.ResponseWriter, r *http.Request, user c.User
 // ThemesWidgetsCreateSubmit is an action which is triggered when someone sends a create request for a widget
 func ThemesWidgetsCreateSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	//fmt.Println("in ThemesWidgetsCreateSubmit")
-	js := (r.PostFormValue("js") == "1")
+	js := r.PostFormValue("js") == "1"
 	_, ferr := c.SimplePanelUserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
@@ -462,7 +462,7 @@ func ThemesWidgetsDeleteSubmit(w http.ResponseWriter, r *http.Request, user c.Us
 	if ferr != nil {
 		return ferr
 	}
-	js := (r.PostFormValue("js") == "1")
+	js := r.PostFormValue("js") == "1"
 	if !user.Perms.ManageThemes {
 		return c.NoPermissionsJSQ(w, r, user, js)
 	}

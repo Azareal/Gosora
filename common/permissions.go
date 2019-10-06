@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"log"
 
-	"github.com/Azareal/Gosora/query_gen"
 	"github.com/Azareal/Gosora/common/phrases"
+	qgen "github.com/Azareal/Gosora/query_gen"
 )
 
 // TODO: Refactor the perms system
@@ -39,6 +39,7 @@ var GlobalPermList = []string{
 	"ViewIPs",
 	"UploadFiles",
 	"UploadAvatars",
+	"UseConvos",
 }
 
 // Permission Structure: ActionComponent[Subcomponent]Flag
@@ -65,8 +66,9 @@ type Perms struct {
 	ViewIPs               bool
 
 	// Global non-staff permissions
-	UploadFiles bool
+	UploadFiles   bool
 	UploadAvatars bool
+	UseConvos     bool
 
 	// Forum permissions
 	ViewTopic bool
@@ -91,7 +93,7 @@ type Perms struct {
 
 func init() {
 	BlankPerms = Perms{
-	//ExtData: make(map[string]bool),
+		//ExtData: make(map[string]bool),
 	}
 
 	GuestPerms = Perms{
@@ -120,8 +122,9 @@ func init() {
 		ViewAdminLogs:         true,
 		ViewIPs:               true,
 
-		UploadFiles: true,
+		UploadFiles:   true,
 		UploadAvatars: true,
+		UseConvos:     true,
 
 		ViewTopic:   true,
 		LikeItem:    true,
@@ -188,7 +191,7 @@ func RebuildGroupPermissions(group *Group) error {
 	}
 
 	tmpPerms := Perms{
-	//ExtData: make(map[string]bool),
+		//ExtData: make(map[string]bool),
 	}
 	err = json.Unmarshal(permstr, &tmpPerms)
 	if err != nil {

@@ -15,8 +15,7 @@ import (
 // TODO: Name the tasks so we can figure out which one it was when something goes wrong? Or maybe toss it up WithStack down there?
 func runTasks(tasks []func() error) {
 	for _, task := range tasks {
-		err := task()
-		if err != nil {
+		if err := task(); err != nil {
 			c.LogError(err)
 		}
 	}
@@ -24,8 +23,7 @@ func runTasks(tasks []func() error) {
 
 func startTick() (abort bool) {
 	isDBDown := atomic.LoadInt32(&c.IsDBDown)
-	err := db.Ping()
-	if err != nil {
+	if err := db.Ping(); err != nil {
 		// TODO: There's a bit of a race here, but it doesn't matter if this error appears multiple times in the logs as it's capped at three times, we just want to cut it down 99% of the time
 		if isDBDown == 0 {
 			db.SetConnMaxLifetime(time.Second) // Drop all the connections and start over
@@ -45,8 +43,7 @@ func startTick() (abort bool) {
 }
 
 func runHook(name string) {
-	err := c.RunTaskHook(name)
-	if err != nil {
+	if err := c.RunTaskHook(name); err != nil {
 		c.LogError(err, "Failed at task '"+name+"'")
 	}
 }
@@ -88,16 +85,14 @@ func tickLoop(thumbChan chan bool) {
 			runTasks(c.ScheduledSecondTasks)
 
 			// TODO: Stop hard-coding this
-			err := c.HandleExpiredScheduledGroups()
-			if err != nil {
+			if err := c.HandleExpiredScheduledGroups(); err != nil {
 				c.LogError(err)
 			}
 
 			// TODO: Handle delayed moderation tasks
 
 			// Sync with the database, if there are any changes
-			err = c.HandleServerSync()
-			if err != nil {
+			if err = c.HandleServerSync(); err != nil {
 				c.LogError(err)
 			}
 
@@ -164,34 +159,29 @@ func dailies() {
 	}
 
 	if c.Config.LogPruneCutoff > -1 {
-		_, err := qgen.NewAcc().Delete("login_logs").DateOlderThan("doneAt",c.Config.LogPruneCutoff,"day").Run()
-		if err != nil {
-			c.LogError(err)
+		f := func(tbl string) {
+			_, err := qgen.NewAcc().Delete(tbl).DateOlderThan("doneAt",c.Config.LogPruneCutoff,"day").Run()
+			if err != nil {
+				c.LogError(err)
+			}
 		}
-		_, err = qgen.NewAcc().Delete("registration_logs").DateOlderThan("doneAt",c.Config.LogPruneCutoff,"day").Run()
-		if err != nil {
-			c.LogError(err)
-		}
+		f("login_logs")
+		f("registration_logs")
 	}
 
 	if c.Config.PostIPCutoff > -1 {
 		// TODO: Use unixtime to remove this MySQLesque logic?
-		_, err := qgen.NewAcc().Update("topics").Set("ipaddress = '0'").DateOlderThan("createdAt",c.Config.PostIPCutoff,"day").Where("ipaddress != '0'").Exec()
-		if err != nil {
-			c.LogError(err)
+		f := func(tbl string) {
+			_, err := qgen.NewAcc().Update(tbl).Set("ipaddress = '0'").DateOlderThan("createdAt",c.Config.PostIPCutoff,"day").Where("ipaddress != '0'").Exec()
+			if err != nil {
+				c.LogError(err)
+			}
 		}
+		f("topics")
+		f("replies")
+		f("users_replies")
 
-		_, err = qgen.NewAcc().Update("replies").Set("ipaddress = '0'").DateOlderThan("createdAt",c.Config.PostIPCutoff,"day").Where("ipaddress != '0'").Exec()
-		if err != nil {
-			c.LogError(err)
-		}
-		
 		// TODO: Find some way of purging the ip data in polls_votes without breaking any anti-cheat measures which might be running... maybe hash it instead?
-
-		_, err = qgen.NewAcc().Update("users_replies").Set("ipaddress = '0'").DateOlderThan("createdAt",c.Config.PostIPCutoff,"day").Where("ipaddress != '0'").Exec()
-		if err != nil {
-			c.LogError(err)
-		}
 
 		// TODO: lastActiveAt isn't currently set, so we can't rely on this to purge last_ips of users who haven't been on in a while
 		/*_, err = qgen.NewAcc().Update("users").Set("last_ip = '0'").DateOlderThan("lastActiveAt",c.Config.PostIPCutoff,"day").Where("last_ip != '0'").Exec()

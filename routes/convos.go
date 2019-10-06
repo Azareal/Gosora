@@ -6,17 +6,18 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+
 	//"log"
 
 	c "github.com/Azareal/Gosora/common"
 	p "github.com/Azareal/Gosora/common/phrases"
 )
 
-func Convos(w http.ResponseWriter, r *http.Request, user c.User, header *c.Header) c.RouteError {
-	accountEditHead("convos", w, r, &user, header)
-	header.AddScript("convo.js")
-	header.AddSheet(header.Theme.Name + "/convo.css")
-	header.AddNotice("convo_dev")
+func Convos(w http.ResponseWriter, r *http.Request, user c.User, h *c.Header) c.RouteError {
+	accountEditHead("convos", w, r, &user, h)
+	h.AddScript("convo.js")
+	h.AddSheet(h.Theme.Name + "/convo.css")
+	h.AddNotice("convo_dev")
 	ccount := c.Convos.GetUserCount(user.ID)
 	page, _ := strconv.Atoi(r.FormValue("page"))
 	offset, page, lastPage := c.PageOffset(ccount, page, c.Config.ItemsPerPage)
@@ -25,13 +26,13 @@ func Convos(w http.ResponseWriter, r *http.Request, user c.User, header *c.Heade
 	convos, err := c.Convos.GetUserExtra(user.ID, offset)
 	//log.Printf("convos: %+v\n", convos)
 	if err == sql.ErrNoRows {
-		return c.NotFound(w, r, header)
+		return c.NotFound(w, r, h)
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
 
-	pi := c.Account{header, "dashboard", "convos", c.ConvoListPage{header, convos, c.Paginator{pageList, page, lastPage}}}
-	return renderTemplate("account", w, r, header, pi)
+	pi := c.Account{h, "dashboard", "convos", c.ConvoListPage{h, convos, c.Paginator{pageList, page, lastPage}}}
+	return renderTemplate("account", w, r, h, pi)
 }
 
 func Convo(w http.ResponseWriter, r *http.Request, user c.User, header *c.Header, scid string) c.RouteError {
@@ -99,12 +100,12 @@ func Convo(w http.ResponseWriter, r *http.Request, user c.User, header *c.Header
 	return renderTemplate("account", w, r, header, pi)
 }
 
-func ConvosCreate(w http.ResponseWriter, r *http.Request, user c.User, header *c.Header) c.RouteError {
-	accountEditHead("create_convo", w, r, &user, header)
-	header.AddNotice("convo_dev")
+func ConvosCreate(w http.ResponseWriter, r *http.Request, user c.User, h *c.Header) c.RouteError {
+	accountEditHead("create_convo", w, r, &user, h)
+	h.AddNotice("convo_dev")
 	recpName := ""
-	pi := c.Account{header, "dashboard", "create_convo", c.ConvoCreatePage{header, recpName}}
-	return renderTemplate("account", w, r, header, pi)
+	pi := c.Account{h, "dashboard", "create_convo", c.ConvoCreatePage{h, recpName}}
+	return renderTemplate("account", w, r, h, pi)
 }
 
 func ConvosCreateSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
@@ -112,7 +113,7 @@ func ConvosCreateSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.R
 	if ferr != nil {
 		return ferr
 	}
-	if user.IsBanned {
+	if !user.Perms.UseConvos {
 		return c.NoPermissions(w, r, user)
 	}
 
@@ -130,6 +131,10 @@ func ConvosCreateSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.R
 			return c.LocalError("One of the recipients doesn't exist", w, r, user)
 		} else if err != nil {
 			return c.InternalError(err, w, r)
+		}
+		// TODO: Should we kick them out of existing conversations if they're moved into a group without permission or the permission is revoked from their group? We might want to give them a chance to delete their messages though to avoid privacy headaches here and it may only be temporarily to tackle a specific incident.
+		if !u.Perms.UseConvos {
+			return c.LocalError("One of the recipients doesn't have permission to use the conversations system", w, r, user)
 		}
 
 		rlist = append(rlist, u.ID)
@@ -168,7 +173,7 @@ func ConvosCreateReplySubmit(w http.ResponseWriter, r *http.Request, user c.User
 	if ferr != nil {
 		return ferr
 	}
-	if user.IsBanned {
+	if !user.Perms.UseConvos {
 		return c.NoPermissions(w, r, user)
 	}
 	cid, err := strconv.Atoi(scid)
@@ -262,6 +267,9 @@ func ConvosEditReplySubmit(w http.ResponseWriter, r *http.Request, user c.User, 
 	cpid, err := strconv.Atoi(scpid)
 	if err != nil {
 		return c.LocalError(p.GetErrorPhrase("id_must_be_integer"), w, r, user)
+	}
+	if !user.Perms.UseConvos {
+		return c.NoPermissions(w, r, user)
 	}
 	js := (r.PostFormValue("js") == "1")
 

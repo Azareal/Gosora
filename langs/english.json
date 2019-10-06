@@ -29,7 +29,8 @@
 		"ViewIPs":               "Can view IP addresses",
 
 		"UploadFiles": "Can upload files",
-		"UploadAvatars": "Can upload avatars"
+		"UploadAvatars": "Can upload avatars",
+		"UseConvos":"Can use conversations"
 	},
 
 	"LocalPerms": {

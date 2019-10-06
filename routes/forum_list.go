@@ -38,15 +38,15 @@ func ForumList(w http.ResponseWriter, r *http.Request, user c.User, header *c.He
 	var forumList []c.Forum
 	for _, fid := range canSee {
 		// Avoid data races by copying the struct into something we can freely mold without worrying about breaking something somewhere else
-		var forum = c.Forums.DirtyGet(fid).Copy()
-		if forum.ParentID == 0 && forum.Name != "" && forum.Active {
-			if forum.LastTopicID != 0 {
-				if forum.LastTopic.ID != 0 && forum.LastReplyer.ID != 0 {
-					forum.LastTopicTime = c.RelativeTime(forum.LastTopic.LastReplyAt)
+		f := c.Forums.DirtyGet(fid).Copy()
+		if f.ParentID == 0 && f.Name != "" && f.Active {
+			if f.LastTopicID != 0 {
+				if f.LastTopic.ID != 0 && f.LastReplyer.ID != 0 {
+					f.LastTopicTime = c.RelativeTime(f.LastTopic.LastReplyAt)
 				}
 			}
-			header.Hooks.Hook("forums_frow_assign", &forum)
-			forumList = append(forumList, forum)
+			header.Hooks.Hook("forums_frow_assign", &f)
+			forumList = append(forumList, f)
 		}
 	}
 

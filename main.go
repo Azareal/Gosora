@@ -25,8 +25,8 @@ import (
 	"time"
 
 	c "github.com/Azareal/Gosora/common"
-	"github.com/Azareal/Gosora/common/counters"
-	"github.com/Azareal/Gosora/common/phrases"
+	co "github.com/Azareal/Gosora/common/counters"
+	p "github.com/Azareal/Gosora/common/phrases"
 	"github.com/Azareal/Gosora/query_gen"
 	"github.com/Azareal/Gosora/routes"
 	"github.com/fsnotify/fsnotify"
@@ -143,40 +143,33 @@ func storeInit() (err error) {
 		return errors.WithStack(err)
 	}
 
-	err = phrases.InitPhrases(c.Site.Language)
-	if err != nil {
+	if err = p.InitPhrases(c.Site.Language); err != nil {
 		return errors.WithStack(err)
 	}
-	err = c.InitEmoji()
-	if err != nil {
+	if err = c.InitEmoji(); err != nil {
 		return errors.WithStack(err)
 	}
 
 	log.Print("Loading the static files.")
-	err = c.Themes.LoadStaticFiles()
-	if err != nil {
+	if err = c.Themes.LoadStaticFiles(); err != nil {
 		return errors.WithStack(err)
 	}
-	err = c.StaticFiles.Init()
-	if err != nil {
+	if err = c.StaticFiles.Init(); err != nil {
 		return errors.WithStack(err)
 	}
-	err = c.StaticFiles.JSTmplInit()
-	if err != nil {
+	if err = c.StaticFiles.JSTmplInit(); err != nil {
 		return errors.WithStack(err)
 	}
 
 	log.Print("Initialising the widgets")
 	c.Widgets = c.NewDefaultWidgetStore()
-	err = c.InitWidgets()
-	if err != nil {
+	if err = c.InitWidgets(); err != nil {
 		return errors.WithStack(err)
 	}
 
 	log.Print("Initialising the menu item list")
 	c.Menus = c.NewDefaultMenuStore()
-	err = c.Menus.Load(1) // 1 = the default menu
-	if err != nil {
+	if err = c.Menus.Load(1); err != nil { // 1 = the default menu
 		return errors.WithStack(err)
 	}
 	menuHold, err := c.Menus.Get(1)
@@ -269,47 +262,47 @@ func storeInit() (err error) {
 	c.Thumbnailer = c.NewCaireThumbnailer()
 
 	log.Print("Initialising the view counters")
-	counters.GlobalViewCounter, err = counters.NewGlobalViewCounter(acc)
+	co.GlobalViewCounter, err = co.NewGlobalViewCounter(acc)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	counters.AgentViewCounter, err = counters.NewDefaultAgentViewCounter(acc)
+	co.AgentViewCounter, err = co.NewDefaultAgentViewCounter(acc)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	counters.OSViewCounter, err = counters.NewDefaultOSViewCounter(acc)
+	co.OSViewCounter, err = co.NewDefaultOSViewCounter(acc)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	counters.LangViewCounter, err = counters.NewDefaultLangViewCounter(acc)
+	co.LangViewCounter, err = co.NewDefaultLangViewCounter(acc)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	counters.RouteViewCounter, err = counters.NewDefaultRouteViewCounter(acc)
+	co.RouteViewCounter, err = co.NewDefaultRouteViewCounter(acc)
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	counters.PostCounter, err = counters.NewPostCounter()
+	co.PostCounter, err = co.NewPostCounter()
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	counters.TopicCounter, err = counters.NewTopicCounter()
+	co.TopicCounter, err = co.NewTopicCounter()
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	counters.TopicViewCounter, err = counters.NewDefaultTopicViewCounter()
+	co.TopicViewCounter, err = co.NewDefaultTopicViewCounter()
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	counters.ForumViewCounter, err = counters.NewDefaultForumViewCounter()
+	co.ForumViewCounter, err = co.NewDefaultForumViewCounter()
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	counters.ReferrerTracker, err = counters.NewDefaultReferrerTracker()
+	co.ReferrerTracker, err = co.NewDefaultReferrerTracker()
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	counters.MemoryCounter, err = counters.NewMemoryCounter(acc)
+	co.MemoryCounter, err = co.NewMemoryCounter(acc)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -422,8 +415,8 @@ func main() {
 		defer watcher.Close()
 
 		go func() {
-			var modifiedFileEvent = func(path string) error {
-				var pathBits = strings.Split(path, "\\")
+			modifiedFileEvent := func(path string) error {
+				pathBits := strings.Split(path, "\\")
 				if len(pathBits) == 0 {
 					return nil
 				}
@@ -503,7 +496,7 @@ func main() {
 
 		var lastEvictedCount int
 		var couldNotDealloc bool
-		var secondTicker = time.NewTicker(time.Second)
+		secondTicker := time.NewTicker(time.Second)
 		for {
 			select {
 			case <-secondTicker.C:
@@ -576,7 +569,7 @@ func main() {
 
 func startServer() {
 	// We might not need the timeouts, if we're behind a reverse-proxy like Nginx
-	var newServer = func(addr string, handler http.Handler) *http.Server {
+	newServer := func(addr string, handler http.Handler) *http.Server {
 		rtime := c.Config.ReadTimeout
 		if rtime == 0 {
 			rtime = 8

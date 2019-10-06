@@ -19,16 +19,16 @@ func wsTopicList(topicList []*c.TopicsRow, lastPage int) *c.WsTopicList {
 	return &c.WsTopicList{wsTopicList, lastPage, 0}
 }
 
-func TopicList(w http.ResponseWriter, r *http.Request, user c.User, header *c.Header) c.RouteError {
-	skip, rerr := header.Hooks.VhookSkippable("route_topic_list_start", w, r, &user, header)
+func TopicList(w http.ResponseWriter, r *http.Request, user c.User, h *c.Header) c.RouteError {
+	skip, rerr := h.Hooks.VhookSkippable("route_topic_list_start", w, r, &user, h)
 	if skip || rerr != nil {
 		return rerr
 	}
-	return TopicListCommon(w, r, user, header, "lastupdated", "")
+	return TopicListCommon(w, r, user, h, "lastupdated", "")
 }
 
-func TopicListMostViewed(w http.ResponseWriter, r *http.Request, user c.User, header *c.Header) c.RouteError {
-	return TopicListCommon(w, r, user, header, "mostviewed", "most-viewed")
+func TopicListMostViewed(w http.ResponseWriter, r *http.Request, user c.User, h *c.Header) c.RouteError {
+	return TopicListCommon(w, r, user, h, "mostviewed", "most-viewed")
 }
 
 // TODO: Implement search
@@ -85,7 +85,7 @@ func TopicListCommon(w http.ResponseWriter, r *http.Request, user c.User, header
 
 		var cfids []int
 		if len(fids) > 0 {
-			var inSlice = func(haystack []int, needle int) bool {
+			inSlice := func(haystack []int, needle int) bool {
 				for _, item := range haystack {
 					if needle == item {
 						return true
@@ -117,7 +117,7 @@ func TopicListCommon(w http.ResponseWriter, r *http.Request, user c.User, header
 		if err != nil {
 			return c.InternalError(err, w, r)
 		}
-		var reqUserList = make(map[int]bool)
+		reqUserList := make(map[int]bool)
 		for _, topic := range tMap {
 			reqUserList[topic.CreatedBy] = true
 			reqUserList[topic.LastReplyBy] = true
@@ -126,7 +126,7 @@ func TopicListCommon(w http.ResponseWriter, r *http.Request, user c.User, header
 		//fmt.Printf("reqUserList %+v\n", reqUserList)
 
 		// Convert the user ID map to a slice, then bulk load the users
-		var idSlice = make([]int, len(reqUserList))
+		idSlice := make([]int, len(reqUserList))
 		var i int
 		for userID := range reqUserList {
 			idSlice[i] = userID

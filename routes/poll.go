@@ -7,7 +7,7 @@ import (
 	"strconv"
 
 	c "github.com/Azareal/Gosora/common"
-	"github.com/Azareal/Gosora/query_gen"
+	qgen "github.com/Azareal/Gosora/query_gen"
 )
 
 func PollVote(w http.ResponseWriter, r *http.Request, user c.User, sPollID string) c.RouteError {
@@ -57,7 +57,6 @@ func PollVote(w http.ResponseWriter, r *http.Request, user c.User, sPollID strin
 	if err != nil {
 		return c.LocalError("Malformed input", w, r, user)
 	}
-
 	err = poll.CastVote(optionIndex, user.ID, user.LastIP)
 	if err != nil {
 		return c.InternalError(err, w, r)
@@ -88,7 +87,7 @@ func PollResults(w http.ResponseWriter, r *http.Request, user c.User, sPollID st
 	}
 	defer rows.Close()
 
-	var optionList = ""
+	optionList := ""
 	for rows.Next() {
 		var votes int
 		err := rows.Scan(&votes)

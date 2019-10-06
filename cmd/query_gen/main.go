@@ -8,15 +8,14 @@ import (
 	"runtime/debug"
 	"strconv"
 
-	"github.com/Azareal/Gosora/query_gen"
+	qgen "github.com/Azareal/Gosora/query_gen"
 )
 
 // TODO: Make sure all the errors in this file propagate upwards properly
 func main() {
 	// Capture panics instead of closing the window at a superhuman speed before the user can read the message on Windows
 	defer func() {
-		r := recover()
-		if r != nil {
+		if r := recover(); r != nil {
 			fmt.Println(r)
 			debug.PrintStack()
 			return
@@ -109,6 +108,8 @@ func writeStatements(adapter qgen.Adapter) error {
 	return nil
 }
 
+type si = map[string]interface{}
+
 func seedTables(adapter qgen.Adapter) error {
 	qgen.Install.AddIndex("topics", "parentID", "parentID")
 	qgen.Install.AddIndex("replies", "tid", "tid")
@@ -156,6 +157,9 @@ func seedTables(adapter qgen.Adapter) error {
 		Non-staff Global Permissions:
 		UploadFiles
 		UploadAvatars
+		UseConvos
+		// CreateConvo ?
+		// CreateConvoReply ?
 
 		Forum Permissions:
 		ViewTopic
@@ -172,11 +176,11 @@ func seedTables(adapter qgen.Adapter) error {
 	*/
 
 	// TODO: Set the permissions on a struct and then serialize the struct and insert that instead of writing raw JSON
-	qgen.Install.SimpleInsert("users_groups", "name, permissions, plugin_perms, is_mod, is_admin, tag", `'Administrator','{"BanUsers":true,"ActivateUsers":true,"EditUser":true,"EditUserEmail":true,"EditUserPassword":true,"EditUserGroup":true,"EditUserGroupSuperMod":true,"EditUserGroupAdmin":false,"EditGroup":true,"EditGroupLocalPerms":true,"EditGroupGlobalPerms":true,"EditGroupSuperMod":true,"EditGroupAdmin":false,"ManageForums":true,"EditSettings":true,"ManageThemes":true,"ManagePlugins":true,"ViewAdminLogs":true,"ViewIPs":true,"UploadFiles":true,"UploadAvatars":true,"ViewTopic":true,"LikeItem":true,"CreateTopic":true,"EditTopic":true,"DeleteTopic":true,"CreateReply":true,"EditReply":true,"DeleteReply":true,"PinTopic":true,"CloseTopic":true,"MoveTopic":true}','{}',1,1,"Admin"`)
+	qgen.Install.SimpleInsert("users_groups", "name, permissions, plugin_perms, is_mod, is_admin, tag", `'Administrator','{"BanUsers":true,"ActivateUsers":true,"EditUser":true,"EditUserEmail":true,"EditUserPassword":true,"EditUserGroup":true,"EditUserGroupSuperMod":true,"EditUserGroupAdmin":false,"EditGroup":true,"EditGroupLocalPerms":true,"EditGroupGlobalPerms":true,"EditGroupSuperMod":true,"EditGroupAdmin":false,"ManageForums":true,"EditSettings":true,"ManageThemes":true,"ManagePlugins":true,"ViewAdminLogs":true,"ViewIPs":true,"UploadFiles":true,"UploadAvatars":true,"UseConvos":true,"ViewTopic":true,"LikeItem":true,"CreateTopic":true,"EditTopic":true,"DeleteTopic":true,"CreateReply":true,"EditReply":true,"DeleteReply":true,"PinTopic":true,"CloseTopic":true,"MoveTopic":true}','{}',1,1,"Admin"`)
 
-	qgen.Install.SimpleInsert("users_groups", "name, permissions, plugin_perms, is_mod, tag", `'Moderator','{"BanUsers":true,"ActivateUsers":false,"EditUser":true,"EditUserEmail":false,"EditUserGroup":true,"ViewIPs":true,"UploadFiles":true,"UploadAvatars":true,"ViewTopic":true,"LikeItem":true,"CreateTopic":true,"EditTopic":true,"DeleteTopic":true,"CreateReply":true,"EditReply":true,"DeleteReply":true,"PinTopic":true,"CloseTopic":true,"MoveTopic":true}','{}',1,"Mod"`)
+	qgen.Install.SimpleInsert("users_groups", "name, permissions, plugin_perms, is_mod, tag", `'Moderator','{"BanUsers":true,"ActivateUsers":false,"EditUser":true,"EditUserEmail":false,"EditUserGroup":true,"ViewIPs":true,"UploadFiles":true,"UploadAvatars":true,"UseConvos":true,"ViewTopic":true,"LikeItem":true,"CreateTopic":true,"EditTopic":true,"DeleteTopic":true,"CreateReply":true,"EditReply":true,"DeleteReply":true,"PinTopic":true,"CloseTopic":true,"MoveTopic":true}','{}',1,"Mod"`)
 
-	qgen.Install.SimpleInsert("users_groups", "name, permissions, plugin_perms", `'Member','{"UploadFiles":true,"UploadAvatars":true,"ViewTopic":true,"LikeItem":true,"CreateTopic":true,"CreateReply":true}','{}'`)
+	qgen.Install.SimpleInsert("users_groups", "name, permissions, plugin_perms", `'Member','{"UploadFiles":true,"UploadAvatars":true,"UseConvos":true,"ViewTopic":true,"LikeItem":true,"CreateTopic":true,"CreateReply":true}','{}'`)
 
 	qgen.Install.SimpleInsert("users_groups", "name, permissions, plugin_perms, is_banned", `'Banned','{"ViewTopic":true}','{}',1`)
 
@@ -223,31 +227,31 @@ func seedTables(adapter qgen.Adapter) error {
 	qgen.Install.SimpleInsert("menus", "", "")
 
 	// Go maps have a random iteration order, so we have to do this, otherwise the schema files will become unstable and harder to audit
-	var order = 0
-	var mOrder = "mid, name, htmlID, cssClass, position, path, aria, tooltip, guestOnly, memberOnly, staffOnly, adminOnly"
-	var addMenuItem = func(data map[string]interface{}) {
+	order := 0
+	mOrder := "mid, name, htmlID, cssClass, position, path, aria, tooltip, guestOnly, memberOnly, staffOnly, adminOnly"
+	addMenuItem := func(data map[string]interface{}) {
 		cols, values := qgen.InterfaceMapToInsertStrings(data, mOrder)
 		qgen.Install.SimpleInsert("menu_items", cols+", order", values+","+strconv.Itoa(order))
 		order++
 	}
 
-	addMenuItem(map[string]interface{}{"mid": 1, "name": "{lang.menu_forums}", "htmlID": "menu_forums", "position": "left", "path": "/forums/", "aria": "{lang.menu_forums_aria}", "tooltip": "{lang.menu_forums_tooltip}"})
+	addMenuItem(si{"mid": 1, "name": "{lang.menu_forums}", "htmlID": "menu_forums", "position": "left", "path": "/forums/", "aria": "{lang.menu_forums_aria}", "tooltip": "{lang.menu_forums_tooltip}"})
 
-	addMenuItem(map[string]interface{}{"mid": 1, "name": "{lang.menu_topics}", "htmlID": "menu_topics", "cssClass": "menu_topics", "position": "left", "path": "/topics/", "aria": "{lang.menu_topics_aria}", "tooltip": "{lang.menu_topics_tooltip}"})
+	addMenuItem(si{"mid": 1, "name": "{lang.menu_topics}", "htmlID": "menu_topics", "cssClass": "menu_topics", "position": "left", "path": "/topics/", "aria": "{lang.menu_topics_aria}", "tooltip": "{lang.menu_topics_tooltip}"})
 
-	addMenuItem(map[string]interface{}{"mid": 1, "htmlID": "general_alerts", "cssClass": "menu_alerts", "position": "right", "tmplName": "menu_alerts"})
+	addMenuItem(si{"mid": 1, "htmlID": "general_alerts", "cssClass": "menu_alerts", "position": "right", "tmplName": "menu_alerts"})
 
-	addMenuItem(map[string]interface{}{"mid": 1, "name": "{lang.menu_account}", "cssClass": "menu_account", "position": "left", "path": "/user/edit/", "aria": "{lang.menu_account_aria}", "tooltip": "{lang.menu_account_tooltip}", "memberOnly": true})
+	addMenuItem(si{"mid": 1, "name": "{lang.menu_account}", "cssClass": "menu_account", "position": "left", "path": "/user/edit/", "aria": "{lang.menu_account_aria}", "tooltip": "{lang.menu_account_tooltip}", "memberOnly": true})
 
-	addMenuItem(map[string]interface{}{"mid": 1, "name": "{lang.menu_profile}", "cssClass": "menu_profile", "position": "left", "path": "{me.Link}", "aria": "{lang.menu_profile_aria}", "tooltip": "{lang.menu_profile_tooltip}", "memberOnly": true})
+	addMenuItem(si{"mid": 1, "name": "{lang.menu_profile}", "cssClass": "menu_profile", "position": "left", "path": "{me.Link}", "aria": "{lang.menu_profile_aria}", "tooltip": "{lang.menu_profile_tooltip}", "memberOnly": true})
 
-	addMenuItem(map[string]interface{}{"mid": 1, "name": "{lang.menu_panel}", "cssClass": "menu_panel menu_account", "position": "left", "path": "/panel/", "aria": "{lang.menu_panel_aria}", "tooltip": "{lang.menu_panel_tooltip}", "memberOnly": true, "staffOnly": true})
+	addMenuItem(si{"mid": 1, "name": "{lang.menu_panel}", "cssClass": "menu_panel menu_account", "position": "left", "path": "/panel/", "aria": "{lang.menu_panel_aria}", "tooltip": "{lang.menu_panel_tooltip}", "memberOnly": true, "staffOnly": true})
 
-	addMenuItem(map[string]interface{}{"mid": 1, "name": "{lang.menu_logout}", "cssClass": "menu_logout", "position": "left", "path": "/accounts/logout/?session={me.Session}", "aria": "{lang.menu_logout_aria}", "tooltip": "{lang.menu_logout_tooltip}", "memberOnly": true})
+	addMenuItem(si{"mid": 1, "name": "{lang.menu_logout}", "cssClass": "menu_logout", "position": "left", "path": "/accounts/logout/?s={me.Session}", "aria": "{lang.menu_logout_aria}", "tooltip": "{lang.menu_logout_tooltip}", "memberOnly": true})
 
-	addMenuItem(map[string]interface{}{"mid": 1, "name": "{lang.menu_register}", "cssClass": "menu_register", "position": "left", "path": "/accounts/create/", "aria": "{lang.menu_register_aria}", "tooltip": "{lang.menu_register_tooltip}", "guestOnly": true})
+	addMenuItem(si{"mid": 1, "name": "{lang.menu_register}", "cssClass": "menu_register", "position": "left", "path": "/accounts/create/", "aria": "{lang.menu_register_aria}", "tooltip": "{lang.menu_register_tooltip}", "guestOnly": true})
 
-	addMenuItem(map[string]interface{}{"mid": 1, "name": "{lang.menu_login}", "cssClass": "menu_login", "position": "left", "path": "/accounts/login/", "aria": "{lang.menu_login_aria}", "tooltip": "{lang.menu_login_tooltip}", "guestOnly": true})
+	addMenuItem(si{"mid": 1, "name": "{lang.menu_login}", "cssClass": "menu_login", "position": "left", "path": "/accounts/login/", "aria": "{lang.menu_login_aria}", "tooltip": "{lang.menu_login_tooltip}", "guestOnly": true})
 
 	return nil
 }
@@ -263,77 +267,77 @@ func seedTables(adapter qgen.Adapter) error {
 
 type LitStr string
 
-func writeSelects(adapter qgen.Adapter) error {
-	build := adapter.Builder()
+func writeSelects(a qgen.Adapter) error {
+	b := a.Builder()
 
 	// Looking for getTopic? Your statement is in another castle
 
-	//build.Select("isPluginInstalled").Table("plugins").Columns("installed").Where("uname = ?").Parse()
+	//b.Select("isPluginInstalled").Table("plugins").Columns("installed").Where("uname = ?").Parse()
 
-	build.Select("forumEntryExists").Table("forums").Columns("fid").Where("name = ''").Orderby("fid ASC").Limit("0,1").Parse()
+	b.Select("forumEntryExists").Table("forums").Columns("fid").Where("name = ''").Orderby("fid ASC").Limit("0,1").Parse()
 
-	build.Select("groupEntryExists").Table("users_groups").Columns("gid").Where("name = ''").Orderby("gid ASC").Limit("0,1").Parse()
-
-	return nil
-}
-
-func writeLeftJoins(adapter qgen.Adapter) error {
-	adapter.SimpleLeftJoin("getForumTopics", "topics", "users", "topics.tid, topics.title, topics.content, topics.createdBy, topics.is_closed, topics.sticky, topics.createdAt, topics.lastReplyAt, topics.parentID, users.name, users.avatar", "topics.createdBy = users.uid", "topics.parentID = ?", "topics.sticky DESC, topics.lastReplyAt DESC, topics.createdBy desc", "")
+	b.Select("groupEntryExists").Table("users_groups").Columns("gid").Where("name = ''").Orderby("gid ASC").Limit("0,1").Parse()
 
 	return nil
 }
 
-func writeInnerJoins(adapter qgen.Adapter) (err error) {
-	return nil
-}
-
-func writeInserts(adapter qgen.Adapter) error {
-	build := adapter.Builder()
-
-	build.Insert("addForumPermsToForum").Table("forums_permissions").Columns("gid,fid,preset,permissions").Fields("?,?,?,?").Parse()
+func writeLeftJoins(a qgen.Adapter) error {
+	a.SimpleLeftJoin("getForumTopics", "topics", "users", "topics.tid, topics.title, topics.content, topics.createdBy, topics.is_closed, topics.sticky, topics.createdAt, topics.lastReplyAt, topics.parentID, users.name, users.avatar", "topics.createdBy = users.uid", "topics.parentID = ?", "topics.sticky DESC, topics.lastReplyAt DESC, topics.createdBy desc", "")
 
 	return nil
 }
 
-func writeUpdates(adapter qgen.Adapter) error {
-	build := adapter.Builder()
+func writeInnerJoins(a qgen.Adapter) (err error) {
+	return nil
+}
 
-	build.Update("updateEmail").Table("emails").Set("email = ?, uid = ?, validated = ?, token = ?").Where("email = ?").Parse()
+func writeInserts(a qgen.Adapter) error {
+	b := a.Builder()
 
-	build.Update("setTempGroup").Table("users").Set("temp_group = ?").Where("uid = ?").Parse()
-
-	build.Update("bumpSync").Table("sync").Set("last_update = UTC_TIMESTAMP()").Parse()
+	b.Insert("addForumPermsToForum").Table("forums_permissions").Columns("gid,fid,preset,permissions").Fields("?,?,?,?").Parse()
 
 	return nil
 }
 
-func writeDeletes(adapter qgen.Adapter) error {
-	build := adapter.Builder()
+func writeUpdates(a qgen.Adapter) error {
+	b := a.Builder()
 
-	//build.Delete("deleteForumPermsByForum").Table("forums_permissions").Where("fid = ?").Parse()
+	b.Update("updateEmail").Table("emails").Set("email = ?, uid = ?, validated = ?, token = ?").Where("email = ?").Parse()
 
-	build.Delete("deleteActivityStreamMatch").Table("activity_stream_matches").Where("watcher = ? AND asid = ?").Parse()
-	//build.Delete("deleteActivityStreamMatchesByWatcher").Table("activity_stream_matches").Where("watcher = ?").Parse()
+	b.Update("setTempGroup").Table("users").Set("temp_group = ?").Where("uid = ?").Parse()
+
+	b.Update("bumpSync").Table("sync").Set("last_update = UTC_TIMESTAMP()").Parse()
 
 	return nil
 }
 
-func writeSimpleCounts(adapter qgen.Adapter) error {
+func writeDeletes(a qgen.Adapter) error {
+	b := a.Builder()
+
+	//b.Delete("deleteForumPermsByForum").Table("forums_permissions").Where("fid = ?").Parse()
+
+	b.Delete("deleteActivityStreamMatch").Table("activity_stream_matches").Where("watcher = ? AND asid = ?").Parse()
+	//b.Delete("deleteActivityStreamMatchesByWatcher").Table("activity_stream_matches").Where("watcher = ?").Parse()
+
 	return nil
 }
 
-func writeInsertSelects(adapter qgen.Adapter) error {
-	/*adapter.SimpleInsertSelect("addForumPermsToForumAdmins",
+func writeSimpleCounts(a qgen.Adapter) error {
+	return nil
+}
+
+func writeInsertSelects(a qgen.Adapter) error {
+	/*a.SimpleInsertSelect("addForumPermsToForumAdmins",
 		qgen.DB_Insert{"forums_permissions", "gid, fid, preset, permissions", ""},
 		qgen.DB_Select{"users_groups", "gid, ? AS fid, ? AS preset, ? AS permissions", "is_admin = 1", "", ""},
 	)*/
 
-	/*adapter.SimpleInsertSelect("addForumPermsToForumStaff",
+	/*a.SimpleInsertSelect("addForumPermsToForumStaff",
 		qgen.DB_Insert{"forums_permissions", "gid, fid, preset, permissions", ""},
 		qgen.DB_Select{"users_groups", "gid, ? AS fid, ? AS preset, ? AS permissions", "is_admin = 0 AND is_mod = 1", "", ""},
 	)*/
 
-	/*adapter.SimpleInsertSelect("addForumPermsToForumMembers",
+	/*a.SimpleInsertSelect("addForumPermsToForumMembers",
 		qgen.DB_Insert{"forums_permissions", "gid, fid, preset, permissions", ""},
 		qgen.DB_Select{"users_groups", "gid, ? AS fid, ? AS preset, ? AS permissions", "is_admin = 0 AND is_mod = 0 AND is_banned = 0", "", ""},
 	)*/
@@ -342,11 +346,11 @@ func writeInsertSelects(adapter qgen.Adapter) error {
 }
 
 // nolint
-func writeInsertLeftJoins(adapter qgen.Adapter) error {
+func writeInsertLeftJoins(a qgen.Adapter) error {
 	return nil
 }
 
-func writeInsertInnerJoins(adapter qgen.Adapter) error {
+func writeInsertInnerJoins(a qgen.Adapter) error {
 	return nil
 }
 
