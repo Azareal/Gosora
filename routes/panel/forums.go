@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	c "github.com/Azareal/Gosora/common"
-	"github.com/Azareal/Gosora/common/phrases"
+	p "github.com/Azareal/Gosora/common/phrases"
 )
 
 func Forums(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
@@ -49,7 +49,7 @@ func Forums(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	}
 
 	pi := c.PanelPage{basePage, forumList, nil}
-	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage,"","","panel_forums",&pi})
+	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "", "", "panel_forums", &pi})
 }
 
 func ForumsCreateSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
@@ -98,7 +98,7 @@ func ForumsDelete(w http.ResponseWriter, r *http.Request, user c.User, sfid stri
 		return c.InternalError(err, w, r)
 	}
 
-	confirmMsg := phrases.GetTmplPhrasef("panel_forum_delete_are_you_sure", forum.Name)
+	confirmMsg := p.GetTmplPhrasef("panel_forum_delete_are_you_sure", forum.Name)
 	yousure := c.AreYouSure{"/panel/forums/delete/submit/" + strconv.Itoa(fid), confirmMsg}
 
 	pi := c.PanelPage{basePage, tList, yousure}
@@ -165,10 +165,10 @@ func ForumsEdit(w http.ResponseWriter, r *http.Request, user c.User, sfid string
 	if !user.Perms.ManageForums {
 		return c.NoPermissions(w, r, user)
 	}
-	
+
 	fid, err := strconv.Atoi(sfid)
 	if err != nil {
-		return c.SimpleError(phrases.GetErrorPhrase("url_id_must_be_integer"),w,r,basePage.Header)
+		return c.SimpleError(p.GetErrorPhrase("url_id_must_be_integer"), w, r, basePage.Header)
 	}
 	basePage.Header.AddScriptAsync("panel_forum_edit.js")
 
@@ -207,7 +207,7 @@ func ForumsEdit(w http.ResponseWriter, r *http.Request, user c.User, sfid string
 	}
 
 	pi := c.PanelEditForumPage{basePage, forum.ID, forum.Name, forum.Desc, forum.Active, forum.Preset, gplist}
-	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage,"","","panel_forum_edit",&pi})
+	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "", "", "panel_forum_edit", &pi})
 }
 
 func ForumsEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, sfid string) c.RouteError {
@@ -341,31 +341,30 @@ func ForumsEditPermsAdvance(w http.ResponseWriter, r *http.Request, user c.User,
 	}
 
 	var formattedPermList []c.NameLangToggle
-
 	// TODO: Load the phrases in bulk for efficiency?
 	// TODO: Reduce the amount of code duplication between this and the group editor. Also, can we grind this down into one line or use a code generator to stay current more easily?
-	addNameLangToggle := func(permStr string, perm bool) {
-		formattedPermList = append(formattedPermList, c.NameLangToggle{permStr, phrases.GetLocalPermPhrase(permStr), perm})
+	addToggle := func(permStr string, perm bool) {
+		formattedPermList = append(formattedPermList, c.NameLangToggle{permStr, p.GetPermPhrase(permStr), perm})
 	}
-	addNameLangToggle("ViewTopic", fp.ViewTopic)
-	addNameLangToggle("LikeItem", fp.LikeItem)
-	addNameLangToggle("CreateTopic", fp.CreateTopic)
+	addToggle("ViewTopic", fp.ViewTopic)
+	addToggle("LikeItem", fp.LikeItem)
+	addToggle("CreateTopic", fp.CreateTopic)
 	//<--
-	addNameLangToggle("EditTopic", fp.EditTopic)
-	addNameLangToggle("DeleteTopic", fp.DeleteTopic)
-	addNameLangToggle("CreateReply", fp.CreateReply)
-	addNameLangToggle("EditReply", fp.EditReply)
-	addNameLangToggle("DeleteReply", fp.DeleteReply)
-	addNameLangToggle("PinTopic", fp.PinTopic)
-	addNameLangToggle("CloseTopic", fp.CloseTopic)
-	addNameLangToggle("MoveTopic", fp.MoveTopic)
+	addToggle("EditTopic", fp.EditTopic)
+	addToggle("DeleteTopic", fp.DeleteTopic)
+	addToggle("CreateReply", fp.CreateReply)
+	addToggle("EditReply", fp.EditReply)
+	addToggle("DeleteReply", fp.DeleteReply)
+	addToggle("PinTopic", fp.PinTopic)
+	addToggle("CloseTopic", fp.CloseTopic)
+	addToggle("MoveTopic", fp.MoveTopic)
 
 	if r.FormValue("updated") == "1" {
 		basePage.AddNotice("panel_forum_perms_updated")
 	}
 
 	pi := c.PanelEditForumGroupPage{basePage, forum.ID, gid, forum.Name, forum.Desc, forum.Active, forum.Preset, formattedPermList}
-	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage,"","","panel_forum_edit_perms",&pi})
+	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "", "", "panel_forum_edit_perms", &pi})
 }
 
 func ForumsEditPermsAdvanceSubmit(w http.ResponseWriter, r *http.Request, user c.User, paramList string) c.RouteError {
@@ -376,7 +375,7 @@ func ForumsEditPermsAdvanceSubmit(w http.ResponseWriter, r *http.Request, user c
 	if !user.Perms.ManageForums {
 		return c.NoPermissions(w, r, user)
 	}
-	js := (r.PostFormValue("js") == "1")
+	js := r.PostFormValue("js") == "1"
 
 	fid, gid, err := forumPermsExtractDash(paramList)
 	if err != nil {

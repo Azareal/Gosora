@@ -36,7 +36,7 @@
 				{{if not $.Topic.IsClosed or $.CurrentUser.Perms.CloseTopic}}
 				{{if $.CurrentUser.Perms.EditReply}}<a href="/reply/edit/submit/{{.ID}}?s={{$.CurrentUser.Session}}" class="action_button edit_item" aria-label="{{lang "topic.post_edit_aria"}}" data-action="edit"></a>{{end}}
 				{{end}}
-				{{if $.CurrentUser.Perms.DeleteReply}}<a href="/reply/delete/submit/{{.ID}}?s={{$.CurrentUser.Session}}" class="action_button delete_item" aria-label="{{lang "topic.post_delete_aria"}}" data-action="delete"></a>{{end}}
+				{{if .Deletable}}<a href="/reply/delete/submit/{{.ID}}?s={{$.CurrentUser.Session}}" class="action_button delete_item" aria-label="{{lang "topic.post_delete_aria"}}" data-action="delete"></a>{{end}}
 				{{if $.CurrentUser.Perms.ViewIPs}}<a href="/users/ips/?ip={{.IP}}" title="{{lang "topic.ip_full_tooltip"}}" class="action_button ip_item_button hide_on_big" aria-label="{{lang "topic.ip_full_aria"}}" data-action="ip"></a>{{end}}
 				<a href="/report/submit/{{.ID}}?s={{$.CurrentUser.Session}}&amp;type=reply" class="action_button report_item" aria-label="{{lang "topic.report_aria"}}" data-action="report"></a>
 				<a href="#" class="action_button button_menu"></a>

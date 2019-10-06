@@ -12,7 +12,7 @@ import (
 	"html"
 	"time"
 
-	"github.com/Azareal/Gosora/query_gen"
+	qgen "github.com/Azareal/Gosora/query_gen"
 )
 
 type ReplyUser struct {
@@ -45,6 +45,7 @@ type ReplyUser struct {
 	ActionIcon string
 
 	Attachments []*MiniAttachment
+	Deletable   bool
 }
 
 type Reply struct {
@@ -57,7 +58,7 @@ type Reply struct {
 	LastEdit     int
 	LastEditBy   int
 	ContentLines int
-	IP    string
+	IP           string
 	Liked        bool
 	LikeCount    int
 	AttachCount  int

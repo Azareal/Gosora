@@ -25,12 +25,12 @@ func main() {
 	}()
 
 	log.Println("Running the query generator")
-	for _, adapter := range qgen.Registry {
-		log.Printf("Building the queries for the %s adapter", adapter.GetName())
-		qgen.Install.SetAdapterInstance(adapter)
+	for _, a := range qgen.Registry {
+		log.Printf("Building the queries for the %s adapter", a.GetName())
+		qgen.Install.SetAdapterInstance(a)
 		qgen.Install.AddPlugins(NewPrimaryKeySpitter()) // TODO: Do we really need to fill the spitter for every adapter?
 
-		err := writeStatements(adapter)
+		err := writeStatements(a)
 		if err != nil {
 			log.Print(err)
 		}
@@ -38,7 +38,7 @@ func main() {
 		if err != nil {
 			log.Print(err)
 		}
-		err = adapter.Write()
+		err = a.Write()
 		if err != nil {
 			log.Print(err)
 		}
@@ -46,73 +46,31 @@ func main() {
 }
 
 // nolint
-func writeStatements(adapter qgen.Adapter) error {
-	err := createTables(adapter)
-	if err != nil {
-		return err
+func writeStatements(a qgen.Adapter) (err error) {
+	e := func(f func(qgen.Adapter) error) {
+		if err != nil {
+			return
+		}
+		err = f(a)
 	}
-
-	err = seedTables(adapter)
-	if err != nil {
-		return err
-	}
-
-	err = writeSelects(adapter)
-	if err != nil {
-		return err
-	}
-
-	err = writeLeftJoins(adapter)
-	if err != nil {
-		return err
-	}
-
-	err = writeInnerJoins(adapter)
-	if err != nil {
-		return err
-	}
-
-	err = writeInserts(adapter)
-	if err != nil {
-		return err
-	}
-
-	err = writeUpdates(adapter)
-	if err != nil {
-		return err
-	}
-
-	err = writeDeletes(adapter)
-	if err != nil {
-		return err
-	}
-
-	err = writeSimpleCounts(adapter)
-	if err != nil {
-		return err
-	}
-
-	err = writeInsertSelects(adapter)
-	if err != nil {
-		return err
-	}
-
-	err = writeInsertLeftJoins(adapter)
-	if err != nil {
-		return err
-	}
-
-	err = writeInsertInnerJoins(adapter)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	e(createTables)
+	e(seedTables)
+	e(writeSelects)
+	e(writeLeftJoins)
+	e(writeInnerJoins)
+	e(writeInserts)
+	e(writeUpdates)
+	e(writeDeletes)
+	e(writeSimpleCounts)
+	e(writeInsertSelects)
+	e(writeInsertLeftJoins)
+	e(writeInsertInnerJoins)
+	return err
 }
 
 type si = map[string]interface{}
 
-func seedTables(adapter qgen.Adapter) error {
+func seedTables(a qgen.Adapter) error {
 	qgen.Install.AddIndex("topics", "parentID", "parentID")
 	qgen.Install.AddIndex("replies", "tid", "tid")
 	qgen.Install.AddIndex("polls", "parentID", "parentID")

@@ -7,7 +7,7 @@
 		"LevelMax": ""
 	},
 
-	"GlobalPerms": {
+	"Perms": {
 		"BanUsers":              "Can ban users",
 		"ActivateUsers":         "Can activate users",
 		"EditUser":              "Can edit users",
@@ -30,10 +30,8 @@
 
 		"UploadFiles": "Can upload files",
 		"UploadAvatars": "Can upload avatars",
-		"UseConvos":"Can use conversations"
-	},
-
-	"LocalPerms": {
+		"UseConvos":"Can use conversations",
+		
 		"ViewTopic":   "Can view topics",
 		"LikeItem":    "Can like items",
 		"CreateTopic": "Can create topics",

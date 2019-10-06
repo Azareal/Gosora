@@ -90,7 +90,7 @@
 					{{if not .Topic.IsClosed or .CurrentUser.Perms.CloseTopic}}
 					{{if .CurrentUser.Perms.EditTopic}}<a href="/topic/edit/{{.Topic.ID}}" class="action_button open_edit" aria-label="{{lang "topic.edit_aria"}}" data-action="edit"></a>{{end}}
 					{{end}}
-					{{if .CurrentUser.Perms.DeleteTopic}}<a href="/topic/delete/submit/{{.Topic.ID}}?s={{.CurrentUser.Session}}" class="action_button delete_item" aria-label="{{lang "topic.delete_aria"}}" data-action="delete"></a>{{end}}
+					{{if .Topic.Deletable}}<a href="/topic/delete/submit/{{.Topic.ID}}?s={{.CurrentUser.Session}}" class="action_button delete_item" aria-label="{{lang "topic.delete_aria"}}" data-action="delete"></a>{{end}}
 					{{if .CurrentUser.Perms.CloseTopic}}
 					{{if .Topic.IsClosed}}<a href='/topic/unlock/submit/{{.Topic.ID}}?s={{.CurrentUser.Session}}' class="action_button unlock_item" data-action="unlock" aria-label="{{lang "topic.unlock_aria"}}"></a>{{else}}<a href='/topic/lock/submit/{{.Topic.ID}}?s={{.CurrentUser.Session}}' class="action_button lock_item" data-action="lock" aria-label="{{lang "topic.lock_aria"}}"></a>{{end}}{{end}}
 					{{if .CurrentUser.Perms.PinTopic}}

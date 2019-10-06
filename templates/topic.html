@@ -47,7 +47,7 @@
 		{{if .CurrentUser.Perms.EditTopic}}<a href='/topic/edit/{{.Topic.ID}}' class="mod_button open_edit" title="{{lang "topic.edit_tooltip"}}" aria-label="{{lang "topic.edit_aria"}}"><button class="username edit_label"></button></a>{{end}}
 		{{end}}
 
-		{{if .CurrentUser.Perms.DeleteTopic}}<a href='/topic/delete/submit/{{.Topic.ID}}?s={{.CurrentUser.Session}}' class="mod_button" title="{{lang "topic.delete_tooltip"}}" aria-label="{{lang "topic.delete_aria"}}"><button class="username delete_label"></button></a>{{end}}
+		{{if .Topic.Deletable}}<a href='/topic/delete/submit/{{.Topic.ID}}?s={{.CurrentUser.Session}}' class="mod_button" title="{{lang "topic.delete_tooltip"}}" aria-label="{{lang "topic.delete_aria"}}"><button class="username delete_label"></button></a>{{end}}
 
 		{{if .CurrentUser.Perms.CloseTopic}}{{if .Topic.IsClosed}}<a class="mod_button" href='/topic/unlock/submit/{{.Topic.ID}}?s={{.CurrentUser.Session}}' title="{{lang "topic.unlock_tooltip"}}" aria-label="{{lang "topic.unlock_aria"}}"><button class="username unlock_label"></button></a>{{else}}<a href='/topic/lock/submit/{{.Topic.ID}}?s={{.CurrentUser.Session}}' class="mod_button" title="{{lang "topic.lock_tooltip"}}" aria-label="{{lang "topic.lock_aria"}}"><button class="username lock_label"></button></a>{{end}}{{end}}
 

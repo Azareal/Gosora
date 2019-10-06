@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+
 	//"fmt"
 	"log"
 	"net/http"
@@ -18,7 +19,7 @@ import (
 	c "github.com/Azareal/Gosora/common"
 	"github.com/Azareal/Gosora/common/counters"
 	"github.com/Azareal/Gosora/common/phrases"
-	"github.com/Azareal/Gosora/query_gen"
+	qgen "github.com/Azareal/Gosora/query_gen"
 )
 
 type TopicStmts struct {
@@ -44,7 +45,7 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user c.User, header *c.He
 	page, _ := strconv.Atoi(r.FormValue("page"))
 	_, tid, err := ParseSEOURL(urlBit)
 	if err != nil {
-		return c.SimpleError(phrases.GetErrorPhrase("url_id_must_be_integer"),w,r,header)
+		return c.SimpleError(phrases.GetErrorPhrase("url_id_must_be_integer"), w, r, header)
 	}
 
 	// Get the topic...
@@ -82,11 +83,11 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user c.User, header *c.He
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
-
 	topic.Tag = postGroup.Tag
 	if postGroup.IsMod {
 		topic.ClassName = c.Config.StaffCSS
 	}
+	topic.Deletable = user.Perms.DeleteTopic || topic.CreatedBy == user.ID
 
 	forum, err := c.Forums.Get(topic.ParentID)
 	if err != nil {
@@ -155,8 +156,8 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user c.User, header *c.He
 	if tmpl == "" {
 		rerr = renderTemplate("topic", w, r, header, tpage)
 	} else {
-		tmpl = "topic_"+tmpl
-		err = renderTemplate3(tmpl,tmpl, w, r, header, tpage)
+		tmpl = "topic_" + tmpl
+		err = renderTemplate3(tmpl, tmpl, w, r, header, tpage)
 		if err != nil {
 			rerr = renderTemplate("topic", w, r, header, tpage)
 		}
@@ -328,7 +329,7 @@ func CreateTopic(w http.ResponseWriter, r *http.Request, user c.User, header *c.
 func CreateTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	fid, err := strconv.Atoi(r.PostFormValue("topic-board"))
 	if err != nil {
-		return c.LocalError(phrases.GetErrorPhrase("id_must_be_integer"),w,r,user)
+		return c.LocalError(phrases.GetErrorPhrase("id_must_be_integer"), w, r, user)
 	}
 	// TODO: Add hooks to make use of headerLite
 	lite, ferr := c.SimpleForumUserCheck(w, r, &user, fid)
@@ -616,8 +617,10 @@ func DeleteTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.Ro
 		if ferr != nil {
 			return ferr
 		}
-		if !user.Perms.ViewTopic || !user.Perms.DeleteTopic {
-			return c.NoPermissionsJSQ(w, r, user, js)
+		if topic.CreatedBy != user.ID {
+			if !user.Perms.ViewTopic || !user.Perms.DeleteTopic {
+				return c.NoPermissionsJSQ(w, r, user, js)
+			}
 		}
 
 		// We might be able to handle this err better
@@ -862,7 +865,7 @@ func addTopicAction(action string, t *c.Topic, u c.User) error {
 
 // TODO: Refactor this
 func LikeTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User, stid string) c.RouteError {
-	js := (r.PostFormValue("js") == "1")
+	js := r.PostFormValue("js") == "1"
 	tid, err := strconv.Atoi(stid)
 	if err != nil {
 		return c.PreErrorJSQ(phrases.GetErrorPhrase("id_must_be_integer"), w, r, js)

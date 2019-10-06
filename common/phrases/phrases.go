@@ -43,8 +43,7 @@ type LanguagePack struct {
 
 	// Should we use a sync map or a struct for these? It would be nice, if we could keep all the phrases consistent.
 	Levels              LevelPhrases
-	GlobalPerms         map[string]string
-	LocalPerms          map[string]string
+	Perms               map[string]string
 	SettingPhrases      map[string]string
 	PermPresets         map[string]string
 	Accounts            map[string]string // TODO: Apply these phrases in the software proper
@@ -184,16 +183,8 @@ func GetLevelPhrase(level int) string {
 	return strings.Replace(levelPhrases.Level, "{0}", strconv.Itoa(level), -1)
 }
 
-// TODO: Merge these two maps?
-func GetGlobalPermPhrase(name string) string {
-	res, ok := currentLangPack.Load().(*LanguagePack).GlobalPerms[name]
-	if !ok {
-		return getPlaceholder("perms", name)
-	}
-	return res
-}
-func GetLocalPermPhrase(name string) string {
-	res, ok := currentLangPack.Load().(*LanguagePack).LocalPerms[name]
+func GetPermPhrase(name string) string {
+	res, ok := currentLangPack.Load().(*LanguagePack).Perms[name]
 	if !ok {
 		return getPlaceholder("perms", name)
 	}

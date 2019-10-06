@@ -301,7 +301,7 @@ func GroupsEditPerms(w http.ResponseWriter, r *http.Request, user c.User, sgid s
 	// TODO: Load the phrases in bulk for efficiency?
 	var localPerms []c.NameLangToggle
 	addLocalPerm := func(permStr string, perm bool) {
-		localPerms = append(localPerms, c.NameLangToggle{permStr, p.GetLocalPermPhrase(permStr), perm})
+		localPerms = append(localPerms, c.NameLangToggle{permStr, p.GetPermPhrase(permStr), perm})
 	}
 
 	addLocalPerm("ViewTopic", g.Perms.ViewTopic)
@@ -319,7 +319,7 @@ func GroupsEditPerms(w http.ResponseWriter, r *http.Request, user c.User, sgid s
 
 	var globalPerms []c.NameLangToggle
 	addGlobalPerm := func(permStr string, perm bool) {
-		globalPerms = append(globalPerms, c.NameLangToggle{permStr, p.GetGlobalPermPhrase(permStr), perm})
+		globalPerms = append(globalPerms, c.NameLangToggle{permStr, p.GetPermPhrase(permStr), perm})
 	}
 
 	addGlobalPerm("BanUsers", g.Perms.BanUsers)

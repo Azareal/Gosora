@@ -10,13 +10,14 @@ import (
 	"database/sql"
 	"html"
 	"html/template"
+
 	//"log"
 	"strconv"
 	"strings"
 	"time"
 
 	p "github.com/Azareal/Gosora/common/phrases"
-	"github.com/Azareal/Gosora/query_gen"
+	qgen "github.com/Azareal/Gosora/query_gen"
 )
 
 // This is also in reply.go
@@ -38,7 +39,7 @@ type Topic struct {
 	LastReplyID int
 	ParentID    int
 	Status      string // Deprecated. Marked for removal.
-	IP   string
+	IP          string
 	ViewCount   int64
 	PostCount   int
 	LikeCount   int
@@ -64,7 +65,7 @@ type TopicUser struct {
 	LastReplyID int
 	ParentID    int
 	Status      string // Deprecated. Marked for removal.
-	IP   string
+	IP          string
 	ViewCount   int64
 	PostCount   int
 	LikeCount   int
@@ -89,6 +90,7 @@ type TopicUser struct {
 
 	Attachments []*MiniAttachment
 	Rids        []int
+	Deletable   bool
 }
 
 // TODO: Embed TopicUser to simplify this structure and it's related logic?
@@ -106,7 +108,7 @@ type TopicsRow struct {
 	LastReplyID int
 	ParentID    int
 	Status      string // Deprecated. Marked for removal. -Is there anything we could use it for?
-	IP   string
+	IP          string
 	ViewCount   int64
 	PostCount   int
 	LikeCount   int
@@ -423,10 +425,11 @@ func GetRidsForTopic(tid int, offset int) (rids []int, err error) {
 }
 
 var aipost = ";&#xFE0E"
-var lockai = "&#x1F512"+aipost
+var lockai = "&#x1F512" + aipost
 var unlockai = "&#x1F513"
 var stickai = "&#x1F4CC"
-var unstickai = "&#x1F4CC"+aipost
+var unstickai = "&#x1F4CC" + aipost
+
 func (ru *ReplyUser) Init() error {
 	ru.UserLink = BuildProfileURL(NameToSlug(ru.CreatedByName), ru.CreatedBy)
 	ru.ContentLines = strings.Count(ru.Content, "\n")
@@ -545,6 +548,7 @@ func (t *TopicUser) Replies(offset int, pFrag int, user *User) (rlist []*ReplyUs
 			attachMap[reply.ID] = len(rlist)
 			attachQueryList = append(attachQueryList, reply.ID)
 		}
+		reply.Deletable = user.Perms.DeleteReply || reply.CreatedBy == user.ID
 
 		hTbl.VhookNoRet("topic_reply_row_assign", &rlist, &reply)
 		rlist = append(rlist, reply)
@@ -568,6 +572,7 @@ func (t *TopicUser) Replies(offset int, pFrag int, user *User) (rlist []*ReplyUs
 			}
 			reply.ContentHtml = ParseMessage(reply.Content, t.ParentID, "forums")
 
+			// TODO: This doesn't work properly so pick the first one instead?
 			if reply.ID == pFrag {
 				ogdesc = reply.Content
 				if len(ogdesc) > 200 {
@@ -583,6 +588,7 @@ func (t *TopicUser) Replies(offset int, pFrag int, user *User) (rlist []*ReplyUs
 				attachMap[reply.ID] = len(rlist)
 				attachQueryList = append(attachQueryList, reply.ID)
 			}
+			reply.Deletable = user.Perms.DeleteReply || reply.CreatedBy == user.ID
 
 			hTbl.VhookNoRet("topic_reply_row_assign", &rlist, &reply)
 			// TODO: Use a pointer instead to make it easier to abstract this loop? What impact would this have on escape analysis?

@@ -238,7 +238,7 @@ func compileCommons(c *tmpl.CTemplateSet, header *Header, header2 *Header, forum
 	}, VoteCount: 7}
 	avatar, microAvatar := BuildAvatar(62, "")
 	miniAttach := []*MiniAttachment{&MiniAttachment{Path: "/"}}
-	topic := TopicUser{1, "blah", "Blah", "Hey there!", 0, false, false, now, now, 1, 1, 0, "", "127.0.0.1", 1, 0, 1, 0, "classname", poll.ID, "weird-data", BuildProfileURL("fake-user", 62), "Fake User", Config.DefaultGroup, avatar, microAvatar, 0, "", "", "", "", "", 58, false, miniAttach, nil}
+	topic := TopicUser{1, "blah", "Blah", "Hey there!", 0, false, false, now, now, 1, 1, 0, "", "127.0.0.1", 1, 0, 1, 0, "classname", poll.ID, "weird-data", BuildProfileURL("fake-user", 62), "Fake User", Config.DefaultGroup, avatar, microAvatar, 0, "", "", "", "", "", 58, false, miniAttach, nil,false}
 
 	var replyList []*ReplyUser
 	reply := Reply{1, 1, "Yo!", 1, Config.DefaultGroup, now, 0, 0, 1, "::1", true, 1, 1, ""}
@@ -520,7 +520,7 @@ func compileJSTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName stri
 	}, VoteCount: 7}
 	avatar, microAvatar := BuildAvatar(62, "")
 	miniAttach := []*MiniAttachment{&MiniAttachment{Path: "/"}}
-	topic := TopicUser{1, "blah", "Blah", "Hey there!", 62, false, false, now, now, 1, 1, 0, "", "127.0.0.1", 1, 0, 1, 0, "classname", poll.ID, "weird-data", BuildProfileURL("fake-user", 62), "Fake User", Config.DefaultGroup, avatar, microAvatar, 0, "", "", "", "", "", 58, false, miniAttach, nil}
+	topic := TopicUser{1, "blah", "Blah", "Hey there!", 62, false, false, now, now, 1, 1, 0, "", "127.0.0.1", 1, 0, 1, 0, "classname", poll.ID, "weird-data", BuildProfileURL("fake-user", 62), "Fake User", Config.DefaultGroup, avatar, microAvatar, 0, "", "", "", "", "", 58, false, miniAttach, nil,false}
 	var replyList []*ReplyUser
 	// TODO: Do we really want the UID here to be zero?
 	avatar, microAvatar = BuildAvatar(0, "")

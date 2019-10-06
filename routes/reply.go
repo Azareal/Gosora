@@ -214,7 +214,7 @@ func CreateReplySubmit(w http.ResponseWriter, r *http.Request, user c.User) c.Ro
 // TODO: Disable stat updates in posts handled by plugin_guilds
 // TODO: Update the stats after edits so that we don't under or over decrement stats during deletes
 func ReplyEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, srid string) c.RouteError {
-	js := (r.PostFormValue("js") == "1")
+	js := r.PostFormValue("js") == "1"
 	rid, err := strconv.Atoi(srid)
 	if err != nil {
 		return c.PreErrorJSQ("The provided Reply ID is not a valid number.", w, r, js)
@@ -282,7 +282,7 @@ func ReplyEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, srid s
 // TODO: Refactor this
 // TODO: Disable stat updates in posts handled by plugin_guilds
 func ReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user c.User, srid string) c.RouteError {
-	js := (r.PostFormValue("js") == "1")
+	js := r.PostFormValue("js") == "1"
 	rid, err := strconv.Atoi(srid)
 	if err != nil {
 		return c.PreErrorJSQ("The provided Reply ID is not a valid number.", w, r, js)
@@ -307,8 +307,10 @@ func ReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user c.User, srid
 	if ferr != nil {
 		return ferr
 	}
-	if !user.Perms.ViewTopic || !user.Perms.DeleteReply {
-		return c.NoPermissionsJSQ(w, r, user, js)
+	if reply.CreatedBy != user.ID {
+		if !user.Perms.ViewTopic || !user.Perms.DeleteReply {
+			return c.NoPermissionsJSQ(w, r, user, js)
+		}
 	}
 
 	err = reply.Delete()
@@ -501,7 +503,7 @@ func ProfileReplyCreateSubmit(w http.ResponseWriter, r *http.Request, user c.Use
 }
 
 func ProfileReplyEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, srid string) c.RouteError {
-	js := (r.PostFormValue("js") == "1")
+	js := r.PostFormValue("js") == "1"
 	rid, err := strconv.Atoi(srid)
 	if err != nil {
 		return c.LocalErrorJSQ("The provided Reply ID is not a valid number.", w, r, user, js)
@@ -537,7 +539,7 @@ func ProfileReplyEditSubmit(w http.ResponseWriter, r *http.Request, user c.User,
 }
 
 func ProfileReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user c.User, srid string) c.RouteError {
-	js := (r.PostFormValue("js") == "1")
+	js := r.PostFormValue("js") == "1"
 	rid, err := strconv.Atoi(srid)
 	if err != nil {
 		return c.LocalErrorJSQ("The provided Reply ID is not a valid number.", w, r, user, js)
@@ -573,7 +575,7 @@ func ProfileReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user c.Use
 }
 
 func ReplyLikeSubmit(w http.ResponseWriter, r *http.Request, user c.User, srid string) c.RouteError {
-	js := (r.PostFormValue("js") == "1")
+	js := r.PostFormValue("js") == "1"
 	rid, err := strconv.Atoi(srid)
 	if err != nil {
 		return c.PreErrorJSQ("The provided Reply ID is not a valid number.", w, r, js)
