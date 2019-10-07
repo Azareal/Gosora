@@ -25,9 +25,7 @@ func Convos(w http.ResponseWriter, r *http.Request, user c.User, h *c.Header) c.
 
 	convos, err := c.Convos.GetUserExtra(user.ID, offset)
 	//log.Printf("convos: %+v\n", convos)
-	if err == sql.ErrNoRows {
-		return c.NotFound(w, r, h)
-	} else if err != nil {
+	if err != sql.ErrNoRows && err != nil {
 		return c.InternalError(err, w, r)
 	}
 

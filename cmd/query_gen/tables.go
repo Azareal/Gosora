@@ -1,6 +1,6 @@
 package main
 
-import "github.com/Azareal/Gosora/query_gen"
+import qgen "github.com/Azareal/Gosora/query_gen"
 
 var mysqlPre = "utf8mb4"
 var mysqlCol = "utf8mb4_general_ci"
@@ -52,8 +52,8 @@ func createTables(adapter qgen.Adapter) (err error) {
 			tC{"temp_group", "int", 0, false, false, "0"}, // For temporary groups, set this to zero when a temporary group isn't in effect
 		},
 		[]tblKey{
-			tblKey{"uid", "primary","",false},
-			tblKey{"name", "unique","",false},
+			tblKey{"uid", "primary", "", false},
+			tblKey{"name", "unique", "", false},
 		},
 	)
 
@@ -71,7 +71,7 @@ func createTables(adapter qgen.Adapter) (err error) {
 			tC{"tag", "varchar", 50, false, false, "''"},
 		},
 		[]tblKey{
-			tblKey{"gid", "primary","",false},
+			tblKey{"gid", "primary", "", false},
 		},
 	)
 
@@ -80,7 +80,7 @@ func createTables(adapter qgen.Adapter) (err error) {
 			tC{"pid", "int", 0, false, true, ""},
 			tC{"from_gid", "int", 0, false, false, ""},
 			tC{"to_gid", "int", 0, false, false, ""},
-			tC{"two_way", "boolean",0,false,false,"0"}, // If a user no longer meets the requirements for this promotion then they will be demoted if this flag is set
+			tC{"two_way", "boolean", 0, false, false, "0"}, // If a user no longer meets the requirements for this promotion then they will be demoted if this flag is set
 
 			// Requirements
 			tC{"level", "int", 0, false, false, ""},
@@ -88,7 +88,7 @@ func createTables(adapter qgen.Adapter) (err error) {
 			tC{"minTime", "int", 0, false, false, ""}, // How long someone needs to have been in their current group before being promoted
 		},
 		[]tblKey{
-			tblKey{"pid", "primary","",false},
+			tblKey{"pid", "primary", "", false},
 		},
 	)
 
@@ -107,7 +107,7 @@ func createTables(adapter qgen.Adapter) (err error) {
 			tC{"createdAt", "createdAt", 0, false, false, ""},
 		},
 		[]tblKey{
-			tblKey{"uid", "primary","",false},
+			tblKey{"uid", "primary", "", false},
 		},
 	)
 
@@ -152,7 +152,7 @@ func createTables(adapter qgen.Adapter) (err error) {
 			tC{"temporary", "boolean", 0, false, false, ""}, // special case for permanent bans to do the necessary bookkeeping, might be removed in the future
 		},
 		[]tblKey{
-			tblKey{"uid", "primary","",false},
+			tblKey{"uid", "primary", "", false},
 		},
 	)
 
@@ -162,7 +162,7 @@ func createTables(adapter qgen.Adapter) (err error) {
 			tC{"uid", "int", 0, false, false, ""}, // TODO: Make this a foreign key
 		},
 		[]tblKey{
-			tblKey{"uid", "primary","",false},
+			tblKey{"uid", "primary", "", false},
 		},
 	)
 
@@ -216,7 +216,7 @@ func createTables(adapter qgen.Adapter) (err error) {
 			tC{"lastReplyerID", "int", 0, false, false, "0"},
 		},
 		[]tblKey{
-			tblKey{"fid", "primary","",false},
+			tblKey{"fid", "primary", "", false},
 		},
 	)
 
@@ -229,7 +229,7 @@ func createTables(adapter qgen.Adapter) (err error) {
 		},
 		[]tblKey{
 			// TODO: Test to see that the compound primary key works
-			tblKey{"fid,gid", "primary","",false},
+			tblKey{"fid,gid", "primary", "", false},
 		},
 	)
 
@@ -265,8 +265,8 @@ func createTables(adapter qgen.Adapter) (err error) {
 			tC{"data", "varchar", 200, false, false, "''"},
 		},
 		[]tblKey{
-			tblKey{"tid", "primary","",false},
-			tblKey{"content", "fulltext","",false},
+			tblKey{"tid", "primary", "", false},
+			tblKey{"content", "fulltext", "", false},
 		},
 	)
 
@@ -289,8 +289,8 @@ func createTables(adapter qgen.Adapter) (err error) {
 			tC{"poll", "int", 0, false, false, "0"},
 		},
 		[]tblKey{
-			tblKey{"rid", "primary","",false},
-			tblKey{"content", "fulltext","",false},
+			tblKey{"rid", "primary", "", false},
+			tblKey{"content", "fulltext", "", false},
 		},
 	)
 
@@ -306,7 +306,7 @@ func createTables(adapter qgen.Adapter) (err error) {
 			tC{"extra", "varchar", 200, false, false, ""},
 		},
 		[]tblKey{
-			tblKey{"attachID", "primary","",false},
+			tblKey{"attachID", "primary", "", false},
 		},
 	)
 
@@ -320,7 +320,7 @@ func createTables(adapter qgen.Adapter) (err error) {
 			// TODO: Add a createdBy column?
 		},
 		[]tblKey{
-			tblKey{"reviseID", "primary","",false},
+			tblKey{"reviseID", "primary", "", false},
 		},
 	)
 
@@ -334,7 +334,7 @@ func createTables(adapter qgen.Adapter) (err error) {
 			tC{"votes", "int", 0, false, false, "0"},
 		},
 		[]tblKey{
-			tblKey{"pollID", "primary","",false},
+			tblKey{"pollID", "primary", "", false},
 		},
 	)
 
@@ -369,7 +369,7 @@ func createTables(adapter qgen.Adapter) (err error) {
 			tC{"ipaddress", "varchar", 200, false, false, "0.0.0.0.0"},
 		},
 		[]tblKey{
-			tblKey{"rid", "primary","",false},
+			tblKey{"rid", "primary", "", false},
 		},
 	)
 
@@ -394,7 +394,7 @@ func createTables(adapter qgen.Adapter) (err error) {
 			tC{"lastReplyBy", "int", 0, false, false, ""},
 		},
 		[]tblKey{
-			tblKey{"cid", "primary","",false},
+			tblKey{"cid", "primary", "", false},
 		},
 	)
 
@@ -407,7 +407,7 @@ func createTables(adapter qgen.Adapter) (err error) {
 			tC{"post", "varchar", 50, false, false, "''"},
 		},
 		[]tblKey{
-			tblKey{"pid", "primary","",false},
+			tblKey{"pid", "primary", "", false},
 		},
 	)
 
@@ -418,13 +418,22 @@ func createTables(adapter qgen.Adapter) (err error) {
 		}, nil,
 	)
 
+	/*
+		createTable("users_blocks", "", "",
+			[]tC{
+				tC{"blocker", "int", 0, false, false, ""},
+				tC{"uid", "int", 0, false, false, ""},
+			}, nil,
+		)
+	*/
+
 	createTable("activity_stream_matches", "", "",
 		[]tC{
 			tC{"watcher", "int", 0, false, false, ""}, // TODO: Make this a foreign key
 			tC{"asid", "int", 0, false, false, ""},    // TODO: Make this a foreign key
-		}, 
+		},
 		[]tblKey{
-			tblKey{"asid,asid","foreign","activity_stream",true},
+			tblKey{"asid,asid", "foreign", "activity_stream", true},
 		},
 	)
 
@@ -439,7 +448,7 @@ func createTables(adapter qgen.Adapter) (err error) {
 			tC{"createdAt", "createdAt", 0, false, false, ""},
 		},
 		[]tblKey{
-			tblKey{"asid", "primary","",false},
+			tblKey{"asid", "primary", "", false},
 		},
 	)
 
@@ -461,7 +470,7 @@ func createTables(adapter qgen.Adapter) (err error) {
 			tC{"constraints", "varchar", 200, false, false, "''"},
 		},
 		[]tblKey{
-			tblKey{"name", "unique","",false},
+			tblKey{"name", "unique", "", false},
 		},
 	)
 
@@ -472,7 +481,7 @@ func createTables(adapter qgen.Adapter) (err error) {
 			tC{"replacement", "varchar", 200, false, false, ""},
 		},
 		[]tblKey{
-			tblKey{"wfid", "primary","",false},
+			tblKey{"wfid", "primary", "", false},
 		},
 	)
 
@@ -483,7 +492,7 @@ func createTables(adapter qgen.Adapter) (err error) {
 			tC{"installed", "boolean", 0, false, false, "0"},
 		},
 		[]tblKey{
-			tblKey{"uname", "unique","",false},
+			tblKey{"uname", "unique", "", false},
 		},
 	)
 
@@ -494,7 +503,7 @@ func createTables(adapter qgen.Adapter) (err error) {
 			//tC{"profileUserVars", "text", 0, false, false, "''"},
 		},
 		[]tblKey{
-			tblKey{"uname", "unique","",false},
+			tblKey{"uname", "unique", "", false},
 		},
 	)
 
@@ -509,7 +518,7 @@ func createTables(adapter qgen.Adapter) (err error) {
 			tC{"data", "text", 0, false, false, "''"},
 		},
 		[]tblKey{
-			tblKey{"wid", "primary","",false},
+			tblKey{"wid", "primary", "", false},
 		},
 	)
 
@@ -518,7 +527,7 @@ func createTables(adapter qgen.Adapter) (err error) {
 			tC{"mid", "int", 0, false, true, ""},
 		},
 		[]tblKey{
-			tblKey{"mid", "primary","",false},
+			tblKey{"mid", "primary", "", false},
 		},
 	)
 
@@ -542,7 +551,7 @@ func createTables(adapter qgen.Adapter) (err error) {
 			tC{"adminOnly", "boolean", 0, false, false, "0"},
 		},
 		[]tblKey{
-			tblKey{"miid", "primary","",false},
+			tblKey{"miid", "primary", "", false},
 		},
 	)
 
@@ -558,7 +567,7 @@ func createTables(adapter qgen.Adapter) (err error) {
 			tC{"menuID", "int", 0, false, false, "-1"}, // simple sidebar menu
 		},
 		[]tblKey{
-			tblKey{"pid", "primary","",false},
+			tblKey{"pid", "primary", "", false},
 		},
 	)
 
@@ -573,7 +582,7 @@ func createTables(adapter qgen.Adapter) (err error) {
 			tC{"doneAt", "createdAt", 0, false, false, ""},
 		},
 		[]tblKey{
-			tblKey{"rlid", "primary","",false},
+			tblKey{"rlid", "primary", "", false},
 		},
 	)
 
@@ -586,7 +595,7 @@ func createTables(adapter qgen.Adapter) (err error) {
 			tC{"doneAt", "createdAt", 0, false, false, ""},
 		},
 		[]tblKey{
-			tblKey{"lid", "primary","",false},
+			tblKey{"lid", "primary", "", false},
 		},
 	)
 

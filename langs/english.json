@@ -537,6 +537,7 @@
 
 		"convos_head":"Conversations",
 		"convos_create":"Create Convo",
+		"convos_none":"You don't have any conversations yet.",
 		"convo_head":"Conversation",
 		"convo_users":"Participants",
 		"create_convo_head":"Create Conversation",

@@ -31,6 +31,8 @@
 		</span>
 		<span title="{{abstime .LastReplyAt}}" class="to_right">{{reltime .LastReplyAt}}</span>
 		<div style="clear:both;"></div>
-	</div>{{end}}
+	</div>{{else}}
+	<div class="rowitem">{{lang "convos_none"}}</div>
+	{{end}}
 </div>
 {{template "paginator.html" . }}

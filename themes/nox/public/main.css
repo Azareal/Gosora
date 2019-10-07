@@ -1415,6 +1415,9 @@ input[type=checkbox]:checked + label .sel {
 		font-size: 17px;
 		line-height: 28px;
 	}
+	.elapsed {
+		display: none;
+	}
 }
 
 @media(min-width: 751px) {
