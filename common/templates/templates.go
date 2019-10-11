@@ -1110,14 +1110,21 @@ ArgLoop:
 			if len(leftOperand) == 0 {
 				panic("The left operand for the language string cannot be left blank")
 			}
-			if leftOperand[0] != '"' {
-				panic("Phrase names cannot be dynamic")
+			if leftOperand[0] == '"' {
+				// ! Slightly crude but it does the job
+				leftParam := strings.Replace(leftOperand, "\"", "", -1)
+				c.langIndexToName = append(c.langIndexToName, leftParam)
+				notident = true
+				con.PushPhrase(len(c.langIndexToName) - 1)
+			} else {
+				leftParam := leftOperand
+				if leftOperand[0] != '"' {
+					leftParam, _ = c.compileIfVarSub(con, leftParam)
+				}
+				// TODO: Add an optimisation if it's a string literal passsed in from a parent template rather than a true dynamic
+				litString("phrases.GetTmplPhrasef("+leftParam+")", false)
+				c.importMap[langPkg] = langPkg
 			}
-			// ! Slightly crude but it does the job
-			leftParam := strings.Replace(leftOperand, "\"", "", -1)
-			c.langIndexToName = append(c.langIndexToName, leftParam)
-			notident = true
-			con.PushPhrase(len(c.langIndexToName) - 1)
 			break ArgLoop
 		case "langf":
 			// TODO: Implement string literals properly
