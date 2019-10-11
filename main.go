@@ -25,6 +25,7 @@ import (
 	"time"
 
 	c "github.com/Azareal/Gosora/common"
+	_ "github.com/Azareal/Gosora/extend"
 	co "github.com/Azareal/Gosora/common/counters"
 	p "github.com/Azareal/Gosora/common/phrases"
 	"github.com/Azareal/Gosora/query_gen"

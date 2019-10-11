@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	c "github.com/Azareal/Gosora/common"
+	e "github.com/Azareal/Gosora/extend"
 )
 
 // go test -v
@@ -26,8 +27,7 @@ func (l *MEPairList) Add(msg string, expects string) {
 
 func TestBBCodeRender(t *testing.T) {
 	//t.Skip()
-	err := initBbcode(c.Plugins["bbcode"])
-	if err != nil {
+	if err := e.InitBbcode(c.Plugins["bbcode"]); err != nil {
 		t.Fatal(err)
 	}
 
@@ -75,7 +75,7 @@ func TestBBCodeRender(t *testing.T) {
 
 	t.Log("Testing bbcodeFullParse")
 	for _, item := range l.Items {
-		res = bbcodeFullParse(item.Msg)
+		res = e.BbcodeFullParse(item.Msg)
 		if res != item.Expects {
 			t.Error("Testing string '" + item.Msg + "'")
 			t.Error("Bad output:", "'"+res+"'")
@@ -85,7 +85,7 @@ func TestBBCodeRender(t *testing.T) {
 
 	f := func(msg, expects string) {
 		t.Log("Testing string '" + msg + "'")
-		res := bbcodeFullParse(msg)
+		res := e.BbcodeFullParse(msg)
 		if res != expects {
 			t.Error("Bad output:", "'"+res+"'")
 			t.Error("Expected:", "'"+expects+"'")
@@ -101,7 +101,7 @@ func TestBBCodeRender(t *testing.T) {
 
 	msg := "[rand]1[/rand]"
 	t.Log("Testing string '" + msg + "'")
-	res = bbcodeFullParse(msg)
+	res = e.BbcodeFullParse(msg)
 	conv, err := strconv.Atoi(res)
 	if err != nil || (conv > 1 || conv < 0) {
 		t.Error("Bad output:", "'"+res+"'")
@@ -110,7 +110,7 @@ func TestBBCodeRender(t *testing.T) {
 
 	msg = "[rand]0[/rand]"
 	t.Log("Testing string '" + msg + "'")
-	res = bbcodeFullParse(msg)
+	res = e.BbcodeFullParse(msg)
 	conv, err = strconv.Atoi(res)
 	if err != nil || conv != 0 {
 		t.Error("Bad output:", "'"+res+"'")
@@ -119,7 +119,7 @@ func TestBBCodeRender(t *testing.T) {
 
 	msg = "[rand]2147483647[/rand]" // Signed 32-bit MAX
 	t.Log("Testing string '" + msg + "'")
-	res = bbcodeFullParse(msg)
+	res = e.BbcodeFullParse(msg)
 	conv, err = strconv.Atoi(res)
 	if err != nil || (conv > 2147483647 || conv < 0) {
 		t.Error("Bad output:", "'"+res+"'")
@@ -128,7 +128,7 @@ func TestBBCodeRender(t *testing.T) {
 
 	msg = "[rand]9223372036854775807[/rand]" // Signed 64-bit MAX
 	t.Log("Testing string '" + msg + "'")
-	res = bbcodeFullParse(msg)
+	res = e.BbcodeFullParse(msg)
 	conv, err = strconv.Atoi(res)
 	if err != nil || (conv > 9223372036854775807 || conv < 0) {
 		t.Error("Bad output:", "'"+res+"'")
@@ -138,7 +138,7 @@ func TestBBCodeRender(t *testing.T) {
 	// Note: conv is commented out in these two, as these numbers overflow int
 	msg = "[rand]18446744073709551615[/rand]" // Unsigned 64-bit MAX
 	t.Log("Testing string '" + msg + "'")
-	res = bbcodeFullParse(msg)
+	res = e.BbcodeFullParse(msg)
 	_, err = strconv.Atoi(res)
 	if err != nil && res != "<red>[Invalid Number]</red>[rand]18446744073709551615[/rand]" {
 		t.Error("Bad output:", "'"+res+"'")
@@ -146,7 +146,7 @@ func TestBBCodeRender(t *testing.T) {
 	}
 	msg = "[rand]170141183460469231731687303715884105727[/rand]" // Signed 128-bit MAX
 	t.Log("Testing string '" + msg + "'")
-	res = bbcodeFullParse(msg)
+	res = e.BbcodeFullParse(msg)
 	_, err = strconv.Atoi(res)
 	if err != nil && res != "<red>[Invalid Number]</red>[rand]170141183460469231731687303715884105727[/rand]" {
 		t.Error("Bad output:", "'"+res+"'")
@@ -166,8 +166,7 @@ func TestBBCodeRender(t *testing.T) {
 
 func TestMarkdownRender(t *testing.T) {
 	//t.Skip()
-	err := initMarkdown(c.Plugins["markdown"])
-	if err != nil {
+	if err := e.InitMarkdown(c.Plugins["markdown"]); err != nil {
 		t.Fatal(err)
 	}
 
@@ -251,7 +250,7 @@ func TestMarkdownRender(t *testing.T) {
 	l.Add("*-你好-*", "<i>-你好-</i>") // TODO: More of these Unicode tests? Emoji, Chinese, etc.?
 
 	for _, item := range l.Items {
-		if res := markdownParse(item.Msg); res != item.Expects {
+		if res := e.MarkdownParse(item.Msg); res != item.Expects {
 			t.Error("Testing string '" + item.Msg + "'")
 			t.Error("Bad output:", "'"+res+"'")
 			//t.Error("Ouput in bytes:", []byte(res))
@@ -260,7 +259,7 @@ func TestMarkdownRender(t *testing.T) {
 	}
 
 	for _, item := range l2.Items {
-		if res := markdownParse(item.Msg); res != item.Expects {
+		if res := e.MarkdownParse(item.Msg); res != item.Expects {
 			t.Error("Testing string '" + item.Msg + "'")
 			t.Error("Bad output:", "'"+res+"'")
 			//t.Error("Ouput in bytes:", []byte(res))
@@ -268,26 +267,8 @@ func TestMarkdownRender(t *testing.T) {
 		}
 	}
 
-	/*for _, item := range l.Items {
-		if res := markdownParse("\n" + item.Msg); res != "\n"+item.Expects {
-			t.Error("Testing string '\n" + item.Msg + "'")
-			t.Error("Bad output:", "'"+res+"'")
-			//t.Error("Ouput in bytes:", []byte(res))
-			t.Error("Expected:", "'\n"+item.Expects+"'")
-		}
-	}
-
 	for _, item := range l.Items {
-		if res := markdownParse("\t" + item.Msg); res != "\t"+item.Expects {
-			t.Error("Testing string '\t" + item.Msg + "'")
-			t.Error("Bad output:", "'"+res+"'")
-			//t.Error("Ouput in bytes:", []byte(res))
-			t.Error("Expected:", "'\t"+item.Expects+"'")
-		}
-	}*/
-
-	for _, item := range l.Items {
-		if res := markdownParse("d" + item.Msg); res != "d"+item.Expects {
+		if res := e.MarkdownParse("d" + item.Msg); res != "d"+item.Expects {
 			t.Error("Testing string 'd" + item.Msg + "'")
 			t.Error("Bad output:", "'"+res+"'")
 			//t.Error("Ouput in bytes:", []byte(res))

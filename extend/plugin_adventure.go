@@ -1,10 +1,10 @@
 // WIP - Experimental adventure plugin, this might find a new home soon, but it's here to stress test Gosora's extensibility for now
-package main
+package extend
 
-import "github.com/Azareal/Gosora/common"
+import c "github.com/Azareal/Gosora/common"
 
 func init() {
-	common.Plugins.Add(&common.Plugin{
+	c.Plugins.Add(&c.Plugin{
 		UName:      "adventure",
 		Name:       "Adventure",
 		Tag:        "WIP",
@@ -16,14 +16,14 @@ func init() {
 	})
 }
 
-func initAdventure(plugin *common.Plugin) error {
+func initAdventure(plugin *c.Plugin) error {
 	return nil
 }
 
 // TODO: Change the signature to return an error?
-func deactivateAdventure(plugin *common.Plugin) {
+func deactivateAdventure(plugin *c.Plugin) {
 }
 
-func installAdventure(plugin *common.Plugin) error {
+func installAdventure(plugin *c.Plugin) error {
 	return nil
 }

@@ -31,7 +31,7 @@ func Groups(w http.ResponseWriter, r *http.Request, u c.User) c.RouteError {
 		}
 		var rank string
 		var rankClass string
-		var canDelete = false
+		canDelete := false
 
 		// TODO: Localise this
 		switch {
@@ -202,7 +202,7 @@ func GroupsPromotionsCreateSubmit(w http.ResponseWriter, r *http.Request, user c
 		return c.LocalError("to must be integer", w, r, user)
 	}
 	if from == to {
-		return c.LocalError("the from group and to group cannot be the same",w,r,user)
+		return c.LocalError("the from group and to group cannot be the same", w, r, user)
 	}
 	twoWay := r.FormValue("two-way") == "1"
 

@@ -1,4 +1,4 @@
-package main
+package extend
 
 import c "github.com/Azareal/Gosora/common"
 

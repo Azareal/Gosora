@@ -2,5 +2,5 @@
 	<div class="rowitem"><h1>{{.Name}}</h1></div>
 </div>
 <nav class="rowblock">{{range .MenuList}}
-	<div class="rowitem  {{if .Compact}}datarow{{end}}"><a href="{{.Location}}">{{.Text}}</a></div>
+	<div class="rowitem{{if .Compact}} datarow{{end}}"><a href="{{.Location}}">{{.Text}}</a></div>
 {{end}}</nav>

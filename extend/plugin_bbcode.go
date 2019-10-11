@@ -1,4 +1,4 @@
-package main
+package extend
 
 import (
 	"bytes"
@@ -26,11 +26,11 @@ var bbcodeQuotes *regexp.Regexp
 var bbcodeCode *regexp.Regexp
 
 func init() {
-	c.Plugins.Add(&c.Plugin{UName: "bbcode", Name: "BBCode", Author: "Azareal", URL: "https://github.com/Azareal", Init: initBbcode, Deactivate: deactivateBbcode})
+	c.Plugins.Add(&c.Plugin{UName: "bbcode", Name: "BBCode", Author: "Azareal", URL: "https://github.com/Azareal", Init: InitBbcode, Deactivate: deactivateBbcode})
 }
 
-func initBbcode(plugin *c.Plugin) error {
-	plugin.AddHook("parse_assign", bbcodeFullParse)
+func InitBbcode(plugin *c.Plugin) error {
+	plugin.AddHook("parse_assign", BbcodeFullParse)
 
 	bbcodeInvalidNumber = []byte("<red>[Invalid Number]</red>")
 	bbcodeNoNegative = []byte("<red>[No Negative Numbers]</red>")
@@ -52,10 +52,10 @@ func initBbcode(plugin *c.Plugin) error {
 }
 
 func deactivateBbcode(plugin *c.Plugin) {
-	plugin.RemoveHook("parse_assign", bbcodeFullParse)
+	plugin.RemoveHook("parse_assign", BbcodeFullParse)
 }
 
-func bbcodeRegexParse(msg string) string {
+func BbcodeRegexParse(msg string) string {
 	msg = bbcodeBold.ReplaceAllString(msg, "<b>$1</b>")
 	msg = bbcodeItalic.ReplaceAllString(msg, "<i>$1</i>")
 	msg = bbcodeUnderline.ReplaceAllString(msg, "<u>$1</u>")
@@ -118,11 +118,10 @@ func bbcodeSimpleParse(msg string) string {
 }
 
 // Here for benchmarking purposes. Might add a plugin setting for disabling [code] as it has it's paws everywhere
-func bbcodeParseWithoutCode(msg string) string {
+func BbcodeParseWithoutCode(msg string) string {
 	var hasU, hasB, hasI, hasS bool
 	var complexBbc bool
 	msgbytes := []byte(msg)
-
 	for i := 0; (i + 3) < len(msgbytes); i++ {
 		if msgbytes[i] == '[' {
 			if msgbytes[i+2] != ']' {
@@ -207,7 +206,7 @@ func bbcodeParseWithoutCode(msg string) string {
 }
 
 // Does every type of BBCode
-func bbcodeFullParse(msg string) string {
+func BbcodeFullParse(msg string) string {
 	var hasU, hasB, hasI, hasS, hasC bool
 	var complexBbc bool
 

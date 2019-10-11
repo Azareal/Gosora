@@ -1,4 +1,4 @@
-package main
+package extend
 
 import (
 	"strings"
@@ -23,11 +23,11 @@ var markdownH1TagOpen []byte
 var markdownH1TagClose []byte
 
 func init() {
-	c.Plugins.Add(&c.Plugin{UName: "markdown", Name: "Markdown", Author: "Azareal", URL: "https://github.com/Azareal", Init: initMarkdown, Deactivate: deactivateMarkdown})
+	c.Plugins.Add(&c.Plugin{UName: "markdown", Name: "Markdown", Author: "Azareal", URL: "https://github.com/Azareal", Init: InitMarkdown, Deactivate: deactivateMarkdown})
 }
 
-func initMarkdown(plugin *c.Plugin) error {
-	plugin.AddHook("parse_assign", markdownParse)
+func InitMarkdown(plugin *c.Plugin) error {
+	plugin.AddHook("parse_assign", MarkdownParse)
 
 	markdownUnclosedElement = []byte("<red>[Unclosed Element]</red>")
 
@@ -47,12 +47,12 @@ func initMarkdown(plugin *c.Plugin) error {
 }
 
 func deactivateMarkdown(plugin *c.Plugin) {
-	plugin.RemoveHook("parse_assign", markdownParse)
+	plugin.RemoveHook("parse_assign", MarkdownParse)
 }
 
 // An adapter for the parser, so that the parser can call itself recursively.
 // This is less for the simple Markdown elements like bold and italics and more for the really complicated ones I plan on adding at some point.
-func markdownParse(msg string) string {
+func MarkdownParse(msg string) string {
 	msg = _markdownParse(msg+" ", 0)
 	if msg[len(msg)-1] == ' ' {
 		msg = msg[:len(msg)-1]
@@ -68,12 +68,12 @@ func _markdownParse(msg string, n int) string {
 
 	var outbytes []byte
 	var lastElement int
-	var breaking = false
+	breaking := false
 	c.DebugLogf("Initial Message: %+v\n", strings.Replace(msg, "\r", "\\r", -1))
 
 	for index := 0; index < len(msg); index++ {
-		var simpleMatch = func(char byte, o []byte, c []byte) {
-			var startIndex = index
+		simpleMatch := func(char byte, o []byte, c []byte) {
+			startIndex := index
 			if (index + 1) >= len(msg) {
 				breaking = true
 				return
@@ -100,8 +100,8 @@ func _markdownParse(msg string, n int) string {
 			index--
 		}
 
-		var startLine = func() {
-			var startIndex = index
+		startLine := func() {
+			startIndex := index
 			if (index + 1) >= len(msg) /*|| (index + 2) >= len(msg)*/ {
 				breaking = true
 				return
@@ -152,9 +152,9 @@ func _markdownParse(msg string, n int) string {
 				break
 			}
 		case '*':
-			var startIndex = index
-			var italic = true
-			var bold = false
+			startIndex := index
+			italic := true
+			bold := false
 			if (index + 2) < len(msg) {
 				if msg[index+1] == '*' {
 					bold = true
@@ -178,7 +178,7 @@ func _markdownParse(msg string, n int) string {
 				break
 			}
 
-			var preBreak = func() {
+			preBreak := func() {
 				outbytes = append(outbytes, msg[lastElement:startIndex]...)
 				lastElement = startIndex
 			}
@@ -317,7 +317,7 @@ func markdownSkipUntilNotChar(data string, index int, char byte) int {
 }
 
 func markdownSkipUntilStrongSpace(data string, index int) int {
-	var inSpace = false
+	inSpace := false
 	for ; index < len(data); index++ {
 		if inSpace && data[index] == 32 {
 			index--
@@ -351,8 +351,7 @@ SwitchLoop:
 // plugin_markdown doesn't support lists yet, but I want it to be easy to have nested lists when we do have them
 func markdownSkipList(data string, index int) int {
 	var lastNewline int
-	var datalen = len(data)
-
+	datalen := len(data)
 	for ; index < datalen; index++ {
 	SkipListInnerLoop:
 		if data[index] == 10 {

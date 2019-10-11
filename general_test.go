@@ -15,6 +15,7 @@ import (
 	"github.com/pkg/errors"
 
 	c "github.com/Azareal/Gosora/common"
+	e "github.com/Azareal/Gosora/extend"
 	"github.com/Azareal/Gosora/install"
 	"github.com/Azareal/Gosora/query_gen"
 	"github.com/Azareal/Gosora/routes"
@@ -969,7 +970,7 @@ func BenchmarkBBCodePluginWithRegexpSerial(b *testing.B) {
 	f := func(name string, msg string) {
 		b.Run(name, func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
-				_ = bbcodeRegexParse(msg)
+				_ = e.BbcodeRegexParse(msg)
 			}
 		})
 	}
@@ -989,7 +990,7 @@ func BenchmarkBBCodePluginWithoutCodeTagSerial(b *testing.B) {
 	f := func(name string, msg string) {
 		b.Run(name, func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
-				_ = bbcodeParseWithoutCode(msg)
+				_ = e.BbcodeParseWithoutCode(msg)
 			}
 		})
 	}
@@ -1009,7 +1010,7 @@ func BenchmarkBBCodePluginWithFullParserSerial(b *testing.B) {
 	f := func(name string, msg string) {
 		b.Run(name, func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
-				_ = bbcodeFullParse(msg)
+				_ = e.BbcodeFullParse(msg)
 			}
 		})
 	}
