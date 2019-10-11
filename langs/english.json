@@ -1095,6 +1095,9 @@
 		"panel_debug_memory_stats_heapidle":"HeapIdle",
 		"panel_debug_memory_stats_heapobjects":"HeapObjects",
 		"panel_debug_memory_stats_stackinuse":"StackInuse",
+		"panel_debug_memory_stats_mspaninuse":"MSpanInuse",
+		"panel_debug_memory_stats_mcacheinuse":"MCacheInuse",
+		"panel_debug_memory_stats_mspansys":"MSpanSys",
 
 		"panel_debug_caches":"Caches",
 		"panel_debug_caches_topic":"Topic Cache",
@@ -1106,6 +1109,28 @@
 		"panel_debug_database_topics":"Topics",
 		"panel_debug_database_users":"Users",
 		"panel_debug_database_replies":"Replies",
-		"panel_debug_disk":"Disk"
+		"panel_debug_database_profile_replies":"Profile Replies",
+		"panel_debug_database_activity_stream":"Activity Stream",
+		"panel_debug_database_likes":"Likes",
+		"panel_debug_database_attachments":"Attachments",
+		"panel_debug_database_polls":"Polls",
+		"panel_debug_database_login_logs":"Login Logs",
+		"panel_debug_database_reg_logs":"Reg Logs",
+		"panel_debug_database_mod_logs":"Mod Logs",
+		"panel_debug_database_admin_logs":"Admin Logs",
+		"panel_debug_database_views":"Views",
+		"panel_debug_database_views_agents":"Views Agents",
+		"panel_debug_database_views_forums":"Views Forums",
+		"panel_debug_database_views_langs":"Views Langs",
+		"panel_debug_database_views_referrers":"Views Referrers",
+		"panel_debug_database_views_systems":"Views Systems",
+
+		"panel_debug_disk":"Disk",
+		"panel_debug_disk_static_files":"Static Files",
+		"panel_debug_disk_attachments":"Attachments",
+		"panel_debug_disk_avatars":"Avatars",
+		"panel_debug_disk_log_files":"Log Files",
+		"panel_debug_disk_backups":"Backups",
+		"panel_debug_disk_git":"Git"
 	}
 }

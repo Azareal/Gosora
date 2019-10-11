@@ -32,25 +32,20 @@
 	{{template "panel_debug_stat_head.html" "panel_debug_memory_stats_sys"}}
 	{{template "panel_debug_stat_head.html" "panel_debug_memory_stats_heapsys"}}
 	{{template "panel_debug_stat_head.html" "panel_debug_memory_stats_heapalloc"}}
-	
 	<div class="grid_item grid_stat"><span>{{.MemStats.Sys}} ({{bunit .MemStats.Sys}})</span></div>
 	<div class="grid_item grid_stat"><span>{{.MemStats.HeapSys}} ({{bunit .MemStats.HeapSys}})</span></div>
 	<div class="grid_item grid_stat"><span>{{.MemStats.HeapAlloc}} ({{bunit .MemStats.HeapAlloc}})</span></div>
-	
 
 	{{template "panel_debug_stat_head.html" "panel_debug_memory_stats_heapidle"}}
 	{{template "panel_debug_stat_head.html" "panel_debug_memory_stats_heapobjects"}}
 	{{template "panel_debug_stat_head.html" "panel_debug_memory_stats_stackinuse"}}
-	
 	<div class="grid_item grid_stat"><span>{{.MemStats.HeapIdle}} ({{bunit .MemStats.HeapIdle}})</span></div>
 	<div class="grid_item grid_stat"><span>{{.MemStats.HeapObjects}}</span></div>
 	<div class="grid_item grid_stat"><span>{{.MemStats.StackInuse}} ({{bunit .MemStats.StackInuse}})</span></div>
 
-
-	<div class="grid_item grid_stat grid_stat_head"><span>MSpanInuse</span></div>	
-	<div class="grid_item grid_stat grid_stat_head"><span>MCacheInuse</span></div>
-	<div class="grid_item grid_stat grid_stat_head"><span>MSpanSys</span></div>
-	
+	{{template "panel_debug_stat_head.html" "panel_debug_memory_stats_mspaninuse"}}
+	{{template "panel_debug_stat_head.html" "panel_debug_memory_stats_mcacheinuse"}}
+	{{template "panel_debug_stat_head.html" "panel_debug_memory_stats_mspansys"}}
 	<div class="grid_item grid_stat"><span>{{.MemStats.MSpanInuse}} ({{bunit .MemStats.MSpanInuse}})</span></div>
 	<div class="grid_item grid_stat"><span>{{.MemStats.MCacheInuse}} ({{bunit .MemStats.MCacheInuse}})</span></div>
 	<div class="grid_item grid_stat"><span>{{.MemStats.MSpanSys}} ({{bunit .MemStats.MSpanSys}})</span></div>
@@ -71,16 +66,13 @@
 	{{template "panel_debug_stat_head.html" "panel_debug_caches_topic"}}
 	{{template "panel_debug_stat_head.html" "panel_debug_caches_user"}}
 	{{template "panel_debug_stat_head.html" "panel_debug_caches_reply"}}
-
 	<div class="grid_item grid_stat"><span>{{.Cache.Topics}} / {{.Cache.TCap}}</span></div>
 	<div class="grid_item grid_stat"><span>{{.Cache.Users}} / {{.Cache.UCap}}</span></div>
 	<div class="grid_item grid_stat"><span>{{.Cache.Replies}} / {{.Cache.RCap}}</span></div>
 
-
 	{{template "panel_debug_stat_head.html" "panel_debug_caches_topic_list"}}
 	{{template "panel_debug_stat_head_q.html"}}
 	{{template "panel_debug_stat_head_q.html"}}
-
 	<div class="grid_item grid_stat"><span>{{if .Cache.TopicListThaw}}Thawed{{else}}Sleeping{{end}}</span></div>
 	{{template "panel_debug_stat_q.html"}}
 	{{template "panel_debug_stat_q.html"}}
@@ -92,92 +84,74 @@
 	{{template "panel_debug_stat_head.html" "panel_debug_database_topics"}}
 	{{template "panel_debug_stat_head.html" "panel_debug_database_users"}}
 	{{template "panel_debug_stat_head.html" "panel_debug_database_replies"}}
+	{{template "panel_debug_stat.html" .Database.Topics}}
+	{{template "panel_debug_stat.html" .Database.Users}}
+	{{template "panel_debug_stat.html" .Database.Replies}}
 
-	<div class="grid_item grid_stat"><span>{{.Database.Topics}}</span></div>
-	<div class="grid_item grid_stat"><span>{{.Database.Users}}</span></div>
-	<div class="grid_item grid_stat"><span>{{.Database.Replies}}</span></div>
+	{{template "panel_debug_stat_head.html" "panel_debug_database_profile_replies"}}
+	{{template "panel_debug_stat_head.html" "panel_debug_database_activity_stream"}}
+	{{template "panel_debug_stat_head.html" "panel_debug_database_likes"}}
+	{{template "panel_debug_stat.html" .Database.ProfileReplies}}
+	{{template "panel_debug_stat.html" .Database.ActivityStream}}
+	{{template "panel_debug_stat.html" .Database.Likes}}
 
-
-	<div class="grid_item grid_stat grid_stat_head"><span>Profile Replies</span></div>
-	<div class="grid_item grid_stat grid_stat_head"><span>Activity Stream</span></div>
-	<div class="grid_item grid_stat grid_stat_head"><span>Likes</span></div>
-
-	<div class="grid_item grid_stat"><span>{{.Database.ProfileReplies}}</span></div>
-	<div class="grid_item grid_stat"><span>{{.Database.ActivityStream}}</span></div>
-	<div class="grid_item grid_stat"><span>{{.Database.Likes}}</span></div>
-
-
-	<div class="grid_item grid_stat grid_stat_head"><span>Attachments</span></div>
-	<div class="grid_item grid_stat grid_stat_head"><span>Polls</span></div>
+	{{template "panel_debug_stat_head.html" "panel_debug_database_attachments"}}
+	{{template "panel_debug_stat_head.html" "panel_debug_database_polls"}}
 	{{template "panel_debug_stat_head_q.html"}}
-
-	<div class="grid_item grid_stat"><span>{{.Database.Attachments}}</span></div>
-	<div class="grid_item grid_stat"><span>{{.Database.Polls}}</span></div>
+	{{template "panel_debug_stat.html" .Database.Attachments}}
+	{{template "panel_debug_stat.html" .Database.Polls}}
 	{{template "panel_debug_stat_q.html"}}
 
+	{{template "panel_debug_stat_head.html" "panel_debug_database_login_logs"}}
+	{{template "panel_debug_stat_head.html" "panel_debug_database_reg_logs"}}
+	{{template "panel_debug_stat_head.html" "panel_debug_database_mod_logs"}}
+	{{template "panel_debug_stat.html" .Database.LoginLogs}}
+	{{template "panel_debug_stat.html" .Database.RegLogs}}
+	{{template "panel_debug_stat.html" .Database.ModLogs}}
 
-	<div class="grid_item grid_stat grid_stat_head"><span>Login Logs</span></div>
-	<div class="grid_item grid_stat grid_stat_head"><span>Reg Logs</span></div>
-	<div class="grid_item grid_stat grid_stat_head"><span>Mod Logs</span></div>
-
-	<div class="grid_item grid_stat"><span>{{.Database.LoginLogs}}</span></div>
-	<div class="grid_item grid_stat"><span>{{.Database.RegLogs}}</span></div>
-	<div class="grid_item grid_stat"><span>{{.Database.ModLogs}}</span></div>
-
-
-	<div class="grid_item grid_stat grid_stat_head"><span>Admin Logs</span></div>
+	{{template "panel_debug_stat_head.html" "panel_debug_database_admin_logs"}}
 	{{template "panel_debug_stat_head_q.html"}}
 	{{template "panel_debug_stat_head_q.html"}}
-
-	<div class="grid_item grid_stat"><span>{{.Database.AdminLogs}}</span></div>
+	{{template "panel_debug_stat.html" .Database.AdminLogs}}
 	{{template "panel_debug_stat_q.html"}}
 	{{template "panel_debug_stat_q.html"}}
 
+	{{template "panel_debug_stat_head.html" "panel_debug_database_views"}}
+	{{template "panel_debug_stat_head.html" "panel_debug_database_views_agents"}}
+	{{template "panel_debug_stat_head.html" "panel_debug_database_views_forums"}}
+	{{template "panel_debug_stat.html" .Database.Views}}
+	{{template "panel_debug_stat.html" .Database.ViewsAgents}}
+	{{template "panel_debug_stat.html" .Database.ViewsForums}}
 
-	<div class="grid_item grid_stat grid_stat_head"><span>Views</span></div>
-	<div class="grid_item grid_stat grid_stat_head"><span>Views Agents</span></div>
-	<div class="grid_item grid_stat grid_stat_head"><span>Views Forums</span></div>
-
-	<div class="grid_item grid_stat"><span>{{.Database.Views}}</span></div>
-	<div class="grid_item grid_stat"><span>{{.Database.ViewsAgents}}</span></div>
-	<div class="grid_item grid_stat"><span>{{.Database.ViewsForums}}</span></div>
-
-
-	<div class="grid_item grid_stat grid_stat_head"><span>Views Langs</span></div>
-	<div class="grid_item grid_stat grid_stat_head"><span>Views Referrers</span></div>
-	<div class="grid_item grid_stat grid_stat_head"><span>Views Systems</span></div>
-
-	<div class="grid_item grid_stat"><span>{{.Database.ViewsLangs}}</span></div>
-	<div class="grid_item grid_stat"><span>{{.Database.ViewsReferrers}}</span></div>
-	<div class="grid_item grid_stat"><span>{{.Database.ViewsSystems}}</span></div>
-
+	{{template "panel_debug_stat_head.html" "panel_debug_database_views_langs"}}
+	{{template "panel_debug_stat_head.html" "panel_debug_database_views_referrers"}}
+	{{template "panel_debug_stat_head.html" "panel_debug_database_views_systems"}}
+	{{template "panel_debug_stat.html" .Database.ViewsLangs}}
+	{{template "panel_debug_stat.html" .Database.ViewsReferrers}}
+	{{template "panel_debug_stat.html" .Database.ViewsSystems}}
 
 	<div class="grid_item grid_stat grid_stat_head"><span>Post Analytics</span></div>
 	<div class="grid_item grid_stat grid_stat_head"><span>Topic Analytics</span></div>
 	{{template "panel_debug_stat_head_q.html"}}
-
-	<div class="grid_item grid_stat"><span>{{.Database.PostChunks}}</span></div>
-	<div class="grid_item grid_stat"><span>{{.Database.TopicChunks}}</span></div>
+	{{template "panel_debug_stat.html" .Database.PostChunks}}
+	{{template "panel_debug_stat.html" .Database.TopicChunks}}
 	{{template "panel_debug_stat_q.html"}}
 </div>
 <div class="colstack_item colstack_head colstack_sub_head">
 	<div class="rowitem"><h2>{{lang "panel_debug_disk"}}</h2></div>
 </div>{{flush}}
 <div id="panel_debug" class="colstack_grid">
-	<div class="grid_item grid_stat grid_stat_head"><span>Static Files</span></div>
-	<div class="grid_item grid_stat grid_stat_head"><span>Attachments</span></div>
-	<div class="grid_item grid_stat grid_stat_head"><span>Avatars</span></div>
-
+	{{template "panel_debug_stat_head.html" "panel_debug_disk_static_files"}}
+	{{template "panel_debug_stat_head.html" "panel_debug_disk_attachments"}}
+	{{template "panel_debug_stat_head.html" "panel_debug_disk_avatars"}}
 	<div class="grid_item grid_stat"><span>{{bunit .Disk.Static}}</span></div>
 	<div class="grid_item grid_stat"><span>{{bunit .Disk.Attachments}}</span></div>
 	<div class="grid_item grid_stat"><span>{{bunit .Disk.Avatars}}</span></div>
 
-
-	<div class="grid_item grid_stat grid_stat_head"><span>Log Files</span></div>
-	<div class="grid_item grid_stat grid_stat_head"><span>Backups</span></div>
-	<div class="grid_item grid_stat grid_stat_head"><span>Git</span></div>
-
+	{{template "panel_debug_stat_head.html" "panel_debug_disk_log_files"}}
+	{{template "panel_debug_stat_head.html" "panel_debug_disk_backups"}}
+	{{template "panel_debug_stat_head.html" "panel_debug_disk_git"}}
 	<div class="grid_item grid_stat"><span>{{bunit .Disk.Logs}}</span></div>
 	<div class="grid_item grid_stat"><span>{{bunit .Disk.Backups}}</span></div>
 	<div class="grid_item grid_stat"><span>{{bunit .Disk.Git}}</span></div>
-</div>
+</div>{{flush}}
