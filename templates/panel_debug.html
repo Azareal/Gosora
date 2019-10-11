@@ -24,10 +24,7 @@
 	{{template "panel_debug_stat.html" .CPUs}}
 	{{template "panel_debug_stat_q.html"}}
 </div>
-
-<div class="colstack_item colstack_head colstack_sub_head">
-	<div class="rowitem"><h2>{{lang "panel_debug_memory_stats"}}</h2></div>
-</div>{{flush}}
+{{template "panel_debug_subhead.html" "panel_debug_memory_stats"}}
 <div id="panel_debug" class="colstack_grid">
 	{{template "panel_debug_stat_head.html" "panel_debug_memory_stats_sys"}}
 	{{template "panel_debug_stat_head.html" "panel_debug_memory_stats_heapsys"}}
@@ -50,18 +47,14 @@
 	<div class="grid_item grid_stat"><span>{{.MemStats.MCacheInuse}} ({{bunit .MemStats.MCacheInuse}})</span></div>
 	<div class="grid_item grid_stat"><span>{{.MemStats.MSpanSys}} ({{bunit .MemStats.MSpanSys}})</span></div>
 
-	
-	<div class="grid_item grid_stat grid_stat_head"><span>MCacheSys</span></div>
-	<div class="grid_item grid_stat grid_stat_head"><span>GCSys</span></div>
-	<div class="grid_item grid_stat grid_stat_head"><span>OtherSys</span></div>
-
+	{{template "panel_debug_stat_head.html" "panel_debug_memory_stats_mcachesys"}}
+	{{template "panel_debug_stat_head.html" "panel_debug_memory_stats_gcsys"}}
+	{{template "panel_debug_stat_head.html" "panel_debug_memory_stats_othersys"}}
 	<div class="grid_item grid_stat"><span>{{.MemStats.MCacheSys}} ({{bunit .MemStats.MCacheSys}})</span></div>
 	<div class="grid_item grid_stat"><span>{{.MemStats.GCSys}} ({{bunit .MemStats.GCSys}})</span></div>
 	<div class="grid_item grid_stat"><span>{{.MemStats.OtherSys}} ({{bunit .MemStats.OtherSys}})</span></div>
 </div>
-<div class="colstack_item colstack_head colstack_sub_head">
-	<div class="rowitem"><h2>{{lang "panel_debug_caches"}}</h2></div>
-</div>
+{{template "panel_debug_subhead.html" "panel_debug_caches"}}
 <div id="panel_debug" class="colstack_grid">
 	{{template "panel_debug_stat_head.html" "panel_debug_caches_topic"}}
 	{{template "panel_debug_stat_head.html" "panel_debug_caches_user"}}
@@ -77,9 +70,7 @@
 	{{template "panel_debug_stat_q.html"}}
 	{{template "panel_debug_stat_q.html"}}
 </div>
-<div class="colstack_item colstack_head colstack_sub_head">
-	<div class="rowitem"><h2>{{lang "panel_debug_database"}}</h2></div>
-</div>{{flush}}
+{{template "panel_debug_subhead.html" "panel_debug_database"}}
 <div id="panel_debug" class="colstack_grid">
 	{{template "panel_debug_stat_head.html" "panel_debug_database_topics"}}
 	{{template "panel_debug_stat_head.html" "panel_debug_database_users"}}
@@ -130,16 +121,14 @@
 	{{template "panel_debug_stat.html" .Database.ViewsReferrers}}
 	{{template "panel_debug_stat.html" .Database.ViewsSystems}}
 
-	<div class="grid_item grid_stat grid_stat_head"><span>Post Analytics</span></div>
-	<div class="grid_item grid_stat grid_stat_head"><span>Topic Analytics</span></div>
+	{{template "panel_debug_stat_head.html" "panel_debug_database_post_analytics"}}
+	{{template "panel_debug_stat_head.html" "panel_debug_database_topic_analytics"}}
 	{{template "panel_debug_stat_head_q.html"}}
 	{{template "panel_debug_stat.html" .Database.PostChunks}}
 	{{template "panel_debug_stat.html" .Database.TopicChunks}}
 	{{template "panel_debug_stat_q.html"}}
 </div>
-<div class="colstack_item colstack_head colstack_sub_head">
-	<div class="rowitem"><h2>{{lang "panel_debug_disk"}}</h2></div>
-</div>{{flush}}
+{{template "panel_debug_subhead.html" "panel_debug_disk"}}
 <div id="panel_debug" class="colstack_grid">
 	{{template "panel_debug_stat_head.html" "panel_debug_disk_static_files"}}
 	{{template "panel_debug_stat_head.html" "panel_debug_disk_attachments"}}

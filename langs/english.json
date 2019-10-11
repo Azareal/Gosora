@@ -1098,6 +1098,9 @@
 		"panel_debug_memory_stats_mspaninuse":"MSpanInuse",
 		"panel_debug_memory_stats_mcacheinuse":"MCacheInuse",
 		"panel_debug_memory_stats_mspansys":"MSpanSys",
+		"panel_debug_memory_stats_mcachesys":"MCacheSys",
+		"panel_debug_memory_stats_gcsys":"GCSys",
+		"panel_debug_memory_stats_othersys":"OtherSys",
 
 		"panel_debug_caches":"Caches",
 		"panel_debug_caches_topic":"Topic Cache",
@@ -1124,6 +1127,8 @@
 		"panel_debug_database_views_langs":"Views Langs",
 		"panel_debug_database_views_referrers":"Views Referrers",
 		"panel_debug_database_views_systems":"Views Systems",
+		"panel_debug_database_post_analytics":"Post Analytics",
+		"panel_debug_database_topic_analytics":"Topic Analytics",
 
 		"panel_debug_disk":"Disk",
 		"panel_debug_disk_static_files":"Static Files",
