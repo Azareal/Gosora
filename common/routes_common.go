@@ -1,16 +1,16 @@
 package common
 
 import (
+	"crypto/subtle"
 	"html"
+	"io"
 	"net"
 	"net/http"
+	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
-	"os"
-	"io"
-	"regexp"
-	"crypto/subtle"
 
 	"github.com/Azareal/Gosora/common/phrases"
 )
@@ -182,8 +182,7 @@ func simpleUserCheck(w http.ResponseWriter, r *http.Request, user *User) (header
 }
 
 func GetThemeByReq(r *http.Request) *Theme {
-	var theme = &Theme{Name: ""}
-
+	theme := &Theme{Name: ""}
 	cookie, err := r.Cookie("current_theme")
 	if err == nil {
 		inTheme, ok := Themes[html.EscapeString(cookie.Value)]
@@ -462,16 +461,14 @@ func NoBanned(w http.ResponseWriter, r *http.Request, user User) RouteError {
 }
 
 func ParseForm(w http.ResponseWriter, r *http.Request, user User) RouteError {
-	err := r.ParseForm()
-	if err != nil {
+	if err := r.ParseForm(); err != nil {
 		return LocalError("Bad Form", w, r, user)
 	}
 	return nil
 }
 
 func NoSessionMismatch(w http.ResponseWriter, r *http.Request, user User) RouteError {
-	err := r.ParseForm()
-	if err != nil {
+	if err := r.ParseForm(); err != nil {
 		return LocalError("Bad Form", w, r, user)
 	}
 	// TODO: Try to eliminate some of these allocations

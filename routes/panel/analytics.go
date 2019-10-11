@@ -10,7 +10,7 @@ import (
 	"time"
 
 	c "github.com/Azareal/Gosora/common"
-	"github.com/Azareal/Gosora/common/phrases"
+	p "github.com/Azareal/Gosora/common/phrases"
 	"github.com/Azareal/Gosora/query_gen"
 )
 
@@ -199,14 +199,14 @@ func analyticsRowsToAverageMap2(rows *sql.Rows, labelList []int64, avgMap map[in
 }
 
 func PreAnalyticsDetail(w http.ResponseWriter, r *http.Request, user *c.User) (*c.BasePanelPage, c.RouteError) {
-	bPage, ferr := buildBasePage(w, r, user, "analytics", "analytics")
+	bp, ferr := buildBasePage(w, r, user, "analytics", "analytics")
 	if ferr != nil {
 		return nil, ferr
 	}
-	bPage.AddSheet("chartist/chartist.min.css")
-	bPage.AddScript("chartist/chartist.min.js")
-	bPage.AddScriptAsync("analytics.js")
-	return bPage, nil
+	bp.AddSheet("chartist/chartist.min.css")
+	bp.AddScript("chartist/chartist.min.js")
+	bp.AddScriptAsync("analytics.js")
+	return bp, nil
 }
 
 func AnalyticsViews(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
@@ -315,7 +315,7 @@ func AnalyticsAgentViews(w http.ResponseWriter, r *http.Request, user c.User, ag
 	graph := c.PanelTimeGraph{Series: [][]int64{viewList}, Labels: labelList}
 	c.DebugLogf("graph: %+v\n", graph)
 
-	friendlyAgent, ok := phrases.GetUserAgentPhrase(agent)
+	friendlyAgent, ok := p.GetUserAgentPhrase(agent)
 	if !ok {
 		friendlyAgent = agent
 	}
@@ -397,7 +397,7 @@ func AnalyticsSystemViews(w http.ResponseWriter, r *http.Request, user c.User, s
 	graph := c.PanelTimeGraph{Series: [][]int64{viewList}, Labels: labelList}
 	c.DebugLogf("graph: %+v\n", graph)
 
-	friendlySystem, ok := phrases.GetOSPhrase(system)
+	friendlySystem, ok := p.GetOSPhrase(system)
 	if !ok {
 		friendlySystem = system
 	}
@@ -437,7 +437,7 @@ func AnalyticsLanguageViews(w http.ResponseWriter, r *http.Request, user c.User,
 	graph := c.PanelTimeGraph{Series: [][]int64{viewList}, Labels: labelList}
 	c.DebugLogf("graph: %+v\n", graph)
 
-	friendlyLang, ok := phrases.GetHumanLangPhrase(lang)
+	friendlyLang, ok := p.GetHumanLangPhrase(lang)
 	if !ok {
 		friendlyLang = lang
 	}
@@ -659,7 +659,7 @@ func analyticsRowsToDuoMap(rows *sql.Rows, labelList []int64, viewMap map[int64]
 		}
 
 		// TODO: Bulk log this
-		var unixCreatedAt = createdAt.Unix()
+		unixCreatedAt := createdAt.Unix()
 		if c.Dev.SuperDebug {
 			log.Print("count: ", count)
 			log.Print("name: ", name)
@@ -830,7 +830,7 @@ func AnalyticsRoutes(w http.ResponseWriter, r *http.Request, user c.User) c.Rout
 	ovList := analyticsVMapToOVList(vMap)
 
 	ex := strings.Split(r.FormValue("ex"), ",")
-	var inEx = func(name string) bool {
+	inEx := func(name string) bool {
 		for _, e := range ex {
 			if e == name {
 				return true
@@ -902,7 +902,7 @@ func AnalyticsAgents(w http.ResponseWriter, r *http.Request, user c.User) c.Rout
 	ovList := analyticsVMapToOVList(vMap)
 
 	ex := strings.Split(r.FormValue("ex"), ",")
-	var inEx = func(name string) bool {
+	inEx := func(name string) bool {
 		for _, e := range ex {
 			if e == name {
 				return true
@@ -918,7 +918,7 @@ func AnalyticsAgents(w http.ResponseWriter, r *http.Request, user c.User) c.Rout
 		if inEx(ovitem.name) {
 			continue
 		}
-		lName, ok := phrases.GetUserAgentPhrase(ovitem.name)
+		lName, ok := p.GetUserAgentPhrase(ovitem.name)
 		if !ok {
 			lName = ovitem.name
 		}
@@ -945,7 +945,7 @@ func AnalyticsAgents(w http.ResponseWriter, r *http.Request, user c.User) c.Rout
 		if inEx(agent) {
 			continue
 		}
-		aAgent, ok := phrases.GetUserAgentPhrase(agent)
+		aAgent, ok := p.GetUserAgentPhrase(agent)
 		if !ok {
 			aAgent = agent
 		}
@@ -996,7 +996,7 @@ func AnalyticsSystems(w http.ResponseWriter, r *http.Request, user c.User) c.Rou
 			viewList = append(viewList, ovitem.viewMap[value])
 		}
 		vList = append(vList, viewList)
-		lName, ok := phrases.GetOSPhrase(ovitem.name)
+		lName, ok := p.GetOSPhrase(ovitem.name)
 		if !ok {
 			lName = ovitem.name
 		}
@@ -1012,7 +1012,7 @@ func AnalyticsSystems(w http.ResponseWriter, r *http.Request, user c.User) c.Rou
 	// TODO: Sort this slice
 	var systemItems []c.PanelAnalyticsAgentsItem
 	for system, count := range osMap {
-		sSystem, ok := phrases.GetOSPhrase(system)
+		sSystem, ok := p.GetOSPhrase(system)
 		if !ok {
 			sSystem = system
 		}
@@ -1068,7 +1068,7 @@ func AnalyticsLanguages(w http.ResponseWriter, r *http.Request, user c.User) c.R
 		if inEx(ovitem.name) {
 			continue
 		}
-		lName, ok := phrases.GetHumanLangPhrase(ovitem.name)
+		lName, ok := p.GetHumanLangPhrase(ovitem.name)
 		if !ok {
 			lName = ovitem.name
 		}
@@ -1096,7 +1096,7 @@ func AnalyticsLanguages(w http.ResponseWriter, r *http.Request, user c.User) c.R
 		if inEx(lang) {
 			continue
 		}
-		lLang, ok := phrases.GetHumanLangPhrase(lang)
+		lLang, ok := p.GetHumanLangPhrase(lang)
 		if !ok {
 			lLang = lang
 		}

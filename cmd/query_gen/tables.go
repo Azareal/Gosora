@@ -10,7 +10,7 @@ type tC = tblColumn
 type tblKey = qgen.DBTableKey
 
 func createTables(adapter qgen.Adapter) (err error) {
-	createTable := func(table string, charset string, collation string, columns []qgen.DBTableColumn, keys []qgen.DBTableKey) {
+	createTable := func(table string, charset string, collation string, columns []tC, keys []tblKey) {
 		if err != nil {
 			return
 		}
@@ -419,10 +419,22 @@ func createTables(adapter qgen.Adapter) (err error) {
 	)
 
 	/*
+		createTable("users_friends", "", "",
+			[]tC{
+				tC{"uid", "int", 0, false, false, ""},
+				tC{"uid2", "int", 0, false, false, ""},
+			}, nil,
+		)
+		createTable("users_friends_invites", "", "",
+			[]tC{
+				tC{"requester", "int", 0, false, false, ""},
+				tC{"target", "int", 0, false, false, ""},
+			}, nil,
+		)
 		createTable("users_blocks", "", "",
 			[]tC{
 				tC{"blocker", "int", 0, false, false, ""},
-				tC{"uid", "int", 0, false, false, ""},
+				tC{"blockedUser", "int", 0, false, false, ""},
 			}, nil,
 		)
 	*/

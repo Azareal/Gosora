@@ -2,50 +2,45 @@
 	<div class="rowitem"><h1>{{lang "panel_debug_head"}}</h1></div>
 </div>{{flush}}
 <div id="panel_debug" class="colstack_grid">
-	<div class="grid_item grid_stat grid_stat_head"><span>{{lang "panel_debug_uptime_label"}}</span></div>
-	<div class="grid_item grid_stat grid_stat_head"><span>{{lang "panel_debug_go_version_label"}}</span></div>
-	<div class="grid_item grid_stat grid_stat_head"><span>{{lang "panel_debug_database_version_label"}}</span></div>
-			
-	<div class="grid_item grid_stat"><span>{{.Uptime}}</span></div>
-	<div class="grid_item grid_stat"><span>{{.GoVersion}}</span></div>
-	<div class="grid_item grid_stat"><span>{{.DBVersion}}</span></div>
+	{{template "panel_debug_stat_head.html" "panel_debug_uptime_label"}}
+	{{template "panel_debug_stat_head.html" "panel_debug_go_version_label"}}
+	{{template "panel_debug_stat_head.html" "panel_debug_database_version_label"}}
+	{{template "panel_debug_stat.html" .Uptime}}
+	{{template "panel_debug_stat.html" .GoVersion}}
+	{{template "panel_debug_stat.html" .DBVersion}}
 	
-
-	<div class="grid_item grid_stat grid_stat_head"><span>{{lang "panel_debug_open_database_connections_label"}}</span></div>
-	<div class="grid_item grid_stat grid_stat_head"><span>{{lang "panel_debug_adapter_label"}}</span></div>
+	{{template "panel_debug_stat_head.html" "panel_debug_open_database_connections_label"}}
+	{{template "panel_debug_stat_head.html" "panel_debug_adapter_label"}}
 	{{/** TODO: Use this for active database connections when Go 1.11 lands **/}}
-	<div class="grid_item grid_stat grid_stat_head"><span>???</span></div>
+	{{template "panel_debug_stat_head_q.html"}}
+	{{template "panel_debug_stat.html" .OpenConns}}
+	{{template "panel_debug_stat.html" .DBAdapter}}
+	{{template "panel_debug_stat_q.html"}}
 
-	<div class="grid_item grid_stat"><span>{{.OpenConns}}</span></div>
-	<div class="grid_item grid_stat"><span>{{.DBAdapter}}</span></div>
-	<div class="grid_item grid_stat"><span>?</span></div>
-
-
-	<div class="grid_item grid_stat grid_stat_head"><span>{{lang "panel_debug_goroutine_count_label"}}</span></div>
-	<div class="grid_item grid_stat grid_stat_head"><span>{{lang "panel_debug_cpu_count_label"}}</span></div>
-	<div class="grid_item grid_stat grid_stat_head"><span>???</span></div>
-
-	<div class="grid_item grid_stat"><span>{{.Goroutines}}</span></div>
-	<div class="grid_item grid_stat"><span>{{.CPUs}}</span></div>
-	<div class="grid_item grid_stat"><span>?</span></div>
+	{{template "panel_debug_stat_head.html" "panel_debug_goroutine_count_label"}}
+	{{template "panel_debug_stat_head.html" "panel_debug_cpu_count_label"}}
+	{{template "panel_debug_stat_head_q.html"}}
+	{{template "panel_debug_stat.html" .Goroutines}}
+	{{template "panel_debug_stat.html" .CPUs}}
+	{{template "panel_debug_stat_q.html"}}
 </div>
 
 <div class="colstack_item colstack_head colstack_sub_head">
-	<div class="rowitem"><h2>Memory Statistics</h2></div>
+	<div class="rowitem"><h2>{{lang "panel_debug_memory_stats"}}</h2></div>
 </div>{{flush}}
 <div id="panel_debug" class="colstack_grid">
-	<div class="grid_item grid_stat grid_stat_head"><span>Sys</span></div>
-	<div class="grid_item grid_stat grid_stat_head"><span>HeapSys</span></div>
-	<div class="grid_item grid_stat grid_stat_head"><span>HeapAlloc</span></div>	
+	{{template "panel_debug_stat_head.html" "panel_debug_memory_stats_sys"}}
+	{{template "panel_debug_stat_head.html" "panel_debug_memory_stats_heapsys"}}
+	{{template "panel_debug_stat_head.html" "panel_debug_memory_stats_heapalloc"}}
 	
 	<div class="grid_item grid_stat"><span>{{.MemStats.Sys}} ({{bunit .MemStats.Sys}})</span></div>
 	<div class="grid_item grid_stat"><span>{{.MemStats.HeapSys}} ({{bunit .MemStats.HeapSys}})</span></div>
 	<div class="grid_item grid_stat"><span>{{.MemStats.HeapAlloc}} ({{bunit .MemStats.HeapAlloc}})</span></div>
 	
 
-	<div class="grid_item grid_stat grid_stat_head"><span>HeapIdle</span></div>
-	<div class="grid_item grid_stat grid_stat_head"><span>HeapObjects</span></div>
-	<div class="grid_item grid_stat grid_stat_head"><span>StackInuse</span></div>
+	{{template "panel_debug_stat_head.html" "panel_debug_memory_stats_heapidle"}}
+	{{template "panel_debug_stat_head.html" "panel_debug_memory_stats_heapobjects"}}
+	{{template "panel_debug_stat_head.html" "panel_debug_memory_stats_stackinuse"}}
 	
 	<div class="grid_item grid_stat"><span>{{.MemStats.HeapIdle}} ({{bunit .MemStats.HeapIdle}})</span></div>
 	<div class="grid_item grid_stat"><span>{{.MemStats.HeapObjects}}</span></div>
@@ -70,33 +65,33 @@
 	<div class="grid_item grid_stat"><span>{{.MemStats.OtherSys}} ({{bunit .MemStats.OtherSys}})</span></div>
 </div>
 <div class="colstack_item colstack_head colstack_sub_head">
-	<div class="rowitem"><h2>Caches</h2></div>
+	<div class="rowitem"><h2>{{lang "panel_debug_caches"}}</h2></div>
 </div>
 <div id="panel_debug" class="colstack_grid">
-	<div class="grid_item grid_stat grid_stat_head"><span>Topic Cache</span></div>
-	<div class="grid_item grid_stat grid_stat_head"><span>User Cache</span></div>
-	<div class="grid_item grid_stat grid_stat_head"><span>Reply Cache</span></div>
+	{{template "panel_debug_stat_head.html" "panel_debug_caches_topic"}}
+	{{template "panel_debug_stat_head.html" "panel_debug_caches_user"}}
+	{{template "panel_debug_stat_head.html" "panel_debug_caches_reply"}}
 
 	<div class="grid_item grid_stat"><span>{{.Cache.Topics}} / {{.Cache.TCap}}</span></div>
 	<div class="grid_item grid_stat"><span>{{.Cache.Users}} / {{.Cache.UCap}}</span></div>
 	<div class="grid_item grid_stat"><span>{{.Cache.Replies}} / {{.Cache.RCap}}</span></div>
 
 
-	<div class="grid_item grid_stat grid_stat_head"><span>Topic List</span></div>
-	<div class="grid_item grid_stat grid_stat_head"><span>???</span></div>
-	<div class="grid_item grid_stat grid_stat_head"><span>???</span></div>
+	{{template "panel_debug_stat_head.html" "panel_debug_caches_topic_list"}}
+	{{template "panel_debug_stat_head_q.html"}}
+	{{template "panel_debug_stat_head_q.html"}}
 
 	<div class="grid_item grid_stat"><span>{{if .Cache.TopicListThaw}}Thawed{{else}}Sleeping{{end}}</span></div>
-	<div class="grid_item grid_stat"><span>?</span></div>
-	<div class="grid_item grid_stat"><span>?</span></div>
+	{{template "panel_debug_stat_q.html"}}
+	{{template "panel_debug_stat_q.html"}}
 </div>
 <div class="colstack_item colstack_head colstack_sub_head">
-	<div class="rowitem"><h2>Database</h2></div>
+	<div class="rowitem"><h2>{{lang "panel_debug_database"}}</h2></div>
 </div>{{flush}}
 <div id="panel_debug" class="colstack_grid">
-	<div class="grid_item grid_stat grid_stat_head"><span>Topics</span></div>
-	<div class="grid_item grid_stat grid_stat_head"><span>Users</span></div>
-	<div class="grid_item grid_stat grid_stat_head"><span>Replies</span></div>
+	{{template "panel_debug_stat_head.html" "panel_debug_database_topics"}}
+	{{template "panel_debug_stat_head.html" "panel_debug_database_users"}}
+	{{template "panel_debug_stat_head.html" "panel_debug_database_replies"}}
 
 	<div class="grid_item grid_stat"><span>{{.Database.Topics}}</span></div>
 	<div class="grid_item grid_stat"><span>{{.Database.Users}}</span></div>
@@ -114,11 +109,11 @@
 
 	<div class="grid_item grid_stat grid_stat_head"><span>Attachments</span></div>
 	<div class="grid_item grid_stat grid_stat_head"><span>Polls</span></div>
-	<div class="grid_item grid_stat grid_stat_head"><span>???</span></div>
+	{{template "panel_debug_stat_head_q.html"}}
 
 	<div class="grid_item grid_stat"><span>{{.Database.Attachments}}</span></div>
 	<div class="grid_item grid_stat"><span>{{.Database.Polls}}</span></div>
-	<div class="grid_item grid_stat"><span>?</span></div>
+	{{template "panel_debug_stat_q.html"}}
 
 
 	<div class="grid_item grid_stat grid_stat_head"><span>Login Logs</span></div>
@@ -131,12 +126,12 @@
 
 
 	<div class="grid_item grid_stat grid_stat_head"><span>Admin Logs</span></div>
-	<div class="grid_item grid_stat grid_stat_head"><span>???</span></div>
-	<div class="grid_item grid_stat grid_stat_head"><span>???</span></div>
+	{{template "panel_debug_stat_head_q.html"}}
+	{{template "panel_debug_stat_head_q.html"}}
 
 	<div class="grid_item grid_stat"><span>{{.Database.AdminLogs}}</span></div>
-	<div class="grid_item grid_stat"><span>?</span></div>
-	<div class="grid_item grid_stat"><span>?</span></div>
+	{{template "panel_debug_stat_q.html"}}
+	{{template "panel_debug_stat_q.html"}}
 
 
 	<div class="grid_item grid_stat grid_stat_head"><span>Views</span></div>
@@ -159,14 +154,14 @@
 
 	<div class="grid_item grid_stat grid_stat_head"><span>Post Analytics</span></div>
 	<div class="grid_item grid_stat grid_stat_head"><span>Topic Analytics</span></div>
-	<div class="grid_item grid_stat grid_stat_head"><span>???</span></div>
+	{{template "panel_debug_stat_head_q.html"}}
 
 	<div class="grid_item grid_stat"><span>{{.Database.PostChunks}}</span></div>
 	<div class="grid_item grid_stat"><span>{{.Database.TopicChunks}}</span></div>
-	<div class="grid_item grid_stat"><span>?</span></div>
+	{{template "panel_debug_stat_q.html"}}
 </div>
 <div class="colstack_item colstack_head colstack_sub_head">
-	<div class="rowitem"><h2>Disk</h2></div>
+	<div class="rowitem"><h2>{{lang "panel_debug_disk"}}</h2></div>
 </div>{{flush}}
 <div id="panel_debug" class="colstack_grid">
 	<div class="grid_item grid_stat grid_stat_head"><span>Static Files</span></div>
