@@ -18,10 +18,10 @@ func Debug(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 
 	goVersion := runtime.Version()
 	dbVersion := qgen.Builder.DbVersion()
-	var uptime string
 	upDuration := time.Since(c.StartTime)
 	hours := int(upDuration.Hours())
 	minutes := int(upDuration.Minutes())
+	var uptime string
 	if hours > 24 {
 		days := hours / 24
 		hours -= days * 24
@@ -63,7 +63,7 @@ func Debug(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	debugCache := c.DebugPageCache{tlen, ulen, rlen, tcap, ucap, rcap, topicListThawed}
 
 	var fErr error
-	var count = func(tbl string) int {
+	count := func(tbl string) int {
 		if fErr != nil {
 			return 0
 		}
@@ -96,7 +96,7 @@ func Debug(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 
 	debugDatabase := c.DebugPageDatabase{c.Topics.Count(),c.Users.Count(),c.Rstore.Count(),c.Prstore.Count(),c.Activity.Count(),c.Likes.Count(),attachs,polls,loginLogs,regLogs,modLogs,adminLogs,views,viewsAgents,viewsForums,viewsLangs,viewsReferrers,viewsSystems,postChunks,topicChunks}
 
-	var dirSize = func(path string) int {
+	dirSize := func(path string) int {
 		if fErr != nil {
 			return 0
 		}

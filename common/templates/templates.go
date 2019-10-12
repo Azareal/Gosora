@@ -218,18 +218,15 @@ import "errors"
 
 	if !c.config.SkipInitBlock {
 		stub += "// nolint\nfunc init() {\n"
-
 		if !c.config.SkipHandles && c.themeName == "" {
 			stub += "\tc.Template_" + fname + "_handle = Template_" + fname + "\n"
 			stub += "\tc.Ctemplates = append(c.Ctemplates,\"" + fname + "\")\n"
 		}
-
 		if !c.config.SkipTmplPtrMap {
 			stub += "tmpl := Template_" + fname + "\n"
 			stub += "\tc.TmplPtrMap[\"" + fname + "\"] = &tmpl\n"
 			stub += "\tc.TmplPtrMap[\"o_" + fname + "\"] = tmpl\n"
 		}
-
 		stub += "}\n\n"
 	}
 
@@ -287,8 +284,7 @@ func (c *CTemplateSet) compile(name string, content string, expects string, expe
 		if r := recover(); r != nil {
 			fmt.Println(r)
 			debug.PrintStack()
-			err := c.loggerf.Sync()
-			if err != nil {
+			if err := c.loggerf.Sync(); err != nil {
 				fmt.Println(err)
 			}
 			log.Fatal("")
@@ -311,13 +307,14 @@ func (c *CTemplateSet) compile(name string, content string, expects string, expe
 	c.localDispStructIndex = 0
 	c.stats = make(map[string]int)
 
-	tree := parse.New(name, c.funcMap)
-	treeSet := make(map[string]*parse.Tree)
-	tree, err = tree.Parse(content, "{{", "}}", treeSet, c.funcMap)
+	//tree := parse.New(name, c.funcMap)
+	//treeSet := make(map[string]*parse.Tree)
+	treeSet, err := parse.Parse(name, content, "{{", "}}", c.funcMap)
 	if err != nil {
 		return "", err
 	}
 	c.detail(name)
+	c.detailf("treeSet: %+v\n", treeSet)
 
 	fname := strings.TrimSuffix(name, filepath.Ext(name))
 	if c.themeName != "" {
@@ -374,8 +371,21 @@ func (c *CTemplateSet) compile(name string, content string, expects string, expe
 		TemplateName:     fname,
 		OutBuf:           &outBuf,
 	}
-	c.templateList = map[string]*parse.Tree{fname: tree}
-	c.detail(c.templateList)
+
+	c.templateList = map[string]*parse.Tree{}
+	for nname, tree := range treeSet {
+		if name == nname {
+			c.templateList[fname] = tree
+		} else {
+			if !strings.HasPrefix(nname, ".html") {
+				c.templateList[nname] = tree
+			} else {
+				c.templateList[strings.TrimSuffix(nname, ".html")] = tree
+			}
+		}
+	}
+	c.detailf("c.templateList: %+v\n", c.templateList)
+
 	c.localVars = make(map[string]map[string]VarItemReflect)
 	c.localVars[fname] = make(map[string]VarItemReflect)
 	c.localVars[fname]["."] = VarItemReflect{".", con.VarHolder, con.HoldReflect}
@@ -392,8 +402,14 @@ func (c *CTemplateSet) compile(name string, content string, expects string, expe
 	//}
 	//c.detailf("c: %+v\n", c)
 
+	c.detailf("name: %+v\n", name)
+	c.detailf("fname: %+v\n", fname)
 	startIndex := con.StartTemplate("")
-	c.rootIterate(c.templateList[fname], con)
+	ttree := c.templateList[fname]
+	if ttree == nil {
+		panic("ttree is nil")
+	}
+	c.rootIterate(ttree, con)
 	con.EndTemplate("")
 	c.afterTemplate(con, startIndex)
 	//c.templateFragmentCount[fname] = c.fragmentCursor[fname] + 1
@@ -574,6 +590,10 @@ w.Write([]byte(`, " + ", -1)
 
 func (c *CTemplateSet) rootIterate(tree *parse.Tree, con CContext) {
 	c.dumpCall("rootIterate", tree, con)
+	if tree.Root == nil {
+		c.detailf("tree: %+v\n", tree)
+		panic("tree root node is empty")
+	}
 	c.detail(tree.Root)
 	for _, node := range tree.Root.Nodes {
 		c.detail("Node:", node.String())
@@ -1195,8 +1215,9 @@ ArgLoop:
 			}
 			leftParam, _ := c.compileIfVarSub(con, leftOperand)
 			out = "{\nbyteFloat, unit := c.ConvertByteUnit(float64(" + leftParam + "))\n"
-			out += "w.Write(fmt.Sprintf(\"%.1f\", byteFloat) + unit)\n"
+			out += "w.Write(StringToBytes(fmt.Sprintf(\"%.1f\", byteFloat) + unit))\n}\n"
 			literal = true
+			c.importMap["fmt"] = "fmt"
 			break ArgLoop
 		case "abstime":
 			// TODO: Implement level literals
@@ -1601,9 +1622,18 @@ func (c *CTemplateSet) compileVarSub(con CContext, varname string, val reflect.V
 		if c.guestOnly && base == "StringToBytes("+con.RootHolder+".CurrentUser.Session))" {
 			return
 		}
+	case reflect.Int8, reflect.Int16, reflect.Int32:
+		c.importMap["strconv"] = "strconv"
+		base = "StringToBytes(strconv.FormatInt(int64(" + varname + "), 10))"
 	case reflect.Int64:
 		c.importMap["strconv"] = "strconv"
 		base = "StringToBytes(strconv.FormatInt(" + varname + ", 10))"
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32:
+		c.importMap["strconv"] = "strconv"
+		base = "StringToBytes(strconv.FormatUint(uint64(" + varname + "), 10))"
+	case reflect.Uint64:
+		c.importMap["strconv"] = "strconv"
+		base = "StringToBytes(strconv.FormatUint(" + varname + ", 10))"
 	case reflect.Struct:
 		// TODO: Avoid clashing with other packages which have structs named Time
 		if val.Type().Name() == "Time" {
@@ -1638,19 +1668,6 @@ func (c *CTemplateSet) compileSubTemplate(pcon CContext, node *parse.TemplateNod
 	defer c.retCall("compileSubTemplate")
 	c.detail("Template Node: ", node.Name)
 
-	// TODO: Cascade errors back up the tree to the caller?
-	content, err := c.loadTemplate(c.fileDir, node.Name)
-	if err != nil {
-		c.logger.Fatal(err)
-	}
-
-	tree := parse.New(node.Name, c.funcMap)
-	var treeSet = make(map[string]*parse.Tree)
-	tree, err = tree.Parse(content, "{{", "}}", treeSet, c.funcMap)
-	if err != nil {
-		c.logger.Fatal(err)
-	}
-
 	fname := strings.TrimSuffix(node.Name, filepath.Ext(node.Name))
 	if c.themeName != "" {
 		_, ok := c.perThemeTmpls[fname]
@@ -1666,6 +1683,36 @@ func (c *CTemplateSet) compileSubTemplate(pcon CContext, node *parse.TemplateNod
 		fname += "_member"
 	}
 
+	_, ok := c.templateList[fname]
+	if !ok {
+		// TODO: Cascade errors back up the tree to the caller?
+		content, err := c.loadTemplate(c.fileDir, node.Name)
+		if err != nil {
+			c.logger.Fatal(err)
+		}
+
+		//tree := parse.New(node.Name, c.funcMap)
+		//treeSet := make(map[string]*parse.Tree)
+		treeSet, err := parse.Parse(node.Name, content, "{{", "}}", c.funcMap)
+		if err != nil {
+			c.logger.Fatal(err)
+		}
+		c.detailf("treeSet: %+v\n", treeSet)
+
+		for nname, tree := range treeSet {
+			if node.Name == nname {
+				c.templateList[fname] = tree
+			} else {
+				if !strings.HasPrefix(nname, ".html") {
+					c.templateList[nname] = tree
+				} else {
+					c.templateList[strings.TrimSuffix(nname, ".html")] = tree
+				}
+			}
+		}
+		c.detailf("c.templateList: %+v\n", c.templateList)
+	}
+
 	con := pcon
 	con.VarHolder = "tmpl_" + fname + "_vars"
 	con.TemplateName = fname
@@ -1675,7 +1722,6 @@ func (c *CTemplateSet) compileSubTemplate(pcon CContext, node *parse.TemplateNod
 			case *parse.FieldNode:
 				// TODO: Incomplete but it should cover the basics
 				cur := pcon.HoldReflect
-
 				var varBit string
 				if cur.Kind() == reflect.Interface {
 					cur = cur.Elem()
@@ -1707,6 +1753,11 @@ func (c *CTemplateSet) compileSubTemplate(pcon CContext, node *parse.TemplateNod
 				}
 				con.VarHolder = pcon.VarHolder + varBit
 				con.HoldReflect = cur
+			case *parse.StringNode:
+				//con.VarHolder = pcon.VarHolder
+				//con.HoldReflect = pcon.HoldReflect
+				con.VarHolder = p.Quoted
+				con.HoldReflect = reflect.ValueOf(p.Quoted)
 			case *parse.DotNode:
 				con.VarHolder = pcon.VarHolder
 				con.HoldReflect = pcon.HoldReflect
@@ -1730,7 +1781,7 @@ func (c *CTemplateSet) compileSubTemplate(pcon CContext, node *parse.TemplateNod
 		}
 	}
 
-	c.templateList[fname] = tree
+	//c.templateList[fname] = tree
 	subtree := c.templateList[fname]
 	c.detail("subtree.Root", subtree.Root)
 	c.localVars[fname] = make(map[string]VarItemReflect)
@@ -1746,9 +1797,7 @@ func (c *CTemplateSet) compileSubTemplate(pcon CContext, node *parse.TemplateNod
 	c.rootIterate(subtree, con)
 	con.EndTemplate(endBit)
 	//c.templateFragmentCount[fname] = c.fragmentCursor[fname] + 1
-
-	_, ok := c.fragOnce[fname]
-	if !ok {
+	if _, ok := c.fragOnce[fname]; !ok {
 		c.fragOnce[fname] = true
 	}
 
@@ -1785,11 +1834,11 @@ func (c *CTemplateSet) compileSubTemplate(pcon CContext, node *parse.TemplateNod
 
 func (c *CTemplateSet) loadTemplate(fileDir string, name string) (content string, err error) {
 	c.dumpCall("loadTemplate", fileDir, name)
-
 	c.detail("c.themeName: ", c.themeName)
 	if c.themeName != "" {
-		c.detail("per-theme override: ", "./themes/"+c.themeName+"/overrides/"+name)
-		res, err := ioutil.ReadFile("./themes/" + c.themeName + "/overrides/" + name)
+		t := "./themes/" + c.themeName + "/overrides/" + name
+		c.detail("per-theme override: ", true)
+		res, err := ioutil.ReadFile(t)
 		if err == nil {
 			content = string(res)
 			if c.config.Minify {
@@ -1820,11 +1869,10 @@ func (c *CTemplateSet) afterTemplate(con CContext, startIndex int) {
 	c.dumpCall("afterTemplate", con, startIndex)
 	defer c.retCall("afterTemplate")
 
-	var loopDepth = 0
+	loopDepth := 0
 	var outBuf = *con.OutBuf
-	var varcounts = make(map[string]int)
-	var loopStart = startIndex
-
+	varcounts := make(map[string]int)
+	loopStart := startIndex
 	if outBuf[startIndex].Type == "startloop" && (len(outBuf) > startIndex+1) {
 		loopStart++
 	}
@@ -1852,7 +1900,7 @@ func (c *CTemplateSet) afterTemplate(con CContext, startIndex int) {
 
 	var varstr string
 	var i int
-	var varmap = make(map[string]int)
+	varmap := make(map[string]int)
 	for name, count := range varcounts {
 		if count > 1 {
 			varstr += "var cached_var_" + strconv.Itoa(i) + " = " + name + "\n"

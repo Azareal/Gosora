@@ -19,7 +19,7 @@
 	</div>
 	<div class="formrow">
 		<div class="formitem formlabel"><a>{{lang "panel_user_name"}}</a></div>
-		<div class="formitem"><input form="user_form" name="user-name" type="text" value="{{.Something.Name}}" placeholder="{{lang "panel_user_name_placeholder"}}" /></div>
+		<div class="formitem"><input form="user_form" name="user-name" type="text" value="{{.Something.Name}}" placeholder="{{lang "panel_user_name_placeholder"}}" autocomplete="off" /></div>
 	</div>
 	{{if .CurrentUser.Perms.EditUserPassword}}<div class="formrow">
 		<div class="formitem formlabel"><a>{{lang "panel_user_password"}}</a></div>
@@ -34,7 +34,7 @@
 		<div class="formitem formlabel"><a>{{lang "panel_user_group"}}</a></div>
 		<div class="formitem">
 			<select form="user_form" name="user-group">
-			{{range .ItemList}}<option {{if eq .ID $.Something.Group}}selected {{end}}value="{{.ID}}">{{.Name}}</option>{{end}}
+			{{range .ItemList}}<option{{if eq .ID $.Something.Group}} selected{{end}} value="{{.ID}}">{{.Name}}</option>{{end}}
 			</select>
 		</div>
 	</div>{{end}}

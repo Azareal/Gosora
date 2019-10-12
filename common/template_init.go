@@ -6,14 +6,16 @@ import (
 	"io"
 	"log"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/Azareal/Gosora/common/alerts"
-	"github.com/Azareal/Gosora/common/phrases"
+	p "github.com/Azareal/Gosora/common/phrases"
 	"github.com/Azareal/Gosora/common/templates"
+	"github.com/Azareal/Gosora/query_gen"
 )
 
 var Ctemplates []string // TODO: Use this to filter out top level templates we don't need
@@ -184,8 +186,7 @@ func CompileTemplates() error {
 
 	log.Print("Compiling the default templates")
 	var wg sync.WaitGroup
-	err := compileTemplates(&wg, c, "")
-	if err != nil {
+	if err := compileTemplates(&wg, c, ""); err != nil {
 		return err
 	}
 	oroots := c.GetOverridenRoots()
@@ -198,7 +199,7 @@ func CompileTemplates() error {
 		c.SetPerThemeTmpls(tmpls)
 		log.Print("theme: ", theme)
 		log.Printf("perThemeTmpls: %+v\n", tmpls)
-		err = compileTemplates(&wg, c, theme)
+		err := compileTemplates(&wg, c, theme)
 		if err != nil {
 			return err
 		}
@@ -207,30 +208,30 @@ func CompileTemplates() error {
 	return nil
 }
 
-func compileCommons(c *tmpl.CTemplateSet, header *Header, header2 *Header, forumList []Forum, out TItemHold) error {
+func compileCommons(c *tmpl.CTemplateSet, head *Header, head2 *Header, forumList []Forum, o TItemHold) error {
 	// TODO: Add support for interface{}s
 	_, user2, user3 := tmplInitUsers()
 	now := time.Now()
 
 	// Convienience function to save a line here and there
 	htitle := func(name string) *Header {
-		header.Title = name
-		return header
+		head.Title = name
+		return head
 	}
 	/*htitle2 := func(name string) *Header {
-		header2.Title = name
-		return header2
+		head2.Title = name
+		return head2
 	}*/
 
 	var topicsList []*TopicsRow
 	topicsList = append(topicsList, &TopicsRow{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, now, now, user3.ID, 1, 1, "", "127.0.0.1", 1, 0, 1, 1, 0, "classname", 0, "", &user2, "", 0, &user3, "General", "/forum/general.2", nil})
 	topicListPage := TopicListPage{htitle("Topic List"), topicsList, forumList, Config.DefaultForum, TopicListSort{"lastupdated", false}, Paginator{[]int{1}, 1, 1}}
-	out.Add("topics", "c.TopicListPage", topicListPage)
+	o.Add("topics", "c.TopicListPage", topicListPage)
 
 	forumItem := BlankForum(1, "general-forum.1", "General Forum", "Where the general stuff happens", true, "all", 0, "", 0)
 	forumPage := ForumPage{htitle("General Forum"), topicsList, forumItem, Paginator{[]int{1}, 1, 1}}
-	out.Add("forum", "c.ForumPage", forumPage)
-	out.Add("forums", "c.ForumsPage", ForumsPage{htitle("Forum List"), forumList})
+	o.Add("forum", "c.ForumPage", forumPage)
+	o.Add("forums", "c.ForumsPage", ForumsPage{htitle("Forum List"), forumList})
 
 	poll := Poll{ID: 1, Type: 0, Options: map[int]string{0: "Nothing", 1: "Something"}, Results: map[int]int{0: 5, 1: 2}, QuickOptions: []PollOption{
 		PollOption{0, "Nothing"},
@@ -247,8 +248,8 @@ func compileCommons(c *tmpl.CTemplateSet, header *Header, header2 *Header, forum
 	replyList = append(replyList, ru)
 	tpage := TopicPage{htitle("Topic Name"), replyList, topic, &Forum{ID: 1, Name: "Hahaha"}, poll, Paginator{[]int{1}, 1, 1}}
 	tpage.Forum.Link = BuildForumURL(NameToSlug(tpage.Forum.Name), tpage.Forum.ID)
-	out.Add("topic", "c.TopicPage", tpage)
-	out.Add("topic_alt", "c.TopicPage", tpage)
+	o.Add("topic", "c.TopicPage", tpage)
+	o.Add("topic_alt", "c.TopicPage", tpage)
 	return nil
 }
 
@@ -362,6 +363,16 @@ func compileTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName string
 	t.AddStd("panel", "c.Panel", Panel{basePage, "panel_dashboard_right", "", "panel_dashboard", inter})
 	ges := []GridElement{GridElement{"","", "", 1, "grid_istat", "", "", ""}}
 	t.AddStd("panel_dashboard", "c.DashGrids", DashGrids{ges,ges})
+
+	goVersion := runtime.Version()
+	dbVersion := qgen.Builder.DbVersion()
+	var memStats runtime.MemStats
+	runtime.ReadMemStats(&memStats)
+	debugCache := DebugPageCache{1, 1, 1, 2, 2, 2, true}
+	debugDatabase := DebugPageDatabase{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
+	debugDisk := DebugPageDisk{1,1,1,1,1,1}
+	dpage := PanelDebugPage{basePage, goVersion, dbVersion, "0s", 1, qgen.Builder.GetAdapter().GetName(), 1, 1, memStats, debugCache, debugDatabase, debugDisk}
+	t.AddStd("panel_debug", "c.PanelDebugPage", dpage)
 	//t.AddStd("panel_analytics", "c.PanelAnalytics", Panel{basePage, "panel_dashboard_right","panel_dashboard", inter})
 
 	writeTemplate := func(name string, content interface{}) {
@@ -732,7 +743,7 @@ func initDefaultTmplFuncMap() {
 			panic("phraseNameInt is not a string")
 		}
 		// TODO: Log non-existent phrases?
-		return template.HTML(phrases.GetTmplPhrase(phraseName))
+		return template.HTML(p.GetTmplPhrase(phraseName))
 	}
 
 	// TODO: Implement this in the template generator too
@@ -743,7 +754,7 @@ func initDefaultTmplFuncMap() {
 		}
 		// TODO: Log non-existent phrases?
 		// TODO: Optimise TmplPhrasef so we don't use slow Sprintf there
-		return template.HTML(phrases.GetTmplPhrasef(phraseName, args...))
+		return template.HTML(p.GetTmplPhrasef(phraseName, args...))
 	}
 
 	fmap["level"] = func(levelInt interface{}) interface{} {
@@ -751,7 +762,7 @@ func initDefaultTmplFuncMap() {
 		if !ok {
 			panic("levelInt is not an integer")
 		}
-		return template.HTML(phrases.GetLevelPhrase(level))
+		return template.HTML(p.GetLevelPhrase(level))
 	}
 
 	fmap["bunit"] = func(byteInt interface{}) interface{} {
