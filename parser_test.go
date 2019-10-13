@@ -301,7 +301,7 @@ func TestParser(t *testing.T) {
 
 	l = &METriList{nil}
 	pre := c.Site.URL // Just in case this is localhost...
-	pre2 := c.Site.EnableSSl
+	pre2 := c.Site.EnableSsl
 	c.Site.URL = "example.com"
 	c.Site.EnableSsl = true
 	l.Add("//"+c.Site.URL, "<a href='https://"+c.Site.URL+"'>"+c.Site.URL+"</a>")
