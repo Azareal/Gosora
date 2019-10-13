@@ -122,8 +122,7 @@ func TestPreparser(t *testing.T) {
 	// TODO: Do a test with invalid UTF-8 input
 
 	for _, item := range l.Items {
-		res := c.PreparseMessage(item.Msg)
-		if res != item.Expects {
+		if res := c.PreparseMessage(item.Msg); res != item.Expects {
 			if item.Name != "" {
 				t.Error("Name: ", item.Name)
 			}
@@ -143,7 +142,7 @@ func TestParser(t *testing.T) {
 	l := &METriList{nil}
 
 	url := "github.com/Azareal/Gosora"
-	eurl := "<a rel='ugc' href='//" + url + "'>//" + url + "</a>"
+	eurl := "<a rel='ugc' href='//" + url + "'>" + url + "</a>"
 	l.Add("", "")
 	l.Add("haha", "haha")
 	l.Add("<b>t</b>", "<b>t</b>")
@@ -185,31 +184,36 @@ func TestParser(t *testing.T) {
 	l.Add("ss", "ss")
 	l.Add("haha\nhaha\nhaha", "haha<br>haha<br>haha")
 	l.Add("//"+url, eurl)
-	l.Add("//a", "<a rel='ugc' href='//a'>//a</a>")
-	l.Add(" //a", " <a rel='ugc' href='//a'>//a</a>")
-	l.Add("//a ", "<a rel='ugc' href='//a'>//a</a> ")
-	l.Add(" //a ", " <a rel='ugc' href='//a'>//a</a> ")
-	l.Add("d //a ", "d <a rel='ugc' href='//a'>//a</a> ")
-	l.Add("ddd ddd //a ", "ddd ddd <a rel='ugc' href='//a'>//a</a> ")
-	l.Add("https://"+url, "<a rel='ugc' href='https://"+url+"'>https://"+url+"</a>")
-	l.Add("https://t", "<a rel='ugc' href='https://t'>https://t</a>")
-	l.Add("http://"+url, "<a rel='ugc' href='http://"+url+"'>http://"+url+"</a>")
+	l.Add("//a", "<a rel='ugc' href='//a'>a</a>")
+	l.Add(" //a", " <a rel='ugc' href='//a'>a</a>")
+	l.Add("//a ", "<a rel='ugc' href='//a'>a</a> ")
+	l.Add(" //a ", " <a rel='ugc' href='//a'>a</a> ")
+	l.Add("d //a ", "d <a rel='ugc' href='//a'>a</a> ")
+	l.Add("ddd ddd //a ", "ddd ddd <a rel='ugc' href='//a'>a</a> ")
+	l.Add("https://"+url, "<a rel='ugc' href='https://"+url+"'>"+url+"</a>")
+	l.Add("https://t", "<a rel='ugc' href='https://t'>t</a>")
+	l.Add("http://"+url, "<a rel='ugc' href='http://"+url+"'>"+url+"</a>")
 	l.Add("#http://"+url, "#http://"+url)
 	l.Add("@http://"+url, "<red>[Invalid Profile]</red>ttp://"+url)
-	l.Add("//"+url+"\n", "<a rel='ugc' href='//"+url+"'>//"+url+"</a><br>")
+	l.Add("//"+url+"\n", "<a rel='ugc' href='//"+url+"'>"+url+"</a><br>")
 	l.Add("\n//"+url, "<br>"+eurl)
 	l.Add("\n//"+url+"\n", "<br>"+eurl+"<br>")
 	l.Add("\n//"+url+"\n\n", "<br>"+eurl+"<br><br>")
 	l.Add("//"+url+"\n//"+url, eurl+"<br>"+eurl)
 	l.Add("//"+url+"\n\n//"+url, eurl+"<br><br>"+eurl)
-	l.Add("//"+c.Site.URL, "<a href='//"+c.Site.URL+"'>//"+c.Site.URL+"</a>")
-	l.Add("//"+c.Site.URL+"\n", "<a href='//"+c.Site.URL+"'>//"+c.Site.URL+"</a><br>")
-	l.Add("//"+c.Site.URL+"\n//"+c.Site.URL, "<a href='//"+c.Site.URL+"'>//"+c.Site.URL+"</a><br><a href='//"+c.Site.URL+"'>//"+c.Site.URL+"</a>")
 
-	local := func(url string) {
-		l.Add("//"+url, "<a href='//"+url+"'>//"+url+"</a>")
-		l.Add("//"+url+"\n", "<a href='//"+url+"'>//"+url+"</a><br>")
-		l.Add("//"+url+"\n//"+url, "<a href='//"+url+"'>//"+url+"</a><br><a href='//"+url+"'>//"+url+"</a>")
+	local := func(u string) {
+		s := "//" + c.Site.URL
+		fs := "http://" + c.Site.URL
+		if c.Site.EnableSsl {
+			s = "https:" + s
+			fs = "https://" + c.Site.URL
+		}
+		l.Add("//"+u, "<a href='"+s+"'>"+c.Site.URL+"</a>")
+		l.Add("//"+u+"\n", "<a href='"+s+"'>"+c.Site.URL+"</a><br>")
+		l.Add("//"+u+"\n//"+u, "<a href='"+s+"'>"+c.Site.URL+"</a><br><a href='"+s+"'>"+c.Site.URL+"</a>")
+		l.Add("http://"+u, "<a href='"+fs+"'>"+c.Site.URL+"</a>")
+		l.Add("https://"+u, "<a href='"+fs+"'>"+c.Site.URL+"</a>")
 	}
 	local("localhost")
 	local("127.0.0.1")
@@ -243,8 +247,9 @@ func TestParser(t *testing.T) {
 	l.Add("@ #tid-@", "<red>[Invalid Profile]</red>#tid-@")
 	l.Add("#tid-1 #tid-1", "<a href='/topic/1'>#tid-1</a> <a href='/topic/1'>#tid-1</a>")
 	l.Add("#tid-0", "<red>[Invalid Topic]</red>")
-	l.Add("https://"+url+"/#tid-1", "<a rel='ugc' href='https://"+url+"/#tid-1'>https://"+url+"/#tid-1</a>")
-	l.Add("https://"+url+"/?hi=2", "<a rel='ugc' href='https://"+url+"/?hi=2'>https://"+url+"/?hi=2</a>")
+	l.Add("https://"+url+"/#tid-1", "<a rel='ugc' href='https://"+url+"/#tid-1'>"+url+"/#tid-1</a>")
+	l.Add("https://"+url+"/?hi=2", "<a rel='ugc' href='https://"+url+"/?hi=2'>"+url+"/?hi=2</a>")
+	l.Add("https://"+url+"/?hi=2#t=1", "<a rel='ugc' href='https://"+url+"/?hi=2#t=1'>"+url+"/?hi=2#t=1</a>")
 	l.Add("#fid-1", "<a href='/forum/1'>#fid-1</a>")
 	l.Add(" #fid-1", " <a href='/forum/1'>#fid-1</a>")
 	l.Add("#fid-0", "<red>[Invalid Forum]</red>")
@@ -283,8 +288,7 @@ func TestParser(t *testing.T) {
 	l.Add("@-1", "<red>[Invalid Profile]</red>1")
 
 	for _, item := range l.Items {
-		res := c.ParseMessage(item.Msg, 1, "forums")
-		if res != item.Expects {
+		if res := c.ParseMessage(item.Msg, 1, "forums"); res != item.Expects {
 			if item.Name != "" {
 				t.Error("Name: ", item.Name)
 			}
@@ -294,6 +298,25 @@ func TestParser(t *testing.T) {
 			break
 		}
 	}
+
+	l = &METriList{nil}
+	pre := c.Site.URL // Just in case this is localhost...
+	c.Site.URL = "example.com"
+	l.Add("//"+c.Site.URL, "<a href='https://"+c.Site.URL+"'>"+c.Site.URL+"</a>")
+	l.Add("//"+c.Site.URL+"\n", "<a href='https://"+c.Site.URL+"'>"+c.Site.URL+"</a><br>")
+	l.Add("//"+c.Site.URL+"\n//"+c.Site.URL, "<a href='https://"+c.Site.URL+"'>"+c.Site.URL+"</a><br><a href='https://"+c.Site.URL+"'>"+c.Site.URL+"</a>")
+	for _, item := range l.Items {
+		if res := c.ParseMessage(item.Msg, 1, "forums"); res != item.Expects {
+			if item.Name != "" {
+				t.Error("Name: ", item.Name)
+			}
+			t.Error("Testing string '" + item.Msg + "'")
+			t.Error("Bad output:", "'"+res+"'")
+			t.Error("Expected:", "'"+item.Expects+"'")
+			break
+		}
+	}
+	c.Site.URL = pre
 
 	c.AddHashLinkType("nnid-", func(sb *strings.Builder, msg string, i *int) {
 		tid, intLen := c.CoerceIntString(msg[*i:])

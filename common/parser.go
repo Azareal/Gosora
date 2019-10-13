@@ -3,6 +3,7 @@ package common
 import (
 	"bytes"
 	//"fmt"
+	//"log"
 	"encoding/json"
 	"io/ioutil"
 	"net/url"
@@ -650,7 +651,7 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 				} else {
 					sb.Write(URLOpenUser)
 				}
-				sb.WriteString(msg[i : i+urlLen])
+				sb.WriteString(media.URL)
 				sb.Write(URLOpen2)
 				sb.WriteString(media.FURL)
 				sb.Write(URLClose)
@@ -852,15 +853,20 @@ func parseMediaString(data string) (media MediaEmbed, ok bool) {
 	if !validateURLString(data) {
 		return media, false
 	}
-	url, err := url.Parse(data)
+	uurl, err := url.Parse(data)
 	if err != nil {
 		return media, false
 	}
 
-	hostname := url.Hostname()
-	scheme := url.Scheme
-	port := url.Port()
-	query := url.Query()
+	hostname := uurl.Hostname()
+	scheme := uurl.Scheme
+	port := uurl.Port()
+	query, err := url.ParseQuery(uurl.RawQuery)
+	if err != nil {
+		return media, false
+	}
+	//log.Print("hostname:",hostname)
+	//log.Print("Site.URL:",Site.URL)
 
 	samesite := hostname == "localhost" || hostname == "127.0.0.1" || hostname == "::1" || hostname == Site.URL
 	if samesite {
@@ -871,12 +877,12 @@ func parseMediaString(data string) (media MediaEmbed, ok bool) {
 			scheme = "https"
 		}
 	}
-	if scheme == "" {
-		scheme = "http"
+	if scheme != "" {
+		scheme += ":"
 	}
 	media.Trusted = samesite
 
-	path := url.EscapedPath()
+	path := uurl.EscapedPath()
 	pathFrags := strings.Split(path, "/")
 	if len(pathFrags) >= 2 {
 		if samesite && pathFrags[1] == "attachs" && (scheme == "http" || scheme == "https") {
@@ -885,7 +891,7 @@ func parseMediaString(data string) (media MediaEmbed, ok bool) {
 			if port != "443" && port != "80" && port != "" {
 				sport = ":" + port
 			}
-			media.URL = scheme + "://" + hostname + sport + path
+			media.URL = scheme + "//" + hostname + sport + path
 			extarr := strings.Split(path, ".")
 			if len(extarr) == 0 {
 				// TODO: Write a unit test for this
@@ -923,7 +929,7 @@ func parseMediaString(data string) (media MediaEmbed, ok bool) {
 				if port != "443" && port != "80" && port != "" {
 					sport = ":" + port
 				}
-				media.URL = scheme + "://" + hostname + sport + path
+				media.URL = scheme + "//" + hostname + sport + path
 				return media, true
 			}
 		}
@@ -933,7 +939,16 @@ func parseMediaString(data string) (media MediaEmbed, ok bool) {
 	if port != "443" && port != "80" && port != "" {
 		sport = ":" + port
 	}
-	media.FURL = hostname + sport + path
+	var q string
+	if len(uurl.RawQuery) > 0 {
+		q = "?" + uurl.RawQuery
+	}
+	var frag string
+	if len(uurl.Fragment) > 0 {
+		frag = "#" + uurl.Fragment
+	}
+	media.URL = scheme + "//" + hostname + sport + path + q + frag
+	media.FURL = hostname + sport + path + q + frag
 
 	return media, true
 }
@@ -943,7 +958,6 @@ func CoerceIntString(data string) (res int, length int) {
 	if !(data[0] > 47 && data[0] < 58) {
 		return 0, 1
 	}
-
 	i := 0
 	for ; len(data) > i; i++ {
 		if !(data[i] > 47 && data[i] < 58) {
