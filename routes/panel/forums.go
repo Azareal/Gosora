@@ -61,10 +61,10 @@ func ForumsCreateSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.R
 		return c.NoPermissions(w, r, user)
 	}
 
-	fname := r.PostFormValue("forum-name")
-	fdesc := r.PostFormValue("forum-desc")
-	fpreset := c.StripInvalidPreset(r.PostFormValue("forum-preset"))
-	factive := r.PostFormValue("forum-active")
+	fname := r.PostFormValue("name")
+	fdesc := r.PostFormValue("desc")
+	fpreset := c.StripInvalidPreset(r.PostFormValue("preset"))
+	factive := r.PostFormValue("active")
 	active := (factive == "on" || factive == "1")
 
 	_, err := c.Forums.Create(fname, fdesc, active, fpreset)

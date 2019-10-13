@@ -202,6 +202,8 @@ func TestParser(t *testing.T) {
 	l.Add("//"+url+"\n//"+url, eurl+"<br>"+eurl)
 	l.Add("//"+url+"\n\n//"+url, eurl+"<br><br>"+eurl)
 
+	pre2 := c.Site.EnableSsl
+	c.Site.EnableSsl = true
 	local := func(u string) {
 		s := "//" + c.Site.URL
 		fs := "http://" + c.Site.URL
@@ -288,8 +290,6 @@ func TestParser(t *testing.T) {
 	l.Add("@-1", "<red>[Invalid Profile]</red>1")
 
 	// TODO: Fix this hack and make the results a bit more reproducible, push the tests further in the process.
-	pre2 := c.Site.EnableSsl
-	c.Site.EnableSsl = true
 	for _, item := range l.Items {
 		if res := c.ParseMessage(item.Msg, 1, "forums"); res != item.Expects {
 			if item.Name != "" {

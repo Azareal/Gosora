@@ -32,7 +32,8 @@ func (s *DefaultBlockStore) IsBlockedBy(blocker, blockee int) (bool, error) {
 }
 
 func (s *DefaultBlockStore) Add(blocker, blockee int) error {
-	return nil
+	_, err := s.add.Exec(blocker, blockee)
+	return err
 }
 
 type FriendInvite struct {
@@ -64,11 +65,15 @@ func NewDefaultFriendStore(acc *qgen.Accumulator) (*DefaultFriendStore, error) {
 }
 
 func (s *DefaultFriendStore) AddInvite(requester, target int) error {
-	return nil
+	_, err := s.addInvite.Exec(requester, target)
+	return err
 }
+
 func (s *DefaultFriendStore) Confirm(requester, target int) error {
-	return nil
+	_, err := s.confirm.Exec(requester, target)
+	return err
 }
+
 func (s *DefaultFriendStore) GetOwnSentInvites(uid int) ([]FriendInvite, error) {
 	return nil, nil
 }
