@@ -287,6 +287,9 @@ func TestParser(t *testing.T) {
 	l.Add("@0", "<red>[Invalid Profile]</red>")
 	l.Add("@-1", "<red>[Invalid Profile]</red>1")
 
+	// TODO: Fix this hack and make the results a bit more reproducible, push the tests further in the process.
+	pre2 := c.Site.EnableSsl
+	c.Site.EnableSsl = true
 	for _, item := range l.Items {
 		if res := c.ParseMessage(item.Msg, 1, "forums"); res != item.Expects {
 			if item.Name != "" {
@@ -298,10 +301,11 @@ func TestParser(t *testing.T) {
 			break
 		}
 	}
+	c.Site.EnableSsl = pre2
 
 	l = &METriList{nil}
 	pre := c.Site.URL // Just in case this is localhost...
-	pre2 := c.Site.EnableSsl
+	pre2 = c.Site.EnableSsl
 	c.Site.URL = "example.com"
 	c.Site.EnableSsl = true
 	l.Add("//"+c.Site.URL, "<a href='https://"+c.Site.URL+"'>"+c.Site.URL+"</a>")

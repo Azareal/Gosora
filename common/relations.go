@@ -1,20 +1,31 @@
 package common
 
-import qgen "github.com/Azareal/Gosora/query_gen"
+import (
+	"database/sql"
+
+	qgen "github.com/Azareal/Gosora/query_gen"
+)
 
 type BlockStore interface {
 	IsBlockedBy(blocker int, blockee int) (bool, error)
 }
 
 type DefaultBlockStore struct {
+	isBlocked *sql.Stmt
 }
 
 func NewDefaultBlockStore(acc *qgen.Accumulator) (*DefaultBlockStore, error) {
-	return &DefaultBlockStore{}, acc.FirstError()
+	return &DefaultBlockStore{
+		isBlocked: acc.Select("users_blocks").Cols("blocker").Where("blocker = ? AND blockedUser = ?").Prepare(),
+	}, acc.FirstError()
 }
 
 func (s *DefaultBlockStore) IsBlockedBy(blocker int, blockee int) (bool, error) {
-	return false, nil
+	err := s.isBlocked.QueryRow(blocker, blockee).Scan(&blocker)
+	if err != nil && err != ErrNoRows {
+		return false, err
+	}
+	return err != ErrNoRows, nil
 }
 
 type FriendStore interface {
