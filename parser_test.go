@@ -209,9 +209,9 @@ func TestParser(t *testing.T) {
 			s = "https:" + s
 			fs = "https://" + c.Site.URL
 		}
-		l.Add("//"+u, "<a href='"+s+"'>"+c.Site.URL+"</a>")
-		l.Add("//"+u+"\n", "<a href='"+s+"'>"+c.Site.URL+"</a><br>")
-		l.Add("//"+u+"\n//"+u, "<a href='"+s+"'>"+c.Site.URL+"</a><br><a href='"+s+"'>"+c.Site.URL+"</a>")
+		l.Add("//"+u, "<a href='"+fs+"'>"+c.Site.URL+"</a>")
+		l.Add("//"+u+"\n", "<a href='"+fs+"'>"+c.Site.URL+"</a><br>")
+		l.Add("//"+u+"\n//"+u, "<a href='"+fs+"'>"+c.Site.URL+"</a><br><a href='"+fs+"'>"+c.Site.URL+"</a>")
 		l.Add("http://"+u, "<a href='"+fs+"'>"+c.Site.URL+"</a>")
 		l.Add("https://"+u, "<a href='"+fs+"'>"+c.Site.URL+"</a>")
 	}
