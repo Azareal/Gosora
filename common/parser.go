@@ -3,13 +3,13 @@ package common
 import (
 	"bytes"
 	//"fmt"
+	"encoding/json"
+	"io/ioutil"
 	"net/url"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
-	"io/ioutil"
-	"os"
-	"encoding/json"
 	"unicode/utf8"
 )
 
@@ -86,7 +86,7 @@ func InitEmoji() error {
 			emojis[ikey] = ival
 		}
 	}
-	
+
 	return nil
 }
 
@@ -283,7 +283,7 @@ func PreparseMessage(msg string) string {
 			// TODO: Scan through tags and make sure the suffix is present to reduce the number of false positives which hit the loop below
 			//fmt.Printf("tags: %+v\n", tags)
 
-			var newI = -1
+			newI := -1
 			var out string
 			toActionList := tagToAction[char]
 			for _, toAction := range toActionList {
@@ -473,8 +473,8 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 
 	// Search for URLs, mentions and hashlinks in the messages...
 	var sb strings.Builder
-	var lastItem = 0
-	var i = 0
+	lastItem := 0
+	i := 0
 	//var c bool
 	//fmt.Println("msg:", "'"+msg+"'")
 	for ; len(msg) > i; i++ {
@@ -484,7 +484,7 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 			if (i != 0) || msg[i] < 33 {
 				i++
 			}
-			if len(msg) <= (i+1) {
+			if len(msg) <= (i + 1) {
 				break
 			}
 			//fmt.Println("s2")
@@ -508,7 +508,7 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 				if msg[i+1:i+len(hashType)+1] != hashType {
 					continue
 				}
-				
+
 				//fmt.Println("msg[lastItem:i]:", msg[lastItem:i])
 				sb.WriteString(msg[lastItem:i])
 				i += len(hashType) + 1
@@ -591,7 +591,7 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 					continue
 				}
 
-				media, ok := parseMediaString(msg[i:i+urlLen])
+				media, ok := parseMediaString(msg[i : i+urlLen])
 				if !ok {
 					//fmt.Println("o3")
 					sb.Write(InvalidURL)
@@ -644,7 +644,7 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 				//fmt.Println("p3")
 
 				// TODO: Add support for rel="ugc"
-				sb.Grow(len(URLOpen) + (len(msg[i : i+urlLen]) * 2) + len(URLOpen2) + len(URLClose))
+				sb.Grow(len(URLOpen) + (len(msg[i:i+urlLen]) * 2) + len(URLOpen2) + len(URLClose))
 				if media.Trusted {
 					sb.Write(URLOpen)
 				} else {
@@ -652,7 +652,7 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 				}
 				sb.WriteString(msg[i : i+urlLen])
 				sb.Write(URLOpen2)
-				sb.WriteString(msg[i : i+urlLen])
+				sb.WriteString(media.FURL)
 				sb.Write(URLClose)
 				i += urlLen
 				lastItem = i
@@ -666,7 +666,7 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 			calclen = lastItem
 		}*/
 		//if i == len(msg) {
-			sb.WriteString(msg[lastItem:])
+		sb.WriteString(msg[lastItem:])
 		/*} else {
 			sb.WriteString(msg[lastItem:calclen])
 		}*/
@@ -712,7 +712,6 @@ func validateURLString(data string) bool {
 func validatedURLBytes(data []byte) (url []byte) {
 	datalen := len(data)
 	i := 0
-
 	if datalen >= 6 {
 		if bytes.Equal(data[0:6], []byte("ftp://")) || bytes.Equal(data[0:6], []byte("git://")) {
 			i = 6
@@ -784,7 +783,7 @@ func PartialURLStringLen(data string) (int, bool) {
 	//fmt.Println("Data Length: ",len(data))
 	if len(data) < i {
 		//fmt.Println("e1:",i)
-		return i+1, false
+		return i + 1, false
 	}
 
 	// ? - There should only be one : and that's only if the URL is on a non-standard port. Same for ?s.
@@ -801,7 +800,7 @@ func PartialURLStringLen(data string) (int, bool) {
 			return i, false
 		}
 	}
-	
+
 	//fmt.Println("e4:", i)
 	/*if data[i-1] < 33 {
 		return i-1, i != f
@@ -842,6 +841,7 @@ func PartialURLStringLen2(data string) int {
 type MediaEmbed struct {
 	Type string //image
 	URL  string
+	FURL string
 	Body string
 
 	Trusted bool // samesite urls
@@ -882,7 +882,7 @@ func parseMediaString(data string) (media MediaEmbed, ok bool) {
 		if samesite && pathFrags[1] == "attachs" && (scheme == "http" || scheme == "https") {
 			var sport string
 			// ? - Assumes the sysadmin hasn't mixed up the two standard ports
-			if port != "443" && port != "80" {
+			if port != "443" && port != "80" && port != "" {
 				sport = ":" + port
 			}
 			media.URL = scheme + "://" + hostname + sport + path
@@ -903,7 +903,7 @@ func parseMediaString(data string) (media MediaEmbed, ok bool) {
 
 	// ? - I don't think this hostname will hit every YT domain
 	// TODO: Make this a more customisable handler rather than hard-coding it in here
-	if strings.HasSuffix(hostname,".youtube.com") && path == "/watch" {
+	if strings.HasSuffix(hostname, ".youtube.com") && path == "/watch" {
 		video, ok := query["v"]
 		if ok && len(video) >= 1 && video[0] != "" {
 			media.Type = "raw"
@@ -913,16 +913,14 @@ func parseMediaString(data string) (media MediaEmbed, ok bool) {
 		}
 	}
 
-	lastFrag := pathFrags[len(pathFrags)-1]
-	if lastFrag != "" {
+	if lastFrag := pathFrags[len(pathFrags)-1]; lastFrag != "" {
 		// TODO: Write a function for getting the file extension of a string
-		extarr := strings.Split(lastFrag, ".")
-		if len(extarr) >= 2 {
+		if extarr := strings.Split(lastFrag, "."); len(extarr) >= 2 {
 			ext := extarr[len(extarr)-1]
 			if ImageFileExts.Contains(ext) {
 				media.Type = "image"
 				var sport string
-				if port != "443" && port != "80" {
+				if port != "443" && port != "80" && port != "" {
 					sport = ":" + port
 				}
 				media.URL = scheme + "://" + hostname + sport + path
@@ -930,6 +928,12 @@ func parseMediaString(data string) (media MediaEmbed, ok bool) {
 			}
 		}
 	}
+
+	var sport string
+	if port != "443" && port != "80" && port != "" {
+		sport = ":" + port
+	}
+	media.FURL = hostname + sport + path
 
 	return media, true
 }
@@ -966,7 +970,7 @@ func Paginate(currentPage int, lastPage int, maxPages int) (out []int) {
 	if diff < 3 {
 		pre = maxPages - diff
 	}
-	
+
 	page := currentPage - pre
 	if page < 0 {
 		page = 0
