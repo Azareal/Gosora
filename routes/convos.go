@@ -156,12 +156,9 @@ func ConvosCreateSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.R
 	if err != nil {
 		return c.LocalError(p.GetErrorPhrase("id_must_be_integer"), w, r, user)
 	}
-
-	err = c.Convos.Delete(cid)
-	if err != nil {
+	if err := c.Convos.Delete(cid); err != nil {
 		return c.InternalError(err, w, r)
 	}
-
 	http.Redirect(w, r, "/user/convos/", http.StatusSeeOther)
 	return nil
 }*/
@@ -269,7 +266,7 @@ func ConvosEditReplySubmit(w http.ResponseWriter, r *http.Request, user c.User, 
 	if !user.Perms.UseConvos {
 		return c.NoPermissions(w, r, user)
 	}
-	js := (r.PostFormValue("js") == "1")
+	js := r.PostFormValue("js") == "1"
 
 	post := &c.ConversationPost{ID: cpid}
 	err = post.Fetch()
@@ -307,5 +304,25 @@ func ConvosEditReplySubmit(w http.ResponseWriter, r *http.Request, user c.User, 
 	} else {
 		w.Write(successJSONBytes)
 	}
+	return nil
+}
+
+func RelationsBlockCreate(w http.ResponseWriter, r *http.Request, user c.User, h *c.Header, spid string) c.RouteError {
+	accountEditHead("create_block", w, r, &user, h)
+	pid, err := strconv.Atoi(spid)
+	if err != nil {
+		return c.LocalError(p.GetErrorPhrase("id_must_be_integer"), w, r, user)
+	}
+	puser, err := c.Users.Get(pid)
+	if err == sql.ErrNoRows {
+		return c.LocalError("The user you're trying to block doesn't exist.", w, r, user)
+	} else if err != nil {
+		return c.InternalError(err, w, r)
+	}
+	pi := c.Account{h, "dashboard", "create_block", puser}
+	return renderTemplate("account", w, r, h, pi)
+}
+
+func RelationsBlockCreateSubmit(w http.ResponseWriter, r *http.Request, user c.User, h *c.Header, spid string) c.RouteError {
 	return nil
 }
