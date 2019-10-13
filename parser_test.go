@@ -301,7 +301,9 @@ func TestParser(t *testing.T) {
 
 	l = &METriList{nil}
 	pre := c.Site.URL // Just in case this is localhost...
+	pre2 := c.Site.EnableSSl
 	c.Site.URL = "example.com"
+	c.Site.EnableSsl = true
 	l.Add("//"+c.Site.URL, "<a href='https://"+c.Site.URL+"'>"+c.Site.URL+"</a>")
 	l.Add("//"+c.Site.URL+"\n", "<a href='https://"+c.Site.URL+"'>"+c.Site.URL+"</a><br>")
 	l.Add("//"+c.Site.URL+"\n//"+c.Site.URL, "<a href='https://"+c.Site.URL+"'>"+c.Site.URL+"</a><br><a href='https://"+c.Site.URL+"'>"+c.Site.URL+"</a>")
@@ -317,6 +319,7 @@ func TestParser(t *testing.T) {
 		}
 	}
 	c.Site.URL = pre
+	c.Site.EnableSsl = pre2
 
 	c.AddHashLinkType("nnid-", func(sb *strings.Builder, msg string, i *int) {
 		tid, intLen := c.CoerceIntString(msg[*i:])
