@@ -431,13 +431,14 @@ func createTables(adapter qgen.Adapter) (err error) {
 				tC{"target", "int", 0, false, false, ""},
 			}, nil,
 		)
-		createTable("users_blocks", "", "",
-			[]tC{
-				tC{"blocker", "int", 0, false, false, ""},
-				tC{"blockedUser", "int", 0, false, false, ""},
-			}, nil,
-		)
 	*/
+
+	createTable("users_blocks", "", "",
+		[]tC{
+			tC{"blocker", "int", 0, false, false, ""},
+			tC{"blockedUser", "int", 0, false, false, ""},
+		}, nil,
+	)
 
 	createTable("activity_stream_matches", "", "",
 		[]tC{

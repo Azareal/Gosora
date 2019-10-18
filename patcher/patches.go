@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"strconv"
 
-	"github.com/Azareal/Gosora/query_gen"
+	qgen "github.com/Azareal/Gosora/query_gen"
 )
 
 type tblColumn = qgen.DBTableColumn
@@ -39,6 +39,7 @@ func init() {
 	addPatch(23, patch23)
 	addPatch(24, patch24)
 	addPatch(25, patch25)
+	addPatch(26, patch26)
 }
 
 func patch0(scanner *bufio.Scanner) (err error) {
@@ -56,7 +57,7 @@ func patch0(scanner *bufio.Scanner) (err error) {
 			tC{"mid", "int", 0, false, true, ""},
 		},
 		[]tblKey{
-			tblKey{"mid", "primary","",false},
+			tblKey{"mid", "primary", "", false},
 		},
 	))
 	if err != nil {
@@ -83,7 +84,7 @@ func patch0(scanner *bufio.Scanner) (err error) {
 			tC{"adminOnly", "boolean", 0, false, false, "0"},
 		},
 		[]tblKey{
-			tblKey{"miid", "primary","",false},
+			tblKey{"miid", "primary", "", false},
 		},
 	))
 	if err != nil {
@@ -96,8 +97,8 @@ func patch0(scanner *bufio.Scanner) (err error) {
 	}
 
 	var order int
-	var mOrder = "mid, name, htmlID, cssClass, position, path, aria, tooltip, guestOnly, memberOnly, staffOnly, adminOnly"
-	var addMenuItem = func(data map[string]interface{}) error {
+	mOrder := "mid, name, htmlID, cssClass, position, path, aria, tooltip, guestOnly, memberOnly, staffOnly, adminOnly"
+	addMenuItem := func(data map[string]interface{}) error {
 		cols, values := qgen.InterfaceMapToInsertStrings(data, mOrder)
 		err := execStmt(qgen.Builder.SimpleInsert("menu_items", cols+", order", values+","+strconv.Itoa(order)))
 		order++
@@ -153,7 +154,7 @@ func patch0(scanner *bufio.Scanner) (err error) {
 }
 
 func patch1(scanner *bufio.Scanner) error {
-	var routes = map[string]string{
+	routes := map[string]string{
 		"routeAccountEditCriticalSubmit": "routes.AccountEditCriticalSubmit",
 		"routeAccountEditAvatar":         "routes.AccountEditAvatar",
 		"routeAccountEditAvatarSubmit":   "routes.AccountEditAvatarSubmit",
@@ -164,7 +165,7 @@ func patch1(scanner *bufio.Scanner) error {
 }
 
 func patch2(scanner *bufio.Scanner) error {
-	var routes = map[string]string{
+	routes := map[string]string{
 		"routeLogout":                   "routes.AccountLogout",
 		"routeShowAttachment":           "routes.ShowAttachment",
 		"routeChangeTheme":              "routes.ChangeTheme",
@@ -190,13 +191,13 @@ func patch3(scanner *bufio.Scanner) error {
 			tC{"doneAt", "createdAt", 0, false, false, ""},
 		},
 		[]tblKey{
-			tblKey{"rlid", "primary","",false},
+			tblKey{"rlid", "primary", "", false},
 		},
 	))
 }
 
 func patch4(scanner *bufio.Scanner) error {
-	var routes = map[string]string{
+	routes := map[string]string{
 		"routeReportSubmit":                      "routes.ReportSubmit",
 		"routeAccountEditEmail":                  "routes.AccountEditEmail",
 		"routeAccountEditEmailTokenSubmit":       "routes.AccountEditEmailTokenSubmit",
@@ -253,7 +254,7 @@ func patch4(scanner *bufio.Scanner) error {
 			tC{"menuID", "int", 0, false, false, "-1"},
 		},
 		[]tblKey{
-			tblKey{"pid", "primary","",false},
+			tblKey{"pid", "primary", "", false},
 		},
 	))
 	if err != nil {
@@ -264,7 +265,7 @@ func patch4(scanner *bufio.Scanner) error {
 }
 
 func patch5(scanner *bufio.Scanner) error {
-	var routes = map[string]string{
+	routes := map[string]string{
 		"routePanelUsers":                  "panel.Users",
 		"routePanelUsersEdit":              "panel.UsersEdit",
 		"routePanelUsersEditSubmit":        "panel.UsersEditSubmit",
@@ -296,7 +297,7 @@ func patch5(scanner *bufio.Scanner) error {
 			tC{"createdAt", "createdAt", 0, false, false, ""},
 		},
 		[]tblKey{
-			tblKey{"uid", "primary","",false},
+			tblKey{"uid", "primary", "", false},
 		},
 	))
 	if err != nil {
@@ -316,14 +317,14 @@ func patch7(scanner *bufio.Scanner) error {
 			tC{"uid", "int", 0, false, false, ""}, // TODO: Make this a foreign key
 		},
 		[]tblKey{
-			tblKey{"uid", "primary","",false},
+			tblKey{"uid", "primary", "", false},
 		},
 	))
 }
 
 func renameRoutes(routes map[string]string) error {
 	// ! Don't reuse this function blindly, it doesn't escape apostrophes
-	var replaceTextWhere = func(replaceThis string, withThis string) error {
+	replaceTextWhere := func(replaceThis string, withThis string) error {
 		return execStmt(qgen.Builder.SimpleUpdate("viewchunks", "route = '"+withThis+"'", "route = '"+replaceThis+"'"))
 	}
 
@@ -338,7 +339,7 @@ func renameRoutes(routes map[string]string) error {
 }
 
 func patch8(scanner *bufio.Scanner) error {
-	var routes = map[string]string{
+	routes := map[string]string{
 		"routePanelWordFilter":                 "panel.WordFilters",
 		"routePanelWordFiltersCreateSubmit":    "panel.WordFiltersCreateSubmit",
 		"routePanelWordFiltersEdit":            "panel.WordFiltersEdit",
@@ -398,7 +399,7 @@ func patch9(scanner *bufio.Scanner) error {
 			tC{"doneAt", "createdAt", 0, false, false, ""},
 		},
 		[]tblKey{
-			tblKey{"lid", "primary","",false},
+			tblKey{"lid", "primary", "", false},
 		},
 	))
 }
@@ -418,13 +419,12 @@ func patch10(scanner *bufio.Scanner) error {
 
 	err = acc().Select("topics").Cols("tid").EachInt(func(tid int) error {
 		stid := itoa(tid)
-
 		count, err := acc().Count("attachments").Where("originTable = 'topics' and originID = " + stid).Total()
 		if err != nil {
 			return err
 		}
 
-		var hasReply = false
+		hasReply := false
 		err = acc().Select("replies").Cols("rid").Where("tid = " + stid).Orderby("rid DESC").Limit("1").EachInt(func(rid int) error {
 			hasReply = true
 			_, err := acc().Update("topics").Set("lastReplyID = ?, attachCount = ?").Where("tid = "+stid).Exec(rid, count)
@@ -461,7 +461,6 @@ func patch11(scanner *bufio.Scanner) error {
 	// We could probably do something more efficient, but as there shouldn't be too many sites right now, we can probably cheat a little, otherwise it'll take forever to get things done
 	return acc().Select("topics").Cols("tid").EachInt(func(tid int) error {
 		stid := itoa(tid)
-
 		count, err := acc().Count("attachments").Where("originTable = 'topics' and originID = " + stid).Total()
 		if err != nil {
 			return err
@@ -473,7 +472,6 @@ func patch11(scanner *bufio.Scanner) error {
 
 	/*return acc().Select("replies").Cols("rid").EachInt(func(rid int) error {
 		srid := itoa(rid)
-
 		count, err := acc().Count("attachments").Where("originTable = 'replies' and originID = " + srid).Total()
 		if err != nil {
 			return err
@@ -521,7 +519,7 @@ func patch12(scanner *bufio.Scanner) error {
 }
 
 func patch13(scanner *bufio.Scanner) error {
-	err := execStmt(qgen.Builder.AddColumn("widgets", tC{"wid", "int", 0, false, true, ""}, &tblKey{"wid", "primary","",false}))
+	err := execStmt(qgen.Builder.AddColumn("widgets", tC{"wid", "int", 0, false, true, ""}, &tblKey{"wid", "primary", "", false}))
 	if err != nil {
 		return err
 	}
@@ -530,15 +528,15 @@ func patch13(scanner *bufio.Scanner) error {
 }
 
 func patch14(scanner *bufio.Scanner) error {
-	err := execStmt(qgen.Builder.AddKey("topics", "title", tblKey{"title", "fulltext","",false}))
+	err := execStmt(qgen.Builder.AddKey("topics", "title", tblKey{"title", "fulltext", "", false}))
 	if err != nil {
 		return err
 	}
-	err = execStmt(qgen.Builder.AddKey("topics", "content", tblKey{"content", "fulltext","",false}))
+	err = execStmt(qgen.Builder.AddKey("topics", "content", tblKey{"content", "fulltext", "", false}))
 	if err != nil {
 		return err
 	}
-	err = execStmt(qgen.Builder.AddKey("replies", "content", tblKey{"content", "fulltext","",false}))
+	err = execStmt(qgen.Builder.AddKey("replies", "content", tblKey{"content", "fulltext", "", false}))
 	if err != nil {
 		return err
 	}
@@ -630,8 +628,8 @@ func patch20(scanner *bufio.Scanner) error {
 	if err != nil {
 		return err
 	}
-	
-	return execStmt(qgen.Builder.AddForeignKey("activity_stream_matches", "asid","activity_stream","asid",true))
+
+	return execStmt(qgen.Builder.AddForeignKey("activity_stream_matches", "asid", "activity_stream", "asid", true))
 }
 
 func patch21(scanner *bufio.Scanner) error {
@@ -639,12 +637,12 @@ func patch21(scanner *bufio.Scanner) error {
 	if err != nil {
 		return err
 	}
-	
+
 	err = execStmt(qgen.Builder.AddColumn("memchunks", tC{"heap", "int", 0, false, false, "0"}, nil))
 	if err != nil {
 		return err
 	}
-	
+
 	err = execStmt(qgen.Builder.CreateTable("meta", "", "",
 		[]tC{
 			tC{"name", "varchar", 200, false, false, ""},
@@ -676,7 +674,7 @@ func patch23(scanner *bufio.Scanner) error {
 			tC{"lastReplyBy", "int", 0, false, false, ""},
 		},
 		[]tblKey{
-			tblKey{"cid", "primary","",false},
+			tblKey{"cid", "primary", "", false},
 		},
 	))
 	if err != nil {
@@ -696,7 +694,7 @@ func patch23(scanner *bufio.Scanner) error {
 			tC{"post", "varchar", 50, false, false, "''"},
 		},
 		[]tblKey{
-			tblKey{"pid", "primary","",false},
+			tblKey{"pid", "primary", "", false},
 		},
 	))
 	if err != nil {
@@ -725,18 +723,27 @@ func patch24(scanner *bufio.Scanner) error {
 			tC{"pid", "int", 0, false, true, ""},
 			tC{"from_gid", "int", 0, false, false, ""},
 			tC{"to_gid", "int", 0, false, false, ""},
-			tC{"two_way", "boolean",0,false,false,"0"}, // If a user no longer meets the requirements for this promotion then they will be demoted if this flag is set
+			tC{"two_way", "boolean", 0, false, false, "0"}, // If a user no longer meets the requirements for this promotion then they will be demoted if this flag is set
 
 			// Requirements
 			tC{"level", "int", 0, false, false, ""},
 			tC{"minTime", "int", 0, false, false, ""}, // How long someone needs to have been in their current group before being promoted
 		},
 		[]tblKey{
-			tblKey{"pid", "primary","",false},
+			tblKey{"pid", "primary", "", false},
 		},
 	))
 }
 
 func patch25(scanner *bufio.Scanner) error {
 	return execStmt(qgen.Builder.AddColumn("users_groups_promotions", tC{"posts", "int", 0, false, false, "0"}, nil))
+}
+
+func patch26(scanner *bufio.Scanner) error {
+	return execStmt(qgen.Builder.CreateTable("users_blocks", "", "",
+		[]tC{
+			tC{"blocker", "int", 0, false, false, ""},
+			tC{"blockedUser", "int", 0, false, false, ""},
+		}, nil,
+	))
 }

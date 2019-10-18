@@ -7,7 +7,7 @@ import (
 
 	c "github.com/Azareal/Gosora/common"
 	"github.com/Azareal/Gosora/common/phrases"
-	"github.com/Azareal/Gosora/query_gen"
+	qgen "github.com/Azareal/Gosora/query_gen"
 )
 
 type ProfileStmts struct {
@@ -37,7 +37,7 @@ func ViewProfile(w http.ResponseWriter, r *http.Request, user c.User, header *c.
 	// TODO: Do a 301 if it's the wrong username? Do a canonical too?
 	_, pid, err := ParseSEOURL(r.URL.Path[len("/user/"):])
 	if err != nil {
-		return c.SimpleError(phrases.GetErrorPhrase("url_id_must_be_integer"),w,r,header)
+		return c.SimpleError(phrases.GetErrorPhrase("url_id_must_be_integer"), w, r, header)
 	}
 
 	// TODO: Preload this?
@@ -98,8 +98,7 @@ func ViewProfile(w http.ResponseWriter, r *http.Request, user c.User, header *c.
 		// TODO: Add a hook here
 		replyList = append(replyList, ru)
 	}
-	err = rows.Err()
-	if err != nil {
+	if err := rows.Err(); err != nil {
 		return c.InternalError(err, w, r)
 	}
 
@@ -107,7 +106,11 @@ func ViewProfile(w http.ResponseWriter, r *http.Request, user c.User, header *c.
 	prevScore := c.GetLevelScore(puser.Level)
 	currentScore := puser.Score - prevScore
 	nextScore := c.GetLevelScore(puser.Level+1) - prevScore
+	blocked, err := c.UserBlocks.IsBlockedBy(user.ID, puser.ID)
+	if err != nil {
+		return c.InternalError(err, w, r)
+	}
 
-	ppage := c.ProfilePage{header, replyList, *puser, currentScore, nextScore}
+	ppage := c.ProfilePage{header, replyList, *puser, currentScore, nextScore, blocked}
 	return renderTemplate("profile", w, r, header, ppage)
 }

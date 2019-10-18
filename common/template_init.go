@@ -147,12 +147,12 @@ type TItem struct {
 
 type TItemHold map[string]TItem
 
-func (hold TItemHold) Add(name string, expects string, expectsInt interface{}) {
-	hold[name] = TItem{expects, expectsInt, true}
+func (h TItemHold) Add(name string, expects string, expectsInt interface{}) {
+	h[name] = TItem{expects, expectsInt, true}
 }
 
-func (hold TItemHold) AddStd(name string, expects string, expectsInt interface{}) {
-	hold[name] = TItem{expects, expectsInt, false}
+func (h TItemHold) AddStd(name string, expects string, expectsInt interface{}) {
+	h[name] = TItem{expects, expectsInt, false}
 }
 
 // ? - Add template hooks?
@@ -169,11 +169,11 @@ func CompileTemplates() error {
 	}
 	log.Printf("overriden: %+v\n", overriden)
 
-	var config tmpl.CTemplateConfig
-	config.Minify = Config.MinifyTemplates
-	config.Debug = Dev.DebugMode
-	config.SuperDebug = Dev.TemplateDebug
-
+	config := tmpl.CTemplateConfig{
+		Minify: Config.MinifyTemplates,
+		Debug: Dev.DebugMode,
+		SuperDebug: Dev.TemplateDebug,
+	}
 	c := tmpl.NewCTemplateSet("normal")
 	c.SetConfig(config)
 	c.SetBaseImportMap(map[string]string{
@@ -296,7 +296,7 @@ func compileTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName string
 		return err
 	}
 
-	ppage := ProfilePage{htitle("User 526"), replyList, user, 0, 0} // TODO: Use the score from user to generate the currentScore and nextScore
+	ppage := ProfilePage{htitle("User 526"), replyList, user, 0, 0, false} // TODO: Use the score from user to generate the currentScore and nextScore
 	t.Add("profile", "c.ProfilePage", ppage)
 
 	var topicsList []*TopicsRow

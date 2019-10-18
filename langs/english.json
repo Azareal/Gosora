@@ -144,6 +144,8 @@
 		"account_level_list":"Level Progress",
 		"convos":"Conversations",
 		"convo":"Conversation",
+		"create_block":"Block User",
+		"remove_block":"Unblock User",
 
 		"panel_dashboard":"Control Panel Dashboard",
 		"panel_forums":"Forum Manager",
@@ -544,6 +546,9 @@
 		"create_convo_recp":"Recipient/s",
 		"create_convo_button":"Create Convo",
 
+		"create_block_msg":"Are you sure you want to block this user?",
+		"remove_block_msg":"Are you sure you want to unblock this user?",
+
 		"areyousure_head":"Are you sure?",
 		"areyousure_continue":"Continue",
 
@@ -700,6 +705,7 @@
 		"profile_unban":"Unban",
 		"profile_ban":"Ban",
 		"profile_block":"Block",
+		"profile_unblock":"Unblock",
 		"profile_report_user_tooltip":"Report User",
 		"profile_report_user_aria":"Report User",
 		"profile_ban_user_head":"Ban User",

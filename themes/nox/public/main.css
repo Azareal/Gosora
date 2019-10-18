@@ -343,6 +343,10 @@ h1, h2, h3, h4, h5 {
 	padding: 4px;
 	margin-bottom: 0px;
 }
+#are_you_sure .rowblock .rowitem.passive {
+	display: flex;
+	flex-direction: column;
+}
 
 .rowhead, .opthead, .colstack_head {
 	margin-left: 8px;

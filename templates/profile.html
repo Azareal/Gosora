@@ -38,6 +38,9 @@
 			{{else}}<a href="#ban_user" class="profile_menu_item">{{lang "profile_ban"}}</a>{{end}}
 			</div>{{end}}
 			<div class="rowitem passive">
+				{{if .Blocked}}<a href="/user/block/remove/{{.ProfileOwner.ID}}" class="profile_menu_item">{{lang "profile_unblock"}}</a>{{else}}<a href="/user/block/create/{{.ProfileOwner.ID}}" class="profile_menu_item">{{lang "profile_block"}}</a>{{end}}
+			</div>
+			<div class="rowitem passive">
 				<a href="/report/submit/{{.ProfileOwner.ID}}?s={{.CurrentUser.Session}}&type=user" class="profile_menu_item report_item" aria-label="{{lang "profile_report_user_aria"}}" title="{{lang "profile_report_user_tooltip"}}"></a>
 			</div>
 			{{end}}
@@ -50,7 +53,7 @@
 	{{if .CurrentUser.Perms.BanUsers}}
 	<!-- TODO: Inline the display:none; CSS -->
 	<div id="ban_user_head" class="colstack_item colstack_head hash_hide ban_user_hash" style="display:none;">
-			<div class="rowitem"><h1><a>{{lang "profile_ban_user_head"}}</a></h1></div>
+		<div class="rowitem"><h1><a>{{lang "profile_ban_user_head"}}</a></h1></div>
 	</div>
 	<form id="ban_user_form" class="hash_hide ban_user_hash" action="/users/ban/submit/{{.ProfileOwner.ID}}?s={{.CurrentUser.Session}}" method="post" style="display:none;">
 	<div class="the_form">

@@ -52,7 +52,7 @@ type Header struct {
 
 func (h *Header) AddScript(name string) {
 	if name[0] == '/' && name[1] == '/' {
-		} else {
+	} else {
 		// TODO: Use a secondary static file map to avoid this concatenation?
 		file, ok := StaticFiles.Get("/s/" + name)
 		if ok {
@@ -65,7 +65,7 @@ func (h *Header) AddScript(name string) {
 
 func (h *Header) AddPreScriptAsync(name string) {
 	if name[0] == '/' && name[1] == '/' {
-		} else {
+	} else {
 		file, ok := StaticFiles.Get("/s/" + name)
 		if ok {
 			name = file.OName
@@ -76,7 +76,7 @@ func (h *Header) AddPreScriptAsync(name string) {
 
 func (h *Header) AddScriptAsync(name string) {
 	if name[0] == '/' && name[1] == '/' {
-		} else {
+	} else {
 		file, ok := StaticFiles.Get("/s/" + name)
 		if ok {
 			name = file.OName
@@ -207,6 +207,7 @@ type ProfilePage struct {
 	ProfileOwner User
 	CurrentScore int
 	NextScore    int
+	Blocked      bool
 }
 
 type CreateTopicPage struct {
@@ -275,10 +276,10 @@ type ConvoListPage struct {
 
 type ConvoViewRow struct {
 	*ConversationPost
-	User *User
-	ClassName string
+	User         *User
+	ClassName    string
 	ContentLines int
-	
+
 	CanModify bool
 }
 
@@ -582,15 +583,15 @@ type PanelEditGroupPermsPage struct {
 type GroupPromotionExtend struct {
 	*GroupPromotion
 	FromGroup *Group
-	ToGroup *Group
+	ToGroup   *Group
 }
 
 type PanelEditGroupPromotionsPage struct {
 	*BasePanelPage
-	ID int
-	Name string
+	ID         int
+	Name       string
 	Promotions []*GroupPromotionExtend
-	Groups []*Group
+	Groups     []*Group
 }
 
 type BackupItem struct {
@@ -607,9 +608,9 @@ type PanelBackupPage struct {
 }
 
 type PageLogItem struct {
-	Action    template.HTML
-	IP string
-	DoneAt    string
+	Action template.HTML
+	IP     string
+	DoneAt string
 }
 
 type PanelLogsPage struct {
@@ -630,8 +631,8 @@ type PanelRegLogsPage struct {
 }
 
 type DebugPageCache struct {
-	Topics int
-	Users int
+	Topics  int
+	Users   int
 	Replies int
 
 	TCap int
@@ -642,37 +643,37 @@ type DebugPageCache struct {
 }
 
 type DebugPageDatabase struct {
-	Topics int
-	Users int
-	Replies int
+	Topics         int
+	Users          int
+	Replies        int
 	ProfileReplies int
 	ActivityStream int
-	Likes int
-	Attachments int
-	Polls int
+	Likes          int
+	Attachments    int
+	Polls          int
 
 	LoginLogs int
-	RegLogs int
-	ModLogs int
+	RegLogs   int
+	ModLogs   int
 	AdminLogs int
 
-	Views int
-	ViewsAgents int
-	ViewsForums int
-	ViewsLangs int
+	Views          int
+	ViewsAgents    int
+	ViewsForums    int
+	ViewsLangs     int
 	ViewsReferrers int
-	ViewsSystems int
-	PostChunks int
-	TopicChunks int
+	ViewsSystems   int
+	PostChunks     int
+	TopicChunks    int
 }
 
 type DebugPageDisk struct {
-	Static int
+	Static      int
 	Attachments int
-	Avatars int
-	Logs int
-	Backups int
-	Git int
+	Avatars     int
+	Logs        int
+	Backups     int
+	Git         int
 }
 
 type PanelDebugPage struct {
@@ -688,9 +689,9 @@ type PanelDebugPage struct {
 	CPUs       int
 	MemStats   runtime.MemStats
 
-	Cache DebugPageCache
+	Cache    DebugPageCache
 	Database DebugPageDatabase
-	Disk DebugPageDisk
+	Disk     DebugPageDisk
 }
 
 type PageSimple struct {

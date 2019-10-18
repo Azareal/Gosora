@@ -92,8 +92,10 @@ func userRoutes() *RouteGroup {
 		Action("routes.ConvosDeleteReplySubmit", "/user/convo/delete/submit/", "extraData"),
 		Action("routes.ConvosEditReplySubmit", "/user/convo/edit/submit/", "extraData"),
 
-		//MView("routes.RelationsBlockCreate","/user/block/create/","extraData")
-		//Action("routes.RelationsBlockCreateSubmit","/user/block/create/submit/","extraData")
+		MView("routes.RelationsBlockCreate", "/user/block/create/", "extraData"),
+		Action("routes.RelationsBlockCreateSubmit", "/user/block/create/submit/", "extraData"),
+		MView("routes.RelationsBlockRemove", "/user/block/remove/", "extraData"),
+		Action("routes.RelationsBlockRemoveSubmit", "/user/block/remove/submit/", "extraData"),
 	)
 }
 

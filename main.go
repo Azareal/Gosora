@@ -49,8 +49,7 @@ func init() {
 }
 
 func afterDBInit() (err error) {
-	err = storeInit()
-	if err != nil {
+	if err := storeInit(); err != nil {
 		return err
 	}
 	log.Print("Exitted storeInit")
@@ -136,6 +135,10 @@ func storeInit() (err error) {
 		return errors.WithStack(err)
 	}
 	c.Convos, err = c.NewDefaultConversationStore(acc)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	c.UserBlocks, err = c.NewDefaultBlockStore(acc)
 	if err != nil {
 		return errors.WithStack(err)
 	}

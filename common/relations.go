@@ -6,20 +6,27 @@ import (
 	qgen "github.com/Azareal/Gosora/query_gen"
 )
 
+var UserBlocks BlockStore
+
+//var UserFriends FriendStore
+
 type BlockStore interface {
 	IsBlockedBy(blocker, blockee int) (bool, error)
 	Add(blocker, blockee int) error
+	Remove(blocker, blockee int) error
 }
 
 type DefaultBlockStore struct {
 	isBlocked *sql.Stmt
 	add       *sql.Stmt
+	remove    *sql.Stmt
 }
 
 func NewDefaultBlockStore(acc *qgen.Accumulator) (*DefaultBlockStore, error) {
 	return &DefaultBlockStore{
 		isBlocked: acc.Select("users_blocks").Cols("blocker").Where("blocker = ? AND blockedUser = ?").Prepare(),
 		add:       acc.Insert("users_blocks").Columns("blocker,blockedUser").Fields("?,?").Prepare(),
+		remove:    acc.Delete("users_blocks").Where("blocker = ? AND blockedUser = ?").Prepare(),
 	}, acc.FirstError()
 }
 
@@ -33,6 +40,11 @@ func (s *DefaultBlockStore) IsBlockedBy(blocker, blockee int) (bool, error) {
 
 func (s *DefaultBlockStore) Add(blocker, blockee int) error {
 	_, err := s.add.Exec(blocker, blockee)
+	return err
+}
+
+func (s *DefaultBlockStore) Remove(blocker, blockee int) error {
+	_, err := s.remove.Exec(blocker, blockee)
 	return err
 }
 
@@ -57,10 +69,10 @@ type DefaultFriendStore struct {
 
 func NewDefaultFriendStore(acc *qgen.Accumulator) (*DefaultFriendStore, error) {
 	return &DefaultFriendStore{
-		addInvite:         acc.Insert("users_friends_invites").Columns("requester, target").Fields("?,?").Prepare(),
+		addInvite:         acc.Insert("users_friends_invites").Columns("requester,target").Fields("?,?").Prepare(),
 		confirm:           acc.Insert("users_friends").Columns("uid,uid2").Fields("?,?").Prepare(),
-		getOwnSentInvites: acc.Select("users_friends_invites").Cols("requester, target").Where("requester = ?").Prepare(),
-		getOwnRecvInvites: acc.Select("users_friends_invites").Cols("requester, target").Where("target = ?").Prepare(),
+		getOwnSentInvites: acc.Select("users_friends_invites").Cols("requester,target").Where("requester = ?").Prepare(),
+		getOwnRecvInvites: acc.Select("users_friends_invites").Cols("requester,target").Where("target = ?").Prepare(),
 	}, acc.FirstError()
 }
 

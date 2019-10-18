@@ -134,6 +134,14 @@ func ConvosCreateSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.R
 		if !u.Perms.UseConvos {
 			return c.LocalError("One of the recipients doesn't have permission to use the conversations system", w, r, user)
 		}
+		blocked, err := c.UserBlocks.IsBlockedBy(u.ID, user.ID)
+		if err != nil {
+			return c.InternalError(err, w, r)
+		}
+		// Supermods can bypass blocks so they can tell people off when they do something stupid or have to convey important information
+		if blocked && !user.IsSuperMod {
+			return c.LocalError("You don't have permission to send messages to one of these users.", w, r, user)
+		}
 
 		rlist = append(rlist, u.ID)
 	}
@@ -308,7 +316,7 @@ func ConvosEditReplySubmit(w http.ResponseWriter, r *http.Request, user c.User, 
 }
 
 func RelationsBlockCreate(w http.ResponseWriter, r *http.Request, user c.User, h *c.Header, spid string) c.RouteError {
-	accountEditHead("create_block", w, r, &user, h)
+	h.Title = p.GetTitlePhrase("create_block")
 	pid, err := strconv.Atoi(spid)
 	if err != nil {
 		return c.LocalError(p.GetErrorPhrase("id_must_be_integer"), w, r, user)
@@ -319,10 +327,69 @@ func RelationsBlockCreate(w http.ResponseWriter, r *http.Request, user c.User, h
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
-	pi := c.Account{h, "dashboard", "create_block", puser}
-	return renderTemplate("account", w, r, h, pi)
+
+	pi := c.Page{h, nil, c.AreYouSure{"/user/block/create/submit/" + strconv.Itoa(puser.ID), p.GetTmplPhrase("create_block_msg")}}
+	return renderTemplate("are_you_sure", w, r, h, pi)
 }
 
-func RelationsBlockCreateSubmit(w http.ResponseWriter, r *http.Request, user c.User, h *c.Header, spid string) c.RouteError {
+func RelationsBlockCreateSubmit(w http.ResponseWriter, r *http.Request, user c.User, spid string) c.RouteError {
+	pid, err := strconv.Atoi(spid)
+	if err != nil {
+		return c.LocalError(p.GetErrorPhrase("id_must_be_integer"), w, r, user)
+	}
+	puser, err := c.Users.Get(pid)
+	if err == sql.ErrNoRows {
+		return c.LocalError("The user you're trying to block doesn't exist.", w, r, user)
+	} else if err != nil {
+		return c.InternalError(err, w, r)
+	}
+	if user.ID == puser.ID {
+		return c.LocalError("You can't block yourself.", w, r, user)
+	}
+
+	err = c.UserBlocks.Add(user.ID, puser.ID)
+	if err != nil {
+		return c.InternalError(err, w, r)
+	}
+
+	http.Redirect(w, r, "/user/"+strconv.Itoa(puser.ID), http.StatusSeeOther)
+	return nil
+}
+
+func RelationsBlockRemove(w http.ResponseWriter, r *http.Request, user c.User, h *c.Header, spid string) c.RouteError {
+	h.Title = p.GetTitlePhrase("remove_block")
+	pid, err := strconv.Atoi(spid)
+	if err != nil {
+		return c.LocalError(p.GetErrorPhrase("id_must_be_integer"), w, r, user)
+	}
+	puser, err := c.Users.Get(pid)
+	if err == sql.ErrNoRows {
+		return c.LocalError("The user you're trying to block doesn't exist.", w, r, user)
+	} else if err != nil {
+		return c.InternalError(err, w, r)
+	}
+
+	pi := c.Page{h, nil, c.AreYouSure{"/user/block/remove/submit/" + strconv.Itoa(puser.ID), p.GetTmplPhrase("remove_block_msg")}}
+	return renderTemplate("are_you_sure", w, r, h, pi)
+}
+
+func RelationsBlockRemoveSubmit(w http.ResponseWriter, r *http.Request, user c.User, spid string) c.RouteError {
+	pid, err := strconv.Atoi(spid)
+	if err != nil {
+		return c.LocalError(p.GetErrorPhrase("id_must_be_integer"), w, r, user)
+	}
+	puser, err := c.Users.Get(pid)
+	if err == sql.ErrNoRows {
+		return c.LocalError("The user you're trying to unblock doesn't exist.", w, r, user)
+	} else if err != nil {
+		return c.InternalError(err, w, r)
+	}
+
+	err = c.UserBlocks.Remove(user.ID, puser.ID)
+	if err != nil {
+		return c.InternalError(err, w, r)
+	}
+
+	http.Redirect(w, r, "/user/"+strconv.Itoa(puser.ID), http.StatusSeeOther)
 	return nil
 }
