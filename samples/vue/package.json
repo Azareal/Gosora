@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build":"webpack"
+    "build": "webpack"
   },
   "repository": {
     "type": "git",
@@ -16,9 +16,9 @@
   "license": "MIT",
   "homepage": "https://gosora-project.com",
   "devDependencies": {
-    "webpack-cli": "^3.3.3"
+    "webpack-cli": "^3.3.9"
   },
   "dependencies": {
-    "webpack": "^4.33.0"
+    "webpack": "^4.41.2"
   }
 }
