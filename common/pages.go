@@ -208,6 +208,8 @@ type ProfilePage struct {
 	CurrentScore int
 	NextScore    int
 	Blocked      bool
+	CanMessage bool
+	CanComment bool
 }
 
 type CreateTopicPage struct {

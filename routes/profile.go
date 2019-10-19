@@ -59,7 +59,6 @@ func ViewProfile(w http.ResponseWriter, r *http.Request, user c.User, header *c.
 		} else if err != nil {
 			return c.InternalError(err, w, r)
 		}
-		puser.Init()
 	}
 	header.Title = phrases.GetTitlePhrasef("profile", puser.Name)
 	header.Path = c.BuildProfileURL(c.NameToSlug(puser.Name), puser.ID)
@@ -86,13 +85,10 @@ func ViewProfile(w http.ResponseWriter, r *http.Request, user c.User, header *c.
 		if err != nil {
 			return c.InternalError(err, w, r)
 		}
-
 		if group.Tag != "" {
 			ru.Tag = group.Tag
 		} else if puser.ID == ru.CreatedBy {
 			ru.Tag = phrases.GetTmplPhrase("profile_owner_tag")
-		} else {
-			ru.Tag = ""
 		}
 
 		// TODO: Add a hook here
@@ -111,6 +107,13 @@ func ViewProfile(w http.ResponseWriter, r *http.Request, user c.User, header *c.
 		return c.InternalError(err, w, r)
 	}
 
-	ppage := c.ProfilePage{header, replyList, *puser, currentScore, nextScore, blocked}
+	blockedInv, err := c.UserBlocks.IsBlockedBy(puser.ID, user.ID)
+	if err != nil {
+		return c.InternalError(err, w, r)
+	}
+	canMessage := (!blockedInv && user.Perms.UseConvos) || user.IsSuperMod
+	canComment := !blockedInv && user.Perms.ViewTopic && user.Perms.CreateReply
+
+	ppage := c.ProfilePage{header, replyList, *puser, currentScore, nextScore, blocked, canMessage, canComment}
 	return renderTemplate("profile", w, r, header, ppage)
 }

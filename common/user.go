@@ -180,9 +180,8 @@ func (u *User) Init() {
 
 // TODO: Refactor this idiom into something shorter, maybe with a NullUserCache when one isn't set?
 func (u *User) CacheRemove() {
-	ucache := Users.GetCache()
-	if ucache != nil {
-		ucache.Remove(u.ID)
+	if uc := Users.GetCache(); uc != nil {
+		uc.Remove(u.ID)
 	}
 	TopicListThaw.Thaw()
 }
@@ -336,9 +335,8 @@ func (u *User) ChangeGroup(group int) (err error) {
 // ! Only updates the database not the *User for safety reasons
 func (u *User) UpdateIP(host string) error {
 	_, err := userStmts.updateLastIP.Exec(host, u.ID)
-	ucache := Users.GetCache()
-	if ucache != nil {
-		ucache.Remove(u.ID)
+	if uc := Users.GetCache(); uc != nil {
+		uc.Remove(u.ID)
 	}
 	return err
 }

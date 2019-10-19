@@ -296,7 +296,7 @@ func compileTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName string
 		return err
 	}
 
-	ppage := ProfilePage{htitle("User 526"), replyList, user, 0, 0, false} // TODO: Use the score from user to generate the currentScore and nextScore
+	ppage := ProfilePage{htitle("User 526"), replyList, user, 0, 0, false,false,false} // TODO: Use the score from user to generate the currentScore and nextScore
 	t.Add("profile", "c.ProfilePage", ppage)
 
 	var topicsList []*TopicsRow

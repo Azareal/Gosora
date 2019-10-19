@@ -242,9 +242,8 @@ func init() {
 // Flush the topic out of the cache
 // ? - We do a CacheRemove() here instead of mutating the pointer to avoid creating a race condition
 func (t *Topic) cacheRemove() {
-	tcache := Topics.GetCache()
-	if tcache != nil {
-		tcache.Remove(t.ID)
+	if tc := Topics.GetCache(); tc != nil {
+		tc.Remove(t.ID)
 	}
 	TopicListThaw.Thaw()
 }
@@ -565,11 +564,10 @@ func (t *TopicUser) Replies(offset int, pFrag int, user *User) (rlist []*ReplyUs
 			if err != nil {
 				return nil, "", err
 			}
-
-			err = reply.Init()
-			if err != nil {
+			if err := reply.Init(); err != nil {
 				return nil, "", err
 			}
+
 			reply.ContentHtml = ParseMessage(reply.Content, t.ParentID, "forums")
 
 			// TODO: This doesn't work properly so pick the first one instead?

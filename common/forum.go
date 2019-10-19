@@ -95,9 +95,9 @@ func (f *Forum) Update(name string, desc string, active bool, preset string) err
 }
 
 func (f *Forum) SetPreset(preset string, gid int) error {
-	fperms, changed := GroupForumPresetToForumPerms(preset)
+	fp, changed := GroupForumPresetToForumPerms(preset)
 	if changed {
-		return f.SetPerms(fperms, preset, gid)
+		return f.SetPerms(fp, preset, gid)
 	}
 	return nil
 }

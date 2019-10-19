@@ -23,19 +23,20 @@ type DefaultBlockStore struct {
 }
 
 func NewDefaultBlockStore(acc *qgen.Accumulator) (*DefaultBlockStore, error) {
+	ub := "users_blocks"
 	return &DefaultBlockStore{
-		isBlocked: acc.Select("users_blocks").Cols("blocker").Where("blocker = ? AND blockedUser = ?").Prepare(),
-		add:       acc.Insert("users_blocks").Columns("blocker,blockedUser").Fields("?,?").Prepare(),
-		remove:    acc.Delete("users_blocks").Where("blocker = ? AND blockedUser = ?").Prepare(),
+		isBlocked: acc.Select(ub).Cols("blocker").Where("blocker = ? AND blockedUser = ?").Prepare(),
+		add:       acc.Insert(ub).Columns("blocker,blockedUser").Fields("?,?").Prepare(),
+		remove:    acc.Delete(ub).Where("blocker = ? AND blockedUser = ?").Prepare(),
 	}, acc.FirstError()
 }
 
 func (s *DefaultBlockStore) IsBlockedBy(blocker, blockee int) (bool, error) {
 	err := s.isBlocked.QueryRow(blocker, blockee).Scan(&blocker)
-	if err != nil && err != ErrNoRows {
-		return false, err
+	if err == ErrNoRows {
+		return false, nil
 	}
-	return err != ErrNoRows, nil
+	return err == nil, err
 }
 
 func (s *DefaultBlockStore) Add(blocker, blockee int) error {

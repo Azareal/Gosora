@@ -1,7 +1,10 @@
 package common
 
-import "database/sql"
-import "github.com/Azareal/Gosora/query_gen"
+import (
+	"database/sql"
+
+	qgen "github.com/Azareal/Gosora/query_gen"
+)
 
 var Likes LikeStore
 
@@ -22,7 +25,7 @@ func NewDefaultLikeStore(acc *qgen.Accumulator) (*DefaultLikeStore, error) {
 
 // TODO: Write a test for this
 func (s *DefaultLikeStore) BulkExists(ids []int, sentBy int, targetType string) (eids []int, err error) {
-	rows, err := qgen.NewAcc().Select("likes").Columns("targetItem").Where("sentBy = ? AND targetType = ?").In("targetItem", ids).Query(sentBy,targetType)
+	rows, err := qgen.NewAcc().Select("likes").Columns("targetItem").Where("sentBy = ? AND targetType = ?").In("targetItem", ids).Query(sentBy, targetType)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	} else if err != nil {
@@ -32,11 +35,10 @@ func (s *DefaultLikeStore) BulkExists(ids []int, sentBy int, targetType string) 
 
 	var id int
 	for rows.Next() {
-		err = rows.Scan(&id)
-		if err != nil {
+		if err := rows.Scan(&id); err != nil {
 			return nil, err
 		}
-		eids = append(eids,id)
+		eids = append(eids, id)
 	}
 	return eids, rows.Err()
 }

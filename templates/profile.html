@@ -27,13 +27,13 @@
 			{{if not .CurrentUser.Loggedin}}<div class="rowitem passive">
 				<a class="profile_menu_item">{{lang "profile_login_for_options"}}</a>
 			</div>{{else}}
-			<div class="rowitem passive">
+			{{if .CanMessage}}<div class="rowitem passive">
 				<a href="/user/convos/create/" class="profile_menu_item">{{lang "profile_send_message"}}</a>
-			</div>
+			</div>{{end}}
 			<!--<div class="rowitem passive">
 				<a class="profile_menu_item">{{lang "profile_add_friend"}}</a>
 			</div>-->
-			{{if (.CurrentUser.IsSuperMod) and not (.ProfileOwner.IsSuperMod) }}<div class="rowitem passive">
+			{{if (.CurrentUser.IsSuperMod) and not (.ProfileOwner.IsSuperMod)}}<div class="rowitem passive">
 				{{if .ProfileOwner.IsBanned}}<a href="/users/unban/{{.ProfileOwner.ID}}?s={{.CurrentUser.Session}}" class="profile_menu_item">{{lang "profile_unban"}}</a>
 			{{else}}<a href="#ban_user" class="profile_menu_item">{{lang "profile_ban"}}</a>{{end}}
 			</div>{{end}}
@@ -97,7 +97,7 @@
 	<div id="profile_comments" class="colstack_item hash_hide">{{template "profile_comments_row.html" . }}</div>
 
 {{if .CurrentUser.Loggedin}}
-{{if not .CurrentUser.IsBanned}}
+{{if .CanComment}}
 	<form id="profile_comments_form" class="hash_hide" action="/profile/reply/create/?s={{.CurrentUser.Session}}" method="post">
 		<input name="uid" value='{{.ProfileOwner.ID}}' type="hidden" />
 		<div class="colstack_item topic_reply_form" style="border-top:none;">

@@ -92,26 +92,27 @@ func CreateReplySubmit(w http.ResponseWriter, r *http.Request, user c.User) c.Ro
 			//c.DebugDetail("key: ", key)
 			//c.DebugDetailf("values: %+v\n", values)
 			for _, value := range values {
-				if strings.HasPrefix(key, "pollinputitem[") {
-					halves := strings.Split(key, "[")
-					if len(halves) != 2 {
-						return c.LocalErrorJSQ("Malformed pollinputitem", w, r, user, js)
-					}
-					halves[1] = strings.TrimSuffix(halves[1], "]")
+				if !strings.HasPrefix(key, "pollinputitem[") {
+					continue
+				}
+				halves := strings.Split(key, "[")
+				if len(halves) != 2 {
+					return c.LocalErrorJSQ("Malformed pollinputitem", w, r, user, js)
+				}
+				halves[1] = strings.TrimSuffix(halves[1], "]")
 
-					index, err := strconv.Atoi(halves[1])
-					if err != nil {
-						return c.LocalErrorJSQ("Malformed pollinputitem", w, r, user, js)
-					}
+				index, err := strconv.Atoi(halves[1])
+				if err != nil {
+					return c.LocalErrorJSQ("Malformed pollinputitem", w, r, user, js)
+				}
 
-					// If there are duplicates, then something has gone horribly wrong, so let's ignore them, this'll likely happen during an attack
-					_, exists := pollInputItems[index]
-					// TODO: Should we use SanitiseBody instead to keep the newlines?
-					if !exists && len(c.SanitiseSingleLine(value)) != 0 {
-						pollInputItems[index] = c.SanitiseSingleLine(value)
-						if len(pollInputItems) >= maxPollOptions {
-							break
-						}
+				// If there are duplicates, then something has gone horribly wrong, so let's ignore them, this'll likely happen during an attack
+				_, exists := pollInputItems[index]
+				// TODO: Should we use SanitiseBody instead to keep the newlines?
+				if !exists && len(c.SanitiseSingleLine(value)) != 0 {
+					pollInputItems[index] = c.SanitiseSingleLine(value)
+					if len(pollInputItems) >= maxPollOptions {
+						break
 					}
 				}
 			}
@@ -140,8 +141,7 @@ func CreateReplySubmit(w http.ResponseWriter, r *http.Request, user c.User) c.Ro
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
 
-	wcount := c.WordCount(content)
-	err = user.IncreasePostStats(wcount, false)
+	err = user.IncreasePostStats(c.WordCount(content), false)
 	if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
@@ -164,14 +164,12 @@ func CreateReplySubmit(w http.ResponseWriter, r *http.Request, user c.User) c.Ro
 	var rids []int
 	for rows.Next() {
 		var rid int
-		err := rows.Scan(&rid)
-		if err != nil {
+		if err := rows.Scan(&rid); err != nil {
 			return c.InternalErrorJSQ(err, w, r, js)
 		}
 		rids = append(rids, rid)
 	}
-	err = rows.Err()
-	if err != nil {
+	if err := rows.Err(); err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
 	if len(rids) == 0 {
@@ -312,9 +310,7 @@ func ReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user c.User, srid
 			return c.NoPermissionsJSQ(w, r, user, js)
 		}
 	}
-
-	err = reply.Delete()
-	if err != nil {
+	if err := reply.Delete(); err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
 
@@ -333,8 +329,7 @@ func ReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user c.User, srid
 	// ? - What happens if an error fires after a redirect...?
 	replyCreator, err := c.Users.Get(reply.CreatedBy)
 	if err == nil {
-		wcount := c.WordCount(reply.Content)
-		err = replyCreator.DecreasePostStats(wcount, false)
+		err = replyCreator.DecreasePostStats(c.WordCount(reply.Content), false)
 		if err != nil {
 			return c.InternalErrorJSQ(err, w, r, js)
 		}
@@ -460,117 +455,6 @@ func RemoveAttachFromReplySubmit(w http.ResponseWriter, r *http.Request, user c.
 	}
 
 	w.Write(successJSONBytes)
-	return nil
-}
-
-// TODO: Move the profile reply routes to their own file?
-func ProfileReplyCreateSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
-	if !user.Perms.ViewTopic || !user.Perms.CreateReply {
-		return c.NoPermissions(w, r, user)
-	}
-	uid, err := strconv.Atoi(r.PostFormValue("uid"))
-	if err != nil {
-		return c.LocalError("Invalid UID", w, r, user)
-	}
-
-	profileOwner, err := c.Users.Get(uid)
-	if err == sql.ErrNoRows {
-		return c.LocalError("The profile you're trying to post on doesn't exist.", w, r, user)
-	} else if err != nil {
-		return c.InternalError(err, w, r)
-	}
-
-	content := c.PreparseMessage(r.PostFormValue("content"))
-	if len(content) == 0 {
-		return c.LocalError("You can't make a blank post", w, r, user)
-	}
-	// TODO: Fully parse the post and store it in the parsed column
-	_, err = c.Prstore.Create(profileOwner.ID, content, user.ID, user.LastIP)
-	if err != nil {
-		return c.InternalError(err, w, r)
-	}
-
-	// ! Be careful about leaking per-route permission state with &user
-	alert := c.Alert{ActorID: user.ID, TargetUserID: profileOwner.ID, Event: "reply", ElementType: "user", ElementID: profileOwner.ID, Actor: &user}
-	err = c.AddActivityAndNotifyTarget(alert)
-	if err != nil {
-		return c.InternalError(err, w, r)
-	}
-
-	counters.PostCounter.Bump()
-	http.Redirect(w, r, "/user/"+strconv.Itoa(uid), http.StatusSeeOther)
-	return nil
-}
-
-func ProfileReplyEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, srid string) c.RouteError {
-	js := r.PostFormValue("js") == "1"
-	rid, err := strconv.Atoi(srid)
-	if err != nil {
-		return c.LocalErrorJSQ("The provided Reply ID is not a valid number.", w, r, user, js)
-	}
-
-	reply, err := c.Prstore.Get(rid)
-	if err == sql.ErrNoRows {
-		return c.PreErrorJSQ("The target reply doesn't exist.", w, r, js)
-	} else if err != nil {
-		return c.InternalErrorJSQ(err, w, r, js)
-	}
-
-	creator, err := c.Users.Get(reply.CreatedBy)
-	if err != nil {
-		return c.InternalErrorJSQ(err, w, r, js)
-	}
-	// ? Does the admin understand that this group perm affects this?
-	if user.ID != creator.ID && !user.Perms.EditReply {
-		return c.NoPermissionsJSQ(w, r, user, js)
-	}
-
-	err = reply.SetBody(r.PostFormValue("edit_item"))
-	if err != nil {
-		return c.InternalErrorJSQ(err, w, r, js)
-	}
-
-	if !js {
-		http.Redirect(w, r, "/user/"+strconv.Itoa(creator.ID)+"#reply-"+strconv.Itoa(rid), http.StatusSeeOther)
-	} else {
-		w.Write(successJSONBytes)
-	}
-	return nil
-}
-
-func ProfileReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user c.User, srid string) c.RouteError {
-	js := r.PostFormValue("js") == "1"
-	rid, err := strconv.Atoi(srid)
-	if err != nil {
-		return c.LocalErrorJSQ("The provided Reply ID is not a valid number.", w, r, user, js)
-	}
-
-	reply, err := c.Prstore.Get(rid)
-	if err == sql.ErrNoRows {
-		return c.PreErrorJSQ("The target reply doesn't exist.", w, r, js)
-	} else if err != nil {
-		return c.InternalErrorJSQ(err, w, r, js)
-	}
-
-	creator, err := c.Users.Get(reply.CreatedBy)
-	if err != nil {
-		return c.InternalErrorJSQ(err, w, r, js)
-	}
-	if user.ID != creator.ID && !user.Perms.DeleteReply {
-		return c.NoPermissionsJSQ(w, r, user, js)
-	}
-
-	err = reply.Delete()
-	if err != nil {
-		return c.InternalErrorJSQ(err, w, r, js)
-	}
-	//log.Printf("The profile post '%d' was deleted by c.User #%d", reply.ID, user.ID)
-
-	if !js {
-		//http.Redirect(w,r, "/user/" + strconv.Itoa(creator.ID), http.StatusSeeOther)
-	} else {
-		w.Write(successJSONBytes)
-	}
 	return nil
 }
 
