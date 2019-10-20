@@ -18,40 +18,40 @@ type Runnable struct {
 	Literal  bool
 }
 
-func (route *RouteImpl) Before(items ...string) *RouteImpl {
+func (r *RouteImpl) Before(items ...string) *RouteImpl {
 	for _, item := range items {
-		route.RunBefore = append(route.RunBefore, Runnable{item, false})
+		r.RunBefore = append(r.RunBefore, Runnable{item, false})
 	}
-	return route
+	return r
 }
 
-func (route *RouteImpl) LitBefore(items ...string) *RouteImpl {
+func (r *RouteImpl) LitBefore(items ...string) *RouteImpl {
 	for _, item := range items {
-		route.RunBefore = append(route.RunBefore, Runnable{item, true})
+		r.RunBefore = append(r.RunBefore, Runnable{item, true})
 	}
-	return route
+	return r
 }
 
-func (route *RouteImpl) LitBeforeMultiline(items ...string) *RouteImpl {
+func (r *RouteImpl) LitBeforeMultiline(items ...string) *RouteImpl {
 	for _, item := range items {
 		for _, line := range strings.Split(item, "\n") {
-			route.LitBefore(strings.TrimSpace(line))
+			r.LitBefore(strings.TrimSpace(line))
 		}
 	}
-	return route
+	return r
 }
 
-func (route *RouteImpl) hasBefore(items ...string) bool {
+func (r *RouteImpl) hasBefore(items ...string) bool {
 	for _, item := range items {
-		if route.hasBeforeItem(item) {
+		if r.hasBeforeItem(item) {
 			return true
 		}
 	}
 	return false
 }
 
-func (route *RouteImpl) hasBeforeItem(item string) bool {
-	for _, before := range route.RunBefore {
+func (r *RouteImpl) hasBeforeItem(item string) bool {
+	for _, before := range r.RunBefore {
 		if before.Contents == item {
 			return true
 		}
@@ -59,8 +59,8 @@ func (route *RouteImpl) hasBeforeItem(item string) bool {
 	return false
 }
 
-func (route *RouteImpl) NoGzip() *RouteImpl {
-	return route.LitBeforeMultiline(`gzw, ok := w.(c.GzipResponseWriter)
+func (r *RouteImpl) NoGzip() *RouteImpl {
+	return r.LitBeforeMultiline(`gzw, ok := w.(c.GzipResponseWriter)
 	if ok {
 		w = gzw.ResponseWriter
 		w.Header().Del("Content-Type")
@@ -68,9 +68,9 @@ func (route *RouteImpl) NoGzip() *RouteImpl {
 	}`)
 }
 
-func (route *RouteImpl) NoHeader() *RouteImpl {
-	route.NoHead = true
-	return route
+func (r *RouteImpl) NoHeader() *RouteImpl {
+	r.NoHead = true
+	return r
 }
 
 func blankRoute() *RouteImpl {
@@ -149,8 +149,8 @@ func (action *uploadAction) MaxSizeVar(varName string) *RouteImpl {
 }
 
 type RouteSet struct {
-	Name string
-	Path string
+	Name  string
+	Path  string
 	Items []*RouteImpl
 }
 

@@ -102,14 +102,16 @@ func ViewProfile(w http.ResponseWriter, r *http.Request, user c.User, header *c.
 	prevScore := c.GetLevelScore(puser.Level)
 	currentScore := puser.Score - prevScore
 	nextScore := c.GetLevelScore(puser.Level+1) - prevScore
-	blocked, err := c.UserBlocks.IsBlockedBy(user.ID, puser.ID)
-	if err != nil {
-		return c.InternalError(err, w, r)
-	}
-
-	blockedInv, err := c.UserBlocks.IsBlockedBy(puser.ID, user.ID)
-	if err != nil {
-		return c.InternalError(err, w, r)
+	var blocked, blockedInv bool
+	if user.Loggedin {
+		blocked, err = c.UserBlocks.IsBlockedBy(user.ID, puser.ID)
+		if err != nil {
+			return c.InternalError(err, w, r)
+		}
+		blockedInv, err = c.UserBlocks.IsBlockedBy(puser.ID, user.ID)
+		if err != nil {
+			return c.InternalError(err, w, r)
+		}
 	}
 	canMessage := (!blockedInv && user.Perms.UseConvos) || user.IsSuperMod
 	canComment := !blockedInv && user.Perms.ViewTopic && user.Perms.CreateReply
