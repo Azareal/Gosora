@@ -10,6 +10,6 @@ type Adventure struct {
 }
 
 // TODO: Should we add a table interface?
-func (adventure *Adventure) GetTable() string {
+func (a *Adventure) GetTable() string {
 	return "adventure"
 }

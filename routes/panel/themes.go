@@ -104,7 +104,6 @@ func ThemesMenusEdit(w http.ResponseWriter, r *http.Request, user c.User, smid s
 	if err != nil {
 		return c.LocalError(p.GetErrorPhrase("url_id_must_be_integer"), w, r, user)
 	}
-
 	menuHold, err := c.Menus.Get(mid)
 	if err == sql.ErrNoRows {
 		return c.NotFound(w, r, basePage.Header)
@@ -149,7 +148,6 @@ func ThemesMenuItemEdit(w http.ResponseWriter, r *http.Request, user c.User, sit
 	if err != nil {
 		return c.LocalError(p.GetErrorPhrase("url_id_must_be_integer"), w, r, user)
 	}
-
 	menuItem, err := c.Menus.ItemStore().Get(itemID)
 	if err == sql.ErrNoRows {
 		return c.NotFound(w, r, basePage.Header)
@@ -434,7 +432,6 @@ func ThemesWidgetsEditSubmit(w http.ResponseWriter, r *http.Request, user c.User
 
 // ThemesWidgetsCreateSubmit is an action which is triggered when someone sends a create request for a widget
 func ThemesWidgetsCreateSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
-	//fmt.Println("in ThemesWidgetsCreateSubmit")
 	js := r.PostFormValue("js") == "1"
 	_, ferr := c.SimplePanelUserCheck(w, r, &user)
 	if ferr != nil {

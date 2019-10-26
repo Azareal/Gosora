@@ -1,4 +1,5 @@
 tmp/*
+!tmp/filler.txt
 tmp2/*
 cert_test/*
 tmp.txt

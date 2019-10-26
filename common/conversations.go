@@ -262,8 +262,7 @@ func (s *DefaultConversationStore) GetUserExtra(uid int, offset int) (cos []*Con
 		idmap[cid] = append(idmap[cid],uid)
 		puidmap[uid] = struct{}{}
 	}
-	err = rows.Err()
-	if err != nil {
+	if err = rows.Err(); err != nil {
 		return nil, err
 	}
 	//log.Println("3")

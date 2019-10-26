@@ -34,7 +34,7 @@ func LogsRegs(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError 
 
 	pageList := c.Paginate(page, lastPage, 5)
 	pi := c.PanelRegLogsPage{basePage, llist, c.Paginator{pageList, page, lastPage}}
-	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage,"","","panel_reglogs", pi})
+	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "", "", "panel_reglogs", pi})
 }
 
 // TODO: Log errors when something really screwy is going on?
@@ -60,7 +60,7 @@ func topicElementTypeAction(action string, elementType string, elementID int, ac
 	var tbit string
 	aarr := strings.Split(action, "-")
 	switch aarr[0] {
-	case "lock","unlock","stick","unstick":
+	case "lock", "unlock", "stick", "unstick":
 		tbit = aarr[0]
 	case "move":
 		if len(aarr) == 2 {
@@ -107,10 +107,9 @@ func LogsMod(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 		return ferr
 	}
 
-	logCount := c.ModLogs.Count()
 	page, _ := strconv.Atoi(r.FormValue("page"))
 	perPage := 12
-	offset, page, lastPage := c.PageOffset(logCount, page, perPage)
+	offset, page, lastPage := c.PageOffset(c.ModLogs.Count(), page, perPage)
 
 	logs, err := c.ModLogs.GetOffset(offset, perPage)
 	if err != nil {
@@ -125,7 +124,7 @@ func LogsMod(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 
 	pageList := c.Paginate(page, lastPage, 5)
 	pi := c.PanelLogsPage{basePage, llist, c.Paginator{pageList, page, lastPage}}
-	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage,"","","panel_modlogs", pi})
+	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "", "", "panel_modlogs", pi})
 }
 
 func LogsAdmin(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
@@ -134,10 +133,9 @@ func LogsAdmin(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError
 		return ferr
 	}
 
-	logCount := c.ModLogs.Count()
 	page, _ := strconv.Atoi(r.FormValue("page"))
 	perPage := 12
-	offset, page, lastPage := c.PageOffset(logCount, page, perPage)
+	offset, page, lastPage := c.PageOffset(c.ModLogs.Count(), page, perPage)
 
 	logs, err := c.AdminLogs.GetOffset(offset, perPage)
 	if err != nil {
@@ -152,5 +150,5 @@ func LogsAdmin(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError
 
 	pageList := c.Paginate(page, lastPage, 5)
 	pi := c.PanelLogsPage{basePage, llist, c.Paginator{pageList, page, lastPage}}
-	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage,"","","panel_adminlogs", pi})
+	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "", "", "panel_adminlogs", pi})
 }

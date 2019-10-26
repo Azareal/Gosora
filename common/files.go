@@ -59,7 +59,7 @@ func (list SFileList) JSTmplInit() error {
 		tmplName := strings.TrimSuffix(path, ".jgo")
 		shortName := strings.TrimPrefix(tmplName, "template_")
 
-		var replace = func(data []byte, replaceThis string, withThis string) []byte {
+		replace := func(data []byte, replaceThis string, withThis string) []byte {
 			return bytes.Replace(data, []byte(replaceThis), []byte(withThis), -1)
 		}
 
@@ -94,7 +94,7 @@ func (list SFileList) JSTmplInit() error {
 		fmt.Println("new endBrace: ", endBrace)
 		fmt.Println("data: ", string(data))
 
-		/*var showPos = func(data []byte, index int) (out string) {
+		/*showPos := func(data []byte, index int) (out string) {
 			out = "["
 			for j, char := range data {
 				if index == j {
@@ -107,9 +107,9 @@ func (list SFileList) JSTmplInit() error {
 		}*/
 
 		// ? Can we just use a regex? I'm thinking of going more efficient, or just outright rolling wasm, this is a temp hack in a place where performance doesn't particularly matter
-		var each = func(phrase string, handle func(index int)) {
+		each := func(phrase string, handle func(index int)) {
 			//fmt.Println("find each '" + phrase + "'")
-			var index = endBrace
+			index := endBrace
 			if index < 0 {
 				panic("index under zero: " + strconv.Itoa(index))
 			}

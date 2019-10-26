@@ -3,7 +3,7 @@ package common
 import (
 	"database/sql"
 
-	"github.com/Azareal/Gosora/query_gen"
+	qgen "github.com/Azareal/Gosora/query_gen"
 )
 
 var IPSearch IPSearcher
@@ -30,7 +30,7 @@ func NewDefaultIPSearcher() (*DefaultIPSearcher, error) {
 	}, acc.FirstError()
 }
 
-func (searcher *DefaultIPSearcher) Lookup(ip string) (uids []int, err error) {
+func (s *DefaultIPSearcher) Lookup(ip string) (uids []int, err error) {
 	var uid int
 	reqUserList := make(map[int]bool)
 	runQuery := func(stmt *sql.Stmt) error {
@@ -50,19 +50,19 @@ func (searcher *DefaultIPSearcher) Lookup(ip string) (uids []int, err error) {
 		return rows.Err()
 	}
 
-	err = runQuery(searcher.searchUsers)
+	err = runQuery(s.searchUsers)
 	if err != nil {
 		return uids, err
 	}
-	err = runQuery(searcher.searchTopics)
+	err = runQuery(s.searchTopics)
 	if err != nil {
 		return uids, err
 	}
-	err = runQuery(searcher.searchReplies)
+	err = runQuery(s.searchReplies)
 	if err != nil {
 		return uids, err
 	}
-	err = runQuery(searcher.searchUsersReplies)
+	err = runQuery(s.searchUsersReplies)
 	if err != nil {
 		return uids, err
 	}

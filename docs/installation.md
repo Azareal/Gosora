@@ -70,7 +70,11 @@ Type in a strong password for the `gosora` user, please oh please... Don't use "
 
 `chmod 2775 logs`
 
+`chmod 2775 attachs`
+
 `chmod 2775 uploads`
+
+`chmod 2775 tmp`
 
 `chmod 755 ./install-linux`
 
