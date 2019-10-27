@@ -15,6 +15,10 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"image"
+	"image/gif"
+	"image/jpeg"
+	"image/png"
 
 	c "github.com/Azareal/Gosora/common"
 	"github.com/Azareal/Gosora/common/counters"
@@ -209,7 +213,7 @@ func AddAttachToTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User,
 		elemStr = elemStr[:len(elemStr)-1]
 	}
 
-	w.Write([]byte(`{"success":"1","elems":[{` + elemStr + `}]}`))
+	w.Write([]byte(`{"success":1,"elems":[{` + elemStr + `}]}`))
 	return nil
 }
 
@@ -468,36 +472,62 @@ func uploadFilesWithHash(w http.ResponseWriter, r *http.Request, user c.User, di
 			return nil, c.LocalError("You're not allowed to upload files with this extension", w, r, user)
 		}
 
-		infile, err := file.Open()
+		inFile, err := file.Open()
 		if err != nil {
 			return nil, c.LocalError("Upload failed", w, r, user)
 		}
-		defer infile.Close()
+		defer inFile.Close()
 
 		hasher := sha256.New()
-		_, err = io.Copy(hasher, infile)
+		_, err = io.Copy(hasher, inFile)
 		if err != nil {
 			return nil, c.LocalError("Upload failed [Hashing Failed]", w, r, user)
 		}
-		infile.Close()
+		inFile.Close()
 
 		checksum := hex.EncodeToString(hasher.Sum(nil))
 		filename := checksum + "." + ext
-		outfile, err := os.Create(dir + filename)
-		if err != nil {
-			return nil, c.LocalError("Upload failed [File Creation Failed]", w, r, user)
-		}
-		defer outfile.Close()
 
-		infile, err = file.Open()
+		inFile, err = file.Open()
 		if err != nil {
 			return nil, c.LocalError("Upload failed", w, r, user)
 		}
-		defer infile.Close()
+		defer inFile.Close()
 
-		_, err = io.Copy(outfile, infile)
-		if err != nil {
-			return nil, c.LocalError("Upload failed [Copy Failed]", w, r, user)
+		if ext != "jpg" && ext != "png" && ext != "gif" {
+			outFile, err := os.Create(dir + filename)
+			if err != nil {
+				return nil, c.LocalError("Upload failed [File Creation Failed]", w, r, user)
+			}
+			defer outFile.Close()
+
+			_, err = io.Copy(outFile, inFile)
+			if err != nil {
+				return nil, c.LocalError("Upload failed [Copy Failed]", w, r, user)
+			}
+		} else {
+			img, _, err := image.Decode(inFile)
+			if err != nil {
+				return nil, c.LocalError("Upload failed [Image Decoding Failed]",w,r,user)
+			}
+
+			outFile, err := os.Create(dir + filename)
+			if err != nil {
+				return nil, c.LocalError("Upload failed [File Creation Failed]", w, r, user)
+			}
+			defer outFile.Close()
+			
+			switch ext {
+			case "gif":
+				err = gif.Encode(outFile, img, nil)
+			case "png":
+				err = png.Encode(outFile, img)
+			default:
+				err = jpeg.Encode(outFile, img, nil)
+			}
+			if err != nil {
+				return nil, c.LocalError("Upload failed [Image Encoding Failed]", w,r,user)
+			}
 		}
 
 		filenames = append(filenames, filename)
