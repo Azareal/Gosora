@@ -29,9 +29,10 @@ var regLogStmts RegLogStmts
 
 func init() {
 	DbInits.Add(func(acc *qgen.Accumulator) error {
+		rl := "registration_logs"
 		regLogStmts = RegLogStmts{
-			update: acc.Update("registration_logs").Set("username = ?, email = ?, failureReason = ?, success = ?").Where("rlid = ?").Prepare(),
-			create: acc.Insert("registration_logs").Columns("username, email, failureReason, success, ipaddress, doneAt").Fields("?,?,?,?,?,UTC_TIMESTAMP()").Prepare(),
+			update: acc.Update(rl).Set("username = ?, email = ?, failureReason = ?, success = ?").Where("rlid = ?").Prepare(),
+			create: acc.Insert(rl).Columns("username, email, failureReason, success, ipaddress, doneAt").Fields("?,?,?,?,?,UTC_TIMESTAMP()").Prepare(),
 		}
 		return acc.FirstError()
 	})
@@ -65,9 +66,10 @@ type SQLRegLogStore struct {
 }
 
 func NewRegLogStore(acc *qgen.Accumulator) (*SQLRegLogStore, error) {
+	rl := "registration_logs"
 	return &SQLRegLogStore{
-		count:     acc.Count("registration_logs").Prepare(),
-		getOffset: acc.Select("registration_logs").Columns("rlid, username, email, failureReason, success, ipaddress, doneAt").Orderby("doneAt DESC").Limit("?,?").Prepare(),
+		count:     acc.Count(rl).Prepare(),
+		getOffset: acc.Select(rl).Columns("rlid, username, email, failureReason, success, ipaddress, doneAt").Orderby("doneAt DESC").Limit("?,?").Prepare(),
 	}, acc.FirstError()
 }
 
@@ -116,9 +118,10 @@ var loginLogStmts LoginLogStmts
 
 func init() {
 	DbInits.Add(func(acc *qgen.Accumulator) error {
+		ll := "login_logs"
 		loginLogStmts = LoginLogStmts{
-			update: acc.Update("login_logs").Set("uid = ?, success = ?").Where("lid = ?").Prepare(),
-			create: acc.Insert("login_logs").Columns("uid, success, ipaddress, doneAt").Fields("?,?,?,UTC_TIMESTAMP()").Prepare(),
+			update: acc.Update(ll).Set("uid = ?, success = ?").Where("lid = ?").Prepare(),
+			create: acc.Insert(ll).Columns("uid, success, ipaddress, doneAt").Fields("?,?,?,UTC_TIMESTAMP()").Prepare(),
 		}
 		return acc.FirstError()
 	})
@@ -154,10 +157,11 @@ type SQLLoginLogStore struct {
 }
 
 func NewLoginLogStore(acc *qgen.Accumulator) (*SQLLoginLogStore, error) {
+	ll := "login_logs"
 	return &SQLLoginLogStore{
-		count:           acc.Count("login_logs").Prepare(),
-		countForUser:    acc.Count("login_logs").Where("uid = ?").Prepare(),
-		getOffsetByUser: acc.Select("login_logs").Columns("lid, success, ipaddress, doneAt").Where("uid = ?").Orderby("doneAt DESC").Limit("?,?").Prepare(),
+		count:           acc.Count(ll).Prepare(),
+		countForUser:    acc.Count(ll).Where("uid = ?").Prepare(),
+		getOffsetByUser: acc.Select(ll).Columns("lid, success, ipaddress, doneAt").Where("uid = ?").Orderby("doneAt DESC").Limit("?,?").Prepare(),
 	}, acc.FirstError()
 }
 

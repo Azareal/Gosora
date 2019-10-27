@@ -179,7 +179,7 @@ func RebuildGroupPermissions(group *Group) error {
 	log.Print("Reloading a group")
 
 	// TODO: Avoid re-initting this all the time
-	getGroupPerms, err := qgen.Builder.SimpleSelect("users_groups", "permissions", "gid = ?", "", "")
+	getGroupPerms, err := qgen.Builder.SimpleSelect("users_groups", "permissions", "gid=?", "", "")
 	if err != nil {
 		return err
 	}

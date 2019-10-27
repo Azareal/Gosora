@@ -701,8 +701,8 @@ func validateURLString(data string) bool {
 
 	// ? - There should only be one : and that's only if the URL is on a non-standard port. Same for ?s.
 	for ; len(data) > i; i++ {
-		char := data[i]
-		if char != '\\' && char != '_' && char != ':' && char != '?' && char != '&' && char != '=' && char != ';' && char != '@' && char != '#' && char != ']' && !(char > 44 && char < 58) && !(char > 64 && char < 92) && !(char > 96 && char < 123) { // 90 is Z, 91 is [
+		ch := data[i]                                                                                                                                                                                                    // char
+		if ch != '\\' && ch != '_' && ch != ':' && ch != '?' && ch != '&' && ch != '=' && ch != ';' && ch != '@' && ch != '#' && ch != ']' && !(ch > 44 && ch < 58) && !(ch > 64 && ch < 92) && !(ch > 96 && ch < 123) { // 90 is Z, 91 is [
 			return false
 		}
 	}
@@ -727,8 +727,8 @@ func validatedURLBytes(data []byte) (url []byte) {
 
 	// ? - There should only be one : and that's only if the URL is on a non-standard port. Same for ?s.
 	for ; datalen > i; i++ {
-		char := data[i]
-		if char != '\\' && char != '_' && char != ':' && char != '?' && char != '&' && char != '=' && char != ';' && char != '@' && char != '#' && char != ']' && !(char > 44 && char < 58) && !(char > 64 && char < 92) && !(char > 96 && char < 123) { // 90 is Z, 91 is [
+		ch := data[i]                                                                                                                                                                                                    //char
+		if ch != '\\' && ch != '_' && ch != ':' && ch != '?' && ch != '&' && ch != '=' && ch != ';' && ch != '@' && ch != '#' && ch != ']' && !(ch > 44 && ch < 58) && !(ch > 64 && ch < 92) && !(ch > 96 && ch < 123) { // 90 is Z, 91 is [
 			return InvalidURL
 		}
 	}
@@ -755,8 +755,8 @@ func PartialURLString(data string) (url []byte) {
 
 	// ? - There should only be one : and that's only if the URL is on a non-standard port. Same for ?s.
 	for ; end >= i; i++ {
-		char := data[i]
-		if char != '\\' && char != '_' && char != ':' && char != '?' && char != '&' && char != '=' && char != ';' && char != '@' && char != '#' && char != ']' && !(char > 44 && char < 58) && !(char > 64 && char < 92) && !(char > 96 && char < 123) { // 90 is Z, 91 is [
+		ch := data[i]                                                                                                                                                                                                    // char
+		if ch != '\\' && ch != '_' && ch != ':' && ch != '?' && ch != '&' && ch != '=' && ch != ';' && ch != '@' && ch != '#' && ch != ']' && !(ch > 44 && ch < 58) && !(ch > 64 && ch < 92) && !(ch > 96 && ch < 123) { // 90 is Z, 91 is [
 			end = i
 		}
 	}
@@ -791,12 +791,12 @@ func PartialURLStringLen(data string) (int, bool) {
 	f := i
 	//fmt.Println("f:",f)
 	for ; len(data) > i; i++ {
-		char := data[i]
-		if char < 33 { // space and invisibles
+		ch := data[i] //char
+		if ch < 33 {  // space and invisibles
 			//fmt.Println("e2:",i)
 			return i, i != f
-		} else if char != '\\' && char != '_' && char != ':' && char != '?' && char != '&' && char != '=' && char != ';' && char != '@' && char != '#' && char != ']' && !(char > 44 && char < 58) && !(char > 64 && char < 92) && !(char > 96 && char < 123) { // 90 is Z, 91 is [
-			//log.Print("Bad Character: ", char)
+		} else if ch != '\\' && ch != '_' && ch != ':' && ch != '?' && ch != '&' && ch != '=' && ch != ';' && ch != '@' && ch != '#' && ch != ']' && !(ch > 44 && ch < 58) && !(ch > 64 && ch < 92) && !(ch > 96 && ch < 123) { // 90 is Z, 91 is [
+			//log.Print("Bad Character: ", ch)
 			//fmt.Println("e3")
 			return i, false
 		}
@@ -829,9 +829,9 @@ func PartialURLStringLen2(data string) int {
 
 	// ? - There should only be one : and that's only if the URL is on a non-standard port. Same for ?s.
 	for ; len(data) > i; i++ {
-		char := data[i]
-		if char != '\\' && char != '_' && char != ':' && char != '?' && char != '&' && char != '=' && char != ';' && char != '@' && char != '#' && !(char > 44 && char < 58) && !(char > 64 && char < 91) && !(char > 96 && char < 123) { // 90 is Z, 91 is [
-			//log.Print("Bad Character: ", char)
+		ch := data[i]                                                                                                                                                                                       //char
+		if ch != '\\' && ch != '_' && ch != ':' && ch != '?' && ch != '&' && ch != '=' && ch != ';' && ch != '@' && ch != '#' && !(ch > 44 && ch < 58) && !(ch > 64 && ch < 91) && !(ch > 96 && ch < 123) { // 90 is Z, 91 is [
+			//log.Print("Bad Character: ", ch)
 			return i
 		}
 	}
@@ -857,20 +857,19 @@ func parseMediaString(data string) (media MediaEmbed, ok bool) {
 	if err != nil {
 		return media, false
 	}
-
-	hostname := uurl.Hostname()
+	host := uurl.Hostname()
 	scheme := uurl.Scheme
 	port := uurl.Port()
 	query, err := url.ParseQuery(uurl.RawQuery)
 	if err != nil {
 		return media, false
 	}
-	//log.Print("hostname:",hostname)
+	//fmt.Println("host:", host)
 	//log.Print("Site.URL:",Site.URL)
 
-	samesite := hostname == "localhost" || hostname == "127.0.0.1" || hostname == "::1" || hostname == Site.URL
+	samesite := host == "localhost" || host == "127.0.0.1" || host == "::1" || host == Site.URL
 	if samesite {
-		hostname = strings.Split(Site.URL, ":")[0]
+		host = strings.Split(Site.URL, ":")[0]
 		// ?- Test this as I'm not sure it'll do what it should. If someone's running SSL on port 80 or non-SSL on port 443 then... Well... They're in far worse trouble than this...
 		port = Site.Port
 		if Site.EnableSsl {
@@ -885,13 +884,13 @@ func parseMediaString(data string) (media MediaEmbed, ok bool) {
 	path := uurl.EscapedPath()
 	pathFrags := strings.Split(path, "/")
 	if len(pathFrags) >= 2 {
-		if samesite && pathFrags[1] == "attachs" && (scheme == "http" || scheme == "https") {
+		if samesite && pathFrags[1] == "attachs" && (scheme == "http:" || scheme == "https:") {
 			var sport string
 			// ? - Assumes the sysadmin hasn't mixed up the two standard ports
 			if port != "443" && port != "80" && port != "" {
 				sport = ":" + port
 			}
-			media.URL = scheme + "//" + hostname + sport + path
+			media.URL = scheme + "//" + host + sport + path
 			extarr := strings.Split(path, ".")
 			if len(extarr) == 0 {
 				// TODO: Write a unit test for this
@@ -909,7 +908,7 @@ func parseMediaString(data string) (media MediaEmbed, ok bool) {
 
 	// ? - I don't think this hostname will hit every YT domain
 	// TODO: Make this a more customisable handler rather than hard-coding it in here
-	if strings.HasSuffix(hostname, ".youtube.com") && path == "/watch" {
+	if strings.HasSuffix(host, ".youtube.com") && path == "/watch" {
 		video, ok := query["v"]
 		if ok && len(video) >= 1 && video[0] != "" {
 			media.Type = "raw"
@@ -929,7 +928,7 @@ func parseMediaString(data string) (media MediaEmbed, ok bool) {
 				if port != "443" && port != "80" && port != "" {
 					sport = ":" + port
 				}
-				media.URL = scheme + "//" + hostname + sport + path
+				media.URL = scheme + "//" + host + sport + path
 				return media, true
 			}
 		}
@@ -947,8 +946,8 @@ func parseMediaString(data string) (media MediaEmbed, ok bool) {
 	if len(uurl.Fragment) > 0 {
 		frag = "#" + uurl.Fragment
 	}
-	media.URL = scheme + "//" + hostname + sport + path + q + frag
-	media.FURL = hostname + sport + path + q + frag
+	media.URL = scheme + "//" + host + sport + path + q + frag
+	media.FURL = host + sport + path + q + frag
 
 	return media, true
 }
