@@ -851,12 +851,12 @@ function mainInit(){
 	});
 
 	$("#themeSelectorSelect").change(function(){
-		console.log("Changing the theme to " + this.options[this.selectedIndex].getAttribute("val"));
+		console.log("Changing the theme to " + this.options[this.selectedIndex].getAttribute("value"));
 		$.ajax({
 			url: this.form.getAttribute("action") + "?s=" + me.User.S,
 			type: "POST",
 			dataType: "json",
-			data: { "newTheme": this.options[this.selectedIndex].getAttribute("val"), js: "1" },
+			data: { "theme": this.options[this.selectedIndex].getAttribute("value"), js: 1 },
 			error: ajaxError,
 			success: function (data, status, xhr) {
 				console.log("Theme successfully switched");

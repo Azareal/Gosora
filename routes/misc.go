@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	//"fmt"
 
 	c "github.com/Azareal/Gosora/common"
 	"github.com/Azareal/Gosora/common/phrases"
@@ -85,7 +86,8 @@ func ChangeTheme(w http.ResponseWriter, r *http.Request, user c.User) c.RouteErr
 	//headerLite, _ := SimpleUserCheck(w, r, &user)
 	// TODO: Rename js to something else, just in case we rewrite the JS side in WebAssembly?
 	js := r.PostFormValue("js") == "1"
-	newTheme := c.SanitiseSingleLine(r.PostFormValue("newTheme"))
+	newTheme := c.SanitiseSingleLine(r.PostFormValue("theme"))
+	//fmt.Printf("newTheme: %+v\n", newTheme)
 
 	theme, ok := c.Themes[newTheme]
 	if !ok || theme.HideFromThemes {
