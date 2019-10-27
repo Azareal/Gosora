@@ -837,6 +837,7 @@ blockquote:first-child {
 	border-radius: 36px;
 	height: 58px;
 	width: 58px;
+	background-position: 0px -10px;
 	background-size: 78px;
 	margin-left: auto;
 	margin-right: auto;

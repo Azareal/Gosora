@@ -879,7 +879,7 @@ function mainInit(){
 		for(let i = 0; i < elems.length; i++) {
 			let elem = elems[i];
 			if(elem.nodeName=="SELECT") {
-				s += elem.name + "=" + elem.options[elem.selectedIndex].getAttribute("val") + "&";
+				s += elem.name + "=" + elem.options[elem.selectedIndex].getAttribute("value") + "&";
 			}
 			// TODO: Implement other element types...
 		}

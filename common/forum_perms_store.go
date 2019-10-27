@@ -34,9 +34,10 @@ type MemoryForumPermsStore struct {
 
 func NewMemoryForumPermsStore() (*MemoryForumPermsStore, error) {
 	acc := qgen.NewAcc()
+	fp := "forums_permissions"
 	return &MemoryForumPermsStore{
-		getByForum:      acc.Select("forums_permissions").Columns("gid, permissions").Where("fid = ?").Orderby("gid ASC").Prepare(),
-		getByForumGroup: acc.Select("forums_permissions").Columns("permissions").Where("fid = ? AND gid = ?").Prepare(),
+		getByForum:      acc.Select(fp).Columns("gid, permissions").Where("fid = ?").Orderby("gid ASC").Prepare(),
+		getByForumGroup: acc.Select(fp).Columns("permissions").Where("fid = ? AND gid = ?").Prepare(),
 
 		evenForums: make(map[int]map[int]*ForumPerms),
 		oddForums:  make(map[int]map[int]*ForumPerms),

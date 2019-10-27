@@ -87,8 +87,8 @@ type Member struct {
 	User c.User
 }
 
-func PrebuildTmplList(user c.User, header *c.Header) c.CTmpl {
-	var guildList = []*Guild{
+func PrebuildTmplList(user c.User, h *c.Header) c.CTmpl {
+	guildList := []*Guild{
 		&Guild{
 			ID:             1,
 			Name:           "lol",
@@ -104,7 +104,7 @@ func PrebuildTmplList(user c.User, header *c.Header) c.CTmpl {
 			Forums:         []*c.Forum{c.Forums.DirtyGet(1)},
 		},
 	}
-	listPage := ListPage{"Guild List", user, header, guildList}
+	listPage := ListPage{"Guild List", user, h, guildList}
 	return c.CTmpl{"guilds_guild_list", "guilds_guild_list.html", "templates/", "guilds.ListPage", listPage, []string{"./extend/guilds/lib"}}
 }
 

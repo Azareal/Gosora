@@ -1059,6 +1059,7 @@ blockquote:first-child {
 	width: 84px;
 	height: 84px;
 	margin-bottom: 12px;
+	background-position: 0px -10px;
 	background-size: 120px;
 }
 .the_name, .userinfo .tag_block {

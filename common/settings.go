@@ -45,10 +45,11 @@ var settingStmts SettingStmts
 func init() {
 	SettingBox.Store(SettingMap(make(map[string]interface{})))
 	DbInits.Add(func(acc *qgen.Accumulator) error {
+		s := "settings"
 		settingStmts = SettingStmts{
-			getAll: acc.Select("settings").Columns("name, content, type, constraints").Prepare(),
-			get:    acc.Select("settings").Columns("content, type, constraints").Where("name = ?").Prepare(),
-			update: acc.Update("settings").Set("content = ?").Where("name = ?").Prepare(),
+			getAll: acc.Select(s).Columns("name, content, type, constraints").Prepare(),
+			get:    acc.Select(s).Columns("content, type, constraints").Where("name = ?").Prepare(),
+			update: acc.Update(s).Set("content = ?").Where("name = ?").Prepare(),
 		}
 		return acc.FirstError()
 	})
@@ -67,8 +68,8 @@ func LoadSettings() error {
 		return err
 	}
 
-	for _, setting := range settings {
-		err = sBox.ParseSetting(setting.Name, setting.Content, setting.Type, setting.Constraint)
+	for _, s := range settings {
+		err = sBox.ParseSetting(s.Name, s.Content, s.Type, s.Constraint)
 		if err != nil {
 			return err
 		}
@@ -80,7 +81,7 @@ func LoadSettings() error {
 
 // TODO: Add better support for HTML attributes (html-attribute). E.g. Meta descriptions.
 func (sBox SettingMap) ParseSetting(sname string, scontent string, stype string, constraint string) (err error) {
-	var ssBox = map[string]interface{}(sBox)
+	ssBox := map[string]interface{}(sBox)
 	switch stype {
 	case "bool":
 		ssBox[sname] = (scontent == "1")

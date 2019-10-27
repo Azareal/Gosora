@@ -103,7 +103,7 @@ func SettingEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, snam
 		return c.NoPermissions(w, r, user)
 	}
 
-	scontent := c.SanitiseBody(r.PostFormValue("setting-value"))
+	scontent := c.SanitiseBody(r.PostFormValue("value"))
 	rerr := headerLite.Settings.Update(sname, scontent)
 	if rerr != nil {
 		return rerr

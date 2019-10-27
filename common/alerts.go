@@ -47,7 +47,7 @@ func init() {
 				qgen.DBInsert{"activity_stream_matches", "watcher, asid", ""},
 				qgen.DBJoin{"activity_stream", "activity_subscriptions", "activity_subscriptions.user, activity_stream.asid", "activity_subscriptions.targetType = activity_stream.elementType AND activity_subscriptions.targetID = activity_stream.elementID AND activity_subscriptions.user != activity_stream.actor", "asid = ?", "", ""},
 			),
-			notifyOne:        acc.Insert("activity_stream_matches").Columns("watcher, asid").Fields("?,?").Prepare(),
+			notifyOne:        acc.Insert("activity_stream_matches").Columns("watcher,asid").Fields("?,?").Prepare(),
 			getWatchers:      acc.SimpleInnerJoin("activity_stream", "activity_subscriptions", "activity_subscriptions.user", "activity_subscriptions.targetType = activity_stream.elementType AND activity_subscriptions.targetID = activity_stream.elementID AND activity_subscriptions.user != activity_stream.actor", "asid = ?", "", ""),
 		}
 		return acc.FirstError()
@@ -224,8 +224,7 @@ func notifyWatchers(asid int) {
 		}
 		uids = append(uids, uid)
 	}
-	err = rows.Err()
-	if err != nil {
+	if err = rows.Err(); err != nil {
 		LogError(err)
 		return
 	}

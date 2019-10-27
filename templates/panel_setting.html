@@ -7,7 +7,7 @@
 		<div class="formrow">
 			<div class="formitem formlabel"><a>{{lang "panel_setting_value"}}</a></div>
 			<div class="formitem">
-				<select name="setting-value">
+				<select name="value">
 				{{range .ItemList}}<option{{if .Selected}} selected{{end}} value="{{.Value}}">{{.Label}}</option>{{end}}
 				</select>
 			</div>
@@ -16,19 +16,19 @@
 		<div class="formrow">
 			<div class="formitem formlabel"><a>{{lang "panel_setting_value"}}</a></div>
 			<div class="formitem">
-				<select name="setting-value">
-					<option{{if eq .Setting.Content "1"}} selected{{end}} value="1">{{lang "option_yes"}}</option>
-					<option{{if eq .Setting.Content "0"}} selected{{end}} value="0">{{lang "option_no"}}</option>
+				<select name="value">
+					<option{{if eq .Setting.Content "1"}} selected{{end}} value=1>{{lang "option_yes"}}</option>
+					<option{{if eq .Setting.Content "0"}} selected{{end}} value=0>{{lang "option_no"}}</option>
 				</select>
 			</div>
 		</div>
 		{{else if eq .Setting.Type "textarea"}}
 		<div class="formrow">
-			<div class="formitem"><textarea name="setting-value">{{.Setting.Content}}</textarea></div>
+			<div class="formitem"><textarea name="value">{{.Setting.Content}}</textarea></div>
 		</div>
 		{{else}}<div class="formrow">
 			<div class="formitem formlabel"><a>{{lang "panel_setting_value"}}</a></div>
-			<div class="formitem"><input name="setting-value" type="text" value="{{.Setting.Content}}" /></div>
+			<div class="formitem"><input name="value" type="text" value="{{.Setting.Content}}"/></div>
 		</div>{{end}}
 		<div class="formrow form_button_row">
 			<div class="formitem"><button name="panel-button" class="formbutton">{{lang "panel_setting_update_button"}}</button></div>

@@ -88,7 +88,7 @@ func (tList *DefaultTopicList) Tick() error {
 			canSee[i] = byte(item)
 		}
 
-		var canSeeInt = make([]int, len(canSee))
+		canSeeInt := make([]int, len(canSee))
 		copy(canSeeInt, group.CanSee)
 		sCanSee := string(canSee)
 		permTree[sCanSee] = canSeeInt
@@ -161,7 +161,7 @@ func (tList *DefaultTopicList) GetListByCanSee(canSee []int, page int, orderby s
 		}
 	}
 
-	var inSlice = func(haystack []int, needle int) bool {
+	inSlice := func(haystack []int, needle int) bool {
 		for _, item := range haystack {
 			if needle == item {
 				return true
@@ -200,7 +200,7 @@ func (tList *DefaultTopicList) GetList(page int, orderby string, filterIDs []int
 		return nil, nil, Paginator{nil, 1, 1}, err
 	}
 
-	var inSlice = func(haystack []int, needle int) bool {
+	inSlice := func(haystack []int, needle int) bool {
 		for _, item := range haystack {
 			if needle == item {
 				return true
@@ -282,43 +282,43 @@ func (tList *DefaultTopicList) getList(page int, orderby string, argList []inter
 	reqUserList := make(map[int]bool)
 	for rows.Next() {
 		// TODO: Embed Topic structs in TopicsRow to make it easier for us to reuse this work in the topic cache
-		topic := TopicsRow{}
-		err := rows.Scan(&topic.ID, &topic.Title, &topic.Content, &topic.CreatedBy, &topic.IsClosed, &topic.Sticky, &topic.CreatedAt, &topic.LastReplyAt, &topic.LastReplyBy, &topic.LastReplyID, &topic.ParentID, &topic.ViewCount, &topic.PostCount, &topic.LikeCount, &topic.AttachCount, &topic.Poll, &topic.Data)
+		t := TopicsRow{}
+		err := rows.Scan(&t.ID, &t.Title, &t.Content, &t.CreatedBy, &t.IsClosed, &t.Sticky, &t.CreatedAt, &t.LastReplyAt, &t.LastReplyBy, &t.LastReplyID, &t.ParentID, &t.ViewCount, &t.PostCount, &t.LikeCount, &t.AttachCount, &t.Poll, &t.Data)
 		if err != nil {
 			return nil, Paginator{nil, 1, 1}, err
 		}
 
-		topic.Link = BuildTopicURL(NameToSlug(topic.Title), topic.ID)
+		t.Link = BuildTopicURL(NameToSlug(t.Title), t.ID)
 		// TODO: Pass forum to something like topicItem.Forum and use that instead of these two properties? Could be more flexible.
-		forum := Forums.DirtyGet(topic.ParentID)
-		topic.ForumName = forum.Name
-		topic.ForumLink = forum.Link
+		forum := Forums.DirtyGet(t.ParentID)
+		t.ForumName = forum.Name
+		t.ForumLink = forum.Link
 
 		// TODO: Create a specialised function with a bit less overhead for getting the last page for a post count
-		_, _, lastPage := PageOffset(topic.PostCount, 1, Config.ItemsPerPage)
-		topic.LastPage = lastPage
+		_, _, lastPage := PageOffset(t.PostCount, 1, Config.ItemsPerPage)
+		t.LastPage = lastPage
 
 		// TODO: Rename this Vhook to better reflect moving the topic list from /routes/ to /common/
-		GetHookTable().Vhook("topics_topic_row_assign", &topic, &forum)
-		topicList = append(topicList, &topic)
-		reqUserList[topic.CreatedBy] = true
-		reqUserList[topic.LastReplyBy] = true
+		GetHookTable().Vhook("topics_topic_row_assign", &t, &forum)
+		topicList = append(topicList, &t)
+		reqUserList[t.CreatedBy] = true
+		reqUserList[t.LastReplyBy] = true
 
 		//log.Print("rlen: ", rlen)
 		//log.Print("rcap: ", rcap)
-		//log.Print("topic.PostCount: ", topic.PostCount)
+		//log.Print("topic.PostCount: ", t.PostCount)
 		//log.Print("topic.PostCount == 2 && rlen < rcap: ", topic.PostCount == 2 && rlen < rcap)
 
 		// Avoid the extra queries on topic list pages, if we already have what we want...
-		var hRids = false
+		hRids := false
 		if tcache != nil {
-			if t, err := tcache.Get(topic.ID); err == nil {
+			if t, err := tcache.Get(t.ID); err == nil {
 				hRids = len(t.Rids) != 0
 			}
 		}
 
-		if topic.PostCount == 2 && rlen < rcap && !hRids && page < 5 {
-			rids, err := GetRidsForTopic(topic.ID, 0)
+		if t.PostCount == 2 && rlen < rcap && !hRids && page < 5 {
+			rids, err := GetRidsForTopic(t.ID, 0)
 			if err != nil {
 				return nil, Paginator{nil, 1, 1}, err
 			}
@@ -329,12 +329,12 @@ func (tList *DefaultTopicList) getList(page int, orderby string, argList []inter
 			}
 			_, _ = Rstore.Get(rids[0])
 			rlen++
-			topic.Rids = []int{rids[0]}
+			t.Rids = []int{rids[0]}
 		}
 
 		if tcache != nil {
-			if _, err := tcache.Get(topic.ID); err == sql.ErrNoRows {
-				_ = tcache.Set(topic.Topic())
+			if _, err := tcache.Get(t.ID); err == sql.ErrNoRows {
+				_ = tcache.Set(t.Topic())
 			}
 		}
 	}
@@ -344,7 +344,7 @@ func (tList *DefaultTopicList) getList(page int, orderby string, argList []inter
 	}
 
 	// Convert the user ID map to a slice, then bulk load the users
-	var idSlice = make([]int, len(reqUserList))
+	idSlice := make([]int, len(reqUserList))
 	var i int
 	for userID := range reqUserList {
 		idSlice[i] = userID

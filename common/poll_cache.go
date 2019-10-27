@@ -138,8 +138,9 @@ func (s *MemoryPollCache) RemoveUnsafe(id int) error {
 
 // Flush removes all the polls from the cache, useful for tests.
 func (s *MemoryPollCache) Flush() {
+	m := make(map[int]*Poll)
 	s.Lock()
-	s.items = make(map[int]*Poll)
+	s.items = m
 	s.length = 0
 	s.Unlock()
 }

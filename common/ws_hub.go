@@ -223,6 +223,7 @@ func (h *WsHubImpl) UserCount() (count int) {
 	h.evenUserLock.RLock()
 	count += len(h.evenOnlineUsers)
 	h.evenUserLock.RUnlock()
+
 	h.oddUserLock.RLock()
 	count += len(h.oddOnlineUsers)
 	h.oddUserLock.RUnlock()
@@ -236,6 +237,7 @@ func (h *WsHubImpl) HasUser(uid int) (exists bool) {
 	if exists {
 		return exists
 	}
+	
 	h.oddUserLock.RLock()
 	_, exists = h.oddOnlineUsers[uid]
 	h.oddUserLock.RUnlock()

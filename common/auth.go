@@ -1,7 +1,7 @@
 /*
 *
 * Gosora Authentication Interface
-* Copyright Azareal 2017 - 2019
+* Copyright Azareal 2017 - 2020
 *
  */
 package common
@@ -145,6 +145,7 @@ func (auth *DefaultAuth) ValidateMFAToken(mfaToken string, uid int) error {
 	if ok {
 		return nil
 	}
+	
 	for i, scratch := range mfaItem.Scratch {
 		if subtle.ConstantTimeCompare([]byte(scratch), []byte(mfaToken)) == 1 {
 			err = mfaItem.BurnScratch(i)
@@ -155,6 +156,7 @@ func (auth *DefaultAuth) ValidateMFAToken(mfaToken string, uid int) error {
 			return nil
 		}
 	}
+
 	return ErrWrongMFAToken
 }
 

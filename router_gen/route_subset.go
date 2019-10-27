@@ -6,8 +6,8 @@ type RouteSubset struct {
 
 func (set *RouteSubset) Before(lines ...string) *RouteSubset {
 	for _, line := range lines {
-		for _, route := range set.RouteList {
-			route.RunBefore = append(route.RunBefore, Runnable{line, false})
+		for _, r := range set.RouteList {
+			r.RunBefore = append(r.RunBefore, Runnable{line, false})
 		}
 	}
 	return set
@@ -15,8 +15,8 @@ func (set *RouteSubset) Before(lines ...string) *RouteSubset {
 
 func (set *RouteSubset) LitBefore(lines ...string) *RouteSubset {
 	for _, line := range lines {
-		for _, route := range set.RouteList {
-			route.RunBefore = append(route.RunBefore, Runnable{line, true})
+		for _, r := range set.RouteList {
+			r.RunBefore = append(r.RunBefore, Runnable{line, true})
 		}
 	}
 	return set

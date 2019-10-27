@@ -100,6 +100,7 @@ func (u *WSUser) AddSocket(conn *websocket.Conn, page string) {
 
 func (u *WSUser) RemoveSocket(conn *websocket.Conn) {
 	u.Lock()
+	defer u.Unlock()
 	if len(u.Sockets) < 6 {
 		for i, socket := range u.Sockets {
 			if socket == nil {
@@ -107,7 +108,6 @@ func (u *WSUser) RemoveSocket(conn *websocket.Conn) {
 			}
 			if socket.conn == conn {
 				u.Sockets[i] = nil
-				u.Unlock()
 				//fmt.Printf("%+v\n", wsUser.Sockets)
 				return
 			}
@@ -123,8 +123,6 @@ func (u *WSUser) RemoveSocket(conn *websocket.Conn) {
 	}
 	u.Sockets = append(u.Sockets[:key], u.Sockets[key+1:]...)
 	//fmt.Printf("%+v\n", u.Sockets)
-
-	u.Unlock()
 }
 
 func (u *WSUser) SetPageForSocket(conn *websocket.Conn, page string) error {

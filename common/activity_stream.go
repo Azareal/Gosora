@@ -18,10 +18,11 @@ type DefaultActivityStream struct {
 }
 
 func NewDefaultActivityStream(acc *qgen.Accumulator) (*DefaultActivityStream, error) {
+	as := "activity_stream"
 	return &DefaultActivityStream{
-		add: acc.Insert("activity_stream").Columns("actor, targetUser, event, elementType, elementID, createdAt").Fields("?,?,?,?,?,UTC_TIMESTAMP()").Prepare(),
-		get: acc.Select("activity_stream").Columns("actor, targetUser, event, elementType, elementID, createdAt").Where("asid = ?").Prepare(),
-		count: acc.Count("activity_stream").Prepare(),
+		add: acc.Insert(as).Columns("actor, targetUser, event, elementType, elementID, createdAt").Fields("?,?,?,?,?,UTC_TIMESTAMP()").Prepare(),
+		get: acc.Select(as).Columns("actor, targetUser, event, elementType, elementID, createdAt").Where("asid = ?").Prepare(),
+		count: acc.Count(as).Prepare(),
 	}, acc.FirstError()
 }
 
