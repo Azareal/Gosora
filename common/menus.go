@@ -64,63 +64,64 @@ var menuItemStmts MenuItemStmts
 
 func init() {
 	DbInits.Add(func(acc *qgen.Accumulator) error {
+		mi := "menu_items"
 		menuItemStmts = MenuItemStmts{
-			update:      acc.Update("menu_items").Set("name = ?, htmlID = ?, cssClass = ?, position = ?, path = ?, aria = ?, tooltip = ?, tmplName = ?, guestOnly = ?, memberOnly = ?, staffOnly = ?, adminOnly = ?").Where("miid = ?").Prepare(),
-			insert:      acc.Insert("menu_items").Columns("mid, name, htmlID, cssClass, position, path, aria, tooltip, tmplName, guestOnly, memberOnly, staffOnly, adminOnly").Fields("?,?,?,?,?,?,?,?,?,?,?,?,?").Prepare(),
-			delete:      acc.Delete("menu_items").Where("miid = ?").Prepare(),
-			updateOrder: acc.Update("menu_items").Set("order = ?").Where("miid = ?").Prepare(),
+			update:      acc.Update(mi).Set("name = ?, htmlID = ?, cssClass = ?, position = ?, path = ?, aria = ?, tooltip = ?, tmplName = ?, guestOnly = ?, memberOnly = ?, staffOnly = ?, adminOnly = ?").Where("miid = ?").Prepare(),
+			insert:      acc.Insert(mi).Columns("mid, name, htmlID, cssClass, position, path, aria, tooltip, tmplName, guestOnly, memberOnly, staffOnly, adminOnly").Fields("?,?,?,?,?,?,?,?,?,?,?,?,?").Prepare(),
+			delete:      acc.Delete(mi).Where("miid = ?").Prepare(),
+			updateOrder: acc.Update(mi).Set("order = ?").Where("miid = ?").Prepare(),
 		}
 		return acc.FirstError()
 	})
 }
 
-func (item MenuItem) Commit() error {
-	_, err := menuItemStmts.update.Exec(item.Name, item.HTMLID, item.CSSClass, item.Position, item.Path, item.Aria, item.Tooltip, item.TmplName, item.GuestOnly, item.MemberOnly, item.SuperModOnly, item.AdminOnly, item.ID)
-	Menus.Load(item.MenuID)
+func (i MenuItem) Commit() error {
+	_, err := menuItemStmts.update.Exec(i.Name, i.HTMLID, i.CSSClass, i.Position, i.Path, i.Aria, i.Tooltip, i.TmplName, i.GuestOnly, i.MemberOnly, i.SuperModOnly, i.AdminOnly, i.ID)
+	Menus.Load(i.MenuID)
 	return err
 }
 
-func (item MenuItem) Create() (int, error) {
-	res, err := menuItemStmts.insert.Exec(item.MenuID, item.Name, item.HTMLID, item.CSSClass, item.Position, item.Path, item.Aria, item.Tooltip, item.TmplName, item.GuestOnly, item.MemberOnly, item.SuperModOnly, item.AdminOnly)
+func (i MenuItem) Create() (int, error) {
+	res, err := menuItemStmts.insert.Exec(i.MenuID, i.Name, i.HTMLID, i.CSSClass, i.Position, i.Path, i.Aria, i.Tooltip, i.TmplName, i.GuestOnly, i.MemberOnly, i.SuperModOnly, i.AdminOnly)
 	if err != nil {
 		return 0, err
 	}
-	Menus.Load(item.MenuID)
+	Menus.Load(i.MenuID)
 
 	miid64, err := res.LastInsertId()
 	return int(miid64), err
 }
 
-func (item MenuItem) Delete() error {
-	_, err := menuItemStmts.delete.Exec(item.ID)
-	Menus.Load(item.MenuID)
+func (i MenuItem) Delete() error {
+	_, err := menuItemStmts.delete.Exec(i.ID)
+	Menus.Load(i.MenuID)
 	return err
 }
 
-func (hold *MenuListHolder) LoadTmpl(name string) (menuTmpl MenuTmpl, err error) {
+func (h *MenuListHolder) LoadTmpl(name string) (menuTmpl MenuTmpl, err error) {
 	data, err := ioutil.ReadFile("./templates/" + name + ".html")
 	if err != nil {
 		return menuTmpl, err
 	}
-	return hold.Parse(name, data), nil
+	return h.Parse(name, data), nil
 }
 
 // TODO: Make this atomic, maybe with a transaction or store the order on the menu itself?
-func (hold *MenuListHolder) UpdateOrder(updateMap map[int]int) error {
+func (h *MenuListHolder) UpdateOrder(updateMap map[int]int) error {
 	for miid, order := range updateMap {
 		_, err := menuItemStmts.updateOrder.Exec(order, miid)
 		if err != nil {
 			return err
 		}
 	}
-	Menus.Load(hold.MenuID)
+	Menus.Load(h.MenuID)
 	return nil
 }
 
-func (hold *MenuListHolder) LoadTmpls() (tmpls map[string]MenuTmpl, err error) {
+func (h *MenuListHolder) LoadTmpls() (tmpls map[string]MenuTmpl, err error) {
 	tmpls = make(map[string]MenuTmpl)
-	var loadTmpl = func(name string) error {
-		menuTmpl, err := hold.LoadTmpl(name)
+	loadTmpl := func(name string) error {
+		menuTmpl, err := h.LoadTmpl(name)
 		if err != nil {
 			return err
 		}
@@ -136,32 +137,32 @@ func (hold *MenuListHolder) LoadTmpls() (tmpls map[string]MenuTmpl, err error) {
 }
 
 // TODO: Run this in main, sync ticks, when the phrase file changes (need to implement the sync for that first), and when the settings are changed
-func (hold *MenuListHolder) Preparse() error {
-	tmpls, err := hold.LoadTmpls()
+func (h *MenuListHolder) Preparse() error {
+	tmpls, err := h.LoadTmpls()
 	if err != nil {
 		return err
 	}
 
-	var addVariation = func(index int, callback func(mitem MenuItem) bool) {
-		renderBuffer, variableIndices, pathList := hold.Scan(tmpls, callback)
-		hold.Variations[index] = menuTmpl{renderBuffer, variableIndices, pathList}
+	addVariation := func(index int, callback func(i MenuItem) bool) {
+		renderBuffer, variableIndices, pathList := h.Scan(tmpls, callback)
+		h.Variations[index] = menuTmpl{renderBuffer, variableIndices, pathList}
 	}
 
 	// Guest Menu
-	addVariation(0, func(mitem MenuItem) bool {
-		return !mitem.MemberOnly
+	addVariation(0, func(i MenuItem) bool {
+		return !i.MemberOnly
 	})
 	// Member Menu
-	addVariation(1, func(mitem MenuItem) bool {
-		return !mitem.SuperModOnly && !mitem.GuestOnly
+	addVariation(1, func(i MenuItem) bool {
+		return !i.SuperModOnly && !i.GuestOnly
 	})
 	// Super Mod Menu
-	addVariation(2, func(mitem MenuItem) bool {
-		return !mitem.AdminOnly && !mitem.GuestOnly
+	addVariation(2, func(i MenuItem) bool {
+		return !i.AdminOnly && !i.GuestOnly
 	})
 	// Admin Menu
-	addVariation(3, func(mitem MenuItem) bool {
-		return !mitem.GuestOnly
+	addVariation(3, func(i MenuItem) bool {
+		return !i.GuestOnly
 	})
 	return nil
 }
@@ -264,13 +265,13 @@ func menuDumpSlice(outerSlice [][]byte) {
 	}
 }
 
-func (hold *MenuListHolder) Parse(name string, tmplData []byte) (menuTmpl MenuTmpl) {
+func (h *MenuListHolder) Parse(name string, tmplData []byte) (menuTmpl MenuTmpl) {
 	var textBuffer, variableBuffer [][]byte
 	var renderList []menuRenderItem
 	var subBuffer []byte
 
 	// ? We only support simple properties on MenuItem right now
-	var addVariable = func(name []byte) {
+	addVariable := func(name []byte) {
 		// TODO: Check if the subBuffer has any items or is empty
 		textBuffer = append(textBuffer, subBuffer)
 		subBuffer = nil
@@ -325,13 +326,13 @@ func (hold *MenuListHolder) Parse(name string, tmplData []byte) (menuTmpl MenuTm
 	return MenuTmpl{name, textBuffer, variableBuffer, renderList}
 }
 
-func (hold *MenuListHolder) Scan(menuTmpls map[string]MenuTmpl, showItem func(mitem MenuItem) bool) (renderBuffer [][]byte, variableIndices []int, pathList []menuPath) {
-	for _, mitem := range hold.List {
+func (h *MenuListHolder) Scan(menuTmpls map[string]MenuTmpl, showItem func(i MenuItem) bool) (renderBuffer [][]byte, variableIndices []int, pathList []menuPath) {
+	for _, mitem := range h.List {
 		// Do we want this item in this variation of the menu?
 		if !showItem(mitem) {
 			continue
 		}
-		renderBuffer, variableIndices = hold.ScanItem(menuTmpls, mitem, renderBuffer, variableIndices)
+		renderBuffer, variableIndices = h.ScanItem(menuTmpls, mitem, renderBuffer, variableIndices)
 		pathList = append(pathList, menuPath{mitem.Path, len(renderBuffer) - 1})
 	}
 
@@ -340,7 +341,7 @@ func (hold *MenuListHolder) Scan(menuTmpls map[string]MenuTmpl, showItem func(mi
 }
 
 // Note: This doesn't do a visibility check like hold.Scan() does
-func (hold *MenuListHolder) ScanItem(menuTmpls map[string]MenuTmpl, mitem MenuItem, renderBuffer [][]byte, variableIndices []int) ([][]byte, []int) {
+func (h *MenuListHolder) ScanItem(menuTmpls map[string]MenuTmpl, mitem MenuItem, renderBuffer [][]byte, variableIndices []int) ([][]byte, []int) {
 	menuTmpl, ok := menuTmpls[mitem.TmplName]
 	if !ok {
 		menuTmpl = menuTmpls["menu_item"]
@@ -416,16 +417,16 @@ func (hold *MenuListHolder) ScanItem(menuTmpls map[string]MenuTmpl, mitem MenuIt
 }
 
 // TODO: Pre-render the lang stuff
-func (hold *MenuListHolder) Build(w io.Writer, user *User, pathPrefix string) error {
+func (h *MenuListHolder) Build(w io.Writer, user *User, pathPrefix string) error {
 	var mTmpl menuTmpl
 	if !user.Loggedin {
-		mTmpl = hold.Variations[0]
+		mTmpl = h.Variations[0]
 	} else if user.IsAdmin {
-		mTmpl = hold.Variations[3]
+		mTmpl = h.Variations[3]
 	} else if user.IsSuperMod {
-		mTmpl = hold.Variations[2]
+		mTmpl = h.Variations[2]
 	} else {
-		mTmpl = hold.Variations[1]
+		mTmpl = h.Variations[1]
 	}
 	if pathPrefix == "" {
 		pathPrefix = Config.DefaultPath
@@ -438,7 +439,7 @@ func (hold *MenuListHolder) Build(w io.Writer, user *User, pathPrefix string) er
 		return nil
 	}
 
-	var nearIndex = 0
+	nearIndex := 0
 	for index, renderItem := range mTmpl.RenderBuffer {
 		if index != mTmpl.VariableIndices[nearIndex] {
 			w.Write(renderItem)

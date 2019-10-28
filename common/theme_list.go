@@ -41,11 +41,12 @@ var themeStmts ThemeStmts
 
 func init() {
 	DbInits.Add(func(acc *qgen.Accumulator) error {
+		t := "themes"
 		themeStmts = ThemeStmts{
-			getAll:    acc.Select("themes").Columns("uname, default").Prepare(),
-			isDefault: acc.Select("themes").Columns("default").Where("uname = ?").Prepare(),
-			update:    acc.Update("themes").Set("default = ?").Where("uname = ?").Prepare(),
-			add:       acc.Insert("themes").Columns("uname, default").Fields("?,?").Prepare(),
+			getAll:    acc.Select(t).Columns("uname, default").Prepare(),
+			isDefault: acc.Select(t).Columns("default").Where("uname = ?").Prepare(),
+			update:    acc.Update(t).Set("default = ?").Where("uname = ?").Prepare(),
+			add:       acc.Insert(t).Columns("uname, default").Fields("?,?").Prepare(),
 		}
 		return acc.FirstError()
 	})
@@ -144,7 +145,7 @@ func NewThemeList() (themes ThemeList, err error) {
 			return themes, err
 		}
 		if len(overrides) > 0 {
-			var overCount = 0
+			overCount := 0
 			theme.OverridenMap = make(map[string]bool)
 			for _, override := range overrides {
 				if override.IsDir() {
@@ -180,7 +181,6 @@ func NewThemeList() (themes ThemeList, err error) {
 
 		themes[theme.Name] = theme
 	}
-
 	if defaultTheme == "" {
 		defaultTheme = lastTheme
 	}
@@ -232,8 +232,7 @@ func (t ThemeList) LoadActiveStatus() error {
 
 func (t ThemeList) LoadStaticFiles() error {
 	for _, theme := range t {
-		err := theme.LoadStaticFiles()
-		if err != nil {
+		if err := theme.LoadStaticFiles(); err != nil {
 			return err
 		}
 	}
@@ -244,7 +243,6 @@ func ResetTemplateOverrides() {
 	log.Print("Resetting the template overrides")
 	for name := range overridenTemplates {
 		log.Print("Resetting '" + name + "' template override")
-
 		originPointer, ok := TmplPtrMap["o_"+name]
 		if !ok {
 			log.Print("The origin template doesn't exist!")
@@ -269,7 +267,6 @@ func ResetTemplateOverrides() {
 			LogError(errors.New("The source and destination templates are incompatible"))
 			return
 		}
-
 		*dPtr = oPtr
 		log.Print("The template override was reset")
 	}

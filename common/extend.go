@@ -30,15 +30,15 @@ func (list PluginList) Add(plugin *Plugin) {
 	list[plugin.UName] = plugin
 }
 
-func buildPlugin(plugin *Plugin) {
-	plugin.Installable = (plugin.Install != nil)
+func buildPlugin(pl *Plugin) {
+	pl.Installable = (pl.Install != nil)
 	/*
 		The Active field should never be altered by a plugin. It's used internally by the software to determine whether an admin has enabled a plugin or not and whether to run it. This will be overwritten by the user's preference.
 	*/
-	plugin.Active = false
-	plugin.Installed = false
-	plugin.Hooks = make(map[string]int)
-	plugin.Data = nil
+	pl.Active = false
+	pl.Installed = false
+	pl.Hooks = make(map[string]int)
+	pl.Data = nil
 }
 
 var hookTableBox atomic.Value
@@ -391,13 +391,14 @@ var extendStmts ExtendStmts
 
 func init() {
 	DbInits.Add(func(acc *qgen.Accumulator) error {
+		pl := "plugins"
 		extendStmts = ExtendStmts{
-			getPlugins: acc.Select("plugins").Columns("uname, active, installed").Prepare(),
+			getPlugins: acc.Select(pl).Columns("uname, active, installed").Prepare(),
 
-			isActive:     acc.Select("plugins").Columns("active").Where("uname = ?").Prepare(),
-			setActive:    acc.Update("plugins").Set("active = ?").Where("uname = ?").Prepare(),
-			setInstalled: acc.Update("plugins").Set("installed = ?").Where("uname = ?").Prepare(),
-			add:          acc.Insert("plugins").Columns("uname, active, installed").Fields("?,?,?").Prepare(),
+			isActive:     acc.Select(pl).Columns("active").Where("uname = ?").Prepare(),
+			setActive:    acc.Update(pl).Set("active = ?").Where("uname = ?").Prepare(),
+			setInstalled: acc.Update(pl).Set("installed = ?").Where("uname = ?").Prepare(),
+			add:          acc.Insert(pl).Columns("uname, active, installed").Fields("?,?,?").Prepare(),
 		}
 		return acc.FirstError()
 	})
@@ -564,8 +565,7 @@ func InitPlugins() {
 // ? - Are the following functions racey?
 func RunTaskHook(name string) error {
 	for _, hook := range taskHooks[name] {
-		err := hook()
-		if err != nil {
+		if err := hook(); err != nil {
 			return err
 		}
 	}

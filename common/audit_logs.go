@@ -32,10 +32,11 @@ type SQLModLogStore struct {
 }
 
 func NewModLogStore(acc *qgen.Accumulator) (*SQLModLogStore, error) {
+	ml := "moderation_logs"
 	return &SQLModLogStore{
-		create:    acc.Insert("moderation_logs").Columns("action, elementID, elementType, ipaddress, actorID, doneAt").Fields("?,?,?,?,?,UTC_TIMESTAMP()").Prepare(),
-		count:     acc.Count("moderation_logs").Prepare(),
-		getOffset: acc.Select("moderation_logs").Columns("action, elementID, elementType, ipaddress, actorID, doneAt").Orderby("doneAt DESC").Limit("?,?").Prepare(),
+		create:    acc.Insert(ml).Columns("action, elementID, elementType, ipaddress, actorID, doneAt").Fields("?,?,?,?,?,UTC_TIMESTAMP()").Prepare(),
+		count:     acc.Count(ml).Prepare(),
+		getOffset: acc.Select(ml).Columns("action, elementID, elementType, ipaddress, actorID, doneAt").Orderby("doneAt DESC").Limit("?,?").Prepare(),
 	}, acc.FirstError()
 }
 
@@ -83,10 +84,11 @@ type SQLAdminLogStore struct {
 }
 
 func NewAdminLogStore(acc *qgen.Accumulator) (*SQLAdminLogStore, error) {
+	al := "administration_logs"
 	return &SQLAdminLogStore{
-		create:    acc.Insert("administration_logs").Columns("action, elementID, elementType, ipaddress, actorID, doneAt").Fields("?,?,?,?,?,UTC_TIMESTAMP()").Prepare(),
-		count:     acc.Count("administration_logs").Prepare(),
-		getOffset: acc.Select("administration_logs").Columns("action, elementID, elementType, ipaddress, actorID, doneAt").Orderby("doneAt DESC").Limit("?,?").Prepare(),
+		create:    acc.Insert(al).Columns("action, elementID, elementType, ipaddress, actorID, doneAt").Fields("?,?,?,?,?,UTC_TIMESTAMP()").Prepare(),
+		count:     acc.Count(al).Prepare(),
+		getOffset: acc.Select(al).Columns("action, elementID, elementType, ipaddress, actorID, doneAt").Orderby("doneAt DESC").Limit("?,?").Prepare(),
 	}, acc.FirstError()
 }
 

@@ -76,17 +76,18 @@ type MemoryForumStore struct {
 // NewMemoryForumStore gives you a new instance of MemoryForumStore
 func NewMemoryForumStore() (*MemoryForumStore, error) {
 	acc := qgen.NewAcc()
+	f := "forums"
 	// TODO: Do a proper delete
 	return &MemoryForumStore{
-		get:          acc.Select("forums").Columns("name, desc, tmpl, active, order, preset, parentID, parentType, topicCount, lastTopicID, lastReplyerID").Where("fid = ?").Prepare(),
-		getAll:       acc.Select("forums").Columns("fid, name, desc, tmpl, active, order, preset, parentID, parentType, topicCount, lastTopicID, lastReplyerID").Orderby("order ASC, fid ASC").Prepare(),
-		delete:       acc.Update("forums").Set("name= '', active = 0").Where("fid = ?").Prepare(),
-		create:       acc.Insert("forums").Columns("name, desc, tmpl, active, preset").Fields("?,?,'',?,?").Prepare(),
-		count:        acc.Count("forums").Where("name != ''").Prepare(),
-		updateCache:  acc.Update("forums").Set("lastTopicID = ?, lastReplyerID = ?").Where("fid = ?").Prepare(),
-		addTopics:    acc.Update("forums").Set("topicCount = topicCount + ?").Where("fid = ?").Prepare(),
-		removeTopics: acc.Update("forums").Set("topicCount = topicCount - ?").Where("fid = ?").Prepare(),
-		updateOrder:  acc.Update("forums").Set("order = ?").Where("fid = ?").Prepare(),
+		get:          acc.Select(f).Columns("name, desc, tmpl, active, order, preset, parentID, parentType, topicCount, lastTopicID, lastReplyerID").Where("fid = ?").Prepare(),
+		getAll:       acc.Select(f).Columns("fid, name, desc, tmpl, active, order, preset, parentID, parentType, topicCount, lastTopicID, lastReplyerID").Orderby("order ASC, fid ASC").Prepare(),
+		delete:       acc.Update(f).Set("name= '', active = 0").Where("fid = ?").Prepare(),
+		create:       acc.Insert(f).Columns("name, desc, tmpl, active, preset").Fields("?,?,'',?,?").Prepare(),
+		count:        acc.Count(f).Where("name != ''").Prepare(),
+		updateCache:  acc.Update(f).Set("lastTopicID = ?, lastReplyerID = ?").Where("fid = ?").Prepare(),
+		addTopics:    acc.Update(f).Set("topicCount = topicCount + ?").Where("fid = ?").Prepare(),
+		removeTopics: acc.Update(f).Set("topicCount = topicCount - ?").Where("fid = ?").Prepare(),
+		updateOrder:  acc.Update(f).Set("order = ?").Where("fid = ?").Prepare(),
 	}, acc.FirstError()
 }
 
@@ -107,7 +108,7 @@ func (s *MemoryForumStore) LoadForums() error {
 	}
 	defer rows.Close()
 
-	var i = 0
+	i := 0
 	for ; rows.Next(); i++ {
 		f := &Forum{ID: 0, Active: true, Preset: "all"}
 		err = rows.Scan(&f.ID, &f.Name, &f.Desc, &f.Tmpl, &f.Active, &f.Order, &f.Preset, &f.ParentID, &f.ParentType, &f.TopicCount, &f.LastTopicID, &f.LastReplyerID)
@@ -254,7 +255,7 @@ func (s *MemoryForumStore) GetAllVisible() (forumView []*Forum, err error) {
 
 func (s *MemoryForumStore) GetAllVisibleIDs() ([]int, error) {
 	forumView := s.forumView.Load().([]*Forum)
-	var ids = make([]int, len(forumView))
+	ids := make([]int, len(forumView))
 	for i := 0; i < len(forumView); i++ {
 		ids[i] = forumView[i].ID
 	}

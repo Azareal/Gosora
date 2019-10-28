@@ -4,7 +4,7 @@ import (
 	"image"
 	"image/gif"
 	"image/jpeg"
-	_ "image/png"
+	"image/png"
 	"os"
 	"strconv"
 
@@ -66,6 +66,14 @@ func ThumbTask(thumbChan chan bool) {
 		if err != nil {
 			LogError(err)
 		}
+
+		/*
+		err := acc.Select("attach_image_queue").Columns("attachID").Limit("0,5").EachInt(func(attachID int) error {
+			return nil
+
+			_, err = acc.Delete("attach_image_queue").Where("attachID = ?").Run(uid)
+		}
+		*/
 		if err = acc.FirstError(); err != nil {
 			LogError(err)
 		}
@@ -119,6 +127,8 @@ func precodeImage(format string, inPath string, tmpPath string) error {
 	// TODO: Make sure animated gifs work after being encoded
 	if format == "gif" {
 		return gif.Encode(outFile, img, nil)
+	} else if format == "png" {
+		return png.Encode(outFile, img)
 	}
 	return jpeg.Encode(outFile, img, nil)
 }

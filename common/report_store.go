@@ -26,16 +26,17 @@ type DefaultReportStore struct {
 }
 
 func NewDefaultReportStore(acc *qgen.Accumulator) (*DefaultReportStore, error) {
+	t := "topics"
 	return &DefaultReportStore{
-		create: acc.Insert("topics").Columns("title, content, parsed_content, ipaddress, createdAt, lastReplyAt, createdBy, lastReplyBy, data, parentID, css_class").Fields("?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,?,?,'report'").Prepare(),
-		exists: acc.Count("topics").Where("data = ? AND data != '' AND parentID = ?").Prepare(),
+		create: acc.Insert(t).Columns("title, content, parsed_content, ipaddress, createdAt, lastReplyAt, createdBy, lastReplyBy, data, parentID, css_class").Fields("?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,?,?,'report'").Prepare(),
+		exists: acc.Count(t).Where("data = ? AND data != '' AND parentID = ?").Prepare(),
 	}, acc.FirstError()
 }
 
 // ! There's a data race in this. If two users report one item at the exact same time, then both reports will go through
-func (s *DefaultReportStore) Create(title string, content string, user *User, itemType string, itemID int) (int, error) {
+func (s *DefaultReportStore) Create(title string, content string, user *User, itemType string, itemID int) (tid int, err error) {
 	var count int
-	err := s.exists.QueryRow(itemType+"_"+strconv.Itoa(itemID), ReportForumID).Scan(&count)
+	err = s.exists.QueryRow(itemType+"_"+strconv.Itoa(itemID), ReportForumID).Scan(&count)
 	if err != nil && err != sql.ErrNoRows {
 		return 0, err
 	}
@@ -47,11 +48,10 @@ func (s *DefaultReportStore) Create(title string, content string, user *User, it
 	if err != nil {
 		return 0, err
 	}
-
 	lastID, err := res.LastInsertId()
 	if err != nil {
 		return 0, err
 	}
-
-	return int(lastID), Forums.AddTopic(int(lastID), user.ID, ReportForumID)
+	tid = int(lastID)
+	return tid, Forums.AddTopic(tid, user.ID, ReportForumID)
 }

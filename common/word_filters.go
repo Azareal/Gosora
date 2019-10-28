@@ -38,12 +38,13 @@ type DefaultWordFilterStore struct {
 }
 
 func NewDefaultWordFilterStore(acc *qgen.Accumulator) (*DefaultWordFilterStore, error) {
+	wf := "word_filters"
 	store := &DefaultWordFilterStore{
-		getAll: acc.Select("word_filters").Columns("wfid, find, replacement").Prepare(),
-		create: acc.Insert("word_filters").Columns("find, replacement").Fields("?,?").Prepare(),
-		delete: acc.Delete("word_filters").Where("wfid = ?").Prepare(),
-		update: acc.Update("word_filters").Set("find = ?, replacement = ?").Where("wfid = ?").Prepare(),
-		count:  acc.Count("word_filters").Prepare(),
+		getAll: acc.Select(wf).Columns("wfid,find,replacement").Prepare(),
+		create: acc.Insert(wf).Columns("find,replacement").Fields("?,?").Prepare(),
+		delete: acc.Delete(wf).Where("wfid = ?").Prepare(),
+		update: acc.Update(wf).Set("find = ?, replacement = ?").Where("wfid = ?").Prepare(),
+		count:  acc.Count(wf).Prepare(),
 	}
 	// TODO: Should we initialise this elsewhere?
 	if acc.FirstError() == nil {

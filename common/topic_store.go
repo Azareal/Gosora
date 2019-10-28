@@ -56,12 +56,13 @@ func NewDefaultTopicStore(cache TopicCache) (*DefaultTopicStore, error) {
 	if cache == nil {
 		cache = NewNullTopicCache()
 	}
+	t := "topics"
 	return &DefaultTopicStore{
 		cache:      cache,
-		get:        acc.Select("topics").Columns("title, content, createdBy, createdAt, lastReplyBy, lastReplyAt, lastReplyID, is_closed, sticky, parentID, ipaddress, views, postCount, likeCount, attachCount, poll, data").Where("tid = ?").Prepare(),
-		exists:     acc.Select("topics").Columns("tid").Where("tid = ?").Prepare(),
-		count: acc.Count("topics").Prepare(),
-		create:     acc.Insert("topics").Columns("parentID, title, content, parsed_content, createdAt, lastReplyAt, lastReplyBy, ipaddress, words, createdBy").Fields("?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,?,?").Prepare(),
+		get:        acc.Select(t).Columns("title, content, createdBy, createdAt, lastReplyBy, lastReplyAt, lastReplyID, is_closed, sticky, parentID, ipaddress, views, postCount, likeCount, attachCount, poll, data").Where("tid = ?").Prepare(),
+		exists: acc.Exists(t,"tid").Prepare(),
+		count: acc.Count(t).Prepare(),
+		create:     acc.Insert(t).Columns("parentID, title, content, parsed_content, createdAt, lastReplyAt, lastReplyBy, ipaddress, words, createdBy").Fields("?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,?,?").Prepare(),
 	}, acc.FirstError()
 }
 
@@ -159,8 +160,7 @@ func (s *DefaultTopicStore) BulkGetMap(ids []int) (list map[int]*Topic, err erro
 		s.cache.Set(t)
 		list[t.ID] = t
 	}
-	err = rows.Err()
-	if err != nil {
+	if err = rows.Err(); err != nil {
 		return list, err
 	}
 
@@ -211,19 +211,18 @@ func (s *DefaultTopicStore) Create(fid int, topicName string, content string, ui
 		return 0, ErrNoBody
 	}
 
-	wcount := WordCount(content)
 	// TODO: Move this statement into the topic store
-	res, err := s.create.Exec(fid, topicName, content, parsedContent, uid, ipaddress, wcount, uid)
+	res, err := s.create.Exec(fid, topicName, content, parsedContent, uid, ipaddress, WordCount(content), uid)
 	if err != nil {
 		return 0, err
 	}
-
 	lastID, err := res.LastInsertId()
 	if err != nil {
 		return 0, err
 	}
+	tid = int(lastID)
 
-	return int(lastID), Forums.AddTopic(int(lastID), uid, fid)
+	return tid, Forums.AddTopic(tid, uid, fid)
 }
 
 // ? - What is this? Do we need it? Should it be in the main store interface?

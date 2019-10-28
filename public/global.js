@@ -869,10 +869,6 @@ function mainInit(){
 	});
 
 	// The time range selector for the time graphs in the Control Panel
-	/*$(".timeRangeSelector").change(function(){
-		console.log("Changed the time range to " + this.options[this.selectedIndex].getAttribute("val"));
-		window.location = this.form.getAttribute("action")+"?timeRange=" + this.options[this.selectedIndex].getAttribute("val"); // Do a redirect as a form submission refuses to work properly
-	});*/
 	$(".autoSubmitRedirect").change(function(){
 		let elems = this.form.elements;
 		let s = "";

@@ -110,8 +110,8 @@ func PermmapToQuery(permmap map[string]*ForumPerms, fid int) error {
 	}
 
 	addForumPermsToForumAdminsTx, err := qgen.Builder.SimpleInsertSelectTx(tx,
-		qgen.DBInsert{"forums_permissions", "gid, fid, preset, permissions", ""},
-		qgen.DBSelect{"users_groups", "gid, ?, '', ?", "is_admin = 1", "", ""},
+		qgen.DBInsert{"forums_permissions", "gid,fid,preset,permissions", ""},
+		qgen.DBSelect{"users_groups", "gid,?,'',?", "is_admin = 1", "", ""},
 	)
 	if err != nil {
 		return err
@@ -127,8 +127,8 @@ func PermmapToQuery(permmap map[string]*ForumPerms, fid int) error {
 	}
 
 	addForumPermsToForumStaffTx, err := qgen.Builder.SimpleInsertSelectTx(tx,
-		qgen.DBInsert{"forums_permissions", "gid, fid, preset, permissions", ""},
-		qgen.DBSelect{"users_groups", "gid, ?, '', ?", "is_admin = 0 AND is_mod = 1", "", ""},
+		qgen.DBInsert{"forums_permissions", "gid,fid,preset,permissions", ""},
+		qgen.DBSelect{"users_groups", "gid,?,'',?", "is_admin = 0 AND is_mod = 1", "", ""},
 	)
 	if err != nil {
 		return err
@@ -144,8 +144,8 @@ func PermmapToQuery(permmap map[string]*ForumPerms, fid int) error {
 	}
 
 	addForumPermsToForumMembersTx, err := qgen.Builder.SimpleInsertSelectTx(tx,
-		qgen.DBInsert{"forums_permissions", "gid, fid, preset, permissions", ""},
-		qgen.DBSelect{"users_groups", "gid, ?, '', ?", "is_admin = 0 AND is_mod = 0 AND is_banned = 0", "", ""},
+		qgen.DBInsert{"forums_permissions", "gid,fid,preset,permissions", ""},
+		qgen.DBSelect{"users_groups", "gid,?,'',?", "is_admin = 0 AND is_mod = 0 AND is_banned = 0", "", ""},
 	)
 	if err != nil {
 		return err

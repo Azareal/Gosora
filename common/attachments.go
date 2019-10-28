@@ -48,16 +48,17 @@ type DefaultAttachmentStore struct {
 }
 
 func NewDefaultAttachmentStore(acc *qgen.Accumulator) (*DefaultAttachmentStore, error) {
+	a := "attachments"
 	return &DefaultAttachmentStore{
-		get:         acc.Select("attachments").Columns("originID, sectionID, uploadedBy, path, extra").Where("attachID = ?").Prepare(),
-		getByObj:    acc.Select("attachments").Columns("attachID, sectionID, uploadedBy, path, extra").Where("originTable = ? AND originID = ?").Prepare(),
-		add:         acc.Insert("attachments").Columns("sectionID, sectionTable, originID, originTable, uploadedBy, path, extra").Fields("?,?,?,?,?,?,?").Prepare(),
-		count:       acc.Count("attachments").Prepare(),
-		countIn:     acc.Count("attachments").Where("originTable = ? and originID = ?").Prepare(),
-		countInPath: acc.Count("attachments").Where("path = ?").Prepare(),
-		move:        acc.Update("attachments").Set("sectionID = ?").Where("originID = ? AND originTable = ?").Prepare(),
-		moveByExtra: acc.Update("attachments").Set("sectionID = ?").Where("originTable = ? AND extra = ?").Prepare(),
-		delete:      acc.Delete("attachments").Where("attachID = ?").Prepare(),
+		get:         acc.Select(a).Columns("originID, sectionID, uploadedBy, path, extra").Where("attachID = ?").Prepare(),
+		getByObj:    acc.Select(a).Columns("attachID, sectionID, uploadedBy, path, extra").Where("originTable = ? AND originID = ?").Prepare(),
+		add:         acc.Insert(a).Columns("sectionID, sectionTable, originID, originTable, uploadedBy, path, extra").Fields("?,?,?,?,?,?,?").Prepare(),
+		count:       acc.Count(a).Prepare(),
+		countIn:     acc.Count(a).Where("originTable = ? and originID = ?").Prepare(),
+		countInPath: acc.Count(a).Where("path = ?").Prepare(),
+		move:        acc.Update(a).Set("sectionID = ?").Where("originID = ? AND originTable = ?").Prepare(),
+		moveByExtra: acc.Update(a).Set("sectionID = ?").Where("originTable = ? AND extra = ?").Prepare(),
+		delete:      acc.Delete(a).Where("attachID = ?").Prepare(),
 	}, acc.FirstError()
 }
 
@@ -93,7 +94,7 @@ func (s *DefaultAttachmentStore) BulkMiniGetList(originTable string, ids []int) 
 	amap = make(map[int][]*MiniAttachment)
 	var buffer []*MiniAttachment
 	var currentID int
-	rows, err := qgen.NewAcc().Select("attachments").Columns("attachID,sectionID,originID,uploadedBy,path").Where("originTable = ?").In("originID", ids).Orderby("originID ASC").Query(originTable)
+	rows, err := qgen.NewAcc().Select("attachments").Columns("attachID,sectionID,originID,uploadedBy,path").Where("originTable=?").In("originID", ids).Orderby("originID ASC").Query(originTable)
 	defer rows.Close()
 	for rows.Next() {
 		a := &MiniAttachment{}
