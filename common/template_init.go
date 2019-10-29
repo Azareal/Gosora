@@ -339,7 +339,7 @@ func compileTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName string
 	}
 
 	t.AddStd("login", "c.Page", Page{htitle("Login Page"), tList, nil})
-	t.AddStd("register", "c.Page", Page{htitle("Registration Page"), tList, "nananana"})
+	t.AddStd("register", "c.Page", Page{htitle("Registration Page"), tList, false})
 	t.AddStd("error", "c.ErrorPage", ErrorPage{htitle("Error"), "A problem has occurred in the system."})
 
 	ipSearchPage := IPSearchPage{htitle("IP Search"), map[int]*User{1: &user2}, "::1"}

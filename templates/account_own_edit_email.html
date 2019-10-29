@@ -2,7 +2,6 @@
 	<div class="rowitem"><h1>{{lang "account_email_head"}}</h1></div>
 </div>
 <div class="colstack_item rowlist">
-	<!-- TODO: Do we need this inline CSS? -->
 	{{range .ItemList}}
 	<div class="rowitem">
 		<a>{{.Email}}</a>
@@ -11,5 +10,5 @@
 			{{if .Validated}}<span class="username validated_email">{{lang "account_email_verified"}}</span>{{else}}<a class="username invalid_email">{{lang "account_email_resend_email"}}</a>{{end}}
 		</span>
 	</div>
-	{{end}}
+	{{else}}<div class="rowitem passive rowmsg">{{lang "account_email_none"}}</div>{{end}}
 </div>

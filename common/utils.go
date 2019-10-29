@@ -319,9 +319,7 @@ func HasSuspiciousEmail(email string) bool {
 		return true
 	}
 
-	var dotCount int
-	var shortBits int
-	var currentSegmentLength int
+	var dotCount, shortBits, currentSegmentLength int
 	for _, char := range lowEmail {
 		if char == '.' {
 			dotCount++
@@ -337,25 +335,40 @@ func HasSuspiciousEmail(email string) bool {
 	return dotCount > 7 || shortBits > 2
 }
 
+var weakPassStrings = []string{"test", "123","6969","password", "qwerty", "fuck", "love"}
+
 // TODO: Write a test for this
 func WeakPassword(password string, username string, email string) error {
 	lowPassword := strings.ToLower(password)
 	switch {
 	case password == "":
 		return errors.New("You didn't put in a password.")
-	case strings.Contains(lowPassword, strings.ToLower(username)) && len(username) > 3:
-		return errors.New("You can't use your username in your password.")
-	case strings.Contains(lowPassword, strings.ToLower(email)):
-		return errors.New("You can't use your email in your password.")
 	case len(password) < 8:
 		return errors.New("Your password needs to be at-least eight characters long")
+	case strings.Contains(lowPassword, strings.ToLower(username)) && len(username) > 3:
+		return errors.New("You can't use your username in your password.")
+	case email != "" && strings.Contains(lowPassword, strings.ToLower(email)):
+		return errors.New("You can't use your email in your password.")
 	}
 
-	if strings.Contains(lowPassword, "test") || strings.Contains(password, "123") || strings.Contains(lowPassword, "password") || strings.Contains(lowPassword, "qwerty") || strings.Contains(lowPassword, "fuck") || strings.Contains(lowPassword, "love") {
-		return errors.New("You may not have 'test', '123', 'password', 'qwerty', 'love' or 'fuck' in your password")
+	for _, passBit := range weakPassStrings {
+		if strings.Contains(lowPassword, passBit) {
+			s := "You may not have "
+			for i, passBit := range weakPassStrings {
+				if i > 0 {
+					if i == len(weakPassStrings)-1 {
+						s += " or "
+					} else {
+						s += ", "
+					}
+				}
+				s += "'" + passBit + "'"
+			}
+			return errors.New(s + " in your password")
+		}
 	}
 
-	var charMap = make(map[rune]int)
+	charMap := make(map[rune]int)
 	var numbers, symbols, upper, lower int
 	for _, char := range password {
 		charItem, ok := charMap[char]

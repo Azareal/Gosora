@@ -474,6 +474,7 @@
 		"register_head":"Create Account",
 		"register_account_name":"Account Name",
 		"register_account_email":"Email",
+		"register_account_email_optional":"Email (optional)",
 		"register_account_password":"Password",
 		"register_account_confirm_password":"Confirm Password",
 		"register_account_anti_spam":"Ar​e y​ou a sp​am​bo​t?",
@@ -515,6 +516,7 @@
 		"account_email_secondary":"Secondary",
 		"account_email_verified":"Verified",
 		"account_email_resend_email":"Resend Verification Email",
+		"account_email_none":"No email addresses found.",
 
 		"account_password_head":"Edit Password",
 		"account_password_current_password":"Current Password",

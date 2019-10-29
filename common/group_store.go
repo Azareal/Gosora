@@ -91,7 +91,7 @@ func (s *MemoryGroupStore) LoadGroups() error {
 	s.groupCount = i
 
 	DebugLog("Binding the Not Loggedin Group")
-	GuestPerms = s.dirtyGetUnsafe(6).Perms
+	GuestPerms = s.dirtyGetUnsafe(6).Perms // ! Race?
 	TopicListThaw.Thaw()
 	return nil
 }
@@ -164,30 +164,30 @@ func (s *MemoryGroupStore) Reload(id int) error {
 	return nil
 }
 
-func (s *MemoryGroupStore) initGroup(group *Group) error {
-	err := json.Unmarshal(group.PermissionsText, &group.Perms)
+func (s *MemoryGroupStore) initGroup(g *Group) error {
+	err := json.Unmarshal(g.PermissionsText, &g.Perms)
 	if err != nil {
-		log.Printf("group: %+v\n", group)
-		log.Print("bad group perms: ", group.PermissionsText)
+		log.Printf("group: %+v\n", g)
+		log.Print("bad group perms: ", g.PermissionsText)
 		return err
 	}
-	DebugLogf(group.Name+": %+v\n", group.Perms)
+	DebugLogf(g.Name+": %+v\n", g.Perms)
 
-	err = json.Unmarshal(group.PluginPermsText, &group.PluginPerms)
+	err = json.Unmarshal(g.PluginPermsText, &g.PluginPerms)
 	if err != nil {
-		log.Printf("group: %+v\n", group)
-		log.Print("bad group plugin perms: ", group.PluginPermsText)
+		log.Printf("group: %+v\n", g)
+		log.Print("bad group plugin perms: ", g.PluginPermsText)
 		return err
 	}
-	DebugLogf(group.Name+": %+v\n", group.PluginPerms)
+	DebugLogf(g.Name+": %+v\n", g.PluginPerms)
 
 	//group.Perms.ExtData = make(map[string]bool)
 	// TODO: Can we optimise the bit where this cascades down to the user now?
-	if group.IsAdmin || group.IsMod {
-		group.IsBanned = false
+	if g.IsAdmin || g.IsMod {
+		g.IsBanned = false
 	}
 
-	err = s.userCount.QueryRow(group.ID).Scan(&group.UserCount)
+	err = s.userCount.QueryRow(g.ID).Scan(&g.UserCount)
 	if err != sql.ErrNoRows {
 		return err
 	}
@@ -209,9 +209,9 @@ func (s *MemoryGroupStore) SetCanSee(gid int, canSee []int) error {
 	return nil
 }
 
-func (s *MemoryGroupStore) CacheSet(group *Group) error {
+func (s *MemoryGroupStore) CacheSet(g *Group) error {
 	s.Lock()
-	s.groups[group.ID] = group
+	s.groups[g.ID] = g
 	s.Unlock()
 	return nil
 }
@@ -234,7 +234,7 @@ func (s *MemoryGroupStore) Create(name string, tag string, isAdmin bool, isMod b
 	}
 	defer tx.Rollback()
 
-	insertTx, err := qgen.Builder.SimpleInsertTx(tx, "users_groups", "name, tag, is_admin, is_mod, is_banned, permissions, plugin_perms", "?,?,?,?,?,?,'{}'")
+	insertTx, err := qgen.Builder.SimpleInsertTx(tx, "users_groups", "name,tag,is_admin,is_mod,is_banned,permissions,plugin_perms", "?,?,?,?,?,?,'{}'")
 	if err != nil {
 		return 0, err
 	}
@@ -242,7 +242,6 @@ func (s *MemoryGroupStore) Create(name string, tag string, isAdmin bool, isMod b
 	if err != nil {
 		return 0, err
 	}
-
 	gid64, err := res.LastInsertId()
 	if err != nil {
 		return 0, err

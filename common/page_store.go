@@ -90,12 +90,13 @@ type DefaultPageStore struct {
 }
 
 func NewDefaultPageStore(acc *qgen.Accumulator) (*DefaultPageStore, error) {
+	pa := "pages"
 	return &DefaultPageStore{
-		get:       acc.Select("pages").Columns("name, title, body, allowedGroups, menuID").Where("pid = ?").Prepare(),
-		getByName: acc.Select("pages").Columns("pid, name, title, body, allowedGroups, menuID").Where("name = ?").Prepare(),
-		getOffset: acc.Select("pages").Columns("pid, name, title, body, allowedGroups, menuID").Orderby("pid DESC").Limit("?,?").Prepare(),
-		count:     acc.Count("pages").Prepare(),
-		delete:    acc.Delete("pages").Where("pid = ?").Prepare(),
+		get:       acc.Select(pa).Columns("name, title, body, allowedGroups, menuID").Where("pid = ?").Prepare(),
+		getByName: acc.Select(pa).Columns("pid, name, title, body, allowedGroups, menuID").Where("name = ?").Prepare(),
+		getOffset: acc.Select(pa).Columns("pid, name, title, body, allowedGroups, menuID").Orderby("pid DESC").Limit("?,?").Prepare(),
+		count:     acc.Count(pa).Prepare(),
+		delete:    acc.Delete(pa).Where("pid = ?").Prepare(),
 	}, acc.FirstError()
 }
 
@@ -122,23 +123,23 @@ func (s *DefaultPageStore) parseAllowedGroups(raw string, page *CustomPage) erro
 }
 
 func (s *DefaultPageStore) Get(id int) (*CustomPage, error) {
-	page := &CustomPage{ID: id}
+	p := &CustomPage{ID: id}
 	rawAllowedGroups := ""
-	err := s.get.QueryRow(id).Scan(&page.Name, &page.Title, &page.Body, &rawAllowedGroups, &page.MenuID)
+	err := s.get.QueryRow(id).Scan(&p.Name, &p.Title, &p.Body, &rawAllowedGroups, &p.MenuID)
 	if err != nil {
 		return nil, err
 	}
-	return page, s.parseAllowedGroups(rawAllowedGroups, page)
+	return p, s.parseAllowedGroups(rawAllowedGroups, p)
 }
 
 func (s *DefaultPageStore) GetByName(name string) (*CustomPage, error) {
-	page := BlankCustomPage()
+	p := BlankCustomPage()
 	rawAllowedGroups := ""
-	err := s.getByName.QueryRow(name).Scan(&page.ID, &page.Name, &page.Title, &page.Body, &rawAllowedGroups, &page.MenuID)
+	err := s.getByName.QueryRow(name).Scan(&p.ID, &p.Name, &p.Title, &p.Body, &rawAllowedGroups, &p.MenuID)
 	if err != nil {
 		return nil, err
 	}
-	return page, s.parseAllowedGroups(rawAllowedGroups, page)
+	return p, s.parseAllowedGroups(rawAllowedGroups, p)
 }
 
 func (s *DefaultPageStore) GetOffset(offset int, perPage int) (pages []*CustomPage, err error) {
@@ -149,17 +150,17 @@ func (s *DefaultPageStore) GetOffset(offset int, perPage int) (pages []*CustomPa
 	defer rows.Close()
 
 	for rows.Next() {
-		page := &CustomPage{ID: 0}
+		p := &CustomPage{ID: 0}
 		rawAllowedGroups := ""
-		err := rows.Scan(&page.ID, &page.Name, &page.Title, &page.Body, &rawAllowedGroups, &page.MenuID)
+		err := rows.Scan(&p.ID, &p.Name, &p.Title, &p.Body, &rawAllowedGroups, &p.MenuID)
 		if err != nil {
 			return pages, err
 		}
-		err = s.parseAllowedGroups(rawAllowedGroups, page)
+		err = s.parseAllowedGroups(rawAllowedGroups, p)
 		if err != nil {
 			return pages, err
 		}
-		pages = append(pages, page)
+		pages = append(pages, p)
 	}
 	return pages, rows.Err()
 }

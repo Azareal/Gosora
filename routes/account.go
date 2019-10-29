@@ -166,7 +166,7 @@ func AccountLoginMFAVerifySubmit(w http.ResponseWriter, r *http.Request, user c.
 	if !mfaVerifySession(provSession, signedSession, uid) {
 		return c.LocalError("Invalid session", w, r, user)
 	}
-	var token = r.PostFormValue("mfa_token")
+	token := r.PostFormValue("mfa_token")
 
 	err = c.Auth.ValidateMFAToken(token, uid)
 	if err != nil {
@@ -188,7 +188,7 @@ func AccountRegister(w http.ResponseWriter, r *http.Request, user c.User, h *c.H
 	}
 	h.Title = p.GetTitlePhrase("register")
 	h.AddScriptAsync("register.js")
-	return renderTemplate("register", w, r, h, c.Page{h, tList, nil})
+	return renderTemplate("register", w, r, h, c.Page{h, tList, h.Settings["activation_type"] != 2})
 }
 
 func isNumeric(data string) (numeric bool) {
@@ -227,19 +227,19 @@ func AccountRegisterSubmit(w http.ResponseWriter, r *http.Request, user c.User) 
 		}
 	}
 
-	username := c.SanitiseSingleLine(r.PostFormValue("username"))
-	// TODO: Add a dedicated function for validating emails
-	email := c.SanitiseSingleLine(r.PostFormValue("email"))
-	if username == "" {
+	name := c.SanitiseSingleLine(r.PostFormValue("name"))
+	if name == "" {
 		regError(p.GetErrorPhrase("register_need_username"), "no-username")
 	}
-	if email == "" {
+	// TODO: Add a dedicated function for validating emails
+	email := c.SanitiseSingleLine(r.PostFormValue("email"))
+	if headerLite.Settings["activation_type"] == 2 && email == "" {
 		regError(p.GetErrorPhrase("register_need_email"), "no-email")
 	}
 
 	// This is so a numeric name won't interfere with mentioning a user by ID, there might be a better way of doing this like perhaps !@ to mean IDs and @ to mean usernames in the pre-parser
-	usernameBits := strings.Split(username, " ")
-	if isNumeric(usernameBits[0]) {
+	nameBits := strings.Split(name, " ")
+	if isNumeric(nameBits[0]) {
 		regError(p.GetErrorPhrase("register_first_word_numeric"), "numeric-name")
 	}
 
@@ -249,7 +249,7 @@ func AccountRegisterSubmit(w http.ResponseWriter, r *http.Request, user c.User) 
 
 	password := r.PostFormValue("password")
 	// ?  Move this into Create()? What if we want to programatically set weak passwords for tests?
-	err := c.WeakPassword(password, username, email)
+	err := c.WeakPassword(password, name, email)
 	if err != nil {
 		regError(err.Error(), "weak-password")
 	} else {
@@ -260,7 +260,7 @@ func AccountRegisterSubmit(w http.ResponseWriter, r *http.Request, user c.User) 
 		}
 	}
 
-	regLog := c.RegLogItem{Username: username, Email: email, FailureReason: regErrReason, Success: regSuccess, IP: user.LastIP}
+	regLog := c.RegLogItem{Username: name, Email: email, FailureReason: regErrReason, Success: regSuccess, IP: user.LastIP}
 	_, err = regLog.Create()
 	if err != nil {
 		return c.InternalError(err, w, r)
@@ -280,7 +280,7 @@ func AccountRegisterSubmit(w http.ResponseWriter, r *http.Request, user c.User) 
 	}
 
 	// TODO: Do the registration attempt logging a little less messily (without having to amend the result after the insert)
-	uid, err := c.Users.Create(username, password, email, group, active)
+	uid, err := c.Users.Create(name, password, email, group, active)
 	if err != nil {
 		regLog.Success = false
 		if err == c.ErrAccountExists {
@@ -320,12 +320,12 @@ func AccountRegisterSubmit(w http.ResponseWriter, r *http.Request, user c.User) 
 		}
 
 		// TODO: Add an EmailStore and move this there
-		_, err = qgen.NewAcc().Insert("emails").Columns("email, uid, validated, token").Fields("?,?,?,?").Exec(email, uid, 0, token)
+		_, err = qgen.NewAcc().Insert("emails").Columns("email,uid,validated,token").Fields("?,?,?,?").Exec(email, uid, 0, token)
 		if err != nil {
 			return c.InternalError(err, w, r)
 		}
 
-		err = c.SendValidationEmail(username, email, token)
+		err = c.SendValidationEmail(name, email, token)
 		if err != nil {
 			return c.LocalError(p.GetErrorPhrase("register_email_fail"), w, r, user)
 		}
@@ -345,7 +345,6 @@ func accountEditHead(titlePhrase string, w http.ResponseWriter, r *http.Request,
 
 func AccountEdit(w http.ResponseWriter, r *http.Request, user c.User, header *c.Header) c.RouteError {
 	accountEditHead("account", w, r, &user, header)
-
 	if r.FormValue("avatar_updated") == "1" {
 		header.AddNotice("account_avatar_updated")
 	} else if r.FormValue("username_updated") == "1" {
@@ -387,12 +386,12 @@ func AccountEditPasswordSubmit(w http.ResponseWriter, r *http.Request, user c.Us
 	}
 
 	var realPassword, salt string
-	currentPassword := r.PostFormValue("account-current-password")
-	newPassword := r.PostFormValue("account-new-password")
-	confirmPassword := r.PostFormValue("account-confirm-password")
+	currentPassword := r.PostFormValue("current-password")
+	newPassword := r.PostFormValue("new-password")
+	confirmPassword := r.PostFormValue("confirm-password")
 
 	// TODO: Use a reusable statement
-	err := qgen.NewAcc().Select("users").Columns("password, salt").Where("uid = ?").QueryRow(user.ID).Scan(&realPassword, &salt)
+	err := qgen.NewAcc().Select("users").Columns("password,salt").Where("uid=?").QueryRow(user.ID).Scan(&realPassword, &salt)
 	if err == sql.ErrNoRows {
 		return c.LocalError("Your account no longer exists.", w, r, user)
 	} else if err != nil {
@@ -429,7 +428,6 @@ func AccountEditAvatarSubmit(w http.ResponseWriter, r *http.Request, user c.User
 	if ferr != nil {
 		return ferr
 	}
-
 	ferr = c.ChangeAvatar("." + ext, w, r, user)
 	if ferr != nil {
 		return ferr
@@ -584,7 +582,7 @@ func AccountEditEmail(w http.ResponseWriter, r *http.Request, user c.User, h *c.
 
 	// Was this site migrated from another forum software? Most of them don't have multiple emails for a single user.
 	// This also applies when the admin switches site.EnableEmails on after having it off for a while.
-	if len(emails) == 0 {
+	if len(emails) == 0 && user.Email != "" {
 		emails = append(emails, c.Email{UserID: user.ID, Email: user.Email, Validated: false, Primary: true})
 	}
 
@@ -612,7 +610,10 @@ func AccountEditEmailTokenSubmit(w http.ResponseWriter, r *http.Request, user c.
 
 	targetEmail := c.Email{UserID: user.ID}
 	emails, err := c.Emails.GetEmailsByUser(&user)
-	if err != nil {
+	if err == sql.ErrNoRows {
+		return c.LocalError("A verification email was never sent for you!", w, r, user)
+	} else if err != nil {
+		// TODO: Better error if we don't have an email or it's not in the emails table for some reason
 		return c.LocalError("You are not logged in", w, r, user)
 	}
 	for _, email := range emails {
@@ -635,8 +636,7 @@ func AccountEditEmailTokenSubmit(w http.ResponseWriter, r *http.Request, user c.
 
 	// If Email Activation is on, then activate the account while we're here
 	if header.Settings["activation_type"] == 2 {
-		err = user.Activate()
-		if err != nil {
+		if err = user.Activate(); err != nil {
 			return c.InternalError(err, w, r)
 		}
 	}
@@ -646,10 +646,9 @@ func AccountEditEmailTokenSubmit(w http.ResponseWriter, r *http.Request, user c.
 
 func AccountLogins(w http.ResponseWriter, r *http.Request, user c.User, h *c.Header) c.RouteError {
 	accountEditHead("account_logins", w, r, &user, h)
-	logCount := c.LoginLogs.CountUser(user.ID)
 	page, _ := strconv.Atoi(r.FormValue("page"))
 	perPage := 12
-	offset, page, lastPage := c.PageOffset(logCount, page, perPage)
+	offset, page, lastPage := c.PageOffset(c.LoginLogs.CountUser(user.ID), page, perPage)
 
 	logs, err := c.LoginLogs.GetOffset(user.ID, offset, perPage)
 	if err != nil {
@@ -779,12 +778,11 @@ func AccountPasswordResetToken(w http.ResponseWriter, r *http.Request, user c.Us
 		header.AddNotice("password_reset_token_token_verified")
 	}*/
 
-	token := r.FormValue("token")
 	uid, err := strconv.Atoi(r.FormValue("uid"))
 	if err != nil {
 		return c.LocalError("Invalid uid", w, r, user)
 	}
-
+	token := r.FormValue("token")
 	err = c.PasswordResetter.ValidateToken(uid, token)
 	if err == sql.ErrNoRows || err == c.ErrBadResetToken {
 		return c.LocalError("This reset token has expired.", w, r, user)
@@ -814,8 +812,7 @@ func AccountPasswordResetTokenSubmit(w http.ResponseWriter, r *http.Request, use
 		return c.LocalError("This reset token has expired.", w, r, user)
 	}
 
-	token := r.FormValue("token")
-	err = c.PasswordResetter.ValidateToken(uid, token)
+	err = c.PasswordResetter.ValidateToken(uid, r.FormValue("token"))
 	if err == sql.ErrNoRows || err == c.ErrBadResetToken {
 		return c.LocalError("This reset token has expired.", w, r, user)
 	} else if err != nil {

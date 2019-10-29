@@ -20,7 +20,7 @@ type DefaultEmailStore struct {
 
 func NewDefaultEmailStore(acc *qgen.Accumulator) (*DefaultEmailStore, error) {
 	return &DefaultEmailStore{
-		getEmailsByUser: acc.Select("emails").Columns("email, validated, token").Where("uid = ?").Prepare(),
+		getEmailsByUser: acc.Select("emails").Columns("email,validated,token").Where("uid=?").Prepare(),
 
 		// Need to fix this: Empty string isn't working, it gets set to 1 instead x.x -- Has this been fixed?
 		verifyEmail: acc.Update("emails").Set("validated = 1, token = ''").Where("email = ?").Prepare(),
