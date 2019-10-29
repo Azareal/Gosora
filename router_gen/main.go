@@ -75,7 +75,7 @@ func main() {
 		end := len(route.Path) - 1
 		out += "\n\t\tcase \"" + route.Path[0:end] + "\":"
 		out += runBefore(route.RunBefore, 4)
-		out += "\n\t\t\tcounters.RouteViewCounter.Bump(" + strconv.Itoa(allRouteMap[route.Name]) + ")"
+		out += "\n\t\t\tco.RouteViewCounter.Bump(" + strconv.Itoa(allRouteMap[route.Name]) + ")"
 		if !route.Action && !route.NoHead {
 			out += "\n\t\t\thead, err := c.UserCheck(w,req,&user)"
 			out += "\n\t\t\tif err != nil {\n\t\t\t\treturn err\n\t\t\t}"
@@ -136,7 +136,7 @@ func main() {
 					}
 				}
 			}
-			out += "\n\t\t\t\t\tcounters.RouteViewCounter.Bump(" + strconv.Itoa(allRouteMap[route.Name]) + ")"
+			out += "\n\t\t\t\t\tco.RouteViewCounter.Bump(" + strconv.Itoa(allRouteMap[route.Name]) + ")"
 			if !route.Action && !route.NoHead && !group.NoHead {
 				out += "\n\t\t\t\thead, err := c.UserCheck(w,req,&user)"
 				out += "\n\t\t\t\tif err != nil {\n\t\t\t\t\treturn err\n\t\t\t\t}"
@@ -155,7 +155,7 @@ func main() {
 			mapIt(defaultRoute.Name)
 			out += "\n\t\t\t\tdefault:"
 			out += runBefore(defaultRoute.RunBefore, 4)
-			out += "\n\t\t\t\t\tcounters.RouteViewCounter.Bump(" + strconv.Itoa(allRouteMap[defaultRoute.Name]) + ")"
+			out += "\n\t\t\t\t\tco.RouteViewCounter.Bump(" + strconv.Itoa(allRouteMap[defaultRoute.Name]) + ")"
 			if !defaultRoute.Action && !defaultRoute.NoHead && !group.NoHead {
 				out += "\n\t\t\t\t\thead, err := c.UserCheck(w,req,&user)"
 				out += "\n\t\t\t\t\tif err != nil {\n\t\t\t\t\t\treturn err\n\t\t\t\t\t}"
@@ -326,7 +326,7 @@ import (
 	"net/http"
 
 	c "github.com/Azareal/Gosora/common"
-	"github.com/Azareal/Gosora/common/counters"
+	co "github.com/Azareal/Gosora/common/counters"
 	"github.com/Azareal/Gosora/routes"
 	"github.com/Azareal/Gosora/routes/panel"
 )
@@ -367,12 +367,12 @@ var markToAgent = map[string]string{ {{range $index, $element := .AllAgentMarkNa
 
 // TODO: Stop spilling these into the package scope?
 func init() {
-	counters.SetRouteMapEnum(routeMapEnum)
-	counters.SetReverseRouteMapEnum(reverseRouteMapEnum)
-	counters.SetAgentMapEnum(agentMapEnum)
-	counters.SetReverseAgentMapEnum(reverseAgentMapEnum)
-	counters.SetOSMapEnum(osMapEnum)
-	counters.SetReverseOSMapEnum(reverseOSMapEnum)
+	co.SetRouteMapEnum(routeMapEnum)
+	co.SetReverseRouteMapEnum(reverseRouteMapEnum)
+	co.SetAgentMapEnum(agentMapEnum)
+	co.SetReverseAgentMapEnum(reverseAgentMapEnum)
+	co.SetOSMapEnum(osMapEnum)
+	co.SetReverseOSMapEnum(reverseOSMapEnum)
 }
 
 type WriterIntercept struct {
@@ -398,7 +398,7 @@ type HTTPSRedirect struct {}
 
 func (red *HTTPSRedirect) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Connection", "close")
-	counters.RouteViewCounter.Bump({{ index .AllRouteMap "routes.HTTPSRedirect" }})
+	co.RouteViewCounter.Bump({{index .AllRouteMap "routes.HTTPSRedirect"}})
 	dest := "https://" + req.Host + req.URL.String()
 	http.Redirect(w, req, dest, http.StatusTemporaryRedirect)
 }
@@ -431,7 +431,6 @@ func (r *GenRouter) handleError(err c.RouteError, w http.ResponseWriter, req *ht
 	if err.Handled() {
 		return
 	}
-	
 	if err.Type() == "system" {
 		c.InternalErrorJSQ(err, w, req, err.JSON())
 		return
@@ -482,7 +481,7 @@ func (r *GenRouter) SuspiciousRequest(req *http.Request, prepend string) {
 		prepend += "\n"
 	}
 	r.DumpRequest(req,prepend+"Suspicious Request")
-	counters.AgentViewCounter.Bump({{.AllAgentMap.suspicious}})
+	co.AgentViewCounter.Bump({{.AllAgentMap.suspicious}})
 }
 
 func isLocalHost(host string) bool {
@@ -493,11 +492,11 @@ func isLocalHost(host string) bool {
 // TODO: SetDefaultPath
 // TODO: GetDefaultPath
 func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	var malformedRequest = func(typ int) {
+	malformedRequest := func(typ int) {
 		w.WriteHeader(200) // 400
 		w.Write([]byte(""))
 		r.DumpRequest(req,"Malformed Request T"+strconv.Itoa(typ))
-		counters.AgentViewCounter.Bump({{.AllAgentMap.malformed}})
+		co.AgentViewCounter.Bump({{.AllAgentMap.malformed}})
 	}
 	
 	// Split the Host and Port string
@@ -604,10 +603,10 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		r.DumpRequest(req,"before routes.StaticFile")
 	}
 	// Increment the request counter
-	counters.GlobalViewCounter.Bump()
+	co.GlobalViewCounter.Bump()
 	
 	if prefix == "/s" { //old prefix: /static
-		counters.RouteViewCounter.Bump({{ index .AllRouteMap "routes.StaticFile" }})
+		co.RouteViewCounter.Bump({{index .AllRouteMap "routes.StaticFile"}})
 		req.URL.Path += extraData
 		routes.StaticFile(w, req)
 		return
@@ -626,7 +625,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	ua := strings.TrimSpace(strings.Replace(strings.TrimPrefix(req.UserAgent(),"Mozilla/5.0 ")," Safari/537.36","",-1)) // Noise, no one's going to be running this and it would require some sort of agent ranking system to determine which identifier should be prioritised over another
 	var agent string
 	if ua == "" {
-		counters.AgentViewCounter.Bump({{.AllAgentMap.blank}})
+		co.AgentViewCounter.Bump({{.AllAgentMap.blank}})
 		if c.Dev.DebugMode {
 			var prepend string
 			for _, char := range req.UserAgent() {
@@ -716,7 +715,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		}
 		
 		if agent == "" {
-			counters.AgentViewCounter.Bump({{.AllAgentMap.unknown}})
+			co.AgentViewCounter.Bump({{.AllAgentMap.unknown}})
 			if c.Dev.DebugMode {
 				var prepend string
 				for _, char := range req.UserAgent() {
@@ -725,9 +724,9 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				r.DumpRequest(req,"Blank UA: " + prepend)
 			}
 		} else {
-			counters.AgentViewCounter.Bump(agentMapEnum[agent])
+			co.AgentViewCounter.Bump(agentMapEnum[agent])
 		}
-		counters.OSViewCounter.Bump(osMapEnum[os])
+		co.OSViewCounter.Bump(osMapEnum[os])
 	}
 
 	// TODO: Do we want to track missing language headers too? Maybe as it's own type, e.g. "noheader"?
@@ -747,26 +746,26 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		}
 		c.DebugDetail("llLang:", llLang)
 		if llLang == "" {
-			counters.LangViewCounter.Bump("none")
+			co.LangViewCounter.Bump("none")
 		} else {
-			validCode := counters.LangViewCounter.Bump(llLang)
+			validCode := co.LangViewCounter.Bump(llLang)
 			if !validCode {
 				r.DumpRequest(req,"Invalid ISO Code")
 			}
 		}
 	} else {
-		counters.LangViewCounter.Bump("none")
+		co.LangViewCounter.Bump("none")
 	}
 
 	if !c.Config.RefNoTrack {
-		referrer := req.Header.Get("Referer") // Check the 'referrer' header too? :P
-		if referrer != "" {
+		ref := req.Header.Get("Referer") // Check the 'referrer' header too? :P
+		if ref != "" {
 			// ? Optimise this a little?
-			referrer = strings.TrimPrefix(strings.TrimPrefix(referrer,"http://"),"https://")
-			referrer = strings.Split(referrer,"/")[0]
-			portless := strings.Split(referrer,":")[0]
+			ref = strings.TrimPrefix(strings.TrimPrefix(ref,"http://"),"https://")
+			ref = strings.Split(ref,"/")[0]
+			portless := strings.Split(ref,":")[0]
 			if portless != "localhost" && portless != "127.0.0.1" && portless != c.Site.Host {
-				counters.ReferrerTracker.Bump(referrer)
+				co.ReferrerTracker.Bump(ref)
 			}
 		}
 	}
@@ -827,7 +826,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 				h.Del("Content-Type")
 				h.Del("Content-Encoding")
 			}
-			counters.RouteViewCounter.Bump({{index .AllRouteMap "routes.UploadedFile" }})
+			co.RouteViewCounter.Bump({{index .AllRouteMap "routes.UploadedFile"}})
 			req.URL.Path += extraData
 			// TODO: Find a way to propagate errors up from this?
 			r.UploadHandler(w,req) // TODO: Count these views
@@ -837,7 +836,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 			// TODO: Add support for favicons and robots.txt files
 			switch(extraData) {
 				case "robots.txt":
-					counters.RouteViewCounter.Bump({{index .AllRouteMap "routes.RobotsTxt"}})
+					co.RouteViewCounter.Bump({{index .AllRouteMap "routes.RobotsTxt"}})
 					return routes.RobotsTxt(w,req)
 				case "favicon.ico":
 					gzw, ok := w.(c.GzipResponseWriter)
@@ -851,10 +850,10 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					routes.StaticFile(w,req)
 					return nil
 				case "opensearch.xml":
-					counters.RouteViewCounter.Bump({{index .AllRouteMap "routes.OpenSearchXml"}})
+					co.RouteViewCounter.Bump({{index .AllRouteMap "routes.OpenSearchXml"}})
 					return routes.OpenSearchXml(w,req)
 				/*case "sitemap.xml":
-					counters.RouteViewCounter.Bump({{index .AllRouteMap "routes.SitemapXml"}})
+					co.RouteViewCounter.Bump({{index .AllRouteMap "routes.SitemapXml"}})
 					return routes.SitemapXml(w,req)*/
 			}
 			return c.NotFound(w,req,nil)
@@ -865,7 +864,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 			r.RUnlock()
 			
 			if ok {
-				counters.RouteViewCounter.Bump({{index .AllRouteMap "routes.DynamicRoute" }}) // TODO: Be more specific about *which* dynamic route it is
+				co.RouteViewCounter.Bump({{index .AllRouteMap "routes.DynamicRoute"}}) // TODO: Be more specific about *which* dynamic route it is
 				req.URL.Path += extraData
 				return handle(w,req,user)
 			}
@@ -876,7 +875,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 			} else {
 				r.DumpRequest(req,"Bad Route")
 			}
-			counters.RouteViewCounter.Bump({{index .AllRouteMap "routes.BadRoute" }})
+			co.RouteViewCounter.Bump({{index .AllRouteMap "routes.BadRoute"}})
 			return c.NotFound(w,req,nil)
 	}
 	return err
