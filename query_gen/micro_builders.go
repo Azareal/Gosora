@@ -11,29 +11,29 @@ type prebuilder struct {
 	adapter Adapter
 }
 
-func (build *prebuilder) Select(nlist ...string) *selectPrebuilder {
+func (b *prebuilder) Select(nlist ...string) *selectPrebuilder {
 	name := optString(nlist, "")
-	return &selectPrebuilder{name, "", "", "", "", "", nil, nil, "", build.adapter}
+	return &selectPrebuilder{name, "", "", "", "", "", nil, nil, "", b.adapter}
 }
 
-func (build *prebuilder) Count(nlist ...string) *selectPrebuilder {
+func (b *prebuilder) Count(nlist ...string) *selectPrebuilder {
 	name := optString(nlist, "")
-	return &selectPrebuilder{name, "", "COUNT(*)", "", "", "", nil, nil, "", build.adapter}
+	return &selectPrebuilder{name, "", "COUNT(*)", "", "", "", nil, nil, "", b.adapter}
 }
 
-func (build *prebuilder) Insert(nlist ...string) *insertPrebuilder {
+func (b *prebuilder) Insert(nlist ...string) *insertPrebuilder {
 	name := optString(nlist, "")
-	return &insertPrebuilder{name, "", "", "", build.adapter}
+	return &insertPrebuilder{name, "", "", "", b.adapter}
 }
 
-func (build *prebuilder) Update(nlist ...string) *updatePrebuilder {
+func (b *prebuilder) Update(nlist ...string) *updatePrebuilder {
 	name := optString(nlist, "")
-	return &updatePrebuilder{name, "", "", "", nil, nil, build.adapter}
+	return &updatePrebuilder{name, "", "", "", nil, nil, b.adapter}
 }
 
-func (build *prebuilder) Delete(nlist ...string) *deletePrebuilder {
+func (b *prebuilder) Delete(nlist ...string) *deletePrebuilder {
 	name := optString(nlist, "")
-	return &deletePrebuilder{name, "", "", nil, build.adapter}
+	return &deletePrebuilder{name, "", "", nil, b.adapter}
 }
 
 type deletePrebuilder struct {

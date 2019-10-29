@@ -399,7 +399,7 @@ func AddAttachToReplySubmit(w http.ResponseWriter, r *http.Request, user c.User,
 		elemStr = elemStr[:len(elemStr)-1]
 	}
 
-	w.Write([]byte(`{"success":"1","elems":{` + elemStr + `}}`))
+	w.Write([]byte(`{"success":1,"elems":{` + elemStr + `}}`))
 	return nil
 }
 

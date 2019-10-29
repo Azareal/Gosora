@@ -24,49 +24,49 @@ type TransactionBuilder struct {
 	textToStmt map[string]*transactionStmt
 }
 
-func (build *TransactionBuilder) SimpleDelete(table string, where string) (stmt *sql.Stmt, err error) {
-	res, err := build.adapter.SimpleDelete("", table, where)
+func (b *TransactionBuilder) SimpleDelete(table string, where string) (stmt *sql.Stmt, err error) {
+	res, err := b.adapter.SimpleDelete("", table, where)
 	if err != nil {
 		return stmt, err
 	}
-	return build.tx.Prepare(res)
+	return b.tx.Prepare(res)
 }
 
 // Quick* versions refer to it being quick to type not the performance. For performance critical transactions, you might want to use the Simple* methods or the *Tx methods on the main builder. Alternate suggestions for names are welcome :)
-func (build *TransactionBuilder) QuickDelete(table string, where string) *transactionStmt {
-	res, err := build.adapter.SimpleDelete("", table, where)
+func (b *TransactionBuilder) QuickDelete(table string, where string) *transactionStmt {
+	res, err := b.adapter.SimpleDelete("", table, where)
 	if err != nil {
 		return newTransactionStmt(nil, err)
 	}
 
-	stmt, ok := build.textToStmt[res]
+	stmt, ok := b.textToStmt[res]
 	if ok {
 		return stmt
 	}
-	stmt = newTransactionStmt(build.tx.Prepare(res))
-	build.textToStmt[res] = stmt
+	stmt = newTransactionStmt(b.tx.Prepare(res))
+	b.textToStmt[res] = stmt
 	return stmt
 }
 
-func (build *TransactionBuilder) SimpleInsert(table string, columns string, fields string) (stmt *sql.Stmt, err error) {
-	res, err := build.adapter.SimpleInsert("", table, columns, fields)
+func (b *TransactionBuilder) SimpleInsert(table string, columns string, fields string) (stmt *sql.Stmt, err error) {
+	res, err := b.adapter.SimpleInsert("", table, columns, fields)
 	if err != nil {
 		return stmt, err
 	}
-	return build.tx.Prepare(res)
+	return b.tx.Prepare(res)
 }
 
-func (build *TransactionBuilder) QuickInsert(table string, where string) *transactionStmt {
-	res, err := build.adapter.SimpleDelete("", table, where)
+func (b *TransactionBuilder) QuickInsert(table string, where string) *transactionStmt {
+	res, err := b.adapter.SimpleDelete("", table, where)
 	if err != nil {
 		return newTransactionStmt(nil, err)
 	}
 
-	stmt, ok := build.textToStmt[res]
+	stmt, ok := b.textToStmt[res]
 	if ok {
 		return stmt
 	}
-	stmt = newTransactionStmt(build.tx.Prepare(res))
-	build.textToStmt[res] = stmt
+	stmt = newTransactionStmt(b.tx.Prepare(res))
+	b.textToStmt[res] = stmt
 	return stmt
 }

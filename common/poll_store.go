@@ -26,12 +26,12 @@ type Poll struct {
 	VoteCount    int
 }
 
-func (poll *Poll) CastVote(optionIndex int, uid int, ipaddress string) error {
-	return Polls.CastVote(optionIndex, poll.ID, uid, ipaddress) // TODO: Move the query into a pollStmts rather than having it in the store
+func (p *Poll) CastVote(optionIndex int, uid int, ip string) error {
+	return Polls.CastVote(optionIndex, p.ID, uid, ip) // TODO: Move the query into a pollStmts rather than having it in the store
 }
 
-func (poll *Poll) Copy() Poll {
-	return *poll
+func (p *Poll) Copy() Poll {
+	return *p
 }
 
 type PollOption struct {
@@ -122,7 +122,7 @@ func (s *DefaultPollStore) Get(id int) (*Poll, error) {
 // TODO: Optimise the query to avoid preparing it on the spot? Maybe, use knowledge of the most common IN() parameter counts?
 // TODO: ID of 0 should always error?
 func (s *DefaultPollStore) BulkGetMap(ids []int) (list map[int]*Poll, err error) {
-	var idCount = len(ids)
+	idCount := len(ids)
 	list = make(map[int]*Poll)
 	if idCount == 0 {
 		return list, nil
@@ -159,21 +159,21 @@ func (s *DefaultPollStore) BulkGetMap(ids []int) (list map[int]*Poll, err error)
 	}
 
 	for rows.Next() {
-		poll := &Poll{ID: 0}
+		p := &Poll{ID: 0}
 		var optionTxt []byte
-		err := rows.Scan(&poll.ID, &poll.ParentID, &poll.ParentTable, &poll.Type, &optionTxt, &poll.VoteCount)
+		err := rows.Scan(&p.ID, &p.ParentID, &p.ParentTable, &p.Type, &optionTxt, &p.VoteCount)
 		if err != nil {
 			return list, err
 		}
 
-		err = json.Unmarshal(optionTxt, &poll.Options)
+		err = json.Unmarshal(optionTxt, &p.Options)
 		if err != nil {
 			return list, err
 		}
-		poll.QuickOptions = s.unpackOptionsMap(poll.Options)
-		s.cache.Set(poll)
+		p.QuickOptions = s.unpackOptionsMap(p.Options)
+		s.cache.Set(p)
 
-		list[poll.ID] = poll
+		list[p.ID] = p
 	}
 
 	// Did we miss any polls?
@@ -206,22 +206,22 @@ func (s *DefaultPollStore) BulkGetMap(ids []int) (list map[int]*Poll, err error)
 }
 
 func (s *DefaultPollStore) Reload(id int) error {
-	poll := &Poll{ID: id}
+	p := &Poll{ID: id}
 	var optionTxt []byte
-	err := s.get.QueryRow(id).Scan(&poll.ParentID, &poll.ParentTable, &poll.Type, &optionTxt, &poll.VoteCount)
+	err := s.get.QueryRow(id).Scan(&p.ParentID, &p.ParentTable, &p.Type, &optionTxt, &p.VoteCount)
 	if err != nil {
 		s.cache.Remove(id)
 		return err
 	}
 
-	err = json.Unmarshal(optionTxt, &poll.Options)
+	err = json.Unmarshal(optionTxt, &p.Options)
 	if err != nil {
 		s.cache.Remove(id)
 		return err
 	}
 
-	poll.QuickOptions = s.unpackOptionsMap(poll.Options)
-	_ = s.cache.Set(poll)
+	p.QuickOptions = s.unpackOptionsMap(p.Options)
+	_ = s.cache.Set(p)
 	return nil
 }
 
@@ -258,7 +258,6 @@ func (s *DefaultPollStore) Create(parent Pollable, pollType int, pollOptions map
 	if err != nil {
 		return 0, err
 	}
-
 	lastID, err := res.LastInsertId()
 	if err != nil {
 		return 0, err
@@ -270,8 +269,9 @@ func (s *DefaultPollStore) Create(parent Pollable, pollType int, pollOptions map
 			return 0, err
 		}
 	}
-
-	return int(lastID), parent.SetPoll(int(lastID)) // TODO: Delete the poll (and options) if SetPoll fails
+	
+	id = int(lastID)
+	return id, parent.SetPoll(id) // TODO: Delete the poll (and options) if SetPoll fails
 }
 
 func (s *DefaultPollStore) SetCache(cache PollCache) {

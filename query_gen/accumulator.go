@@ -4,6 +4,7 @@ package qgen
 import (
 	"database/sql"
 	"log"
+	"strings"
 )
 
 var LogPrepares = true
@@ -235,10 +236,79 @@ func (build *Accumulator) Select(table string) *AccSelectBuilder {
 	return &AccSelectBuilder{table, "", "", "", "", nil, nil, "", build}
 }
 
+func (build *Accumulator) Exists(tbl, col string) *AccSelectBuilder {
+	return build.Select(tbl).Columns(col).Where(col + "=?")
+}
+
 func (build *Accumulator) Insert(table string) *accInsertBuilder {
 	return &accInsertBuilder{table, "", "", build}
 }
 
 func (build *Accumulator) Count(table string) *accCountBuilder {
 	return &accCountBuilder{table, "", "", nil, nil, "", build}
+}
+
+type SimpleModel struct {
+	delete *sql.Stmt
+	create *sql.Stmt
+	update *sql.Stmt
+}
+
+func (build *Accumulator) SimpleModel(tbl, colstr, primary string) SimpleModel {
+	var qlist, uplist string
+	for _, col := range strings.Split(colstr,",") {
+		qlist += "?,"
+		uplist += col + "=?,"
+	}
+	if len(qlist) > 0 {
+		qlist = qlist[0 : len(qlist)-1]
+		uplist = uplist[0 : len(uplist)-1]
+	}
+
+	where := primary + "=?"
+	return SimpleModel{
+		delete:      build.Delete(tbl).Where(where).Prepare(),
+		create:      build.Insert(tbl).Columns(colstr).Fields(qlist).Prepare(),
+		update:      build.Update(tbl).Set(uplist).Where(where).Prepare(),
+	}
+}
+
+func (m SimpleModel) Delete(keyVal interface{}) error {
+	_, err := m.delete.Exec(keyVal)
+	return err
+}
+
+func (m SimpleModel) Update(args ...interface{}) error {
+	_, err := m.update.Exec(args...)
+	return err
+}
+
+func (m SimpleModel) Create(args ...interface{}) error {
+	_, err := m.create.Exec(args...)
+	return err
+}
+
+func (m SimpleModel) CreateID(args ...interface{}) (int, error) {
+	res, err := m.create.Exec(args...)
+	if err != nil {
+		return 0, err
+	}
+	lastID, err := res.LastInsertId()
+	return int(lastID), err
+}
+
+func (build *Accumulator) Model(table string) *accModelBuilder {
+	return &accModelBuilder{table,"",build}
+}
+
+type accModelBuilder struct {
+	table string
+	primary string
+
+	build *Accumulator
+}
+
+func (b *accModelBuilder) Primary(col string) *accModelBuilder {
+	b.primary = col
+	return b
 }
