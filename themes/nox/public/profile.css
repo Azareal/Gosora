@@ -17,6 +17,13 @@
 	height: 64px;
 	border-radius: 32px;
 }
+.avatarRow a {
+	margin-left: auto;
+	margin-right: auto;
+}
+.avatarRow .avatar {
+	display: block;
+}
 .nameRow {
 	display: flex;
 	flex-direction: column;

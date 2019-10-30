@@ -5,7 +5,7 @@
 	<div id="profile_left_pane" class="rowmenu">
 		<div class="topBlock">
 			<div class="rowitem avatarRow">
-				<img src="{{.ProfileOwner.Avatar}}" class="avatar" alt="Avatar" title="{{.ProfileOwner.Name}}'s Avatar" aria-hidden="true" />
+				<a href="{{.ProfileOwner.Avatar}}"><img src="{{.ProfileOwner.Avatar}}" class="avatar" alt="Avatar" title="{{.ProfileOwner.Name}}'s Avatar" aria-hidden="true" /></a>
 			</div>
 			<div class="rowitem nameRow">
 				<span class="profileName" title="{{.ProfileOwner.Name}}">{{.ProfileOwner.Name}}</span>{{if .ProfileOwner.Tag}}<span class="username" title="{{.ProfileOwner.Tag}}">{{.ProfileOwner.Tag}}</span>{{end}}
