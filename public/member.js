@@ -1,5 +1,5 @@
 // TODO: Push ImageFileExts to the client from the server in some sort of gen.js?
-var imageExts = ["png", "jpg", "jpeg","jfif", "svg", "bmp", "gif", "tiff","tif", "webp"];
+var imageExts = ["png", "jpg", "jpe","jpeg","jif","jfi","jfif", "svg", "bmp", "gif", "tiff","tif", "webp"];
 
 (() => {
 	addInitHook("almost_end_init", () => {
