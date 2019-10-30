@@ -441,6 +441,7 @@ func (ru *ReplyUser) Init() error {
 	if postGroup.IsMod {
 		ru.ClassName = Config.StaffCSS
 	}
+	ru.Tag = postGroup.Tag
 
 	// TODO: Make a function for this? Build a more sophisticated noavatar handling system? Do bulk user loads and let the c.UserStore initialise this?
 	ru.Avatar, ru.MicroAvatar = BuildAvatar(ru.CreatedBy, ru.Avatar)
