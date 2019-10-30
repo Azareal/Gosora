@@ -66,7 +66,7 @@ var AllowedFileExts = StringList{
 	"otf", "woff2", "woff", "ttf", "eot", // fonts
 }
 var ImageFileExts = StringList{
-	"png", "jpg", "jpeg", "svg", "bmp", "gif", "tif", "webp", /* "apng",*/
+	"png", "jpg", "jpeg","jfif", "svg", "bmp", "gif", "tif", "webp", /* "apng",*/
 }
 var ArchiveFileExts = StringList{
 	"bz2", "zip", "gz", "7z", "tar", "cab",

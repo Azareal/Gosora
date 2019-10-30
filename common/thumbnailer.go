@@ -47,7 +47,7 @@ func ThumbTask(thumbChan chan bool) {
 			/*if user.RawAvatar == ".gif" {
 				return nil
 			}*/
-			if user.RawAvatar != ".png" && user.RawAvatar != ".jpg" && user.RawAvatar != ".jpeg" && user.RawAvatar != ".gif" {
+			if user.RawAvatar != ".png" && user.RawAvatar != ".jpg" && user.RawAvatar != ".jpeg" && user.RawAvatar != ".jfif" && user.RawAvatar != ".gif" {
 				return nil
 			}
 

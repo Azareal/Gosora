@@ -494,7 +494,7 @@ func uploadFilesWithHash(w http.ResponseWriter, r *http.Request, user c.User, di
 		}
 		defer inFile.Close()
 
-		if ext != "jpg" && ext != "png" && ext != "gif" {
+		if ext != "jpg" && ext != "jpeg" && ext != "png" && ext != "gif" {
 			outFile, err := os.Create(dir + filename)
 			if err != nil {
 				return nil, c.LocalError("Upload failed [File Creation Failed]", w, r, user)
