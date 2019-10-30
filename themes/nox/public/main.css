@@ -834,11 +834,13 @@ blockquote:first-child {
 	flex-direction: column;
 }
 .avatar_item {
-	border-radius: 36px;
-	height: 58px;
-	width: 58px;
 	background-position: 0px -10px;
 	background-size: 78px;
+}
+.aitem, .avatar_item {
+	height: 58px;
+	width: 58px;
+	border-radius: 36px;
 	margin-left: auto;
 	margin-right: auto;
 }

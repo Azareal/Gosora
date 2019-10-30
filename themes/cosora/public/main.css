@@ -1055,12 +1055,14 @@ blockquote:first-child {
 	flex-direction: column;
 }
 .avatar_item {
-	border-radius: 50px;
-	width: 84px;
-	height: 84px;
-	margin-bottom: 12px;
 	background-position: 0px -10px;
 	background-size: 120px;
+}
+.avatar_item, .aitem {
+	border-radius: 62px;
+	width: 72px;
+	height: 72px;
+	margin-bottom: 8px;
 }
 .the_name, .userinfo .tag_block {
 	margin-left: auto;
