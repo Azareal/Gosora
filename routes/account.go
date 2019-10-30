@@ -114,7 +114,6 @@ func mfaGetCookies(r *http.Request) (uid int, provSession string, signedSession 
 	if err != nil {
 		return 0, "", "", err
 	}
-
 	provSession, err = extractCookie("provSession", r)
 	if err != nil {
 		return 0, "", "", err
@@ -231,18 +230,17 @@ func AccountRegisterSubmit(w http.ResponseWriter, r *http.Request, user c.User) 
 	if name == "" {
 		regError(p.GetErrorPhrase("register_need_username"), "no-username")
 	}
-	// TODO: Add a dedicated function for validating emails
-	email := c.SanitiseSingleLine(r.PostFormValue("email"))
-	if headerLite.Settings["activation_type"] == 2 && email == "" {
-		regError(p.GetErrorPhrase("register_need_email"), "no-email")
-	}
-
 	// This is so a numeric name won't interfere with mentioning a user by ID, there might be a better way of doing this like perhaps !@ to mean IDs and @ to mean usernames in the pre-parser
 	nameBits := strings.Split(name, " ")
 	if isNumeric(nameBits[0]) {
 		regError(p.GetErrorPhrase("register_first_word_numeric"), "numeric-name")
 	}
 
+	// TODO: Add a dedicated function for validating emails
+	email := c.SanitiseSingleLine(r.PostFormValue("email"))
+	if headerLite.Settings["activation_type"] == 2 && email == "" {
+		regError(p.GetErrorPhrase("register_need_email"), "no-email")
+	}
 	if c.HasSuspiciousEmail(email) {
 		regError(p.GetErrorPhrase("register_suspicious_email"), "suspicious-email")
 	}
@@ -313,19 +311,17 @@ func AccountRegisterSubmit(w http.ResponseWriter, r *http.Request, user c.User) 
 	c.Auth.SetCookies(w, uid, session)
 
 	// Check if this user actually owns this email, if email activation is on, automatically flip their account to active when the email is validated. Validation is also useful for determining whether this user should receive any alerts, etc. via email
-	if c.Site.EnableEmails {
+	if c.Site.EnableEmails && email != "" {
 		token, err := c.GenerateSafeString(80)
 		if err != nil {
 			return c.InternalError(err, w, r)
 		}
-
 		// TODO: Add an EmailStore and move this there
 		_, err = qgen.NewAcc().Insert("emails").Columns("email,uid,validated,token").Fields("?,?,?,?").Exec(email, uid, 0, token)
 		if err != nil {
 			return c.InternalError(err, w, r)
 		}
-
-		err = c.SendValidationEmail(name, email, token)
+		err = c.SendActivationEmail(name, email, token)
 		if err != nil {
 			return c.LocalError(p.GetErrorPhrase("register_email_fail"), w, r, user)
 		}
@@ -595,6 +591,62 @@ func AccountEditEmail(w http.ResponseWriter, r *http.Request, user c.User, h *c.
 
 	pi := c.Account{h, "edit_emails", "account_own_edit_email", c.EmailListPage{h, emails}}
 	return renderTemplate("account", w, r, h, pi)
+}
+
+func AccountEditEmailAddSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
+	email := r.PostFormValue("email")
+
+	_, err := c.Emails.Get(&user, email)
+	if err == nil {
+		return c.LocalError("You have already added this email.",w,r,user)
+	} else if err != sql.ErrNoRows && err != nil {
+		return c.InternalError(err, w, r)
+	}
+
+	var token string
+	if c.Site.EnableEmails {
+		token, err = c.GenerateSafeString(80)
+		if err != nil {
+			return c.InternalError(err, w, r)
+		}
+	}
+	err = c.Emails.Add(user.ID, email, token)
+	if err != nil {
+		return c.InternalError(err,w,r)
+	}
+	if c.Site.EnableEmails {
+		err = c.SendValidationEmail(user.Name, email, token)
+		if err != nil {
+			return c.LocalError(p.GetErrorPhrase("register_email_fail"), w, r, user)
+		}
+	}
+	
+	http.Redirect(w, r, "/user/edit/email/?added=1", http.StatusSeeOther)
+	return nil
+}
+
+func AccountEditEmailRemoveSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
+	headerLite, _ := c.SimpleUserCheck(w, r, &user)
+	email := r.PostFormValue("email")
+
+	// Quick and dirty check
+	_, err := c.Emails.Get(&user, email)
+	if err == sql.ErrNoRows {
+		return c.LocalError("This email isn't set on this user.",w,r,user)
+	} else if err != nil {
+		return c.InternalError(err, w, r)
+	}
+	if headerLite.Settings["activation_type"] == 2 && user.Email == email {
+		return c.LocalError("You can't remove your primary email when mandatory email activation is enabled.",w,r,user)
+	}
+
+	err = c.Emails.Delete(user.ID, email)
+	if err != nil {
+		return c.InternalError(err,w,r)
+	}
+	
+	http.Redirect(w, r, "/user/edit/email/?removed=1", http.StatusSeeOther)
+	return nil
 }
 
 // TODO: Should we make this an AnonAction so someone can do this without being logged in?
