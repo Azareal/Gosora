@@ -92,9 +92,9 @@ DisableLiveTopicList - This switch allows you to disable the live topic list. De
 
 DisableJSAntispam - This switch lets you disable the JS anti-spam feature. It may be useful if you primarily get users who for one reason or another have decided to disable JavaScript. Default: false
 
-LooseHost - Disable host header checks in the router. May be useful when using a reverse-proxy like Nginx. Default: false
+LooseHost - Disable host header checks in the router. This may be useful when using a reverse-proxy like Nginx / Apache to stop it white-screening. Default: false
 
-LoosePort - Disable port match checks in the router. May be useful when using a revere-proxy like Nginx. Default: false
+LoosePort - Disable port match checks in the router. This may be useful when using a revere-proxy like Nginx / Apache to stop it white-screening. Default: false
 
 DisableServerPush - This switch lets you disable the HTTP/2 server push feature. Default: false
 
