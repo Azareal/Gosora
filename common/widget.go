@@ -16,18 +16,22 @@ type WidgetStmts struct {
 	delete      *sql.Stmt
 	create      *sql.Stmt
 	update      *sql.Stmt
+	
+	//qgen.SimpleModel
 }
 
 var widgetStmts WidgetStmts
 
 func init() {
 	DbInits.Add(func(acc *qgen.Accumulator) error {
+		w := "widgets"
 		widgetStmts = WidgetStmts{
-			//getList: acc.Select("widgets").Columns("wid, position, side, type, active,  location, data").Orderby("position ASC").Prepare(),
-			getDockList: acc.Select("widgets").Columns("wid, position, type, active,  location, data").Where("side = ?").Orderby("position ASC").Prepare(),
-			delete:      acc.Delete("widgets").Where("wid = ?").Prepare(),
-			create:      acc.Insert("widgets").Columns("position, side, type, active, location, data").Fields("?,?,?,?,?,?").Prepare(),
-			update:      acc.Update("widgets").Set("position = ?, side = ?, type = ?, active = ?, location = ?, data = ?").Where("wid = ?").Prepare(),
+			//getList: acc.Select(w).Columns("wid, position, side, type, active, location, data").Orderby("position ASC").Prepare(),
+			getDockList: acc.Select(w).Columns("wid, position, type, active, location, data").Where("side = ?").Orderby("position ASC").Prepare(),
+			//model: acc.SimpleModel(w,"position,type,active,location,data","wid"),
+			delete:      acc.Delete(w).Where("wid = ?").Prepare(),
+			create:      acc.Insert(w).Columns("position, side, type, active, location, data").Fields("?,?,?,?,?,?").Prepare(),
+			update:      acc.Update(w).Set("position = ?, side = ?, type = ?, active = ?, location = ?, data = ?").Where("wid = ?").Prepare(),
 		}
 		return acc.FirstError()
 	})
@@ -111,7 +115,7 @@ func (widget *Widget) Build(hvars interface{}) (string, error) {
 		return widget.BuildFunc(widget, hvars)
 	}
 
-	var header = hvars.(*Header)
+	header := hvars.(*Header)
 	err := header.Theme.RunTmpl(widget.Body, hvars, header.Writer)
 	return "", err
 }

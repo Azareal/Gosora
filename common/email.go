@@ -5,14 +5,20 @@ import (
 	"fmt"
 	"net/mail"
 	"net/smtp"
+	"strings"
+	
+	p "github.com/Azareal/Gosora/common/phrases"
 )
 
-type Email struct {
-	UserID    int
-	Email     string
-	Validated bool
-	Primary   bool
-	Token     string
+func SendActivationEmail(username string, email string, token string) error {
+	schema := "http"
+	if Site.EnableSsl {
+		schema += "s"
+	}
+	// TODO: Move these to the phrase system
+	subject := "Account Activation - " + Site.Name
+	msg := "Dear " + username + ", to complete your registration on our forums, we need you to validate your email, so that we can confirm that this email actually belongs to you.\n\nClick on the following link to do so. " + schema + "://" + Site.URL + "/user/edit/token/" + token + "\n\nIf you haven't created an account here, then please feel free to ignore this email.\nWe're sorry for the inconvenience this may have caused."
+	return SendEmail(email, subject, msg)
 }
 
 func SendValidationEmail(username string, email string, token string) error {
@@ -20,11 +26,21 @@ func SendValidationEmail(username string, email string, token string) error {
 	if Site.EnableSsl {
 		schema += "s"
 	}
-
-	// TODO: Move these to the phrase system
-	subject := "Validate Your Email - " + Site.Name
-	msg := "Dear " + username + ", to complete your registration on our forums, we need you to validate your email, so that we can confirm that this email actually belongs to you.\n\nClick on the following link to do so. " + schema + "://" + Site.URL + "/user/edit/token/" + token + "\n\nIf you haven't created an account here, then please feel free to ignore this email.\nWe're sorry for the inconvenience this may have caused."
-	return SendEmail(email, subject, msg)
+	r := func(body *string) func(name, val string) {
+		return func(name, val string) {
+			*body = strings.Replace(*body,"{{"+name+"}}",val,-1)
+		}
+	}
+	subject := p.GetAccountPhrase("ValidateEmailSubject")
+	r1 := r(&subject)
+	r1("name",Site.Name)
+	body := p.GetAccountPhrase("ValidateEmailBody")
+	r2 := r(&body)
+	r2("username",username)
+	r2("schema",schema)
+	r2("url",Site.URL)
+	r2("token",token)
+	return SendEmail(email, subject, body)
 }
 
 // TODO: Refactor this
@@ -60,16 +76,12 @@ func SendEmail(email string, subject string, msg string) (err error) {
 			return err
 		}
 		c, err = smtp.NewClient(conn, Config.SMTPServer)
-		if err != nil {
-			LogWarning(err)
-			return err
-		}
 	} else {
 		c, err = smtp.Dial(Config.SMTPServer + ":" + Config.SMTPPort)
-		if err != nil {
-			LogWarning(err)
-			return err
-		}
+	}
+	if err != nil {
+		LogWarning(err)
+		return err
 	}
 
 	if Config.SMTPUsername != "" {
@@ -80,14 +92,11 @@ func SendEmail(email string, subject string, msg string) (err error) {
 			return err
 		}
 	}
-
-	err = c.Mail(from.Address)
-	if err != nil {
+	if err = c.Mail(from.Address); err != nil {
 		LogWarning(err)
 		return err
 	}
-	err = c.Rcpt(to.Address)
-	if err != nil {
+	if err = c.Rcpt(to.Address); err != nil {
 		LogWarning(err)
 		return err
 	}
@@ -102,14 +111,11 @@ func SendEmail(email string, subject string, msg string) (err error) {
 		LogWarning(err)
 		return err
 	}
-
-	err = w.Close()
-	if err != nil {
+	if err = w.Close(); err != nil {
 		LogWarning(err)
 		return err
 	}
-	err = c.Quit()
-	if err != nil {
+	if err = c.Quit(); err != nil {
 		LogWarning(err)
 		return err
 	}

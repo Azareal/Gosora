@@ -67,8 +67,11 @@
 	},
 
 	"Accounts": {
-		"VerifyEmailSubject": "Validate Your Email @  {{name}}",
-		"VerifyEmailBody": "Dear {{username}}, following your registration on our forums, we ask you to validate your email, so that we can confirm that this email actually belongs to you.\n\nClick on the following link to do so. {{schema}}://{{url}}/user/edit/token/{{token}}\n\nIf you haven't created an account here, then please feel free to ignore this email.\nWe're sorry for the inconvenience this may have caused."
+		"ActivateEmailSubject": "Validate Your Email - {{name}}",
+		"ActivateEmailBody": "Dear {{username}}, following your registration on our forums, we ask you to validate your email, so that we can confirm that this email actually belongs to you.\n\nClick on the following link to do so. {{schema}}://{{url}}/user/edit/token/{{token}}\n\nIf you haven't created an account here, then please feel free to ignore this email.\nWe're sorry for the inconvenience this may have caused.",
+
+		"ValidateEmailSubject":"Validate Your Email - {{name}}",
+		"ValidateEmailBody":"Dear {{username}}, to receive emails from our site on this address, we need you to confirm that this email address actually belongs to you.\n\nPlease click on the following link to do so: {{schema}}://{{url}}/user/edit/token/{{token}}\n\nIf you're not a user of our site, then please ignore this email."
 	},
 
 	"Errors": {
@@ -440,7 +443,7 @@
 		"panel_delete_button_text":"Delete",
 		
 		"menu_forums_tooltip":"Forum List",
-		"menu_forums_aria":"The Forum list",
+		"menu_forums_aria":"The forum list",
 		"menu_topics_tooltip":"Topic List",
 		"menu_topics_aria":"The topic list",
 		"menu_alert_counter_aria":"The number of alerts",
