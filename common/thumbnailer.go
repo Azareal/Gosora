@@ -8,7 +8,9 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/Azareal/Gosora/query_gen"
+	"golang.org/x/image/tiff"
+
+	qgen "github.com/Azareal/Gosora/query_gen"
 	"github.com/pkg/errors"
 )
 
@@ -47,7 +49,7 @@ func ThumbTask(thumbChan chan bool) {
 			/*if user.RawAvatar == ".gif" {
 				return nil
 			}*/
-			if user.RawAvatar != ".png" && user.RawAvatar != ".jpg" && user.RawAvatar != ".jpeg" && user.RawAvatar != ".jfif" && user.RawAvatar != ".gif" {
+			if user.RawAvatar != ".png" && user.RawAvatar != ".jpg" && user.RawAvatar != ".jpeg" && user.RawAvatar != ".jfif" && user.RawAvatar != ".gif" && user.RawAvatar != "tiff" && user.RawAvatar != "tif" {
 				return nil
 			}
 
@@ -68,11 +70,11 @@ func ThumbTask(thumbChan chan bool) {
 		}
 
 		/*
-		err := acc.Select("attach_image_queue").Columns("attachID").Limit("0,5").EachInt(func(attachID int) error {
-			return nil
+			err := acc.Select("attach_image_queue").Columns("attachID").Limit("0,5").EachInt(func(attachID int) error {
+				return nil
 
-			_, err = acc.Delete("attach_image_queue").Where("attachID = ?").Run(uid)
-		}
+				_, err = acc.Delete("attach_image_queue").Where("attachID = ?").Run(uid)
+			}
 		*/
 		if err = acc.FirstError(); err != nil {
 			LogError(err)
@@ -125,10 +127,13 @@ func precodeImage(format string, inPath string, tmpPath string) error {
 	defer outFile.Close()
 
 	// TODO: Make sure animated gifs work after being encoded
-	if format == "gif" {
+	switch format {
+	case "gif":
 		return gif.Encode(outFile, img, nil)
-	} else if format == "png" {
+	case "png":
 		return png.Encode(outFile, img)
+	case "tiff", "tif":
+		return tiff.Encode(outFile, img, nil)
 	}
 	return jpeg.Encode(outFile, img, nil)
 }

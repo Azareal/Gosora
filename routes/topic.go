@@ -19,6 +19,7 @@ import (
 	"image/gif"
 	"image/jpeg"
 	"image/png"
+	"golang.org/x/image/tiff"
 
 	c "github.com/Azareal/Gosora/common"
 	"github.com/Azareal/Gosora/common/counters"
@@ -494,7 +495,7 @@ func uploadFilesWithHash(w http.ResponseWriter, r *http.Request, user c.User, di
 		}
 		defer inFile.Close()
 
-		if ext != "jpg" && ext != "jpeg" && ext != "png" && ext != "gif" {
+		if ext != "jpg" && ext != "jpeg" && ext != "png" && ext != "gif" && ext != "tiff" && ext != "tif" {
 			outFile, err := os.Create(dir + filename)
 			if err != nil {
 				return nil, c.LocalError("Upload failed [File Creation Failed]", w, r, user)
@@ -522,6 +523,8 @@ func uploadFilesWithHash(w http.ResponseWriter, r *http.Request, user c.User, di
 				err = gif.Encode(outFile, img, nil)
 			case "png":
 				err = png.Encode(outFile, img)
+			case "tiff","tif":
+				err = tiff.Encode(outFile,img,nil)
 			default:
 				err = jpeg.Encode(outFile, img, nil)
 			}

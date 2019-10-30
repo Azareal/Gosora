@@ -1,3 +1,6 @@
+// TODO: Push ImageFileExts to the client from the server in some sort of gen.js?
+var imageExts = ["png", "jpg", "jpeg","jfif", "svg", "bmp", "gif", "tiff","tif", "webp"];
+
 (() => {
 	addInitHook("almost_end_init", () => {
 	function copyToClipboard(str) {
@@ -49,7 +52,7 @@
 				
 			let ext = getExt(filename);
 			// TODO: Push ImageFileExts to the client from the server in some sort of gen.js?
-			let isImage = ["png", "jpg", "jpeg", "svg", "bmp", "gif", "tif", "webp"].includes(ext);
+			let isImage = imageExts.includes(ext);
 			if(isImage) {
 				let reader = new FileReader();
 				reader.onload = f;
@@ -79,7 +82,7 @@
 					let fileItem = document.createElement("div");
 					let ext = getExt(filename);
 					// TODO: Push ImageFileExts to the client from the server in some sort of gen.js?
-					let isImage = ["png", "jpg", "jpeg", "svg", "bmp", "gif", "tif", "webp"].includes(ext);
+					let isImage = imageExts.includes(ext);
 					let c = "";
 					if(isImage) c = " attach_image_holder"
 					fileItem.className = "attach_item attach_item_item" + c;
@@ -115,7 +118,7 @@
 
 				let ext = getExt(filename);
 				// TODO: Push ImageFileExts to the client from the server in some sort of gen.js?
-				let isImage = ["png", "jpg", "jpeg", "svg", "bmp", "gif", "tif", "webp"].includes(ext);
+				let isImage = imageExts.includes(ext);
 				fileItem.innerText = "." + ext;
 				fileItem.className = "formbutton uploadItem";
 				// TODO: Check if this is actually an image
@@ -249,7 +252,7 @@
 			event.preventDefault();
 			let selectNode = this.form.querySelector(".mod_floater_options");
 			let optionNode = selectNode.options[selectNode.selectedIndex];
-			let action = optionNode.getAttribute("val");
+			let action = optionNode.getAttribute("value");
 	
 			// Handle these specially
 			switch(action) {

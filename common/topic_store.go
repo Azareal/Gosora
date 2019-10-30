@@ -226,7 +226,7 @@ func (s *DefaultTopicStore) Create(fid int, topicName string, content string, ui
 }
 
 // ? - What is this? Do we need it? Should it be in the main store interface?
-func (s *DefaultTopicStore) AddLastTopic(item *Topic, fid int) error {
+func (s *DefaultTopicStore) AddLastTopic(t *Topic, fid int) error {
 	// Coming Soon...
 	return nil
 }
