@@ -450,6 +450,7 @@ func uploadFilesWithHash(w http.ResponseWriter, r *http.Request, user c.User, di
 	if len(files) > 5 {
 		return nil, c.LocalError("You can't attach more than five files", w, r, user)
 	}
+	disableEncode := r.PostFormValue("ko") == "1"
 
 	for _, file := range files {
 		if file.Filename == "" {
@@ -495,7 +496,7 @@ func uploadFilesWithHash(w http.ResponseWriter, r *http.Request, user c.User, di
 		}
 		defer inFile.Close()
 
-		if ext != "jpg" && ext != "jpeg" && ext != "png" && ext != "gif" && ext != "tiff" && ext != "tif" {
+		if disableEncode || (ext != "jpg" && ext != "jpeg" && ext != "png" && ext != "gif" && ext != "tiff" && ext != "tif") {
 			outFile, err := os.Create(dir + filename)
 			if err != nil {
 				return nil, c.LocalError("Upload failed [File Creation Failed]", w, r, user)
