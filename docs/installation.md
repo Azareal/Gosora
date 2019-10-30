@@ -25,6 +25,8 @@ We can now hop into the newly created folder with the same command we used for g
 
 And now, we'll change the permissions on the installer script, otherwise we'll get an access denied error:
 
+`chmod 755 ./update-deps-linux`
+
 `chmod 755 ./install-linux`
 
 Just run this to run the installer:
