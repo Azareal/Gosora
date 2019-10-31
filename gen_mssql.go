@@ -45,10 +45,10 @@ func _gen_mssql() (err error) {
 	}
 		
 	common.DebugLog("Preparing getForumTopics statement.")
-	stmts.getForumTopics, err = db.Prepare("SELECT [topics].[tid],[topics].[title],[topics].[content],[topics].[createdBy],[topics].[is_closed],[topics].[sticky],[topics].[createdAt],[topics].[lastReplyAt],[topics].[parentID],[users].[name],[users].[avatar] FROM [topics] LEFT JOIN [users] ON [topics].[createdBy] = [users].[uid]  WHERE [topics].[parentID] = ?1 ORDER BY topics.sticky DESC,topics.lastReplyAt DESC,topics.createdBy DESC")
+	stmts.getForumTopics, err = db.Prepare("SELECT [topics].[tid],[topics].[title],[topics].[content],[topics].[createdBy],[topics].[is_closed],[topics].[sticky],[topics].[createdAt],[topics].[lastReplyAt],[topics].[parentID],[users].[name],[users].[avatar] FROM [topics] LEFT JOIN [users] ON [topics].[createdBy]=[users].[uid]  WHERE [topics].[parentID] = ?1 ORDER BY topics.sticky DESC,topics.lastReplyAt DESC,topics.createdBy DESC")
 	if err != nil {
 		log.Print("Error in getForumTopics statement.")
-		log.Print("Bad Query: ","SELECT [topics].[tid],[topics].[title],[topics].[content],[topics].[createdBy],[topics].[is_closed],[topics].[sticky],[topics].[createdAt],[topics].[lastReplyAt],[topics].[parentID],[users].[name],[users].[avatar] FROM [topics] LEFT JOIN [users] ON [topics].[createdBy] = [users].[uid]  WHERE [topics].[parentID] = ?1 ORDER BY topics.sticky DESC,topics.lastReplyAt DESC,topics.createdBy DESC")
+		log.Print("Bad Query: ","SELECT [topics].[tid],[topics].[title],[topics].[content],[topics].[createdBy],[topics].[is_closed],[topics].[sticky],[topics].[createdAt],[topics].[lastReplyAt],[topics].[parentID],[users].[name],[users].[avatar] FROM [topics] LEFT JOIN [users] ON [topics].[createdBy]=[users].[uid]  WHERE [topics].[parentID] = ?1 ORDER BY topics.sticky DESC,topics.lastReplyAt DESC,topics.createdBy DESC")
 		return err
 	}
 		

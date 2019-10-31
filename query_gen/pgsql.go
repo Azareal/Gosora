@@ -21,39 +21,39 @@ type PgsqlAdapter struct {
 }
 
 // GetName gives you the name of the database adapter. In this case, it's pgsql
-func (adapter *PgsqlAdapter) GetName() string {
-	return adapter.Name
+func (a *PgsqlAdapter) GetName() string {
+	return a.Name
 }
 
-func (adapter *PgsqlAdapter) GetStmt(name string) DBStmt {
-	return adapter.Buffer[name]
+func (a *PgsqlAdapter) GetStmt(name string) DBStmt {
+	return a.Buffer[name]
 }
 
-func (adapter *PgsqlAdapter) GetStmts() map[string]DBStmt {
-	return adapter.Buffer
+func (a *PgsqlAdapter) GetStmts() map[string]DBStmt {
+	return a.Buffer
 }
 
 // TODO: Implement this
-func (adapter *PgsqlAdapter) BuildConn(config map[string]string) (*sql.DB, error) {
+func (a *PgsqlAdapter) BuildConn(config map[string]string) (*sql.DB, error) {
 	return nil, nil
 }
 
-func (adapter *PgsqlAdapter) DbVersion() string {
+func (a *PgsqlAdapter) DbVersion() string {
 	return "SELECT version()"
 }
 
-func (adapter *PgsqlAdapter) DropTable(name string, table string) (string, error) {
+func (a *PgsqlAdapter) DropTable(name string, table string) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
-	querystr := "DROP TABLE IF EXISTS \"" + table + "\";"
-	adapter.pushStatement(name, "drop-table", querystr)
-	return querystr, nil
+	q := "DROP TABLE IF EXISTS \"" + table + "\";"
+	a.pushStatement(name, "drop-table", q)
+	return q, nil
 }
 
 // TODO: Implement this
 // We may need to change the CreateTable API to better suit PGSQL and the other database drivers which are coming up
-func (adapter *PgsqlAdapter) CreateTable(name string, table string, charset string, collation string, columns []DBTableColumn, keys []DBTableKey) (string, error) {
+func (a *PgsqlAdapter) CreateTable(name string, table string, charset string, collation string, columns []DBTableColumn, keys []DBTableKey) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
@@ -61,7 +61,7 @@ func (adapter *PgsqlAdapter) CreateTable(name string, table string, charset stri
 		return "", errors.New("You can't have a table with no columns")
 	}
 
-	var querystr = "CREATE TABLE \"" + table + "\" ("
+	q := "CREATE TABLE \"" + table + "\" ("
 	for _, column := range columns {
 		if column.AutoIncrement {
 			column.Type = "serial"
@@ -79,41 +79,40 @@ func (adapter *PgsqlAdapter) CreateTable(name string, table string, charset stri
 		var end string
 		if column.Default != "" {
 			end = " DEFAULT "
-			if adapter.stringyType(column.Type) && column.Default != "''" {
+			if a.stringyType(column.Type) && column.Default != "''" {
 				end += "'" + column.Default + "'"
 			} else {
 				end += column.Default
 			}
 		}
-
 		if !column.Null {
 			end += " not null"
 		}
 
-		querystr += "\n\t`" + column.Name + "` " + column.Type + size + end + ","
+		q += "\n\t`" + column.Name + "` " + column.Type + size + end + ","
 	}
 
 	if len(keys) > 0 {
 		for _, key := range keys {
-			querystr += "\n\t" + key.Type
+			q += "\n\t" + key.Type
 			if key.Type != "unique" {
-				querystr += " key"
+				q += " key"
 			}
-			querystr += "("
+			q += "("
 			for _, column := range strings.Split(key.Columns, ",") {
-				querystr += "`" + column + "`,"
+				q += "`" + column + "`,"
 			}
-			querystr = querystr[0:len(querystr)-1] + "),"
+			q = q[0:len(q)-1] + "),"
 		}
 	}
 
-	querystr = querystr[0:len(querystr)-1] + "\n);"
-	adapter.pushStatement(name, "create-table", querystr)
-	return querystr, nil
+	q = q[0:len(q)-1] + "\n);"
+	a.pushStatement(name, "create-table", q)
+	return q, nil
 }
 
 // TODO: Implement this
-func (adapter *PgsqlAdapter) AddColumn(name string, table string, column DBTableColumn, key *DBTableKey) (string, error) {
+func (a *PgsqlAdapter) AddColumn(name string, table string, column DBTableColumn, key *DBTableKey) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
@@ -122,7 +121,7 @@ func (adapter *PgsqlAdapter) AddColumn(name string, table string, column DBTable
 
 // TODO: Implement this
 // TODO: Test to make sure everything works here
-func (adapter *PgsqlAdapter) AddIndex(name string, table string, iname string, colname string) (string, error) {
+func (a *PgsqlAdapter) AddIndex(name string, table string, iname string, colname string) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
@@ -137,7 +136,7 @@ func (adapter *PgsqlAdapter) AddIndex(name string, table string, iname string, c
 
 // TODO: Implement this
 // TODO: Test to make sure everything works here
-func (adapter *PgsqlAdapter) AddKey(name string, table string, column string, key DBTableKey) (string, error) {
+func (a *PgsqlAdapter) AddKey(name string, table string, column string, key DBTableKey) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
@@ -149,17 +148,17 @@ func (adapter *PgsqlAdapter) AddKey(name string, table string, column string, ke
 
 // TODO: Implement this
 // TODO: Test to make sure everything works here
-func (adapter *PgsqlAdapter) AddForeignKey(name string, table string, column string, ftable string, fcolumn string, cascade bool) (out string, e error) {
+func (a *PgsqlAdapter) AddForeignKey(name string, table string, column string, ftable string, fcolumn string, cascade bool) (out string, e error) {
 	var c = func(str string, val bool) {
 		if e != nil || !val {
 			return
 		}
-		e = errors.New("You need a "+str+" for this table")
+		e = errors.New("You need a " + str + " for this table")
 	}
-	c("name",table=="")
-	c("column",column=="")
-	c("ftable",ftable=="")
-	c("fcolumn",fcolumn=="")
+	c("name", table == "")
+	c("column", column == "")
+	c("ftable", ftable == "")
+	c("fcolumn", fcolumn == "")
 	if e != nil {
 		return "", e
 	}
@@ -168,14 +167,14 @@ func (adapter *PgsqlAdapter) AddForeignKey(name string, table string, column str
 
 // TODO: Test this
 // ! We need to get the last ID out of this somehow, maybe add returning to every query? Might require some sort of wrapper over the sql statements
-func (adapter *PgsqlAdapter) SimpleInsert(name string, table string, columns string, fields string) (string, error) {
+func (a *PgsqlAdapter) SimpleInsert(name string, table string, columns string, fields string) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
 
-	var querystr = "INSERT INTO \"" + table + "\"("
+	q := "INSERT INTO \"" + table + "\"("
 	if columns != "" {
-		querystr += adapter.buildColumns(columns) + ") VALUES ("
+		q += a.buildColumns(columns) + ") VALUES ("
 		for _, field := range processFields(fields) {
 			nameLen := len(field.Name)
 			if field.Name[0] == '"' && field.Name[nameLen-1] == '"' && nameLen >= 3 {
@@ -184,35 +183,35 @@ func (adapter *PgsqlAdapter) SimpleInsert(name string, table string, columns str
 			if field.Name[0] == '\'' && field.Name[nameLen-1] == '\'' && nameLen >= 3 {
 				field.Name = "'" + strings.Replace(field.Name[1:nameLen-1], "'", "''", -1) + "'"
 			}
-			querystr += field.Name + ","
+			q += field.Name + ","
 		}
-		querystr = querystr[0 : len(querystr)-1]
+		q = q[0 : len(q)-1]
 	} else {
-		querystr += ") VALUES ("
+		q += ") VALUES ("
 	}
-	querystr += ")"
+	q += ")"
 
-	adapter.pushStatement(name, "insert", querystr)
-	return querystr, nil
+	a.pushStatement(name, "insert", q)
+	return q, nil
 }
 
-func (adapter *PgsqlAdapter) buildColumns(columns string) (querystr string) {
+func (a *PgsqlAdapter) buildColumns(columns string) (q string) {
 	if columns == "" {
 		return ""
 	}
 	// Escape the column names, just in case we've used a reserved keyword
 	for _, column := range processColumns(columns) {
 		if column.Type == "function" {
-			querystr += column.Left + ","
+			q += column.Left + ","
 		} else {
-			querystr += "\"" + column.Left + "\","
+			q += "\"" + column.Left + "\","
 		}
 	}
-	return querystr[0 : len(querystr)-1]
+	return q[0 : len(q)-1]
 }
 
 // TODO: Implement this
-func (adapter *PgsqlAdapter) SimpleReplace(name string, table string, columns string, fields string) (string, error) {
+func (a *PgsqlAdapter) SimpleReplace(name string, table string, columns string, fields string) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
@@ -226,7 +225,7 @@ func (adapter *PgsqlAdapter) SimpleReplace(name string, table string, columns st
 }
 
 // TODO: Implement this
-func (adapter *PgsqlAdapter) SimpleUpsert(name string, table string, columns string, fields string, where string) (string, error) {
+func (a *PgsqlAdapter) SimpleUpsert(name string, table string, columns string, fields string, where string) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
@@ -240,7 +239,7 @@ func (adapter *PgsqlAdapter) SimpleUpsert(name string, table string, columns str
 }
 
 // TODO: Implemented, but we need CreateTable and a better installer to *test* it
-func (adapter *PgsqlAdapter) SimpleUpdate(up *updatePrebuilder) (string, error) {
+func (a *PgsqlAdapter) SimpleUpdate(up *updatePrebuilder) (string, error) {
 	if up.table == "" {
 		return "", errors.New("You need a name for this table")
 	}
@@ -248,9 +247,9 @@ func (adapter *PgsqlAdapter) SimpleUpdate(up *updatePrebuilder) (string, error) 
 		return "", errors.New("You need to set data in this update statement")
 	}
 
-	var querystr = "UPDATE \"" + up.table + "\" SET "
+	q := "UPDATE \"" + up.table + "\" SET "
 	for _, item := range processSet(up.set) {
-		querystr += "`" + item.Column + "` ="
+		q += "`" + item.Column + "` ="
 		for _, token := range item.Expr {
 			switch token.Type {
 			case "function":
@@ -258,23 +257,23 @@ func (adapter *PgsqlAdapter) SimpleUpdate(up *updatePrebuilder) (string, error) 
 				if strings.ToUpper(token.Contents) == "UTC_TIMESTAMP()" {
 					token.Contents = "LOCALTIMESTAMP()"
 				}
-				querystr += " " + token.Contents
+				q += " " + token.Contents
 			case "operator", "number", "substitute", "or":
-				querystr += " " + token.Contents
+				q += " " + token.Contents
 			case "column":
-				querystr += " `" + token.Contents + "`"
+				q += " `" + token.Contents + "`"
 			case "string":
-				querystr += " '" + token.Contents + "'"
+				q += " '" + token.Contents + "'"
 			}
 		}
-		querystr += ","
+		q += ","
 	}
 	// Remove the trailing comma
-	querystr = querystr[0 : len(querystr)-1]
+	q = q[0 : len(q)-1]
 
 	// Add support for BETWEEN x.x
 	if len(up.where) != 0 {
-		querystr += " WHERE"
+		q += " WHERE"
 		for _, loc := range processWhere(up.where) {
 			for _, token := range loc.Expr {
 				switch token.Type {
@@ -283,33 +282,33 @@ func (adapter *PgsqlAdapter) SimpleUpdate(up *updatePrebuilder) (string, error) 
 					if strings.ToUpper(token.Contents) == "UTC_TIMESTAMP()" {
 						token.Contents = "LOCALTIMESTAMP()"
 					}
-					querystr += " " + token.Contents
+					q += " " + token.Contents
 				case "operator", "number", "substitute", "or":
-					querystr += " " + token.Contents
+					q += " " + token.Contents
 				case "column":
-					querystr += " `" + token.Contents + "`"
+					q += " `" + token.Contents + "`"
 				case "string":
-					querystr += " '" + token.Contents + "'"
+					q += " '" + token.Contents + "'"
 				default:
 					panic("This token doesn't exist o_o")
 				}
 			}
-			querystr += " AND"
+			q += " AND"
 		}
-		querystr = querystr[0 : len(querystr)-4]
+		q = q[0 : len(q)-4]
 	}
 
-	adapter.pushStatement(up.name, "update", querystr)
-	return querystr, nil
+	a.pushStatement(up.name, "update", q)
+	return q, nil
 }
 
 // TODO: Implement this
-func (adapter *PgsqlAdapter) SimpleUpdateSelect(up *updatePrebuilder) (string, error) {
+func (a *PgsqlAdapter) SimpleUpdateSelect(up *updatePrebuilder) (string, error) {
 	return "", errors.New("not implemented")
 }
 
 // TODO: Implement this
-func (adapter *PgsqlAdapter) SimpleDelete(name string, table string, where string) (string, error) {
+func (a *PgsqlAdapter) SimpleDelete(name string, table string, where string) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
@@ -320,7 +319,7 @@ func (adapter *PgsqlAdapter) SimpleDelete(name string, table string, where strin
 }
 
 // TODO: Implement this
-func (adapter *PgsqlAdapter) ComplexDelete(b *deletePrebuilder) (string, error) {
+func (a *PgsqlAdapter) ComplexDelete(b *deletePrebuilder) (string, error) {
 	if b.table == "" {
 		return "", errors.New("You need a name for this table")
 	}
@@ -332,7 +331,7 @@ func (adapter *PgsqlAdapter) ComplexDelete(b *deletePrebuilder) (string, error) 
 
 // TODO: Implement this
 // We don't want to accidentally wipe tables, so we'll have a separate method for purging tables instead
-func (adapter *PgsqlAdapter) Purge(name string, table string) (string, error) {
+func (a *PgsqlAdapter) Purge(name string, table string) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
@@ -340,7 +339,7 @@ func (adapter *PgsqlAdapter) Purge(name string, table string) (string, error) {
 }
 
 // TODO: Implement this
-func (adapter *PgsqlAdapter) SimpleSelect(name string, table string, columns string, where string, orderby string, limit string) (string, error) {
+func (a *PgsqlAdapter) SimpleSelect(name string, table string, columns string, where string, orderby string, limit string) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
@@ -351,7 +350,7 @@ func (adapter *PgsqlAdapter) SimpleSelect(name string, table string, columns str
 }
 
 // TODO: Implement this
-func (adapter *PgsqlAdapter) ComplexSelect(prebuilder *selectPrebuilder) (string, error) {
+func (a *PgsqlAdapter) ComplexSelect(prebuilder *selectPrebuilder) (string, error) {
 	if prebuilder.table == "" {
 		return "", errors.New("You need a name for this table")
 	}
@@ -362,7 +361,7 @@ func (adapter *PgsqlAdapter) ComplexSelect(prebuilder *selectPrebuilder) (string
 }
 
 // TODO: Implement this
-func (adapter *PgsqlAdapter) SimpleLeftJoin(name string, table1 string, table2 string, columns string, joiners string, where string, orderby string, limit string) (string, error) {
+func (a *PgsqlAdapter) SimpleLeftJoin(name string, table1 string, table2 string, columns string, joiners string, where string, orderby string, limit string) (string, error) {
 	if table1 == "" {
 		return "", errors.New("You need a name for the left table")
 	}
@@ -379,7 +378,7 @@ func (adapter *PgsqlAdapter) SimpleLeftJoin(name string, table1 string, table2 s
 }
 
 // TODO: Implement this
-func (adapter *PgsqlAdapter) SimpleInnerJoin(name string, table1 string, table2 string, columns string, joiners string, where string, orderby string, limit string) (string, error) {
+func (a *PgsqlAdapter) SimpleInnerJoin(name string, table1 string, table2 string, columns string, joiners string, where string, orderby string, limit string) (string, error) {
 	if table1 == "" {
 		return "", errors.New("You need a name for the left table")
 	}
@@ -396,39 +395,39 @@ func (adapter *PgsqlAdapter) SimpleInnerJoin(name string, table1 string, table2 
 }
 
 // TODO: Implement this
-func (adapter *PgsqlAdapter) SimpleInsertSelect(name string, ins DBInsert, sel DBSelect) (string, error) {
+func (a *PgsqlAdapter) SimpleInsertSelect(name string, ins DBInsert, sel DBSelect) (string, error) {
 	return "", nil
 }
 
 // TODO: Implement this
-func (adapter *PgsqlAdapter) SimpleInsertLeftJoin(name string, ins DBInsert, sel DBJoin) (string, error) {
+func (a *PgsqlAdapter) SimpleInsertLeftJoin(name string, ins DBInsert, sel DBJoin) (string, error) {
 	return "", nil
 }
 
 // TODO: Implement this
-func (adapter *PgsqlAdapter) SimpleInsertInnerJoin(name string, ins DBInsert, sel DBJoin) (string, error) {
+func (a *PgsqlAdapter) SimpleInsertInnerJoin(name string, ins DBInsert, sel DBJoin) (string, error) {
 	return "", nil
 }
 
 // TODO: Implement this
-func (adapter *PgsqlAdapter) SimpleCount(name string, table string, where string, limit string) (string, error) {
+func (a *PgsqlAdapter) SimpleCount(name string, table string, where string, limit string) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
 	return "", nil
 }
 
-func (adapter *PgsqlAdapter) Builder() *prebuilder {
-	return &prebuilder{adapter}
+func (a *PgsqlAdapter) Builder() *prebuilder {
+	return &prebuilder{a}
 }
 
-func (adapter *PgsqlAdapter) Write() error {
+func (a *PgsqlAdapter) Write() error {
 	var stmts, body string
-	for _, name := range adapter.BufferOrder {
+	for _, name := range a.BufferOrder {
 		if name[0] == '_' {
 			continue
 		}
-		stmt := adapter.Buffer[name]
+		stmt := a.Buffer[name]
 		// TODO: Add support for create-table? Table creation might be a little complex for Go to do outside a SQL file :(
 		if stmt.Type != "create-table" {
 			stmts += "\t" + name + " *sql.Stmt\n"
@@ -473,15 +472,15 @@ func _gen_pgsql() (err error) {
 }
 
 // Internal methods, not exposed in the interface
-func (adapter *PgsqlAdapter) pushStatement(name string, stype string, querystr string) {
+func (a *PgsqlAdapter) pushStatement(name string, stype string, q string) {
 	if name == "" {
 		return
 	}
-	adapter.Buffer[name] = DBStmt{querystr, stype}
-	adapter.BufferOrder = append(adapter.BufferOrder, name)
+	a.Buffer[name] = DBStmt{q, stype}
+	a.BufferOrder = append(a.BufferOrder, name)
 }
 
-func (adapter *PgsqlAdapter) stringyType(ctype string) bool {
+func (a *PgsqlAdapter) stringyType(ctype string) bool {
 	ctype = strings.ToLower(ctype)
 	return ctype == "char" || ctype == "varchar" || ctype == "timestamp" || ctype == "text"
 }
