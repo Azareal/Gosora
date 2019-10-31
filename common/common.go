@@ -65,16 +65,16 @@ var AllowedFileExts = StringList{
 
 	"otf", "woff2", "woff", "ttf", "eot", // fonts
 
-	"bz2", "zip", "gz", "7z", "tar", "cab","rar", // archives
+	"bz2", "zip", "zipx", "gz", "7z", "tar", "cab", "rar", "kgb", "pea", "xz", "zz", // archives
 }
 var ImageFileExts = StringList{
 	"png", "jpg", "jpe","jpeg","jif","jfi","jfif", "svg", "bmp", "gif", "tiff","tif", "webp", /* "apng",*/
 }
 var ArchiveFileExts = StringList{
-	"bz2", "zip", "gz", "7z", "tar", "cab","rar",
+	"bz2", "zip", "zipx", "gz", "7z", "tar", "cab", "rar", "kgb", "pea", "xz", "zz",
 }
 var ExecutableFileExts = StringList{
-	"exe", "jar", "phar", "shar", "iso",
+	"exe", "jar", "phar", "shar", "iso", "apk", "deb",
 }
 
 func init() {
