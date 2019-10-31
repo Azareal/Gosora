@@ -10,12 +10,13 @@ import (
 	"database/sql"
 	"errors"
 	"log"
+
 	//"fmt"
 	"sort"
 	"sync"
 	"sync/atomic"
 
-	"github.com/Azareal/Gosora/query_gen"
+	qgen "github.com/Azareal/Gosora/query_gen"
 )
 
 var forumCreateMutex sync.Mutex
@@ -70,6 +71,7 @@ type MemoryForumStore struct {
 	updateCache  *sql.Stmt
 	addTopics    *sql.Stmt
 	removeTopics *sql.Stmt
+	lastTopic    *sql.Stmt
 	updateOrder  *sql.Stmt
 }
 
@@ -81,12 +83,13 @@ func NewMemoryForumStore() (*MemoryForumStore, error) {
 	return &MemoryForumStore{
 		get:          acc.Select(f).Columns("name, desc, tmpl, active, order, preset, parentID, parentType, topicCount, lastTopicID, lastReplyerID").Where("fid = ?").Prepare(),
 		getAll:       acc.Select(f).Columns("fid, name, desc, tmpl, active, order, preset, parentID, parentType, topicCount, lastTopicID, lastReplyerID").Orderby("order ASC, fid ASC").Prepare(),
-		delete:       acc.Update(f).Set("name= '', active = 0").Where("fid = ?").Prepare(),
+		delete:       acc.Update(f).Set("name='',active=0").Where("fid = ?").Prepare(),
 		create:       acc.Insert(f).Columns("name, desc, tmpl, active, preset").Fields("?,?,'',?,?").Prepare(),
 		count:        acc.Count(f).Where("name != ''").Prepare(),
 		updateCache:  acc.Update(f).Set("lastTopicID = ?, lastReplyerID = ?").Where("fid = ?").Prepare(),
-		addTopics:    acc.Update(f).Set("topicCount = topicCount + ?").Where("fid = ?").Prepare(),
-		removeTopics: acc.Update(f).Set("topicCount = topicCount - ?").Where("fid = ?").Prepare(),
+		addTopics:    acc.Update(f).Set("topicCount=topicCount+?").Where("fid = ?").Prepare(),
+		removeTopics: acc.Update(f).Set("topicCount=topicCount-?").Where("fid = ?").Prepare(),
+		lastTopic:    acc.Select("topics").Columns("tid").Where("parentID = ?").Orderby("lastReplyAt DESC, createdAt DESC").Limit("1").Prepare(),
 		updateOrder:  acc.Update(f).Set("order = ?").Where("fid = ?").Prepare(),
 	}, acc.FirstError()
 }
@@ -184,8 +187,8 @@ func (s *MemoryForumStore) Get(id int) (*Forum, error) {
 }
 
 func (s *MemoryForumStore) BypassGet(id int) (*Forum, error) {
-	var f = &Forum{ID: id}
-	err := s.get.QueryRow(id).Scan(&f.Name, &f.Desc, &f.Tmpl,&f.Active, &f.Order, &f.Preset, &f.ParentID, &f.ParentType, &f.TopicCount, &f.LastTopicID, &f.LastReplyerID)
+	f := &Forum{ID: id}
+	err := s.get.QueryRow(id).Scan(&f.Name, &f.Desc, &f.Tmpl, &f.Active, &f.Order, &f.Preset, &f.ParentID, &f.ParentType, &f.TopicCount, &f.LastTopicID, &f.LastReplyerID)
 	if err != nil {
 		return nil, err
 	}
@@ -308,9 +311,32 @@ func (s *MemoryForumStore) AddTopic(tid int, uid int, fid int) error {
 	return s.Reload(fid)
 }
 
-// TODO: Update the forum cache with the latest topic
+// TODO: Make this update more atomic
 func (s *MemoryForumStore) RemoveTopic(fid int) error {
 	_, err := s.removeTopics.Exec(1, fid)
+	if err != nil {
+		return err
+	}
+
+	var tid int
+	err = s.lastTopic.QueryRow(fid).Scan(&tid)
+	if err == sql.ErrNoRows {
+		_, err = s.updateCache.Exec(0, 0, fid)
+		if err != nil {
+			return err
+		}
+		s.Reload(fid)
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+
+	topic, err := Topics.Get(tid)
+	if err != nil {
+		return err
+	}
+	_, err = s.updateCache.Exec(tid, topic.CreatedBy, fid)
 	if err != nil {
 		return err
 	}
