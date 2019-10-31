@@ -64,12 +64,14 @@ var AllowedFileExts = StringList{
 	"mp3", "mp4", "avi", "wmv", "webm", // video
 
 	"otf", "woff2", "woff", "ttf", "eot", // fonts
+
+	"bz2", "zip", "gz", "7z", "tar", "cab","rar", // archives
 }
 var ImageFileExts = StringList{
 	"png", "jpg", "jpe","jpeg","jif","jfi","jfif", "svg", "bmp", "gif", "tiff","tif", "webp", /* "apng",*/
 }
 var ArchiveFileExts = StringList{
-	"bz2", "zip", "gz", "7z", "tar", "cab",
+	"bz2", "zip", "gz", "7z", "tar", "cab","rar",
 }
 var ExecutableFileExts = StringList{
 	"exe", "jar", "phar", "shar", "iso",

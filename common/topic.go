@@ -342,14 +342,13 @@ func (t *Topic) Delete() error {
 		return err
 	}
 
-	err = Forums.RemoveTopic(t.ParentID)
-	if err != nil && err != ErrNoRows {
-		return err
-	}
-
 	_, err = topicStmts.delete.Exec(t.ID)
 	t.cacheRemove()
 	if err != nil {
+		return err
+	}
+	err = Forums.RemoveTopic(t.ParentID)
+	if err != nil && err != ErrNoRows {
 		return err
 	}
 	_, err = topicStmts.deleteActivitySubs.Exec(t.ID)
