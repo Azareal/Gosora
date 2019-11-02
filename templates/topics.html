@@ -78,7 +78,7 @@
 	<div class="rowitem rowmsg"><a href="" class="more_topics"></a></div>
 </div>
 <div id="topic_list" class="rowblock topic_list topic_list_{{.Sort.SortBy}}" aria-label="{{lang "topics_list_aria"}}">
-	{{range .TopicList}}{{template "topics_topic.html" . }}{{else}}<div class="rowitem passive rowmsg">{{lang "topics_no_topics"}}{{if .CurrentUser.Loggedin}}{{if .CurrentUser.Perms.CreateTopic}} <a href="/topics/create/">{{lang "topics_start_one"}}</a>{{end}}{{end}}</div>{{end}}
+	{{range .TopicList}}{{template "topics_topic.html" . }}{{else}}<div class="rowitem passive rowmsg">{{lang "topics_no_topics"}}{{if .CurrentUser.Loggedin}}{{if .CurrentUser.Perms.CreateTopic}}&nbsp;<a href="/topics/create/">{{lang "topics_start_one"}}</a>{{end}}{{end}}</div>{{end}}
 </div>
 
 {{template "paginator.html" . }}

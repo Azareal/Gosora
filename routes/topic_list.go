@@ -179,10 +179,6 @@ func TopicListCommon(w http.ResponseWriter, r *http.Request, user c.User, header
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
-	// ! Need an inline error not a page level error
-	if len(topicList) == 0 {
-		return c.NotFound(w, r, header)
-	}
 
 	// TODO: Reduce the amount of boilerplate here
 	if r.FormValue("js") == "1" {
