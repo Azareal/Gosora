@@ -271,6 +271,7 @@ h1, h2, h3, h4, h5 {
 .forum_list .rowmsg.rowitem {
 	border: 1px solid var(--element-border-color);
 	border-bottom: 2px solid var(--element-border-color);
+	background-color: var(--element-background-color);
 }
 
 .colstack {
@@ -1245,9 +1246,15 @@ red {
 	margin-bottom: 14px;
 }
 
+#ip_search_container .rowlist:not(.has_items) {
+	display: block;
+}
 #ip_search_container .rowlist .rowitem {
 	padding-top: 16px;
 	padding-bottom: 10px;
+}
+#ip_search_container .rowlist .rowmsg {
+	width: 100%;
 }
 .ip_search_block .rowitem {
 	padding: 8px;

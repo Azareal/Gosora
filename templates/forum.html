@@ -79,7 +79,7 @@
 				</span>
 			</div>
 		</div>
-		</div>{{else}}<div class="rowitem passive rowmsg">{{lang "forum_no_topics"}}{{if .CurrentUser.Loggedin}}{{if .CurrentUser.Perms.CreateTopic}} <a href="/topics/create/{{.Forum.ID}}">{{lang "forum_start_one"}}</a>{{end}}{{end}}</div>{{end}}
+		</div>{{else}}<div class="rowitem passive rowmsg">{{lang "forum_no_topics"}}{{if .CurrentUser.Loggedin}}{{if .CurrentUser.Perms.CreateTopic}}&nbsp;<a href="/topics/create/{{.Forum.ID}}">{{lang "forum_start_one"}}</a>{{end}}{{end}}</div>{{end}}
 	</div>
 
 {{template "paginator.html" . }}

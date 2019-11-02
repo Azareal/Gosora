@@ -12,14 +12,12 @@
 			<input form="ip-search-form" class="ip_search_search" type="submit" value="{{lang "ip_search_search_button"}}" />
 		</div>
 	</div>
-	{{if .IP}}
-	<div class="rowblock rowlist bgavatars micro_grid">
+	{{if .IP}}<div class="rowblock rowlist bgavatars micro_grid{{if .ItemList}} has_items{{end}}">
 		{{range .ItemList}}<div class="rowitem" style="background-image:url('{{.Avatar}}');">
 			<img src="{{.Avatar}}" class="bgsub" alt="Avatar" aria-hidden="true" />
 			<a class="rowTitle" href="{{.Link}}">{{.Name}}</a>
 		</div>
 		{{else}}<div class="rowitem rowmsg">{{lang "ip_search_no_users"}}</div>{{end}}
-	</div>
-	{{end}}
+	</div>{{end}}
 </main>
 {{template "footer.html" . }}

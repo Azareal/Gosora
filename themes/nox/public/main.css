@@ -215,7 +215,7 @@ li a {
 	background-color: #444444;
 	padding: 16px;
 }
-.rowblock:not(.topic_list):not(.rowhead):not(.opthead) .rowitem:not(.post_item) {
+.rowblock:not(.topic_list):not(.rowhead):not(.opthead) .rowitem:not(.post_item), .topic_list .rowitem.rowmsg {
 	border-radius: 3px;
 	background-color: #444444;
 	display: flex;
