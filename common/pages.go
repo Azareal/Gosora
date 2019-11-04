@@ -208,8 +208,8 @@ type ProfilePage struct {
 	CurrentScore int
 	NextScore    int
 	Blocked      bool
-	CanMessage bool
-	CanComment bool
+	CanMessage   bool
+	CanComment   bool
 }
 
 type CreateTopicPage struct {
@@ -383,6 +383,13 @@ type PanelDashboardPage struct {
 type PanelSetting struct {
 	*Setting
 	FriendlyName string
+}
+
+type PanelUserEditPage struct {
+	*BasePanelPage
+	Groups    []*Group
+	User      *User
+	ShowEmail bool
 }
 
 type PanelSettingPage struct {
