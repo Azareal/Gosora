@@ -97,6 +97,7 @@
 		"register_need_username":"You didn't put in a username.",
 		"register_need_email":"You didn't put in an email.",
 		"register_first_word_numeric":"The first word of your name must not be purely numeric",
+		"register_url_username":"You cannot have a URL within your username",
 		"register_suspicious_email":"Your email address is suspicious.",
 		"register_password_mismatch":"The two passwords don't match.",
 		"register_username_unavailable":"This username isn't available. Try another.",

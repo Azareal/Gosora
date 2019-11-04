@@ -12,7 +12,7 @@ import (
 
 func SendActivationEmail(username string, email string, token string) error {
 	schema := "http"
-	if Site.EnableSsl {
+	if Config.SslSchema {
 		schema += "s"
 	}
 	// TODO: Move these to the phrase system
@@ -23,7 +23,7 @@ func SendActivationEmail(username string, email string, token string) error {
 
 func SendValidationEmail(username string, email string, token string) error {
 	schema := "http"
-	if Site.EnableSsl {
+	if Config.SslSchema {
 		schema += "s"
 	}
 	r := func(body *string) func(name, val string) {

@@ -235,6 +235,9 @@ func AccountRegisterSubmit(w http.ResponseWriter, r *http.Request, user c.User) 
 	if isNumeric(nameBits[0]) {
 		regError(p.GetErrorPhrase("register_first_word_numeric"), "numeric-name")
 	}
+	if strings.Contains(name,"http://") || strings.Contains(name,"https://") || strings.Contains(name,"ftp://") || strings.Contains(name,"ssh://") {
+		regError(p.GetErrorPhrase("register_url_username"), "url-name")
+	}
 
 	// TODO: Add a dedicated function for validating emails
 	email := c.SanitiseSingleLine(r.PostFormValue("email"))
@@ -807,12 +810,12 @@ func AccountPasswordResetSubmit(w http.ResponseWriter, r *http.Request, user c.U
 		return c.InternalError(err, w, r)
 	}
 
-	var schema string
-	if c.Site.EnableSsl {
-		schema = "s"
+	var s string
+	if c.Config.SslSchema {
+		s = "s"
 	}
 
-	err = c.SendEmail(tuser.Email, p.GetTmplPhrase("password_reset_subject"), p.GetTmplPhrasef("password_reset_body", tuser.Name, "http"+schema+"://"+c.Site.URL+"/accounts/password-reset/token/?uid="+strconv.Itoa(tuser.ID)+"&token="+token))
+	err = c.SendEmail(tuser.Email, p.GetTmplPhrase("password_reset_subject"), p.GetTmplPhrasef("password_reset_body", tuser.Name, "http"+s+"://"+c.Site.URL+"/accounts/password-reset/token/?uid="+strconv.Itoa(tuser.ID)+"&token="+token))
 	if err != nil {
 		return c.LocalError(p.GetErrorPhrase("password_reset_email_fail"), w, r, user)
 	}

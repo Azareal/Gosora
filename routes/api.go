@@ -33,13 +33,13 @@ func writeXMLHeader(w http.ResponseWriter, r *http.Request) {
 
 // TODO: Keep track of when a sitemap was last modifed and add a lastmod element for it
 func SitemapXml(w http.ResponseWriter, r *http.Request) c.RouteError {
-	var sslBit string
-	if c.Site.EnableSsl {
-		sslBit = "s"
+	var s string
+	if c.Config.SslSchema {
+		s = "s"
 	}
 	sitemapItem := func(path string) {
 		w.Write([]byte(`<sitemap>
-	<loc>http` + sslBit + `://` + c.Site.URL + "/" + path + `</loc>
+	<loc>http` + s + `://` + c.Site.URL + "/" + path + `</loc>
 </sitemap>
 `))
 	}
@@ -95,13 +95,13 @@ func sitemapSwitch(w http.ResponseWriter, r *http.Request) c.RouteError {
 }
 
 func SitemapForums(w http.ResponseWriter, r *http.Request) c.RouteError {
-	var sslBit string
-	if c.Site.EnableSsl {
-		sslBit = "s"
+	var s string
+	if c.Config.SslSchema {
+		s = "s"
 	}
 	sitemapItem := func(path string) {
 		w.Write([]byte(`<url>
-	<loc>http` + sslBit + `://` + c.Site.URL + path + `</loc>
+	<loc>http` + s + `://` + c.Site.URL + path + `</loc>
 </url>
 `))
 	}
@@ -129,13 +129,13 @@ func SitemapForums(w http.ResponseWriter, r *http.Request) c.RouteError {
 // TODO: Add a global ratelimit. 10 50MB files (smaller if compressed better) per minute?
 // ? We might have problems with banned users, if they have fewer ViewTopic permissions than guests as they'll be able to see this list. Then again, a banned user could just logout to see it
 func SitemapTopics(w http.ResponseWriter, r *http.Request) c.RouteError {
-	var sslBit string
-	if c.Site.EnableSsl {
-		sslBit = "s"
+	var s string
+	if c.Config.SslSchema {
+		s = "s"
 	}
 	sitemapItem := func(path string) {
 		w.Write([]byte(`<sitemap>
-	<loc>http` + sslBit + `://` + c.Site.URL + "/" + path + `</loc>
+	<loc>http` + s + `://` + c.Site.URL + "/" + path + `</loc>
 </sitemap>
 `))
 	}
@@ -171,13 +171,13 @@ func SitemapTopics(w http.ResponseWriter, r *http.Request) c.RouteError {
 }
 
 func SitemapTopic(w http.ResponseWriter, r *http.Request, page int) c.RouteError {
-	/*var sslBit string
-	if c.Site.EnableSsl {
-		sslBit = "s"
+	/*var s string
+	if c.Config.SslSchema {
+		s = "s"
 	}
 	var sitemapItem = func(path string) {
 			w.Write([]byte(`<url>
-		<loc>http` + sslBit + `://` + c.Site.URL + "/" + path + `</loc>
+		<loc>http` + s + `://` + c.Site.URL + "/" + path + `</loc>
 	</url>
 	`))
 		}*/
@@ -254,7 +254,7 @@ func APIMe(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 
 func OpenSearchXml(w http.ResponseWriter, r *http.Request) c.RouteError {
 	furl := "http"
-	if c.Site.EnableSsl {
+	if c.Config.SslSchema {
 		furl += "s"
 	}
 	furl += "://" + c.Site.URL

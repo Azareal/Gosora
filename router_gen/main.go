@@ -531,7 +531,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		// TODO: Abstract the redirect logic?
 		w.Header().Set("Connection", "close")
 		var s string
-		if c.Site.EnableSsl {
+		if c.Config.SslSchema {
 			s = "s"
 		}
 		var p string
@@ -556,8 +556,8 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// TODO: Cover more suspicious strings and at a lower layer than this
-	for _, char := range req.URL.Path {
-		if char != '&' && !(char > 44 && char < 58) && char != '=' && char != '?' && !(char > 64 && char < 91) && char != '\\' && char != '_' && !(char > 96 && char < 123) {
+	for _, ch := range req.URL.Path { //char
+		if ch != '&' && !(ch > 44 && ch < 58) && ch != '=' && ch != '?' && !(ch > 64 && ch < 91) && ch != '\\' && ch != '_' && !(ch > 96 && ch < 123) {
 			r.SuspiciousRequest(req,"Bad char in path")
 			break
 		}
@@ -592,7 +592,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		h.Set("X-Frame-Options", "deny")
 		h.Set("X-XSS-Protection", "1; mode=block") // TODO: Remove when we add a CSP? CSP's are horrendously glitchy things, tread with caution before removing
 		h.Set("X-Content-Type-Options", "nosniff")
-		if c.Config.RefNoRef || !c.Site.EnableSsl {
+		if c.Config.RefNoRef || !c.Config.SslSchema {
 			h.Set("Referrer-Policy","no-referrer")
 		} else {
 			h.Set("Referrer-Policy","strict-origin")

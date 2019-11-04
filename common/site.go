@@ -62,7 +62,7 @@ type config struct {
 	SslPrivkey   string
 	SslFullchain string
 	HashAlgo     string // Defaults to bcrypt, and in the future, possibly something stronger
-	ConvoKey string
+	ConvoKey     string
 
 	MaxRequestSizeStr  string
 	MaxRequestSize     int
@@ -89,9 +89,9 @@ type config struct {
 	MinifyTemplates bool
 	BuildSlugs      bool // TODO: Make this a setting?
 
-	PrimaryServer bool
-	ServerCount   int
-	PostIPCutoff  int
+	PrimaryServer  bool
+	ServerCount    int
+	PostIPCutoff   int
 	LogPruneCutoff int
 
 	DisableLiveTopicList bool
@@ -99,13 +99,14 @@ type config struct {
 	//LooseCSP             bool
 	LooseHost              bool
 	LoosePort              bool
+	SslSchema bool // Pretend we're using SSL, might be useful if a reverse-proxy terminates SSL in-front of Gosora
 	DisableServerPush      bool
 	EnableCDNPush          bool
 	DisableNoavatarRange   bool
 	DisableDefaultNoavatar bool
 
 	RefNoTrack bool
-	RefNoRef bool
+	RefNoRef   bool
 
 	Noavatar            string // ? - Move this into the settings table?
 	ItemsPerPage        int    // ? - Move this into the settings table?
@@ -173,6 +174,9 @@ func ProcessConfig() (err error) {
 		Site.URL = strings.TrimSuffix(Site.URL, "\\")
 		Site.URL = strings.TrimSuffix(Site.URL, ":")
 		Site.URL = Site.URL + ":" + Site.Port
+	}
+	if Site.EnableSsl {
+		Config.SslSchema = Site.EnableSsl
 	}
 	if Config.DefaultPath == "" {
 		Config.DefaultPath = "/topics/"

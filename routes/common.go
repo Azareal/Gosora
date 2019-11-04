@@ -99,7 +99,7 @@ func renderTemplate2(tmplName string, hookName string, w http.ResponseWriter, r 
 
 func FootHeaders(w http.ResponseWriter, header *c.Header) {
 	if !header.LooseCSP {
-		if c.Site.EnableSsl {
+		if c.Config.SslSchema {
 			w.Header().Set("Content-Security-Policy", "default-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-eval' 'unsafe-inline'; img-src * data: 'unsafe-eval' 'unsafe-inline'; connect-src * 'unsafe-eval' 'unsafe-inline'; frame-src 'self' www.youtube-nocookie.com;upgrade-insecure-requests")
 		} else {
 			w.Header().Set("Content-Security-Policy", "default-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-eval' 'unsafe-inline'; img-src * data: 'unsafe-eval' 'unsafe-inline'; connect-src * 'unsafe-eval' 'unsafe-inline'; frame-src 'self' www.youtube-nocookie.com")

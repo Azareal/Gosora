@@ -24,7 +24,7 @@ func successRedirect(dest string, w http.ResponseWriter, r *http.Request, js boo
 // TODO: Prerender needs to handle dyntmpl templates better...
 func renderTemplate(tmplName string, w http.ResponseWriter, r *http.Request, header *c.Header, pi interface{}) c.RouteError {
 	if !header.LooseCSP {
-		if c.Site.EnableSsl {
+		if c.Config.SslSchema {
 			w.Header().Set("Content-Security-Policy", "default-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-eval' 'unsafe-inline'; img-src * data: 'unsafe-eval' 'unsafe-inline'; connect-src * 'unsafe-eval' 'unsafe-inline'; frame-src 'self';upgrade-insecure-requests")
 		} else {
 			w.Header().Set("Content-Security-Policy", "default-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-eval' 'unsafe-inline'; img-src * data: 'unsafe-eval' 'unsafe-inline'; connect-src * 'unsafe-eval' 'unsafe-inline'; frame-src 'self'")

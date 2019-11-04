@@ -61,7 +61,7 @@ func ShowAttachment(w http.ResponseWriter, r *http.Request, user c.User, filenam
 	} else {
 		return c.LocalError("Unknown section", w, r, user)
 	}
-
+	
 	if originTable != "topics" && originTable != "replies" {
 		return c.LocalError("Unknown origin", w, r, user)
 	}
@@ -74,10 +74,11 @@ func ShowAttachment(w http.ResponseWriter, r *http.Request, user c.User, filenam
 		if ferr != nil {
 			return ferr
 		}
+		h := w.Header()
 		if guest.Perms.ViewTopic {
-			w.Header().Set("Cache-Control", "max-age="+strconv.Itoa(int(c.Year)))
+			h.Set("Cache-Control", "max-age="+strconv.Itoa(int(c.Year)))
 		} else {
-			w.Header().Set("Cache-Control", "private")
+			h.Set("Cache-Control", "private")
 		}
 	}
 

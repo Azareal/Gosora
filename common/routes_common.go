@@ -293,7 +293,7 @@ func preRoute(w http.ResponseWriter, r *http.Request) (User, bool) {
 
 	// TODO: Add a config setting to disable this header
 	// TODO: Have this header cover more things
-	if Site.EnableSsl {
+	if Config.SslSchema {
 		w.Header().Set("Content-Security-Policy", "upgrade-insecure-requests")
 	}
 

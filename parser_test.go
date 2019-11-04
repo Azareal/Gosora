@@ -202,12 +202,12 @@ func TestParser(t *testing.T) {
 	l.Add("//"+url+"\n//"+url, eurl+"<br>"+eurl)
 	l.Add("//"+url+"\n\n//"+url, eurl+"<br><br>"+eurl)
 
-	pre2 := c.Site.EnableSsl
-	c.Site.EnableSsl = true
+	pre2 := c.Config.SslSchema
+	c.Config.SslSchema = true
 	local := func(u string) {
 		s := "//" + c.Site.URL
 		fs := "http://" + c.Site.URL
-		if c.Site.EnableSsl {
+		if c.Config.SslSchema {
 			s = "https:" + s
 			fs = "https://" + c.Site.URL
 		}
@@ -301,13 +301,13 @@ func TestParser(t *testing.T) {
 			break
 		}
 	}
-	c.Site.EnableSsl = pre2
+	c.Config.SslSchema = pre2
 
 	l = &METriList{nil}
 	pre := c.Site.URL // Just in case this is localhost...
-	pre2 = c.Site.EnableSsl
+	pre2 = c.Config.SslSchema
 	c.Site.URL = "example.com"
-	c.Site.EnableSsl = true
+	c.Config.SslSchema = true
 	l.Add("//"+c.Site.URL, "<a href='https://"+c.Site.URL+"'>"+c.Site.URL+"</a>")
 	l.Add("//"+c.Site.URL+"\n", "<a href='https://"+c.Site.URL+"'>"+c.Site.URL+"</a><br>")
 	l.Add("//"+c.Site.URL+"\n//"+c.Site.URL, "<a href='https://"+c.Site.URL+"'>"+c.Site.URL+"</a><br><a href='https://"+c.Site.URL+"'>"+c.Site.URL+"</a>")
@@ -323,7 +323,7 @@ func TestParser(t *testing.T) {
 		}
 	}
 	c.Site.URL = pre
-	c.Site.EnableSsl = pre2
+	c.Config.SslSchema = pre2
 
 	c.AddHashLinkType("nnid-", func(sb *strings.Builder, msg string, i *int) {
 		tid, intLen := c.CoerceIntString(msg[*i:])
