@@ -10,7 +10,7 @@ import (
 	c "github.com/Azareal/Gosora/common"
 )
 
-var successJSONBytes = []byte(`{"success":"1"}`)
+var successJSONBytes = []byte(`{"success":1}`)
 
 func ParseSEOURL(urlBit string) (slug string, id int, err error) {
 	halves := strings.Split(urlBit, ".")
@@ -29,7 +29,7 @@ func doPush(w http.ResponseWriter, header *c.Header) {
 	if c.Config.EnableCDNPush {
 		// TODO: Cache these in a sync.Pool?
 		var sb strings.Builder
-		var push = func(in []string) {
+		push := func(in []string) {
 			sb.Grow((slen1 + 5) * len(in))
 			for _, path := range in {
 				sb.WriteString("</s/")
@@ -67,7 +67,7 @@ func doPush(w http.ResponseWriter, header *c.Header) {
 		}
 		//fmt.Println("has pusher")
 
-		var push = func(in []string) {
+		push := func(in []string) {
 			for _, path := range in {
 				//fmt.Println("pushing /s/" + path)
 				// TODO: Avoid concatenating here
@@ -98,9 +98,12 @@ func renderTemplate2(tmplName string, hookName string, w http.ResponseWriter, r 
 }
 
 func FootHeaders(w http.ResponseWriter, header *c.Header) {
-	// TODO: Expand this to non-HTTPS requests too
-	if !header.LooseCSP && c.Site.EnableSsl {
-		w.Header().Set("Content-Security-Policy", "default-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-eval' 'unsafe-inline'; img-src * data: 'unsafe-eval' 'unsafe-inline'; connect-src * 'unsafe-eval' 'unsafe-inline'; frame-src 'self' www.youtube-nocookie.com;upgrade-insecure-requests")
+	if !header.LooseCSP {
+		if c.Site.EnableSsl {
+			w.Header().Set("Content-Security-Policy", "default-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-eval' 'unsafe-inline'; img-src * data: 'unsafe-eval' 'unsafe-inline'; connect-src * 'unsafe-eval' 'unsafe-inline'; frame-src 'self' www.youtube-nocookie.com;upgrade-insecure-requests")
+		} else {
+			w.Header().Set("Content-Security-Policy", "default-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-eval' 'unsafe-inline'; img-src * data: 'unsafe-eval' 'unsafe-inline'; connect-src * 'unsafe-eval' 'unsafe-inline'; frame-src 'self' www.youtube-nocookie.com")
+		}
 	}
 
 	// Server pushes can backfire on certain browsers, so we want to make sure it's only triggered for ones where it'll help
