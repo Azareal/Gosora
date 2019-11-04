@@ -521,6 +521,9 @@
 		"account_email_verified":"Verified",
 		"account_email_resend_email":"Resend Verification Email",
 		"account_email_none":"No email addresses found.",
+		"account_email_create_email_label":"Email",
+		"account_email_create_email":"john.doe@example.com",
+		"account_email_create_button":"Add Email",
 
 		"account_password_head":"Edit Password",
 		"account_password_current_password":"Current Password",
@@ -834,6 +837,7 @@
 		"panel_user_name_placeholder":"Jane Doe",
 		"panel_user_password":"Password",
 		"panel_user_email":"Email",
+		"panel_user_show_email":"Show Email",
 		"panel_user_group":"Group",
 		"panel_user_update_button":"Update User",
 
