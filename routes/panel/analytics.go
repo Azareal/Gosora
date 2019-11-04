@@ -206,6 +206,7 @@ func PreAnalyticsDetail(w http.ResponseWriter, r *http.Request, user *c.User) (*
 	bp.AddSheet("chartist/chartist.min.css")
 	bp.AddScript("chartist/chartist.min.js")
 	bp.AddScriptAsync("analytics.js")
+	bp.LooseCSP = true
 	return bp, nil
 }
 

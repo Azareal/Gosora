@@ -9,7 +9,7 @@ import (
 
 // A blank list to fill out that parameter in Page for routes which don't use it
 var tList []interface{}
-var successJSONBytes = []byte(`{"success":"1"}`)
+var successJSONBytes = []byte(`{"success":1}`)
 
 // We're trying to reduce the amount of boilerplate in here, so I added these two functions, they might wind up circulating outside this file in the future
 func successRedirect(dest string, w http.ResponseWriter, r *http.Request, js bool) c.RouteError {
@@ -23,6 +23,11 @@ func successRedirect(dest string, w http.ResponseWriter, r *http.Request, js boo
 
 // TODO: Prerender needs to handle dyntmpl templates better...
 func renderTemplate(tmplName string, w http.ResponseWriter, r *http.Request, header *c.Header, pi interface{}) c.RouteError {
+	// TODO: Expand this to non-HTTPS requests too
+	if !header.LooseCSP && c.Site.EnableSsl {
+		w.Header().Set("Content-Security-Policy", "default-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-eval' 'unsafe-inline'; img-src * data: 'unsafe-eval' 'unsafe-inline'; connect-src * 'unsafe-eval' 'unsafe-inline'; frame-src 'self';upgrade-insecure-requests")
+	}
+
 	header.AddScript("global.js")
 	if c.RunPreRenderHook("pre_render_"+tmplName, w, r, &header.CurrentUser, pi) {
 		return nil
