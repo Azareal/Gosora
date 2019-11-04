@@ -100,11 +100,14 @@ We will also want to setup a service:
 For things like HTTPS, you might also need to [modify your config.json](https://github.com/Azareal/Gosora/blob/master/docs/configuration.md) file after installing Gosora to get it working.
 
 You can get a free private key and certificate pair from Let's Encrypt or Cloudflare.
+
 If you're using Nginx or something else as a reverse-proxy in-front of Gosora, then you will have to consult their documentation for advice on setting HTTPS. You may also need to enable LoosePort and LooseHost in `config/config.json`.
 
+If you're behind a reverse-proxy that terminates the SSL / TLS connection, for instance, if the certificate is setup on there instead of the instance, then you may also want to set the SslSchema config setting to true in `config/config.json` and leave EnableSsl disabled.
 
-For email, you will need a SMTP server (either provided by yourself or by a transactional mail provider who specialises in doing so)
- You can setup it up via config.json with the Email setting and the ones starting with SMTP.
+
+For email, you will need a SMTP server (either provided by yourself or by a transactional mail provider who specialises in doing so).
+You can setup it up via config.json with the Email setting and the ones starting with SMTP.
 
 It is also possible to send emails without SMTP with the experimental sendmail plugin, however there is a high chance of your emails ending up in the user's spam folder, if it arrives at all.
 

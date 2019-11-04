@@ -94,7 +94,9 @@ DisableJSAntispam - This switch lets you disable the JS anti-spam feature. It ma
 
 LooseHost - Disable host header checks in the router. This may be useful when using a reverse-proxy like Nginx / Apache to stop it white-screening. Default: false
 
-LoosePort - Disable port match checks in the router. This may be useful when using a revere-proxy like Nginx / Apache to stop it white-screening. Default: false
+LoosePort - Disable port match checks in the router. This may be useful when using a reverse-proxy like Nginx / Apache to stop it white-screening. Default: false
+
+SslSchema - Allow for HTTPS URLs without necessarily using a HTTPS listener. This might be useful if a reverse-proxy or otherwise terminates the SSL / TLS connection instead of Gosora. Default: false
 
 DisableServerPush - This switch lets you disable the HTTP/2 server push feature. Default: false
 
