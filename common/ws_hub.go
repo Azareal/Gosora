@@ -105,6 +105,7 @@ func wsTopicListTick(h *WsHubImpl) error {
 			if !tItem.Sticky {
 				if tItem.ID != h.lastTopicList[j].ID || !tItem.LastReplyAt.Equal(h.lastTopicList[j].LastReplyAt) {
 					hasItem = true
+					break
 				}
 			}
 		}
@@ -237,7 +238,7 @@ func (h *WsHubImpl) HasUser(uid int) (exists bool) {
 	if exists {
 		return exists
 	}
-	
+
 	h.oddUserLock.RLock()
 	_, exists = h.oddOnlineUsers[uid]
 	h.oddUserLock.RUnlock()
