@@ -905,6 +905,14 @@ function mainInit(){
 		this.innerText = formattedTime;
 	});
 
+	$("spoiler").addClass("hide_spoil");
+	$(".hide_spoil").click(function(event) {
+		event.stopPropagation();
+		event.preventDefault();
+		$(this).removeClass("hide_spoil");
+		$(this).unbind("click");
+	});
+
 	this.onkeyup = function(event) {
 		if(event.which == 37) this.querySelectorAll("#prevFloat a")[0].click();
 		if(event.which == 39) this.querySelectorAll("#nextFloat a")[0].click();

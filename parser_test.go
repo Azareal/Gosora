@@ -60,6 +60,8 @@ func TestPreparser(t *testing.T) {
 	l.Add("<em>hi</em>", "<em>hi</em>")
 	l.Add("<i>hi</i>", "<em>hi</em>")
 	l.Add("<strong>hi</strong>", "<strong>hi</strong>")
+	l.Add("<spoiler>hi</spoiler>", "<spoiler>hi</spoiler>")
+	l.Add("<g>hi</g>", "hi") // Grammarly fix
 	l.Add("<b><i>hi</i></b>", "<strong><em>hi</em></strong>")
 	l.Add("<strong><em>hi</em></strong>", "<strong><em>hi</em></strong>")
 	l.Add("<b><i><b>hi</b></i></b>", "<strong><em><strong>hi</strong></em></strong>")

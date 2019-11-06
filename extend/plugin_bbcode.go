@@ -24,13 +24,14 @@ var bbcodeURL *regexp.Regexp
 var bbcodeURLLabel *regexp.Regexp
 var bbcodeQuotes *regexp.Regexp
 var bbcodeCode *regexp.Regexp
+var bbcodeSpoiler *regexp.Regexp
 
 func init() {
 	c.Plugins.Add(&c.Plugin{UName: "bbcode", Name: "BBCode", Author: "Azareal", URL: "https://github.com/Azareal", Init: InitBbcode, Deactivate: deactivateBbcode})
 }
 
-func InitBbcode(plugin *c.Plugin) error {
-	plugin.AddHook("parse_assign", BbcodeFullParse)
+func InitBbcode(pl *c.Plugin) error {
+	pl.AddHook("parse_assign", BbcodeFullParse)
 
 	bbcodeInvalidNumber = []byte("<red>[Invalid Number]</red>")
 	bbcodeNoNegative = []byte("<red>[No Negative Numbers]</red>")
@@ -46,13 +47,14 @@ func InitBbcode(plugin *c.Plugin) error {
 	bbcodeURLLabel = regexp.MustCompile(`(?s)\[url=` + urlpattern + `\](.*)\[/url\]`)
 	bbcodeQuotes = regexp.MustCompile(`\[quote\](.*)\[/quote\]`)
 	bbcodeCode = regexp.MustCompile(`\[code\](.*)\[/code\]`)
+	bbcodeSpoiler = regexp.MustCompile(`\[spoiler\](.*)\[/spoiler\]`)
 
 	bbcodeRandom = rand.New(rand.NewSource(time.Now().UnixNano()))
 	return nil
 }
 
-func deactivateBbcode(plugin *c.Plugin) {
-	plugin.RemoveHook("parse_assign", BbcodeFullParse)
+func deactivateBbcode(pl *c.Plugin) {
+	pl.RemoveHook("parse_assign", BbcodeFullParse)
 }
 
 func BbcodeRegexParse(msg string) string {
@@ -63,6 +65,7 @@ func BbcodeRegexParse(msg string) string {
 	msg = bbcodeURL.ReplaceAllString(msg, "<a href=''$1$2//$3' rel='ugc'>$1$2//$3</i>")
 	msg = bbcodeURLLabel.ReplaceAllString(msg, "<a href=''$1$2//$3' rel='ugc'>$4</i>")
 	msg = bbcodeQuotes.ReplaceAllString(msg, "<blockquote>$1</blockquote>")
+	msg = bbcodeSpoiler.ReplaceAllString(msg, "<spoiler>$1</spoiler>")
 	msg = bbcodeH1.ReplaceAllString(msg, "<h2>$1</h2>")
 	//msg = bbcodeCode.ReplaceAllString(msg,"<span class='codequotes'>$1</span>")
 	return msg
@@ -199,6 +202,7 @@ func BbcodeParseWithoutCode(msg string) string {
 		msg = string(msgbytes)
 		msg = bbcodeURL.ReplaceAllString(msg, "<a href='$1$2//$3' rel='ugc'>$1$2//$3</i>")
 		msg = bbcodeURLLabel.ReplaceAllString(msg, "<a href='$1$2//$3' rel='ugc'>$4</i>")
+		msg = bbcodeSpoiler.ReplaceAllString(msg, "<spoiler>$1</spoiler>")
 		msg = bbcodeQuotes.ReplaceAllString(msg, "<blockquote>$1</blockquote>")
 		return bbcodeCode.ReplaceAllString(msg, "<span class='codequotes'>$1</span>")
 	}
@@ -328,6 +332,7 @@ func BbcodeFullParse(msg string) string {
 		msg = bbcodeURLLabel.ReplaceAllString(msg, "<a href='$1$2//$3' rel='ugc'>$4</i>")
 		msg = bbcodeQuotes.ReplaceAllString(msg, "<blockquote>$1</blockquote>")
 		msg = bbcodeCode.ReplaceAllString(msg, "<span class='codequotes'>$1</span>")
+		msg = bbcodeSpoiler.ReplaceAllString(msg, "<spoiler>$1</spoiler>")
 		msg = bbcodeH1.ReplaceAllString(msg, "<h2>$1</h2>")
 	} else {
 		msg = string(msgbytes[0 : len(msgbytes)-10])

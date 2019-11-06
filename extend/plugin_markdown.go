@@ -19,6 +19,8 @@ var markdownStrikeTagOpen []byte
 var markdownStrikeTagClose []byte
 var markdownQuoteTagOpen []byte
 var markdownQuoteTagClose []byte
+var markdownSpoilerTagOpen []byte
+var markdownSpoilerTagClose []byte
 var markdownH1TagOpen []byte
 var markdownH1TagClose []byte
 
@@ -26,8 +28,8 @@ func init() {
 	c.Plugins.Add(&c.Plugin{UName: "markdown", Name: "Markdown", Author: "Azareal", URL: "https://github.com/Azareal", Init: InitMarkdown, Deactivate: deactivateMarkdown})
 }
 
-func InitMarkdown(plugin *c.Plugin) error {
-	plugin.AddHook("parse_assign", MarkdownParse)
+func InitMarkdown(pl *c.Plugin) error {
+	pl.AddHook("parse_assign", MarkdownParse)
 
 	markdownUnclosedElement = []byte("<red>[Unclosed Element]</red>")
 
@@ -41,13 +43,15 @@ func InitMarkdown(plugin *c.Plugin) error {
 	markdownStrikeTagClose = []byte("</s>")
 	markdownQuoteTagOpen = []byte("<blockquote>")
 	markdownQuoteTagClose = []byte("</blockquote>")
+	markdownSpoilerTagOpen = []byte("<spoiler>")
+	markdownSpoilerTagClose = []byte("</spoiler>")
 	markdownH1TagOpen = []byte("<h2>")
 	markdownH1TagClose = []byte("</h2>")
 	return nil
 }
 
-func deactivateMarkdown(plugin *c.Plugin) {
-	plugin.RemoveHook("parse_assign", MarkdownParse)
+func deactivateMarkdown(pl *c.Plugin) {
+	pl.RemoveHook("parse_assign", MarkdownParse)
 }
 
 // An adapter for the parser, so that the parser can call itself recursively.
@@ -251,6 +255,12 @@ func _markdownParse(msg string, n int) string {
 			if breaking {
 				break
 			}
+		// TODO: Might need to be double pipe
+		case '|':
+			simpleMatch('|', markdownSpoilerTagOpen, markdownSpoilerTagClose)
+			if breaking {
+				break
+			}
 		case 10: // newline
 			if (index + 1) >= len(msg) {
 				break
@@ -284,8 +294,8 @@ func _markdownParse(msg string, n int) string {
 	return string(outbytes)
 }
 
-func isMarkdownStartChar(char byte) bool {
-	return char == '\\' || char == '~' || char == '_' || char == 10 || char == '`' || char == '*'
+func isMarkdownStartChar(ch byte) bool { // char
+	return ch == '\\' || ch == '~' || ch == '_' || ch == 10 || ch == '`' || ch == '*' || ch == '|'
 }
 
 func markdownFindChar(data string, index int, char byte) bool {

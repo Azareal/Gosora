@@ -59,6 +59,7 @@ func TestBBCodeRender(t *testing.T) {
 		//l.Add("[b][b][b]hi", "[b][b][b]hi")
 		//l.Add("[/b]hi", "[/b]hi")
 	}
+	l.Add("[spoiler]hi[/spoiler]", "<spoiler>hi</spoiler>")
 	l.Add("[code]hi[/code]", "<span class='codequotes'>hi</span>")
 	l.Add("[code][b]hi[/b][/code]", "<span class='codequotes'>[b]hi[/b]</span>")
 	l.Add("[code][b]hi[/code][/b]", "<span class='codequotes'>[b]hi</span>[/b]")
@@ -91,13 +92,13 @@ func TestBBCodeRender(t *testing.T) {
 			t.Error("Expected:", "'"+expects+"'")
 		}
 	}
-	f("[rand][/rand]","<red>[Invalid Number]</red>[rand][/rand]")
-	f("[rand]-1[/rand]","<red>[No Negative Numbers]</red>[rand]-1[/rand]")
-	f("[rand]-01[/rand]","<red>[No Negative Numbers]</red>[rand]-01[/rand]")
-	f("[rand]NaN[/rand]","<red>[Invalid Number]</red>[rand]NaN[/rand]")
-	f("[rand]Inf[/rand]","<red>[Invalid Number]</red>[rand]Inf[/rand]")
-	f("[rand]+[/rand]","<red>[Invalid Number]</red>[rand]+[/rand]")
-	f("[rand]1+1[/rand]","<red>[Invalid Number]</red>[rand]1+1[/rand]")
+	f("[rand][/rand]", "<red>[Invalid Number]</red>[rand][/rand]")
+	f("[rand]-1[/rand]", "<red>[No Negative Numbers]</red>[rand]-1[/rand]")
+	f("[rand]-01[/rand]", "<red>[No Negative Numbers]</red>[rand]-01[/rand]")
+	f("[rand]NaN[/rand]", "<red>[Invalid Number]</red>[rand]NaN[/rand]")
+	f("[rand]Inf[/rand]", "<red>[Invalid Number]</red>[rand]Inf[/rand]")
+	f("[rand]+[/rand]", "<red>[Invalid Number]</red>[rand]+[/rand]")
+	f("[rand]1+1[/rand]", "<red>[Invalid Number]</red>[rand]1+1[/rand]")
 
 	msg := "[rand]1[/rand]"
 	t.Log("Testing string '" + msg + "'")
@@ -240,6 +241,7 @@ func TestMarkdownRender(t *testing.T) {
 	l.Add("~~~", "~~~")
 	l.Add("~~~~", "~~~~")
 	l.Add("~~~~~", "~~~~~")
+	l.Add("|hi|", "<spoiler>hi</spoiler>")
 	l.Add("__", "__")
 	l.Add("___", "___")
 	l.Add("_ _", "<u> </u>")

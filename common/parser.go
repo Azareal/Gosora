@@ -143,14 +143,14 @@ func PreparseMessage(msg string) string {
 	// There are a few useful cases for having spaces, but I'd like to stop the WYSIWYG from inserting random lines here and there
 	msg = SanitiseBody(msg)
 
-	var runes = []rune(msg)
+	runes := []rune(msg)
 	msg = ""
 
 	// TODO: We can maybe reduce the size of this by using an offset?
 	// TODO: Move some of these closures out of this function to make things a little more efficient
-	var allowedTags = [][]string{
+	allowedTags := [][]string{
 		'e': []string{"m"},
-		's': []string{"", "trong", "pan"},
+		's': []string{"", "trong", "poiler", "pan"},
 		'd': []string{"el"},
 		'u': []string{""},
 		'b': []string{"", "lockquote"},
@@ -159,7 +159,7 @@ func PreparseMessage(msg string) string {
 		//'p': []string{""},
 		'g': []string{""}, // Quick and dirty fix for Grammarly
 	}
-	var buildLitMatch = func(tag string) func(*TagToAction, bool, int, []rune) (int, string) {
+	buildLitMatch := func(tag string) func(*TagToAction, bool, int, []rune) (int, string) {
 		return func(action *TagToAction, open bool, _ int, _ []rune) (int, string) {
 			if open {
 				action.Depth++
@@ -172,11 +172,12 @@ func PreparseMessage(msg string) string {
 			return -1, "</" + tag + ">"
 		}
 	}
-	var tagToAction = [][]*TagToAction{
+	tagToAction := [][]*TagToAction{
 		'e': []*TagToAction{&TagToAction{"m", buildLitMatch("em"), 0, false}},
 		's': []*TagToAction{
 			&TagToAction{"", buildLitMatch("del"), 0, false},
 			&TagToAction{"trong", buildLitMatch("strong"), 0, false},
+			&TagToAction{"poiler", buildLitMatch("spoiler"), 0, false},
 			// Hides the span tags Trumbowyg loves blasting out randomly
 			&TagToAction{"pan", func(act *TagToAction, open bool, i int, runes []rune) (int, string) {
 				if open {
@@ -727,7 +728,7 @@ func validatedURLBytes(data []byte) (url []byte) {
 
 	// ? - There should only be one : and that's only if the URL is on a non-standard port. Same for ?s.
 	for ; datalen > i; i++ {
-		ch := data[i]                                                                                                                                                                                                    //char
+		ch := data[i]                                                                                                                                                                                                    // char
 		if ch != '\\' && ch != '_' && ch != ':' && ch != '?' && ch != '&' && ch != '=' && ch != ';' && ch != '@' && ch != '#' && ch != ']' && !(ch > 44 && ch < 58) && !(ch > 64 && ch < 92) && !(ch > 96 && ch < 123) { // 90 is Z, 91 is [
 			return InvalidURL
 		}

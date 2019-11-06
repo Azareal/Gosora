@@ -303,7 +303,6 @@ red {
 	float: right;
 	color: var(--dim-text-color);
 }
-
 .real_username {
 	float: left;
 	margin-right: 7px;
@@ -359,6 +358,25 @@ red {
 }
 .level {
 	margin-left: 3px;
+}
+
+.hide_spoil {
+	background-color: grey;
+	color: grey;
+}
+.hide_spoil img {
+	border: 0;
+	clip: rect(0 0 0 0);
+	height: 1px;
+	margin: -1px;
+	overflow: hidden;
+	padding: 50px;
+	white-space: nowrap;
+	width: 1px;
+	background-color: grey;
+}
+.hide_spoil img {
+	content: "   ";
 }
 
 .formrow.real_first_child, .formrow:first-child {

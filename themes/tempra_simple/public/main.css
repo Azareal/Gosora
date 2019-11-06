@@ -3,12 +3,10 @@
 	-moz-box-sizing: border-box;
 	-webkit-box-sizing: border-box;
 }
-
 body {
 	font-family: arial;
 	padding-bottom: 8px;
 }
-
 /* Patch for Edge, until they fix emojis in arial x.x */
 @supports (-ms-ime-align:auto) { .user_content { font-family: Segoe UI Emoji, arial; } }
 
@@ -227,7 +225,6 @@ main > *:last-child {
 	padding-bottom: 12px;
 	font-size: 16px;
 }
-
 /*.grid_istat {
 	margin-bottom: 5px;
 }*/
@@ -285,7 +282,6 @@ h1, h2, h3, h4, h5 {
 .rowitem:not(:last-child) {
 	border-bottom: 1px solid hsl(0,0%,85%);
 }
-
 .rowitem a {
 	text-decoration: none;
 	color: black;
@@ -378,7 +374,6 @@ h1, h2, h3, h4, h5 {
 	width: 100%;
 	background-color: white;
 }
-
 /* Clearfix */
 .formrow:before, .formrow:after {
 	content: " ";
@@ -801,6 +796,32 @@ red {
 .action_item .action_icon {
 	font-size: 18px;
 	padding-right: 5px;
+}
+
+.hide_spoil {
+	background-color: rgb(220,220,220);
+	color: rgb(220,220,220) !important;
+}
+.hide_spoil img {
+	border: 0;
+	clip: rect(0 0 0 0);
+	height: 1px;
+	margin: -1px;
+	overflow: hidden;
+	padding: 50px;
+	white-space: nowrap;
+	width: 1px;
+	background-color: rgb(220,220,220);
+}
+.hide_spoil img {
+	content: "   ";
+}
+.staff_post .hide_spoil {
+	background-color: rgb(240,180,240); /*rgb(255, 234, 255)*/
+	color: rgb(240,180,240) !important;
+}
+.staff_post .hide_spoil img {
+	background-color: rgb(240,180,240);
 }
 
 blockquote {

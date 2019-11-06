@@ -1246,6 +1246,25 @@ red {
 	margin-bottom: 14px;
 }
 
+.hide_spoil {
+	background-color: lightgrey;
+	color: lightgrey;
+}
+.hide_spoil img {
+	border: 0;
+	clip: rect(0 0 0 0);
+	height: 1px;
+	margin: -1px;
+	overflow: hidden;
+	padding: 50px;
+	white-space: nowrap;
+	width: 1px;
+	background-color: lightgrey;
+}
+.hide_spoil img {
+	content: "   ";
+}
+
 #ip_search_container .rowlist:not(.has_items) {
 	display: block;
 }
