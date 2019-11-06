@@ -13,6 +13,10 @@
 		</span>
 		<div style="clear:both;"></div>
 	</div>
+	{{else}}
+	<div class="rowitem rowmsg">
+		<a>{{lang "panel_logs_moderation_no_logs"}}</a>
+	</div>
 	{{end}}
 </div>
 {{template "paginator.html" . }}

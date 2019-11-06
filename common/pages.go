@@ -345,14 +345,12 @@ type PanelStats struct {
 	Themes      int
 	Reports     int
 }
-
 type BasePanelPage struct {
 	*Header
 	Stats         PanelStats
 	Zone          string
 	ReportForumID int
 }
-
 type PanelPage struct {
 	*BasePanelPage
 	ItemList  []interface{}
@@ -369,12 +367,10 @@ type GridElement struct {
 	TextColour string
 	Note       string
 }
-
 type DashGrids struct {
 	Grid1 []GridElement
 	Grid2 []GridElement
 }
-
 type PanelDashboardPage struct {
 	*BasePanelPage
 	Grids DashGrids
@@ -384,6 +380,11 @@ type PanelSetting struct {
 	*Setting
 	FriendlyName string
 }
+type PanelSettingPage struct {
+	*BasePanelPage
+	ItemList []OptionLabel
+	Setting  *PanelSetting
+}
 
 type PanelUserEditPage struct {
 	*BasePanelPage
@@ -392,18 +393,11 @@ type PanelUserEditPage struct {
 	ShowEmail bool
 }
 
-type PanelSettingPage struct {
-	*BasePanelPage
-	ItemList []OptionLabel
-	Setting  *PanelSetting
-}
-
 type PanelCustomPagesPage struct {
 	*BasePanelPage
 	ItemList []*CustomPage
 	Paginator
 }
-
 type PanelCustomPageEditPage struct {
 	*BasePanelPage
 	Page *CustomPage

@@ -94,9 +94,21 @@ func modlogsElementType(action string, elementType string, elementID int, actor 
 			out = p.GetTmplPhrasef("panel_logs_moderation_action_reply_delete", topic.Link, topic.Title, actor.Link, actor.Name)
 		}
 	}
-
 	if out == "" {
 		out = p.GetTmplPhrasef("panel_logs_moderation_action_unknown", action, elementType, actor.Link, actor.Name)
+	}
+	return out
+}
+
+func adminlogsElementType(action string, elementType string, elementID int, actor *c.User) (out string) {
+	switch elementType {
+	// TODO: Record more detail for this, e.g. which field/s was changed
+	case "user":
+		targetUser := handleUnknownUser(c.Users.Get(elementID))
+		out = p.GetTmplPhrasef("panel_logs_administration_action_user_"+action, targetUser.Link, targetUser.Name, actor.Link, actor.Name)
+	}
+	if out == "" {
+		out = p.GetTmplPhrasef("panel_logs_administration_action_unknown", action, elementType, actor.Link, actor.Name)
 	}
 	return out
 }
@@ -132,10 +144,11 @@ func LogsAdmin(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError
 	if ferr != nil {
 		return ferr
 	}
+	basePage.AddNotice("Currently under development")
 
 	page, _ := strconv.Atoi(r.FormValue("page"))
 	perPage := 12
-	offset, page, lastPage := c.PageOffset(c.ModLogs.Count(), page, perPage)
+	offset, page, lastPage := c.PageOffset(c.AdminLogs.Count(), page, perPage)
 
 	logs, err := c.AdminLogs.GetOffset(offset, perPage)
 	if err != nil {
@@ -144,7 +157,7 @@ func LogsAdmin(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError
 	llist := make([]c.PageLogItem, len(logs))
 	for index, log := range logs {
 		actor := handleUnknownUser(c.Users.Get(log.ActorID))
-		action := modlogsElementType(log.Action, log.ElementType, log.ElementID, actor)
+		action := adminlogsElementType(log.Action, log.ElementType, log.ElementID, actor)
 		llist[index] = c.PageLogItem{Action: template.HTML(action), IP: log.IP, DoneAt: log.DoneAt}
 	}
 

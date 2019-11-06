@@ -78,7 +78,7 @@
 	{{if eq .Zone "logs"}}
 		<div class="rowitem passive submenu"><a href="/panel/logs/regs/">{{lang "panel_menu_logs_registrations"}}</a></div>
 		<div class="rowitem passive submenu"><a href="/panel/logs/mod/">{{lang "panel_menu_logs_moderators"}}</a></div>
-		{{if .CurrentUser.Perms.ViewAdminLogs}}<div class="rowitem passive submenu"><a>{{lang "panel_menu_logs_administrators"}}</a></div>{{end}}
+		{{if .CurrentUser.Perms.ViewAdminLogs}}<div class="rowitem passive submenu"><a href="/panel/logs/admin/">{{lang "panel_menu_logs_administrators"}}</a></div>{{end}}
 	{{end}}
 </div>
 <div class="colstack_item colstack_head">

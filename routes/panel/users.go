@@ -153,6 +153,11 @@ func UsersEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, suid s
 	}
 	targetUser.CacheRemove()
 
+	err = c.AdminLogs.Create("edit", targetUser.ID, "user", user.LastIP, user.ID)
+	if err != nil {
+		return c.InternalError(err, w, r)
+	}
+
 	// If we're changing our own password, redirect to the index rather than to a noperms error due to the force logout
 	if targetUser.ID == user.ID && red {
 		http.Redirect(w, r, "/", http.StatusSeeOther)

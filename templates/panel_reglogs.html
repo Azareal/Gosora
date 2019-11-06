@@ -5,13 +5,17 @@
 	{{range .Logs}}
 	<div class="rowitem panel_compactrow{{if not .Success}} bg_red{{end}}">
 		<span class="to_left{{if not .Success}} panel_registration_attempt{{end}}">
-			<span>{{if not .Success}}{{lang "panel_logs_registration_attempt"}}: {{end}}{{.Username}} ({{lang "panel_logs_registration_email"}}: {{.Email}}){{if .ParsedReason}} ({{lang "panel_logs_registration_reason"}}: {{.ParsedReason}}){{end}}</span>
+			<span>{{if not .Success}}{{lang "panel_logs_registration_attempt"}}: {{end}}{{.Username}}{{if .Email}} ({{lang "panel_logs_registration_email"}}: {{.Email}}){{end}}{{if .ParsedReason}} ({{lang "panel_logs_registration_reason"}}: {{.ParsedReason}}){{end}}</span>
 			{{if $.CurrentUser.Perms.ViewIPs}}<br /><small title="{{.IP}}">{{.IP}}</small>{{end}}
 		</span>
 		<span class="to_right">
 			<span title="{{.DoneAt}}">{{.DoneAt}}</span>
 		</span>
 		<div style="clear:both;"></div>
+	</div>
+	{{else}}
+	<div class="rowitem rowmsg">
+		<a>{{lang "panel_logs_registration_no_logs"}}</a>
 	</div>
 	{{end}}
 </div>

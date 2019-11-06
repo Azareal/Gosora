@@ -62,6 +62,8 @@ func userRoutes() *RouteGroup {
 			Action("MFADisableSubmit", "/mfa/disable/submit/"),
 			MView("Email", "/email/"),
 			View("EmailTokenSubmit", "/token/", "extraData").NoHeader(),
+			//Action("EmailAddSubmit", "/user/edit/email/add/submit/"),
+			//Action("EmailRemoveSubmit", "/user/edit/email/remove/submit/"),
 		),
 
 		/*MView("routes.AccountEdit", "/user/edit/"),
@@ -264,6 +266,7 @@ func panelRoutes() *RouteGroup {
 		View("panel.Backups", "/panel/backups/", "extraData").Before("SuperAdminOnly").NoGzip(), // TODO: Tests for this
 		View("panel.LogsRegs", "/panel/logs/regs/"),
 		View("panel.LogsMod", "/panel/logs/mod/"),
+		View("panel.LogsAdmin", "/panel/logs/admin/"),
 		View("panel.Debug", "/panel/debug/").Before("AdminOnly"),
 	)
 }
