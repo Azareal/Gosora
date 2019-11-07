@@ -63,13 +63,13 @@ func (list SFileList) JSTmplInit() error {
 			return bytes.Replace(data, []byte(replaceThis), []byte(withThis), -1)
 		}
 
-		startIndex, hasFunc := skipAllUntilCharsExist(data, 0, []byte("func init() {"))
+		startIndex, hasFunc := skipAllUntilCharsExist(data, 0, []byte("if(tmplInits===undefined)"))
 		if !hasFunc {
-			return errors.New("no init function found")
+			return errors.New("no init map found")
 		}
-		data = data[startIndex-len([]byte("func init() {")):]
+		data = data[startIndex-len([]byte("if(tmplInits===undefined)")):]
+		data = replace(data, "// nolint", "")
 		data = replace(data, "func ", "function ")
-		data = replace(data, "function init() {", "if(tmplInits===undefined) var tmplInits = {};\ntmplInits[\""+tmplName+"\"] = ")
 		data = replace(data, " error {\n", " {\nlet out = \"\"\n")
 		funcIndex, hasFunc := skipAllUntilCharsExist(data, 0, []byte("function Template_"))
 		if !hasFunc {
@@ -180,11 +180,10 @@ func (list SFileList) JSTmplInit() error {
 		data = replace(data, "w.Write(", "out += ")
 		data = replace(data, "strconv.Itoa(", "")
 		data = replace(data, "strconv.FormatInt(", "")
-		data = replace(data, "c.", "")
+		data = replace(data, "	c.", "")
 		data = replace(data, "phrases.", "")
 		data = replace(data, ", 10;", "")
-		data = replace(data, shortName+"_tmpl_phrase_id = RegisterTmplPhraseNames([]string{", "[")
-		data = replace(data, "var plist = GetTmplPhrasesBytes("+shortName+"_tmpl_phrase_id)", "let plist = tmplPhrases[\""+tmplName+"\"];")
+		data = replace(data, "var plist = GetTmplPhrasesBytes("+shortName+"_tmpl_phrase_id)", "const plist = tmplPhrases[\""+tmplName+"\"];")
 		data = replace(data, "var cached_var_", "let cached_var_")
 		data = replace(data, `tmpl_`+shortName+`_vars, ok := tmpl_`+shortName+`_i.`, `/*`)
 		data = replace(data, "[]byte(", "")
