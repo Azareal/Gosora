@@ -114,6 +114,16 @@ func adminlogsElementType(action string, elementType string, elementID int, acto
 		out = p.GetTmplPhrasef("panel_logs_administration_action_group_"+action, "/panel/groups/edit/"+strconv.Itoa(g.ID), g.Name, actor.Link, actor.Name)
 	case "group_promotion":
 		out = p.GetTmplPhrasef("panel_logs_administration_action_group_promotion_"+action, actor.Link, actor.Name)
+	case "forum":
+		f, err := c.Forums.Get(elementID)
+		if err != nil {
+			f = &c.Forum{Name: p.GetTmplPhrase("forum_unknown")}
+		}
+		if action == "reorder" {
+			out = p.GetTmplPhrasef("panel_logs_administration_action_forum_reorder", actor.Link, actor.Name)
+		} else {
+			out = p.GetTmplPhrasef("panel_logs_administration_action_forum_"+action, "/panel/forums/edit/"+strconv.Itoa(f.ID), f.Name, actor.Link, actor.Name)
+		}
 	}
 	if out == "" {
 		out = p.GetTmplPhrasef("panel_logs_administration_action_unknown", action, elementType, actor.Link, actor.Name)

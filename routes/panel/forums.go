@@ -67,7 +67,11 @@ func ForumsCreateSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.R
 	factive := r.PostFormValue("active")
 	active := (factive == "on" || factive == "1")
 
-	_, err := c.Forums.Create(fname, fdesc, active, fpreset)
+	fid, err := c.Forums.Create(fname, fdesc, active, fpreset)
+	if err != nil {
+		return c.InternalError(err, w, r)
+	}
+	err = c.AdminLogs.Create("create", fid, "forum", user.LastIP, user.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -90,7 +94,6 @@ func ForumsDelete(w http.ResponseWriter, r *http.Request, user c.User, sfid stri
 	if err != nil {
 		return c.LocalError("The provided Forum ID is not a valid number.", w, r, user)
 	}
-
 	forum, err := c.Forums.Get(fid)
 	if err == sql.ErrNoRows {
 		return c.LocalError("The forum you're trying to delete doesn't exist.", w, r, user)
@@ -127,6 +130,10 @@ func ForumsDeleteSubmit(w http.ResponseWriter, r *http.Request, user c.User, sfi
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
+	err = c.AdminLogs.Create("delete", fid, "forum", user.LastIP, user.ID)
+	if err != nil {
+		return c.InternalError(err, w, r)
+	}
 
 	http.Redirect(w, r, "/panel/forums/?deleted=1", http.StatusSeeOther)
 	return nil
@@ -153,6 +160,11 @@ func ForumsOrderSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.Ro
 		updateMap[fid] = index
 	}
 	c.Forums.UpdateOrder(updateMap)
+
+	err := c.AdminLogs.Create("reorder", 0, "forum", user.LastIP, user.ID)
+	if err != nil {
+		return c.InternalErrorJSQ(err, w, r, js)
+	}
 
 	return successRedirect("/panel/forums/", w, r, js)
 }
@@ -224,7 +236,6 @@ func ForumsEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, sfid 
 	if err != nil {
 		return c.LocalErrorJSQ("The provided Forum ID is not a valid number.", w, r, user, js)
 	}
-
 	forum, err := c.Forums.Get(fid)
 	if err == sql.ErrNoRows {
 		return c.LocalErrorJSQ("The forum you're trying to edit doesn't exist.", w, r, user, js)
@@ -248,6 +259,11 @@ func ForumsEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, sfid 
 	if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
+	err = c.AdminLogs.Create("edit", fid, "forum", user.LastIP, user.ID)
+	if err != nil {
+		return c.InternalError(err, w, r)
+	}
+
 	// ? Should we redirect to the forum editor instead?
 	return successRedirect("/panel/forums/", w, r, js)
 }
@@ -283,6 +299,10 @@ func ForumsEditPermsSubmit(w http.ResponseWriter, r *http.Request, user c.User, 
 	err = forum.SetPreset(permPreset, gid)
 	if err != nil {
 		return c.LocalErrorJSQ(err.Error(), w, r, user, js)
+	}
+	err = c.AdminLogs.Create("edit", fid, "forum", user.LastIP, user.ID)
+	if err != nil {
+		return c.InternalError(err, w, r)
 	}
 
 	return successRedirect("/panel/forums/edit/"+strconv.Itoa(fid)+"?updated=1", w, r, js)
@@ -417,6 +437,10 @@ func ForumsEditPermsAdvanceSubmit(w http.ResponseWriter, r *http.Request, user c
 	err = forum.SetPerms(&fp, "custom", gid)
 	if err != nil {
 		return c.LocalErrorJSQ(err.Error(), w, r, user, js)
+	}
+	err = c.AdminLogs.Create("edit", fid, "forum", user.LastIP, user.ID)
+	if err != nil {
+		return c.InternalError(err, w, r)
 	}
 
 	return successRedirect("/panel/forums/edit/perms/"+strconv.Itoa(fid)+"-"+strconv.Itoa(gid)+"?updated=1", w, r, js)

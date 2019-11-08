@@ -1020,6 +1020,7 @@
 		"user_unknown":"Unknown",
 		"topic_unknown":"Unknown",
 		"group_unknown":"Unknown",
+		"forum_unknown":"Unknown",
 
 		"panel_logs_administration_head":"Admin Action Logs",
 		"panel_logs_administration_action_user_edit":"User <a href='%s'>%s</a> was modified by <a href='%s'>%s</a>",
@@ -1027,6 +1028,10 @@
 		"panel_logs_administration_action_group_edit":"Group <a href='%s'>%s</a> was modified by <a href='%s'>%s</a>",
 		"panel_logs_administration_action_group_promotion_create":"A group promotion was created by <a href='%s'>%s</a>",
 		"panel_logs_administration_action_group_promotion_delete":"A group promotion was deleted by <a href='%s'>%s</a>",
+		"panel_logs_administration_action_forum_reorder":"Forums were reordered by <a href='%s'>%s</a>",
+		"panel_logs_administration_action_forum_create":"Forum <a href='%s'>%s</a> was created by <a href='%s'>%s</a>",
+		"panel_logs_administration_action_forum_delete":"Forum <a href='%s'>%s</a> was deleted by <a href='%s'>%s</a>",
+		"panel_logs_administration_action_forum_edit":"Forum <a href='%s'>%s</a> was modified by <a href='%s'>%s</a>",
 		"panel_logs_administration_action_unknown":"Unknown action '%s' on elementType '%s' by <a href='%s'>%s</a>",
 		"panel_logs_administration_no_logs":"There aren't any events logged.",
 
