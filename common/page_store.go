@@ -38,12 +38,12 @@ func BlankCustomPage() *CustomPage {
 	return new(CustomPage)
 }
 
-func (page *CustomPage) AddAllowedGroup(gid int) {
-	page.AllowedGroups = append(page.AllowedGroups, gid)
+func (p *CustomPage) AddAllowedGroup(gid int) {
+	p.AllowedGroups = append(p.AllowedGroups, gid)
 }
 
-func (page *CustomPage) getRawAllowedGroups() (rawAllowedGroups string) {
-	for _, group := range page.AllowedGroups {
+func (p *CustomPage) getRawAllowedGroups() (rawAllowedGroups string) {
+	for _, group := range p.AllowedGroups {
 		rawAllowedGroups += strconv.Itoa(group) + ","
 	}
 	if len(rawAllowedGroups) > 0 {
@@ -52,18 +52,17 @@ func (page *CustomPage) getRawAllowedGroups() (rawAllowedGroups string) {
 	return rawAllowedGroups
 }
 
-func (page *CustomPage) Commit() error {
-	_, err := customPageStmts.update.Exec(page.Name, page.Title, page.Body, page.getRawAllowedGroups(), page.MenuID, page.ID)
-	Pages.Reload(page.ID)
+func (p *CustomPage) Commit() error {
+	_, err := customPageStmts.update.Exec(p.Name, p.Title, p.Body, p.getRawAllowedGroups(), p.MenuID, p.ID)
+	Pages.Reload(p.ID)
 	return err
 }
 
-func (page *CustomPage) Create() (int, error) {
-	res, err := customPageStmts.create.Exec(page.Name, page.Title, page.Body, page.getRawAllowedGroups(), page.MenuID)
+func (p *CustomPage) Create() (int, error) {
+	res, err := customPageStmts.create.Exec(p.Name, p.Title, p.Body, p.getRawAllowedGroups(), p.MenuID)
 	if err != nil {
 		return 0, err
 	}
-
 	pid64, err := res.LastInsertId()
 	return int(pid64), err
 }

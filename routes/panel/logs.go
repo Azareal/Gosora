@@ -124,6 +124,26 @@ func adminlogsElementType(action string, elementType string, elementID int, acto
 		} else {
 			out = p.GetTmplPhrasef("panel_logs_administration_action_forum_"+action, "/panel/forums/edit/"+strconv.Itoa(f.ID), f.Name, actor.Link, actor.Name)
 		}
+	case "page":
+		pp, err := c.Pages.Get(elementID)
+		if err != nil {
+			pp = &c.CustomPage{Name: p.GetTmplPhrase("page_unknown")}
+		}
+		out = p.GetTmplPhrasef("panel_logs_administration_action_page_"+action, "/panel/pages/edit/"+strconv.Itoa(pp.ID), pp.Name, actor.Link, actor.Name)
+	case "setting":
+		s, err := c.SettingBox.Load().(c.SettingMap).BypassGet(action)
+		if err != nil {
+			s = &c.Setting{Name: p.GetTmplPhrase("setting_unknown")}
+		}
+		out = p.GetTmplPhrasef("panel_logs_administration_action_setting_edit", "/panel/settings/edit/"+s.Name, s.Name, actor.Link, actor.Name)
+	case "word_filter":
+		wf, err := c.WordFilters.Get(elementID)
+		if err != nil {
+			wf = &c.WordFilter{}
+		}
+		out = p.GetTmplPhrasef("panel_logs_administration_action_word_filter_"+action, "/panel/settings/word-filters/", wf.ID, actor.Link, actor.Name)
+	case "backup":
+		out = p.GetTmplPhrasef("panel_logs_administration_action_backup_"+action, actor.Link, actor.Name)
 	}
 	if out == "" {
 		out = p.GetTmplPhrasef("panel_logs_administration_action_unknown", action, elementType, actor.Link, actor.Name)

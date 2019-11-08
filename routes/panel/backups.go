@@ -28,19 +28,24 @@ func Backups(w http.ResponseWriter, r *http.Request, user c.User, backupURL stri
 		if err != nil {
 			return c.NotFound(w, r, basePage.Header)
 		}
-		w.Header().Set("Content-Length", strconv.FormatInt(info.Size(), 10))
 
+		h := w.Header()
+		h.Set("Content-Length", strconv.FormatInt(info.Size(), 10))
 		if ext == ".sql" {
-			// TODO: Change the served filename to gosora_backup_%timestamp%.sql, the time the 	file was generated, not when it was modified aka what the name of it should be
-			w.Header().Set("Content-Disposition", "attachment; filename=gosora_backup.sql")
-			w.Header().Set("Content-Type", "application/sql")
+			// TODO: Change the served filename to gosora_backup_%timestamp%.sql, the time the file was generated, not when it was modified aka what the name of it should be
+			h.Set("Content-Disposition", "attachment; filename=gosora_backup.sql")
+			h.Set("Content-Type", "application/sql")
 		} else {
-			// TODO: Change the served filename to gosora_backup_%timestamp%.zip, the time the 	file was generated, not when it was modified aka what the name of it should be
-			w.Header().Set("Content-Disposition", "attachment; filename=gosora_backup.zip")
-			w.Header().Set("Content-Type", "application/zip")
+			// TODO: Change the served filename to gosora_backup_%timestamp%.zip, the time the file was generated, not when it was modified aka what the name of it should be
+			h.Set("Content-Disposition", "attachment; filename=gosora_backup.zip")
+			h.Set("Content-Type", "application/zip")
 		}
 		// TODO: Fix the problem where non-existent files aren't greeted with custom 404s on ServeFile()'s side
 		http.ServeFile(w, r, "./backups/"+backupURL)
+		err = c.AdminLogs.Create("download", 0, "backup", user.LastIP, user.ID)
+		if err != nil {
+			return c.InternalError(err, w, r)
+		}
 		return nil
 	}
 

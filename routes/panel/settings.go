@@ -77,7 +77,6 @@ func SettingEdit(w http.ResponseWriter, r *http.Request, user c.User, sname stri
 		if err != nil {
 			return c.LocalError("The value of this setting couldn't be converted to an integer", w, r, user)
 		}
-
 		for index, label := range strings.Split(llist, ",") {
 			itemList = append(itemList, c.OptionLabel{
 				Label:    label,
@@ -94,7 +93,7 @@ func SettingEdit(w http.ResponseWriter, r *http.Request, user c.User, sname stri
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "", "", "panel_setting", &pi})
 }
 
-func SettingEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, sname string) c.RouteError {
+func SettingEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, name string) c.RouteError {
 	headerLite, ferr := c.SimplePanelUserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
@@ -103,10 +102,16 @@ func SettingEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, snam
 		return c.NoPermissions(w, r, user)
 	}
 
-	scontent := c.SanitiseBody(r.PostFormValue("value"))
-	rerr := headerLite.Settings.Update(sname, scontent)
+	name = c.SanitiseSingleLine(name)
+	content := c.SanitiseBody(r.PostFormValue("value"))
+	rerr := headerLite.Settings.Update(name, content)
 	if rerr != nil {
 		return rerr
+	}
+	// TODO: Avoid this hack
+	err := c.AdminLogs.Create(name, 0, "setting", user.LastIP, user.ID)
+	if err != nil {
+		return c.InternalError(err, w, r)
 	}
 
 	http.Redirect(w, r, "/panel/settings/", http.StatusSeeOther)

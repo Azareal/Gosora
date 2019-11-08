@@ -1021,6 +1021,8 @@
 		"topic_unknown":"Unknown",
 		"group_unknown":"Unknown",
 		"forum_unknown":"Unknown",
+		"page_unknown":"Unknown",
+		"setting_unknown":"unknown",
 
 		"panel_logs_administration_head":"Admin Action Logs",
 		"panel_logs_administration_action_user_edit":"User <a href='%s'>%s</a> was modified by <a href='%s'>%s</a>",
@@ -1032,6 +1034,14 @@
 		"panel_logs_administration_action_forum_create":"Forum <a href='%s'>%s</a> was created by <a href='%s'>%s</a>",
 		"panel_logs_administration_action_forum_delete":"Forum <a href='%s'>%s</a> was deleted by <a href='%s'>%s</a>",
 		"panel_logs_administration_action_forum_edit":"Forum <a href='%s'>%s</a> was modified by <a href='%s'>%s</a>",
+		"panel_logs_administration_action_page_create":"Page <a href='%s'>%s</a> was created by <a href='%s'>%s</a>",
+		"panel_logs_administration_action_page_delete":"Page <a href='%s'>%s</a> was deleted by <a href='%s'>%s</a>",
+		"panel_logs_administration_action_page_edit":"Page <a href='%s'>%s</a> was modified by <a href='%s'>%s</a>",
+		"panel_logs_administration_action_setting_edit":"Setting <a href='%s'>%s</a> was modified by <a href='%s'>%s</a>",
+		"panel_logs_administration_action_word_filter_create":"Word Filter <a href='%s'>%d</a> was created by <a href='%s'>%s</a>",
+		"panel_logs_administration_action_word_filter_delete":"Word Filter <a href='%s'>%d</a> was deleted by <a href='%s'>%s</a>",
+		"panel_logs_administration_action_word_filter_edit":"Word Filter <a href='%s'>%d</a> was modified by <a href='%s'>%s</a>",
+		"panel_logs_administration_action_backup_download":"A backup was downloaded by <a href='%s'>%s</a>",
 		"panel_logs_administration_action_unknown":"Unknown action '%s' on elementType '%s' by <a href='%s'>%s</a>",
 		"panel_logs_administration_no_logs":"There aren't any events logged.",
 

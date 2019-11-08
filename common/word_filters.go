@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"sync/atomic"
 
-	"github.com/Azareal/Gosora/query_gen"
+	qgen "github.com/Azareal/Gosora/query_gen"
 )
 
 // TODO: Move some features into methods on this?
@@ -19,7 +19,8 @@ var WordFilters WordFilterStore
 type WordFilterStore interface {
 	ReloadAll() error
 	GetAll() (filters map[int]*WordFilter, err error)
-	Create(find string, replacement string) error
+	Get(id int) (*WordFilter, error)
+	Create(find string, replacement string) (int, error)
 	Delete(id int) error
 	Update(id int, find string, replacement string) error
 	Length() int
@@ -31,6 +32,7 @@ type DefaultWordFilterStore struct {
 	box atomic.Value // An atomic value holding a WordFilterMap
 
 	getAll *sql.Stmt
+	get    *sql.Stmt
 	create *sql.Stmt
 	delete *sql.Stmt
 	update *sql.Stmt
@@ -41,6 +43,7 @@ func NewDefaultWordFilterStore(acc *qgen.Accumulator) (*DefaultWordFilterStore, 
 	wf := "word_filters"
 	store := &DefaultWordFilterStore{
 		getAll: acc.Select(wf).Columns("wfid,find,replacement").Prepare(),
+		get:    acc.Select(wf).Columns("wfid,find,replacement").Where("wfid = ?").Prepare(),
 		create: acc.Insert(wf).Columns("find,replacement").Fields("?,?").Prepare(),
 		delete: acc.Delete(wf).Where("wfid = ?").Prepare(),
 		update: acc.Update(wf).Set("find = ?, replacement = ?").Where("wfid = ?").Prepare(),
@@ -93,13 +96,23 @@ func (s *DefaultWordFilterStore) GetAll() (filters map[int]*WordFilter, err erro
 	return s.box.Load().(map[int]*WordFilter), nil
 }
 
+func (s *DefaultWordFilterStore) Get(id int) (*WordFilter, error) {
+	wf := &WordFilter{ID: id}
+	err := s.get.QueryRow(id).Scan(&wf.Find, &wf.Replacement)
+	return wf, err
+}
+
 // Create adds a new word filter to the database and refreshes the memory cache
-func (s *DefaultWordFilterStore) Create(find string, replace string) error {
-	_, err := s.create.Exec(find, replace)
+func (s *DefaultWordFilterStore) Create(find string, replace string) (int, error) {
+	res, err := s.create.Exec(find, replace)
 	if err != nil {
-		return err
+		return 0, err
 	}
-	return s.ReloadAll()
+	id64, err := res.LastInsertId()
+	if err != nil {
+		return 0, err
+	}
+	return int(id64), s.ReloadAll()
 }
 
 // Delete removes a word filter from the database and refreshes the memory cache

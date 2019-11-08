@@ -42,24 +42,28 @@ func PagesCreateSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.Ro
 		return ferr
 	}
 
-	pname := r.PostFormValue("name")
-	if pname == "" {
+	name := c.SanitiseSingleLine(r.PostFormValue("name"))
+	if name == "" {
 		return c.LocalError("No name was provided for this page", w, r, user)
 	}
-	ptitle := r.PostFormValue("title")
-	if ptitle == "" {
+	title := c.SanitiseSingleLine(r.PostFormValue("title"))
+	if title == "" {
 		return c.LocalError("No title was provided for this page", w, r, user)
 	}
-	pbody := r.PostFormValue("body")
-	if pbody == "" {
+	body := r.PostFormValue("body")
+	if body == "" {
 		return c.LocalError("No body was provided for this page", w, r, user)
 	}
 
 	page := c.BlankCustomPage()
-	page.Name = pname
-	page.Title = ptitle
-	page.Body = pbody
-	_, err := page.Create()
+	page.Name = name
+	page.Title = title
+	page.Body = body
+	pid, err := page.Create()
+	if err != nil {
+		return c.InternalError(err, w, r)
+	}
+	err = c.AdminLogs.Create("create", pid, "page", user.LastIP, user.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -102,16 +106,16 @@ func PagesEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, spid s
 	if err != nil {
 		return c.LocalError("Page ID needs to be an integer", w, r, user)
 	}
-	pname := r.PostFormValue("name")
-	if pname == "" {
+	name := c.SanitiseSingleLine(r.PostFormValue("name"))
+	if name == "" {
 		return c.LocalError("No name was provided for this page", w, r, user)
 	}
-	ptitle := r.PostFormValue("title")
-	if ptitle == "" {
+	title := c.SanitiseSingleLine(r.PostFormValue("title"))
+	if title == "" {
 		return c.LocalError("No title was provided for this page", w, r, user)
 	}
-	pbody := r.PostFormValue("body")
-	if pbody == "" {
+	body := r.PostFormValue("body")
+	if body == "" {
 		return c.LocalError("No body was provided for this page", w, r, user)
 	}
 
@@ -119,10 +123,14 @@ func PagesEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, spid s
 	if err != nil {
 		return c.NotFound(w, r, nil)
 	}
-	page.Name = pname
-	page.Title = ptitle
-	page.Body = pbody
+	page.Name = name
+	page.Title = title
+	page.Body = body
 	err = page.Commit()
+	if err != nil {
+		return c.InternalError(err, w, r)
+	}
+	err = c.AdminLogs.Create("edit", pid, "page", user.LastIP, user.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -142,6 +150,10 @@ func PagesDeleteSubmit(w http.ResponseWriter, r *http.Request, user c.User, spid
 		return c.LocalError("Page ID needs to be an integer", w, r, user)
 	}
 	err = c.Pages.Delete(pid)
+	if err != nil {
+		return c.InternalError(err, w, r)
+	}
+	err = c.AdminLogs.Create("delete", pid, "page", user.LastIP, user.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
