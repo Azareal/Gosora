@@ -10,13 +10,13 @@
 		<form action="/panel/groups/edit/submit/{{.ID}}?s={{.CurrentUser.Session}}" method="post">
 		<div class="formrow">
 			<div class="formitem formlabel"><a>{{lang "panel_group_name"}}</a></div>
-			<div class="formitem"><input name="group-name" type="text" value="{{.Name}}" placeholder="{{lang "panel_group_name_placeholder"}}" /></div>
+			<div class="formitem"><input name="name" type="text" value="{{.Name}}" placeholder="{{lang "panel_group_name_placeholder"}}" /></div>
 		</div>
 		{{if .CurrentUser.Perms.EditGroup}}
 		<div class="formrow">
 			<div class="formitem formlabel"><a>{{lang "panel_group_type"}}</a></div>
 			<div class="formitem">
-				<select name="group-type"{{if .DisableRank}} disabled{{end}}>
+				<select name="type"{{if .DisableRank}} disabled{{end}}>
 					<option value="Guest"{{if eq .Rank "Guest"}} selected{{end}} disabled>{{lang "panel_groups_rank_guest"}}</option>
 					<option value="Member"{{if eq .Rank "Member"}} selected{{end}}>{{lang "panel_groups_rank_member"}}</option>
 					<option value="Mod"{{if eq .Rank "Mod"}} selected{{end}}{{if not .CurrentUser.Perms.EditGroupSuperMod}} disabled{{end}}>{{lang "panel_groups_rank_mod"}}</option>
@@ -27,7 +27,7 @@
 		</div>{{end}}
 		<div class="formrow">
 			<div class="formitem formlabel"><a>{{lang "panel_group_tag"}}</a></div>
-			<div class="formitem"><input name="group-tag" type="text" value="{{.Tag}}" placeholder="{{lang "panel_group_tag_placeholder"}}" /></div>
+			<div class="formitem"><input name="tag" type="text" value="{{.Tag}}" placeholder="{{lang "panel_group_tag_placeholder"}}" /></div>
 		</div>
 		<div class="formrow form_button_row">
 			<div class="formitem"><button name="panel-button" class="formbutton">{{lang "panel_group_update_button"}}</button></div>

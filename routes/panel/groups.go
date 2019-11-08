@@ -225,7 +225,11 @@ func GroupsPromotionsCreateSubmit(w http.ResponseWriter, r *http.Request, user c
 	if err != nil {
 		return ferr
 	}
-	_, err = c.GroupPromotions.Create(from, to, twoWay, level, posts)
+	pid, err := c.GroupPromotions.Create(from, to, twoWay, level, posts)
+	if err != nil {
+		return c.InternalError(err, w, r)
+	}
+	err = c.AdminLogs.Create("create", pid, "group_promotion", user.LastIP, user.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -269,6 +273,10 @@ func GroupsPromotionsDeleteSubmit(w http.ResponseWriter, r *http.Request, user c
 		return ferr
 	}
 	err = c.GroupPromotions.Delete(pid)
+	if err != nil {
+		return c.InternalError(err, w, r)
+	}
+	err = c.AdminLogs.Create("delete", pid, "group_promotion", user.LastIP, user.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -378,12 +386,12 @@ func GroupsEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, sgid 
 		return ferr
 	}
 
-	gname := r.FormValue("group-name")
+	gname := r.FormValue("name")
 	if gname == "" {
 		return c.LocalError(p.GetErrorPhrase("panel_groups_need_name"), w, r, user)
 	}
-	gtag := r.FormValue("group-tag")
-	rank := r.FormValue("group-type")
+	gtag := r.FormValue("tag")
+	rank := r.FormValue("type")
 
 	var originalRank string
 	// TODO: Use a switch for this
@@ -403,7 +411,6 @@ func GroupsEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, sgid 
 		if !user.Perms.EditGroupGlobalPerms {
 			return c.LocalError(p.GetErrorPhrase("panel_groups_cannot_edit_group_type"), w, r, user)
 		}
-
 		switch rank {
 		case "Admin":
 			if !user.Perms.EditGroupAdmin {
@@ -430,6 +437,10 @@ func GroupsEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, sgid 
 	}
 
 	err = group.Update(gname, gtag)
+	if err != nil {
+		return c.InternalError(err, w, r)
+	}
+	err = c.AdminLogs.Create("edit", group.ID, "group", user.LastIP, user.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -466,7 +477,7 @@ func GroupsEditPermsSubmit(w http.ResponseWriter, r *http.Request, user c.User, 
 	pCheck := func(hasPerm bool, perms []string) {
 		if hasPerm {
 			for _, perm := range perms {
-				pvalue := r.PostFormValue("group-perm-" + perm)
+				pvalue := r.PostFormValue("perm-" + perm)
 				pmap[perm] = (pvalue == "1")
 			}
 		}
@@ -475,6 +486,10 @@ func GroupsEditPermsSubmit(w http.ResponseWriter, r *http.Request, user c.User, 
 	pCheck(user.Perms.EditGroupGlobalPerms, c.GlobalPermList)
 
 	err = group.UpdatePerms(pmap)
+	if err != nil {
+		return c.InternalError(err, w, r)
+	}
+	err = c.AdminLogs.Create("edit", group.ID, "group", user.LastIP, user.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -492,15 +507,15 @@ func GroupsCreateSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.R
 		return c.NoPermissions(w, r, user)
 	}
 
-	groupName := r.PostFormValue("group-name")
+	groupName := r.PostFormValue("name")
 	if groupName == "" {
 		return c.LocalError(p.GetErrorPhrase("panel_groups_need_name"), w, r, user)
 	}
-	groupTag := r.PostFormValue("group-tag")
+	groupTag := r.PostFormValue("tag")
 
 	var isAdmin, isMod, isBanned bool
 	if user.Perms.EditGroupGlobalPerms {
-		switch r.PostFormValue("group-type") {
+		switch r.PostFormValue("type") {
 		case "Admin":
 			if !user.Perms.EditGroupAdmin {
 				return c.LocalError(p.GetErrorPhrase("panel_groups_create_cannot_designate_admin"), w, r, user)
@@ -521,6 +536,11 @@ func GroupsCreateSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.R
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
+	err = c.AdminLogs.Create("create", gid, "group", user.LastIP, user.ID)
+	if err != nil {
+		return c.InternalError(err, w, r)
+	}
+
 	http.Redirect(w, r, "/panel/groups/edit/"+strconv.Itoa(gid), http.StatusSeeOther)
 	return nil
 }

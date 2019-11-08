@@ -106,6 +106,14 @@ func adminlogsElementType(action string, elementType string, elementID int, acto
 	case "user":
 		targetUser := handleUnknownUser(c.Users.Get(elementID))
 		out = p.GetTmplPhrasef("panel_logs_administration_action_user_"+action, targetUser.Link, targetUser.Name, actor.Link, actor.Name)
+	case "group":
+		g, err := c.Groups.Get(elementID)
+		if err != nil {
+			g = &c.Group{Name: p.GetTmplPhrase("group_unknown")}
+		}
+		out = p.GetTmplPhrasef("panel_logs_administration_action_group_"+action, "/panel/groups/edit/"+strconv.Itoa(g.ID), g.Name, actor.Link, actor.Name)
+	case "group_promotion":
+		out = p.GetTmplPhrasef("panel_logs_administration_action_group_promotion_"+action, actor.Link, actor.Name)
 	}
 	if out == "" {
 		out = p.GetTmplPhrasef("panel_logs_administration_action_unknown", action, elementType, actor.Link, actor.Name)

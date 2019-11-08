@@ -209,6 +209,11 @@ func UsersAvatarSubmit(w http.ResponseWriter, r *http.Request, user c.User, suid
 		return c.InternalError(err, w, r)
 	}
 
+	err = c.AdminLogs.Create("edit", targetUser.ID, "user", user.LastIP, user.ID)
+	if err != nil {
+		return c.InternalError(err, w, r)
+	}
+
 	var se string
 	if r.PostFormValue("show-email") == "1" {
 		se = "&show-email=1"
@@ -242,6 +247,11 @@ func UsersAvatarRemoveSubmit(w http.ResponseWriter, r *http.Request, user c.User
 	ferr = c.ChangeAvatar("", w, r, *targetUser)
 	if ferr != nil {
 		return ferr
+	}
+
+	err = c.AdminLogs.Create("edit", targetUser.ID, "user", user.LastIP, user.ID)
+	if err != nil {
+		return c.InternalError(err, w, r)
 	}
 
 	var se string
