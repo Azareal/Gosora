@@ -1289,11 +1289,13 @@ func TestWordFilters(t *testing.T) {
 	expect(t, len(filters) == 0, "Word filter map should be empty")
 	// TODO: Add a test for ParseMessage relating to word filters
 
-	err = c.WordFilters.Create("imbecile", "lovely")
+	wfid, err := c.WordFilters.Create("imbecile", "lovely")
 	expectNilErr(t, err)
+	expect(t,wfid == 1, "The first word filter should have an ID of 1")
 	expect(t, c.WordFilters.Length() == 1, "Word filter list should not be empty")
 	expect(t, c.WordFilters.EstCount() == 1, "Word filter list should not be empty")
 	expect(t, c.WordFilters.Count() == 1, "Word filter list should not be empty")
+
 	filters, err = c.WordFilters.GetAll()
 	expectNilErr(t, err)
 	expect(t, len(filters) == 1, "Word filter map should not be empty")
@@ -1301,9 +1303,18 @@ func TestWordFilters(t *testing.T) {
 	expect(t, filter.ID == 1, "Word filter ID should be 1")
 	expect(t, filter.Find == "imbecile", "Word filter needle should be imbecile")
 	expect(t, filter.Replacement == "lovely", "Word filter replacement should be lovely")
+
+	filter, err = c.WordFilters.Get(1)
+	expectNilErr(t, err)
+	expect(t, filter.ID == 1, "Word filter ID should be 1")
+	expect(t, filter.Find == "imbecile", "Word filter needle should be imbecile")
+	expect(t, filter.Replacement == "lovely", "Word filter replacement should be lovely")
+
 	// TODO: Add a test for ParseMessage relating to word filters
 
-	// TODO: Add deletion tests
+	err = c.WordFilters.Delete(1)
+	expectNilErr(t,err)
+	// TODO: More deletion tests
 }
 
 // TODO: Expand upon the valid characters which can go in URLs?

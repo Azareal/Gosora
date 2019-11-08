@@ -43,7 +43,7 @@ func NewDefaultWordFilterStore(acc *qgen.Accumulator) (*DefaultWordFilterStore, 
 	wf := "word_filters"
 	store := &DefaultWordFilterStore{
 		getAll: acc.Select(wf).Columns("wfid,find,replacement").Prepare(),
-		get:    acc.Select(wf).Columns("wfid,find,replacement").Where("wfid = ?").Prepare(),
+		get:    acc.Select(wf).Columns("find,replacement").Where("wfid = ?").Prepare(),
 		create: acc.Insert(wf).Columns("find,replacement").Fields("?,?").Prepare(),
 		delete: acc.Delete(wf).Where("wfid = ?").Prepare(),
 		update: acc.Update(wf).Set("find = ?, replacement = ?").Where("wfid = ?").Prepare(),
