@@ -1279,6 +1279,57 @@ func TestMetaStore(t *testing.T) {
 	recordMustNotExist(t, err, "meta var giggle should not exist")
 }
 
+func TestPages(t *testing.T) {
+	expect(t, c.Pages.Count() == 0, "Page count should be 0")
+	_, err := c.Pages.Get(1)
+	recordMustNotExist(t, err, "Page 1 should not exist yet")
+	expectNilErr(t, c.Pages.Delete(-1))
+	expectNilErr(t, c.Pages.Delete(0))
+	expectNilErr(t, c.Pages.Delete(1))
+	_, err = c.Pages.Get(1)
+	recordMustNotExist(t, err, "Page 1 should not exist yet")
+	//err = c.Pages.Reload(1)
+	//recordMustNotExist(t,err,"Page 1 should not exist yet")
+
+	ipage := c.BlankCustomPage()
+	ipage.Name = "test"
+	ipage.Title = "Test"
+	ipage.Body = "A test page"
+	pid, err := ipage.Create()
+	expectNilErr(t, err)
+	expect(t, pid == 1, "The first page should have an ID of 1")
+	expect(t, c.Pages.Count() == 1, "Page count should be 1")
+
+	page, err := c.Pages.Get(1)
+	expectNilErr(t, err)
+	expect(t, page.Name == ipage.Name, "The page name should be "+ipage.Name)
+	expect(t, page.Title == ipage.Title, "The page title should be "+ipage.Title)
+	expect(t, page.Body == ipage.Body, "The page body should be "+ipage.Body)
+
+	opage, err := c.Pages.Get(1)
+	expectNilErr(t, err)
+	opage.Name = "t"
+	opage.Title = "T"
+	opage.Body = "testing"
+	expectNilErr(t, opage.Commit())
+
+	page, err = c.Pages.Get(1)
+	expectNilErr(t, err)
+	expect(t, page.Name == opage.Name, "The page name should be "+opage.Name)
+	expect(t, page.Title == opage.Title, "The page title should be "+opage.Title)
+	expect(t, page.Body == opage.Body, "The page body should be "+opage.Body)
+
+	err = c.Pages.Delete(1)
+	expectNilErr(t, err)
+	expect(t, c.Pages.Count() == 0, "Page count should be 0")
+	_, err = c.Pages.Get(1)
+	recordMustNotExist(t, err, "Page 1 should not exist")
+	//err = c.Pages.Reload(1)
+	//recordMustNotExist(t,err,"Page 1 should not exist")
+
+	// TODO: More tests
+}
+
 func TestWordFilters(t *testing.T) {
 	// TODO: Test the word filters and their store
 	expect(t, c.WordFilters.Length() == 0, "Word filter list should be empty")
@@ -1288,10 +1339,12 @@ func TestWordFilters(t *testing.T) {
 	expectNilErr(t, err) // TODO: Slightly confusing that we don't get ErrNoRow here
 	expect(t, len(filters) == 0, "Word filter map should be empty")
 	// TODO: Add a test for ParseMessage relating to word filters
+	_, err = c.WordFilters.Get(1)
+	recordMustNotExist(t, err, "filter 1 should not exist")
 
 	wfid, err := c.WordFilters.Create("imbecile", "lovely")
 	expectNilErr(t, err)
-	expect(t,wfid == 1, "The first word filter should have an ID of 1")
+	expect(t, wfid == 1, "The first word filter should have an ID of 1")
 	expect(t, c.WordFilters.Length() == 1, "Word filter list should not be empty")
 	expect(t, c.WordFilters.EstCount() == 1, "Word filter list should not be empty")
 	expect(t, c.WordFilters.Count() == 1, "Word filter list should not be empty")
@@ -1310,11 +1363,42 @@ func TestWordFilters(t *testing.T) {
 	expect(t, filter.Find == "imbecile", "Word filter needle should be imbecile")
 	expect(t, filter.Replacement == "lovely", "Word filter replacement should be lovely")
 
+	// Update
+	expectNilErr(t, c.WordFilters.Update(1, "b", "a"))
+
+	expect(t, c.WordFilters.Length() == 1, "Word filter list should not be empty")
+	expect(t, c.WordFilters.EstCount() == 1, "Word filter list should not be empty")
+	expect(t, c.WordFilters.Count() == 1, "Word filter list should not be empty")
+
+	filters, err = c.WordFilters.GetAll()
+	expectNilErr(t, err)
+	expect(t, len(filters) == 1, "Word filter map should not be empty")
+	filter = filters[1]
+	expect(t, filter.ID == 1, "Word filter ID should be 1")
+	expect(t, filter.Find == "b", "Word filter needle should be b")
+	expect(t, filter.Replacement == "a", "Word filter replacement should be a")
+
+	filter, err = c.WordFilters.Get(1)
+	expectNilErr(t, err)
+	expect(t, filter.ID == 1, "Word filter ID should be 1")
+	expect(t, filter.Find == "b", "Word filter needle should be imbecile")
+	expect(t, filter.Replacement == "a", "Word filter replacement should be a")
+
 	// TODO: Add a test for ParseMessage relating to word filters
 
 	err = c.WordFilters.Delete(1)
-	expectNilErr(t,err)
-	// TODO: More deletion tests
+	expectNilErr(t, err)
+
+	expect(t, c.WordFilters.Length() == 0, "Word filter list should be empty")
+	expect(t, c.WordFilters.EstCount() == 0, "Word filter list should be empty")
+	expect(t, c.WordFilters.Count() == 0, "Word filter list should be empty")
+	filters, err = c.WordFilters.GetAll()
+	expectNilErr(t, err) // TODO: Slightly confusing that we don't get ErrNoRow here
+	expect(t, len(filters) == 0, "Word filter map should be empty")
+	_, err = c.WordFilters.Get(1)
+	recordMustNotExist(t, err, "filter 1 should not exist")
+
+	// TODO: Any more tests we could do?
 }
 
 // TODO: Expand upon the valid characters which can go in URLs?
