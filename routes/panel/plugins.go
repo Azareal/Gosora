@@ -22,7 +22,7 @@ func Plugins(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 		pluginList = append(pluginList, plugin)
 	}
 
-	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage,"","","panel_plugins", c.PanelPage{basePage, pluginList, nil}})
+	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "", "", "panel_plugins", c.PanelPage{basePage, pluginList, nil}})
 }
 
 // TODO: Abstract more of the plugin activation / installation / deactivation logic, so we can test all that more reliably and easily
@@ -73,6 +73,10 @@ func PluginsActivate(w http.ResponseWriter, r *http.Request, user c.User, uname 
 	if err != nil {
 		return c.LocalError(err.Error(), w, r, user)
 	}
+	err = c.AdminLogs.CreateExtra("activate", 0, "plugin", user.LastIP, user.ID, c.SanitiseSingleLine(plugin.Name))
+	if err != nil {
+		return c.InternalError(err, w, r)
+	}
 
 	http.Redirect(w, r, "/panel/plugins/", http.StatusSeeOther)
 	return nil
@@ -106,6 +110,10 @@ func PluginsDeactivate(w http.ResponseWriter, r *http.Request, user c.User, unam
 	}
 	if plugin.Deactivate != nil {
 		plugin.Deactivate(plugin)
+	}
+	err = c.AdminLogs.CreateExtra("deactivate", 0, "plugin", user.LastIP, user.ID, c.SanitiseSingleLine(plugin.Name))
+	if err != nil {
+		return c.InternalError(err, w, r)
 	}
 
 	http.Redirect(w, r, "/panel/plugins/", http.StatusSeeOther)
@@ -172,6 +180,10 @@ func PluginsInstall(w http.ResponseWriter, r *http.Request, user c.User, uname s
 	err = plugin.Init(plugin)
 	if err != nil {
 		return c.LocalError(err.Error(), w, r, user)
+	}
+	err = c.AdminLogs.CreateExtra("install", 0, "plugin", user.LastIP, user.ID, c.SanitiseSingleLine(plugin.Name))
+	if err != nil {
+		return c.InternalError(err, w, r)
 	}
 
 	http.Redirect(w, r, "/panel/plugins/", http.StatusSeeOther)

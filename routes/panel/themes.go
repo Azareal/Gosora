@@ -58,6 +58,10 @@ func ThemesSetDefault(w http.ResponseWriter, r *http.Request, user c.User, uname
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
+	err = c.AdminLogs.CreateExtra("set_default", 0, "theme", user.LastIP, user.ID, c.SanitiseSingleLine(theme.Name))
+	if err != nil {
+		return c.InternalError(err, w, r)
+	}
 
 	http.Redirect(w, r, "/panel/themes/", http.StatusSeeOther)
 	return nil
@@ -173,10 +177,10 @@ func themesMenuItemSetters(r *http.Request, i c.MenuItem) c.MenuItem {
 	i.Aria = getItem("aria")
 	i.Tooltip = getItem("tooltip")
 	i.TmplName = getItem("tmplname")
+	i.GuestOnly = false
 
 	switch getItem("permissions") {
 	case "everyone":
-		i.GuestOnly = false
 		i.MemberOnly = false
 		i.SuperModOnly = false
 		i.AdminOnly = false
@@ -186,17 +190,14 @@ func themesMenuItemSetters(r *http.Request, i c.MenuItem) c.MenuItem {
 		i.SuperModOnly = false
 		i.AdminOnly = false
 	case "member-only":
-		i.GuestOnly = false
 		i.MemberOnly = true
 		i.SuperModOnly = false
 		i.AdminOnly = false
 	case "supermod-only":
-		i.GuestOnly = false
 		i.MemberOnly = true
 		i.SuperModOnly = true
 		i.AdminOnly = false
 	case "admin-only":
-		i.GuestOnly = false
 		i.MemberOnly = true
 		i.SuperModOnly = true
 		i.AdminOnly = true
@@ -232,6 +233,11 @@ func ThemesMenuItemEditSubmit(w http.ResponseWriter, r *http.Request, user c.Use
 	if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
+	err = c.AdminLogs.Create("edit", menuItem.ID, "menu_item", user.LastIP, user.ID)
+	if err != nil {
+		return c.InternalError(err, w, r)
+	}
+
 	return successRedirect("/panel/themes/menus/item/edit/"+strconv.Itoa(itemID), w, r, js)
 }
 
@@ -240,11 +246,11 @@ func ThemesMenuItemCreateSubmit(w http.ResponseWriter, r *http.Request, user c.U
 	if ferr != nil {
 		return ferr
 	}
-
 	js := r.PostFormValue("js") == "1"
 	if !user.Perms.ManageThemes {
 		return c.NoPermissionsJSQ(w, r, user, js)
 	}
+
 	smenuID := r.PostFormValue("mid")
 	if smenuID == "" {
 		return c.LocalErrorJSQ("No menuID provided", w, r, user, js)
@@ -260,6 +266,11 @@ func ThemesMenuItemCreateSubmit(w http.ResponseWriter, r *http.Request, user c.U
 	if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
+	err = c.AdminLogs.Create("create", itemID, "menu_item", user.LastIP, user.ID)
+	if err != nil {
+		return c.InternalError(err, w, r)
+	}
+
 	return successRedirect("/panel/themes/menus/item/edit/"+strconv.Itoa(itemID), w, r, js)
 }
 
@@ -289,6 +300,11 @@ func ThemesMenuItemDeleteSubmit(w http.ResponseWriter, r *http.Request, user c.U
 	if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
+	err = c.AdminLogs.Create("delete", menuItem.ID, "menu_item", user.LastIP, user.ID)
+	if err != nil {
+		return c.InternalError(err, w, r)
+	}
+
 	return successRedirect("/panel/themes/menus/", w, r, js)
 }
 
@@ -325,6 +341,11 @@ func ThemesMenuItemOrderSubmit(w http.ResponseWriter, r *http.Request, user c.Us
 		updateMap[miid] = index
 	}
 	menuHold.UpdateOrder(updateMap)
+
+	err = c.AdminLogs.Create("suborder", menuHold.MenuID, "menu", user.LastIP, user.ID)
+	if err != nil {
+		return c.InternalError(err, w, r)
+	}
 
 	return successRedirect("/panel/themes/menus/edit/"+strconv.Itoa(mid), w, r, js)
 }
@@ -409,7 +430,6 @@ func ThemesWidgetsEditSubmit(w http.ResponseWriter, r *http.Request, user c.User
 	if err != nil {
 		return c.LocalErrorJSQ(p.GetErrorPhrase("id_must_be_integer"), w, r, user, js)
 	}
-
 	widget, err := c.Widgets.Get(wid)
 	if err == sql.ErrNoRows {
 		return c.NotFoundJSQ(w, r, nil, js)
@@ -425,6 +445,10 @@ func ThemesWidgetsEditSubmit(w http.ResponseWriter, r *http.Request, user c.User
 	err = ewidget.Commit()
 	if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
+	}
+	err = c.AdminLogs.Create("edit", widget.ID, "widget", user.LastIP, user.ID)
+	if err != nil {
+		return c.InternalError(err, w, r)
 	}
 
 	return successRedirect("/panel/themes/widgets/", w, r, js)
@@ -446,9 +470,13 @@ func ThemesWidgetsCreateSubmit(w http.ResponseWriter, r *http.Request, user c.Us
 		return c.LocalErrorJSQ(err.Error(), w, r, user, js)
 	}
 
-	err = ewidget.Create()
+	wid, err := ewidget.Create()
 	if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
+	}
+	err = c.AdminLogs.Create("create", wid, "widget", user.LastIP, user.ID)
+	if err != nil {
+		return c.InternalError(err, w, r)
 	}
 
 	return successRedirect("/panel/themes/widgets/", w, r, js)
@@ -476,6 +504,10 @@ func ThemesWidgetsDeleteSubmit(w http.ResponseWriter, r *http.Request, user c.Us
 	}
 
 	err = widget.Delete()
+	if err != nil {
+		return c.InternalError(err, w, r)
+	}
+	err = c.AdminLogs.Create("delete", widget.ID, "widget", user.LastIP, user.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}

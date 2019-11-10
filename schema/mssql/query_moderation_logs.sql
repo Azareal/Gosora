@@ -4,5 +4,6 @@ CREATE TABLE [moderation_logs] (
 	[elementType] nvarchar (100) not null,
 	[ipaddress] nvarchar (200) not null,
 	[actorID] int not null,
-	[doneAt] datetime not null
+	[doneAt] datetime not null,
+	[extra] nvarchar (MAX) not null
 );

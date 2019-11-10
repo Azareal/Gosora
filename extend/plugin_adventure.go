@@ -16,14 +16,14 @@ func init() {
 	})
 }
 
-func initAdventure(plugin *c.Plugin) error {
+func initAdventure(pl *c.Plugin) error {
 	return nil
 }
 
 // TODO: Change the signature to return an error?
-func deactivateAdventure(plugin *c.Plugin) {
+func deactivateAdventure(pl *c.Plugin) {
 }
 
-func installAdventure(plugin *c.Plugin) error {
+func installAdventure(pl *c.Plugin) error {
 	return nil
 }

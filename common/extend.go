@@ -321,11 +321,11 @@ type Plugin struct {
 	Installable bool
 	Installed   bool
 
-	Init       func(plugin *Plugin) error
-	Activate   func(plugin *Plugin) error
-	Deactivate func(plugin *Plugin) // TODO: We might want to let this return an error?
-	Install    func(plugin *Plugin) error
-	Uninstall  func(plugin *Plugin) error // TODO: I'm not sure uninstall is implemented
+	Init       func(pl *Plugin) error
+	Activate   func(pl *Plugin) error
+	Deactivate func(pl *Plugin) // TODO: We might want to let this return an error?
+	Install    func(pl *Plugin) error
+	Uninstall  func(pl *Plugin) error // TODO: I'm not sure uninstall is implemented
 
 	Hooks map[string]int
 	Data  interface{} // Usually used for hosting the VMs / reusable elements of non-native plugins

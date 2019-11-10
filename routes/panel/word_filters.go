@@ -2,6 +2,7 @@ package panel
 
 import (
 	"database/sql"
+	"encoding/json"
 	"net/http"
 	"strconv"
 	"strings"
@@ -95,13 +96,24 @@ func WordFiltersEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, 
 	// Unlike with find, it's okay if we leave this blank, as this means that the admin wants to remove the word entirely with no replacement
 	replace := strings.TrimSpace(r.PostFormValue("replace"))
 
+	wf, err := c.WordFilters.Get(wfid)
+	if err == sql.ErrNoRows {
+		return c.LocalErrorJSQ("This word filter doesn't exist.", w, r, user, js)
+	} else if err != nil {
+		return c.InternalErrorJSQ(err, w, r, js)
+	}
 	err = c.WordFilters.Update(wfid, find, replace)
 	if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
-	err = c.AdminLogs.Create("edit", wfid, "word_filter", user.LastIP, user.ID)
+
+	lBytes, err := json.Marshal(c.WordFilterDiff{wf.Find, wf.Replace, find, replace})
 	if err != nil {
-		return c.InternalError(err, w, r)
+		return c.InternalErrorJSQ(err, w, r, js)
+	}
+	err = c.AdminLogs.CreateExtra("edit", wfid, "word_filter", user.LastIP, user.ID, string(lBytes))
+	if err != nil {
+		return c.InternalErrorJSQ(err, w, r, js)
 	}
 
 	http.Redirect(w, r, "/panel/settings/word-filters/", http.StatusSeeOther)

@@ -9,9 +9,15 @@ import (
 
 // TODO: Move some features into methods on this?
 type WordFilter struct {
-	ID          int
-	Find        string
-	Replacement string
+	ID      int
+	Find    string
+	Replace string
+}
+type WordFilterDiff struct {
+	BeforeFind    string
+	BeforeReplace string
+	AfterFind     string
+	AfterReplace  string
 }
 
 var WordFilters WordFilterStore
@@ -82,7 +88,7 @@ func (s *DefaultWordFilterStore) bypassGetAll() (filters []*WordFilter, err erro
 
 	for rows.Next() {
 		f := &WordFilter{ID: 0}
-		err := rows.Scan(&f.ID, &f.Find, &f.Replacement)
+		err := rows.Scan(&f.ID, &f.Find, &f.Replace)
 		if err != nil {
 			return filters, err
 		}
@@ -98,7 +104,7 @@ func (s *DefaultWordFilterStore) GetAll() (filters map[int]*WordFilter, err erro
 
 func (s *DefaultWordFilterStore) Get(id int) (*WordFilter, error) {
 	wf := &WordFilter{ID: id}
-	err := s.get.QueryRow(id).Scan(&wf.Find, &wf.Replacement)
+	err := s.get.QueryRow(id).Scan(&wf.Find, &wf.Replace)
 	return wf, err
 }
 

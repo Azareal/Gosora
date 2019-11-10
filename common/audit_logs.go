@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/Azareal/Gosora/query_gen"
+	qgen "github.com/Azareal/Gosora/query_gen"
 )
 
 var ModLogs LogStore
@@ -14,15 +14,17 @@ type LogItem struct {
 	Action      string
 	ElementID   int
 	ElementType string
-	IP   string
+	IP          string
 	ActorID     int
 	DoneAt      string
+	Extra       string
 }
 
 type LogStore interface {
 	Create(action string, elementID int, elementType string, ip string, actorID int) (err error)
+	CreateExtra(action string, elementID int, elementType string, ip string, actorID int, extra string) (err error)
 	Count() int
-	GetOffset(offset int, perPage int) (logs []LogItem, err error)
+	GetOffset(offset, perPage int) (logs []LogItem, err error)
 }
 
 type SQLModLogStore struct {
@@ -34,15 +36,19 @@ type SQLModLogStore struct {
 func NewModLogStore(acc *qgen.Accumulator) (*SQLModLogStore, error) {
 	ml := "moderation_logs"
 	return &SQLModLogStore{
-		create:    acc.Insert(ml).Columns("action, elementID, elementType, ipaddress, actorID, doneAt").Fields("?,?,?,?,?,UTC_TIMESTAMP()").Prepare(),
+		create:    acc.Insert(ml).Columns("action, elementID, elementType, ipaddress, actorID, doneAt, extra").Fields("?,?,?,?,?,UTC_TIMESTAMP(),?").Prepare(),
 		count:     acc.Count(ml).Prepare(),
-		getOffset: acc.Select(ml).Columns("action, elementID, elementType, ipaddress, actorID, doneAt").Orderby("doneAt DESC").Limit("?,?").Prepare(),
+		getOffset: acc.Select(ml).Columns("action, elementID, elementType, ipaddress, actorID, doneAt, extra").Orderby("doneAt DESC").Limit("?,?").Prepare(),
 	}, acc.FirstError()
 }
 
 // TODO: Make a store for this?
 func (s *SQLModLogStore) Create(action string, elementID int, elementType string, ip string, actorID int) (err error) {
-	_, err = s.create.Exec(action, elementID, elementType, ip, actorID)
+	return s.CreateExtra(action, elementID, elementType, ip, actorID, "")
+}
+
+func (s *SQLModLogStore) CreateExtra(action string, elementID int, elementType string, ip string, actorID int, extra string) (err error) {
+	_, err = s.create.Exec(action, elementID, elementType, ip, actorID, extra)
 	return err
 }
 
@@ -58,7 +64,7 @@ func buildLogList(rows *sql.Rows) (logs []LogItem, err error) {
 	for rows.Next() {
 		var l LogItem
 		var doneAt time.Time
-		err := rows.Scan(&l.Action, &l.ElementID, &l.ElementType, &l.IP, &l.ActorID, &doneAt)
+		err := rows.Scan(&l.Action, &l.ElementID, &l.ElementType, &l.IP, &l.ActorID, &doneAt, &l.Extra)
 		if err != nil {
 			return logs, err
 		}
@@ -68,7 +74,7 @@ func buildLogList(rows *sql.Rows) (logs []LogItem, err error) {
 	return logs, rows.Err()
 }
 
-func (s *SQLModLogStore) GetOffset(offset int, perPage int) (logs []LogItem, err error) {
+func (s *SQLModLogStore) GetOffset(offset, perPage int) (logs []LogItem, err error) {
 	rows, err := s.getOffset.Query(offset, perPage)
 	if err != nil {
 		return logs, err
@@ -86,15 +92,19 @@ type SQLAdminLogStore struct {
 func NewAdminLogStore(acc *qgen.Accumulator) (*SQLAdminLogStore, error) {
 	al := "administration_logs"
 	return &SQLAdminLogStore{
-		create:    acc.Insert(al).Columns("action, elementID, elementType, ipaddress, actorID, doneAt").Fields("?,?,?,?,?,UTC_TIMESTAMP()").Prepare(),
+		create:    acc.Insert(al).Columns("action, elementID, elementType, ipaddress, actorID, doneAt, extra").Fields("?,?,?,?,?,UTC_TIMESTAMP(),?").Prepare(),
 		count:     acc.Count(al).Prepare(),
-		getOffset: acc.Select(al).Columns("action, elementID, elementType, ipaddress, actorID, doneAt").Orderby("doneAt DESC").Limit("?,?").Prepare(),
+		getOffset: acc.Select(al).Columns("action, elementID, elementType, ipaddress, actorID, doneAt, extra").Orderby("doneAt DESC").Limit("?,?").Prepare(),
 	}, acc.FirstError()
 }
 
 // TODO: Make a store for this?
 func (s *SQLAdminLogStore) Create(action string, elementID int, elementType string, ip string, actorID int) (err error) {
-	_, err = s.create.Exec(action, elementID, elementType, ip, actorID)
+	return s.CreateExtra(action, elementID, elementType, ip, actorID, "")
+}
+
+func (s *SQLAdminLogStore) CreateExtra(action string, elementID int, elementType string, ip string, actorID int, extra string) (err error) {
+	_, err = s.create.Exec(action, elementID, elementType, ip, actorID, extra)
 	return err
 }
 
@@ -106,7 +116,7 @@ func (s *SQLAdminLogStore) Count() (count int) {
 	return count
 }
 
-func (s *SQLAdminLogStore) GetOffset(offset int, perPage int) (logs []LogItem, err error) {
+func (s *SQLAdminLogStore) GetOffset(offset, perPage int) (logs []LogItem, err error) {
 	rows, err := s.getOffset.Query(offset, perPage)
 	if err != nil {
 		return logs, err

@@ -4,5 +4,6 @@ CREATE TABLE "moderation_logs" (
 	`elementType` varchar (100) not null,
 	`ipaddress` varchar (200) not null,
 	`actorID` int not null,
-	`doneAt` timestamp not null
+	`doneAt` timestamp not null,
+	`extra` text not null
 );

@@ -167,6 +167,7 @@ func createTables(adapter qgen.Adapter) (err error) {
 	)
 
 	// TODO: Should we add a users prefix to this table to fit the "unofficial convention"?
+	// TODO: Add an autoincrement key?
 	createTable("emails", "", "",
 		[]tC{
 			tC{"email", "varchar", 200, false, false, ""},
@@ -620,6 +621,7 @@ func createTables(adapter qgen.Adapter) (err error) {
 			tC{"ipaddress", "varchar", 200, false, false, ""},
 			tC{"actorID", "int", 0, false, false, ""}, // TODO: Make this a foreign key
 			tC{"doneAt", "datetime", 0, false, false, ""},
+			tC{"extra", "text", 0, false, false, ""},
 		}, nil,
 	)
 
@@ -631,6 +633,7 @@ func createTables(adapter qgen.Adapter) (err error) {
 			tC{"ipaddress", "varchar", 200, false, false, ""},
 			tC{"actorID", "int", 0, false, false, ""}, // TODO: Make this a foreign key
 			tC{"doneAt", "datetime", 0, false, false, ""},
+			tC{"extra", "text", 0, false, false, ""},
 		}, nil,
 	)
 

@@ -11,6 +11,7 @@ import (
 type tblColumn = qgen.DBTableColumn
 type tC = tblColumn
 type tblKey = qgen.DBTableKey
+type tK = tblKey
 
 func init() {
 	addPatch(0, patch0)
@@ -40,6 +41,7 @@ func init() {
 	addPatch(24, patch24)
 	addPatch(25, patch25)
 	addPatch(26, patch26)
+	addPatch(27, patch27)
 }
 
 func patch0(scanner *bufio.Scanner) (err error) {
@@ -56,8 +58,8 @@ func patch0(scanner *bufio.Scanner) (err error) {
 		[]tC{
 			tC{"mid", "int", 0, false, true, ""},
 		},
-		[]tblKey{
-			tblKey{"mid", "primary", "", false},
+		[]tK{
+			tK{"mid", "primary", "", false},
 		},
 	))
 	if err != nil {
@@ -83,8 +85,8 @@ func patch0(scanner *bufio.Scanner) (err error) {
 			tC{"staffOnly", "boolean", 0, false, false, "0"},
 			tC{"adminOnly", "boolean", 0, false, false, "0"},
 		},
-		[]tblKey{
-			tblKey{"miid", "primary", "", false},
+		[]tK{
+			tK{"miid", "primary", "", false},
 		},
 	))
 	if err != nil {
@@ -190,8 +192,8 @@ func patch3(scanner *bufio.Scanner) error {
 			tC{"ipaddress", "varchar", 200, false, false, ""},
 			tC{"doneAt", "createdAt", 0, false, false, ""},
 		},
-		[]tblKey{
-			tblKey{"rlid", "primary", "", false},
+		[]tK{
+			tK{"rlid", "primary", "", false},
 		},
 	))
 }
@@ -253,8 +255,8 @@ func patch4(scanner *bufio.Scanner) error {
 			tC{"allowedGroups", "text", 0, false, false, ""},
 			tC{"menuID", "int", 0, false, false, "-1"},
 		},
-		[]tblKey{
-			tblKey{"pid", "primary", "", false},
+		[]tK{
+			tK{"pid", "primary", "", false},
 		},
 	))
 	if err != nil {
@@ -277,7 +279,7 @@ func patch5(scanner *bufio.Scanner) error {
 		return err
 	}
 
-	err = execStmt(qgen.Builder.SimpleUpdate("menu_items", "path = '/user/edit/'", "path = '/user/edit/critical/'"))
+	err = execStmt(qgen.Builder.SimpleUpdate("menu_items", "path='/user/edit/'", "path='/user/edit/critical/'"))
 	if err != nil {
 		return err
 	}
@@ -296,8 +298,8 @@ func patch5(scanner *bufio.Scanner) error {
 			tC{"scratch8", "varchar", 50, false, false, ""},
 			tC{"createdAt", "createdAt", 0, false, false, ""},
 		},
-		[]tblKey{
-			tblKey{"uid", "primary", "", false},
+		[]tK{
+			tK{"uid", "primary", "", false},
 		},
 	))
 	if err != nil {
@@ -316,8 +318,8 @@ func patch7(scanner *bufio.Scanner) error {
 		[]tC{
 			tC{"uid", "int", 0, false, false, ""}, // TODO: Make this a foreign key
 		},
-		[]tblKey{
-			tblKey{"uid", "primary", "", false},
+		[]tK{
+			tK{"uid", "primary", "", false},
 		},
 	))
 }
@@ -378,8 +380,7 @@ func patch8(scanner *bufio.Scanner) error {
 	return execStmt(qgen.Builder.CreateTable("updates", "", "",
 		[]tC{
 			tC{"dbVersion", "int", 0, false, false, "0"},
-		},
-		[]tblKey{},
+		}, nil,
 	))
 }
 
@@ -398,8 +399,8 @@ func patch9(scanner *bufio.Scanner) error {
 			tC{"ipaddress", "varchar", 200, false, false, ""},
 			tC{"doneAt", "createdAt", 0, false, false, ""},
 		},
-		[]tblKey{
-			tblKey{"lid", "primary", "", false},
+		[]tK{
+			tK{"lid", "primary", "", false},
 		},
 	))
 }
@@ -461,23 +462,21 @@ func patch11(scanner *bufio.Scanner) error {
 	// We could probably do something more efficient, but as there shouldn't be too many sites right now, we can probably cheat a little, otherwise it'll take forever to get things done
 	return acc().Select("topics").Cols("tid").EachInt(func(tid int) error {
 		stid := itoa(tid)
-		count, err := acc().Count("attachments").Where("originTable = 'topics' and originID = " + stid).Total()
+		count, err := acc().Count("attachments").Where("originTable='topics' and originID=" + stid).Total()
 		if err != nil {
 			return err
 		}
-
 		_, err = acc().Update("topics").Set("attachCount = ?").Where("tid = " + stid).Exec(count)
 		return err
 	})
 
 	/*return acc().Select("replies").Cols("rid").EachInt(func(rid int) error {
 		srid := itoa(rid)
-		count, err := acc().Count("attachments").Where("originTable = 'replies' and originID = " + srid).Total()
+		count, err := acc().Count("attachments").Where("originTable='replies' and originID=" + srid).Total()
 		if err != nil {
 			return err
 		}
-
-		_, err = acc().Update("replies").Set("attachCount = ?").Where("rid = " + srid).Exec(count)
+		_, err = acc().Update("replies").Set("attachCount = ?").Where("rid=" + srid).Exec(count)
 		return err
 	})*/
 }
@@ -519,24 +518,19 @@ func patch12(scanner *bufio.Scanner) error {
 }
 
 func patch13(scanner *bufio.Scanner) error {
-	err := execStmt(qgen.Builder.AddColumn("widgets", tC{"wid", "int", 0, false, true, ""}, &tblKey{"wid", "primary", "", false}))
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return execStmt(qgen.Builder.AddColumn("widgets", tC{"wid", "int", 0, false, true, ""}, &tK{"wid", "primary", "", false}))
 }
 
 func patch14(scanner *bufio.Scanner) error {
-	err := execStmt(qgen.Builder.AddKey("topics", "title", tblKey{"title", "fulltext", "", false}))
+	err := execStmt(qgen.Builder.AddKey("topics", "title", tK{"title", "fulltext", "", false}))
 	if err != nil {
 		return err
 	}
-	err = execStmt(qgen.Builder.AddKey("topics", "content", tblKey{"content", "fulltext", "", false}))
+	err = execStmt(qgen.Builder.AddKey("topics", "content", tK{"content", "fulltext", "", false}))
 	if err != nil {
 		return err
 	}
-	err = execStmt(qgen.Builder.AddKey("replies", "content", tblKey{"content", "fulltext", "", false}))
+	err = execStmt(qgen.Builder.AddKey("replies", "content", tK{"content", "fulltext", "", false}))
 	if err != nil {
 		return err
 	}
@@ -585,12 +579,10 @@ func patch17(scanner *bufio.Scanner) error {
 		if err != nil {
 			return err
 		}
-
 		err = acc().Select("topics").Cols("parentID").Where("tid = ?").QueryRow(tid).Scan(&sectionID)
 		if err != nil {
 			return err
 		}
-
 		_, err = acc().Update("attachments").Set("sectionID = ?, extra = ?").Where("originTable = 'replies' AND originID = ?").Exec(sectionID, tid, rid)
 		return err
 	})
@@ -616,12 +608,10 @@ func patch20(scanner *bufio.Scanner) error {
 		if err != nil {
 			return err
 		}
-
 		err = acc().Select("activity_stream").Cols("asid").Where("asid = ?").QueryRow(asid).Scan(&asid)
 		if err != sql.ErrNoRows {
 			return err
 		}
-
 		_, err = acc().Delete("activity_stream_matches").Where("asid = ?").Run(asid)
 		return err
 	})
@@ -673,8 +663,8 @@ func patch23(scanner *bufio.Scanner) error {
 			tC{"lastReplyAt", "datetime", 0, false, false, ""},
 			tC{"lastReplyBy", "int", 0, false, false, ""},
 		},
-		[]tblKey{
-			tblKey{"cid", "primary", "", false},
+		[]tK{
+			tK{"cid", "primary", "", false},
 		},
 	))
 	if err != nil {
@@ -693,8 +683,8 @@ func patch23(scanner *bufio.Scanner) error {
 			tC{"body", "varchar", 50, false, false, ""},
 			tC{"post", "varchar", 50, false, false, "''"},
 		},
-		[]tblKey{
-			tblKey{"pid", "primary", "", false},
+		[]tK{
+			tK{"pid", "primary", "", false},
 		},
 	))
 	if err != nil {
@@ -729,8 +719,8 @@ func patch24(scanner *bufio.Scanner) error {
 			tC{"level", "int", 0, false, false, ""},
 			tC{"minTime", "int", 0, false, false, ""}, // How long someone needs to have been in their current group before being promoted
 		},
-		[]tblKey{
-			tblKey{"pid", "primary", "", false},
+		[]tK{
+			tK{"pid", "primary", "", false},
 		},
 	))
 }
@@ -746,4 +736,12 @@ func patch26(scanner *bufio.Scanner) error {
 			tC{"blockedUser", "int", 0, false, false, ""},
 		}, nil,
 	))
+}
+
+func patch27(scanner *bufio.Scanner) error {
+	err := execStmt(qgen.Builder.AddColumn("moderation_logs", tC{"extra", "text", 0, false, false, ""}, nil))
+	if err != nil {
+		return err
+	}
+	return execStmt(qgen.Builder.AddColumn("administration_logs", tC{"extra", "text", 0, false, false, ""}, nil))
 }

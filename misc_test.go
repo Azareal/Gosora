@@ -1355,13 +1355,13 @@ func TestWordFilters(t *testing.T) {
 	filter := filters[1]
 	expect(t, filter.ID == 1, "Word filter ID should be 1")
 	expect(t, filter.Find == "imbecile", "Word filter needle should be imbecile")
-	expect(t, filter.Replacement == "lovely", "Word filter replacement should be lovely")
+	expect(t, filter.Replace == "lovely", "Word filter replacement should be lovely")
 
 	filter, err = c.WordFilters.Get(1)
 	expectNilErr(t, err)
 	expect(t, filter.ID == 1, "Word filter ID should be 1")
 	expect(t, filter.Find == "imbecile", "Word filter needle should be imbecile")
-	expect(t, filter.Replacement == "lovely", "Word filter replacement should be lovely")
+	expect(t, filter.Replace == "lovely", "Word filter replacement should be lovely")
 
 	// Update
 	expectNilErr(t, c.WordFilters.Update(1, "b", "a"))
@@ -1376,13 +1376,13 @@ func TestWordFilters(t *testing.T) {
 	filter = filters[1]
 	expect(t, filter.ID == 1, "Word filter ID should be 1")
 	expect(t, filter.Find == "b", "Word filter needle should be b")
-	expect(t, filter.Replacement == "a", "Word filter replacement should be a")
+	expect(t, filter.Replace == "a", "Word filter replacement should be a")
 
 	filter, err = c.WordFilters.Get(1)
 	expectNilErr(t, err)
 	expect(t, filter.ID == 1, "Word filter ID should be 1")
 	expect(t, filter.Find == "b", "Word filter needle should be imbecile")
-	expect(t, filter.Replacement == "a", "Word filter replacement should be a")
+	expect(t, filter.Replace == "a", "Word filter replacement should be a")
 
 	// TODO: Add a test for ParseMessage relating to word filters
 
@@ -1445,8 +1445,9 @@ func TestWidgets(t *testing.T) {
 
 	widget := &c.Widget{Position: 0, Side: "rightSidebar", Type: "simple", Enabled: true, Location: "global"}
 	ewidget := &c.WidgetEdit{widget, map[string]string{"Name": "Test", "Text": "Testing"}}
-	err = ewidget.Create()
+	wid, err := ewidget.Create()
 	expectNilErr(t, err)
+	expect(t,wid==1,"wid should be 1")
 
 	// TODO: Do a test for the widget body
 	widget2, err := c.Widgets.Get(1)

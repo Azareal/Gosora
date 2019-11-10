@@ -50,40 +50,40 @@ type Widget struct {
 
 	Literal      bool
 	TickMask     atomic.Value
-	InitFunc     func(widget *Widget, schedule *WidgetScheduler) error
-	ShutdownFunc func(widget *Widget) error
-	BuildFunc    func(widget *Widget, hvars interface{}) (string, error)
-	TickFunc     func(widget *Widget) error
+	InitFunc     func(w *Widget, schedule *WidgetScheduler) error
+	ShutdownFunc func(w *Widget) error
+	BuildFunc    func(w *Widget, hvars interface{}) (string, error)
+	TickFunc     func(w *Widget) error
 }
 
-func (widget *Widget) Delete() error {
-	_, err := widgetStmts.delete.Exec(widget.ID)
+func (w *Widget) Delete() error {
+	_, err := widgetStmts.delete.Exec(w.ID)
 	if err != nil {
 		return err
 	}
 
 	// Reload the dock
 	// TODO: Better synchronisation
-	Widgets.delete(widget.ID)
-	widgets, err := getDockWidgets(widget.Side)
+	Widgets.delete(w.ID)
+	widgets, err := getDockWidgets(w.Side)
 	if err != nil {
 		return err
 	}
-	setDock(widget.Side, widgets)
+	setDock(w.Side, widgets)
 	return nil
 }
 
-func (widget *Widget) Copy() (owidget *Widget) {
+func (w *Widget) Copy() (owidget *Widget) {
 	owidget = &Widget{}
-	*owidget = *widget
+	*owidget = *w
 	return owidget
 }
 
 // TODO: Test this
 // TODO: Add support for zone:id. Perhaps, carry a ZoneID property around in *Header? It might allow some weirdness like frontend[5] which matches any zone with an ID of 5 but it would be a tad faster than verifying each zone, although it might be problematic if users end up relying on this behaviour for areas which don't pass IDs to the widgets system but *probably* should
 // TODO: Add a selector which also matches topics inside a specific forum?
-func (widget *Widget) Allowed(zone string, zoneid int) bool {
-	for _, loc := range strings.Split(widget.Location, "|") {
+func (w *Widget) Allowed(zone string, zoneid int) bool {
+	for _, loc := range strings.Split(w.Location, "|") {
 		if len(loc) == 0 {
 			continue
 		}
@@ -107,16 +107,15 @@ func (widget *Widget) Allowed(zone string, zoneid int) bool {
 }
 
 // TODO: Refactor
-func (widget *Widget) Build(hvars interface{}) (string, error) {
-	if widget.Literal {
-		return widget.Body, nil
+func (w *Widget) Build(hvars interface{}) (string, error) {
+	if w.Literal {
+		return w.Body, nil
 	}
-	if widget.BuildFunc != nil {
-		return widget.BuildFunc(widget, hvars)
+	if w.BuildFunc != nil {
+		return w.BuildFunc(w, hvars)
 	}
-
 	header := hvars.(*Header)
-	err := header.Theme.RunTmpl(widget.Body, hvars, header.Writer)
+	err := header.Theme.RunTmpl(w.Body, hvars, header.Writer)
 	return "", err
 }
 
@@ -125,40 +124,42 @@ type WidgetEdit struct {
 	Data map[string]string
 }
 
-func (widget *WidgetEdit) Create() error {
-	data, err := json.Marshal(widget.Data)
+func (w *WidgetEdit) Create() (int, error) {
+	data, err := json.Marshal(w.Data)
 	if err != nil {
-		return err
+		return 0, err
 	}
-	_, err = widgetStmts.create.Exec(widget.Position, widget.Side, widget.Type, widget.Enabled, widget.Location, data)
+	res, err := widgetStmts.create.Exec(w.Position, w.Side, w.Type, w.Enabled, w.Location, data)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	// Reload the dock
-	widgets, err := getDockWidgets(widget.Side)
+	widgets, err := getDockWidgets(w.Side)
 	if err != nil {
-		return err
+		return 0, err
 	}
-	setDock(widget.Side, widgets)
-	return nil
+	setDock(w.Side, widgets)
+
+	wid64, err := res.LastInsertId()
+	return int(wid64), err
 }
 
-func (widget *WidgetEdit) Commit() error {
-	data, err := json.Marshal(widget.Data)
+func (w *WidgetEdit) Commit() error {
+	data, err := json.Marshal(w.Data)
 	if err != nil {
 		return err
 	}
-	_, err = widgetStmts.update.Exec(widget.Position, widget.Side, widget.Type, widget.Enabled, widget.Location, data, widget.ID)
+	_, err = widgetStmts.update.Exec(w.Position, w.Side, w.Type, w.Enabled, w.Location, data, w.ID)
 	if err != nil {
 		return err
 	}
 
 	// Reload the dock
-	widgets, err := getDockWidgets(widget.Side)
+	widgets, err := getDockWidgets(w.Side)
 	if err != nil {
 		return err
 	}
-	setDock(widget.Side, widgets)
+	setDock(w.Side, widgets)
 	return nil
 }

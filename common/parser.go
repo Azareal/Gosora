@@ -470,7 +470,7 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 		return ""
 	}
 	for _, filter := range wordFilters {
-		msg = strings.Replace(msg, filter.Find, filter.Replacement, -1)
+		msg = strings.Replace(msg, filter.Find, filter.Replace, -1)
 	}
 
 	// Search for URLs, mentions and hashlinks in the messages...

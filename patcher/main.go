@@ -130,8 +130,10 @@ func patcher(scanner *bufio.Scanner) error {
 		}
 		err := patch(scanner)
 		if err != nil {
+			fmt.Println("Failed to apply patch "+strconv.Itoa(index+1))
 			return err
 		}
+		fmt.Println("Applied patch "+strconv.Itoa(index+1))
 		patched++
 	}
 
@@ -140,6 +142,8 @@ func patcher(scanner *bufio.Scanner) error {
 		if err != nil {
 			return err
 		}
+	} else {
+		fmt.Println("No new patches found.")
 	}
 
 	return nil

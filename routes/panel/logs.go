@@ -100,53 +100,59 @@ func modlogsElementType(action string, elementType string, elementID int, actor 
 	return out
 }
 
-func adminlogsElementType(action string, elementType string, elementID int, actor *c.User) (out string) {
+func adminlogsElementType(action string, elementType string, elementID int, actor *c.User, extra string) (out string) {
 	switch elementType {
 	// TODO: Record more detail for this, e.g. which field/s was changed
 	case "user":
 		targetUser := handleUnknownUser(c.Users.Get(elementID))
-		out = p.GetTmplPhrasef("panel_logs_administration_action_user_"+action, targetUser.Link, targetUser.Name, actor.Link, actor.Name)
+		out = p.GetTmplPhrasef("panel_logs_admin_action_user_"+action, targetUser.Link, targetUser.Name, actor.Link, actor.Name)
 	case "group":
 		g, err := c.Groups.Get(elementID)
 		if err != nil {
 			g = &c.Group{Name: p.GetTmplPhrase("group_unknown")}
 		}
-		out = p.GetTmplPhrasef("panel_logs_administration_action_group_"+action, "/panel/groups/edit/"+strconv.Itoa(g.ID), g.Name, actor.Link, actor.Name)
+		out = p.GetTmplPhrasef("panel_logs_admin_action_group_"+action, "/panel/groups/edit/"+strconv.Itoa(g.ID), g.Name, actor.Link, actor.Name)
 	case "group_promotion":
-		out = p.GetTmplPhrasef("panel_logs_administration_action_group_promotion_"+action, actor.Link, actor.Name)
+		out = p.GetTmplPhrasef("panel_logs_admin_action_group_promotion_"+action, actor.Link, actor.Name)
 	case "forum":
 		f, err := c.Forums.Get(elementID)
 		if err != nil {
 			f = &c.Forum{Name: p.GetTmplPhrase("forum_unknown")}
 		}
 		if action == "reorder" {
-			out = p.GetTmplPhrasef("panel_logs_administration_action_forum_reorder", actor.Link, actor.Name)
+			out = p.GetTmplPhrasef("panel_logs_admin_action_forum_reorder", actor.Link, actor.Name)
 		} else {
-			out = p.GetTmplPhrasef("panel_logs_administration_action_forum_"+action, "/panel/forums/edit/"+strconv.Itoa(f.ID), f.Name, actor.Link, actor.Name)
+			out = p.GetTmplPhrasef("panel_logs_admin_action_forum_"+action, "/panel/forums/edit/"+strconv.Itoa(f.ID), f.Name, actor.Link, actor.Name)
 		}
 	case "page":
 		pp, err := c.Pages.Get(elementID)
 		if err != nil {
 			pp = &c.CustomPage{Name: p.GetTmplPhrase("page_unknown")}
 		}
-		out = p.GetTmplPhrasef("panel_logs_administration_action_page_"+action, "/panel/pages/edit/"+strconv.Itoa(pp.ID), pp.Name, actor.Link, actor.Name)
+		out = p.GetTmplPhrasef("panel_logs_admin_action_page_"+action, "/panel/pages/edit/"+strconv.Itoa(pp.ID), pp.Name, actor.Link, actor.Name)
 	case "setting":
 		s, err := c.SettingBox.Load().(c.SettingMap).BypassGet(action)
 		if err != nil {
 			s = &c.Setting{Name: p.GetTmplPhrase("setting_unknown")}
 		}
-		out = p.GetTmplPhrasef("panel_logs_administration_action_setting_edit", "/panel/settings/edit/"+s.Name, s.Name, actor.Link, actor.Name)
+		out = p.GetTmplPhrasef("panel_logs_admin_action_setting_edit", "/panel/settings/edit/"+s.Name, s.Name, actor.Link, actor.Name)
 	case "word_filter":
-		wf, err := c.WordFilters.Get(elementID)
-		if err != nil {
-			wf = &c.WordFilter{}
+		out = p.GetTmplPhrasef("panel_logs_admin_action_word_filter_"+action, actor.Link, actor.Name)
+	case "menu":
+		if action == "suborder" {
+			out = p.GetTmplPhrasef("panel_logs_admin_action_menu_suborder", elementID, actor.Link, actor.Name)
 		}
-		out = p.GetTmplPhrasef("panel_logs_administration_action_word_filter_"+action, "/panel/settings/word-filters/", wf.ID, actor.Link, actor.Name)
+	case "menu_item":
+		out = p.GetTmplPhrasef("panel_logs_admin_action_menu_item_"+action, "/panel/themes/menus/item/edit/"+strconv.Itoa(elementID), elementID, actor.Link, actor.Name)
+	case "widget":
+		out = p.GetTmplPhrasef("panel_logs_admin_action_widget_"+action, "/panel/themes/widgets/", elementID, actor.Link, actor.Name)
+	case "plugin":
+		out = p.GetTmplPhrasef("panel_logs_admin_action_plugin_"+action, extra, actor.Link, actor.Name)
 	case "backup":
-		out = p.GetTmplPhrasef("panel_logs_administration_action_backup_"+action, actor.Link, actor.Name)
+		out = p.GetTmplPhrasef("panel_logs_admin_action_backup_"+action, actor.Link, actor.Name)
 	}
 	if out == "" {
-		out = p.GetTmplPhrasef("panel_logs_administration_action_unknown", action, elementType, actor.Link, actor.Name)
+		out = p.GetTmplPhrasef("panel_logs_admin_action_unknown", action, elementType, actor.Link, actor.Name)
 	}
 	return out
 }
@@ -182,8 +188,6 @@ func LogsAdmin(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError
 	if ferr != nil {
 		return ferr
 	}
-	basePage.AddNotice("Currently under development")
-
 	page, _ := strconv.Atoi(r.FormValue("page"))
 	perPage := 12
 	offset, page, lastPage := c.PageOffset(c.AdminLogs.Count(), page, perPage)
@@ -195,7 +199,7 @@ func LogsAdmin(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError
 	llist := make([]c.PageLogItem, len(logs))
 	for index, log := range logs {
 		actor := handleUnknownUser(c.Users.Get(log.ActorID))
-		action := adminlogsElementType(log.Action, log.ElementType, log.ElementID, actor)
+		action := adminlogsElementType(log.Action, log.ElementType, log.ElementID, actor, log.Extra)
 		llist[index] = c.PageLogItem{Action: template.HTML(action), IP: log.IP, DoneAt: log.DoneAt}
 	}
 
