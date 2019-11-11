@@ -178,6 +178,7 @@ func (list SFileList) JSTmplInit() error {
 		data = replace(data, "w.Write([]byte(", "out += ")
 		data = replace(data, "w.Write(StringToBytes(", "out += ")
 		data = replace(data, "w.Write(", "out += ")
+		data = replace(data, "+= c.", "+= ")
 		data = replace(data, "strconv.Itoa(", "")
 		data = replace(data, "strconv.FormatInt(", "")
 		data = replace(data, "	c.", "")
