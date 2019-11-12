@@ -15,7 +15,7 @@
 	//console.log("bf")
 	addInitHook("end_init", () => {
 		//console.log("af")
-		let loggedIn = document.head.querySelector("[property='x-loggedin']").content;
+		let loggedIn = document.head.querySelector("[property='x-loggedin']").content == "true";
 		if(loggedIn) {
 			if(navigator.userAgent.indexOf("Firefox") != -1) $.trumbowyg.svgPath = "/s/trumbowyg/ui/icons.svg";
 			
