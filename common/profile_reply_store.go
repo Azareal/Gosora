@@ -23,10 +23,11 @@ type SQLProfileReplyStore struct {
 }
 
 func NewSQLProfileReplyStore(acc *qgen.Accumulator) (*SQLProfileReplyStore, error) {
+	ur := "users_replies"
 	return &SQLProfileReplyStore{
-		get:    acc.Select("users_replies").Columns("uid, content, createdBy, createdAt, lastEdit, lastEditBy, ipaddress").Where("rid = ?").Prepare(),
-		create: acc.Insert("users_replies").Columns("uid, content, parsed_content, createdAt, createdBy, ipaddress").Fields("?,?,?,UTC_TIMESTAMP(),?,?").Prepare(),
-		count:  acc.Count("users_replies").Prepare(),
+		get:    acc.Select(ur).Columns("uid, content, createdBy, createdAt, lastEdit, lastEditBy, ipaddress").Where("rid = ?").Prepare(),
+		create: acc.Insert(ur).Columns("uid, content, parsed_content, createdAt, createdBy, ipaddress").Fields("?,?,?,UTC_TIMESTAMP(),?,?").Prepare(),
+		count:  acc.Count(ur).Prepare(),
 	}, acc.FirstError()
 }
 

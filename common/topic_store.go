@@ -197,7 +197,7 @@ func (s *DefaultTopicStore) Exists(id int) bool {
 	return s.exists.QueryRow(id).Scan(&id) == nil
 }
 
-func (s *DefaultTopicStore) Create(fid int, topicName string, content string, uid int, ipaddress string) (tid int, err error) {
+func (s *DefaultTopicStore) Create(fid int, topicName string, content string, uid int, ip string) (tid int, err error) {
 	if topicName == "" {
 		return 0, ErrNoTitle
 	}
@@ -210,9 +210,9 @@ func (s *DefaultTopicStore) Create(fid int, topicName string, content string, ui
 	if parsedContent == "" {
 		return 0, ErrNoBody
 	}
-
+	
 	// TODO: Move this statement into the topic store
-	res, err := s.create.Exec(fid, topicName, content, parsedContent, uid, ipaddress, WordCount(content), uid)
+	res, err := s.create.Exec(fid, topicName, content, parsedContent, uid, ip, WordCount(content), uid)
 	if err != nil {
 		return 0, err
 	}

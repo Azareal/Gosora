@@ -8,7 +8,7 @@ var Rstore ReplyStore
 
 type ReplyStore interface {
 	Get(id int) (*Reply, error)
-	Create(topic *Topic, content string, ipaddress string, uid int) (id int, err error)
+	Create(topic *Topic, content string, ip string, uid int) (id int, err error)
 	Count() (count int)
 
 	SetCache(cache ReplyCache)
@@ -27,11 +27,12 @@ func NewSQLReplyStore(acc *qgen.Accumulator, cache ReplyCache) (*SQLReplyStore, 
 	if cache == nil {
 		cache = NewNullReplyCache()
 	}
+	re := "replies"
 	return &SQLReplyStore{
 		cache:  cache,
-		get:    acc.Select("replies").Columns("tid, content, createdBy, createdAt, lastEdit, lastEditBy, ipaddress, likeCount, attachCount, actionType").Where("rid = ?").Prepare(),
-		create: acc.Insert("replies").Columns("tid, content, parsed_content, createdAt, lastUpdated, ipaddress, words, createdBy").Fields("?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,?").Prepare(),
-		count: acc.Count("replies").Prepare(),
+		get:    acc.Select(re).Columns("tid, content, createdBy, createdAt, lastEdit, lastEditBy, ipaddress, likeCount, attachCount, actionType").Where("rid = ?").Prepare(),
+		create: acc.Insert(re).Columns("tid, content, parsed_content, createdAt, lastUpdated, ipaddress, words, createdBy").Fields("?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,?").Prepare(),
+		count: acc.Count(re).Prepare(),
 	}, acc.FirstError()
 }
 

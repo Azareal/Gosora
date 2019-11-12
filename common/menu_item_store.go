@@ -13,10 +13,10 @@ func NewDefaultMenuItemStore() *DefaultMenuItemStore {
 	}
 }
 
-func (s *DefaultMenuItemStore) Add(item MenuItem) {
+func (s *DefaultMenuItemStore) Add(i MenuItem) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
-	s.items[item.ID] = item
+	s.items[i.ID] = i
 }
 
 func (s *DefaultMenuItemStore) Get(id int) (MenuItem, error) {

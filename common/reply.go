@@ -81,7 +81,7 @@ type ReplyStmts struct {
 func init() {
 	DbInits.Add(func(acc *qgen.Accumulator) error {
 		replyStmts = ReplyStmts{
-			isLiked:                acc.Select("likes").Columns("targetItem").Where("sentBy = ? and targetItem = ? and targetType = 'replies'").Prepare(),
+			isLiked:                acc.Select("likes").Columns("targetItem").Where("sentBy = ? and targetItem = ? and targetType='replies'").Prepare(),
 			createLike:             acc.Insert("likes").Columns("weight, targetItem, targetType, sentBy").Fields("?,?,?,?").Prepare(),
 			edit:                   acc.Update("replies").Set("content = ?, parsed_content = ?").Where("rid = ? AND poll = 0").Prepare(),
 			setPoll:                acc.Update("replies").Set("poll = ?").Where("rid = ? AND poll = 0").Prepare(),

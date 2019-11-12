@@ -26,7 +26,7 @@ type WordFilterStore interface {
 	ReloadAll() error
 	GetAll() (filters map[int]*WordFilter, err error)
 	Get(id int) (*WordFilter, error)
-	Create(find string, replacement string) (int, error)
+	Create(find string, replace string) (int, error)
 	Delete(id int) error
 	Update(id int, find string, replacement string) error
 	Length() int
