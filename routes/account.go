@@ -715,6 +715,30 @@ func AccountLogins(w http.ResponseWriter, r *http.Request, user c.User, h *c.Hea
 	return renderTemplate("account", w, r, h, pi)
 }
 
+func AccountBlocked(w http.ResponseWriter, r *http.Request, user c.User, h *c.Header) c.RouteError {
+	accountEditHead("account_blocked", w, r, &user, h)
+	page, _ := strconv.Atoi(r.FormValue("page"))
+	perPage := 12
+	offset, page, lastPage := c.PageOffset(c.UserBlocks.BlockedByCount(user.ID), page, perPage)
+
+	uids, err := c.UserBlocks.BlockedByOffset(user.ID, offset, perPage)
+	if err != nil {
+		return c.InternalError(err, w, r)
+	}
+	var blocks []*c.User
+	for _, uid := range uids {
+		u, err := c.Users.Get(uid)
+		if err != nil {
+			return c.InternalError(err,w,r)
+		}
+		blocks = append(blocks, u)
+	}
+
+	pageList := c.Paginate(page, lastPage, 5)
+	pi := c.Account{h, "logins", "account_blocked", c.AccountBlocksPage{h, blocks, c.Paginator{pageList, page, lastPage}}}
+	return renderTemplate("account", w, r, h, pi)
+}
+
 func LevelList(w http.ResponseWriter, r *http.Request, user c.User, h *c.Header) c.RouteError {
 	h.Title = p.GetTitlePhrase("account_level_list")
 

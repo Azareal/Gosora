@@ -80,6 +80,7 @@ func userRoutes() *RouteGroup {
 		View("routes.AccountEditEmailTokenSubmit", "/user/edit/token/", "extraData").NoHeader(),*/
 
 		MView("routes.AccountLogins", "/user/edit/logins/"),
+		MView("routes.AccountBlocked", "/user/edit/blocked/"),
 
 		MView("routes.LevelList", "/user/levels/"),
 		//MView("routes.LevelRankings", "/user/rankings/"),

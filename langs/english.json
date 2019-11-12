@@ -144,6 +144,7 @@
 		"account_mfa_setup":"Setup 2FA",
 		"account_email":"Email Manager",
 		"account_logins":"Logins",
+		"account_blocked":"Blocked",
 		"account_penalties":"Penalties",
 		"account_level_list":"Level Progress",
 		"convos":"Conversations",
@@ -502,6 +503,7 @@
 		"account_menu_security":"Security",
 		"account_menu_notifications":"Notifications",
 		"account_menu_logins":"Logins",
+		"account_menu_blocked":"Blocked",
 		"account_menu_penalties":"Penalties",
 		"account_menu_messages":"Messages",
 
@@ -545,6 +547,10 @@
 		"account_logins_head":"Logins",
 		"account_logins_success":"Successful Login",
 		"account_logins_failure":"Failed Login",
+
+		"account_blocked_head":"Blocked Users",
+		"account_blocked_remove":"Remove",
+		"account_blocked_no_users":"You haven't blocked any users.",
 
 		"convos_head":"Conversations",
 		"convos_create":"Create Convo",

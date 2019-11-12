@@ -242,6 +242,12 @@ type AccountLoginsPage struct {
 	Paginator
 }
 
+type AccountBlocksPage struct {
+	*Header
+	Users []*User
+	Paginator
+}
+
 type AccountDashPage struct {
 	*Header
 	MFASetup     bool

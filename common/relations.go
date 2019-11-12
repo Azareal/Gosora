@@ -14,20 +14,26 @@ type BlockStore interface {
 	IsBlockedBy(blocker, blockee int) (bool, error)
 	Add(blocker, blockee int) error
 	Remove(blocker, blockee int) error
+	BlockedByOffset(blocker, offset, perPage int) ([]int, error)
+	BlockedByCount(blocker int) int
 }
 
 type DefaultBlockStore struct {
-	isBlocked *sql.Stmt
-	add       *sql.Stmt
-	remove    *sql.Stmt
+	isBlocked      *sql.Stmt
+	add            *sql.Stmt
+	remove         *sql.Stmt
+	blockedBy      *sql.Stmt
+	blockedByCount *sql.Stmt
 }
 
 func NewDefaultBlockStore(acc *qgen.Accumulator) (*DefaultBlockStore, error) {
 	ub := "users_blocks"
 	return &DefaultBlockStore{
-		isBlocked: acc.Select(ub).Cols("blocker").Where("blocker = ? AND blockedUser = ?").Prepare(),
-		add:       acc.Insert(ub).Columns("blocker,blockedUser").Fields("?,?").Prepare(),
-		remove:    acc.Delete(ub).Where("blocker = ? AND blockedUser = ?").Prepare(),
+		isBlocked:      acc.Select(ub).Cols("blocker").Where("blocker = ? AND blockedUser = ?").Prepare(),
+		add:            acc.Insert(ub).Columns("blocker,blockedUser").Fields("?,?").Prepare(),
+		remove:         acc.Delete(ub).Where("blocker = ? AND blockedUser = ?").Prepare(),
+		blockedBy:      acc.Select(ub).Columns("blockedUser").Where("blocker = ?").Limit("?,?").Prepare(),
+		blockedByCount: acc.Count(ub).Where("blocker = ?").Prepare(),
 	}, acc.FirstError()
 }
 
@@ -47,6 +53,33 @@ func (s *DefaultBlockStore) Add(blocker, blockee int) error {
 func (s *DefaultBlockStore) Remove(blocker, blockee int) error {
 	_, err := s.remove.Exec(blocker, blockee)
 	return err
+}
+
+func (s *DefaultBlockStore) BlockedByOffset(blocker, offset, perPage int) (uids []int, err error) {
+	rows, err := s.blockedBy.Query(blocker, offset, perPage)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var uid int
+		err := rows.Scan(&uid)
+		if err != nil {
+			return nil, err
+		}
+		uids = append(uids, uid)
+	}
+
+	return uids, rows.Err()
+}
+
+func (s *DefaultBlockStore) BlockedByCount(blocker int) (count int) {
+	err := s.blockedByCount.QueryRow(blocker).Scan(&count)
+	if err != nil {
+		LogError(err)
+	}
+	return count
 }
 
 type FriendInvite struct {
