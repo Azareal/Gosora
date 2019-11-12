@@ -105,13 +105,13 @@ Run `run.bat`, e.g. double-clicking on it.
 
 # How do I install plugins?
 
-For the default plugins like Markdown and Helloworld, you can find them in the Plugin Manager of your Control Panel. For ones which aren't included by default, you will need to drag them from your `/extend/` directory and into the `/` directory (the root directory of your Gosora installation, where the executable and most of the main Go files are).
+For the default plugins like Markdown and Helloworld, you can find them in the Plugin Manager of your Control Panel. For ones which aren't included by default, you will need to drop them down in the `/extend/` directory.
 
-You will then need to recompile Gosora in order to link the plugin code with Gosora's code. For plugins not written in Gosora (e.g. JavaScript), you do not need to move them from the `/extend/` directory, they will automatically show up in your Control Panel ready to be installed.
+You will then need to recompile Gosora in order to link the plugin code with Gosora's code. For plugins not written in Go (e.g. JavaScript), they will automatically show up in your Control Panel ready to be installed, although we currently don't support these types of plugins at this time.
 
-Experimental plugins aka the ones in the `/experimental/` folder (e.g. plugin_sendmail) are similar but different. You will have to move native plugins (ones written in Go) to the root directory of your installation and will have to move experimental plugins written in other languages into the `/extend/` directory.
+There are also some experimental plugins in the `/experimental/` folder like plugin_sendmail which you may want to make use of, although there aren't any particular guarantees about whether they will continue to function or not.
 
-We're looking for ways to clean-up the plugin system so that all of them (except the experimental ones) are housed in `/extend/`, however we've encountered some problems with Go's packaging system. We hope to fix this issue in the future.
+We're currently in the process of moving plugins from the `/` to the `/extend/` folder, if there is a piece of functionality that you would like to tap into, but which you cannot from that package, then feel free to poke me, otherwise you may need to drop it in `/` and name the package accordingly.
 
 
 # Images
