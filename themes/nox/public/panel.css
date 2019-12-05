@@ -26,9 +26,6 @@
 .menu_stats {
 	margin-left: 4px;
 }
-/*.back_to_site {
-	font-size: 18px;
-}*/
 .above_right {
 	background-color: rgb(62, 62, 62);
 	margin-top: -12px;
@@ -397,10 +394,7 @@ span.grip::after {
 	padding-top: 12px;
 	padding-bottom: 12px;
 }
-#widgetTmpl {
-	display: none;
-}
-.widget_disabled {
+#widgetTmpl, .widget_disabled {
 	display: none;
 }
 .bg_red .widget_disabled {
@@ -415,6 +409,18 @@ span.grip::after {
 .wtext, .rwtext {
 	width: 100%;
 	height: 80px;
+}
+
+#panel_reglogs .panel_compactrow {
+	flex-direction: column;
+}
+.logdetail {
+	display: flex;
+	width: 100%;
+	margin-top: 3px;
+}
+#panel_reglogs .logdetail small, #panel_reglogs .logdetails span {
+	font-size: 14px;
 }
 
 #panel_debug .grid_stat:not(.grid_stat_head) {

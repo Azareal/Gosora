@@ -1,5 +1,5 @@
 <div class="colstack_item colstack_head">
-	<div class="rowitem"><h1>{{lang "panel_logs_moderation_head"}}</h1></div>
+	<div class="rowitem"><h1>{{lang "panel_logs_mod_head"}}</h1></div>
 </div>
 <div id="panel_modlogs" class="colstack_item rowlist loglist">
 	{{range .Logs}}
@@ -13,10 +13,6 @@
 		</span>
 		<div style="clear:both;"></div>
 	</div>
-	{{else}}
-	<div class="rowitem rowmsg">
-		<a>{{lang "panel_logs_moderation_no_logs"}}</a>
-	</div>
-	{{end}}
+	{{else}}<div class="rowitem rowmsg"><a>{{lang "panel_logs_mod_no_logs"}}</a></div>{{end}}
 </div>
 {{template "paginator.html" . }}

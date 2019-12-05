@@ -199,3 +199,10 @@ select + .timeRangeSelector {
 	display: block;
 	clear: both;
 }
+
+.logdetail {
+	margin-top: 5px;
+}
+#panel_reglogs .logdetail small, #panel_reglogs .logdetails span {
+	font-size: 14px;
+}

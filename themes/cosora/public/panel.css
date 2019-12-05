@@ -395,6 +395,18 @@ select + .timeRangeSelector {
 	margin-bottom: 18px;
 }
 
+#panel_reglogs .panel_compactrow {
+	flex-direction: column;
+}
+.logdetail {
+	display: flex;
+	width: 100%;
+	margin-top: 4px;
+}
+#panel_reglogs .logdetail small, #panel_reglogs .logdetails span {
+	font-size: 14px;
+}
+
 .pageset {
 	margin-left: 16px;
 }

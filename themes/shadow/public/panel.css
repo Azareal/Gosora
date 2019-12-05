@@ -152,6 +152,13 @@ select + .timeRangeSelector {
 	display: block;
 }
 
+.logdetail {
+	margin-top: 4px;
+}
+#panel_reglogs .logdetail small, #panel_reglogs .logdetails span {
+	font-size: 12px;
+}
+
 .pageset {
 	margin-left: 0px;
 	margin-bottom: 0px;

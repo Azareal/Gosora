@@ -55,7 +55,7 @@ func handleUnknownTopic(topic *c.Topic, err error) *c.Topic {
 // TODO: Move the log building logic into /common/ and it's own abstraction
 func topicElementTypeAction(action string, elementType string, elementID int, actor *c.User, topic *c.Topic) (out string) {
 	if action == "delete" {
-		return p.GetTmplPhrasef("panel_logs_moderation_action_topic_delete", elementID, actor.Link, actor.Name)
+		return p.GetTmplPhrasef("panel_logs_mod_action_topic_delete", elementID, actor.Link, actor.Name)
 	}
 	var tbit string
 	aarr := strings.Split(action, "-")
@@ -67,15 +67,15 @@ func topicElementTypeAction(action string, elementType string, elementID int, ac
 			fid, _ := strconv.Atoi(aarr[1])
 			forum, err := c.Forums.Get(fid)
 			if err == nil {
-				return p.GetTmplPhrasef("panel_logs_moderation_action_topic_move_dest", topic.Link, topic.Title, forum.Link, forum.Name, actor.Link, actor.Name)
+				return p.GetTmplPhrasef("panel_logs_mod_action_topic_move_dest", topic.Link, topic.Title, forum.Link, forum.Name, actor.Link, actor.Name)
 			}
 		}
 		tbit = "move"
 	default:
-		return p.GetTmplPhrasef("panel_logs_moderation_action_topic_unknown", action, elementType, actor.Link, actor.Name)
+		return p.GetTmplPhrasef("panel_logs_mod_action_topic_unknown", action, elementType, actor.Link, actor.Name)
 	}
 	if tbit != "" {
-		return p.GetTmplPhrasef("panel_logs_moderation_action_topic_"+tbit, topic.Link, topic.Title, actor.Link, actor.Name)
+		return p.GetTmplPhrasef("panel_logs_mod_action_topic_"+tbit, topic.Link, topic.Title, actor.Link, actor.Name)
 	}
 	return fmt.Sprintf(out, topic.Link, topic.Title, actor.Link, actor.Name)
 }
@@ -87,15 +87,15 @@ func modlogsElementType(action string, elementType string, elementID int, actor 
 		out = topicElementTypeAction(action, elementType, elementID, actor, topic)
 	case "user":
 		targetUser := handleUnknownUser(c.Users.Get(elementID))
-		out = p.GetTmplPhrasef("panel_logs_moderation_action_user_"+action, targetUser.Link, targetUser.Name, actor.Link, actor.Name)
+		out = p.GetTmplPhrasef("panel_logs_mod_action_user_"+action, targetUser.Link, targetUser.Name, actor.Link, actor.Name)
 	case "reply":
 		if action == "delete" {
 			topic := handleUnknownTopic(c.TopicByReplyID(elementID))
-			out = p.GetTmplPhrasef("panel_logs_moderation_action_reply_delete", topic.Link, topic.Title, actor.Link, actor.Name)
+			out = p.GetTmplPhrasef("panel_logs_mod_action_reply_delete", topic.Link, topic.Title, actor.Link, actor.Name)
 		}
 	}
 	if out == "" {
-		out = p.GetTmplPhrasef("panel_logs_moderation_action_unknown", action, elementType, actor.Link, actor.Name)
+		out = p.GetTmplPhrasef("panel_logs_mod_action_unknown", action, elementType, actor.Link, actor.Name)
 	}
 	return out
 }
