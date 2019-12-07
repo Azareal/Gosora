@@ -16,7 +16,7 @@
   "license": "MIT",
   "homepage": "https://gosora-project.com",
   "devDependencies": {
-    "webpack-cli": "^3.3.9"
+    "webpack-cli": "^3.3.10"
   },
   "dependencies": {
     "webpack": "^4.41.2"
