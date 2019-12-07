@@ -6,7 +6,7 @@ import "github.com/Azareal/Gosora/query_gen"
 var Activity ActivityStream
 
 type ActivityStream interface {
-	Add(alert Alert) (int, error)
+	Add(a Alert) (int, error)
 	Get(id int) (Alert, error)
 	Count() (count int)
 }

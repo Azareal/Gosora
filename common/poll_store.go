@@ -7,7 +7,7 @@ import (
 	"log"
 	"strconv"
 
-	"github.com/Azareal/Gosora/query_gen"
+	qgen "github.com/Azareal/Gosora/query_gen"
 )
 
 var Polls PollStore
@@ -60,14 +60,14 @@ type PollStore interface {
 type DefaultPollStore struct {
 	cache PollCache
 
-	get                         *sql.Stmt
-	exists                      *sql.Stmt
-	createPoll                  *sql.Stmt
-	createPollOption            *sql.Stmt
-	addVote                     *sql.Stmt
-	incrementVoteCount          *sql.Stmt
-	incrementVoteCountForOption *sql.Stmt
-	delete                      *sql.Stmt
+	get                   *sql.Stmt
+	exists                *sql.Stmt
+	createPoll            *sql.Stmt
+	createPollOption      *sql.Stmt
+	addVote               *sql.Stmt
+	incVoteCount          *sql.Stmt
+	incVoteCountForOption *sql.Stmt
+	delete                *sql.Stmt
 	//count      *sql.Stmt
 }
 
@@ -78,14 +78,14 @@ func NewDefaultPollStore(cache PollCache) (*DefaultPollStore, error) {
 	}
 	// TODO: Add an admin version of registerStmt with more flexibility?
 	return &DefaultPollStore{
-		cache:                       cache,
-		get:                         acc.Select("polls").Columns("parentID, parentTable, type, options, votes").Where("pollID = ?").Prepare(),
-		exists:                      acc.Select("polls").Columns("pollID").Where("pollID = ?").Prepare(),
-		createPoll:                  acc.Insert("polls").Columns("parentID, parentTable, type, options").Fields("?,?,?,?").Prepare(),
-		createPollOption:            acc.Insert("polls_options").Columns("pollID, option, votes").Fields("?,?,0").Prepare(),
-		addVote:                     acc.Insert("polls_votes").Columns("pollID, uid, option, castAt, ipaddress").Fields("?,?,?,UTC_TIMESTAMP(),?").Prepare(),
-		incrementVoteCount:          acc.Update("polls").Set("votes = votes + 1").Where("pollID = ?").Prepare(),
-		incrementVoteCountForOption: acc.Update("polls_options").Set("votes = votes + 1").Where("option = ? AND pollID = ?").Prepare(),
+		cache:                 cache,
+		get:                   acc.Select("polls").Columns("parentID, parentTable, type, options, votes").Where("pollID = ?").Prepare(),
+		exists:                acc.Select("polls").Columns("pollID").Where("pollID = ?").Prepare(),
+		createPoll:            acc.Insert("polls").Columns("parentID, parentTable, type, options").Fields("?,?,?,?").Prepare(),
+		createPollOption:      acc.Insert("polls_options").Columns("pollID, option, votes").Fields("?,?,0").Prepare(),
+		addVote:               acc.Insert("polls_votes").Columns("pollID, uid, option, castAt, ipaddress").Fields("?,?,?,UTC_TIMESTAMP(),?").Prepare(),
+		incVoteCount:          acc.Update("polls").Set("votes = votes + 1").Where("pollID = ?").Prepare(),
+		incVoteCountForOption: acc.Update("polls_options").Set("votes = votes + 1").Where("option = ? AND pollID = ?").Prepare(),
 		//count: acc.SimpleCount("polls", "", ""),
 	}, acc.FirstError()
 }
@@ -146,7 +146,7 @@ func (s *DefaultPollStore) BulkGetMap(ids []int) (list map[int]*Poll, err error)
 
 	// TODO: Add a function for the qlist stuff
 	var q string
-	idList := make([]interface{},len(ids))
+	idList := make([]interface{}, len(ids))
 	for i, id := range ids {
 		idList[i] = strconv.Itoa(id)
 		q += "?,"
@@ -239,11 +239,11 @@ func (s *DefaultPollStore) CastVote(optionIndex int, pollID int, uid int, ipaddr
 	if err != nil {
 		return err
 	}
-	_, err = s.incrementVoteCount.Exec(pollID)
+	_, err = s.incVoteCount.Exec(pollID)
 	if err != nil {
 		return err
 	}
-	_, err = s.incrementVoteCountForOption.Exec(optionIndex, pollID)
+	_, err = s.incVoteCountForOption.Exec(optionIndex, pollID)
 	return err
 }
 
@@ -269,7 +269,7 @@ func (s *DefaultPollStore) Create(parent Pollable, pollType int, pollOptions map
 			return 0, err
 		}
 	}
-	
+
 	id = int(lastID)
 	return id, parent.SetPoll(id) // TODO: Delete the poll (and options) if SetPoll fails
 }

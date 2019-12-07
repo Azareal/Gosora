@@ -169,11 +169,9 @@ func (auth *DefaultAuth) ForceLogout(uid int) error {
 	}
 
 	// Flush the user out of the cache
-	ucache := Users.GetCache()
-	if ucache != nil {
-		ucache.Remove(uid)
+	if uc := Users.GetCache(); uc != nil {
+		uc.Remove(uid)
 	}
-
 	return nil
 }
 

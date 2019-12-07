@@ -36,7 +36,7 @@ func NewMemoryForumPermsStore() (*MemoryForumPermsStore, error) {
 	acc := qgen.NewAcc()
 	fp := "forums_permissions"
 	return &MemoryForumPermsStore{
-		getByForum:      acc.Select(fp).Columns("gid, permissions").Where("fid = ?").Orderby("gid ASC").Prepare(),
+		getByForum:      acc.Select(fp).Columns("gid,permissions").Where("fid = ?").Orderby("gid ASC").Prepare(),
 		getByForumGroup: acc.Select(fp).Columns("permissions").Where("fid = ? AND gid = ?").Prepare(),
 
 		evenForums: make(map[int]map[int]*ForumPerms),

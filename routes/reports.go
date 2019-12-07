@@ -14,7 +14,7 @@ func ReportSubmit(w http.ResponseWriter, r *http.Request, user c.User, sitemID s
 	if ferr != nil {
 		return ferr
 	}
-	js := (r.PostFormValue("js") == "1")
+	js := r.PostFormValue("js") == "1"
 
 	itemID, err := strconv.Atoi(sitemID)
 	if err != nil {

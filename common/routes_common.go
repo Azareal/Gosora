@@ -232,8 +232,8 @@ func userCheck(w http.ResponseWriter, r *http.Request, user *User) (header *Head
 	return header, nil
 }
 
-func PrepResources(user *User, header *Header, theme *Theme) {
-	header.AddSheet(theme.Name + "/main.css")
+func PrepResources(user *User, h *Header, theme *Theme) {
+	h.AddSheet(theme.Name + "/main.css")
 
 	if len(theme.Resources) > 0 {
 		rlist := theme.Resources
@@ -245,12 +245,12 @@ func PrepResources(user *User, header *Header, theme *Theme) {
 				extarr := strings.Split(resource.Name, ".")
 				ext := extarr[len(extarr)-1]
 				if ext == "css" {
-					header.AddSheet(resource.Name)
+					h.AddSheet(resource.Name)
 				} else if ext == "js" {
 					if resource.Async {
-						header.AddScriptAsync(resource.Name)
+						h.AddScriptAsync(resource.Name)
 					} else {
-						header.AddScript(resource.Name)
+						h.AddScript(resource.Name)
 					}
 				}
 			}
@@ -269,7 +269,7 @@ func PrepResources(user *User, header *Header, theme *Theme) {
 			}
 		}
 		//fmt.Printf("tname %+v\n", tname)
-		header.AddPreScriptAsync("template_" + name + tname + ".js")
+		h.AddPreScriptAsync("template_" + name + tname + ".js")
 	}
 	addPreScript("topics_topic")
 	addPreScript("paginator")

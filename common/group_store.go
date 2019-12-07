@@ -48,12 +48,13 @@ type MemoryGroupStore struct {
 
 func NewMemoryGroupStore() (*MemoryGroupStore, error) {
 	acc := qgen.NewAcc()
+	ug := "users_groups"
 	return &MemoryGroupStore{
 		groups:     make(map[int]*Group),
 		groupCount: 0,
-		getAll:     acc.Select("users_groups").Columns("gid, name, permissions, plugin_perms, is_mod, is_admin, is_banned, tag").Prepare(),
-		get:        acc.Select("users_groups").Columns("name, permissions, plugin_perms, is_mod, is_admin, is_banned, tag").Where("gid = ?").Prepare(),
-		count:      acc.Count("users_groups").Prepare(),
+		getAll:     acc.Select(ug).Columns("gid, name, permissions, plugin_perms, is_mod, is_admin, is_banned, tag").Prepare(),
+		get:        acc.Select(ug).Columns("name, permissions, plugin_perms, is_mod, is_admin, is_banned, tag").Where("gid = ?").Prepare(),
+		count:      acc.Count(ug).Prepare(),
 		userCount:  acc.Count("users").Where("group = ?").Prepare(),
 	}, acc.FirstError()
 }

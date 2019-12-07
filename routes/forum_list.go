@@ -13,7 +13,6 @@ func ForumList(w http.ResponseWriter, r *http.Request, user c.User, header *c.He
 	if skip || rerr != nil {
 		return rerr
 	}
-
 	header.Title = phrases.GetTitlePhrase("forums")
 	header.Zone = "forums"
 	header.Path = "/forums/"

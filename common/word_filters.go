@@ -28,7 +28,7 @@ type WordFilterStore interface {
 	Get(id int) (*WordFilter, error)
 	Create(find string, replace string) (int, error)
 	Delete(id int) error
-	Update(id int, find string, replacement string) error
+	Update(id int, find string, replace string) error
 	Length() int
 	EstCount() int
 	Count() (count int)

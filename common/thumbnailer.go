@@ -24,17 +24,17 @@ func ThumbTask(thumbChan chan bool) {
 		acc := qgen.NewAcc()
 		err := acc.Select("users_avatar_queue").Columns("uid").Limit("0,5").EachInt(func(uid int) error {
 			// TODO: Do a bulk user fetch instead?
-			user, err := Users.Get(uid)
+			u, err := Users.Get(uid)
 			if err != nil {
 				return errors.WithStack(err)
 			}
 
 			// Has the avatar been removed or already been processed by the thumbnailer?
-			if len(user.RawAvatar) < 2 || user.RawAvatar[1] == '.' {
+			if len(u.RawAvatar) < 2 || u.RawAvatar[1] == '.' {
 				_, _ = acc.Delete("users_avatar_queue").Where("uid = ?").Run(uid)
 				return nil
 			}
-			_, err = os.Stat("./uploads/avatar_" + strconv.Itoa(user.ID) + user.RawAvatar)
+			_, err = os.Stat("./uploads/avatar_" + strconv.Itoa(u.ID) + u.RawAvatar)
 			if os.IsNotExist(err) {
 				_, _ = acc.Delete("users_avatar_queue").Where("uid = ?").Run(uid)
 				return nil
@@ -43,22 +43,23 @@ func ThumbTask(thumbChan chan bool) {
 			}
 
 			// This means it's an external image, they aren't currently implemented, but this is here for when they are
-			if user.RawAvatar[0] != '.' {
+			if u.RawAvatar[0] != '.' {
 				return nil
 			}
 			/*if user.RawAvatar == ".gif" {
 				return nil
 			}*/
-			if user.RawAvatar != ".png" && user.RawAvatar != ".jpg" && user.RawAvatar != ".jpe" && user.RawAvatar != ".jpeg" && user.RawAvatar != ".jif" && user.RawAvatar != ".jfi" && user.RawAvatar != ".jfif" && user.RawAvatar != ".gif" && user.RawAvatar != "tiff" && user.RawAvatar != "tif" {
+			if u.RawAvatar != ".png" && u.RawAvatar != ".jpg" && u.RawAvatar != ".jpe" && u.RawAvatar != ".jpeg" && u.RawAvatar != ".jif" && u.RawAvatar != ".jfi" && u.RawAvatar != ".jfif" && u.RawAvatar != ".gif" && u.RawAvatar != "tiff" && u.RawAvatar != "tif" {
 				return nil
 			}
 
-			err = Thumbnailer.Resize(user.RawAvatar[1:], "./uploads/avatar_"+strconv.Itoa(user.ID)+user.RawAvatar, "./uploads/avatar_"+strconv.Itoa(user.ID)+"_tmp"+user.RawAvatar, "./uploads/avatar_"+strconv.Itoa(user.ID)+"_w48"+user.RawAvatar, 48)
+			ap := "./uploads/avatar_"
+			err = Thumbnailer.Resize(u.RawAvatar[1:], ap+strconv.Itoa(u.ID)+u.RawAvatar, ap+strconv.Itoa(u.ID)+"_tmp"+u.RawAvatar, ap+strconv.Itoa(u.ID)+"_w48"+u.RawAvatar, 48)
 			if err != nil {
 				return errors.WithStack(err)
 			}
 
-			err = user.ChangeAvatar("." + user.RawAvatar)
+			err = u.ChangeAvatar("." + u.RawAvatar)
 			if err != nil {
 				return errors.WithStack(err)
 			}
