@@ -31,11 +31,15 @@ func createTables(adapter qgen.Adapter) (err error) {
 			tC{"session", "varchar", 200, false, false, "''"},
 			//tC{"authToken", "varchar", 200, false, false, "''"},
 			tC{"last_ip", "varchar", 200, false, false, "0.0.0.0.0"},
+			tC{"enable_embeds", "int", 0, false, false, "-1"},
 			tC{"email", "varchar", 200, false, false, "''"},
 			tC{"avatar", "varchar", 100, false, false, "''"},
 			tC{"message", "text", 0, false, false, "''"},
+
+			// TODO: Drop these columns?
 			tC{"url_prefix", "varchar", 20, false, false, "''"},
 			tC{"url_name", "varchar", 100, false, false, "''"},
+			
 			tC{"level", "smallint", 0, false, false, "0"},
 			tC{"score", "int", 0, false, false, "0"},
 			tC{"posts", "int", 0, false, false, "0"},

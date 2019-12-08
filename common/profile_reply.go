@@ -5,7 +5,7 @@ import (
 	"html"
 	"time"
 
-	"github.com/Azareal/Gosora/query_gen"
+	qgen "github.com/Azareal/Gosora/query_gen"
 )
 
 var profileReplyStmts ProfileReplyStmts
@@ -20,7 +20,7 @@ type ProfileReply struct {
 	LastEdit     int
 	LastEditBy   int
 	ContentLines int
-	IP    string
+	IP           string
 }
 
 type ProfileReplyStmts struct {
@@ -30,9 +30,10 @@ type ProfileReplyStmts struct {
 
 func init() {
 	DbInits.Add(func(acc *qgen.Accumulator) error {
+		ur := "users_replies"
 		profileReplyStmts = ProfileReplyStmts{
-			edit:   acc.Update("users_replies").Set("content = ?, parsed_content = ?").Where("rid = ?").Prepare(),
-			delete: acc.Delete("users_replies").Where("rid = ?").Prepare(),
+			edit:   acc.Update(ur).Set("content = ?, parsed_content = ?").Where("rid = ?").Prepare(),
+			delete: acc.Delete(ur).Where("rid = ?").Prepare(),
 		}
 		return acc.FirstError()
 	})
@@ -51,7 +52,7 @@ func (r *ProfileReply) Delete() error {
 
 func (r *ProfileReply) SetBody(content string) error {
 	content = PreparseMessage(html.UnescapeString(content))
-	_, err := profileReplyStmts.edit.Exec(content, ParseMessage(content, 0, ""), r.ID)
+	_, err := profileReplyStmts.edit.Exec(content, ParseMessage(content, 0, "", nil), r.ID)
 	return err
 }
 

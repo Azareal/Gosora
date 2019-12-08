@@ -42,6 +42,7 @@ func init() {
 	addPatch(25, patch25)
 	addPatch(26, patch26)
 	addPatch(27, patch27)
+	addPatch(28, patch28)
 }
 
 func patch0(scanner *bufio.Scanner) (err error) {
@@ -744,4 +745,8 @@ func patch27(scanner *bufio.Scanner) error {
 		return err
 	}
 	return execStmt(qgen.Builder.AddColumn("administration_logs", tC{"extra", "text", 0, false, false, ""}, nil))
+}
+
+func patch28(scanner *bufio.Scanner) error {
+	return execStmt(qgen.Builder.AddColumn("users", tC{"enable_embeds", "int", 0, false, false, "-1"}, nil))
 }

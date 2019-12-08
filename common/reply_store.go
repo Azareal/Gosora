@@ -52,7 +52,7 @@ func (s *SQLReplyStore) Get(id int) (*Reply, error) {
 
 // TODO: Write a test for this
 func (s *SQLReplyStore) Create(t *Topic, content string, ip string, uid int) (rid int, err error) {
-	res, err := s.create.Exec(t.ID, content, ParseMessage(content, t.ParentID, "forums"), ip, WordCount(content), uid)
+	res, err := s.create.Exec(t.ID, content, ParseMessage(content, t.ParentID, "forums", nil), ip, WordCount(content), uid)
 	if err != nil {
 		return 0, err
 	}

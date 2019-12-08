@@ -248,6 +248,13 @@ type AccountBlocksPage struct {
 	Paginator
 }
 
+type AccountPrivacyPage struct {
+	*Header
+	ProfileComments bool
+	ReceiveConvos bool
+	EnableEmbeds bool
+}
+
 type AccountDashPage struct {
 	*Header
 	MFASetup     bool

@@ -10,6 +10,7 @@ CREATE TABLE [users] (
 	[lastActiveAt] datetime not null,
 	[session] nvarchar (200) DEFAULT '' not null,
 	[last_ip] nvarchar (200) DEFAULT '0.0.0.0.0' not null,
+	[enable_embeds] int DEFAULT -1 not null,
 	[email] nvarchar (200) DEFAULT '' not null,
 	[avatar] nvarchar (100) DEFAULT '' not null,
 	[message] nvarchar (MAX) DEFAULT '' not null,

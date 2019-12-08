@@ -11,7 +11,6 @@ import (
 	"html"
 	"html/template"
 
-	//"log"
 	"strconv"
 	"strings"
 	"time"
@@ -83,10 +82,10 @@ type TopicUser struct {
 	ContentHTML   string // TODO: Avoid converting this to bytes in templates, particularly if it's long
 	Tag           string
 	URL           string
-	URLPrefix     string
-	URLName       string
-	Level         int
-	Liked         bool
+	//URLPrefix     string
+	//URLName       string
+	Level int
+	Liked bool
 
 	Attachments []*MiniAttachment
 	Rids        []int
@@ -215,7 +214,7 @@ func init() {
 		t := "topics"
 		topicStmts = TopicStmts{
 			getRids:            acc.Select("replies").Columns("rid").Where("tid = ?").Orderby("rid ASC").Limit("?,?").Prepare(),
-			getReplies:         acc.SimpleLeftJoin("replies AS r", "users AS u", "r.rid, r.content, r.createdBy, r.createdAt, r.lastEdit, r.lastEditBy, u.avatar, u.name, u.group, u.url_prefix, u.url_name, u.level, r.ipaddress, r.likeCount, r.attachCount, r.actionType", "r.createdBy = u.uid", "r.tid = ?", "r.rid ASC", "?,?"),
+			getReplies:         acc.SimpleLeftJoin("replies AS r", "users AS u", "r.rid, r.content, r.createdBy, r.createdAt, r.lastEdit, r.lastEditBy, u.avatar, u.name, u.group, u.level, r.ipaddress, r.likeCount, r.attachCount, r.actionType", "r.createdBy = u.uid", "r.tid = ?", "r.rid ASC", "?,?"),
 			addReplies:         acc.Update(t).Set("postCount = postCount + ?, lastReplyBy = ?, lastReplyAt = UTC_TIMESTAMP()").Where("tid = ?").Prepare(),
 			updateLastReply:    acc.Update(t).Set("lastReplyID = ?").Where("lastReplyID > ? AND tid = ?").Prepare(),
 			lock:               acc.Update(t).Set("is_closed = 1").Where("tid = ?").Prepare(),
@@ -233,7 +232,7 @@ func init() {
 			setPoll:            acc.Update(t).Set("poll = ?").Where("tid = ? AND poll = 0").Prepare(),
 			createAction:       acc.Insert("replies").Columns("tid, actionType, ipaddress, createdBy, createdAt, lastUpdated, content, parsed_content").Fields("?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),'',''").Prepare(),
 
-			getTopicUser: acc.SimpleLeftJoin("topics AS t", "users AS u", "t.title, t.content, t.createdBy, t.createdAt, t.lastReplyAt, t.lastReplyBy, t.lastReplyID, t.is_closed, t.sticky, t.parentID, t.ipaddress, t.views, t.postCount, t.likeCount, t.attachCount,t.poll, u.name, u.avatar, u.group, u.url_prefix, u.url_name, u.level", "t.createdBy = u.uid", "tid = ?", "", ""),
+			getTopicUser: acc.SimpleLeftJoin("topics AS t", "users AS u", "t.title, t.content, t.createdBy, t.createdAt, t.lastReplyAt, t.lastReplyBy, t.lastReplyID, t.is_closed, t.sticky, t.parentID, t.ipaddress, t.views, t.postCount, t.likeCount, t.attachCount,t.poll, u.name, u.avatar, u.group, u.level", "t.createdBy = u.uid", "tid = ?", "", ""),
 			getByReplyID: acc.SimpleLeftJoin("replies AS r", "topics AS t", "t.tid, t.title, t.content, t.createdBy, t.createdAt, t.is_closed, t.sticky, t.parentID, t.ipaddress, t.views, t.postCount, t.likeCount, t.poll, t.data", "r.tid = t.tid", "rid = ?", "", ""),
 		}
 		return acc.FirstError()
@@ -250,7 +249,7 @@ func (t *Topic) cacheRemove() {
 }
 
 // TODO: Write a test for this
-func (t *Topic) AddReply(rid int, uid int) (err error) {
+func (t *Topic) AddReply(rid, uid int) (err error) {
 	_, err = topicStmts.addReplies.Exec(1, uid, t.ID)
 	if err != nil {
 		return err
@@ -300,7 +299,7 @@ func (t *Topic) Unstick() (err error) {
 
 // TODO: Test this
 // TODO: Use a transaction for this
-func (t *Topic) Like(score int, uid int) (err error) {
+func (t *Topic) Like(score, uid int) (err error) {
 	var disp int // Unused
 	err = topicStmts.hasLikedTopic.QueryRow(uid, t.ID).Scan(&disp)
 	if err != nil && err != ErrNoRows {
@@ -308,12 +307,10 @@ func (t *Topic) Like(score int, uid int) (err error) {
 	} else if err != ErrNoRows {
 		return ErrAlreadyLiked
 	}
-
 	_, err = topicStmts.createLike.Exec(score, t.ID, "topics", uid)
 	if err != nil {
 		return err
 	}
-
 	_, err = topicStmts.addLikesToTopic.Exec(1, t.ID)
 	if err != nil {
 		return err
@@ -360,7 +357,7 @@ func (t *Topic) Delete() error {
 }
 
 // TODO: Write tests for this
-func (t *Topic) Update(name string, content string) error {
+func (t *Topic) Update(name, content string) error {
 	name = SanitiseSingleLine(html.UnescapeString(name))
 	if name == "" {
 		return ErrNoTitle
@@ -371,7 +368,7 @@ func (t *Topic) Update(name string, content string) error {
 	}
 
 	content = PreparseMessage(html.UnescapeString(content))
-	parsedContent := ParseMessage(content, t.ParentID, "forums")
+	parsedContent := ParseMessage(content, t.ParentID, "forums", nil)
 	_, err := topicStmts.edit.Exec(name, content, parsedContent, t.ID)
 	t.cacheRemove()
 	return err
@@ -404,7 +401,7 @@ func (t *Topic) CreateActionReply(action string, ip string, uid int) (err error)
 	return err
 }
 
-func GetRidsForTopic(tid int, offset int) (rids []int, err error) {
+func GetRidsForTopic(tid, offset int) (rids []int, err error) {
 	rows, err := topicStmts.getRids.Query(tid, offset, Config.ItemsPerPage)
 	if err != nil {
 		return nil, err
@@ -450,20 +447,16 @@ func (ru *ReplyUser) Init() error {
 
 	// We really shouldn't have inline HTML, we should do something about this...
 	if ru.ActionType != "" {
-		var action string
 		aarr := strings.Split(ru.ActionType, "-")
-		switch aarr[0] {
+		action := aarr[0]
+		switch action {
 		case "lock":
-			action = aarr[0]
 			ru.ActionIcon = lockai
 		case "unlock":
-			action = aarr[0]
 			ru.ActionIcon = unlockai
 		case "stick":
-			action = aarr[0]
 			ru.ActionIcon = stickai
 		case "unstick":
-			action = aarr[0]
 			ru.ActionIcon = unstickai
 		case "move":
 			if len(aarr) == 2 {
@@ -471,19 +464,15 @@ func (ru *ReplyUser) Init() error {
 				forum, err := Forums.Get(fid)
 				if err == nil {
 					ru.ActionType = p.GetTmplPhrasef("topic.action_topic_move_dest", forum.Link, forum.Name, ru.UserLink, ru.CreatedByName)
-				} else {
-					action = aarr[0]
+					return nil
 				}
-			} else {
-				action = aarr[0]
 			}
 		default:
 			// TODO: Only fire this off if a corresponding phrase for the ActionType doesn't exist? Or maybe have some sort of action registry?
 			ru.ActionType = p.GetTmplPhrasef("topic.action_topic_default", ru.ActionType)
+			return nil
 		}
-		if action != "" {
-			ru.ActionType = p.GetTmplPhrasef("topic.action_topic_"+action, ru.UserLink, ru.CreatedByName)
-		}
+		ru.ActionType = p.GetTmplPhrasef("topic.action_topic_"+action, ru.UserLink, ru.CreatedByName)
 	}
 
 	return nil
@@ -516,42 +505,52 @@ func (t *TopicUser) Replies(offset int, pFrag int, user *User) (rlist []*ReplyUs
 		ruser, err = ucache.Get(re.CreatedBy)
 	}
 
-	// TODO: Factor the user fields out and embed a user struct instead
-	var reply *ReplyUser
 	hTbl := GetHookTable()
-	if err == nil {
-		//log.Print("reply cached serve")
-		reply = &ReplyUser{ClassName: "", Reply: *re, CreatedByName: ruser.Name, Avatar: ruser.Avatar, URLPrefix: ruser.URLPrefix, URLName: ruser.URLName, Level: ruser.Level}
-
-		err := reply.Init()
+	rf := func(r *ReplyUser) error {
+		err := r.Init()
 		if err != nil {
-			return nil, "", err
-		}
-		reply.ContentHtml = ParseMessage(reply.Content, t.ParentID, "forums")
-		// TODO: Do this more efficiently by avoiding the allocations entirely in ParseMessage, if there's nothing to do.
-		if reply.ContentHtml == reply.Content {
-			reply.ContentHtml = reply.Content
+			return err
 		}
 
-		if reply.ID == pFrag {
-			ogdesc = reply.Content
+		r.ContentHtml = ParseMessage(r.Content, t.ParentID, "forums", user.ParseSettings)
+		// TODO: Do this more efficiently by avoiding the allocations entirely in ParseMessage, if there's nothing to do.
+		if r.ContentHtml == r.Content {
+			r.ContentHtml = r.Content
+		}
+
+		// TODO: This doesn't work properly so pick the first one instead?
+		if r.ID == pFrag {
+			ogdesc = r.Content
 			if len(ogdesc) > 200 {
 				ogdesc = ogdesc[:197] + "..."
 			}
 		}
 
-		if reply.LikeCount > 0 && user.Liked > 0 {
-			likedMap[reply.ID] = len(rlist)
-			likedQueryList = append(likedQueryList, reply.ID)
+		if r.LikeCount > 0 && user.Liked > 0 {
+			likedMap[r.ID] = len(rlist)
+			likedQueryList = append(likedQueryList, r.ID)
 		}
-		if user.Perms.EditReply && reply.AttachCount > 0 {
-			attachMap[reply.ID] = len(rlist)
-			attachQueryList = append(attachQueryList, reply.ID)
+		if user.Perms.EditReply && r.AttachCount > 0 {
+			attachMap[r.ID] = len(rlist)
+			attachQueryList = append(attachQueryList, r.ID)
 		}
-		reply.Deletable = user.Perms.DeleteReply || reply.CreatedBy == user.ID
+		r.Deletable = user.Perms.DeleteReply || r.CreatedBy == user.ID
 
-		hTbl.VhookNoRet("topic_reply_row_assign", &rlist, &reply)
-		rlist = append(rlist, reply)
+		hTbl.VhookNoRet("topic_reply_row_assign", &rlist, &r)
+		// TODO: Use a pointer instead to make it easier to abstract this loop? What impact would this have on escape analysis?
+		rlist = append(rlist, r)
+		//log.Printf("r: %d-%d", r.ID, len(rlist)-1)
+		return nil
+	}
+
+	// TODO: Factor the user fields out and embed a user struct instead
+	if err == nil {
+		//log.Print("reply cached serve")
+		reply := &ReplyUser{ClassName: "", Reply: *re, CreatedByName: ruser.Name, Avatar: ruser.Avatar /*URLPrefix: ruser.URLPrefix, URLName: ruser.URLName, */, Level: ruser.Level}
+		err = rf(reply)
+		if err != nil {
+			return nil, "", err
+		}
 	} else {
 		rows, err := topicStmts.getReplies.Query(t.ID, offset, Config.ItemsPerPage)
 		if err != nil {
@@ -560,39 +559,15 @@ func (t *TopicUser) Replies(offset int, pFrag int, user *User) (rlist []*ReplyUs
 		defer rows.Close()
 
 		for rows.Next() {
-			reply = &ReplyUser{}
-			err := rows.Scan(&reply.ID, &reply.Content, &reply.CreatedBy, &reply.CreatedAt, &reply.LastEdit, &reply.LastEditBy, &reply.Avatar, &reply.CreatedByName, &reply.Group, &reply.URLPrefix, &reply.URLName, &reply.Level, &reply.IP, &reply.LikeCount, &reply.AttachCount, &reply.ActionType)
+			r := &ReplyUser{}
+			err := rows.Scan(&r.ID, &r.Content, &r.CreatedBy, &r.CreatedAt, &r.LastEdit, &r.LastEditBy, &r.Avatar, &r.CreatedByName, &r.Group /*&r.URLPrefix, &r.URLName,*/, &r.Level, &r.IP, &r.LikeCount, &r.AttachCount, &r.ActionType)
 			if err != nil {
 				return nil, "", err
 			}
-			if err := reply.Init(); err != nil {
+			err = rf(r)
+			if err != nil {
 				return nil, "", err
 			}
-
-			reply.ContentHtml = ParseMessage(reply.Content, t.ParentID, "forums")
-
-			// TODO: This doesn't work properly so pick the first one instead?
-			if reply.ID == pFrag {
-				ogdesc = reply.Content
-				if len(ogdesc) > 200 {
-					ogdesc = ogdesc[:197] + "..."
-				}
-			}
-
-			if reply.LikeCount > 0 && user.Liked > 0 {
-				likedMap[reply.ID] = len(rlist)
-				likedQueryList = append(likedQueryList, reply.ID)
-			}
-			if user.Perms.EditReply && reply.AttachCount > 0 {
-				attachMap[reply.ID] = len(rlist)
-				attachQueryList = append(attachQueryList, reply.ID)
-			}
-			reply.Deletable = user.Perms.DeleteReply || reply.CreatedBy == user.ID
-
-			hTbl.VhookNoRet("topic_reply_row_assign", &rlist, &reply)
-			// TODO: Use a pointer instead to make it easier to abstract this loop? What impact would this have on escape analysis?
-			rlist = append(rlist, reply)
-			//log.Printf("r: %d-%d", reply.ID, len(rlist)-1)
 		}
 		err = rows.Err()
 		if err != nil {
@@ -689,7 +664,7 @@ func GetTopicUser(user *User, tid int) (tu TopicUser, err error) {
 
 	tu = TopicUser{ID: tid}
 	// TODO: This misses some important bits...
-	err = topicStmts.getTopicUser.QueryRow(tid).Scan(&tu.Title, &tu.Content, &tu.CreatedBy, &tu.CreatedAt, &tu.LastReplyAt, &tu.LastReplyBy, &tu.LastReplyID, &tu.IsClosed, &tu.Sticky, &tu.ParentID, &tu.IP, &tu.ViewCount, &tu.PostCount, &tu.LikeCount, &tu.AttachCount, &tu.Poll, &tu.CreatedByName, &tu.Avatar, &tu.Group, &tu.URLPrefix, &tu.URLName, &tu.Level)
+	err = topicStmts.getTopicUser.QueryRow(tid).Scan(&tu.Title, &tu.Content, &tu.CreatedBy, &tu.CreatedAt, &tu.LastReplyAt, &tu.LastReplyBy, &tu.LastReplyID, &tu.IsClosed, &tu.Sticky, &tu.ParentID, &tu.IP, &tu.ViewCount, &tu.PostCount, &tu.LikeCount, &tu.AttachCount, &tu.Poll, &tu.CreatedByName, &tu.Avatar, &tu.Group, &tu.Level)
 	tu.Avatar, tu.MicroAvatar = BuildAvatar(tu.CreatedBy, tu.Avatar)
 	tu.Link = BuildTopicURL(NameToSlug(tu.Title), tu.ID)
 	tu.UserLink = BuildProfileURL(NameToSlug(tu.CreatedByName), tu.CreatedBy)
@@ -709,8 +684,8 @@ func copyTopicToTopicUser(t *Topic, u *User) (tu TopicUser) {
 	tu.Group = u.Group
 	tu.Avatar = u.Avatar
 	tu.MicroAvatar = u.MicroAvatar
-	tu.URLPrefix = u.URLPrefix
-	tu.URLName = u.URLName
+	//tu.URLPrefix = u.URLPrefix
+	//tu.URLName = u.URLName
 	tu.Level = u.Level
 
 	tu.ID = t.ID

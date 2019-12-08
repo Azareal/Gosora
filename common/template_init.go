@@ -14,8 +14,8 @@ import (
 
 	"github.com/Azareal/Gosora/common/alerts"
 	p "github.com/Azareal/Gosora/common/phrases"
-	"github.com/Azareal/Gosora/common/templates"
-	"github.com/Azareal/Gosora/query_gen"
+	tmpl "github.com/Azareal/Gosora/common/templates"
+	qgen "github.com/Azareal/Gosora/query_gen"
 )
 
 var Ctemplates []string // TODO: Use this to filter out top level templates we don't need
@@ -93,14 +93,14 @@ var Template_account_handle = genIntTmpl("account")
 
 func tmplInitUsers() (User, User, User) {
 	avatar, microAvatar := BuildAvatar(62, "")
-	user := User{62, BuildProfileURL("fake-user", 62), "Fake User", "compiler@localhost", 0, false, false, false, false, false, false, GuestPerms, make(map[string]bool), "", false, "", avatar, microAvatar, "", "", "", "", 0, 0, 0, 0,"0.0.0.0.0", "", 0}
+	user := User{62, BuildProfileURL("fake-user", 62), "Fake User", "compiler@localhost", 0, false, false, false, false, false, false, GuestPerms, make(map[string]bool), "", false, "", avatar, microAvatar, "", "", 0, 0, 0, 0, "0.0.0.0.0", "", 0, nil}
 
 	// TODO: Do a more accurate level calculation for this?
 	avatar, microAvatar = BuildAvatar(1, "")
-	user2 := User{1, BuildProfileURL("admin-alice", 1), "Admin Alice", "alice@localhost", 1, true, true, true, true, false, false, AllPerms, make(map[string]bool), "", true, "", avatar, microAvatar, "", "", "", "", 58, 1000, 0, 1000, "127.0.0.1", "", 0}
+	user2 := User{1, BuildProfileURL("admin-alice", 1), "Admin Alice", "alice@localhost", 1, true, true, true, true, false, false, AllPerms, make(map[string]bool), "", true, "", avatar, microAvatar, "", "", 58, 1000, 0, 1000, "127.0.0.1", "", 0, nil}
 
 	avatar, microAvatar = BuildAvatar(2, "")
-	user3 := User{2, BuildProfileURL("admin-fred", 62), "Admin Fred", "fred@localhost", 1, true, true, true, true, false, false, AllPerms, make(map[string]bool), "", true, "", avatar, microAvatar, "", "", "", "", 42, 900, 0, 900, "::1", "", 0}
+	user3 := User{2, BuildProfileURL("admin-fred", 62), "Admin Fred", "fred@localhost", 1, true, true, true, true, false, false, AllPerms, make(map[string]bool), "", true, "", avatar, microAvatar, "", "", 42, 900, 0, 900, "::1", "", 0, nil}
 	return user, user2, user3
 }
 
@@ -170,8 +170,8 @@ func CompileTemplates() error {
 	log.Printf("overriden: %+v\n", overriden)
 
 	config := tmpl.CTemplateConfig{
-		Minify: Config.MinifyTemplates,
-		Debug: Dev.DebugMode,
+		Minify:     Config.MinifyTemplates,
+		Debug:      Dev.DebugMode,
 		SuperDebug: Dev.TemplateDebug,
 	}
 	c := tmpl.NewCTemplateSet("normal")
@@ -239,11 +239,11 @@ func compileCommons(c *tmpl.CTemplateSet, head *Header, head2 *Header, forumList
 	}, VoteCount: 7}
 	avatar, microAvatar := BuildAvatar(62, "")
 	miniAttach := []*MiniAttachment{&MiniAttachment{Path: "/"}}
-	topic := TopicUser{1, "blah", "Blah", "Hey there!", 0, false, false, now, now, 1, 1, 0, "", "127.0.0.1", 1, 0, 1, 0, "classname", poll.ID, "weird-data", BuildProfileURL("fake-user", 62), "Fake User", Config.DefaultGroup, avatar, microAvatar, 0, "", "", "", "", "", 58, false, miniAttach, nil,false}
+	topic := TopicUser{1, "blah", "Blah", "Hey there!", 0, false, false, now, now, 1, 1, 0, "", "127.0.0.1", 1, 0, 1, 0, "classname", poll.ID, "weird-data", BuildProfileURL("fake-user", 62), "Fake User", Config.DefaultGroup, avatar, microAvatar, 0, "", "", "", 58, false, miniAttach, nil, false}
 
 	var replyList []*ReplyUser
 	reply := Reply{1, 1, "Yo!", 1, Config.DefaultGroup, now, 0, 0, 1, "::1", true, 1, 1, ""}
-	ru := &ReplyUser{ClassName: "", Reply: reply, CreatedByName: "Alice", Avatar: avatar, URLPrefix: "", URLName: "", Level: 0, Attachments: miniAttach}
+	ru := &ReplyUser{ClassName: "", Reply: reply, CreatedByName: "Alice", Avatar: avatar, Level: 0, Attachments: miniAttach}
 	ru.Init()
 	replyList = append(replyList, ru)
 	tpage := TopicPage{htitle("Topic Name"), replyList, topic, &Forum{ID: 1, Name: "Hahaha"}, poll, Paginator{[]int{1}, 1, 1}}
@@ -271,7 +271,7 @@ func compileTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName string
 	// TODO: Do we want the UID on this to be 0?
 	//avatar, microAvatar = BuildAvatar(0, "")
 	reply := Reply{1, 1, "Yo!", 1, Config.DefaultGroup, now, 0, 0, 1, "::1", true, 1, 1, ""}
-	ru := &ReplyUser{ClassName: "", Reply: reply, CreatedByName: "Alice", Avatar: "", URLPrefix: "", URLName: "", Level: 0, Attachments: miniAttach}
+	ru := &ReplyUser{ClassName: "", Reply: reply, CreatedByName: "Alice", Avatar: "", Level: 0, Attachments: miniAttach}
 	ru.Init()
 	replyList = append(replyList, ru)
 
@@ -296,7 +296,7 @@ func compileTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName string
 		return err
 	}
 
-	ppage := ProfilePage{htitle("User 526"), replyList, user, 0, 0, false,false,false} // TODO: Use the score from user to generate the currentScore and nextScore
+	ppage := ProfilePage{htitle("User 526"), replyList, user, 0, 0, false, false, false} // TODO: Use the score from user to generate the currentScore and nextScore
 	t.Add("profile", "c.ProfilePage", ppage)
 
 	var topicsList []*TopicsRow
@@ -307,8 +307,8 @@ func compileTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName string
 	forumPage := ForumPage{htitle("General Forum"), topicsList, forumItem, Paginator{[]int{1}, 1, 1}}
 
 	// Experimental!
-	for _, tmpl := range strings.Split(Dev.ExtraTmpls,",") {
-		sp := strings.Split(tmpl,":")
+	for _, tmpl := range strings.Split(Dev.ExtraTmpls, ",") {
+		sp := strings.Split(tmpl, ":")
 		if len(sp) < 2 {
 			continue
 		}
@@ -350,27 +350,27 @@ func compileTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName string
 	t.AddStd("account", "c.Account", accountPage)
 
 	parti := []*User{&user}
-	convo := &Conversation{1,user.ID,time.Now(),0,time.Now()}
-	convoItems := []ConvoViewRow{ConvoViewRow{&ConversationPost{1,1,"hey","",user.ID}, &user, "", 4, true}}
+	convo := &Conversation{1, user.ID, time.Now(), 0, time.Now()}
+	convoItems := []ConvoViewRow{ConvoViewRow{&ConversationPost{1, 1, "hey", "", user.ID}, &user, "", 4, true}}
 	convoPage := ConvoViewPage{header, convo, convoItems, parti, Paginator{[]int{1}, 1, 1}}
 	t.AddStd("convo", "c.ConvoViewPage", convoPage)
 
-	convos := []*ConversationExtra{&ConversationExtra{&Conversation{},[]*User{&user}}}
+	convos := []*ConversationExtra{&ConversationExtra{&Conversation{}, []*User{&user}}}
 	convoListPage := ConvoListPage{header, convos, Paginator{[]int{1}, 1, 1}}
 	t.AddStd("convos", "c.ConvoListPage", convoListPage)
 
 	basePage := &BasePanelPage{header, PanelStats{}, "dashboard", ReportForumID}
 	t.AddStd("panel", "c.Panel", Panel{basePage, "panel_dashboard_right", "", "panel_dashboard", inter})
-	ges := []GridElement{GridElement{"","", "", 1, "grid_istat", "", "", ""}}
-	t.AddStd("panel_dashboard", "c.DashGrids", DashGrids{ges,ges})
+	ges := []GridElement{GridElement{"", "", "", 1, "grid_istat", "", "", ""}}
+	t.AddStd("panel_dashboard", "c.DashGrids", DashGrids{ges, ges})
 
 	goVersion := runtime.Version()
 	dbVersion := qgen.Builder.DbVersion()
 	var memStats runtime.MemStats
 	runtime.ReadMemStats(&memStats)
 	debugCache := DebugPageCache{1, 1, 1, 2, 2, 2, true}
-	debugDatabase := DebugPageDatabase{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
-	debugDisk := DebugPageDisk{1,1,1,1,1,1}
+	debugDatabase := DebugPageDatabase{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
+	debugDisk := DebugPageDisk{1, 1, 1, 1, 1, 1}
 	dpage := PanelDebugPage{basePage, goVersion, dbVersion, "0s", 1, qgen.Builder.GetAdapter().GetName(), 1, 1, memStats, debugCache, debugDatabase, debugDisk}
 	t.AddStd("panel_debug", "c.PanelDebugPage", dpage)
 	//t.AddStd("panel_analytics", "c.PanelAnalytics", Panel{basePage, "panel_dashboard_right","panel_dashboard", inter})
@@ -456,13 +456,13 @@ func CompileJSTemplates() error {
 	log.Printf("overriden: %+v\n", overriden)
 
 	config := tmpl.CTemplateConfig{
-		Minify: Config.MinifyTemplates,
-		Debug: Dev.DebugMode,
-		SuperDebug: Dev.TemplateDebug,
-		SkipHandles: true,
+		Minify:         Config.MinifyTemplates,
+		Debug:          Dev.DebugMode,
+		SuperDebug:     Dev.TemplateDebug,
+		SkipHandles:    true,
 		SkipTmplPtrMap: true,
-		SkipInitBlock: false,
-		PackageName: "tmpl",
+		SkipInitBlock:  false,
+		PackageName:    "tmpl",
 	}
 	c := tmpl.NewCTemplateSet("js")
 	c.SetConfig(config)
@@ -531,12 +531,12 @@ func compileJSTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName stri
 	}, VoteCount: 7}
 	avatar, microAvatar := BuildAvatar(62, "")
 	miniAttach := []*MiniAttachment{&MiniAttachment{Path: "/"}}
-	topic := TopicUser{1, "blah", "Blah", "Hey there!", 62, false, false, now, now, 1, 1, 0, "", "127.0.0.1", 1, 0, 1, 0, "classname", poll.ID, "weird-data", BuildProfileURL("fake-user", 62), "Fake User", Config.DefaultGroup, avatar, microAvatar, 0, "", "", "", "", "", 58, false, miniAttach, nil,false}
+	topic := TopicUser{1, "blah", "Blah", "Hey there!", 62, false, false, now, now, 1, 1, 0, "", "127.0.0.1", 1, 0, 1, 0, "classname", poll.ID, "weird-data", BuildProfileURL("fake-user", 62), "Fake User", Config.DefaultGroup, avatar, microAvatar, 0, "","","", 58, false, miniAttach, nil, false}
 	var replyList []*ReplyUser
 	// TODO: Do we really want the UID here to be zero?
 	avatar, microAvatar = BuildAvatar(0, "")
 	reply := Reply{1, 1, "Yo!", 1, Config.DefaultGroup, now, 0, 0, 1, "::1", true, 1, 1, ""}
-	ru := &ReplyUser{ClassName: "", Reply: reply, CreatedByName: "Alice", Avatar: avatar, URLPrefix: "", URLName: "", Level: 0, Attachments: miniAttach}
+	ru := &ReplyUser{ClassName: "", Reply: reply, CreatedByName: "Alice", Avatar: avatar, Level: 0, Attachments: miniAttach}
 	ru.Init()
 	replyList = append(replyList, ru)
 
@@ -554,11 +554,11 @@ func compileJSTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName stri
 
 	t.AddStd("topic_c_edit_post", "c.TopicCEditPost", TopicCEditPost{ID: 0, Source: "", Ref: ""})
 	t.AddStd("topic_c_attach_item", "c.TopicCAttachItem", TopicCAttachItem{ID: 1, ImgSrc: "", Path: "", FullPath: ""})
-	t.AddStd("topic_c_poll_input", "c.TopicCPollInput", TopicCPollInput{Index:0})
+	t.AddStd("topic_c_poll_input", "c.TopicCPollInput", TopicCPollInput{Index: 0})
 
 	parti := []*User{&user}
-	convo := &Conversation{1,user.ID,time.Now(),0,time.Now()}
-	convoItems := []ConvoViewRow{ConvoViewRow{&ConversationPost{1,1,"hey","",user.ID}, &user, "", 4, true}}
+	convo := &Conversation{1, user.ID, time.Now(), 0, time.Now()}
+	convoItems := []ConvoViewRow{ConvoViewRow{&ConversationPost{1, 1, "hey", "", user.ID}, &user, "", 4, true}}
 	convoPage := ConvoViewPage{header, convo, convoItems, parti, Paginator{[]int{1}, 1, 1}}
 	t.AddStd("convo", "c.ConvoViewPage", convoPage)
 
@@ -825,7 +825,7 @@ func loadTemplates(t *template.Template, themeName string) error {
 	if err != nil {
 		return err
 	}
-	
+
 	tFileMap := make(map[string]int)
 	for index, path := range tFiles {
 		path = strings.Replace(path, "\\", "/", -1)

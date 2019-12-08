@@ -9,17 +9,17 @@ import (
 	"io"
 
 	//"fmt"
+	"golang.org/x/image/tiff"
+	"image"
+	"image/gif"
+	"image/jpeg"
+	"image/png"
 	"log"
 	"net/http"
 	"os"
 	"regexp"
 	"strconv"
 	"strings"
-	"image"
-	"image/gif"
-	"image/jpeg"
-	"image/png"
-	"golang.org/x/image/tiff"
 
 	c "github.com/Azareal/Gosora/common"
 	"github.com/Azareal/Gosora/common/counters"
@@ -72,16 +72,17 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user c.User, header *c.He
 	header.Path = c.BuildTopicURL(c.NameToSlug(topic.Title), topic.ID)
 
 	// TODO: Cache ContentHTML when possible?
-	topic.ContentHTML = c.ParseMessage(topic.Content, topic.ParentID, "forums")
+	topic.ContentHTML = c.ParseMessage(topic.Content, topic.ParentID, "forums", user.ParseSettings)
 	// TODO: Do this more efficiently by avoiding the allocations entirely in ParseMessage, if there's nothing to do.
 	if topic.ContentHTML == topic.Content {
 		topic.ContentHTML = topic.Content
 	}
 	topic.ContentLines = strings.Count(topic.Content, "\n")
 
-	header.OGDesc = topic.Content
-	if len(header.OGDesc) > 200 {
-		header.OGDesc = header.OGDesc[:197] + "..."
+	if len(topic.Content) > 200 {
+		header.OGDesc = topic.Content[:197] + "..."
+	} else {
+		header.OGDesc = topic.Content
 	}
 
 	postGroup, err := c.Groups.Get(topic.Group)
@@ -141,7 +142,6 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user c.User, header *c.He
 		if strings.HasPrefix(r.URL.Fragment, "post-") {
 			pFrag, _ = strconv.Atoi(strings.TrimPrefix(r.URL.Fragment, "post-"))
 		}
-
 		rlist, ogdesc, err := topic.Replies(offset, pFrag, &user)
 		if err == sql.ErrNoRows {
 			return c.LocalError("Bad Page. Some of the posts may have been deleted or you got here by directly typing in the page number.", w, r, user)
@@ -510,7 +510,7 @@ func uploadFilesWithHash(w http.ResponseWriter, r *http.Request, user c.User, di
 		} else {
 			img, _, err := image.Decode(inFile)
 			if err != nil {
-				return nil, c.LocalError("Upload failed [Image Decoding Failed]",w,r,user)
+				return nil, c.LocalError("Upload failed [Image Decoding Failed]", w, r, user)
 			}
 
 			outFile, err := os.Create(dir + filename)
@@ -518,19 +518,19 @@ func uploadFilesWithHash(w http.ResponseWriter, r *http.Request, user c.User, di
 				return nil, c.LocalError("Upload failed [File Creation Failed]", w, r, user)
 			}
 			defer outFile.Close()
-			
+
 			switch ext {
 			case "gif":
 				err = gif.Encode(outFile, img, nil)
 			case "png":
 				err = png.Encode(outFile, img)
-			case "tiff","tif":
-				err = tiff.Encode(outFile,img,nil)
+			case "tiff", "tif":
+				err = tiff.Encode(outFile, img, nil)
 			default:
 				err = jpeg.Encode(outFile, img, nil)
 			}
 			if err != nil {
-				return nil, c.LocalError("Upload failed [Image Encoding Failed]", w,r,user)
+				return nil, c.LocalError("Upload failed [Image Encoding Failed]", w, r, user)
 			}
 		}
 
@@ -603,7 +603,7 @@ func EditTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User, stid s
 	if !js {
 		http.Redirect(w, r, "/topic/"+strconv.Itoa(tid), http.StatusSeeOther)
 	} else {
-		outBytes, err := json.Marshal(JsonReply{c.ParseMessage(topic.Content, topic.ParentID, "forums")})
+		outBytes, err := json.Marshal(JsonReply{c.ParseMessage(topic.Content, topic.ParentID, "forums", user.ParseSettings)})
 		if err != nil {
 			return c.InternalErrorJSQ(err, w, r, js)
 		}

@@ -14,7 +14,7 @@ import (
 
 	c "github.com/Azareal/Gosora/common"
 	p "github.com/Azareal/Gosora/common/phrases"
-	"github.com/Azareal/Gosora/query_gen"
+	qgen "github.com/Azareal/Gosora/query_gen"
 )
 
 // A blank list to fill out that parameter in Page for routes which don't use it
@@ -153,7 +153,7 @@ func AccountLoginMFAVerify(w http.ResponseWriter, r *http.Request, user c.User, 
 	if !mfaVerifySession(provSession, signedSession, uid) {
 		return c.LocalError("Invalid session", w, r, user)
 	}
-	
+
 	return renderTemplate("login_mfa_verify", w, r, h, c.Page{h, tList, nil})
 }
 
@@ -235,7 +235,7 @@ func AccountRegisterSubmit(w http.ResponseWriter, r *http.Request, user c.User) 
 	if isNumeric(nameBits[0]) {
 		regError(p.GetErrorPhrase("register_first_word_numeric"), "numeric-name")
 	}
-	if strings.Contains(name,"http://") || strings.Contains(name,"https://") || strings.Contains(name,"ftp://") || strings.Contains(name,"ssh://") {
+	if strings.Contains(name, "http://") || strings.Contains(name, "https://") || strings.Contains(name, "ftp://") || strings.Contains(name, "ssh://") {
 		regError(p.GetErrorPhrase("register_url_username"), "url-name")
 	}
 
@@ -423,15 +423,15 @@ func AccountEditAvatarSubmit(w http.ResponseWriter, r *http.Request, user c.User
 		return c.NoPermissions(w, r, user)
 	}
 
-	ext, ferr := c.UploadAvatar(w,r,user,user.ID)
+	ext, ferr := c.UploadAvatar(w, r, user, user.ID)
 	if ferr != nil {
 		return ferr
 	}
-	ferr = c.ChangeAvatar("." + ext, w, r, user)
+	ferr = c.ChangeAvatar("."+ext, w, r, user)
 	if ferr != nil {
 		return ferr
 	}
-	
+
 	// TODO: Only schedule a resize if the avatar isn't tiny
 	err := user.ScheduleAvatarResize()
 	if err != nil {
@@ -572,6 +572,37 @@ func AccountEditMFADisableSubmit(w http.ResponseWriter, r *http.Request, user c.
 	return nil
 }
 
+func AccountEditPrivacy(w http.ResponseWriter, r *http.Request, user c.User, h *c.Header) c.RouteError {
+	accountEditHead("account_privacy", w, r, &user, h)
+	profileComments := false
+	receiveConvos := false
+	enableEmbeds := !c.DefaultParseSettings.NoEmbed
+	if user.ParseSettings != nil {
+		enableEmbeds = !user.ParseSettings.NoEmbed
+	}
+	pi := c.Account{h, "privacy", "account_own_edit_privacy", c.AccountPrivacyPage{h, profileComments, receiveConvos, enableEmbeds}}
+	return renderTemplate("account", w, r, h, pi)
+}
+
+func AccountEditPrivacySubmit(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
+	//headerLite, _ := c.SimpleUserCheck(w, r, &user)
+
+	sEnableEmbeds := r.FormValue("enable_embeds")
+	enableEmbeds, err := strconv.Atoi(sEnableEmbeds)
+	if err != nil {
+		return c.LocalError("enable_embeds must be 0 or 1", w, r, user)
+	}
+	if sEnableEmbeds != r.FormValue("o_enable_embeds") {
+		err = (&user).UpdatePrivacy(enableEmbeds)
+		if err != nil {
+			return c.InternalError(err, w, r)
+		}
+	}
+
+	http.Redirect(w, r, "/user/edit/privacy/?updated=1", http.StatusSeeOther)
+	return nil
+}
+
 func AccountEditEmail(w http.ResponseWriter, r *http.Request, user c.User, h *c.Header) c.RouteError {
 	accountEditHead("account_email", w, r, &user, h)
 	emails, err := c.Emails.GetEmailsByUser(&user)
@@ -598,10 +629,9 @@ func AccountEditEmail(w http.ResponseWriter, r *http.Request, user c.User, h *c.
 
 func AccountEditEmailAddSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	email := r.PostFormValue("email")
-
 	_, err := c.Emails.Get(&user, email)
 	if err == nil {
-		return c.LocalError("You have already added this email.",w,r,user)
+		return c.LocalError("You have already added this email.", w, r, user)
 	} else if err != sql.ErrNoRows && err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -615,7 +645,7 @@ func AccountEditEmailAddSubmit(w http.ResponseWriter, r *http.Request, user c.Us
 	}
 	err = c.Emails.Add(user.ID, email, token)
 	if err != nil {
-		return c.InternalError(err,w,r)
+		return c.InternalError(err, w, r)
 	}
 	if c.Site.EnableEmails {
 		err = c.SendValidationEmail(user.Name, email, token)
@@ -623,7 +653,7 @@ func AccountEditEmailAddSubmit(w http.ResponseWriter, r *http.Request, user c.Us
 			return c.LocalError(p.GetErrorPhrase("register_email_fail"), w, r, user)
 		}
 	}
-	
+
 	http.Redirect(w, r, "/user/edit/email/?added=1", http.StatusSeeOther)
 	return nil
 }
@@ -635,19 +665,19 @@ func AccountEditEmailRemoveSubmit(w http.ResponseWriter, r *http.Request, user c
 	// Quick and dirty check
 	_, err := c.Emails.Get(&user, email)
 	if err == sql.ErrNoRows {
-		return c.LocalError("This email isn't set on this user.",w,r,user)
+		return c.LocalError("This email isn't set on this user.", w, r, user)
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
 	if headerLite.Settings["activation_type"] == 2 && user.Email == email {
-		return c.LocalError("You can't remove your primary email when mandatory email activation is enabled.",w,r,user)
+		return c.LocalError("You can't remove your primary email when mandatory email activation is enabled.", w, r, user)
 	}
 
 	err = c.Emails.Delete(user.ID, email)
 	if err != nil {
-		return c.InternalError(err,w,r)
+		return c.InternalError(err, w, r)
 	}
-	
+
 	http.Redirect(w, r, "/user/edit/email/?removed=1", http.StatusSeeOther)
 	return nil
 }
@@ -729,13 +759,13 @@ func AccountBlocked(w http.ResponseWriter, r *http.Request, user c.User, h *c.He
 	for _, uid := range uids {
 		u, err := c.Users.Get(uid)
 		if err != nil {
-			return c.InternalError(err,w,r)
+			return c.InternalError(err, w, r)
 		}
 		blocks = append(blocks, u)
 	}
 
 	pageList := c.Paginate(page, lastPage, 5)
-	pi := c.Account{h, "logins", "account_blocked", c.AccountBlocksPage{h, blocks, c.Paginator{pageList, page, lastPage}}}
+	pi := c.Account{h, "blocked", "account_blocked", c.AccountBlocksPage{h, blocks, c.Paginator{pageList, page, lastPage}}}
 	return renderTemplate("account", w, r, h, pi)
 }
 

@@ -31,12 +31,12 @@ type Version struct {
 }
 
 // TODO: Write a test for this
-func (version *Version) String() (out string) {
-	out = strconv.Itoa(version.Major) + "." + strconv.Itoa(version.Minor) + "." + strconv.Itoa(version.Patch)
-	if version.Tag != "" {
-		out += "-" + version.Tag
-		if version.TagID != 0 {
-			out += strconv.Itoa(version.TagID)
+func (ver *Version) String() (out string) {
+	out = strconv.Itoa(ver.Major) + "." + strconv.Itoa(ver.Minor) + "." + strconv.Itoa(ver.Patch)
+	if ver.Tag != "" {
+		out += "-" + ver.Tag
+		if ver.TagID != 0 {
+			out += strconv.Itoa(ver.TagID)
 		}
 	}
 	return
@@ -335,10 +335,10 @@ func HasSuspiciousEmail(email string) bool {
 	return dotCount > 7 || shortBits > 2
 }
 
-var weakPassStrings = []string{"test", "123","6969","password", "qwerty", "fuck", "love"}
+var weakPassStrings = []string{"test", "123", "6969", "password", "qwerty", "fuck", "love"}
 
 // TODO: Write a test for this
-func WeakPassword(password string, username string, email string) error {
+func WeakPassword(password, username, email string) error {
 	lowPassword := strings.ToLower(password)
 	switch {
 	case password == "":
@@ -422,7 +422,7 @@ func createFile(name string) error {
 }
 
 // TODO: Write a test for this
-func writeFile(name string, content string) (err error) {
+func writeFile(name, content string) (err error) {
 	f, err := os.Create(name)
 	if err != nil {
 		return err

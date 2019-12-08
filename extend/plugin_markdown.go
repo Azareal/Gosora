@@ -373,7 +373,6 @@ func markdownSkipList(data string, index int) int {
 					goto SkipListInnerLoop
 				}
 			}
-
 			if index >= datalen {
 				if data[index] != '*' && data[index] != '-' {
 					if (lastNewline + 1) < datalen {

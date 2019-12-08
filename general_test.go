@@ -791,7 +791,7 @@ func BenchmarkQueryTopicParallel(b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
 		var tu c.TopicUser
 		for pb.Next() {
-			err := db.QueryRow("select topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ipaddress, topics.views, topics.postCount, topics.likeCount, users.name, users.avatar, users.group, users.url_prefix, users.url_name, users.level from topics left join users ON topics.createdBy = users.uid where tid = ?", 1).Scan(&tu.Title, &tu.Content, &tu.CreatedBy, &tu.CreatedAt, &tu.IsClosed, &tu.Sticky, &tu.ParentID, &tu.IP, &tu.ViewCount, &tu.PostCount, &tu.LikeCount, &tu.CreatedByName, &tu.Avatar, &tu.Group, &tu.URLPrefix, &tu.URLName, &tu.Level)
+			err := db.QueryRow("select topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ipaddress, topics.views, topics.postCount, topics.likeCount, users.name, users.avatar, users.group, users.level from topics left join users ON topics.createdBy = users.uid where tid = ?", 1).Scan(&tu.Title, &tu.Content, &tu.CreatedBy, &tu.CreatedAt, &tu.IsClosed, &tu.Sticky, &tu.ParentID, &tu.IP, &tu.ViewCount, &tu.PostCount, &tu.LikeCount, &tu.CreatedByName, &tu.Avatar, &tu.Group, &tu.Level)
 			if err == ErrNoRows {
 				log.Fatal("No rows found!")
 				return
@@ -812,14 +812,14 @@ func BenchmarkQueryPreparedTopicParallel(b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
 		var tu c.TopicUser
 
-		getTopicUser, err := qgen.Builder.SimpleLeftJoin("topics", "users", "topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ipaddress, topics.postCount, topics.likeCount, users.name, users.avatar, users.group, users.url_prefix, users.url_name, users.level", "topics.createdBy = users.uid", "tid = ?", "", "")
+		getTopicUser, err := qgen.Builder.SimpleLeftJoin("topics", "users", "topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ipaddress, topics.postCount, topics.likeCount, users.name, users.avatar, users.group, users.level", "topics.createdBy = users.uid", "tid = ?", "", "")
 		if err != nil {
 			b.Fatal(err)
 		}
 		defer getTopicUser.Close()
 
 		for pb.Next() {
-			err := getTopicUser.QueryRow(1).Scan(&tu.Title, &tu.Content, &tu.CreatedBy, &tu.CreatedAt, &tu.IsClosed, &tu.Sticky, &tu.ParentID, &tu.IP, &tu.PostCount, &tu.LikeCount, &tu.CreatedByName, &tu.Avatar, &tu.Group, &tu.URLPrefix, &tu.URLName, &tu.Level)
+			err := getTopicUser.QueryRow(1).Scan(&tu.Title, &tu.Content, &tu.CreatedBy, &tu.CreatedAt, &tu.IsClosed, &tu.Sticky, &tu.ParentID, &tu.IP, &tu.PostCount, &tu.LikeCount, &tu.CreatedByName, &tu.Avatar, &tu.Group, &tu.Level)
 			if err == ErrNoRows {
 				b.Fatal("No rows found!")
 				return
@@ -873,7 +873,7 @@ func BenchmarkQueriesSerial(b *testing.B) {
 	var tu c.TopicUser
 	b.Run("topic", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			err := db.QueryRow("select topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ipaddress, topics.postCount, topics.likeCount, users.name, users.avatar, users.group, users.url_prefix, users.url_name, users.level from topics left join users ON topics.createdBy = users.uid where tid = ?", 1).Scan(&tu.Title, &tu.Content, &tu.CreatedBy, &tu.CreatedAt, &tu.IsClosed, &tu.Sticky, &tu.ParentID, &tu.IP, &tu.PostCount, &tu.LikeCount, &tu.CreatedByName, &tu.Avatar, &tu.Group, &tu.URLPrefix, &tu.URLName, &tu.Level)
+			err := db.QueryRow("select topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ipaddress, topics.postCount, topics.likeCount, users.name, users.avatar, users.group, users.level from topics left join users ON topics.createdBy = users.uid where tid = ?", 1).Scan(&tu.Title, &tu.Content, &tu.CreatedBy, &tu.CreatedAt, &tu.IsClosed, &tu.Sticky, &tu.ParentID, &tu.IP, &tu.PostCount, &tu.LikeCount, &tu.CreatedByName, &tu.Avatar, &tu.Group, &tu.Level)
 			if err == ErrNoRows {
 				b.Fatal("No rows found!")
 				return
@@ -885,7 +885,7 @@ func BenchmarkQueriesSerial(b *testing.B) {
 	})
 	b.Run("topic_replies", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			rows, err := db.Query("select replies.rid, replies.content, replies.createdBy, replies.createdAt, replies.lastEdit, replies.lastEditBy, users.avatar, users.name, users.is_super_admin, users.group, users.url_prefix, users.url_name, users.level, replies.ipaddress from replies left join users ON replies.createdBy = users.uid where tid = ?", 1)
+			rows, err := db.Query("select replies.rid, replies.content, replies.createdBy, replies.createdAt, replies.lastEdit, replies.lastEditBy, users.avatar, users.name, users.is_super_admin, users.group, users.level, replies.ipaddress from replies left join users ON replies.createdBy = users.uid where tid = ?", 1)
 			if err != nil {
 				b.Fatal(err)
 				return
@@ -907,13 +907,13 @@ func BenchmarkQueriesSerial(b *testing.B) {
 	var group int
 	b.Run("topic_replies_scan", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			rows, err := db.Query("select replies.rid, replies.content, replies.createdBy, replies.createdAt, replies.lastEdit, replies.lastEditBy, users.avatar, users.name, users.is_super_admin, users.group, users.url_prefix, users.url_name, users.level, replies.ipaddress from replies left join users ON replies.createdBy = users.uid where tid = ?", 1)
+			rows, err := db.Query("select replies.rid, replies.content, replies.createdBy, replies.createdAt, replies.lastEdit, replies.lastEditBy, users.avatar, users.name, users.is_super_admin, users.group, users.level, replies.ipaddress from replies left join users ON replies.createdBy = users.uid where tid = ?", 1)
 			if err != nil {
 				b.Fatal(err)
 				return
 			}
 			for rows.Next() {
-				err := rows.Scan(&r.ID, &r.Content, &r.CreatedBy, &r.CreatedAt, &r.LastEdit, &r.LastEditBy, &r.Avatar, &r.CreatedByName, &isSuperAdmin, &group, &r.URLPrefix, &r.URLName, &r.Level, &r.IP)
+				err := rows.Scan(&r.ID, &r.Content, &r.CreatedBy, &r.CreatedAt, &r.LastEdit, &r.LastEditBy, &r.Avatar, &r.CreatedByName, &isSuperAdmin, &group, &r.Level, &r.IP)
 				if err != nil {
 					b.Fatal(err)
 					return
@@ -933,36 +933,19 @@ func BenchmarkQueriesSerial(b *testing.B) {
 // TODO: Take the attachment system into account in these parser benches
 func BenchmarkParserSerial(b *testing.B) {
 	b.ReportAllocs()
-	b.Run("empty_post", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			_ = c.ParseMessage("", 0, "")
+	f := func(name, msg string) func(b *testing.B) {
+		return func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				_ = c.ParseMessage(msg, 0, "", nil)
+			}
 		}
-	})
-	b.Run("short_post", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			_ = c.ParseMessage("Hey everyone, how's it going?", 0, "")
-		}
-	})
-	b.Run("one_smily", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			_ = c.ParseMessage("Hey everyone, how's it going? :)", 0, "")
-		}
-	})
-	b.Run("five_smilies", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			_ = c.ParseMessage("Hey everyone, how's it going? :):):):):)", 0, "")
-		}
-	})
-	b.Run("ten_smilies", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			_ = c.ParseMessage("Hey everyone, how's it going? :):):):):):):):):):)", 0, "")
-		}
-	})
-	b.Run("twenty_smilies", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			_ = c.ParseMessage("Hey everyone, how's it going? :):):):):):):):):):):):):):):):):):):):)", 0, "")
-		}
-	})
+	}
+	f("empty_post","")
+	f("short_post","Hey everyone, how's it going?")
+	f("one_smily","Hey everyone, how's it going? :)")
+	f("five_smilies","Hey everyone, how's it going? :):):):):)")
+	f("ten_smilies","Hey everyone, how's it going? :):):):):):):):):):)")
+	f("twenty_smilies","Hey everyone, how's it going? :):):):):):):):):):):):):):):):):):):):)")
 }
 
 func BenchmarkBBCodePluginWithRegexpSerial(b *testing.B) {

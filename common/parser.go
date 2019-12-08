@@ -449,10 +449,26 @@ var hashLinkMap = map[string]func(*strings.Builder, string, *int){
 	// TODO: Forum Shortcode Link
 }
 
+// TODO: Pack multiple bit flags into an integer instead of using a struct?
+var DefaultParseSettings = &ParseSettings{}
+
+type ParseSettings struct {
+	NoEmbed bool
+}
+
+func (ps *ParseSettings) CopyPtr() *ParseSettings {
+	n := &ParseSettings{}
+	*n = *ps
+	return n
+}
+
 // TODO: Write a test for this
 // TODO: We need a lot more hooks here. E.g. To add custom media types and handlers.
 // TODO: Use templates to reduce the amount of boilerplate?
-func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/) string {
+func ParseMessage(msg string, sectionID int, sectionType string, settings *ParseSettings /*, user User*/) string {
+	if settings == nil {
+		settings = DefaultParseSettings
+	}
 	// TODO: Word boundary detection for these to avoid mangling code
 	msg = strings.Replace(msg, ":)", "😀", -1)
 	msg = strings.Replace(msg, ":(", "😞", -1)
@@ -544,10 +560,10 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 				i--
 			} else if msg[i] == 'h' || msg[i] == 'f' || msg[i] == 'g' || msg[i] == '/' {
 				//fmt.Println("s3")
-				if len(msg) > i+3 && msg[i+1] == 't' && msg[i+2] == 't' && msg[i+3] == 'p' {
+				if len(msg) > i+5 && msg[i+1] == 't' && msg[i+2] == 't' && msg[i+3] == 'p' {
 					if len(msg) > i+6 && msg[i+4] == 's' && msg[i+5] == ':' && msg[i+6] == '/' {
 						// Do nothing
-					} else if len(msg) > i+5 && msg[i+4] == ':' && msg[i+5] == '/' {
+					} else if msg[i+4] == ':' && msg[i+5] == '/' {
 						// Do nothing
 					} else {
 						continue
@@ -593,7 +609,7 @@ func ParseMessage(msg string, sectionID int, sectionType string /*, user User*/)
 					continue
 				}
 
-				media, ok := parseMediaString(msg[i : i+urlLen])
+				media, ok := parseMediaString(msg[i:i+urlLen], settings)
 				if !ok {
 					//fmt.Println("o3")
 					sb.Write(InvalidURL)
@@ -702,8 +718,8 @@ func validateURLString(data string) bool {
 
 	// ? - There should only be one : and that's only if the URL is on a non-standard port. Same for ?s.
 	for ; len(data) > i; i++ {
-		ch := data[i]                                                                                                                                                                                                    // char
-		if ch != '\\' && ch != '_' && ch != ':' && ch != '?' && ch != '&' && ch != '=' && ch != ';' && ch != '@' && ch != '#' && ch != ']' && !(ch > 44 && ch < 58) && !(ch > 64 && ch < 92) && !(ch > 96 && ch < 123) { // 90 is Z, 91 is [
+		ch := data[i]
+		if ch != '\\' && ch != '_' && ch != '?' && ch != '&' && ch != '=' && ch != '@' && ch != '#' && ch != ']' && !(ch > 44 && ch < 60) && !(ch > 64 && ch < 92) && !(ch > 96 && ch < 123) { // 57 is 9, 58 is :, 59 is ;, 90 is Z, 91 is [
 			return false
 		}
 	}
@@ -728,8 +744,8 @@ func validatedURLBytes(data []byte) (url []byte) {
 
 	// ? - There should only be one : and that's only if the URL is on a non-standard port. Same for ?s.
 	for ; datalen > i; i++ {
-		ch := data[i]                                                                                                                                                                                                    // char
-		if ch != '\\' && ch != '_' && ch != ':' && ch != '?' && ch != '&' && ch != '=' && ch != ';' && ch != '@' && ch != '#' && ch != ']' && !(ch > 44 && ch < 58) && !(ch > 64 && ch < 92) && !(ch > 96 && ch < 123) { // 90 is Z, 91 is [
+		ch := data[i]
+		if ch != '\\' && ch != '_' && ch != '?' && ch != '&' && ch != '=' && ch != '@' && ch != '#' && ch != ']' && !(ch > 44 && ch < 60) && !(ch > 64 && ch < 92) && !(ch > 96 && ch < 123) { // 57 is 9, 58 is :, 59 is ;, 90 is Z, 91 is [
 			return InvalidURL
 		}
 	}
@@ -756,8 +772,8 @@ func PartialURLString(data string) (url []byte) {
 
 	// ? - There should only be one : and that's only if the URL is on a non-standard port. Same for ?s.
 	for ; end >= i; i++ {
-		ch := data[i]                                                                                                                                                                                                    // char
-		if ch != '\\' && ch != '_' && ch != ':' && ch != '?' && ch != '&' && ch != '=' && ch != ';' && ch != '@' && ch != '#' && ch != ']' && !(ch > 44 && ch < 58) && !(ch > 64 && ch < 92) && !(ch > 96 && ch < 123) { // 90 is Z, 91 is [
+		ch := data[i]
+		if ch != '\\' && ch != '_' && ch != '?' && ch != '&' && ch != '=' && ch != '@' && ch != '#' && ch != ']' && !(ch > 44 && ch < 60) && !(ch > 64 && ch < 92) && !(ch > 96 && ch < 123) { // 57 is 9, 58 is :, 59 is ;, 90 is Z, 91 is [
 			end = i
 		}
 	}
@@ -796,7 +812,7 @@ func PartialURLStringLen(data string) (int, bool) {
 		if ch < 33 {  // space and invisibles
 			//fmt.Println("e2:",i)
 			return i, i != f
-		} else if ch != '\\' && ch != '_' && ch != ':' && ch != '?' && ch != '&' && ch != '=' && ch != ';' && ch != '@' && ch != '#' && ch != ']' && !(ch > 44 && ch < 58) && !(ch > 64 && ch < 92) && !(ch > 96 && ch < 123) { // 90 is Z, 91 is [
+		} else if ch != '\\' && ch != '_' && ch != '?' && ch != '&' && ch != '=' && ch != '@' && ch != '#' && ch != ']' && !(ch > 44 && ch < 60) && !(ch > 64 && ch < 92) && !(ch > 96 && ch < 123) { // 57 is 9, 58 is :, 59 is ;, 90 is Z, 91 is [
 			//log.Print("Bad Character: ", ch)
 			//fmt.Println("e3")
 			return i, false
@@ -830,8 +846,8 @@ func PartialURLStringLen2(data string) int {
 
 	// ? - There should only be one : and that's only if the URL is on a non-standard port. Same for ?s.
 	for ; len(data) > i; i++ {
-		ch := data[i]                                                                                                                                                                                       //char
-		if ch != '\\' && ch != '_' && ch != ':' && ch != '?' && ch != '&' && ch != '=' && ch != ';' && ch != '@' && ch != '#' && !(ch > 44 && ch < 58) && !(ch > 64 && ch < 91) && !(ch > 96 && ch < 123) { // 90 is Z, 91 is [
+		ch := data[i]
+		if ch != '\\' && ch != '_' && ch != '?' && ch != '&' && ch != '=' && ch != '@' && ch != '#' && ch != ']' && !(ch > 44 && ch < 60) && !(ch > 64 && ch < 91) && !(ch > 96 && ch < 123) { // 57 is 9, 58 is :, 59 is ;, 90 is Z, 91 is [
 			//log.Print("Bad Character: ", ch)
 			return i
 		}
@@ -850,7 +866,7 @@ type MediaEmbed struct {
 }
 
 // TODO: Write a test for this
-func parseMediaString(data string) (media MediaEmbed, ok bool) {
+func parseMediaString(data string, settings *ParseSettings) (media MediaEmbed, ok bool) {
 	if !validateURLString(data) {
 		return media, false
 	}
@@ -907,30 +923,32 @@ func parseMediaString(data string) (media MediaEmbed, ok bool) {
 		}
 	}
 
-	// ? - I don't think this hostname will hit every YT domain
-	// TODO: Make this a more customisable handler rather than hard-coding it in here
-	if strings.HasSuffix(host, ".youtube.com") && path == "/watch" {
-		video, ok := query["v"]
-		if ok && len(video) >= 1 && video[0] != "" {
-			media.Type = "raw"
-			// TODO: Filter the URL to make sure no nasties end up in there
-			media.Body = "<iframe class='postIframe' src='https://www.youtube-nocookie.com/embed/" + video[0] + "' frameborder=0 allowfullscreen></iframe>"
-			return media, true
-		}
-	}
-
-	if lastFrag := pathFrags[len(pathFrags)-1]; lastFrag != "" {
-		// TODO: Write a function for getting the file extension of a string
-		if extarr := strings.Split(lastFrag, "."); len(extarr) >= 2 {
-			ext := extarr[len(extarr)-1]
-			if ImageFileExts.Contains(ext) {
-				media.Type = "image"
-				var sport string
-				if port != "443" && port != "80" && port != "" {
-					sport = ":" + port
-				}
-				media.URL = scheme + "//" + host + sport + path
+	if !settings.NoEmbed {
+		// ? - I don't think this hostname will hit every YT domain
+		// TODO: Make this a more customisable handler rather than hard-coding it in here
+		if strings.HasSuffix(host, ".youtube.com") && path == "/watch" {
+			video, ok := query["v"]
+			if ok && len(video) >= 1 && video[0] != "" {
+				media.Type = "raw"
+				// TODO: Filter the URL to make sure no nasties end up in there
+				media.Body = "<iframe class='postIframe' src='https://www.youtube-nocookie.com/embed/" + video[0] + "' frameborder=0 allowfullscreen></iframe>"
 				return media, true
+			}
+		}
+
+		if lastFrag := pathFrags[len(pathFrags)-1]; lastFrag != "" {
+			// TODO: Write a function for getting the file extension of a string
+			if extarr := strings.Split(lastFrag, "."); len(extarr) >= 2 {
+				ext := extarr[len(extarr)-1]
+				if ImageFileExts.Contains(ext) {
+					media.Type = "image"
+					var sport string
+					if port != "443" && port != "80" && port != "" {
+						sport = ":" + port
+					}
+					media.URL = scheme + "//" + host + sport + path
+					return media, true
+				}
 			}
 		}
 	}
@@ -947,8 +965,8 @@ func parseMediaString(data string) (media MediaEmbed, ok bool) {
 	if len(uurl.Fragment) > 0 {
 		frag = "#" + uurl.Fragment
 	}
-	media.URL = scheme + "//" + host + sport + path + q + frag
 	media.FURL = host + sport + path + q + frag
+	media.URL = scheme + "//" + media.FURL
 
 	return media, true
 }
@@ -978,7 +996,7 @@ func CoerceIntString(data string) (res int, length int) {
 
 // TODO: Write tests for this
 // Make sure we reflect changes to this in the JS port in /public/global.js
-func Paginate(currentPage int, lastPage int, maxPages int) (out []int) {
+func Paginate(currentPage, lastPage, maxPages int) (out []int) {
 	diff := lastPage - currentPage
 	pre := 3
 	if diff < 3 {
@@ -998,7 +1016,7 @@ func Paginate(currentPage int, lastPage int, maxPages int) (out []int) {
 
 // TODO: Write tests for this
 // Make sure we reflect changes to this in the JS port in /public/global.js
-func PageOffset(count int, page int, perPage int) (int, int, int) {
+func PageOffset(count, page, perPage int) (int, int, int) {
 	var offset int
 	lastPage := LastPage(count, perPage)
 	if page > 1 {
@@ -1020,6 +1038,6 @@ func PageOffset(count int, page int, perPage int) (int, int, int) {
 
 // TODO: Write tests for this
 // Make sure we reflect changes to this in the JS port in /public/global.js
-func LastPage(count int, perPage int) int {
+func LastPage(count, perPage int) int {
 	return (count / perPage) + 1
 }

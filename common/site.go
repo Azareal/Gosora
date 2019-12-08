@@ -91,6 +91,7 @@ type config struct {
 
 	PrimaryServer  bool
 	ServerCount    int
+	LastIPCutoff   int // Currently just -1, non--1, but will accept the number of months a user's last IP should be retained for in the future before being purged. Please note that the other two cutoffs below operate off the numbers of days instead.
 	PostIPCutoff   int
 	LogPruneCutoff int
 
@@ -99,7 +100,7 @@ type config struct {
 	//LooseCSP             bool
 	LooseHost              bool
 	LoosePort              bool
-	SslSchema bool // Pretend we're using SSL, might be useful if a reverse-proxy terminates SSL in-front of Gosora
+	SslSchema              bool // Pretend we're using SSL, might be useful if a reverse-proxy terminates SSL in-front of Gosora
 	DisableServerPush      bool
 	EnableCDNPush          bool
 	DisableNoavatarRange   bool
@@ -107,6 +108,7 @@ type config struct {
 
 	RefNoTrack bool
 	RefNoRef   bool
+	NoEmbed    bool
 
 	Noavatar            string // ? - Move this into the settings table?
 	ItemsPerPage        int    // ? - Move this into the settings table?
@@ -163,6 +165,10 @@ func LoadConfig() error {
 func ProcessConfig() (err error) {
 	Config.Noavatar = strings.Replace(Config.Noavatar, "{site_url}", Site.URL, -1)
 	guestAvatar = GuestAvatar{buildNoavatar(0, 200), buildNoavatar(0, 48)}
+
+	// Strip these unnecessary bits, if we find them.
+	Site.URL = strings.TrimPrefix(Site.URL, "http://")
+	Site.URL = strings.TrimPrefix(Site.URL, "https://")
 	Site.Host = Site.URL
 	Site.LocalHost = Site.Host == "localhost" || Site.Host == "127.0.0.1" || Site.Host == "::1"
 	Site.PortInt, err = strconv.Atoi(Site.Port)
@@ -216,6 +222,9 @@ func ProcessConfig() (err error) {
 	if Config.LogPruneCutoff == 0 {
 		Config.LogPruneCutoff = 365 // Default cutoff
 	}
+	if Config.NoEmbed {
+		DefaultParseSettings.NoEmbed = true
+	}
 
 	// ? Find a way of making these unlimited if zero? It might rule out some optimisations, waste memory, and break layouts
 	if Config.MaxTopicTitleLength == 0 {
@@ -240,20 +249,18 @@ func ProcessConfig() (err error) {
 	return nil
 }
 
-func VerifyConfig() error {
-	if !Forums.Exists(Config.DefaultForum) {
-		return errors.New("Invalid default forum")
+func VerifyConfig() (err error) {
+	switch {
+	case !Forums.Exists(Config.DefaultForum):
+		err = errors.New("Invalid default forum")
+	case Config.ServerCount < 1:
+		err = errors.New("You can't have less than one server")
+	case Config.MaxTopicTitleLength > 100:
+		err = errors.New("The max topic title length cannot be over 100 as that's unable to fit in the database row")
+	case Config.MaxUsernameLength > 100:
+		err = errors.New("The max username length cannot be over 100 as that's unable to fit in the database row")
 	}
-	if Config.ServerCount < 1 {
-		return errors.New("You can't have less than one server")
-	}
-	if Config.MaxTopicTitleLength > 100 {
-		return errors.New("The max topic title length cannot be over 100 as that's unable to fit in the database row")
-	}
-	if Config.MaxUsernameLength > 100 {
-		return errors.New("The max username length cannot be over 100 as that's unable to fit in the database row")
-	}
-	return nil
+	return err
 }
 
 func SwitchToTestDB() {

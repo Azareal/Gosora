@@ -5,7 +5,7 @@ import (
 	"errors"
 	"strconv"
 
-	"github.com/Azareal/Gosora/query_gen"
+	qgen "github.com/Azareal/Gosora/query_gen"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -20,11 +20,11 @@ type UserStore interface {
 	Get(id int) (*User, error)
 	GetByName(name string) (*User, error)
 	Exists(id int) bool
-	GetOffset(offset int, perPage int) (users []*User, err error)
+	GetOffset(offset, perPage int) ([]*User, error)
 	//BulkGet(ids []int) ([]*User, error)
 	BulkGetMap(ids []int) (map[int]*User, error)
 	BypassGet(id int) (*User, error)
-	Create(username string, password string, email string, group int, active bool) (int, error)
+	Create(name string, password string, email string, group int, active bool) (int, error)
 	Reload(id int) error
 	Count() int
 
@@ -35,12 +35,12 @@ type UserStore interface {
 type DefaultUserStore struct {
 	cache UserCache
 
-	get            *sql.Stmt
-	getByName      *sql.Stmt
-	getOffset      *sql.Stmt
-	exists         *sql.Stmt
-	register       *sql.Stmt
-	usernameExists *sql.Stmt
+	get        *sql.Stmt
+	getByName  *sql.Stmt
+	getOffset  *sql.Stmt
+	exists     *sql.Stmt
+	register   *sql.Stmt
+	nameExists *sql.Stmt
 	count      *sql.Stmt
 }
 
@@ -50,16 +50,17 @@ func NewDefaultUserStore(cache UserCache) (*DefaultUserStore, error) {
 	if cache == nil {
 		cache = NewNullUserCache()
 	}
+	u := "users"
 	// TODO: Add an admin version of registerStmt with more flexibility?
 	return &DefaultUserStore{
-		cache:          cache,
-		get:            acc.SimpleSelect("users", "name, group, active, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, posts, liked, last_ip, temp_group", "uid = ?", "", ""),
-		getByName:      acc.Select("users").Columns("uid, name, group, active, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, posts, liked, last_ip, temp_group").Where("name = ?").Prepare(),
-		getOffset:      acc.Select("users").Columns("uid, name, group, active, is_super_admin, session, email, avatar, message, url_prefix, url_name, level, score, posts, liked, last_ip, temp_group").Orderby("uid ASC").Limit("?,?").Prepare(),
-		exists:         acc.SimpleSelect("users", "uid", "uid = ?", "", ""),
-		register:       acc.Insert("users").Columns("name, email, password, salt, group, is_super_admin, session, active, message, createdAt, lastActiveAt, lastLiked, oldestItemLikedCreatedAt").Fields("?,?,?,?,?,0,'',?,'',UTC_TIMESTAMP(),UTC_TIMESTAMP(),UTC_TIMESTAMP(),UTC_TIMESTAMP()").Prepare(), // TODO: Implement user_count on users_groups here
-		usernameExists: acc.SimpleSelect("users", "name", "name = ?", "", ""),
-		count:      acc.Count("users").Prepare(),
+		cache:      cache,
+		get:        acc.Select(u).Columns("name, group, active, is_super_admin, session, email, avatar, message, level, score, posts, liked, last_ip, temp_group, enable_embeds").Where("uid = ?").Prepare(),
+		getByName:  acc.Select(u).Columns("uid, name, group, active, is_super_admin, session, email, avatar, message, level, score, posts, liked, last_ip, temp_group, enable_embeds").Where("name = ?").Prepare(),
+		getOffset:  acc.Select(u).Columns("uid, name, group, active, is_super_admin, session, email, avatar, message, level, score, posts, liked, last_ip, temp_group, enable_embeds").Orderby("uid ASC").Limit("?,?").Prepare(),
+		exists:     acc.Exists(u, "uid").Prepare(),
+		register:   acc.Insert(u).Columns("name, email, password, salt, group, is_super_admin, session, active, message, createdAt, lastActiveAt, lastLiked, oldestItemLikedCreatedAt").Fields("?,?,?,?,?,0,'',?,'',UTC_TIMESTAMP(),UTC_TIMESTAMP(),UTC_TIMESTAMP(),UTC_TIMESTAMP()").Prepare(), // TODO: Implement user_count on users_groups here
+		nameExists: acc.Exists(u, "name").Prepare(),
+		count:      acc.Count(u).Prepare(),
 	}, acc.FirstError()
 }
 
@@ -86,8 +87,13 @@ func (s *DefaultUserStore) Get(id int) (*User, error) {
 	//log.Print("uncached user")
 
 	u = &User{ID: id, Loggedin: true}
-	err = s.get.QueryRow(id).Scan(&u.Name, &u.Group, &u.Active, &u.IsSuperAdmin, &u.Session, &u.Email, &u.RawAvatar, &u.Message, &u.URLPrefix, &u.URLName, &u.Level, &u.Score, &u.Posts,&u.Liked, &u.LastIP, &u.TempGroup)
+	var embeds int
+	err = s.get.QueryRow(id).Scan(&u.Name, &u.Group, &u.Active, &u.IsSuperAdmin, &u.Session, &u.Email, &u.RawAvatar, &u.Message, &u.Level, &u.Score, &u.Posts, &u.Liked, &u.LastIP, &u.TempGroup, &embeds)
 	if err == nil {
+		if embeds != -1 {
+			u.ParseSettings = DefaultParseSettings.CopyPtr()
+			u.ParseSettings.NoEmbed = embeds == 0
+		}
 		u.Init()
 		s.cache.Set(u)
 	}
@@ -98,8 +104,13 @@ func (s *DefaultUserStore) Get(id int) (*User, error) {
 // ! This bypasses the cache, use frugally
 func (s *DefaultUserStore) GetByName(name string) (*User, error) {
 	u := &User{Loggedin: true}
-	err := s.getByName.QueryRow(name).Scan(&u.ID, &u.Name, &u.Group, &u.Active, &u.IsSuperAdmin, &u.Session, &u.Email, &u.RawAvatar, &u.Message, &u.URLPrefix, &u.URLName, &u.Level, &u.Score, &u.Posts,&u.Liked, &u.LastIP, &u.TempGroup)
+	var embeds int
+	err := s.getByName.QueryRow(name).Scan(&u.ID, &u.Name, &u.Group, &u.Active, &u.IsSuperAdmin, &u.Session, &u.Email, &u.RawAvatar, &u.Message, &u.Level, &u.Score, &u.Posts, &u.Liked, &u.LastIP, &u.TempGroup, &embeds)
 	if err == nil {
+		if embeds != -1 {
+			u.ParseSettings = DefaultParseSettings.CopyPtr()
+			u.ParseSettings.NoEmbed = embeds == 0
+		}
 		u.Init()
 		s.cache.Set(u)
 	}
@@ -115,11 +126,16 @@ func (s *DefaultUserStore) GetOffset(offset int, perPage int) (users []*User, er
 	}
 	defer rows.Close()
 
+	var embeds int
 	for rows.Next() {
 		u := &User{Loggedin: true}
-		err := rows.Scan(&u.ID, &u.Name, &u.Group, &u.Active, &u.IsSuperAdmin, &u.Session, &u.Email, &u.RawAvatar, &u.Message, &u.URLPrefix, &u.URLName, &u.Level, &u.Score, &u.Posts, &u.Liked, &u.LastIP, &u.TempGroup)
+		err := rows.Scan(&u.ID, &u.Name, &u.Group, &u.Active, &u.IsSuperAdmin, &u.Session, &u.Email, &u.RawAvatar, &u.Message, &u.Level, &u.Score, &u.Posts, &u.Liked, &u.LastIP, &u.TempGroup, &embeds)
 		if err != nil {
 			return nil, err
+		}
+		if embeds != -1 {
+			u.ParseSettings = DefaultParseSettings.CopyPtr()
+			u.ParseSettings.NoEmbed = embeds == 0
 		}
 		u.Init()
 		s.cache.Set(u)
@@ -164,31 +180,35 @@ func (s *DefaultUserStore) BulkGetMap(ids []int) (list map[int]*User, err error)
 
 	// TODO: Add a function for the q stuff
 	var q string
-	idList := make([]interface{},len(ids))
+	idList := make([]interface{}, len(ids))
 	for i, id := range ids {
 		idList[i] = strconv.Itoa(id)
 		q += "?,"
 	}
 	q = q[0 : len(q)-1]
 
-	rows, err := qgen.NewAcc().Select("users").Columns("uid,name,group,active,is_super_admin,session,email,avatar,message,url_prefix,url_name,level,score,posts,liked,last_ip,temp_group").Where("uid IN(" + q + ")").Query(idList...)
+	rows, err := qgen.NewAcc().Select("users").Columns("uid,name,group,active,is_super_admin,session,email,avatar,message,level,score,posts,liked,last_ip,temp_group,enable_embeds").Where("uid IN(" + q + ")").Query(idList...)
 	if err != nil {
 		return list, err
 	}
 	defer rows.Close()
 
+	var embeds int
 	for rows.Next() {
 		u := &User{Loggedin: true}
-		err := rows.Scan(&u.ID, &u.Name, &u.Group, &u.Active, &u.IsSuperAdmin, &u.Session, &u.Email, &u.RawAvatar, &u.Message, &u.URLPrefix, &u.URLName, &u.Level, &u.Score, &u.Posts, &u.Liked, &u.LastIP, &u.TempGroup)
+		err := rows.Scan(&u.ID, &u.Name, &u.Group, &u.Active, &u.IsSuperAdmin, &u.Session, &u.Email, &u.RawAvatar, &u.Message, &u.Level, &u.Score, &u.Posts, &u.Liked, &u.LastIP, &u.TempGroup, &embeds)
 		if err != nil {
 			return list, err
+		}
+		if embeds != -1 {
+			u.ParseSettings = DefaultParseSettings.CopyPtr()
+			u.ParseSettings.NoEmbed = embeds == 0
 		}
 		u.Init()
 		s.cache.Set(u)
 		list[u.ID] = u
 	}
-	err = rows.Err()
-	if err != nil {
+	if err = rows.Err(); err != nil {
 		return list, err
 	}
 
@@ -212,8 +232,13 @@ func (s *DefaultUserStore) BulkGetMap(ids []int) (list map[int]*User, err error)
 
 func (s *DefaultUserStore) BypassGet(id int) (*User, error) {
 	u := &User{ID: id, Loggedin: true}
-	err := s.get.QueryRow(id).Scan(&u.Name, &u.Group, &u.Active, &u.IsSuperAdmin, &u.Session, &u.Email, &u.RawAvatar, &u.Message, &u.URLPrefix, &u.URLName, &u.Level, &u.Score, &u.Posts, &u.Liked, &u.LastIP, &u.TempGroup)
+	var embeds int
+	err := s.get.QueryRow(id).Scan(&u.Name, &u.Group, &u.Active, &u.IsSuperAdmin, &u.Session, &u.Email, &u.RawAvatar, &u.Message, &u.Level, &u.Score, &u.Posts, &u.Liked, &u.LastIP, &u.TempGroup, &embeds)
 	if err == nil {
+		if embeds != -1 {
+			u.ParseSettings = DefaultParseSettings.CopyPtr()
+			u.ParseSettings.NoEmbed = embeds == 0
+		}
 		u.Init()
 	}
 	return u, err
@@ -240,16 +265,16 @@ func (s *DefaultUserStore) Exists(id int) bool {
 
 // TODO: Change active to a bool?
 // TODO: Use unique keys for the usernames
-func (s *DefaultUserStore) Create(username string, password string, email string, group int, active bool) (int, error) {
+func (s *DefaultUserStore) Create(name string, password string, email string, group int, active bool) (int, error) {
 	// TODO: Strip spaces?
 
 	// ? This number might be a little screwy with Unicode, but it's the only consistent thing we have, as Unicode characters can be any number of bytes in theory?
-	if len(username) > Config.MaxUsernameLength {
+	if len(name) > Config.MaxUsernameLength {
 		return 0, ErrLongUsername
 	}
 
-	// Is this username already taken..?
-	err := s.usernameExists.QueryRow(username).Scan(&username)
+	// Is this name already taken..?
+	err := s.nameExists.QueryRow(name).Scan(&name)
 	if err != ErrNoRows {
 		return 0, ErrAccountExists
 	}
@@ -262,7 +287,7 @@ func (s *DefaultUserStore) Create(username string, password string, email string
 		return 0, err
 	}
 
-	res, err := s.register.Exec(username, email, string(hashedPassword), salt, group, active)
+	res, err := s.register.Exec(name, email, string(hashedPassword), salt, group, active)
 	if err != nil {
 		return 0, err
 	}

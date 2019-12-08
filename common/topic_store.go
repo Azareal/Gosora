@@ -29,7 +29,7 @@ type TopicStore interface {
 	BypassGet(id int) (*Topic, error)
 	BulkGetMap(ids []int) (list map[int]*Topic, err error)
 	Exists(id int) bool
-	Create(fid int, topicName string, content string, uid int, ipaddress string) (tid int, err error)
+	Create(fid int, name string, content string, uid int, ip string) (tid int, err error)
 	AddLastTopic(item *Topic, fid int) error // unimplemented
 	Reload(id int) error                     // Too much SQL logic to move into TopicCache
 	// TODO: Implement these two methods
@@ -197,22 +197,22 @@ func (s *DefaultTopicStore) Exists(id int) bool {
 	return s.exists.QueryRow(id).Scan(&id) == nil
 }
 
-func (s *DefaultTopicStore) Create(fid int, topicName string, content string, uid int, ip string) (tid int, err error) {
-	if topicName == "" {
+func (s *DefaultTopicStore) Create(fid int, name string, content string, uid int, ip string) (tid int, err error) {
+	if name == "" {
 		return 0, ErrNoTitle
 	}
 	// ? This number might be a little screwy with Unicode, but it's the only consistent thing we have, as Unicode characters can be any number of bytes in theory?
-	if len(topicName) > Config.MaxTopicTitleLength {
+	if len(name) > Config.MaxTopicTitleLength {
 		return 0, ErrLongTitle
 	}
 
-	parsedContent := strings.TrimSpace(ParseMessage(content, fid, "forums"))
+	parsedContent := strings.TrimSpace(ParseMessage(content, fid, "forums", nil))
 	if parsedContent == "" {
 		return 0, ErrNoBody
 	}
 	
 	// TODO: Move this statement into the topic store
-	res, err := s.create.Exec(fid, topicName, content, parsedContent, uid, ip, WordCount(content), uid)
+	res, err := s.create.Exec(fid, name, content, parsedContent, uid, ip, WordCount(content), uid)
 	if err != nil {
 		return 0, err
 	}

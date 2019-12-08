@@ -56,6 +56,8 @@ func userRoutes() *RouteGroup {
 			UploadAction("AvatarSubmit", "/avatar/submit/").MaxSizeVar("int(c.Config.MaxRequestSize)"),
 			Action("RevokeAvatarSubmit", "/avatar/revoke/submit/"),
 			Action("UsernameSubmit", "/username/submit/"), // TODO: Full test this
+			MView("Privacy", "/privacy/"),
+			Action("PrivacySubmit", "/privacy/submit/"),
 			MView("MFA", "/mfa/"),
 			MView("MFASetup", "/mfa/setup/"),
 			Action("MFASetupSubmit", "/mfa/setup/submit/"),

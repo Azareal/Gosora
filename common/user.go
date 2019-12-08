@@ -46,16 +46,19 @@ type User struct {
 	Avatar      string
 	MicroAvatar string
 	Message     string
-	URLPrefix   string // Move this to another table? Create a user lite?
-	URLName     string
-	Tag         string
-	Level       int
-	Score       int
-	Posts       int
-	Liked       int
-	LastIP      string // ! This part of the UserCache data might fall out of date
-	LastAgent   string // ! Temporary hack, don't use
-	TempGroup   int
+	// TODO: Implement something like this for profiles?
+	//URLPrefix   string // Move this to another table? Create a user lite?
+	//URLName     string
+	Tag       string
+	Level     int
+	Score     int
+	Posts     int
+	Liked     int
+	LastIP    string // ! This part of the UserCache data might fall out of date
+	LastAgent string // ! Temporary hack, don't use
+	TempGroup int
+
+	ParseSettings *ParseSettings
 }
 
 func (u *User) WebSockets() *WsJSONUser {
@@ -119,7 +122,7 @@ type UserStmts struct {
 	changeGroup *sql.Stmt
 	delete      *sql.Stmt
 	setAvatar   *sql.Stmt
-	setUsername *sql.Stmt
+	setName     *sql.Stmt
 	incTopics   *sql.Stmt
 	updateLevel *sql.Stmt
 	update      *sql.Stmt
@@ -131,8 +134,9 @@ type UserStmts struct {
 	incMegaposts *sql.Stmt
 	incLiked     *sql.Stmt
 
-	decLiked     *sql.Stmt
-	updateLastIP *sql.Stmt
+	decLiked      *sql.Stmt
+	updateLastIP  *sql.Stmt
+	updatePrivacy *sql.Stmt
 
 	setPassword *sql.Stmt
 
@@ -143,27 +147,29 @@ var userStmts UserStmts
 
 func init() {
 	DbInits.Add(func(acc *qgen.Accumulator) error {
-		w := "uid = ?"
+		u := "users"
+		w := "uid=?"
 		userStmts = UserStmts{
-			activate:    acc.SimpleUpdate("users", "active = 1", w),
-			changeGroup: acc.SimpleUpdate("users", "group = ?", w), // TODO: Implement user_count for users_groups here
-			delete:      acc.SimpleDelete("users", w),
-			setAvatar:   acc.Update("users").Set("avatar = ?").Where(w).Prepare(),
-			setUsername: acc.Update("users").Set("name = ?").Where(w).Prepare(),
-			incTopics:   acc.SimpleUpdate("users", "topics =  topics + ?", w),
-			updateLevel: acc.SimpleUpdate("users", "level = ?", w),
-			update:      acc.Update("users").Set("name = ?, email = ?, group = ?").Where(w).Prepare(), // TODO: Implement user_count for users_groups on things which use this
+			activate:    acc.SimpleUpdate(u, "active=1", w),
+			changeGroup: acc.SimpleUpdate(u, "group=?", w), // TODO: Implement user_count for users_groups here
+			delete:      acc.Delete(u).Where(w).Prepare(),
+			setAvatar:   acc.Update(u).Set("avatar=?").Where(w).Prepare(),
+			setName:     acc.Update(u).Set("name=?").Where(w).Prepare(),
+			incTopics:   acc.SimpleUpdate(u, "topics=topics+?", w),
+			updateLevel: acc.SimpleUpdate(u, "level=?", w),
+			update:      acc.Update(u).Set("name=?,email=?,group=?").Where(w).Prepare(), // TODO: Implement user_count for users_groups on things which use this
 
-			incScore:     acc.Update("users").Set("score = score + ?").Where(w).Prepare(),
-			incPosts:     acc.Update("users").Set("posts = posts + ?").Where(w).Prepare(),
-			incBigposts:  acc.Update("users").Set("posts = posts + ?, bigposts = bigposts + ?").Where(w).Prepare(),
-			incMegaposts: acc.Update("users").Set("posts = posts + ?, bigposts = bigposts + ?, megaposts = megaposts + ?").Where(w).Prepare(),
-			incLiked:     acc.Update("users").Set("liked = liked + ?, lastLiked = UTC_TIMESTAMP()").Where(w).Prepare(),
-			decLiked:     acc.Update("users").Set("liked = liked - ?").Where(w).Prepare(),
+			incScore:     acc.Update(u).Set("score=score+?").Where(w).Prepare(),
+			incPosts:     acc.Update(u).Set("posts=posts+?").Where(w).Prepare(),
+			incBigposts:  acc.Update(u).Set("posts=posts+?,bigposts=bigposts+?").Where(w).Prepare(),
+			incMegaposts: acc.Update(u).Set("posts=posts+?,bigposts=bigposts+?,megaposts=megaposts+?").Where(w).Prepare(),
+			incLiked:     acc.Update(u).Set("liked=liked+?,lastLiked=UTC_TIMESTAMP()").Where(w).Prepare(),
+			decLiked:     acc.Update(u).Set("liked=liked-?").Where(w).Prepare(),
 			//recalcLastLiked: acc...
-			updateLastIP: acc.SimpleUpdate("users", "last_ip = ?", w),
+			updateLastIP:  acc.SimpleUpdate(u, "last_ip=?", w),
+			updatePrivacy: acc.Update(u).Set("enable_embeds=?").Where(w).Prepare(),
 
-			setPassword: acc.Update("users").Set("password = ?, salt = ?").Where(w).Prepare(),
+			setPassword: acc.Update(u).Set("password=?,salt=?").Where(w).Prepare(),
 
 			scheduleAvatarResize: acc.Insert("users_avatar_queue").Columns("uid").Fields("?").Prepare(),
 		}
@@ -204,7 +210,7 @@ func (u *User) deleteScheduleGroupTx(tx *sql.Tx) error {
 }
 
 func (u *User) setTempGroupTx(tx *sql.Tx, tempGroup int) error {
-	setTempGroupStmt, err := qgen.Builder.SimpleUpdateTx(tx, "users", "temp_group = ?", "uid = ?")
+	setTempGroupStmt, err := qgen.Builder.SimpleUpdateTx(tx, "users", "temp_group=?", "uid=?")
 	if err != nil {
 		return err
 	}
@@ -304,7 +310,7 @@ func (u *User) bindStmt(stmt *sql.Stmt, params ...interface{}) (err error) {
 }
 
 func (u *User) ChangeName(name string) (err error) {
-	return u.bindStmt(userStmts.setUsername, name)
+	return u.bindStmt(userStmts.setName, name)
 }
 
 func (u *User) ChangeAvatar(avatar string) (err error) {
@@ -341,7 +347,15 @@ func (u *User) UpdateIP(host string) error {
 	return err
 }
 
-func (u *User) Update(name string, email string, group int) (err error) {
+func (u *User) UpdatePrivacy(enableEmbeds int) error {
+	_, err := userStmts.updatePrivacy.Exec(enableEmbeds, u.ID)
+	if uc := Users.GetCache(); uc != nil {
+		uc.Remove(u.ID)
+	}
+	return err
+}
+
+func (u *User) Update(name, email string, group int) (err error) {
 	return u.bindStmt(userStmts.update, name, email, group)
 }
 
@@ -461,7 +475,7 @@ type GuestAvatar struct {
 	Micro  string
 }
 
-func buildNoavatar(uid int, width int) string {
+func buildNoavatar(uid, width int) string {
 	if !Config.DisableNoavatarRange {
 		// TODO: Find a faster algorithm
 		if uid > 50000 {
@@ -520,7 +534,6 @@ func wordsToScore(wcount int, topic bool) (score int) {
 	} else {
 		score = 1
 	}
-
 	settings := SettingBox.Load().(SettingMap)
 	if wcount >= settings["megapost_min_words"].(int) {
 		score += 4

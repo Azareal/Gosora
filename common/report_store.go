@@ -34,7 +34,7 @@ func NewDefaultReportStore(acc *qgen.Accumulator) (*DefaultReportStore, error) {
 }
 
 // ! There's a data race in this. If two users report one item at the exact same time, then both reports will go through
-func (s *DefaultReportStore) Create(title string, content string, user *User, itemType string, itemID int) (tid int, err error) {
+func (s *DefaultReportStore) Create(title string, content string, u *User, itemType string, itemID int) (tid int, err error) {
 	var count int
 	err = s.exists.QueryRow(itemType+"_"+strconv.Itoa(itemID), ReportForumID).Scan(&count)
 	if err != nil && err != sql.ErrNoRows {
@@ -44,7 +44,7 @@ func (s *DefaultReportStore) Create(title string, content string, user *User, it
 		return 0, ErrAlreadyReported
 	}
 
-	res, err := s.create.Exec(title, content, ParseMessage(content, 0, ""), user.LastIP, user.ID, user.ID, itemType+"_"+strconv.Itoa(itemID), ReportForumID)
+	res, err := s.create.Exec(title, content, ParseMessage(content, 0, "", nil), u.LastIP, u.ID, u.ID, itemType+"_"+strconv.Itoa(itemID), ReportForumID)
 	if err != nil {
 		return 0, err
 	}
@@ -53,5 +53,6 @@ func (s *DefaultReportStore) Create(title string, content string, user *User, it
 		return 0, err
 	}
 	tid = int(lastID)
-	return tid, Forums.AddTopic(tid, user.ID, ReportForumID)
+	
+	return tid, Forums.AddTopic(tid, u.ID, ReportForumID)
 }

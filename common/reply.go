@@ -17,31 +17,18 @@ import (
 
 type ReplyUser struct {
 	Reply
-	//ID            int
-	//ParentID      int
-	//Content       string
-	ContentHtml string
-	//CreatedBy     int
+
+	ContentHtml   string
 	UserLink      string
 	CreatedByName string
-	//Group         int
-	//CreatedAt     time.Time
-	//LastEdit      int
-	//LastEditBy    int
-	Avatar      string
-	MicroAvatar string
-	ClassName   string
-	//ContentLines  int
-	Tag       string
-	URL       string
-	URLPrefix string
-	URLName   string
-	Level     int
-	//IP     string
-	//Liked         bool
-	//LikeCount     int
-	//AttachCount int
-	//ActionType  string
+	Avatar        string
+	MicroAvatar   string
+	ClassName     string
+	Tag           string
+	URL           string
+	//URLPrefix string
+	//URLName   string
+	Level      int
 	ActionIcon string
 
 	Attachments []*MiniAttachment
@@ -139,7 +126,7 @@ func (r *Reply) SetPost(content string) error {
 		return err
 	}
 	content = PreparseMessage(html.UnescapeString(content))
-	parsedContent := ParseMessage(content, topic.ParentID, "forums")
+	parsedContent := ParseMessage(content, topic.ParentID, "forums", nil)
 	_, err = replyStmts.edit.Exec(content, parsedContent, r.ID) // TODO: Sniff if this changed anything to see if we hit an existing poll
 	_ = Rstore.GetCache().Remove(r.ID)
 	return err

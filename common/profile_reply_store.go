@@ -38,7 +38,7 @@ func (s *SQLProfileReplyStore) Get(id int) (*ProfileReply, error) {
 }
 
 func (s *SQLProfileReplyStore) Create(profileID int, content string, createdBy int, ipaddress string) (id int, err error) {
-	res, err := s.create.Exec(profileID, content, ParseMessage(content, 0, ""), createdBy, ipaddress)
+	res, err := s.create.Exec(profileID, content, ParseMessage(content, 0, "", nil), createdBy, ipaddress)
 	if err != nil {
 		return 0, err
 	}

@@ -194,7 +194,7 @@ func CreateReplySubmit(w http.ResponseWriter, r *http.Request, user c.User) c.Ro
 
 	prid, _ := strconv.Atoi(r.FormValue("prid"))
 	if js && (prid == 0 || rids[0] == prid) {
-		outBytes, err := json.Marshal(JsonReply{c.ParseMessage(reply.Content, topic.ParentID, "forums")})
+		outBytes, err := json.Marshal(JsonReply{c.ParseMessage(reply.Content, topic.ParentID, "forums", user.ParseSettings)})
 		if err != nil {
 			return c.InternalErrorJSQ(err, w, r, js)
 		}
@@ -267,7 +267,7 @@ func ReplyEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, srid s
 	if !js {
 		http.Redirect(w, r, "/topic/"+strconv.Itoa(topic.ID)+"#reply-"+strconv.Itoa(rid), http.StatusSeeOther)
 	} else {
-		outBytes, err := json.Marshal(JsonReply{c.ParseMessage(reply.Content, topic.ParentID, "forums")})
+		outBytes, err := json.Marshal(JsonReply{c.ParseMessage(reply.Content, topic.ParentID, "forums", user.ParseSettings)})
 		if err != nil {
 			return c.InternalErrorJSQ(err, w, r, js)
 		}
