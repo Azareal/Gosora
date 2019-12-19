@@ -217,10 +217,10 @@ func ProcessConfig() (err error) {
 	Site.MaxRequestSize = Config.MaxRequestSize
 
 	if Config.PostIPCutoff == 0 {
-		Config.PostIPCutoff = 180 // Default cutoff
+		Config.PostIPCutoff = 120 // Default cutoff
 	}
 	if Config.LogPruneCutoff == 0 {
-		Config.LogPruneCutoff = 365 // Default cutoff
+		Config.LogPruneCutoff = 180 // Default cutoff
 	}
 	if Config.NoEmbed {
 		DefaultParseSettings.NoEmbed = true
