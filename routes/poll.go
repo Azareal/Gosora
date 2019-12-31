@@ -57,7 +57,7 @@ func PollVote(w http.ResponseWriter, r *http.Request, user c.User, sPollID strin
 	if err != nil {
 		return c.LocalError("Malformed input", w, r, user)
 	}
-	err = poll.CastVote(optionIndex, user.ID, user.LastIP)
+	err = poll.CastVote(optionIndex, user.ID, user.GetIP())
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}

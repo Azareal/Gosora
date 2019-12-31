@@ -97,7 +97,7 @@ function buildStatsChart(rawLabels, seriesData, timeRange, legendNames, bytes = 
 				continue;
 			}
 			let date = new Date(rawLabels[i]*1000);
-			console.log("date: ", date);
+			console.log("date:", date);
 			let minutes = "0" + date.getMinutes();
 			let label = date.getHours() + ":" + minutes.substr(-2);
 			console.log("label:", label);
@@ -106,7 +106,7 @@ function buildStatsChart(rawLabels, seriesData, timeRange, legendNames, bytes = 
 	} else {
 		for(const i in rawLabels) {
 			let date = new Date(rawLabels[i]*1000);
-			console.log("date: ", date);
+			console.log("date:", date);
 			let minutes = "0" + date.getMinutes();
 			let label = date.getHours() + ":" + minutes.substr(-2);
 			console.log("label:", label);

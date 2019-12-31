@@ -141,22 +141,34 @@ func tickLoop(thumbChan chan bool) {
 	}
 }
 
-func dailies() {
+func asmMatches() {
 	// TODO: Find a more efficient way of doing this
-	err := qgen.NewAcc().Select("activity_stream").Cols("asid").EachInt(func(asid int) error {
-		count, err := qgen.NewAcc().Count("activity_stream_matches").Where("asid = " + strconv.Itoa(asid)).Total()
+	acc := qgen.NewAcc()
+	countStmt := acc.Count("activity_stream_matches").Where("asid=?").Prepare()
+	if err := acc.FirstError(); err != nil {
+		c.LogError(err)
+		return
+	}
+
+	err := acc.Select("activity_stream").Cols("asid").EachInt(func(asid int) error {
+		var count int
+		err := countStmt.QueryRow(asid).Scan(&count)
 		if err != sql.ErrNoRows {
 			return err
 		}
 		if count > 0 {
 			return nil
 		}
-		_, err = qgen.NewAcc().Delete("activity_stream").Where("asid = ?").Run(asid)
+		_, err = qgen.NewAcc().Delete("activity_stream").Where("asid=?").Run(asid)
 		return err
 	})
 	if err != nil && err != sql.ErrNoRows {
 		c.LogError(err)
 	}
+}
+
+func dailies() {
+	asmMatches()
 
 	if c.Config.LogPruneCutoff > -1 {
 		f := func(tbl string) {
@@ -172,7 +184,7 @@ func dailies() {
 	if c.Config.PostIPCutoff > -1 {
 		// TODO: Use unixtime to remove this MySQLesque logic?
 		f := func(tbl string) {
-			_, err := qgen.NewAcc().Update(tbl).Set("ipaddress = '0'").DateOlderThan("createdAt",c.Config.PostIPCutoff,"day").Where("ipaddress != '0'").Exec()
+			_, err := qgen.NewAcc().Update(tbl).Set("ipaddress='0'").DateOlderThan("createdAt",c.Config.PostIPCutoff,"day").Where("ipaddress!='0'").Exec()
 			if err != nil {
 				c.LogError(err)
 			}
@@ -182,16 +194,30 @@ func dailies() {
 		f("users_replies")
 
 		// TODO: Find some way of purging the ip data in polls_votes without breaking any anti-cheat measures which might be running... maybe hash it instead?
+	}
 
-		// TODO: lastActiveAt isn't currently set, so we can't rely on this to purge last_ips of users who haven't been on in a while
-		/*_, err = qgen.NewAcc().Update("users").Set("last_ip = '0'").DateOlderThan("lastActiveAt",c.Config.PostIPCutoff,"day").Where("last_ip != '0'").Exec()
+	// TODO: lastActiveAt isn't currently set, so we can't rely on this to purge last_ips of users who haven't been on in a while
+	/*if c.Config.LastIPCutoff == -1 {
+		_, err := qgen.NewAcc().Update("users").Set("last_ip=0").Where("last_ip!=0").Exec()
+		if err != nil {
+			c.LogError(err)
+		}
+	} else */if c.Config.LastIPCutoff > 0 {
+		/*_, err = qgen.NewAcc().Update("users").Set("last_ip='0'").DateOlderThan("lastActiveAt",c.Config.PostIPCutoff,"day").Where("last_ip!='0'").Exec()
 		if err != nil {
 			c.LogError(err)
 		}*/
+		mon := time.Now().Month()
+		_, err := qgen.NewAcc().Update("users").Set("last_ip=0").Where("last_ip!=0 AND last_ip NOT LIKE '"+strconv.Itoa(int(mon))+"-%'").Exec()
+		if err != nil {
+			c.LogError(err)
+		}
 	}
 
-	err = c.Meta.Set("lastDaily", strconv.FormatInt(time.Now().Unix(), 10))
-	if err != nil {
-		c.LogError(err)
+	{
+		err := c.Meta.Set("lastDaily", strconv.FormatInt(time.Now().Unix(), 10))
+		if err != nil {
+			c.LogError(err)
+		}
 	}
 }

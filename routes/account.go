@@ -36,11 +36,11 @@ func AccountLoginSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.R
 		return c.LocalError("You're already logged in.", w, r, user)
 	}
 
-	username := c.SanitiseSingleLine(r.PostFormValue("username"))
-	uid, err, requiresExtraAuth := c.Auth.Authenticate(username, r.PostFormValue("password"))
+	name := c.SanitiseSingleLine(r.PostFormValue("username"))
+	uid, err, requiresExtraAuth := c.Auth.Authenticate(name, r.PostFormValue("password"))
 	if err != nil {
 		// TODO: uid is currently set to 0 as authenticate fetches the user by username and password. Get the actual uid, so we can alert the user of attempted logins? What if someone takes advantage of the response times to deduce if an account exists?
-		logItem := &c.LoginLogItem{UID: uid, Success: false, IP: user.LastIP}
+		logItem := &c.LoginLogItem{UID: uid, Success: false, IP: user.GetIP()}
 		_, err := logItem.Create()
 		if err != nil {
 			return c.InternalError(err, w, r)
@@ -49,7 +49,7 @@ func AccountLoginSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.R
 	}
 
 	// TODO: Take 2FA into account
-	logItem := &c.LoginLogItem{UID: uid, Success: true, IP: user.LastIP}
+	logItem := &c.LoginLogItem{UID: uid, Success: true, IP: user.GetIP()}
 	_, err = logItem.Create()
 	if err != nil {
 		return c.InternalError(err, w, r)
@@ -91,7 +91,7 @@ func loginSuccess(uid int, w http.ResponseWriter, r *http.Request, user *c.User)
 	if user.IsAdmin {
 		// Is this error check redundant? We already check for the error in PreRoute for the same IP
 		// TODO: Should we be logging this?
-		log.Printf("#%d has logged in with IP %s", uid, user.LastIP)
+		log.Printf("#%d has logged in with IP %s", uid, user.GetIP())
 	}
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 	return nil
@@ -220,7 +220,7 @@ func AccountRegisterSubmit(w http.ResponseWriter, r *http.Request, user c.User) 
 	if !c.Config.DisableJSAntispam {
 		h := sha256.New()
 		h.Write([]byte(c.JSTokenBox.Load().(string)))
-		h.Write([]byte(user.LastIP))
+		h.Write([]byte(user.GetIP()))
 		if r.PostFormValue("golden-watch") != hex.EncodeToString(h.Sum(nil)) {
 			regError(p.GetErrorPhrase("register_might_be_machine"), "js-antispam")
 		}
@@ -261,7 +261,7 @@ func AccountRegisterSubmit(w http.ResponseWriter, r *http.Request, user c.User) 
 		}
 	}
 
-	regLog := c.RegLogItem{Username: name, Email: email, FailureReason: regErrReason, Success: regSuccess, IP: user.LastIP}
+	regLog := c.RegLogItem{Username: name, Email: email, FailureReason: regErrReason, Success: regSuccess, IP: user.GetIP()}
 	_, err = regLog.Create()
 	if err != nil {
 		return c.InternalError(err, w, r)

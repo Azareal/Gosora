@@ -58,7 +58,7 @@ func ThemesSetDefault(w http.ResponseWriter, r *http.Request, user c.User, uname
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
-	err = c.AdminLogs.CreateExtra("set_default", 0, "theme", user.LastIP, user.ID, c.SanitiseSingleLine(theme.Name))
+	err = c.AdminLogs.CreateExtra("set_default", 0, "theme", user.GetIP(), user.ID, c.SanitiseSingleLine(theme.Name))
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -233,7 +233,7 @@ func ThemesMenuItemEditSubmit(w http.ResponseWriter, r *http.Request, user c.Use
 	if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
-	err = c.AdminLogs.Create("edit", menuItem.ID, "menu_item", user.LastIP, user.ID)
+	err = c.AdminLogs.Create("edit", menuItem.ID, "menu_item", user.GetIP(), user.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -266,7 +266,7 @@ func ThemesMenuItemCreateSubmit(w http.ResponseWriter, r *http.Request, user c.U
 	if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
-	err = c.AdminLogs.Create("create", itemID, "menu_item", user.LastIP, user.ID)
+	err = c.AdminLogs.Create("create", itemID, "menu_item", user.GetIP(), user.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -300,7 +300,7 @@ func ThemesMenuItemDeleteSubmit(w http.ResponseWriter, r *http.Request, user c.U
 	if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
-	err = c.AdminLogs.Create("delete", menuItem.ID, "menu_item", user.LastIP, user.ID)
+	err = c.AdminLogs.Create("delete", menuItem.ID, "menu_item", user.GetIP(), user.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -342,7 +342,7 @@ func ThemesMenuItemOrderSubmit(w http.ResponseWriter, r *http.Request, user c.Us
 	}
 	menuHold.UpdateOrder(updateMap)
 
-	err = c.AdminLogs.Create("suborder", menuHold.MenuID, "menu", user.LastIP, user.ID)
+	err = c.AdminLogs.Create("suborder", menuHold.MenuID, "menu", user.GetIP(), user.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -446,7 +446,7 @@ func ThemesWidgetsEditSubmit(w http.ResponseWriter, r *http.Request, user c.User
 	if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
-	err = c.AdminLogs.Create("edit", widget.ID, "widget", user.LastIP, user.ID)
+	err = c.AdminLogs.Create("edit", widget.ID, "widget", user.GetIP(), user.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -474,7 +474,7 @@ func ThemesWidgetsCreateSubmit(w http.ResponseWriter, r *http.Request, user c.Us
 	if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
-	err = c.AdminLogs.Create("create", wid, "widget", user.LastIP, user.ID)
+	err = c.AdminLogs.Create("create", wid, "widget", user.GetIP(), user.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -507,7 +507,7 @@ func ThemesWidgetsDeleteSubmit(w http.ResponseWriter, r *http.Request, user c.Us
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
-	err = c.AdminLogs.Create("delete", widget.ID, "widget", user.LastIP, user.ID)
+	err = c.AdminLogs.Create("delete", widget.ID, "widget", user.GetIP(), user.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}

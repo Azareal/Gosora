@@ -13,14 +13,14 @@ console.log("forums:",forums);
 Sortable.create(document.getElementById("panel_forums"), {
 	sort: true,
 	onEnd: (evt) => {
-		console.log("pre forums: ", forums)
-		console.log("evt: ", evt)
+		console.log("pre forums:", forums)
+		console.log("evt:", evt)
 		let oldFid = forums[evt.newIndex];
 		forums[evt.oldIndex] = oldFid;
 		let newFid = evt.item.getAttribute("data-fid");
-		console.log("newFid: ", newFid);
+		console.log("newFid:", newFid);
 		forums[evt.newIndex] = newFid;
-		console.log("post forums: ", forums);
+		console.log("post forums:", forums);
 	}
 });
 
@@ -37,7 +37,7 @@ document.getElementById("panel_forums_order_button").addEventListener("click", (
 			if(req.status!==200) return;
 			
 			let resp = JSON.parse(req.responseText);
-			console.log("resp: ", resp);
+			console.log("resp:", resp);
 			// TODO: Should we move other notices into TmplPhrases like this one?
 			pushNotice(phraseBox["panel"]["panel.forums_order_updated"]);
 			if(resp.success==1) return;

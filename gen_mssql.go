@@ -61,26 +61,26 @@ func _gen_mssql() (err error) {
 	}
 		
 	common.DebugLog("Preparing updateEmail statement.")
-	stmts.updateEmail, err = db.Prepare("UPDATE [emails] SET [email] = ?,[uid] = ?,[validated] = ?,[token] = ? WHERE [email] = ?")
+	stmts.updateEmail, err = db.Prepare("UPDATE [emails] SET [email]= ?,[uid]= ?,[validated]= ?,[token]= ? WHERE [email] = ?")
 	if err != nil {
 		log.Print("Error in updateEmail statement.")
-		log.Print("Bad Query: ","UPDATE [emails] SET [email] = ?,[uid] = ?,[validated] = ?,[token] = ? WHERE [email] = ?")
+		log.Print("Bad Query: ","UPDATE [emails] SET [email]= ?,[uid]= ?,[validated]= ?,[token]= ? WHERE [email] = ?")
 		return err
 	}
 		
 	common.DebugLog("Preparing setTempGroup statement.")
-	stmts.setTempGroup, err = db.Prepare("UPDATE [users] SET [temp_group] = ? WHERE [uid] = ?")
+	stmts.setTempGroup, err = db.Prepare("UPDATE [users] SET [temp_group]= ? WHERE [uid] = ?")
 	if err != nil {
 		log.Print("Error in setTempGroup statement.")
-		log.Print("Bad Query: ","UPDATE [users] SET [temp_group] = ? WHERE [uid] = ?")
+		log.Print("Bad Query: ","UPDATE [users] SET [temp_group]= ? WHERE [uid] = ?")
 		return err
 	}
 		
 	common.DebugLog("Preparing bumpSync statement.")
-	stmts.bumpSync, err = db.Prepare("UPDATE [sync] SET [last_update] = GETUTCDATE()")
+	stmts.bumpSync, err = db.Prepare("UPDATE [sync] SET [last_update]= GETUTCDATE()")
 	if err != nil {
 		log.Print("Error in bumpSync statement.")
-		log.Print("Bad Query: ","UPDATE [sync] SET [last_update] = GETUTCDATE()")
+		log.Print("Bad Query: ","UPDATE [sync] SET [last_update]= GETUTCDATE()")
 		return err
 	}
 		

@@ -29,12 +29,12 @@
 	<div id="forum_topic_create_form" class="rowblock topic_create_form quick_create_form auto_hide" aria-label="{{lang "quick_topic.aria"}}">
 		<form id="quick_post_form" enctype="multipart/form-data" action="/topic/create/submit/?s={{.CurrentUser.Session}}" method="post"></form>
 		<img class="little_row_avatar" src="{{.CurrentUser.MicroAvatar}}" height=64 alt="{{lang "quick_topic.avatar_alt"}}" title="{{lang "quick_topic.avatar_tooltip"}}" />
-		<input form="quick_post_form" id="topic_board_input" name="topic-board" value="{{.Forum.ID}}" type="hidden">
+		<input form="quick_post_form" id="topic_board_input" name="board" value="{{.Forum.ID}}" type="hidden">
 		<div class="main_form">
 			<div class="topic_meta">
 				<div class="formrow topic_name_row real_first_child">
 					<div class="formitem">
-						<input form="quick_post_form" name="topic-name" placeholder="{{lang "quick_topic.whatsup"}}" required>
+						<input form="quick_post_form" name="name" placeholder="{{lang "quick_topic.whatsup"}}" required>
 					</div>
 				</div>
 			</div>
@@ -43,7 +43,7 @@
 	</div>
 	{{end}}
 	{{end}}
-	<div id="forum_topic_list" class="rowblock micro_grid" aria-label="{{lang "forum_list_aria"}}" style="grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));">
+	<div id="forum_topic_list" class="rowblock micro_grid" aria-label="{{lang "forum_list_aria"}}" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr));">
 		{{range .ItemList}}<div class="rowitem" data-tid="{{.ID}}">
 		<div>
 			<a class="rowtopic" href="{{.Link}}" itemprop="itemListElement"><img src="{{.Content}}" style="width:100%;height:160px;" /></a>

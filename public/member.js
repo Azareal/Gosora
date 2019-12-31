@@ -284,7 +284,7 @@ var imageExts = ["png", "jpg", "jpe","jpeg","jif","jfi","jfif", "svg", "bmp", "g
 	function addPollInput() {
 		console.log("clicked on pollinputinput");
 		let dataPollInput = $(this).parent().attr("data-pollinput");
-		console.log("dataPollInput: ", dataPollInput);
+		console.log("dataPollInput:", dataPollInput);
 		if(dataPollInput == undefined) return;
 		if(dataPollInput != (pollInputIndex-1)) return;
 		$(".poll_content_row .formitem").append(Template_topic_c_poll_input({

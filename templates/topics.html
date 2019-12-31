@@ -59,13 +59,13 @@
 	<div class="main_form">
 		<div class="topic_meta">
 			<div class="formrow topic_board_row real_first_child">
-				<div class="formitem"><select form="quick_post_form" id="topic_board_input" name="topic-board">
+				<div class="formitem"><select form="quick_post_form" id="topic_board_input" name="board">
 					{{range .ForumList}}<option{{if eq .ID $.DefaultForum}} selected{{end}} value="{{.ID}}">{{.Name}}</option>{{end}}
 				</select></div>
 			</div>
 			<div class="formrow topic_name_row">
 				<div class="formitem">
-					<input form="quick_post_form" name="topic-name" placeholder="{{lang "quick_topic.whatsup"}}" required>
+					<input form="quick_post_form" name="name" placeholder="{{lang "quick_topic.whatsup"}}" required>
 				</div>
 			</div>
 		</div>

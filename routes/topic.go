@@ -9,7 +9,6 @@ import (
 	"io"
 
 	//"fmt"
-	"golang.org/x/image/tiff"
 	"image"
 	"image/gif"
 	"image/jpeg"
@@ -20,6 +19,8 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
+	"golang.org/x/image/tiff"
 
 	c "github.com/Azareal/Gosora/common"
 	"github.com/Azareal/Gosora/common/counters"
@@ -332,7 +333,7 @@ func CreateTopic(w http.ResponseWriter, r *http.Request, user c.User, header *c.
 }
 
 func CreateTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
-	fid, err := strconv.Atoi(r.PostFormValue("topic-board"))
+	fid, err := strconv.Atoi(r.PostFormValue("board"))
 	if err != nil {
 		return c.LocalError(phrases.GetErrorPhrase("id_must_be_integer"), w, r, user)
 	}
@@ -345,10 +346,10 @@ func CreateTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.Ro
 		return c.NoPermissions(w, r, user)
 	}
 
-	tname := c.SanitiseSingleLine(r.PostFormValue("topic-name"))
-	content := c.PreparseMessage(r.PostFormValue("topic-content"))
+	tname := c.SanitiseSingleLine(r.PostFormValue("name"))
+	content := c.PreparseMessage(r.PostFormValue("content"))
 	// TODO: Fully parse the post and store it in the parsed column
-	tid, err := c.Topics.Create(fid, tname, content, user.ID, user.LastIP)
+	tid, err := c.Topics.Create(fid, tname, content, user.ID, user.GetIP())
 	if err != nil {
 		switch err {
 		case c.ErrNoRows:
@@ -632,7 +633,7 @@ func DeleteTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.Ro
 		if err != nil {
 			return c.PreError("The provided TopicID is not a valid number.", w, r)
 		}
-		tids = append(tids, tid)
+		tids = []int{tid}
 	}
 	if len(tids) == 0 {
 		return c.LocalErrorJSQ("You haven't provided any IDs", w, r, user, js)
@@ -663,13 +664,13 @@ func DeleteTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.Ro
 			return c.InternalErrorJSQ(err, w, r, js)
 		}
 
-		err = c.ModLogs.Create("delete", tid, "topic", user.LastIP, user.ID)
+		err = c.ModLogs.Create("delete", tid, "topic", user.GetIP(), user.ID)
 		if err != nil {
 			return c.InternalErrorJSQ(err, w, r, js)
 		}
 
 		// ? - We might need to add soft-delete before we can do an action reply for this
-		/*_, err = stmts.createActionReply.Exec(tid,"delete",ipaddress,user.ID)
+		/*_, err = stmts.createActionReply.Exec(tid,"delete",ip,user.ID)
 		if err != nil {
 			return c.InternalErrorJSQ(err,w,r,js)
 		}*/
@@ -890,11 +891,11 @@ func MoveTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User, sfid s
 }
 
 func addTopicAction(action string, t *c.Topic, u c.User) error {
-	err := c.ModLogs.Create(action, t.ID, "topic", u.LastIP, u.ID)
+	err := c.ModLogs.Create(action, t.ID, "topic", u.GetIP(), u.ID)
 	if err != nil {
 		return err
 	}
-	return t.CreateActionReply(action, u.LastIP, u.ID)
+	return t.CreateActionReply(action, u.GetIP(), u.ID)
 }
 
 // TODO: Refactor this

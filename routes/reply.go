@@ -66,7 +66,7 @@ func CreateReplySubmit(w http.ResponseWriter, r *http.Request, user c.User) c.Ro
 
 	content := c.PreparseMessage(r.PostFormValue("content"))
 	// TODO: Fully parse the post and put that in the parsed column
-	rid, err := c.Rstore.Create(topic, content, user.LastIP, user.ID)
+	rid, err := c.Rstore.Create(topic, content, user.GetIP(), user.ID)
 	if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
@@ -337,7 +337,7 @@ func ReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user c.User, srid
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
 
-	err = c.ModLogs.Create("delete", reply.ParentID, "reply", user.LastIP, user.ID)
+	err = c.ModLogs.Create("delete", reply.ParentID, "reply", user.GetIP(), user.ID)
 	if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}

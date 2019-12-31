@@ -17,11 +17,24 @@ type DefaultPasswordResetter struct {
 	delete    *sql.Stmt
 }
 
+/*
+	type PasswordReset struct {
+		Email string `q:"email"`
+		Uid int `q:"uid"`
+		Validated bool `q:"validated"`
+		Token string `q:"token"`
+		CreatedAt time.Time `q:"createdAt"`
+	}
+*/
+
 func NewDefaultPasswordResetter(acc *qgen.Accumulator) (*DefaultPasswordResetter, error) {
+	pr := "password_resets"
 	return &DefaultPasswordResetter{
-		getTokens: acc.Select("password_resets").Columns("token").Where("uid = ?").Prepare(),
-		create:    acc.Insert("password_resets").Columns("email, uid, validated, token, createdAt").Fields("?,?,0,?,UTC_TIMESTAMP()").Prepare(),
-		delete:    acc.Delete("password_resets").Where("uid =?").Prepare(),
+		getTokens: acc.Select(pr).Columns("token").Where("uid = ?").Prepare(),
+		create:    acc.Insert(pr).Columns("email, uid, validated, token, createdAt").Fields("?,?,0,?,UTC_TIMESTAMP()").Prepare(),
+		//create: acc.Insert(pr).Cols("email,uid,validated=0,token,createdAt=UTC_TIMESTAMP()").Prep(),
+		delete:    acc.Delete(pr).Where("uid=?").Prepare(),
+		//model:  acc.Model(w).Cols("email,uid,validated=0,token").Key("uid").CreatedAt("createdAt").Prep(),
 	}, acc.FirstError()
 }
 
@@ -45,16 +58,14 @@ func (r *DefaultPasswordResetter) ValidateToken(uid int, token string) error {
 	success := false
 	for rows.Next() {
 		var rtoken string
-		err := rows.Scan(&rtoken)
-		if err != nil {
+		if err := rows.Scan(&rtoken); err != nil {
 			return err
 		}
 		if subtle.ConstantTimeCompare([]byte(token), []byte(rtoken)) == 1 {
 			success = true
 		}
 	}
-	err = rows.Err()
-	if err != nil {
+	if err = rows.Err(); err != nil {
 		return err
 	}
 

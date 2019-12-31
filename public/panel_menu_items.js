@@ -9,14 +9,14 @@ for(let i = 0; item = items[i]; i++) menuItems[i] = item.getAttribute("data-miid
 Sortable.create(document.getElementById("panel_menu_item_holder"), {
 	sort: true,
 	onEnd: (evt) => {
-		console.log("pre menuItems: ", menuItems)
-		console.log("evt: ", evt)
+		console.log("pre menuItems:", menuItems)
+		console.log("evt:", evt)
 		let oldMiid = menuItems[evt.newIndex];
 		menuItems[evt.oldIndex] = oldMiid;
 		let newMiid = evt.item.getAttribute("data-miid");
-		console.log("newMiid: ", newMiid);
+		console.log("newMiid:", newMiid);
 		menuItems[evt.newIndex] = newMiid;
-		console.log("post menuItems: ", menuItems);
+		console.log("post menuItems:", menuItems);
 	}
 });
 
@@ -32,13 +32,13 @@ document.getElementById("panel_menu_items_order_button").addEventListener("click
 			// TODO: Signal the error with a notice
 			if(req.status===200) {
 				let resp = JSON.parse(req.responseText);
-				console.log("resp: ", resp);
+				console.log("resp:", resp);
 				// TODO: Should we move other notices into TmplPhrases like this one?
 				pushNotice(phraseBox["panel"]["panel.themes_menus_items_order_updated"]);
 				if(resp.success==1) return;
 			}
 		} catch(ex) {
-			console.error("exception: ", ex)
+			console.error("exception:", ex)
 		}
 		console.trace();
 	}

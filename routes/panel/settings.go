@@ -109,7 +109,7 @@ func SettingEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, name
 		return rerr
 	}
 	// TODO: Avoid this hack
-	err := c.AdminLogs.Create(name, 0, "setting", user.LastIP, user.ID)
+	err := c.AdminLogs.Create(name, 0, "setting", user.GetIP(), user.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}

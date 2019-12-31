@@ -7,22 +7,22 @@
 		<form id="quick_post_form" enctype="multipart/form-data" action="/topic/create/submit/?s={{.CurrentUser.Session}}" method="post"></form>
 		<div class="formrow real_first_child">
 			<div class="formitem formlabel"><a>{{lang "create_topic_board"}}</a></div>
-			<div class="formitem"><select form="quick_post_form" id="topic_board_input" name="topic-board">
+			<div class="formitem"><select form="quick_post_form" id="topic_board_input" name="board">
 				{{range .ItemList}}<option{{if eq .ID $.FID}} selected{{end}} value="{{.ID}}">{{.Name}}</option>{{end}}
 			</select></div>
 		</div>
 		<div class="formrow">
 			<div class="formitem formlabel"><a>{{lang "create_topic_name"}}</a></div>
-			<div class="formitem"><input form="quick_post_form" name="topic-name" type="text" placeholder="{{lang "create_topic_name"}}" required /></div>
+			<div class="formitem"><input form="quick_post_form" name="name" type="text" placeholder="{{lang "create_topic_name"}}" required /></div>
 		</div>
 		<div class="formrow">
 			<div class="formitem formlabel"><a>{{lang "create_topic_content"}}</a></div>
-			<div class="formitem"><textarea form="quick_post_form" class="large" id="topic_content" name="topic-content" placeholder="{{lang "create_topic_placeholder"}}" required></textarea></div>
+			<div class="formitem"><textarea form="quick_post_form" class="large" id="topic_content" name="content" placeholder="{{lang "create_topic_placeholder"}}" required></textarea></div>
 		</div>
 		<div class="formrow">
 			<button form="quick_post_form" name="topic-button" class="formbutton">{{lang "create_topic_create_button"}}</button>
 			{{if .CurrentUser.Perms.UploadFiles}}
-			<input name="quick_topic_upload_files" form="quick_post_form" id="quick_topic_upload_files" multiple type="file" style="display: none;" />
+			<input name="quick_topic_upload_files" form="quick_post_form" id="quick_topic_upload_files" multiple type="file" style="display:none;" />
 			<label for="quick_topic_upload_files" class="formbutton add_file_button">{{lang "create_topic_add_file_button"}}</label>{{end}}
 			<div id="upload_file_dock"></div>
 		</div>

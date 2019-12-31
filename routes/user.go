@@ -73,7 +73,7 @@ func BanUserSubmit(w http.ResponseWriter, r *http.Request, user c.User, suid str
 		return c.InternalError(err, w, r)
 	}
 
-	err = c.ModLogs.Create("ban", uid, "user", user.LastIP, user.ID)
+	err = c.ModLogs.Create("ban", uid, "user", user.GetIP(), user.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -119,7 +119,7 @@ func UnbanUser(w http.ResponseWriter, r *http.Request, user c.User, suid string)
 		return c.InternalError(err, w, r)
 	}
 
-	err = c.ModLogs.Create("unban", uid, "user", user.LastIP, user.ID)
+	err = c.ModLogs.Create("unban", uid, "user", user.GetIP(), user.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -160,7 +160,7 @@ func ActivateUser(w http.ResponseWriter, r *http.Request, user c.User, suid stri
 		return c.InternalError(err, w, r)
 	}
 
-	err = c.ModLogs.Create("activate", targetUser.ID, "user", user.LastIP, user.ID)
+	err = c.ModLogs.Create("activate", targetUser.ID, "user", user.GetIP(), user.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}

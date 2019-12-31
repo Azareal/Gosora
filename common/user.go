@@ -201,7 +201,7 @@ func (u *User) Unban() error {
 }
 
 func (u *User) deleteScheduleGroupTx(tx *sql.Tx) error {
-	deleteScheduleGroupStmt, err := qgen.Builder.SimpleDeleteTx(tx, "users_groups_scheduler", "uid = ?")
+	deleteScheduleGroupStmt, err := qgen.Builder.SimpleDeleteTx(tx, "users_groups_scheduler", "uid=?")
 	if err != nil {
 		return err
 	}
@@ -338,9 +338,14 @@ func (u *User) ChangeGroup(group int) (err error) {
 	return u.bindStmt(userStmts.changeGroup, group)
 }
 
+func (u *User) GetIP() string {
+	spl := strings.Split(u.LastIP,"-")
+	return spl[len(spl)-1]
+}
+
 // ! Only updates the database not the *User for safety reasons
-func (u *User) UpdateIP(host string) error {
-	_, err := userStmts.updateLastIP.Exec(host, u.ID)
+func (u *User) UpdateIP(ip string) error {
+	_, err := userStmts.updateLastIP.Exec(ip, u.ID)
 	if uc := Users.GetCache(); uc != nil {
 		uc.Remove(u.ID)
 	}

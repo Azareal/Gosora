@@ -316,15 +316,15 @@ func preRoute(w http.ResponseWriter, r *http.Request) (User, bool) {
 		}
 	}
 
-	usercpy.LastIP = host
-
-	if usercpy.Loggedin && host != usercpy.LastIP {
-		err = usercpy.UpdateIP(host)
+	if usercpy.Loggedin && host != usercpy.GetIP() {
+		mon := time.Now().Month()
+		err = usercpy.UpdateIP(strconv.Itoa(int(mon)) + "-" + host)
 		if err != nil {
 			InternalError(err, w, r)
 			return *usercpy, false
 		}
 	}
+	usercpy.LastIP = host
 
 	return *usercpy, true
 }
@@ -350,11 +350,11 @@ func UploadAvatar(w http.ResponseWriter, r *http.Request, user User, tuid int) (
 			if hdr.Filename == "" {
 				continue
 			}
-			infile, err := hdr.Open()
+			inFile, err := hdr.Open()
 			if err != nil {
 				return "", LocalError("Upload failed", w, r, user)
 			}
-			defer infile.Close()
+			defer inFile.Close()
 
 			if ext == "" {
 				extarr := strings.Split(hdr.Filename, ".")
@@ -377,13 +377,13 @@ func UploadAvatar(w http.ResponseWriter, r *http.Request, user User, tuid int) (
 			}
 
 			// TODO: Centralise this string, so we don't have to change it in two different places when it changes
-			outfile, err := os.Create("./uploads/avatar_" + strconv.Itoa(tuid) + "." + ext)
+			outFile, err := os.Create("./uploads/avatar_" + strconv.Itoa(tuid) + "." + ext)
 			if err != nil {
 				return "", LocalError("Upload failed [File Creation Failed]", w, r, user)
 			}
-			defer outfile.Close()
+			defer outFile.Close()
 
-			_, err = io.Copy(outfile, infile)
+			_, err = io.Copy(outFile, inFile)
 			if err != nil {
 				return "", LocalError("Upload failed [Copy Failed]", w, r, user)
 			}

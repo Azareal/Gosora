@@ -39,7 +39,7 @@ func ProfileReplyCreateSubmit(w http.ResponseWriter, r *http.Request, user c.Use
 		return c.LocalError("You can't make a blank post", w, r, user)
 	}
 	// TODO: Fully parse the post and store it in the parsed column
-	_, err = c.Prstore.Create(profileOwner.ID, content, user.ID, user.LastIP)
+	_, err = c.Prstore.Create(profileOwner.ID, content, user.ID, user.GetIP())
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}

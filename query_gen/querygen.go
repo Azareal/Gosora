@@ -25,7 +25,7 @@ type DBTableKey struct {
 	Type    string
 
 	// Foreign keys only
-	FTable string
+	FTable  string
 	Cascade bool
 }
 
@@ -57,7 +57,8 @@ type DBColumn struct {
 	Table string
 	Left  string // Could be a function or a column, so I'm naming this Left
 	Alias string // aka AS Blah, if it's present
-	Type  string // function or column
+	//Type  string // function or column
+	Type int
 }
 
 type DBField struct {
@@ -82,9 +83,22 @@ type DBOrder struct {
 	Order  string
 }
 
+const (
+	TokenFunc = iota
+	TokenOp
+	TokenColumn
+	TokenNumber
+	TokenString
+	TokenSub
+	TokenOr
+	TokenNot
+	TokenLike
+)
+
 type DBToken struct {
 	Contents string
-	Type     string // function, operator, column, number, string, substitute
+	//Type     string // function, op, column, number, string, sub, not, like
+	Type int
 }
 
 type DBSetter struct {

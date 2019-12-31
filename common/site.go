@@ -222,6 +222,12 @@ func ProcessConfig() (err error) {
 	if Config.LogPruneCutoff == 0 {
 		Config.LogPruneCutoff = 180 // Default cutoff
 	}
+	if Config.LastIPCutoff == 0 {
+		Config.LastIPCutoff = 3 // Default cutoff
+	}
+	if Config.LastIPCutoff > 12 {
+		Config.LastIPCutoff = 12
+	}
 	if Config.NoEmbed {
 		DefaultParseSettings.NoEmbed = true
 	}

@@ -32,21 +32,21 @@ func _gen_pgsql() (err error) {
 	}
 		
 	common.DebugLog("Preparing updateEmail statement.")
-	stmts.updateEmail, err = db.Prepare("UPDATE \"emails\" SET `email` = ?,`uid` = ?,`validated` = ?,`token` = ? WHERE `email` = ?")
+	stmts.updateEmail, err = db.Prepare("UPDATE \"emails\" SET `email`= ?,`uid`= ?,`validated`= ?,`token`= ? WHERE `email` = ?")
 	if err != nil {
 		log.Print("Error in updateEmail statement.")
 		return err
 	}
 		
 	common.DebugLog("Preparing setTempGroup statement.")
-	stmts.setTempGroup, err = db.Prepare("UPDATE \"users\" SET `temp_group` = ? WHERE `uid` = ?")
+	stmts.setTempGroup, err = db.Prepare("UPDATE \"users\" SET `temp_group`= ? WHERE `uid` = ?")
 	if err != nil {
 		log.Print("Error in setTempGroup statement.")
 		return err
 	}
 		
 	common.DebugLog("Preparing bumpSync statement.")
-	stmts.bumpSync, err = db.Prepare("UPDATE \"sync\" SET `last_update` = LOCALTIMESTAMP()")
+	stmts.bumpSync, err = db.Prepare("UPDATE \"sync\" SET `last_update`= LOCALTIMESTAMP()")
 	if err != nil {
 		log.Print("Error in bumpSync statement.")
 		return err

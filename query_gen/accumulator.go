@@ -99,19 +99,19 @@ func (build *Accumulator) Tx(handler func(*TransactionBuilder) error) {
 	build.RecordError(tx.Commit())
 }
 
-func (build *Accumulator) SimpleSelect(table string, columns string, where string, orderby string, limit string) *sql.Stmt {
+func (build *Accumulator) SimpleSelect(table, columns, where, orderby, limit string) *sql.Stmt {
 	return build.prepare(build.adapter.SimpleSelect("", table, columns, where, orderby, limit))
 }
 
-func (build *Accumulator) SimpleCount(table string, where string, limit string) *sql.Stmt {
+func (build *Accumulator) SimpleCount(table, where, limit string) *sql.Stmt {
 	return build.prepare(build.adapter.SimpleCount("", table, where, limit))
 }
 
-func (build *Accumulator) SimpleLeftJoin(table1 string, table2 string, columns string, joiners string, where string, orderby string, limit string) *sql.Stmt {
+func (build *Accumulator) SimpleLeftJoin(table1, table2, columns, joiners, where, orderby, limit string) *sql.Stmt {
 	return build.prepare(build.adapter.SimpleLeftJoin("", table1, table2, columns, joiners, where, orderby, limit))
 }
 
-func (build *Accumulator) SimpleInnerJoin(table1 string, table2 string, columns string, joiners string, where string, orderby string, limit string) *sql.Stmt {
+func (build *Accumulator) SimpleInnerJoin(table1, table2, columns, joiners, where, orderby, limit string) *sql.Stmt {
 	return build.prepare(build.adapter.SimpleInnerJoin("", table1, table2, columns, joiners, where, orderby, limit))
 }
 
@@ -119,7 +119,7 @@ func (build *Accumulator) CreateTable(table string, charset string, collation st
 	return build.prepare(build.adapter.CreateTable("", table, charset, collation, columns, keys))
 }
 
-func (build *Accumulator) SimpleInsert(table string, columns string, fields string) *sql.Stmt {
+func (build *Accumulator) SimpleInsert(table, columns, fields string) *sql.Stmt {
 	return build.prepare(build.adapter.SimpleInsert("", table, columns, fields))
 }
 
@@ -135,15 +135,16 @@ func (build *Accumulator) SimpleInsertInnerJoin(ins DBInsert, sel DBJoin) *sql.S
 	return build.prepare(build.adapter.SimpleInsertInnerJoin("", ins, sel))
 }
 
-func (build *Accumulator) SimpleUpdate(table string, set string, where string) *sql.Stmt {
+func (build *Accumulator) SimpleUpdate(table, set, where string) *sql.Stmt {
 	return build.prepare(build.adapter.SimpleUpdate(qUpdate(table, set, where)))
 }
 
-func (build *Accumulator) SimpleUpdateSelect(table string, set string, where string) *sql.Stmt {
-	return build.prepare(build.adapter.SimpleUpdateSelect(qUpdate(table, set, where)))
+func (build *Accumulator) SimpleUpdateSelect(table, set, table2, cols, where, orderby, limit string) *sql.Stmt {
+	pre := qUpdate(table, set, "").WhereQ(build.GetAdapter().Builder().Select().Table(table2).Columns(cols).Where(where).Orderby(orderby).Limit(limit))
+	return build.prepare(build.adapter.SimpleUpdateSelect(pre))
 }
 
-func (build *Accumulator) SimpleDelete(table string, where string) *sql.Stmt {
+func (build *Accumulator) SimpleDelete(table, where string) *sql.Stmt {
 	return build.prepare(build.adapter.SimpleDelete("", table, where))
 }
 
@@ -256,7 +257,7 @@ type SimpleModel struct {
 
 func (build *Accumulator) SimpleModel(tbl, colstr, primary string) SimpleModel {
 	var qlist, uplist string
-	for _, col := range strings.Split(colstr,",") {
+	for _, col := range strings.Split(colstr, ",") {
 		qlist += "?,"
 		uplist += col + "=?,"
 	}
@@ -267,9 +268,9 @@ func (build *Accumulator) SimpleModel(tbl, colstr, primary string) SimpleModel {
 
 	where := primary + "=?"
 	return SimpleModel{
-		delete:      build.Delete(tbl).Where(where).Prepare(),
-		create:      build.Insert(tbl).Columns(colstr).Fields(qlist).Prepare(),
-		update:      build.Update(tbl).Set(uplist).Where(where).Prepare(),
+		delete: build.Delete(tbl).Where(where).Prepare(),
+		create: build.Insert(tbl).Columns(colstr).Fields(qlist).Prepare(),
+		update: build.Update(tbl).Set(uplist).Where(where).Prepare(),
 	}
 }
 
@@ -298,11 +299,11 @@ func (m SimpleModel) CreateID(args ...interface{}) (int, error) {
 }
 
 func (build *Accumulator) Model(table string) *accModelBuilder {
-	return &accModelBuilder{table,"",build}
+	return &accModelBuilder{table, "", build}
 }
 
 type accModelBuilder struct {
-	table string
+	table   string
 	primary string
 
 	build *Accumulator

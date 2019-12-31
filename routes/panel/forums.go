@@ -71,7 +71,7 @@ func ForumsCreateSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.R
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
-	err = c.AdminLogs.Create("create", fid, "forum", user.LastIP, user.ID)
+	err = c.AdminLogs.Create("create", fid, "forum", user.GetIP(), user.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -130,7 +130,7 @@ func ForumsDeleteSubmit(w http.ResponseWriter, r *http.Request, user c.User, sfi
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
-	err = c.AdminLogs.Create("delete", fid, "forum", user.LastIP, user.ID)
+	err = c.AdminLogs.Create("delete", fid, "forum", user.GetIP(), user.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -161,7 +161,7 @@ func ForumsOrderSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.Ro
 	}
 	c.Forums.UpdateOrder(updateMap)
 
-	err := c.AdminLogs.Create("reorder", 0, "forum", user.LastIP, user.ID)
+	err := c.AdminLogs.Create("reorder", 0, "forum", user.GetIP(), user.ID)
 	if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
@@ -259,7 +259,7 @@ func ForumsEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, sfid 
 	if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
-	err = c.AdminLogs.Create("edit", fid, "forum", user.LastIP, user.ID)
+	err = c.AdminLogs.Create("edit", fid, "forum", user.GetIP(), user.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -300,7 +300,7 @@ func ForumsEditPermsSubmit(w http.ResponseWriter, r *http.Request, user c.User, 
 	if err != nil {
 		return c.LocalErrorJSQ(err.Error(), w, r, user, js)
 	}
-	err = c.AdminLogs.Create("edit", fid, "forum", user.LastIP, user.ID)
+	err = c.AdminLogs.Create("edit", fid, "forum", user.GetIP(), user.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -348,7 +348,6 @@ func ForumsEditPermsAdvance(w http.ResponseWriter, r *http.Request, user c.User,
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
-
 	if forum.Preset == "" {
 		forum.Preset = "custom"
 	}
@@ -438,7 +437,7 @@ func ForumsEditPermsAdvanceSubmit(w http.ResponseWriter, r *http.Request, user c
 	if err != nil {
 		return c.LocalErrorJSQ(err.Error(), w, r, user, js)
 	}
-	err = c.AdminLogs.Create("edit", fid, "forum", user.LastIP, user.ID)
+	err = c.AdminLogs.Create("edit", fid, "forum", user.GetIP(), user.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}

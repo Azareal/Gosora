@@ -25,7 +25,7 @@ import (
 
 // A blank list to fill out that parameter in Page for routes which don't use it
 var tList []interface{}
-var successJSONBytes = []byte(`{"success":"1"}`)
+var successJSONBytes = []byte(`{"success":1}`)
 
 // TODO: Refactor this
 // TODO: Use the phrase system
@@ -115,8 +115,8 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError 
 			defer rows.Close()
 
 			for rows.Next() {
-				var alert c.Alert
-				err = rows.Scan(&alert.ASID, &alert.ActorID, &alert.TargetUserID, &alert.Event, &alert.ElementType, &alert.ElementID, &createdAt)
+				var al c.Alert
+				err = rows.Scan(&al.ASID, &al.ActorID, &al.TargetUserID, &al.Event, &al.ElementType, &al.ElementID, &createdAt)
 				if err != nil {
 					return c.InternalErrorJS(err, w, r)
 				}
@@ -124,8 +124,8 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError 
 				uCreatedAt := createdAt.Unix()
 				//log.Print("uCreatedAt", uCreatedAt)
 				//if rCreatedAt == 0 || rCreatedAt < uCreatedAt {
-				alerts = append(alerts, alert)
-				actors = append(actors, alert.ActorID)
+				alerts = append(alerts, al)
+				actors = append(actors, al.ActorID)
 				//}
 				if uCreatedAt > topCreatedAt {
 					topCreatedAt = uCreatedAt
@@ -325,10 +325,10 @@ func routeAPIPhrases(w http.ResponseWriter, r *http.Request, user c.User) c.Rout
 func routeJSAntispam(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	h := sha256.New()
 	h.Write([]byte(c.JSTokenBox.Load().(string)))
-	h.Write([]byte(user.LastIP))
+	h.Write([]byte(user.GetIP()))
 	jsToken := hex.EncodeToString(h.Sum(nil))
 
-	var innerCode = "`document.getElementByld('golden-watch').value = '" + jsToken + "';`"
+	innerCode := "`document.getElementByld('golden-watch').value = '" + jsToken + "';`"
 	io.WriteString(w, `let hihi = `+innerCode+`;
 hihi = hihi.replace('ld','Id');
 eval(hihi);`)

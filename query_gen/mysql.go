@@ -27,20 +27,20 @@ type MysqlAdapter struct {
 }
 
 // GetName gives you the name of the database adapter. In this case, it's mysql
-func (adapter *MysqlAdapter) GetName() string {
-	return adapter.Name
+func (a *MysqlAdapter) GetName() string {
+	return a.Name
 }
 
-func (adapter *MysqlAdapter) GetStmt(name string) DBStmt {
-	return adapter.Buffer[name]
+func (a *MysqlAdapter) GetStmt(name string) DBStmt {
+	return a.Buffer[name]
 }
 
-func (adapter *MysqlAdapter) GetStmts() map[string]DBStmt {
-	return adapter.Buffer
+func (a *MysqlAdapter) GetStmts() map[string]DBStmt {
+	return a.Buffer
 }
 
 // TODO: Add an option to disable unix pipes
-func (adapter *MysqlAdapter) BuildConn(config map[string]string) (*sql.DB, error) {
+func (a *MysqlAdapter) BuildConn(config map[string]string) (*sql.DB, error) {
 	dbCollation, ok := config["collation"]
 	if !ok {
 		return nil, ErrNoCollation
@@ -78,21 +78,21 @@ func (adapter *MysqlAdapter) BuildConn(config map[string]string) (*sql.DB, error
 	return db, db.Ping()
 }
 
-func (adapter *MysqlAdapter) DbVersion() string {
+func (a *MysqlAdapter) DbVersion() string {
 	return "SELECT VERSION()"
 }
 
-func (adapter *MysqlAdapter) DropTable(name string, table string) (string, error) {
+func (a *MysqlAdapter) DropTable(name string, table string) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
-	querystr := "DROP TABLE IF EXISTS `" + table + "`;"
+	q := "DROP TABLE IF EXISTS `" + table + "`;"
 	// TODO: Shunt the table name logic and associated stmt list up to the a higher layer to reduce the amount of unnecessary overhead in the builder / accumulator
-	adapter.pushStatement(name, "drop-table", querystr)
-	return querystr, nil
+	a.pushStatement(name, "drop-table", q)
+	return q, nil
 }
 
-func (adapter *MysqlAdapter) CreateTable(name string, table string, charset string, collation string, columns []DBTableColumn, keys []DBTableKey) (string, error) {
+func (a *MysqlAdapter) CreateTable(name string, table string, charset string, collation string, columns []DBTableColumn, keys []DBTableKey) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
@@ -100,49 +100,50 @@ func (adapter *MysqlAdapter) CreateTable(name string, table string, charset stri
 		return "", errors.New("You can't have a table with no columns")
 	}
 
-	var querystr = "CREATE TABLE `" + table + "` ("
+	q := "CREATE TABLE `" + table + "` ("
 	for _, column := range columns {
-		column, size, end := adapter.parseColumn(column)
-		querystr += "\n\t`" + column.Name + "` " + column.Type + size + end + ","
+		column, size, end := a.parseColumn(column)
+		q += "\n\t`" + column.Name + "` " + column.Type + size + end + ","
 	}
 
 	if len(keys) > 0 {
 		for _, key := range keys {
-			querystr += "\n\t" + key.Type
+			q += "\n\t" + key.Type
 			if key.Type != "unique" {
-				querystr += " key"
+				q += " key"
 			}
 			if key.Type == "foreign" {
 				cols := strings.Split(key.Columns, ",")
-				querystr += "(`" + cols[0] + "`) REFERENCES `" + key.FTable + "`(`" + cols[1] + "`)"
+				q += "(`" + cols[0] + "`) REFERENCES `" + key.FTable + "`(`" + cols[1] + "`)"
 				if key.Cascade {
-					querystr += " ON DELETE CASCADE"
+					q += " ON DELETE CASCADE"
 				}
-				querystr += ","
+				q += ","
 			} else {
-				querystr += "("
+				q += "("
 				for _, column := range strings.Split(key.Columns, ",") {
-					querystr += "`" + column + "`,"
+					q += "`" + column + "`,"
 				}
-				querystr = querystr[0:len(querystr)-1] + "),"
+				q = q[0:len(q)-1] + "),"
 			}
 		}
 	}
 
-	querystr = querystr[0:len(querystr)-1] + "\n)"
+	q = q[0:len(q)-1] + "\n)"
 	if charset != "" {
-		querystr += " CHARSET=" + charset
+		q += " CHARSET=" + charset
 	}
 	if collation != "" {
-		querystr += " COLLATE " + collation
+		q += " COLLATE " + collation
 	}
 
 	// TODO: Shunt the table name logic and associated stmt list up to the a higher layer to reduce the amount of unnecessary overhead in the builder / accumulator
-	adapter.pushStatement(name, "create-table", querystr+";")
-	return querystr + ";", nil
+	q += ";"
+	a.pushStatement(name, "create-table", q)
+	return q, nil
 }
 
-func (adapter *MysqlAdapter) parseColumn(column DBTableColumn) (col DBTableColumn, size string, end string) {
+func (a *MysqlAdapter) parseColumn(column DBTableColumn) (col DBTableColumn, size string, end string) {
 	// Make it easier to support Cassandra in the future
 	if column.Type == "createdAt" {
 		column.Type = "datetime"
@@ -162,7 +163,7 @@ func (adapter *MysqlAdapter) parseColumn(column DBTableColumn) (col DBTableColum
 		end = " DEFAULT "
 		/*if column.Type == "datetime" && column.Default[len(column.Default)-1] == ')' {
 			end += column.Default
-		} else */if adapter.stringyType(column.Type) && column.Default != "''" {
+		} else */if a.stringyType(column.Type) && column.Default != "''" {
 			end += "'" + column.Default + "'"
 		} else {
 			end += column.Default
@@ -188,20 +189,20 @@ func (a *MysqlAdapter) AddColumn(name string, table string, column DBTableColumn
 	}
 
 	column, size, end := a.parseColumn(column)
-	querystr := "ALTER TABLE `" + table + "` ADD COLUMN " + "`" + column.Name + "` " + column.Type + size + end
+	q := "ALTER TABLE `" + table + "` ADD COLUMN " + "`" + column.Name + "` " + column.Type + size + end
 
 	if key != nil {
-		querystr += " " + key.Type
+		q += " " + key.Type
 		if key.Type != "unique" {
-			querystr += " key"
+			q += " key"
 		} else if key.Type == "primary" {
-			querystr += " first"
+			q += " first"
 		}
 	}
 
 	// TODO: Shunt the table name logic and associated stmt list up to the a higher layer to reduce the amount of unnecessary overhead in the builder / accumulator
-	a.pushStatement(name, "add-column", querystr)
-	return querystr, nil
+	a.pushStatement(name, "add-column", q)
+	return q, nil
 }
 
 // TODO: Test to make sure everything works here
@@ -216,10 +217,10 @@ func (a *MysqlAdapter) AddIndex(name string, table string, iname string, colname
 		return "", errors.New("You need a name for the column")
 	}
 
-	querystr := "ALTER TABLE `" + table + "` ADD INDEX " + "`i_" + iname + "` (`" + colname + "`);"
+	q := "ALTER TABLE `" + table + "` ADD INDEX " + "`i_" + iname + "` (`" + colname + "`);"
 	// TODO: Shunt the table name logic and associated stmt list up to the a higher layer to reduce the amount of unnecessary overhead in the builder / accumulator
-	a.pushStatement(name, "add-index", querystr)
-	return querystr, nil
+	a.pushStatement(name, "add-index", q)
+	return q, nil
 }
 
 // TODO: Test to make sure everything works here
@@ -228,45 +229,46 @@ func (a *MysqlAdapter) AddKey(name string, table string, column string, key DBTa
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
-	var querystr string
+	var q string
 	if key.Type == "fulltext" {
-		querystr = "ALTER TABLE `" + table + "` ADD FULLTEXT(`" + column + "`)"
+		q = "ALTER TABLE `" + table + "` ADD FULLTEXT(`" + column + "`)"
 	} else {
 		return "", errors.New("Only fulltext is supported by AddKey right now")
 	}
 
 	// TODO: Shunt the table name logic and associated stmt list up to the a higher layer to reduce the amount of unnecessary overhead in the builder / accumulator
-	a.pushStatement(name, "add-key", querystr)
-	return querystr, nil
+	a.pushStatement(name, "add-key", q)
+	return q, nil
 }
 
 func (a *MysqlAdapter) AddForeignKey(name string, table string, column string, ftable string, fcolumn string, cascade bool) (out string, e error) {
-	var c = func(str string, val bool) {
+	c := func(str string, val bool) {
 		if e != nil || !val {
 			return
 		}
-		e = errors.New("You need a "+str+" for this table")
+		e = errors.New("You need a " + str + " for this table")
 	}
-	c("name",table=="")
-	c("column",column=="")
-	c("ftable",ftable=="")
-	c("fcolumn",fcolumn=="")
+	c("name", table == "")
+	c("column", column == "")
+	c("ftable", ftable == "")
+	c("fcolumn", fcolumn == "")
 	if e != nil {
 		return "", e
 	}
 
-	querystr := "ALTER TABLE `"+table+"` ADD CONSTRAINT `fk_"+column+"` FOREIGN KEY(`"+column+"`) REFERENCES `"+ftable+"`(`"+fcolumn+"`)"
+	q := "ALTER TABLE `" + table + "` ADD CONSTRAINT `fk_" + column + "` FOREIGN KEY(`" + column + "`) REFERENCES `" + ftable + "`(`" + fcolumn + "`)"
 	if cascade {
-		querystr += " ON DELETE CASCADE"
+		q += " ON DELETE CASCADE"
 	}
 
 	// TODO: Shunt the table name logic and associated stmt list up to the a higher layer to reduce the amount of unnecessary overhead in the builder / accumulator
-	a.pushStatement(name, "add-foreign-key", querystr)
-	return querystr, nil
+	a.pushStatement(name, "add-foreign-key", q)
+	return q, nil
 }
 
 var silen1 = len("INSERT INTO ``() VALUES () ")
-func (adapter *MysqlAdapter) SimpleInsert(name string, table string, columns string, fields string) (string, error) {
+
+func (a *MysqlAdapter) SimpleInsert(name string, table string, columns string, fields string) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
@@ -277,7 +279,7 @@ func (adapter *MysqlAdapter) SimpleInsert(name string, table string, columns str
 	sb.WriteString(table)
 	sb.WriteString("`(")
 	if columns != "" {
-		sb.WriteString(adapter.buildColumns(columns))
+		sb.WriteString(a.buildColumns(columns))
 		sb.WriteString(") VALUES (")
 		fs := processFields(fields)
 		sb.Grow(len(fs) * 3)
@@ -301,27 +303,27 @@ func (adapter *MysqlAdapter) SimpleInsert(name string, table string, columns str
 
 	// TODO: Shunt the table name logic and associated stmt list up to the a higher layer to reduce the amount of unnecessary overhead in the builder / accumulator
 	q := sb.String()
-	adapter.pushStatement(name, "insert", q)
+	a.pushStatement(name, "insert", q)
 	return q, nil
 }
 
-func (adapter *MysqlAdapter) buildColumns(columns string) (querystr string) {
+func (a *MysqlAdapter) buildColumns(columns string) (q string) {
 	if columns == "" {
 		return ""
 	}
 	// Escape the column names, just in case we've used a reserved keyword
-	for _, column := range processColumns(columns) {
-		if column.Type == "function" {
-			querystr += column.Left + ","
+	for _, col := range processColumns(columns) {
+		if col.Type == TokenFunc {
+			q += col.Left + ","
 		} else {
-			querystr += "`" + column.Left + "`,"
+			q += "`" + col.Left + "`,"
 		}
 	}
-	return querystr[0 : len(querystr)-1]
+	return q[0 : len(q)-1]
 }
 
 // ! DEPRECATED
-func (adapter *MysqlAdapter) SimpleReplace(name string, table string, columns string, fields string) (string, error) {
+func (a *MysqlAdapter) SimpleReplace(name string, table string, columns string, fields string) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
@@ -332,18 +334,18 @@ func (adapter *MysqlAdapter) SimpleReplace(name string, table string, columns st
 		return "", errors.New("No input data found for SimpleInsert")
 	}
 
-	var querystr = "REPLACE INTO `" + table + "`(" + adapter.buildColumns(columns) + ") VALUES ("
+	q := "REPLACE INTO `" + table + "`(" + a.buildColumns(columns) + ") VALUES ("
 	for _, field := range processFields(fields) {
-		querystr += field.Name + ","
+		q += field.Name + ","
 	}
-	querystr = querystr[0 : len(querystr)-1]
+	q = q[0 : len(q)-1]
 
 	// TODO: Shunt the table name logic and associated stmt list up to the a higher layer to reduce the amount of unnecessary overhead in the builder / accumulator
-	adapter.pushStatement(name, "replace", querystr+")")
-	return querystr + ")", nil
+	a.pushStatement(name, "replace", q+")")
+	return q + ")", nil
 }
 
-func (adapter *MysqlAdapter) SimpleUpsert(name string, table string, columns string, fields string, where string) (string, error) {
+func (a *MysqlAdapter) SimpleUpsert(name string, table string, columns string, fields string, where string) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
@@ -356,24 +358,24 @@ func (adapter *MysqlAdapter) SimpleUpsert(name string, table string, columns str
 	if where == "" {
 		return "", errors.New("You need a where for this upsert")
 	}
-	
-	var querystr = "INSERT INTO `" + table + "`("
-	var parsedFields = processFields(fields)
+
+	q := "INSERT INTO `" + table + "`("
+	parsedFields := processFields(fields)
 
 	var insertColumns string
 	var insertValues string
-	var setBit = ") ON DUPLICATE KEY UPDATE "
+	setBit := ") ON DUPLICATE KEY UPDATE "
 
-	for columnID, column := range processColumns(columns) {
+	for columnID, col := range processColumns(columns) {
 		field := parsedFields[columnID]
-		if column.Type == "function" {
-			insertColumns += column.Left + ","
+		if col.Type == TokenFunc {
+			insertColumns += col.Left + ","
 			insertValues += field.Name + ","
-			setBit += column.Left + " = " + field.Name + " AND "
+			setBit += col.Left + " = " + field.Name + " AND "
 		} else {
-			insertColumns += "`" + column.Left + "`,"
+			insertColumns += "`" + col.Left + "`,"
 			insertValues += field.Name + ","
-			setBit += "`" + column.Left + "` = " + field.Name + " AND "
+			setBit += "`" + col.Left + "` = " + field.Name + " AND "
 		}
 	}
 	insertColumns = insertColumns[0 : len(insertColumns)-1]
@@ -381,15 +383,16 @@ func (adapter *MysqlAdapter) SimpleUpsert(name string, table string, columns str
 	insertColumns += ") VALUES (" + insertValues
 	setBit = setBit[0 : len(setBit)-5]
 
-	querystr += insertColumns + setBit
+	q += insertColumns + setBit
 
 	// TODO: Shunt the table name logic and associated stmt list up to the a higher layer to reduce the amount of unnecessary overhead in the builder / accumulator
-	adapter.pushStatement(name, "upsert", querystr)
-	return querystr, nil
+	a.pushStatement(name, "upsert", q)
+	return q, nil
 }
 
 var sulen1 = len("UPDATE `` SET ")
-func (adapter *MysqlAdapter) SimpleUpdate(up *updatePrebuilder) (string, error) {
+
+func (a *MysqlAdapter) SimpleUpdate(up *updatePrebuilder) (string, error) {
 	if up.table == "" {
 		return "", errors.New("You need a name for this table")
 	}
@@ -411,17 +414,17 @@ func (adapter *MysqlAdapter) SimpleUpdate(up *updatePrebuilder) (string, error) 
 			sb.WriteString("`")
 		}
 		sb.WriteString(item.Column)
-		sb.WriteString("` =")
+		sb.WriteString("`=")
 		for _, token := range item.Expr {
 			switch token.Type {
-			case "function", "operator", "number", "substitute", "or":
+			case TokenFunc, TokenOp, TokenNumber, TokenSub, TokenOr:
 				sb.WriteString(" ")
 				sb.WriteString(token.Contents)
-			case "column":
+			case TokenColumn:
 				sb.WriteString(" `")
 				sb.WriteString(token.Contents)
 				sb.WriteString("`")
-			case "string":
+			case TokenString:
 				sb.WriteString(" '")
 				sb.WriteString(token.Contents)
 				sb.WriteString("'")
@@ -429,7 +432,7 @@ func (adapter *MysqlAdapter) SimpleUpdate(up *updatePrebuilder) (string, error) 
 		}
 	}
 
-	whereStr, err := adapter.buildFlexiWhere(up.where,up.dateCutoff)
+	whereStr, err := a.buildFlexiWhere(up.where, up.dateCutoff)
 	sb.WriteString(whereStr)
 	if err != nil {
 		return sb.String(), err
@@ -437,29 +440,28 @@ func (adapter *MysqlAdapter) SimpleUpdate(up *updatePrebuilder) (string, error) 
 
 	// TODO: Shunt the table name logic and associated stmt list up to the a higher layer to reduce the amount of unnecessary overhead in the builder / accumulator
 	q := sb.String()
-	adapter.pushStatement(up.name, "update", q)
+	a.pushStatement(up.name, "update", q)
 	return q, nil
 }
 
-func (adapter *MysqlAdapter) SimpleDelete(name string, table string, where string) (string, error) {
+func (a *MysqlAdapter) SimpleDelete(name string, table string, where string) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
 	if where == "" {
 		return "", errors.New("You need to specify what data you want to delete")
 	}
-
-	var q = "DELETE FROM `" + table + "` WHERE"
+	q := "DELETE FROM `" + table + "` WHERE"
 
 	// Add support for BETWEEN x.x
 	for _, loc := range processWhere(where) {
 		for _, token := range loc.Expr {
 			switch token.Type {
-			case "function", "operator", "number", "substitute", "or":
+			case TokenFunc, TokenOp, TokenNumber, TokenSub, TokenOr, TokenNot:
 				q += " " + token.Contents
-			case "column":
+			case TokenColumn:
 				q += " `" + token.Contents + "`"
-			case "string":
+			case TokenString:
 				q += " '" + token.Contents + "'"
 			default:
 				panic("This token doesn't exist o_o")
@@ -470,41 +472,41 @@ func (adapter *MysqlAdapter) SimpleDelete(name string, table string, where strin
 
 	q = strings.TrimSpace(q[0 : len(q)-4])
 	// TODO: Shunt the table name logic and associated stmt list up to the a higher layer to reduce the amount of unnecessary overhead in the builder / accumulator
-	adapter.pushStatement(name, "delete", q)
+	a.pushStatement(name, "delete", q)
 	return q, nil
 }
 
-func (adapter *MysqlAdapter) ComplexDelete(b *deletePrebuilder) (string, error) {
+func (a *MysqlAdapter) ComplexDelete(b *deletePrebuilder) (string, error) {
 	if b.table == "" {
 		return "", errors.New("You need a name for this table")
 	}
 	if b.where == "" && b.dateCutoff == nil {
 		return "", errors.New("You need to specify what data you want to delete")
 	}
-	var q = "DELETE FROM `" + b.table + "`"
+	q := "DELETE FROM `" + b.table + "`"
 
-	whereStr, err := adapter.buildFlexiWhere(b.where, b.dateCutoff)
+	whereStr, err := a.buildFlexiWhere(b.where, b.dateCutoff)
 	if err != nil {
 		return q, err
 	}
 	q += whereStr
 
 	// TODO: Shunt the table name logic and associated stmt list up to the a higher layer to reduce the amount of unnecessary overhead in the builder / accumulator
-	adapter.pushStatement(b.name, "delete", q)
+	a.pushStatement(b.name, "delete", q)
 	return q, nil
 }
 
 // We don't want to accidentally wipe tables, so we'll have a separate method for purging tables instead
-func (adapter *MysqlAdapter) Purge(name string, table string) (string, error) {
+func (a *MysqlAdapter) Purge(name string, table string) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
-	q := "DELETE FROM `"+table+"`"
-	adapter.pushStatement(name, "purge", q)
+	q := "DELETE FROM `" + table + "`"
+	a.pushStatement(name, "purge", q)
 	return q, nil
 }
 
-func (adapter *MysqlAdapter) buildWhere(where string) (q string, err error) {
+func (a *MysqlAdapter) buildWhere(where string) (q string, err error) {
 	if len(where) == 0 {
 		return "", nil
 	}
@@ -512,11 +514,11 @@ func (adapter *MysqlAdapter) buildWhere(where string) (q string, err error) {
 	for _, loc := range processWhere(where) {
 		for _, token := range loc.Expr {
 			switch token.Type {
-			case "function", "operator", "number", "substitute", "or":
+			case TokenFunc, TokenOp, TokenNumber, TokenSub, TokenOr, TokenNot, TokenLike:
 				q += " " + token.Contents
-			case "column":
+			case TokenColumn:
 				q += " `" + token.Contents + "`"
-			case "string":
+			case TokenString:
 				q += " '" + token.Contents + "'"
 			default:
 				return q, errors.New("This token doesn't exist o_o")
@@ -528,11 +530,10 @@ func (adapter *MysqlAdapter) buildWhere(where string) (q string, err error) {
 }
 
 // The new version of buildWhere() currently only used in ComplexSelect for complex OO builder queries
-func (adapter *MysqlAdapter) buildFlexiWhere(where string, dateCutoff *dateCutoff) (q string, err error) {
+func (a *MysqlAdapter) buildFlexiWhere(where string, dateCutoff *dateCutoff) (q string, err error) {
 	if len(where) == 0 && dateCutoff == nil {
 		return "", nil
 	}
-
 	q = " WHERE"
 	if dateCutoff != nil {
 		if dateCutoff.Type == 0 {
@@ -546,11 +547,11 @@ func (adapter *MysqlAdapter) buildFlexiWhere(where string, dateCutoff *dateCutof
 		for _, loc := range processWhere(where) {
 			for _, token := range loc.Expr {
 				switch token.Type {
-				case "function", "operator", "number", "substitute", "or":
+				case TokenFunc, TokenOp, TokenNumber, TokenSub, TokenOr, TokenNot, TokenLike:
 					q += " " + token.Contents
-				case "column":
+				case TokenColumn:
 					q += " `" + token.Contents + "`"
-				case "string":
+				case TokenString:
 					q += " '" + token.Contents + "'"
 				default:
 					return q, errors.New("This token doesn't exist o_o")
@@ -563,7 +564,7 @@ func (adapter *MysqlAdapter) buildFlexiWhere(where string, dateCutoff *dateCutof
 	return q[0 : len(q)-4], nil
 }
 
-func (adapter *MysqlAdapter) buildOrderby(orderby string) (q string) {
+func (a *MysqlAdapter) buildOrderby(orderby string) (q string) {
 	if len(orderby) != 0 {
 		q = " ORDER BY "
 		for _, column := range processOrderby(orderby) {
@@ -575,14 +576,14 @@ func (adapter *MysqlAdapter) buildOrderby(orderby string) (q string) {
 	return q
 }
 
-func (adapter *MysqlAdapter) SimpleSelect(name string, table string, columns string, where string, orderby string, limit string) (string, error) {
+func (a *MysqlAdapter) SimpleSelect(name string, table string, columns string, where string, orderby string, limit string) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
 	if len(columns) == 0 {
 		return "", errors.New("No columns found for SimpleSelect")
 	}
-	var q = "SELECT "
+	q := "SELECT "
 
 	// Slice up the user friendly strings into something easier to process
 	for _, column := range strings.Split(strings.TrimSpace(columns), ",") {
@@ -590,20 +591,20 @@ func (adapter *MysqlAdapter) SimpleSelect(name string, table string, columns str
 	}
 	q = q[0 : len(q)-1]
 
-	whereStr, err := adapter.buildWhere(where)
+	whereStr, err := a.buildWhere(where)
 	if err != nil {
 		return q, err
 	}
-	q += " FROM `" + table + "`" + whereStr + adapter.buildOrderby(orderby) + adapter.buildLimit(limit)
+	q += " FROM `" + table + "`" + whereStr + a.buildOrderby(orderby) + a.buildLimit(limit)
 
 	q = strings.TrimSpace(q)
-	adapter.pushStatement(name, "select", q)
+	a.pushStatement(name, "select", q)
 	return q, nil
 }
 
 func (a *MysqlAdapter) ComplexSelect(preBuilder *selectPrebuilder) (out string, err error) {
 	sb := &strings.Builder{}
-	err = a.complexSelect(preBuilder,sb)
+	err = a.complexSelect(preBuilder, sb)
 	out = sb.String()
 	a.pushStatement(preBuilder.name, "select", out)
 	return out, err
@@ -611,6 +612,7 @@ func (a *MysqlAdapter) ComplexSelect(preBuilder *selectPrebuilder) (out string, 
 
 var cslen1 = len("SELECT  FROM ``")
 var cslen2 = len(" WHERE `` IN(")
+
 func (a *MysqlAdapter) complexSelect(preBuilder *selectPrebuilder, sb *strings.Builder) error {
 	if preBuilder.table == "" {
 		return errors.New("You need a name for this table")
@@ -618,7 +620,7 @@ func (a *MysqlAdapter) complexSelect(preBuilder *selectPrebuilder, sb *strings.B
 	if len(preBuilder.columns) == 0 {
 		return errors.New("No columns found for ComplexSelect")
 	}
-	
+
 	cols := a.buildJoinColumns(preBuilder.columns)
 	sb.Grow(cslen1 + len(cols) + len(preBuilder.table))
 	sb.WriteString("SELECT ")
@@ -633,7 +635,7 @@ func (a *MysqlAdapter) complexSelect(preBuilder *selectPrebuilder, sb *strings.B
 		sb.WriteString(" WHERE `")
 		sb.WriteString(preBuilder.inColumn)
 		sb.WriteString("` IN(")
-		err := a.complexSelect(preBuilder.inChain,sb)
+		err := a.complexSelect(preBuilder.inChain, sb)
 		if err != nil {
 			return err
 		}
@@ -673,18 +675,18 @@ func (a *MysqlAdapter) SimpleLeftJoin(name string, table1 string, table2 string,
 		return "", err
 	}
 
-	thalf1 := strings.Split(strings.Replace(table1," as ", " AS ",-1)," AS ")
+	thalf1 := strings.Split(strings.Replace(table1, " as ", " AS ", -1), " AS ")
 	var as1 string
 	if len(thalf1) == 2 {
-		as1 = " AS `"+ thalf1[1]+"`"
+		as1 = " AS `" + thalf1[1] + "`"
 	}
-	thalf2 := strings.Split(strings.Replace(table2," as ", " AS ",-1)," AS ")
+	thalf2 := strings.Split(strings.Replace(table2, " as ", " AS ", -1), " AS ")
 	var as2 string
 	if len(thalf2) == 2 {
-		as2 = " AS `"+ thalf2[1]+"`"
+		as2 = " AS `" + thalf2[1] + "`"
 	}
 
-	q := "SELECT" + a.buildJoinColumns(columns) + " FROM `" + thalf1[0] + "`"+as1+" LEFT JOIN `" + thalf2[0] + "`"+as2+" ON " + a.buildJoiners(joiners) + whereStr + a.buildOrderby(orderby) + a.buildLimit(limit)
+	q := "SELECT" + a.buildJoinColumns(columns) + " FROM `" + thalf1[0] + "`" + as1 + " LEFT JOIN `" + thalf2[0] + "`" + as2 + " ON " + a.buildJoiners(joiners) + whereStr + a.buildOrderby(orderby) + a.buildLimit(limit)
 
 	q = strings.TrimSpace(q)
 	a.pushStatement(name, "select", q)
@@ -710,107 +712,104 @@ func (a *MysqlAdapter) SimpleInnerJoin(name string, table1 string, table2 string
 		return "", err
 	}
 
-	thalf1 := strings.Split(strings.Replace(table1," as ", " AS ",-1)," AS ")
+	thalf1 := strings.Split(strings.Replace(table1, " as ", " AS ", -1), " AS ")
 	var as1 string
 	if len(thalf1) == 2 {
-		as1 = " AS `"+ thalf1[1]+"`"
+		as1 = " AS `" + thalf1[1] + "`"
 	}
-	thalf2 := strings.Split(strings.Replace(table2," as ", " AS ",-1)," AS ")
+	thalf2 := strings.Split(strings.Replace(table2, " as ", " AS ", -1), " AS ")
 	var as2 string
 	if len(thalf2) == 2 {
-		as2 = " AS `"+ thalf2[1]+"`"
+		as2 = " AS `" + thalf2[1] + "`"
 	}
 
-	q := "SELECT " + a.buildJoinColumns(columns) + " FROM `" + thalf1[0] + "`"+as1+" INNER JOIN `" + thalf2[0] + "`"+as2+" ON " + a.buildJoiners(joiners) + whereStr + a.buildOrderby(orderby) + a.buildLimit(limit)
+	q := "SELECT " + a.buildJoinColumns(columns) + " FROM `" + thalf1[0] + "`" + as1 + " INNER JOIN `" + thalf2[0] + "`" + as2 + " ON " + a.buildJoiners(joiners) + whereStr + a.buildOrderby(orderby) + a.buildLimit(limit)
 
 	q = strings.TrimSpace(q)
 	a.pushStatement(name, "select", q)
 	return q, nil
 }
 
-func (adapter *MysqlAdapter) SimpleUpdateSelect(up *updatePrebuilder) (string, error) {
+func (a *MysqlAdapter) SimpleUpdateSelect(up *updatePrebuilder) (string, error) {
 	sel := up.whereSubQuery
-	whereStr, err := adapter.buildWhere(sel.where)
+	whereStr, err := a.buildWhere(sel.where)
 	if err != nil {
 		return "", err
 	}
 
 	var setter string
 	for _, item := range processSet(up.set) {
-		setter += "`" + item.Column + "` ="
+		setter += "`" + item.Column + "`="
 		for _, token := range item.Expr {
 			switch token.Type {
-			case "function", "operator", "number", "substitute", "or":
-				setter += " " + token.Contents
-			case "column":
-				setter += " `" + token.Contents + "`"
-			case "string":
-				setter += " '" + token.Contents + "'"
+			case TokenFunc, TokenOp, TokenNumber, TokenSub, TokenOr:
+				setter += token.Contents
+			case TokenColumn:
+				setter += "`" + token.Contents + "`"
+			case TokenString:
+				setter += "'" + token.Contents + "'"
 			}
 		}
 		setter += ","
 	}
 	setter = setter[0 : len(setter)-1]
 
-	var querystr = "UPDATE `" + up.table + "` SET " + setter + " WHERE (SELECT" + adapter.buildJoinColumns(sel.columns) + " FROM `" + sel.table + "`" + whereStr + adapter.buildOrderby(sel.orderby) + adapter.buildLimit(sel.limit) + ")"
-
-	querystr = strings.TrimSpace(querystr)
-	adapter.pushStatement(up.name, "update", querystr)
-	return querystr, nil
-}
-
-func (adapter *MysqlAdapter) SimpleInsertSelect(name string, ins DBInsert, sel DBSelect) (string, error) {
-	whereStr, err := adapter.buildWhere(sel.Where)
-	if err != nil {
-		return "", err
-	}
-
-	var q = "INSERT INTO `" + ins.Table + "`(" + adapter.buildColumns(ins.Columns) + ") SELECT" + adapter.buildJoinColumns(sel.Columns) + " FROM `" + sel.Table + "`" + whereStr + adapter.buildOrderby(sel.Orderby) + adapter.buildLimit(sel.Limit)
-
+	q := "UPDATE `" + up.table + "` SET " + setter + " WHERE (SELECT" + a.buildJoinColumns(sel.columns) + " FROM `" + sel.table + "`" + whereStr + a.buildOrderby(sel.orderby) + a.buildLimit(sel.limit) + ")"
 	q = strings.TrimSpace(q)
-	adapter.pushStatement(name, "insert", q)
+	a.pushStatement(up.name, "update", q)
 	return q, nil
 }
 
-func (adapter *MysqlAdapter) SimpleInsertLeftJoin(name string, ins DBInsert, sel DBJoin) (string, error) {
-	whereStr, err := adapter.buildJoinWhere(sel.Where)
+func (a *MysqlAdapter) SimpleInsertSelect(name string, ins DBInsert, sel DBSelect) (string, error) {
+	whereStr, err := a.buildWhere(sel.Where)
 	if err != nil {
 		return "", err
 	}
 
-	q := "INSERT INTO `" + ins.Table + "`(" + adapter.buildColumns(ins.Columns) + ") SELECT" + adapter.buildJoinColumns(sel.Columns) + " FROM `" + sel.Table1 + "` LEFT JOIN `" + sel.Table2 + "` ON " + adapter.buildJoiners(sel.Joiners) + whereStr + adapter.buildOrderby(sel.Orderby) + adapter.buildLimit(sel.Limit)
-
+	q := "INSERT INTO `" + ins.Table + "`(" + a.buildColumns(ins.Columns) + ") SELECT" + a.buildJoinColumns(sel.Columns) + " FROM `" + sel.Table + "`" + whereStr + a.buildOrderby(sel.Orderby) + a.buildLimit(sel.Limit)
 	q = strings.TrimSpace(q)
-	adapter.pushStatement(name, "insert", q)
+	a.pushStatement(name, "insert", q)
+	return q, nil
+}
+
+func (a *MysqlAdapter) SimpleInsertLeftJoin(name string, ins DBInsert, sel DBJoin) (string, error) {
+	whereStr, err := a.buildJoinWhere(sel.Where)
+	if err != nil {
+		return "", err
+	}
+
+	q := "INSERT INTO `" + ins.Table + "`(" + a.buildColumns(ins.Columns) + ") SELECT" + a.buildJoinColumns(sel.Columns) + " FROM `" + sel.Table1 + "` LEFT JOIN `" + sel.Table2 + "` ON " + a.buildJoiners(sel.Joiners) + whereStr + a.buildOrderby(sel.Orderby) + a.buildLimit(sel.Limit)
+	q = strings.TrimSpace(q)
+	a.pushStatement(name, "insert", q)
 	return q, nil
 }
 
 // TODO: Make this more consistent with the other build* methods?
-func (adapter *MysqlAdapter) buildJoiners(joiners string) (q string) {
-	for _, joiner := range processJoiner(joiners) {
-		q += "`" + joiner.LeftTable + "`.`" + joiner.LeftColumn + "` " + joiner.Operator + " `" + joiner.RightTable + "`.`" + joiner.RightColumn + "` AND "
+func (a *MysqlAdapter) buildJoiners(joiners string) (q string) {
+	for _, j := range processJoiner(joiners) {
+		q += "`" + j.LeftTable + "`.`" + j.LeftColumn + "` " + j.Operator + " `" + j.RightTable + "`.`" + j.RightColumn + "` AND "
 	}
 	// Remove the trailing AND
 	return q[0 : len(q)-4]
 }
 
 // Add support for BETWEEN x.x
-func (adapter *MysqlAdapter) buildJoinWhere(where string) (q string, err error) {
+func (a *MysqlAdapter) buildJoinWhere(where string) (q string, err error) {
 	if len(where) != 0 {
 		q = " WHERE"
 		for _, loc := range processWhere(where) {
 			for _, token := range loc.Expr {
 				switch token.Type {
-				case "function", "operator", "number", "substitute", "or":
+				case TokenFunc, TokenOp, TokenNumber, TokenSub, TokenOr, TokenNot, TokenLike:
 					q += " " + token.Contents
-				case "column":
+				case TokenColumn:
 					halves := strings.Split(token.Contents, ".")
 					if len(halves) == 2 {
 						q += " `" + halves[0] + "`.`" + halves[1] + "`"
 					} else {
 						q += " `" + token.Contents + "`"
 					}
-				case "string":
+				case TokenString:
 					q += " '" + token.Contents + "'"
 				default:
 					return q, errors.New("This token doesn't exist o_o")
@@ -823,74 +822,73 @@ func (adapter *MysqlAdapter) buildJoinWhere(where string) (q string, err error) 
 	return q, nil
 }
 
-func (adapter *MysqlAdapter) buildLimit(limit string) (q string) {
+func (a *MysqlAdapter) buildLimit(limit string) (q string) {
 	if limit != "" {
 		q = " LIMIT " + limit
 	}
 	return q
 }
 
-func (a *MysqlAdapter) buildJoinColumns(columns string) (q string) {
-	for _, column := range processColumns(columns) {
+func (a *MysqlAdapter) buildJoinColumns(cols string) (q string) {
+	for _, col := range processColumns(cols) {
 		// TODO: Move the stirng and number logic to processColumns?
 		// TODO: Error if [0] doesn't exist
-		firstChar := column.Left[0]
+		firstChar := col.Left[0]
 		if firstChar == '\'' {
-			column.Type = "string"
+			col.Type = TokenString
 		} else {
 			_, err := strconv.Atoi(string(firstChar))
 			if err == nil {
-				column.Type = "number"
+				col.Type = TokenNumber
 			}
 		}
 
 		// Escape the column names, just in case we've used a reserved keyword
-		var source = column.Left
-		if column.Table != "" {
-			source = "`" + column.Table + "`.`" + source + "`"
-		} else if column.Type != "function" && column.Type != "number" && column.Type != "substitute" && column.Type != "string" {
+		source := col.Left
+		if col.Table != "" {
+			source = "`" + col.Table + "`.`" + source + "`"
+		} else if col.Type != TokenFunc && col.Type != TokenNumber && col.Type != TokenSub && col.Type != TokenString {
 			source = "`" + source + "`"
 		}
 
 		var alias string
-		if column.Alias != "" {
-			alias = " AS `" + column.Alias + "`"
+		if col.Alias != "" {
+			alias = " AS `" + col.Alias + "`"
 		}
 		q += " " + source + alias + ","
 	}
 	return q[0 : len(q)-1]
 }
 
-func (adapter *MysqlAdapter) SimpleInsertInnerJoin(name string, ins DBInsert, sel DBJoin) (string, error) {
-	whereStr, err := adapter.buildJoinWhere(sel.Where)
+func (a *MysqlAdapter) SimpleInsertInnerJoin(name string, ins DBInsert, sel DBJoin) (string, error) {
+	whereStr, err := a.buildJoinWhere(sel.Where)
 	if err != nil {
 		return "", err
 	}
 
-	q := "INSERT INTO `" + ins.Table + "`(" + adapter.buildColumns(ins.Columns) + ") SELECT" + adapter.buildJoinColumns(sel.Columns) + " FROM `" + sel.Table1 + "` INNER JOIN `" + sel.Table2 + "` ON " + adapter.buildJoiners(sel.Joiners) + whereStr + adapter.buildOrderby(sel.Orderby) + adapter.buildLimit(sel.Limit)
-
+	q := "INSERT INTO `" + ins.Table + "`(" + a.buildColumns(ins.Columns) + ") SELECT" + a.buildJoinColumns(sel.Columns) + " FROM `" + sel.Table1 + "` INNER JOIN `" + sel.Table2 + "` ON " + a.buildJoiners(sel.Joiners) + whereStr + a.buildOrderby(sel.Orderby) + a.buildLimit(sel.Limit)
 	q = strings.TrimSpace(q)
-	adapter.pushStatement(name, "insert", q)
+	a.pushStatement(name, "insert", q)
 	return q, nil
 }
 
-func (adapter *MysqlAdapter) SimpleCount(name string, table string, where string, limit string) (q string, err error) {
+func (a *MysqlAdapter) SimpleCount(name string, table string, where string, limit string) (q string, err error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
-	whereStr, err := adapter.buildWhere(where)
+	whereStr, err := a.buildWhere(where)
 	if err != nil {
 		return "", err
 	}
 
-	q = "SELECT COUNT(*) FROM `" + table + "`" + whereStr + adapter.buildLimit(limit)
+	q = "SELECT COUNT(*) FROM `" + table + "`" + whereStr + a.buildLimit(limit)
 	q = strings.TrimSpace(q)
-	adapter.pushStatement(name, "select", q)
+	a.pushStatement(name, "select", q)
 	return q, nil
 }
 
-func (adapter *MysqlAdapter) Builder() *prebuilder {
-	return &prebuilder{adapter}
+func (a *MysqlAdapter) Builder() *prebuilder {
+	return &prebuilder{a}
 }
 
 func (a *MysqlAdapter) Write() error {
@@ -964,7 +962,7 @@ func (a *MysqlAdapter) pushStatement(name string, stype string, querystr string)
 	a.BufferOrder = append(a.BufferOrder, name)
 }
 
-func (adapter *MysqlAdapter) stringyType(ctype string) bool {
+func (a *MysqlAdapter) stringyType(ctype string) bool {
 	ctype = strings.ToLower(ctype)
 	return ctype == "varchar" || ctype == "tinytext" || ctype == "text" || ctype == "mediumtext" || ctype == "longtext" || ctype == "char" || ctype == "datetime" || ctype == "timestamp" || ctype == "time" || ctype == "date"
 }

@@ -195,23 +195,23 @@ func (a *PgsqlAdapter) SimpleInsert(name string, table string, columns string, f
 	return q, nil
 }
 
-func (a *PgsqlAdapter) buildColumns(columns string) (q string) {
-	if columns == "" {
+func (a *PgsqlAdapter) buildColumns(cols string) (q string) {
+	if cols == "" {
 		return ""
 	}
 	// Escape the column names, just in case we've used a reserved keyword
-	for _, column := range processColumns(columns) {
-		if column.Type == "function" {
-			q += column.Left + ","
+	for _, col := range processColumns(cols) {
+		if col.Type == TokenFunc {
+			q += col.Left + ","
 		} else {
-			q += "\"" + column.Left + "\","
+			q += "\"" + col.Left + "\","
 		}
 	}
 	return q[0 : len(q)-1]
 }
 
 // TODO: Implement this
-func (a *PgsqlAdapter) SimpleReplace(name string, table string, columns string, fields string) (string, error) {
+func (a *PgsqlAdapter) SimpleReplace(name, table, columns, fields string) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
@@ -249,26 +249,25 @@ func (a *PgsqlAdapter) SimpleUpdate(up *updatePrebuilder) (string, error) {
 
 	q := "UPDATE \"" + up.table + "\" SET "
 	for _, item := range processSet(up.set) {
-		q += "`" + item.Column + "` ="
+		q += "`" + item.Column + "`="
 		for _, token := range item.Expr {
 			switch token.Type {
-			case "function":
+			case TokenFunc:
 				// TODO: Write a more sophisticated function parser on the utils side.
 				if strings.ToUpper(token.Contents) == "UTC_TIMESTAMP()" {
 					token.Contents = "LOCALTIMESTAMP()"
 				}
 				q += " " + token.Contents
-			case "operator", "number", "substitute", "or":
+			case TokenOp, TokenNumber, TokenSub, TokenOr:
 				q += " " + token.Contents
-			case "column":
+			case TokenColumn:
 				q += " `" + token.Contents + "`"
-			case "string":
+			case TokenString:
 				q += " '" + token.Contents + "'"
 			}
 		}
 		q += ","
 	}
-	// Remove the trailing comma
 	q = q[0 : len(q)-1]
 
 	// Add support for BETWEEN x.x
@@ -277,17 +276,17 @@ func (a *PgsqlAdapter) SimpleUpdate(up *updatePrebuilder) (string, error) {
 		for _, loc := range processWhere(up.where) {
 			for _, token := range loc.Expr {
 				switch token.Type {
-				case "function":
+				case TokenFunc:
 					// TODO: Write a more sophisticated function parser on the utils side. What's the situation in regards to case sensitivity?
 					if strings.ToUpper(token.Contents) == "UTC_TIMESTAMP()" {
 						token.Contents = "LOCALTIMESTAMP()"
 					}
 					q += " " + token.Contents
-				case "operator", "number", "substitute", "or":
+				case TokenOp, TokenNumber, TokenSub, TokenOr, TokenNot, TokenLike:
 					q += " " + token.Contents
-				case "column":
+				case TokenColumn:
 					q += " `" + token.Contents + "`"
-				case "string":
+				case TokenString:
 					q += " '" + token.Contents + "'"
 				default:
 					panic("This token doesn't exist o_o")

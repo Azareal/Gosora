@@ -52,7 +52,7 @@ func WordFiltersCreateSubmit(w http.ResponseWriter, r *http.Request, user c.User
 	if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
-	err = c.AdminLogs.Create("create", wfid, "word_filter", user.LastIP, user.ID)
+	err = c.AdminLogs.Create("create", wfid, "word_filter", user.GetIP(), user.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -111,7 +111,7 @@ func WordFiltersEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, 
 	if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
-	err = c.AdminLogs.CreateExtra("edit", wfid, "word_filter", user.LastIP, user.ID, string(lBytes))
+	err = c.AdminLogs.CreateExtra("edit", wfid, "word_filter", user.GetIP(), user.ID, string(lBytes))
 	if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
@@ -125,7 +125,7 @@ func WordFiltersDeleteSubmit(w http.ResponseWriter, r *http.Request, user c.User
 	if ferr != nil {
 		return ferr
 	}
-	js := (r.PostFormValue("js") == "1")
+	js := r.PostFormValue("js") == "1"
 	if !user.Perms.EditSettings {
 		return c.NoPermissionsJSQ(w, r, user, js)
 	}
@@ -138,7 +138,7 @@ func WordFiltersDeleteSubmit(w http.ResponseWriter, r *http.Request, user c.User
 	if err == sql.ErrNoRows {
 		return c.LocalErrorJSQ("This word filter doesn't exist", w, r, user, js)
 	}
-	err = c.AdminLogs.Create("delete", wfid, "word_filter", user.LastIP, user.ID)
+	err = c.AdminLogs.Create("delete", wfid, "word_filter", user.GetIP(), user.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}

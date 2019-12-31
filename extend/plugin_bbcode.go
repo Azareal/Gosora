@@ -74,24 +74,25 @@ func BbcodeRegexParse(msg string) string {
 // Only does the simple BBCode like [u], [b], [i] and [s]
 func bbcodeSimpleParse(msg string) string {
 	var hasU, hasB, hasI, hasS bool
-	msgbytes := []byte(msg)
-	for i := 0; (i + 2) < len(msgbytes); i++ {
-		if msgbytes[i] == '[' && msgbytes[i+2] == ']' {
-			if msgbytes[i+1] == 'b' && !hasB {
-				msgbytes[i] = '<'
-				msgbytes[i+2] = '>'
+	mbytes := []byte(msg)
+	for i := 0; (i + 2) < len(mbytes); i++ {
+		if mbytes[i] == '[' && mbytes[i+2] == ']' {
+			ch := mbytes[i+1]
+			if ch == 'b' && !hasB {
+				mbytes[i] = '<'
+				mbytes[i+2] = '>'
 				hasB = true
-			} else if msgbytes[i+1] == 'i' && !hasI {
-				msgbytes[i] = '<'
-				msgbytes[i+2] = '>'
+			} else if ch == 'i' && !hasI {
+				mbytes[i] = '<'
+				mbytes[i+2] = '>'
 				hasI = true
-			} else if msgbytes[i+1] == 'u' && !hasU {
-				msgbytes[i] = '<'
-				msgbytes[i+2] = '>'
+			} else if ch == 'u' && !hasU {
+				mbytes[i] = '<'
+				mbytes[i+2] = '>'
 				hasU = true
-			} else if msgbytes[i+1] == 's' && !hasS {
-				msgbytes[i] = '<'
-				msgbytes[i+2] = '>'
+			} else if ch == 's' && !hasS {
+				mbytes[i] = '<'
+				mbytes[i+2] = '>'
 				hasS = true
 			}
 			i += 2
@@ -105,46 +106,47 @@ func bbcodeSimpleParse(msg string) string {
 		closeBold := []byte("</b>")
 		closeStrike := []byte("</s>")
 		if hasI {
-			msgbytes = append(msgbytes, closeItalic...)
+			mbytes = append(mbytes, closeItalic...)
 		}
 		if hasU {
-			msgbytes = append(msgbytes, closeUnder...)
+			mbytes = append(mbytes, closeUnder...)
 		}
 		if hasB {
-			msgbytes = append(msgbytes, closeBold...)
+			mbytes = append(mbytes, closeBold...)
 		}
 		if hasS {
-			msgbytes = append(msgbytes, closeStrike...)
+			mbytes = append(mbytes, closeStrike...)
 		}
 	}
-	return string(msgbytes)
+	return string(mbytes)
 }
 
 // Here for benchmarking purposes. Might add a plugin setting for disabling [code] as it has it's paws everywhere
 func BbcodeParseWithoutCode(msg string) string {
 	var hasU, hasB, hasI, hasS bool
 	var complexBbc bool
-	msgbytes := []byte(msg)
-	for i := 0; (i + 3) < len(msgbytes); i++ {
-		if msgbytes[i] == '[' {
-			if msgbytes[i+2] != ']' {
-				if msgbytes[i+1] == '/' {
-					if msgbytes[i+3] == ']' {
-						if msgbytes[i+2] == 'b' {
-							msgbytes[i] = '<'
-							msgbytes[i+3] = '>'
+	mbytes := []byte(msg)
+	for i := 0; (i + 3) < len(mbytes); i++ {
+		if mbytes[i] == '[' {
+			if mbytes[i+2] != ']' {
+				if mbytes[i+1] == '/' {
+					if mbytes[i+3] == ']' {
+						switch mbytes[i+2] {
+						case 'b':
+							mbytes[i] = '<'
+							mbytes[i+3] = '>'
 							hasB = false
-						} else if msgbytes[i+2] == 'i' {
-							msgbytes[i] = '<'
-							msgbytes[i+3] = '>'
+						case 'i':
+							mbytes[i] = '<'
+							mbytes[i+3] = '>'
 							hasI = false
-						} else if msgbytes[i+2] == 'u' {
-							msgbytes[i] = '<'
-							msgbytes[i+3] = '>'
+						case 'u':
+							mbytes[i] = '<'
+							mbytes[i+3] = '>'
 							hasU = false
-						} else if msgbytes[i+2] == 's' {
-							msgbytes[i] = '<'
-							msgbytes[i+3] = '>'
+						case 's':
+							mbytes[i] = '<'
+							mbytes[i+3] = '>'
 							hasS = false
 						}
 						i += 3
@@ -155,21 +157,22 @@ func BbcodeParseWithoutCode(msg string) string {
 					complexBbc = true
 				}
 			} else {
-				if msgbytes[i+1] == 'b' && !hasB {
-					msgbytes[i] = '<'
-					msgbytes[i+2] = '>'
+				ch := mbytes[i+1]
+				if ch == 'b' && !hasB {
+					mbytes[i] = '<'
+					mbytes[i+2] = '>'
 					hasB = true
-				} else if msgbytes[i+1] == 'i' && !hasI {
-					msgbytes[i] = '<'
-					msgbytes[i+2] = '>'
+				} else if ch == 'i' && !hasI {
+					mbytes[i] = '<'
+					mbytes[i+2] = '>'
 					hasI = true
-				} else if msgbytes[i+1] == 'u' && !hasU {
-					msgbytes[i] = '<'
-					msgbytes[i+2] = '>'
+				} else if ch == 'u' && !hasU {
+					mbytes[i] = '<'
+					mbytes[i+2] = '>'
 					hasU = true
-				} else if msgbytes[i+1] == 's' && !hasS {
-					msgbytes[i] = '<'
-					msgbytes[i+2] = '>'
+				} else if ch == 's' && !hasS {
+					mbytes[i] = '<'
+					mbytes[i+2] = '>'
 					hasS = true
 				}
 				i += 2
@@ -184,29 +187,29 @@ func BbcodeParseWithoutCode(msg string) string {
 		closeBold := []byte("</b>")
 		closeStrike := []byte("</s>")
 		if hasI {
-			msgbytes = append(bytes.TrimSpace(msgbytes), closeItalic...)
+			mbytes = append(bytes.TrimSpace(mbytes), closeItalic...)
 		}
 		if hasU {
-			msgbytes = append(bytes.TrimSpace(msgbytes), closeUnder...)
+			mbytes = append(bytes.TrimSpace(mbytes), closeUnder...)
 		}
 		if hasB {
-			msgbytes = append(bytes.TrimSpace(msgbytes), closeBold...)
+			mbytes = append(bytes.TrimSpace(mbytes), closeBold...)
 		}
 		if hasS {
-			msgbytes = append(bytes.TrimSpace(msgbytes), closeStrike...)
+			mbytes = append(bytes.TrimSpace(mbytes), closeStrike...)
 		}
 	}
 
 	// Copy the new complex parser over once the rough edges have been smoothed over
 	if complexBbc {
-		msg = string(msgbytes)
+		msg = string(mbytes)
 		msg = bbcodeURL.ReplaceAllString(msg, "<a href='$1$2//$3' rel='ugc'>$1$2//$3</i>")
 		msg = bbcodeURLLabel.ReplaceAllString(msg, "<a href='$1$2//$3' rel='ugc'>$4</i>")
 		msg = bbcodeSpoiler.ReplaceAllString(msg, "<spoiler>$1</spoiler>")
 		msg = bbcodeQuotes.ReplaceAllString(msg, "<blockquote>$1</blockquote>")
 		return bbcodeCode.ReplaceAllString(msg, "<span class='codequotes'>$1</span>")
 	}
-	return string(msgbytes)
+	return string(mbytes)
 }
 
 // Does every type of BBCode
@@ -214,63 +217,66 @@ func BbcodeFullParse(msg string) string {
 	var hasU, hasB, hasI, hasS, hasC bool
 	var complexBbc bool
 
-	msgbytes := []byte(msg)
-	msgbytes = append(msgbytes, c.SpaceGap...)
-	for i := 0; i < len(msgbytes); i++ {
-		if msgbytes[i] == '[' {
-			if msgbytes[i+2] != ']' {
-				if msgbytes[i+1] == '/' {
-					if msgbytes[i+3] == ']' {
+	mbytes := []byte(msg)
+	mbytes = append(mbytes, c.SpaceGap...)
+	for i := 0; i < len(mbytes); i++ {
+		if mbytes[i] == '[' {
+			if mbytes[i+2] != ']' {
+				if mbytes[i+1] == '/' {
+					if mbytes[i+3] == ']' {
 						if !hasC {
-							if msgbytes[i+2] == 'b' {
-								msgbytes[i] = '<'
-								msgbytes[i+3] = '>'
+							switch mbytes[i+2] {
+							case 'b':
+								mbytes[i] = '<'
+								mbytes[i+3] = '>'
 								hasB = false
-							} else if msgbytes[i+2] == 'i' {
-								msgbytes[i] = '<'
-								msgbytes[i+3] = '>'
+							case 'i':
+								mbytes[i] = '<'
+								mbytes[i+3] = '>'
 								hasI = false
-							} else if msgbytes[i+2] == 'u' {
-								msgbytes[i] = '<'
-								msgbytes[i+3] = '>'
+							case 'u':
+								mbytes[i] = '<'
+								mbytes[i+3] = '>'
 								hasU = false
-							} else if msgbytes[i+2] == 's' {
-								msgbytes[i] = '<'
-								msgbytes[i+3] = '>'
+							case 's':
+								mbytes[i] = '<'
+								mbytes[i+3] = '>'
 								hasS = false
 							}
 							i += 3
 						}
 					} else {
-						if msgbytes[i+2] == 'c' && msgbytes[i+3] == 'o' && msgbytes[i+4] == 'd' && msgbytes[i+5] == 'e' && msgbytes[i+6] == ']' {
+						if mbytes[i+6] == ']' && mbytes[i+2] == 'c' && mbytes[i+3] == 'o' && mbytes[i+4] == 'd' && mbytes[i+5] == 'e' {
 							hasC = false
 							i += 7
 						}
 						complexBbc = true
 					}
 				} else {
-					if msgbytes[i+1] == 'c' && msgbytes[i+2] == 'o' && msgbytes[i+3] == 'd' && msgbytes[i+4] == 'e' && msgbytes[i+5] == ']' {
+					// Put the biggest index first to avoid unnecessary bounds checks
+					if mbytes[i+5] == ']' && mbytes[i+1] == 'c' && mbytes[i+2] == 'o' && mbytes[i+3] == 'd' && mbytes[i+4] == 'e' {
 						hasC = true
 						i += 6
 					}
 					complexBbc = true
 				}
 			} else if !hasC {
-				if msgbytes[i+1] == 'b' && !hasB {
-					msgbytes[i] = '<'
-					msgbytes[i+2] = '>'
+				ch := mbytes[i+1]
+				if ch == 'b' && !hasB {
+					mbytes[i] = '<'
+					mbytes[i+2] = '>'
 					hasB = true
-				} else if msgbytes[i+1] == 'i' && !hasI {
-					msgbytes[i] = '<'
-					msgbytes[i+2] = '>'
+				} else if ch == 'i' && !hasI {
+					mbytes[i] = '<'
+					mbytes[i+2] = '>'
 					hasI = true
-				} else if msgbytes[i+1] == 'u' && !hasU {
-					msgbytes[i] = '<'
-					msgbytes[i+2] = '>'
+				} else if ch == 'u' && !hasU {
+					mbytes[i] = '<'
+					mbytes[i+2] = '>'
 					hasU = true
-				} else if msgbytes[i+1] == 's' && !hasS {
-					msgbytes[i] = '<'
-					msgbytes[i+2] = '>'
+				} else if ch == 's' && !hasS {
+					mbytes[i] = '<'
+					mbytes[i+2] = '>'
 					hasS = true
 				}
 				i += 2
@@ -285,46 +291,46 @@ func BbcodeFullParse(msg string) string {
 		closeBold := []byte("</b>")
 		closeStrike := []byte("</s>")
 		if hasI {
-			msgbytes = append(bytes.TrimSpace(msgbytes), closeItalic...)
+			mbytes = append(bytes.TrimSpace(mbytes), closeItalic...)
 		}
 		if hasU {
-			msgbytes = append(bytes.TrimSpace(msgbytes), closeUnder...)
+			mbytes = append(bytes.TrimSpace(mbytes), closeUnder...)
 		}
 		if hasB {
-			msgbytes = append(bytes.TrimSpace(msgbytes), closeBold...)
+			mbytes = append(bytes.TrimSpace(mbytes), closeBold...)
 		}
 		if hasS {
-			msgbytes = append(bytes.TrimSpace(msgbytes), closeStrike...)
+			mbytes = append(bytes.TrimSpace(mbytes), closeStrike...)
 		}
-		msgbytes = append(msgbytes, c.SpaceGap...)
+		mbytes = append(mbytes, c.SpaceGap...)
 	}
 
 	if complexBbc {
 		i := 0
 		var start, lastTag int
 		var outbytes []byte
-		for ; i < len(msgbytes); i++ {
-			if msgbytes[i] == '[' {
-				if msgbytes[i+1] == 'u' {
-					if msgbytes[i+2] == 'r' && msgbytes[i+3] == 'l' && msgbytes[i+4] == ']' {
-						i, start, lastTag, outbytes = bbcodeParseURL(i, start, lastTag, msgbytes, outbytes)
+		for ; i < len(mbytes); i++ {
+			if mbytes[i] == '[' {
+				if mbytes[i+1] == 'u' {
+					if mbytes[i+4] == ']' && mbytes[i+2] == 'r' && mbytes[i+3] == 'l' {
+						i, start, lastTag, outbytes = bbcodeParseURL(i, start, lastTag, mbytes, outbytes)
 						continue
 					}
-				} else if msgbytes[i+1] == 'r' {
-					if bytes.Equal(msgbytes[i+2:i+6], []byte("and]")) {
-						i, start, lastTag, outbytes = bbcodeParseRand(i, start, lastTag, msgbytes, outbytes)
+				} else if mbytes[i+1] == 'r' {
+					if bytes.Equal(mbytes[i+2:i+6], []byte("and]")) {
+						i, start, lastTag, outbytes = bbcodeParseRand(i, start, lastTag, mbytes, outbytes)
 					}
 				}
 			}
 		}
 		if lastTag != i {
-			outbytes = append(outbytes, msgbytes[lastTag:]...)
+			outbytes = append(outbytes, mbytes[lastTag:]...)
 		}
 
 		if len(outbytes) != 0 {
 			msg = string(outbytes[0 : len(outbytes)-10])
 		} else {
-			msg = string(msgbytes[0 : len(msgbytes)-10])
+			msg = string(mbytes[0 : len(mbytes)-10])
 		}
 
 		// TODO: Optimise these
@@ -335,27 +341,27 @@ func BbcodeFullParse(msg string) string {
 		msg = bbcodeSpoiler.ReplaceAllString(msg, "<spoiler>$1</spoiler>")
 		msg = bbcodeH1.ReplaceAllString(msg, "<h2>$1</h2>")
 	} else {
-		msg = string(msgbytes[0 : len(msgbytes)-10])
+		msg = string(mbytes[0 : len(mbytes)-10])
 	}
 
 	return msg
 }
 
 // TODO: Strip the containing [url] so the media parser can work it's magic instead? Or do we want to allow something like [url=]label[/url] here?
-func bbcodeParseURL(i int, start int, lastTag int, msgbytes []byte, outbytes []byte) (int, int, int, []byte) {
+func bbcodeParseURL(i int, start int, lastTag int, mbytes []byte, outbytes []byte) (int, int, int, []byte) {
 	start = i + 5
-	outbytes = append(outbytes, msgbytes[lastTag:i]...)
+	outbytes = append(outbytes, mbytes[lastTag:i]...)
 	i = start
-	i += c.PartialURLStringLen2(string(msgbytes[start:]))
-	if !bytes.Equal(msgbytes[i:i+6], []byte("[/url]")) {
+	i += c.PartialURLStringLen2(string(mbytes[start:]))
+	if !bytes.Equal(mbytes[i:i+6], []byte("[/url]")) {
 		outbytes = append(outbytes, c.InvalidURL...)
 		return i, start, lastTag, outbytes
 	}
 
 	outbytes = append(outbytes, c.URLOpen...)
-	outbytes = append(outbytes, msgbytes[start:i]...)
+	outbytes = append(outbytes, mbytes[start:i]...)
 	outbytes = append(outbytes, c.URLOpen2...)
-	outbytes = append(outbytes, msgbytes[start:i]...)
+	outbytes = append(outbytes, mbytes[start:i]...)
 	outbytes = append(outbytes, c.URLClose...)
 	i += 6
 	lastTag = i

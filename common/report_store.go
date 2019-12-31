@@ -44,7 +44,7 @@ func (s *DefaultReportStore) Create(title string, content string, u *User, itemT
 		return 0, ErrAlreadyReported
 	}
 
-	res, err := s.create.Exec(title, content, ParseMessage(content, 0, "", nil), u.LastIP, u.ID, u.ID, itemType+"_"+strconv.Itoa(itemID), ReportForumID)
+	res, err := s.create.Exec(title, content, ParseMessage(content, 0, "", nil), u.GetIP(), u.ID, u.ID, itemType+"_"+strconv.Itoa(itemID), ReportForumID)
 	if err != nil {
 		return 0, err
 	}
@@ -53,6 +53,6 @@ func (s *DefaultReportStore) Create(title string, content string, u *User, itemT
 		return 0, err
 	}
 	tid = int(lastID)
-	
+
 	return tid, Forums.AddTopic(tid, u.ID, ReportForumID)
 }

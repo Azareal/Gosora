@@ -63,7 +63,7 @@ func PagesCreateSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.Ro
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
-	err = c.AdminLogs.Create("create", pid, "page", user.LastIP, user.ID)
+	err = c.AdminLogs.Create("create", pid, "page", user.GetIP(), user.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -130,7 +130,7 @@ func PagesEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, spid s
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
-	err = c.AdminLogs.Create("edit", pid, "page", user.LastIP, user.ID)
+	err = c.AdminLogs.Create("edit", pid, "page", user.GetIP(), user.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -153,7 +153,7 @@ func PagesDeleteSubmit(w http.ResponseWriter, r *http.Request, user c.User, spid
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
-	err = c.AdminLogs.Create("delete", pid, "page", user.LastIP, user.ID)
+	err = c.AdminLogs.Create("delete", pid, "page", user.GetIP(), user.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}

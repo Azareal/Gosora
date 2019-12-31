@@ -13,18 +13,18 @@ import (
 )
 
 // TODO: Add support for numbers and strings?
-func processColumns(colstr string) (columns []DBColumn) {
-	if colstr == "" {
+func processColumns(colStr string) (columns []DBColumn) {
+	if colStr == "" {
 		return columns
 	}
-	colstr = strings.Replace(colstr, " as ", " AS ", -1)
-	for _, segment := range strings.Split(colstr, ",") {
-		var outcol DBColumn
+	colStr = strings.Replace(colStr, " as ", " AS ", -1)
+	for _, segment := range strings.Split(colStr, ",") {
+		var outCol DBColumn
 		dotHalves := strings.Split(strings.TrimSpace(segment), ".")
 
 		var halves []string
 		if len(dotHalves) == 2 {
-			outcol.Table = dotHalves[0]
+			outCol.Table = dotHalves[0]
 			halves = strings.Split(dotHalves[1], " AS ")
 		} else {
 			halves = strings.Split(dotHalves[0], " AS ")
@@ -32,132 +32,132 @@ func processColumns(colstr string) (columns []DBColumn) {
 
 		halves[0] = strings.TrimSpace(halves[0])
 		if len(halves) == 2 {
-			outcol.Alias = strings.TrimSpace(halves[1])
+			outCol.Alias = strings.TrimSpace(halves[1])
 		}
 		if halves[0][len(halves[0])-1] == ')' {
-			outcol.Type = "function"
+			outCol.Type = TokenFunc
 		} else if halves[0] == "?" {
-			outcol.Type = "substitute"
+			outCol.Type = TokenSub
 		} else {
-			outcol.Type = "column"
+			outCol.Type = TokenColumn
 		}
 
-		outcol.Left = halves[0]
-		columns = append(columns, outcol)
+		outCol.Left = halves[0]
+		columns = append(columns, outCol)
 	}
 	return columns
 }
 
 // TODO: Allow order by statements without a direction
-func processOrderby(orderstr string) (order []DBOrder) {
-	if orderstr == "" {
+func processOrderby(orderStr string) (order []DBOrder) {
+	if orderStr == "" {
 		return order
 	}
-	for _, segment := range strings.Split(orderstr, ",") {
-		var outorder DBOrder
+	for _, segment := range strings.Split(orderStr, ",") {
+		var outOrder DBOrder
 		halves := strings.Split(strings.TrimSpace(segment), " ")
 		if len(halves) != 2 {
 			continue
 		}
-		outorder.Column = halves[0]
-		outorder.Order = strings.ToLower(halves[1])
-		order = append(order, outorder)
+		outOrder.Column = halves[0]
+		outOrder.Order = strings.ToLower(halves[1])
+		order = append(order, outOrder)
 	}
 	return order
 }
 
-func processJoiner(joinstr string) (joiner []DBJoiner) {
-	if joinstr == "" {
+func processJoiner(joinStr string) (joiner []DBJoiner) {
+	if joinStr == "" {
 		return joiner
 	}
-	joinstr = strings.Replace(joinstr, " on ", " ON ", -1)
-	joinstr = strings.Replace(joinstr, " and ", " AND ", -1)
-	for _, segment := range strings.Split(joinstr, " AND ") {
-		var outjoin DBJoiner
+	joinStr = strings.Replace(joinStr, " on ", " ON ", -1)
+	joinStr = strings.Replace(joinStr, " and ", " AND ", -1)
+	for _, segment := range strings.Split(joinStr, " AND ") {
+		var outJoin DBJoiner
 		var parseOffset int
 		var left, right string
 
 		left, parseOffset = getIdentifier(segment, parseOffset)
-		outjoin.Operator, parseOffset = getOperator(segment, parseOffset+1)
+		outJoin.Operator, parseOffset = getOperator(segment, parseOffset+1)
 		right, parseOffset = getIdentifier(segment, parseOffset+1)
 
 		leftColumn := strings.Split(left, ".")
 		rightColumn := strings.Split(right, ".")
-		outjoin.LeftTable = strings.TrimSpace(leftColumn[0])
-		outjoin.RightTable = strings.TrimSpace(rightColumn[0])
-		outjoin.LeftColumn = strings.TrimSpace(leftColumn[1])
-		outjoin.RightColumn = strings.TrimSpace(rightColumn[1])
+		outJoin.LeftTable = strings.TrimSpace(leftColumn[0])
+		outJoin.RightTable = strings.TrimSpace(rightColumn[0])
+		outJoin.LeftColumn = strings.TrimSpace(leftColumn[1])
+		outJoin.RightColumn = strings.TrimSpace(rightColumn[1])
 
-		joiner = append(joiner, outjoin)
+		joiner = append(joiner, outJoin)
 	}
 	return joiner
 }
 
-func (where *DBWhere) parseNumber(segment string, i int) int {
+func (wh *DBWhere) parseNumber(segment string, i int) int {
 	var buffer string
 	for ; i < len(segment); i++ {
-		char := segment[i]
-		if '0' <= char && char <= '9' {
-			buffer += string(char)
+		ch := segment[i]
+		if '0' <= ch && ch <= '9' {
+			buffer += string(ch)
 		} else {
 			i--
-			where.Expr = append(where.Expr, DBToken{buffer, "number"})
+			wh.Expr = append(wh.Expr, DBToken{buffer, TokenNumber})
 			return i
 		}
 	}
 	return i
 }
 
-func (where *DBWhere) parseColumn(segment string, i int) int {
+func (wh *DBWhere) parseColumn(segment string, i int) int {
 	var buffer string
 	for ; i < len(segment); i++ {
-		char := segment[i]
+		ch := segment[i]
 		switch {
-		case ('a' <= char && char <= 'z') || ('A' <= char && char <= 'Z') || char == '.' || char == '_':
-			buffer += string(char)
-		case char == '(':
-			return where.parseFunction(segment, buffer, i)
+		case ('a' <= ch && ch <= 'z') || ('A' <= ch && ch <= 'Z') || ch == '.' || ch == '_':
+			buffer += string(ch)
+		case ch == '(':
+			return wh.parseFunction(segment, buffer, i)
 		default:
 			i--
-			where.Expr = append(where.Expr, DBToken{buffer, "column"})
+			wh.Expr = append(wh.Expr, DBToken{buffer, TokenColumn})
 			return i
 		}
 	}
 	return i
 }
 
-func (where *DBWhere) parseFunction(segment string, buffer string, i int) int {
-	var preI = i
+func (wh *DBWhere) parseFunction(segment string, buffer string, i int) int {
+	preI := i
 	i = skipFunctionCall(segment, i-1)
 	buffer += segment[preI:i] + string(segment[i])
-	where.Expr = append(where.Expr, DBToken{buffer, "function"})
+	wh.Expr = append(wh.Expr, DBToken{buffer, TokenFunc})
 	return i
 }
 
-func (where *DBWhere) parseString(segment string, i int) int {
+func (wh *DBWhere) parseString(segment string, i int) int {
 	var buffer string
 	i++
 	for ; i < len(segment); i++ {
-		char := segment[i]
-		if char != '\'' {
-			buffer += string(char)
+		ch := segment[i]
+		if ch != '\'' {
+			buffer += string(ch)
 		} else {
-			where.Expr = append(where.Expr, DBToken{buffer, "string"})
+			wh.Expr = append(wh.Expr, DBToken{buffer, TokenString})
 			return i
 		}
 	}
 	return i
 }
 
-func (where *DBWhere) parseOperator(segment string, i int) int {
+func (wh *DBWhere) parseOperator(segment string, i int) int {
 	var buffer string
 	for ; i < len(segment); i++ {
-		char := segment[i]
-		if isOpByte(char) {
-			buffer += string(char)
+		ch := segment[i]
+		if isOpByte(ch) {
+			buffer += string(ch)
 		} else {
 			i--
-			where.Expr = append(where.Expr, DBToken{buffer, "operator"})
+			wh.Expr = append(wh.Expr, DBToken{buffer, TokenOp})
 			return i
 		}
 	}
@@ -175,35 +175,41 @@ func normalizeOr(in string) string {
 }
 
 // TODO: Write tests for this
-func processWhere(wherestr string) (where []DBWhere) {
-	if wherestr == "" {
+func processWhere(whereStr string) (where []DBWhere) {
+	if whereStr == "" {
 		return where
 	}
-	wherestr = normalizeAnd(wherestr)
-	wherestr = normalizeOr(wherestr)
+	whereStr = normalizeAnd(whereStr)
+	whereStr = normalizeOr(whereStr)
 
-	for _, segment := range strings.Split(wherestr, " AND ") {
-		var tmpWhere = &DBWhere{[]DBToken{}}
-		segment += ")"
-		for i := 0; i < len(segment); i++ {
-			char := segment[i]
+	for _, seg := range strings.Split(whereStr, " AND ") {
+		tmpWhere := &DBWhere{[]DBToken{}}
+		seg += ")"
+		for i := 0; i < len(seg); i++ {
+			ch := seg[i]
 			switch {
-			case '0' <= char && char <= '9':
-				i = tmpWhere.parseNumber(segment, i)
+			case '0' <= ch && ch <= '9':
+				i = tmpWhere.parseNumber(seg, i)
 			// TODO: Sniff the third byte offset from char or it's non-existent to avoid matching uppercase strings which start with OR
-			case char == 'O' && (i+1) < len(segment) && segment[i+1] == 'R':
-				tmpWhere.Expr = append(tmpWhere.Expr, DBToken{"OR", "or"})
+			case ch == 'O' && (i+1) < len(seg) && seg[i+1] == 'R':
+				tmpWhere.Expr = append(tmpWhere.Expr, DBToken{"OR", TokenOr})
 				i += 1
-			case ('a' <= char && char <= 'z') || ('A' <= char && char <= 'Z') || char == '_':
-				i = tmpWhere.parseColumn(segment, i)
-			case char == '\'':
-				i = tmpWhere.parseString(segment, i)
-			case char == ')' && i < (len(segment)-1):
-				tmpWhere.Expr = append(tmpWhere.Expr, DBToken{")", "operator"})
-			case isOpByte(char):
-				i = tmpWhere.parseOperator(segment, i)
-			case char == '?':
-				tmpWhere.Expr = append(tmpWhere.Expr, DBToken{"?", "substitute"})
+			case ch == 'N' && (i+2) < len(seg) && seg[i+1] == 'O' && seg[i+2] == 'T':
+				tmpWhere.Expr = append(tmpWhere.Expr, DBToken{"NOT", TokenNot})
+				i += 2
+			case ch == 'L' && (i+3) < len(seg) && seg[i+1] == 'I' && seg[i+2] == 'K' && seg[i+3] == 'E':
+				tmpWhere.Expr = append(tmpWhere.Expr, DBToken{"LIKE", TokenLike})
+				i += 3
+			case ('a' <= ch && ch <= 'z') || ('A' <= ch && ch <= 'Z') || ch == '_':
+				i = tmpWhere.parseColumn(seg, i)
+			case ch == '\'':
+				i = tmpWhere.parseString(seg, i)
+			case ch == ')' && i < (len(seg)-1):
+				tmpWhere.Expr = append(tmpWhere.Expr, DBToken{")", TokenOp})
+			case isOpByte(ch):
+				i = tmpWhere.parseOperator(seg, i)
+			case ch == '?':
+				tmpWhere.Expr = append(tmpWhere.Expr, DBToken{"?", TokenSub})
 			}
 		}
 		where = append(where, *tmpWhere)
@@ -211,47 +217,47 @@ func processWhere(wherestr string) (where []DBWhere) {
 	return where
 }
 
-func (setter *DBSetter) parseNumber(segment string, i int) int {
+func (set *DBSetter) parseNumber(segment string, i int) int {
 	var buffer string
 	for ; i < len(segment); i++ {
-		char := segment[i]
-		if '0' <= char && char <= '9' {
-			buffer += string(char)
+		ch := segment[i]
+		if '0' <= ch && ch <= '9' {
+			buffer += string(ch)
 		} else {
-			setter.Expr = append(setter.Expr, DBToken{buffer, "number"})
+			set.Expr = append(set.Expr, DBToken{buffer, TokenNumber})
 			return i
 		}
 	}
 	return i
 }
 
-func (setter *DBSetter) parseColumn(segment string, i int) int {
+func (set *DBSetter) parseColumn(segment string, i int) int {
 	var buffer string
 	for ; i < len(segment); i++ {
-		char := segment[i]
+		ch := segment[i]
 		switch {
-		case ('a' <= char && char <= 'z') || ('A' <= char && char <= 'Z') || char == '_':
-			buffer += string(char)
-		case char == '(':
-			return setter.parseFunction(segment, buffer, i)
+		case ('a' <= ch && ch <= 'z') || ('A' <= ch && ch <= 'Z') || ch == '_':
+			buffer += string(ch)
+		case ch == '(':
+			return set.parseFunction(segment, buffer, i)
 		default:
 			i--
-			setter.Expr = append(setter.Expr, DBToken{buffer, "column"})
+			set.Expr = append(set.Expr, DBToken{buffer, TokenColumn})
 			return i
 		}
 	}
 	return i
 }
 
-func (setter *DBSetter) parseFunction(segment string, buffer string, i int) int {
-	var preI = i
+func (set *DBSetter) parseFunction(segment string, buffer string, i int) int {
+	preI := i
 	i = skipFunctionCall(segment, i-1)
 	buffer += segment[preI:i] + string(segment[i])
-	setter.Expr = append(setter.Expr, DBToken{buffer, "function"})
+	set.Expr = append(set.Expr, DBToken{buffer, TokenFunc})
 	return i
 }
 
-func (setter *DBSetter) parseString(segment string, i int) int {
+func (set *DBSetter) parseString(segment string, i int) int {
 	var buffer string
 	i++
 	for ; i < len(segment); i++ {
@@ -259,22 +265,22 @@ func (setter *DBSetter) parseString(segment string, i int) int {
 		if char != '\'' {
 			buffer += string(char)
 		} else {
-			setter.Expr = append(setter.Expr, DBToken{buffer, "string"})
+			set.Expr = append(set.Expr, DBToken{buffer, TokenString})
 			return i
 		}
 	}
 	return i
 }
 
-func (setter *DBSetter) parseOperator(segment string, i int) int {
+func (set *DBSetter) parseOperator(segment string, i int) int {
 	var buffer string
 	for ; i < len(segment); i++ {
-		char := segment[i]
-		if isOpByte(char) {
-			buffer += string(char)
+		ch := segment[i]
+		if isOpByte(ch) {
+			buffer += string(ch)
 		} else {
 			i--
-			setter.Expr = append(setter.Expr, DBToken{buffer, "operator"})
+			set.Expr = append(set.Expr, DBToken{buffer, TokenOp})
 			return i
 		}
 	}
@@ -316,18 +322,18 @@ func processSet(setstr string) (setter []DBSetter) {
 		segment := halves[1] + ")"
 
 		for i := 0; i < len(segment); i++ {
-			char := segment[i]
+			ch := segment[i]
 			switch {
-			case '0' <= char && char <= '9':
+			case '0' <= ch && ch <= '9':
 				i = tmpSetter.parseNumber(segment, i)
-			case ('a' <= char && char <= 'z') || ('A' <= char && char <= 'Z') || char == '_':
+			case ('a' <= ch && ch <= 'z') || ('A' <= ch && ch <= 'Z') || ch == '_':
 				i = tmpSetter.parseColumn(segment, i)
-			case char == '\'':
+			case ch == '\'':
 				i = tmpSetter.parseString(segment, i)
-			case isOpByte(char):
+			case isOpByte(ch):
 				i = tmpSetter.parseOperator(segment, i)
-			case char == '?':
-				tmpSetter.Expr = append(tmpSetter.Expr, DBToken{"?", "substitute"})
+			case ch == '?':
+				tmpSetter.Expr = append(tmpSetter.Expr, DBToken{"?", TokenSub})
 			}
 		}
 		setter = append(setter, *tmpSetter)
@@ -335,86 +341,88 @@ func processSet(setstr string) (setter []DBSetter) {
 	return setter
 }
 
-func processLimit(limitstr string) (limiter DBLimit) {
-	halves := strings.Split(limitstr, ",")
+func processLimit(limitStr string) (limit DBLimit) {
+	halves := strings.Split(limitStr, ",")
 	if len(halves) == 2 {
-		limiter.Offset = halves[0]
-		limiter.MaxCount = halves[1]
+		limit.Offset = halves[0]
+		limit.MaxCount = halves[1]
 	} else {
-		limiter.MaxCount = halves[0]
+		limit.MaxCount = halves[0]
 	}
-	return limiter
+	return limit
 }
 
-func isOpByte(char byte) bool {
-	return char == '<' || char == '>' || char == '=' || char == '!' || char == '*' || char == '%' || char == '+' || char == '-' || char == '/' || char == '(' || char == ')'
+func isOpByte(ch byte) bool {
+	return ch == '<' || ch == '>' || ch == '=' || ch == '!' || ch == '*' || ch == '%' || ch == '+' || ch == '-' || ch == '/' || ch == '(' || ch == ')'
 }
 
-func isOpRune(char rune) bool {
-	return char == '<' || char == '>' || char == '=' || char == '!' || char == '*' || char == '%' || char == '+' || char == '-' || char == '/' || char == '(' || char == ')'
+func isOpRune(ch rune) bool {
+	return ch == '<' || ch == '>' || ch == '=' || ch == '!' || ch == '*' || ch == '%' || ch == '+' || ch == '-' || ch == '/' || ch == '(' || ch == ')'
 }
 
-func processFields(fieldstr string) (fields []DBField) {
-	if fieldstr == "" {
+func processFields(fieldStr string) (fields []DBField) {
+	if fieldStr == "" {
 		return fields
 	}
 	var buffer string
 	var lastItem int
-	fieldstr += ","
-	for i := 0; i < len(fieldstr); i++ {
-		if fieldstr[i] == '(' {
-			i = skipFunctionCall(fieldstr, i-1)
-			fields = append(fields, DBField{Name: fieldstr[lastItem : i+1], Type: getIdentifierType(fieldstr[lastItem : i+1])})
+	fieldStr += ","
+	for i := 0; i < len(fieldStr); i++ {
+		ch := fieldStr[i]
+		if ch == '(' {
+			i = skipFunctionCall(fieldStr, i-1)
+			fields = append(fields, DBField{Name: fieldStr[lastItem : i+1], Type: getIdentifierType(fieldStr[lastItem : i+1])})
 			buffer = ""
 			lastItem = i + 2
-		} else if fieldstr[i] == ',' && buffer != "" {
+		} else if ch == ',' && buffer != "" {
 			fields = append(fields, DBField{Name: buffer, Type: getIdentifierType(buffer)})
 			buffer = ""
 			lastItem = i + 1
-		} else if (fieldstr[i] >= 32) && fieldstr[i] != ',' && fieldstr[i] != ')' {
-			buffer += string(fieldstr[i])
+		} else if (ch >= 32) && ch != ',' && ch != ')' {
+			buffer += string(ch)
 		}
 	}
 	return fields
 }
 
-func getIdentifierType(identifier string) string {
-	if ('a' <= identifier[0] && identifier[0] <= 'z') || ('A' <= identifier[0] && identifier[0] <= 'Z') {
-		if identifier[len(identifier)-1] == ')' {
+func getIdentifierType(iden string) string {
+	if ('a' <= iden[0] && iden[0] <= 'z') || ('A' <= iden[0] && iden[0] <= 'Z') {
+		if iden[len(iden)-1] == ')' {
 			return "function"
 		}
 		return "column"
 	}
-	if identifier[0] == '\'' || identifier[0] == '"' {
+	if iden[0] == '\'' || iden[0] == '"' {
 		return "string"
 	}
 	return "literal"
 }
 
-func getIdentifier(segment string, startOffset int) (out string, i int) {
-	segment = strings.TrimSpace(segment)
-	segment += " " // Avoid overflow bugs with slicing
-	for i = startOffset; i < len(segment); i++ {
-		if segment[i] == '(' {
-			i = skipFunctionCall(segment, i)
-			return strings.TrimSpace(segment[startOffset:i]), (i - 1)
+func getIdentifier(seg string, startOffset int) (out string, i int) {
+	seg = strings.TrimSpace(seg)
+	seg += " " // Avoid overflow bugs with slicing
+	for i = startOffset; i < len(seg); i++ {
+		ch := seg[i]
+		if ch == '(' {
+			i = skipFunctionCall(seg, i)
+			return strings.TrimSpace(seg[startOffset:i]), (i - 1)
 		}
-		if (segment[i] == ' ' || isOpByte(segment[i])) && i != startOffset {
-			return strings.TrimSpace(segment[startOffset:i]), (i - 1)
+		if (ch == ' ' || isOpByte(ch)) && i != startOffset {
+			return strings.TrimSpace(seg[startOffset:i]), (i - 1)
 		}
 	}
-	return strings.TrimSpace(segment[startOffset:]), (i - 1)
+	return strings.TrimSpace(seg[startOffset:]), (i - 1)
 }
 
-func getOperator(segment string, startOffset int) (out string, i int) {
-	segment = strings.TrimSpace(segment)
-	segment += " " // Avoid overflow bugs with slicing
-	for i = startOffset; i < len(segment); i++ {
-		if !isOpByte(segment[i]) && i != startOffset {
-			return strings.TrimSpace(segment[startOffset:i]), (i - 1)
+func getOperator(seg string, startOffset int) (out string, i int) {
+	seg = strings.TrimSpace(seg)
+	seg += " " // Avoid overflow bugs with slicing
+	for i = startOffset; i < len(seg); i++ {
+		if !isOpByte(seg[i]) && i != startOffset {
+			return strings.TrimSpace(seg[startOffset:i]), (i - 1)
 		}
 	}
-	return strings.TrimSpace(segment[startOffset:]), (i - 1)
+	return strings.TrimSpace(seg[startOffset:]), (i - 1)
 }
 
 func skipFunctionCall(data string, index int) int {

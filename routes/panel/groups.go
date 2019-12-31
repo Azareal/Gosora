@@ -229,7 +229,7 @@ func GroupsPromotionsCreateSubmit(w http.ResponseWriter, r *http.Request, user c
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
-	err = c.AdminLogs.Create("create", pid, "group_promotion", user.LastIP, user.ID)
+	err = c.AdminLogs.Create("create", pid, "group_promotion", user.GetIP(), user.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -276,7 +276,7 @@ func GroupsPromotionsDeleteSubmit(w http.ResponseWriter, r *http.Request, user c
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
-	err = c.AdminLogs.Create("delete", pid, "group_promotion", user.LastIP, user.ID)
+	err = c.AdminLogs.Create("delete", pid, "group_promotion", user.GetIP(), user.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -375,7 +375,6 @@ func GroupsEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, sgid 
 	if err != nil {
 		return c.LocalError(p.GetErrorPhrase("id_must_be_integer"), w, r, user)
 	}
-
 	group, err := c.Groups.Get(gid)
 	if err == sql.ErrNoRows {
 		//log.Print("aaaaa monsters")
@@ -386,24 +385,25 @@ func GroupsEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, sgid 
 		return ferr
 	}
 
-	gname := r.FormValue("name")
-	if gname == "" {
+	name := r.FormValue("name")
+	if name == "" {
 		return c.LocalError(p.GetErrorPhrase("panel_groups_need_name"), w, r, user)
 	}
-	gtag := r.FormValue("tag")
+	tag := r.FormValue("tag")
 	rank := r.FormValue("type")
 
 	var originalRank string
 	// TODO: Use a switch for this
-	if group.IsAdmin {
+	switch {
+	case group.IsAdmin:
 		originalRank = "Admin"
-	} else if group.IsMod {
+	case group.IsMod:
 		originalRank = "Mod"
-	} else if group.IsBanned {
+	case group.IsBanned:
 		originalRank = "Banned"
-	} else if group.ID == 6 {
+	case group.ID == 6:
 		originalRank = "Guest"
-	} else {
+	default:
 		originalRank = "Member"
 	}
 
@@ -436,11 +436,11 @@ func GroupsEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, sgid 
 		}
 	}
 
-	err = group.Update(gname, gtag)
+	err = group.Update(name, tag)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
-	err = c.AdminLogs.Create("edit", group.ID, "group", user.LastIP, user.ID)
+	err = c.AdminLogs.Create("edit", group.ID, "group", user.GetIP(), user.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -489,7 +489,7 @@ func GroupsEditPermsSubmit(w http.ResponseWriter, r *http.Request, user c.User, 
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
-	err = c.AdminLogs.Create("edit", group.ID, "group", user.LastIP, user.ID)
+	err = c.AdminLogs.Create("edit", group.ID, "group", user.GetIP(), user.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -536,7 +536,7 @@ func GroupsCreateSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.R
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
-	err = c.AdminLogs.Create("create", gid, "group", user.LastIP, user.ID)
+	err = c.AdminLogs.Create("create", gid, "group", user.GetIP(), user.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}

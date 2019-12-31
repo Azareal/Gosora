@@ -153,7 +153,7 @@ func UsersEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, suid s
 	}
 	targetUser.CacheRemove()
 
-	err = c.AdminLogs.Create("edit", targetUser.ID, "user", user.LastIP, user.ID)
+	err = c.AdminLogs.Create("edit", targetUser.ID, "user", user.GetIP(), user.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -209,7 +209,7 @@ func UsersAvatarSubmit(w http.ResponseWriter, r *http.Request, user c.User, suid
 		return c.InternalError(err, w, r)
 	}
 
-	err = c.AdminLogs.Create("edit", targetUser.ID, "user", user.LastIP, user.ID)
+	err = c.AdminLogs.Create("edit", targetUser.ID, "user", user.GetIP(), user.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -249,7 +249,7 @@ func UsersAvatarRemoveSubmit(w http.ResponseWriter, r *http.Request, user c.User
 		return ferr
 	}
 
-	err = c.AdminLogs.Create("edit", targetUser.ID, "user", user.LastIP, user.ID)
+	err = c.AdminLogs.Create("edit", targetUser.ID, "user", user.GetIP(), user.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}

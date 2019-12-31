@@ -73,7 +73,7 @@ func PluginsActivate(w http.ResponseWriter, r *http.Request, user c.User, uname 
 	if err != nil {
 		return c.LocalError(err.Error(), w, r, user)
 	}
-	err = c.AdminLogs.CreateExtra("activate", 0, "plugin", user.LastIP, user.ID, c.SanitiseSingleLine(plugin.Name))
+	err = c.AdminLogs.CreateExtra("activate", 0, "plugin", user.GetIP(), user.ID, c.SanitiseSingleLine(plugin.Name))
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -111,7 +111,7 @@ func PluginsDeactivate(w http.ResponseWriter, r *http.Request, user c.User, unam
 	if plugin.Deactivate != nil {
 		plugin.Deactivate(plugin)
 	}
-	err = c.AdminLogs.CreateExtra("deactivate", 0, "plugin", user.LastIP, user.ID, c.SanitiseSingleLine(plugin.Name))
+	err = c.AdminLogs.CreateExtra("deactivate", 0, "plugin", user.GetIP(), user.ID, c.SanitiseSingleLine(plugin.Name))
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -181,7 +181,7 @@ func PluginsInstall(w http.ResponseWriter, r *http.Request, user c.User, uname s
 	if err != nil {
 		return c.LocalError(err.Error(), w, r, user)
 	}
-	err = c.AdminLogs.CreateExtra("install", 0, "plugin", user.LastIP, user.ID, c.SanitiseSingleLine(plugin.Name))
+	err = c.AdminLogs.CreateExtra("install", 0, "plugin", user.GetIP(), user.ID, c.SanitiseSingleLine(plugin.Name))
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}

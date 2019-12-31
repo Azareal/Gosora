@@ -42,7 +42,7 @@ func Backups(w http.ResponseWriter, r *http.Request, user c.User, backupURL stri
 		}
 		// TODO: Fix the problem where non-existent files aren't greeted with custom 404s on ServeFile()'s side
 		http.ServeFile(w, r, "./backups/"+backupURL)
-		err = c.AdminLogs.Create("download", 0, "backup", user.LastIP, user.ID)
+		err = c.AdminLogs.Create("download", 0, "backup", user.GetIP(), user.ID)
 		if err != nil {
 			return c.InternalError(err, w, r)
 		}

@@ -44,7 +44,7 @@ func (a *MssqlAdapter) DbVersion() string {
 	return "SELECT CONCAT(SERVERPROPERTY('productversion'), SERVERPROPERTY ('productlevel'), SERVERPROPERTY ('edition'))"
 }
 
-func (a *MssqlAdapter) DropTable(name string, table string) (string, error) {
+func (a *MssqlAdapter) DropTable(name, table string) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
@@ -150,7 +150,7 @@ func (a *MssqlAdapter) AddColumn(name string, table string, column DBTableColumn
 
 // TODO: Implement this
 // TODO: Test to make sure everything works here
-func (a *MssqlAdapter) AddIndex(name string, table string, iname string, colname string) (string, error) {
+func (a *MssqlAdapter) AddIndex(name, table, iname, colname string) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
@@ -194,27 +194,26 @@ func (a *MssqlAdapter) AddForeignKey(name string, table string, column string, f
 	return "", errors.New("not implemented")
 }
 
-func (a *MssqlAdapter) SimpleInsert(name string, table string, columns string, fields string) (string, error) {
+func (a *MssqlAdapter) SimpleInsert(name, table, cols, fields string) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
 
 	q := "INSERT INTO [" + table + "] ("
-	if columns == "" {
+	if cols == "" {
 		q += ") VALUES ()"
 		a.pushStatement(name, "insert", q)
 		return q, nil
 	}
 
 	// Escape the column names, just in case we've used a reserved keyword
-	for _, column := range processColumns(columns) {
-		if column.Type == "function" {
-			q += column.Left + ","
+	for _, col := range processColumns(cols) {
+		if col.Type == TokenFunc {
+			q += col.Left + ","
 		} else {
-			q += "[" + column.Left + "],"
+			q += "[" + col.Left + "],"
 		}
 	}
-	// Remove the trailing comma
 	q = q[0 : len(q)-1]
 
 	q += ") VALUES ("
@@ -314,17 +313,17 @@ func (a *MssqlAdapter) SimpleUpsert(name string, table string, columns string, f
 	for _, loc := range processWhere(where) {
 		for _, token := range loc.Expr {
 			switch token.Type {
-			case "substitute":
+			case TokenSub:
 				q += " ?"
-			case "function", "operator", "number", "or":
+			case TokenFunc, TokenOp, TokenNumber, TokenOr, TokenNot, TokenLike:
 				// TODO: Split the function case off to speed things up
 				if strings.ToUpper(token.Contents) == "UTC_TIMESTAMP()" {
 					token.Contents = "GETUTCDATE()"
 				}
 				q += " " + token.Contents
-			case "column":
+			case TokenColumn:
 				q += " [" + token.Contents + "]"
-			case "string":
+			case TokenString:
 				q += " '" + token.Contents + "'"
 			default:
 				panic("This token doesn't exist o_o")
@@ -337,14 +336,14 @@ func (a *MssqlAdapter) SimpleUpsert(name string, table string, columns string, f
 	var fieldList string
 
 	// Escape the column names, just in case we've used a reserved keyword
-	for columnID, column := range processColumns(columns) {
+	for columnID, col := range processColumns(columns) {
 		fieldList += "f" + strconv.Itoa(columnID) + ","
-		if column.Type == "function" {
-			matched += column.Left + " = f" + strconv.Itoa(columnID) + ","
-			notMatched += column.Left + ","
+		if col.Type == TokenFunc {
+			matched += col.Left + " = f" + strconv.Itoa(columnID) + ","
+			notMatched += col.Left + ","
 		} else {
-			matched += "[" + column.Left + "] = f" + strconv.Itoa(columnID) + ","
-			notMatched += "[" + column.Left + "],"
+			matched += "[" + col.Left + "] = f" + strconv.Itoa(columnID) + ","
+			notMatched += "[" + col.Left + "],"
 		}
 	}
 
@@ -373,20 +372,20 @@ func (a *MssqlAdapter) SimpleUpdate(up *updatePrebuilder) (string, error) {
 
 	q := "UPDATE [" + up.table + "] SET "
 	for _, item := range processSet(up.set) {
-		q += "[" + item.Column + "] ="
+		q += "[" + item.Column + "]="
 		for _, token := range item.Expr {
 			switch token.Type {
-			case "substitute":
+			case TokenSub:
 				q += " ?"
-			case "function", "operator", "number", "or":
+			case TokenFunc, TokenOp, TokenNumber, TokenOr:
 				// TODO: Split the function case off to speed things up
 				if strings.ToUpper(token.Contents) == "UTC_TIMESTAMP()" {
 					token.Contents = "GETUTCDATE()"
 				}
 				q += " " + token.Contents
-			case "column":
+			case TokenColumn:
 				q += " [" + token.Contents + "]"
-			case "string":
+			case TokenString:
 				q += " '" + token.Contents + "'"
 			default:
 				panic("This token doesn't exist o_o")
@@ -394,7 +393,6 @@ func (a *MssqlAdapter) SimpleUpdate(up *updatePrebuilder) (string, error) {
 		}
 		q += ","
 	}
-	// Remove the trailing comma
 	q = q[0 : len(q)-1]
 
 	// Add support for BETWEEN x.x
@@ -403,15 +401,15 @@ func (a *MssqlAdapter) SimpleUpdate(up *updatePrebuilder) (string, error) {
 		for _, loc := range processWhere(up.where) {
 			for _, token := range loc.Expr {
 				switch token.Type {
-				case "function", "operator", "number", "substitute", "or":
+				case TokenFunc, TokenOp, TokenNumber, TokenSub, TokenOr, TokenNot, TokenLike:
 					// TODO: Split the function case off to speed things up
 					if strings.ToUpper(token.Contents) == "UTC_TIMESTAMP()" {
 						token.Contents = "GETUTCDATE()"
 					}
 					q += " " + token.Contents
-				case "column":
+				case TokenColumn:
 					q += " [" + token.Contents + "]"
-				case "string":
+				case TokenString:
 					q += " '" + token.Contents + "'"
 				default:
 					panic("This token doesn't exist o_o")
@@ -443,17 +441,17 @@ func (a *MssqlAdapter) SimpleDelete(name string, table string, where string) (st
 	for _, loc := range processWhere(where) {
 		for _, token := range loc.Expr {
 			switch token.Type {
-			case "substitute":
+			case TokenSub:
 				q += " ?"
-			case "function", "operator", "number", "or":
+			case TokenFunc, TokenOp, TokenNumber, TokenOr, TokenNot, TokenLike:
 				// TODO: Split the function case off to speed things up
 				if strings.ToUpper(token.Contents) == "UTC_TIMESTAMP()" {
 					token.Contents = "GETUTCDATE()"
 				}
 				q += " " + token.Contents
-			case "column":
+			case TokenColumn:
 				q += " [" + token.Contents + "]"
-			case "string":
+			case TokenString:
 				q += " '" + token.Contents + "'"
 			default:
 				panic("This token doesn't exist o_o")
@@ -492,7 +490,7 @@ func (a *MssqlAdapter) SimpleSelect(name string, table string, columns string, w
 	if len(orderby) == 0 && limit != "" {
 		return "", errors.New("Orderby needs to be set to use limit on Mssql")
 	}
-	substituteCount := 0
+	subCount := 0
 	q := ""
 
 	// Escape the column names, just in case we've used a reserved keyword
@@ -508,19 +506,19 @@ func (a *MssqlAdapter) SimpleSelect(name string, table string, columns string, w
 		for _, loc := range processWhere(where) {
 			for _, token := range loc.Expr {
 				switch token.Type {
-				case "substitute":
-					substituteCount++
-					q += " ?" + strconv.Itoa(substituteCount)
-				case "function", "operator", "number", "or":
+				case TokenSub:
+					subCount++
+					q += " ?" + strconv.Itoa(subCount)
+				case TokenFunc, TokenOp, TokenNumber, TokenOr, TokenNot, TokenLike:
 					// TODO: Split the function case off to speed things up
 					// MSSQL seems to convert the formats? so we'll compare it with a regular date. Do this with the other methods too?
 					if strings.ToUpper(token.Contents) == "UTC_TIMESTAMP()" {
 						token.Contents = "GETDATE()"
 					}
 					q += " " + token.Contents
-				case "column":
+				case TokenColumn:
 					q += " [" + token.Contents + "]"
-				case "string":
+				case TokenString:
 					q += " '" + token.Contents + "'"
 				default:
 					panic("This token doesn't exist o_o")
@@ -546,8 +544,8 @@ func (a *MssqlAdapter) SimpleSelect(name string, table string, columns string, w
 		log.Printf("limiter: %+v\n", limiter)
 		if limiter.Offset != "" {
 			if limiter.Offset == "?" {
-				substituteCount++
-				q += " OFFSET ?" + strconv.Itoa(substituteCount) + " ROWS"
+				subCount++
+				q += " OFFSET ?" + strconv.Itoa(subCount) + " ROWS"
 			} else {
 				q += " OFFSET " + limiter.Offset + " ROWS"
 			}
@@ -556,8 +554,8 @@ func (a *MssqlAdapter) SimpleSelect(name string, table string, columns string, w
 		// ! Does this work without an offset?
 		if limiter.MaxCount != "" {
 			if limiter.MaxCount == "?" {
-				substituteCount++
-				limiter.MaxCount = "?" + strconv.Itoa(substituteCount)
+				subCount++
+				limiter.MaxCount = "?" + strconv.Itoa(subCount)
 			}
 			q += " FETCH NEXT " + limiter.MaxCount + " ROWS ONLY "
 		}
@@ -594,22 +592,22 @@ func (a *MssqlAdapter) SimpleLeftJoin(name string, table1 string, table2 string,
 	if len(orderby) == 0 && limit != "" {
 		return "", errors.New("Orderby needs to be set to use limit on Mssql")
 	}
-	substituteCount := 0
+	subCount := 0
 	q := ""
 
-	for _, column := range processColumns(columns) {
+	for _, col := range processColumns(columns) {
 		var source, alias string
 		// Escape the column names, just in case we've used a reserved keyword
-		if column.Table != "" {
-			source = "[" + column.Table + "].[" + column.Left + "]"
-		} else if column.Type == "function" {
-			source = column.Left
+		if col.Table != "" {
+			source = "[" + col.Table + "].[" + col.Left + "]"
+		} else if col.Type == TokenFunc {
+			source = col.Left
 		} else {
-			source = "[" + column.Left + "]"
+			source = "[" + col.Left + "]"
 		}
 
-		if column.Alias != "" {
-			alias = " AS '" + column.Alias + "'"
+		if col.Alias != "" {
+			alias = " AS '" + col.Alias + "'"
 		}
 		q += source + alias + ","
 	}
@@ -629,23 +627,23 @@ func (a *MssqlAdapter) SimpleLeftJoin(name string, table1 string, table2 string,
 		for _, loc := range processWhere(where) {
 			for _, token := range loc.Expr {
 				switch token.Type {
-				case "substitute":
-					substituteCount++
-					q += " ?" + strconv.Itoa(substituteCount)
-				case "function", "operator", "number", "or":
+				case TokenSub:
+					subCount++
+					q += " ?" + strconv.Itoa(subCount)
+				case TokenFunc, TokenOp, TokenNumber, TokenOr, TokenNot, TokenLike:
 					// TODO: Split the function case off to speed things up
 					if strings.ToUpper(token.Contents) == "UTC_TIMESTAMP()" {
 						token.Contents = "GETUTCDATE()"
 					}
 					q += " " + token.Contents
-				case "column":
+				case TokenColumn:
 					halves := strings.Split(token.Contents, ".")
 					if len(halves) == 2 {
 						q += " [" + halves[0] + "].[" + halves[1] + "]"
 					} else {
 						q += " [" + token.Contents + "]"
 					}
-				case "string":
+				case TokenString:
 					q += " '" + token.Contents + "'"
 				default:
 					panic("This token doesn't exist o_o")
@@ -676,8 +674,8 @@ func (a *MssqlAdapter) SimpleLeftJoin(name string, table1 string, table2 string,
 		limiter := processLimit(limit)
 		if limiter.Offset != "" {
 			if limiter.Offset == "?" {
-				substituteCount++
-				q += " OFFSET ?" + strconv.Itoa(substituteCount) + " ROWS"
+				subCount++
+				q += " OFFSET ?" + strconv.Itoa(subCount) + " ROWS"
 			} else {
 				q += " OFFSET " + limiter.Offset + " ROWS"
 			}
@@ -686,8 +684,8 @@ func (a *MssqlAdapter) SimpleLeftJoin(name string, table1 string, table2 string,
 		// ! Does this work without an offset?
 		if limiter.MaxCount != "" {
 			if limiter.MaxCount == "?" {
-				substituteCount++
-				limiter.MaxCount = "?" + strconv.Itoa(substituteCount)
+				subCount++
+				limiter.MaxCount = "?" + strconv.Itoa(subCount)
 			}
 			q += " FETCH NEXT " + limiter.MaxCount + " ROWS ONLY "
 		}
@@ -719,22 +717,22 @@ func (a *MssqlAdapter) SimpleInnerJoin(name string, table1 string, table2 string
 	if len(orderby) == 0 && limit != "" {
 		return "", errors.New("Orderby needs to be set to use limit on Mssql")
 	}
-	substituteCount := 0
+	subCount := 0
 	q := ""
 
-	for _, column := range processColumns(columns) {
+	for _, col := range processColumns(columns) {
 		var source, alias string
 		// Escape the column names, just in case we've used a reserved keyword
-		if column.Table != "" {
-			source = "[" + column.Table + "].[" + column.Left + "]"
-		} else if column.Type == "function" {
-			source = column.Left
+		if col.Table != "" {
+			source = "[" + col.Table + "].[" + col.Left + "]"
+		} else if col.Type == TokenFunc {
+			source = col.Left
 		} else {
-			source = "[" + column.Left + "]"
+			source = "[" + col.Left + "]"
 		}
 
-		if column.Alias != "" {
-			alias = " AS '" + column.Alias + "'"
+		if col.Alias != "" {
+			alias = " AS '" + col.Alias + "'"
 		}
 		q += source + alias + ","
 	}
@@ -754,23 +752,23 @@ func (a *MssqlAdapter) SimpleInnerJoin(name string, table1 string, table2 string
 		for _, loc := range processWhere(where) {
 			for _, token := range loc.Expr {
 				switch token.Type {
-				case "substitute":
-					substituteCount++
-					q += " ?" + strconv.Itoa(substituteCount)
-				case "function", "operator", "number", "or":
+				case TokenSub:
+					subCount++
+					q += " ?" + strconv.Itoa(subCount)
+				case TokenFunc, TokenOp, TokenNumber, TokenOr, TokenNot, TokenLike:
 					// TODO: Split the function case off to speed things up
 					if strings.ToUpper(token.Contents) == "UTC_TIMESTAMP()" {
 						token.Contents = "GETUTCDATE()"
 					}
 					q += " " + token.Contents
-				case "column":
+				case TokenColumn:
 					halves := strings.Split(token.Contents, ".")
 					if len(halves) == 2 {
 						q += " [" + halves[0] + "].[" + halves[1] + "]"
 					} else {
 						q += " [" + token.Contents + "]"
 					}
-				case "string":
+				case TokenString:
 					q += " '" + token.Contents + "'"
 				default:
 					panic("This token doesn't exist o_o")
@@ -802,8 +800,8 @@ func (a *MssqlAdapter) SimpleInnerJoin(name string, table1 string, table2 string
 		limiter := processLimit(limit)
 		if limiter.Offset != "" {
 			if limiter.Offset == "?" {
-				substituteCount++
-				q += " OFFSET ?" + strconv.Itoa(substituteCount) + " ROWS"
+				subCount++
+				q += " OFFSET ?" + strconv.Itoa(subCount) + " ROWS"
 			} else {
 				q += " OFFSET " + limiter.Offset + " ROWS"
 			}
@@ -812,8 +810,8 @@ func (a *MssqlAdapter) SimpleInnerJoin(name string, table1 string, table2 string
 		// ! Does this work without an offset?
 		if limiter.MaxCount != "" {
 			if limiter.MaxCount == "?" {
-				substituteCount++
-				limiter.MaxCount = "?" + strconv.Itoa(substituteCount)
+				subCount++
+				limiter.MaxCount = "?" + strconv.Itoa(subCount)
 			}
 			q += " FETCH NEXT " + limiter.MaxCount + " ROWS ONLY "
 		}
@@ -839,28 +837,28 @@ func (a *MssqlAdapter) SimpleInsertSelect(name string, ins DBInsert, sel DBSelec
 	q := "INSERT INTO [" + ins.Table + "] ("
 
 	// Escape the column names, just in case we've used a reserved keyword
-	for _, column := range processColumns(ins.Columns) {
-		if column.Type == "function" {
-			q += column.Left + ","
+	for _, col := range processColumns(ins.Columns) {
+		if col.Type == TokenFunc {
+			q += col.Left + ","
 		} else {
-			q += "[" + column.Left + "],"
+			q += "[" + col.Left + "],"
 		}
 	}
 	q = q[0:len(q)-1] + ") SELECT "
 
 	/* Select */
-	substituteCount := 0
+	subCount := 0
 
-	for _, column := range processColumns(sel.Columns) {
+	for _, col := range processColumns(sel.Columns) {
 		var source, alias string
 		// Escape the column names, just in case we've used a reserved keyword
-		if column.Type == "function" || column.Type == "substitute" {
-			source = column.Left
+		if col.Type == TokenFunc || col.Type == TokenSub {
+			source = col.Left
 		} else {
-			source = "[" + column.Left + "]"
+			source = "[" + col.Left + "]"
 		}
-		if column.Alias != "" {
-			alias = " AS [" + column.Alias + "]"
+		if col.Alias != "" {
+			alias = " AS [" + col.Alias + "]"
 		}
 		q += " " + source + alias + ","
 	}
@@ -872,18 +870,18 @@ func (a *MssqlAdapter) SimpleInsertSelect(name string, ins DBInsert, sel DBSelec
 		for _, loc := range processWhere(sel.Where) {
 			for _, token := range loc.Expr {
 				switch token.Type {
-				case "substitute":
-					substituteCount++
-					q += " ?" + strconv.Itoa(substituteCount)
-				case "function", "operator", "number", "or":
+				case TokenSub:
+					subCount++
+					q += " ?" + strconv.Itoa(subCount)
+				case TokenFunc, TokenOp, TokenNumber, TokenOr, TokenNot, TokenLike:
 					// TODO: Split the function case off to speed things up
 					if strings.ToUpper(token.Contents) == "UTC_TIMESTAMP()" {
 						token.Contents = "GETUTCDATE()"
 					}
 					q += " " + token.Contents
-				case "column":
+				case TokenColumn:
 					q += " [" + token.Contents + "]"
-				case "string":
+				case TokenString:
 					q += " '" + token.Contents + "'"
 				default:
 					panic("This token doesn't exist o_o")
@@ -913,8 +911,8 @@ func (a *MssqlAdapter) SimpleInsertSelect(name string, ins DBInsert, sel DBSelec
 		limiter := processLimit(sel.Limit)
 		if limiter.Offset != "" {
 			if limiter.Offset == "?" {
-				substituteCount++
-				q += " OFFSET ?" + strconv.Itoa(substituteCount) + " ROWS"
+				subCount++
+				q += " OFFSET ?" + strconv.Itoa(subCount) + " ROWS"
 			} else {
 				q += " OFFSET " + limiter.Offset + " ROWS"
 			}
@@ -923,8 +921,8 @@ func (a *MssqlAdapter) SimpleInsertSelect(name string, ins DBInsert, sel DBSelec
 		// ! Does this work without an offset?
 		if limiter.MaxCount != "" {
 			if limiter.MaxCount == "?" {
-				substituteCount++
-				limiter.MaxCount = "?" + strconv.Itoa(substituteCount)
+				subCount++
+				limiter.MaxCount = "?" + strconv.Itoa(subCount)
 			}
 			q += " FETCH NEXT " + limiter.MaxCount + " ROWS ONLY "
 		}
@@ -950,30 +948,30 @@ func (a *MssqlAdapter) simpleJoin(name string, ins DBInsert, sel DBJoin, joinTyp
 	q := "INSERT INTO [" + ins.Table + "] ("
 
 	// Escape the column names, just in case we've used a reserved keyword
-	for _, column := range processColumns(ins.Columns) {
-		if column.Type == "function" {
-			q += column.Left + ","
+	for _, col := range processColumns(ins.Columns) {
+		if col.Type == TokenFunc {
+			q += col.Left + ","
 		} else {
-			q += "[" + column.Left + "],"
+			q += "[" + col.Left + "],"
 		}
 	}
 	q = q[0:len(q)-1] + ") SELECT "
 
 	/* Select */
-	substituteCount := 0
+	subCount := 0
 
-	for _, column := range processColumns(sel.Columns) {
+	for _, col := range processColumns(sel.Columns) {
 		var source, alias string
 		// Escape the column names, just in case we've used a reserved keyword
-		if column.Table != "" {
-			source = "[" + column.Table + "].[" + column.Left + "]"
-		} else if column.Type == "function" {
-			source = column.Left
+		if col.Table != "" {
+			source = "[" + col.Table + "].[" + col.Left + "]"
+		} else if col.Type == TokenFunc {
+			source = col.Left
 		} else {
-			source = "[" + column.Left + "]"
+			source = "[" + col.Left + "]"
 		}
-		if column.Alias != "" {
-			alias = " AS '" + column.Alias + "'"
+		if col.Alias != "" {
+			alias = " AS '" + col.Alias + "'"
 		}
 		q += source + alias + ","
 	}
@@ -993,23 +991,23 @@ func (a *MssqlAdapter) simpleJoin(name string, ins DBInsert, sel DBJoin, joinTyp
 		for _, loc := range processWhere(sel.Where) {
 			for _, token := range loc.Expr {
 				switch token.Type {
-				case "substitute":
-					substituteCount++
-					q += " ?" + strconv.Itoa(substituteCount)
-				case "function", "operator", "number", "or":
+				case TokenSub:
+					subCount++
+					q += " ?" + strconv.Itoa(subCount)
+				case TokenFunc, TokenOp, TokenNumber, TokenOr, TokenNot, TokenLike:
 					// TODO: Split the function case off to speed things up
 					if strings.ToUpper(token.Contents) == "UTC_TIMESTAMP()" {
 						token.Contents = "GETUTCDATE()"
 					}
 					q += " " + token.Contents
-				case "column":
+				case TokenColumn:
 					halves := strings.Split(token.Contents, ".")
 					if len(halves) == 2 {
 						q += " [" + halves[0] + "].[" + halves[1] + "]"
 					} else {
 						q += " [" + token.Contents + "]"
 					}
-				case "string":
+				case TokenString:
 					q += " '" + token.Contents + "'"
 				default:
 					panic("This token doesn't exist o_o")
@@ -1040,8 +1038,8 @@ func (a *MssqlAdapter) simpleJoin(name string, ins DBInsert, sel DBJoin, joinTyp
 		limiter := processLimit(sel.Limit)
 		if limiter.Offset != "" {
 			if limiter.Offset == "?" {
-				substituteCount++
-				q += " OFFSET ?" + strconv.Itoa(substituteCount) + " ROWS"
+				subCount++
+				q += " OFFSET ?" + strconv.Itoa(subCount) + " ROWS"
 			} else {
 				q += " OFFSET " + limiter.Offset + " ROWS"
 			}
@@ -1050,8 +1048,8 @@ func (a *MssqlAdapter) simpleJoin(name string, ins DBInsert, sel DBJoin, joinTyp
 		// ! Does this work without an offset?
 		if limiter.MaxCount != "" {
 			if limiter.MaxCount == "?" {
-				substituteCount++
-				limiter.MaxCount = "?" + strconv.Itoa(substituteCount)
+				subCount++
+				limiter.MaxCount = "?" + strconv.Itoa(subCount)
 			}
 			q += " FETCH NEXT " + limiter.MaxCount + " ROWS ONLY "
 		}
@@ -1074,7 +1072,7 @@ func (a *MssqlAdapter) SimpleInsertInnerJoin(name string, ins DBInsert, sel DBJo
 	return a.simpleJoin(name, ins, sel, "INNER")
 }
 
-func (a *MssqlAdapter) SimpleCount(name string, table string, where string, limit string) (string, error) {
+func (a *MssqlAdapter) SimpleCount(name, table, where, limit string) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
@@ -1086,14 +1084,14 @@ func (a *MssqlAdapter) SimpleCount(name string, table string, where string, limi
 		for _, loc := range processWhere(where) {
 			for _, token := range loc.Expr {
 				switch token.Type {
-				case "function", "operator", "number", "substitute", "or":
+				case TokenFunc, TokenOp, TokenNumber, TokenSub, TokenOr, TokenNot, TokenLike:
 					if strings.ToUpper(token.Contents) == "UTC_TIMESTAMP()" {
 						token.Contents = "GETUTCDATE()"
 					}
 					q += " " + token.Contents
-				case "column":
+				case TokenColumn:
 					q += " [" + token.Contents + "]"
-				case "string":
+				case TokenString:
 					q += " '" + token.Contents + "'"
 				default:
 					panic("This token doesn't exist o_o")
