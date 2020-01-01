@@ -506,27 +506,37 @@ func (a *MysqlAdapter) Purge(name, table string) (string, error) {
 	return q, nil
 }
 
-func (a *MysqlAdapter) buildWhere(where string) (q string, err error) {
+func (a *MysqlAdapter) buildWhere(where string, sb *strings.Builder) error {
 	if len(where) == 0 {
-		return "", nil
+		return nil
 	}
-	q = " WHERE"
-	for _, loc := range processWhere(where) {
+	spl := processWhere(where)
+	sb.Grow(len(spl) * 8)
+	for i, loc := range spl {
+		if i != 0 {
+			sb.WriteString(" AND ")
+		} else {
+			sb.WriteString(" WHERE ")
+		}
 		for _, token := range loc.Expr {
 			switch token.Type {
 			case TokenFunc, TokenOp, TokenNumber, TokenSub, TokenOr, TokenNot, TokenLike:
-				q += " " + token.Contents
+				sb.WriteString(token.Contents)
+				sb.WriteRune(' ')
 			case TokenColumn:
-				q += " `" + token.Contents + "`"
+				sb.WriteRune('`')
+				sb.WriteString(token.Contents)
+				sb.WriteRune('`')
 			case TokenString:
-				q += " '" + token.Contents + "'"
+				sb.WriteRune('\'')
+				sb.WriteString(token.Contents)
+				sb.WriteRune('\'')
 			default:
-				return q, errors.New("This token doesn't exist o_o")
+				return errors.New("This token doesn't exist o_o")
 			}
 		}
-		q += " AND"
 	}
-	return q[0 : len(q)-4], nil
+	return nil
 }
 
 // The new version of buildWhere() currently only used in ComplexSelect for complex OO builder queries
@@ -591,11 +601,12 @@ func (a *MysqlAdapter) SimpleSelect(name, table, columns, where, orderby, limit 
 	}
 	q = q[0 : len(q)-1]
 
-	whereStr, err := a.buildWhere(where)
+	sb := &strings.Builder{}
+	err := a.buildWhere(where, sb)
 	if err != nil {
-		return q, err
+		return "", err
 	}
-	q += " FROM `" + table + "`" + whereStr + a.buildOrderby(orderby) + a.buildLimit(limit)
+	q += " FROM `" + table + "`" + sb.String() + a.buildOrderby(orderby) + a.buildLimit(limit)
 
 	q = strings.TrimSpace(q)
 	a.pushStatement(name, "select", q)
@@ -732,7 +743,8 @@ func (a *MysqlAdapter) SimpleInnerJoin(name string, table1 string, table2 string
 
 func (a *MysqlAdapter) SimpleUpdateSelect(up *updatePrebuilder) (string, error) {
 	sel := up.whereSubQuery
-	whereStr, err := a.buildWhere(sel.where)
+	sb := &strings.Builder{}
+	err := a.buildWhere(sel.where, sb)
 	if err != nil {
 		return "", err
 	}
@@ -754,19 +766,20 @@ func (a *MysqlAdapter) SimpleUpdateSelect(up *updatePrebuilder) (string, error) 
 	}
 	setter = setter[0 : len(setter)-1]
 
-	q := "UPDATE `" + up.table + "` SET " + setter + " WHERE (SELECT" + a.buildJoinColumns(sel.columns) + " FROM `" + sel.table + "`" + whereStr + a.buildOrderby(sel.orderby) + a.buildLimit(sel.limit) + ")"
+	q := "UPDATE `" + up.table + "` SET " + setter + " WHERE (SELECT" + a.buildJoinColumns(sel.columns) + " FROM `" + sel.table + "`" + sb.String() + a.buildOrderby(sel.orderby) + a.buildLimit(sel.limit) + ")"
 	q = strings.TrimSpace(q)
 	a.pushStatement(up.name, "update", q)
 	return q, nil
 }
 
 func (a *MysqlAdapter) SimpleInsertSelect(name string, ins DBInsert, sel DBSelect) (string, error) {
-	whereStr, err := a.buildWhere(sel.Where)
+	sb := &strings.Builder{}
+	err := a.buildWhere(sel.Where, sb)
 	if err != nil {
 		return "", err
 	}
 
-	q := "INSERT INTO `" + ins.Table + "`(" + a.buildColumns(ins.Columns) + ") SELECT" + a.buildJoinColumns(sel.Columns) + " FROM `" + sel.Table + "`" + whereStr + a.buildOrderby(sel.Orderby) + a.buildLimit(sel.Limit)
+	q := "INSERT INTO `" + ins.Table + "`(" + a.buildColumns(ins.Columns) + ") SELECT" + a.buildJoinColumns(sel.Columns) + " FROM `" + sel.Table + "`" + sb.String() + a.buildOrderby(sel.Orderby) + a.buildLimit(sel.Limit)
 	q = strings.TrimSpace(q)
 	a.pushStatement(name, "insert", q)
 	return q, nil
@@ -876,12 +889,13 @@ func (a *MysqlAdapter) SimpleCount(name, table, where, limit string) (q string, 
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
-	whereStr, err := a.buildWhere(where)
+	sb := &strings.Builder{}
+	err = a.buildWhere(where, sb)
 	if err != nil {
 		return "", err
 	}
 
-	q = "SELECT COUNT(*) FROM `" + table + "`" + whereStr + a.buildLimit(limit)
+	q = "SELECT COUNT(*) FROM `" + table + "`" + sb.String() + a.buildLimit(limit)
 	q = strings.TrimSpace(q)
 	a.pushStatement(name, "select", q)
 	return q, nil
