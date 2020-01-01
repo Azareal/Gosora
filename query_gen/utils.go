@@ -108,28 +108,39 @@ func (wh *DBWhere) parseNumber(segment string, i int) int {
 	return i
 }
 
-func (wh *DBWhere) parseColumn(segment string, i int) int {
-	var buffer string
-	for ; i < len(segment); i++ {
-		ch := segment[i]
+func (wh *DBWhere) parseColumn(seg string, i int) int {
+	//var buffer string
+	si := i
+	l := 0
+	for ; i < len(seg); i++ {
+		ch := seg[i]
 		switch {
 		case ('a' <= ch && ch <= 'z') || ('A' <= ch && ch <= 'Z') || ch == '.' || ch == '_':
-			buffer += string(ch)
+			//buffer += string(ch)
+			l++
 		case ch == '(':
-			return wh.parseFunction(segment, buffer, i)
+			var str string
+			if l != 0 {
+				str = seg[si : si+l]
+			}
+			return wh.parseFunction(seg, str, i)
 		default:
 			i--
-			wh.Expr = append(wh.Expr, DBToken{buffer, TokenColumn})
+			var str string
+			if l != 0 {
+				str = seg[si : si+l]
+			}
+			wh.Expr = append(wh.Expr, DBToken{str, TokenColumn})
 			return i
 		}
 	}
 	return i
 }
 
-func (wh *DBWhere) parseFunction(segment string, buffer string, i int) int {
+func (wh *DBWhere) parseFunction(seg string, buffer string, i int) int {
 	preI := i
-	i = skipFunctionCall(segment, i-1)
-	buffer += segment[preI:i] + string(segment[i])
+	i = skipFunctionCall(seg, i-1)
+	buffer += seg[preI:i] + string(seg[i])
 	wh.Expr = append(wh.Expr, DBToken{buffer, TokenFunc})
 	return i
 }
@@ -385,17 +396,17 @@ func processFields(fieldStr string) (fields []DBField) {
 	return fields
 }
 
-func getIdentifierType(iden string) string {
+func getIdentifierType(iden string) int {
 	if ('a' <= iden[0] && iden[0] <= 'z') || ('A' <= iden[0] && iden[0] <= 'Z') {
 		if iden[len(iden)-1] == ')' {
-			return "function"
+			return IdenFunc
 		}
-		return "column"
+		return IdenColumn
 	}
 	if iden[0] == '\'' || iden[0] == '"' {
-		return "string"
+		return IdenString
 	}
-	return "literal"
+	return IdenLiteral
 }
 
 func getIdentifier(seg string, startOffset int) (out string, i int) {

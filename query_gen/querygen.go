@@ -61,9 +61,17 @@ type DBColumn struct {
 	Type int
 }
 
+const (
+	IdenFunc = iota
+	IdenColumn
+	IdenString
+	IdenLiteral
+)
+
 type DBField struct {
 	Name string
-	Type string
+	//Type string
+	Type int
 }
 
 type DBWhere struct {
