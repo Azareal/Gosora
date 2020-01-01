@@ -82,7 +82,7 @@ func (a *MysqlAdapter) DbVersion() string {
 	return "SELECT VERSION()"
 }
 
-func (a *MysqlAdapter) DropTable(name string, table string) (string, error) {
+func (a *MysqlAdapter) DropTable(name, table string) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
@@ -206,7 +206,7 @@ func (a *MysqlAdapter) AddColumn(name string, table string, column DBTableColumn
 }
 
 // TODO: Test to make sure everything works here
-func (a *MysqlAdapter) AddIndex(name string, table string, iname string, colname string) (string, error) {
+func (a *MysqlAdapter) AddIndex(name, table, iname, colname string) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
@@ -268,7 +268,7 @@ func (a *MysqlAdapter) AddForeignKey(name string, table string, column string, f
 
 var silen1 = len("INSERT INTO ``() VALUES () ")
 
-func (a *MysqlAdapter) SimpleInsert(name string, table string, columns string, fields string) (string, error) {
+func (a *MysqlAdapter) SimpleInsert(name, table, columns, fields string) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
@@ -323,7 +323,7 @@ func (a *MysqlAdapter) buildColumns(columns string) (q string) {
 }
 
 // ! DEPRECATED
-func (a *MysqlAdapter) SimpleReplace(name string, table string, columns string, fields string) (string, error) {
+func (a *MysqlAdapter) SimpleReplace(name, table, columns, fields string) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
@@ -345,7 +345,7 @@ func (a *MysqlAdapter) SimpleReplace(name string, table string, columns string, 
 	return q + ")", nil
 }
 
-func (a *MysqlAdapter) SimpleUpsert(name string, table string, columns string, fields string, where string) (string, error) {
+func (a *MysqlAdapter) SimpleUpsert(name, table, columns, fields, where string) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
@@ -444,7 +444,7 @@ func (a *MysqlAdapter) SimpleUpdate(up *updatePrebuilder) (string, error) {
 	return q, nil
 }
 
-func (a *MysqlAdapter) SimpleDelete(name string, table string, where string) (string, error) {
+func (a *MysqlAdapter) SimpleDelete(name, table, where string) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
@@ -497,7 +497,7 @@ func (a *MysqlAdapter) ComplexDelete(b *deletePrebuilder) (string, error) {
 }
 
 // We don't want to accidentally wipe tables, so we'll have a separate method for purging tables instead
-func (a *MysqlAdapter) Purge(name string, table string) (string, error) {
+func (a *MysqlAdapter) Purge(name, table string) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
@@ -576,7 +576,7 @@ func (a *MysqlAdapter) buildOrderby(orderby string) (q string) {
 	return q
 }
 
-func (a *MysqlAdapter) SimpleSelect(name string, table string, columns string, where string, orderby string, limit string) (string, error) {
+func (a *MysqlAdapter) SimpleSelect(name, table, columns, where, orderby, limit string) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
@@ -872,7 +872,7 @@ func (a *MysqlAdapter) SimpleInsertInnerJoin(name string, ins DBInsert, sel DBJo
 	return q, nil
 }
 
-func (a *MysqlAdapter) SimpleCount(name string, table string, where string, limit string) (q string, err error) {
+func (a *MysqlAdapter) SimpleCount(name, table, where, limit string) (q string, err error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}

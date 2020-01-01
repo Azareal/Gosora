@@ -93,15 +93,22 @@ func processJoiner(joinStr string) (joiner []DBJoiner) {
 	return joiner
 }
 
-func (wh *DBWhere) parseNumber(segment string, i int) int {
-	var buffer string
-	for ; i < len(segment); i++ {
-		ch := segment[i]
+func (wh *DBWhere) parseNumber(seg string, i int) int {
+	//var buffer string
+	si := i
+	l := 0
+	for ; i < len(seg); i++ {
+		ch := seg[i]
 		if '0' <= ch && ch <= '9' {
-			buffer += string(ch)
+			//buffer += string(ch)
+			l++
 		} else {
 			i--
-			wh.Expr = append(wh.Expr, DBToken{buffer, TokenNumber})
+			var str string
+			if l != 0 {
+				str = seg[si : si+l]
+			}
+			wh.Expr = append(wh.Expr, DBToken{str, TokenNumber})
 			return i
 		}
 	}
@@ -145,30 +152,44 @@ func (wh *DBWhere) parseFunction(seg string, buffer string, i int) int {
 	return i
 }
 
-func (wh *DBWhere) parseString(segment string, i int) int {
-	var buffer string
+func (wh *DBWhere) parseString(seg string, i int) int {
+	//var buffer string
 	i++
-	for ; i < len(segment); i++ {
-		ch := segment[i]
+	si := i
+	l := 0
+	for ; i < len(seg); i++ {
+		ch := seg[i]
 		if ch != '\'' {
-			buffer += string(ch)
+			//buffer += string(ch)
+			l++
 		} else {
-			wh.Expr = append(wh.Expr, DBToken{buffer, TokenString})
+			var str string
+			if l != 0 {
+				str = seg[si : si+l]
+			}
+			wh.Expr = append(wh.Expr, DBToken{str, TokenString})
 			return i
 		}
 	}
 	return i
 }
 
-func (wh *DBWhere) parseOperator(segment string, i int) int {
-	var buffer string
-	for ; i < len(segment); i++ {
-		ch := segment[i]
+func (wh *DBWhere) parseOperator(seg string, i int) int {
+	//var buffer string
+	si := i
+	l := 0
+	for ; i < len(seg); i++ {
+		ch := seg[i]
 		if isOpByte(ch) {
-			buffer += string(ch)
+			//buffer += string(ch)
+			l++
 		} else {
 			i--
-			wh.Expr = append(wh.Expr, DBToken{buffer, TokenOp})
+			var str string
+			if l != 0 {
+				str = seg[si : si+l]
+			}
+			wh.Expr = append(wh.Expr, DBToken{str, TokenOp})
 			return i
 		}
 	}
@@ -228,32 +249,50 @@ func processWhere(whereStr string) (where []DBWhere) {
 	return where
 }
 
-func (set *DBSetter) parseNumber(segment string, i int) int {
-	var buffer string
-	for ; i < len(segment); i++ {
-		ch := segment[i]
+func (set *DBSetter) parseNumber(seg string, i int) int {
+	//var buffer string
+	si := i
+	l := 0
+	for ; i < len(seg); i++ {
+		ch := seg[i]
 		if '0' <= ch && ch <= '9' {
-			buffer += string(ch)
+			//buffer += string(ch)
+			l++
 		} else {
-			set.Expr = append(set.Expr, DBToken{buffer, TokenNumber})
+			var str string
+			if l != 0 {
+				str = seg[si : si+l]
+			}
+			set.Expr = append(set.Expr, DBToken{str, TokenNumber})
 			return i
 		}
 	}
 	return i
 }
 
-func (set *DBSetter) parseColumn(segment string, i int) int {
-	var buffer string
-	for ; i < len(segment); i++ {
-		ch := segment[i]
+func (set *DBSetter) parseColumn(seg string, i int) int {
+	//var buffer string
+	si := i
+	l := 0
+	for ; i < len(seg); i++ {
+		ch := seg[i]
 		switch {
 		case ('a' <= ch && ch <= 'z') || ('A' <= ch && ch <= 'Z') || ch == '_':
-			buffer += string(ch)
+			//buffer += string(ch)
+			l++
 		case ch == '(':
-			return set.parseFunction(segment, buffer, i)
+			var str string
+			if l != 0 {
+				str = seg[si : si+l]
+			}
+			return set.parseFunction(seg, str, i)
 		default:
 			i--
-			set.Expr = append(set.Expr, DBToken{buffer, TokenColumn})
+			var str string
+			if l != 0 {
+				str = seg[si : si+l]
+			}
+			set.Expr = append(set.Expr, DBToken{str, TokenColumn})
 			return i
 		}
 	}
@@ -268,30 +307,44 @@ func (set *DBSetter) parseFunction(segment string, buffer string, i int) int {
 	return i
 }
 
-func (set *DBSetter) parseString(segment string, i int) int {
-	var buffer string
+func (set *DBSetter) parseString(seg string, i int) int {
+	//var buffer string
 	i++
-	for ; i < len(segment); i++ {
-		char := segment[i]
-		if char != '\'' {
-			buffer += string(char)
+	si := i
+	l := 0
+	for ; i < len(seg); i++ {
+		ch := seg[i]
+		if ch != '\'' {
+			//buffer += string(ch)
+			l++
 		} else {
-			set.Expr = append(set.Expr, DBToken{buffer, TokenString})
+			var str string
+			if l != 0 {
+				str = seg[si : si+l]
+			}
+			set.Expr = append(set.Expr, DBToken{str, TokenString})
 			return i
 		}
 	}
 	return i
 }
 
-func (set *DBSetter) parseOperator(segment string, i int) int {
-	var buffer string
-	for ; i < len(segment); i++ {
-		ch := segment[i]
+func (set *DBSetter) parseOperator(seg string, i int) int {
+	//var buffer string
+	si := i
+	l := 0
+	for ; i < len(seg); i++ {
+		ch := seg[i]
 		if isOpByte(ch) {
-			buffer += string(ch)
+			//buffer += string(ch)
+			l++
 		} else {
 			i--
-			set.Expr = append(set.Expr, DBToken{buffer, TokenOp})
+			var str string
+			if l != 0 {
+				str = seg[si : si+l]
+			}
+			set.Expr = append(set.Expr, DBToken{str, TokenOp})
 			return i
 		}
 	}
