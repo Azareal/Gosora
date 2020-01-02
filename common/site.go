@@ -230,7 +230,7 @@ func ProcessConfig() (err error) {
 		Config.LastIPCutoff = 12
 	}
 	if Config.PollIPCutoff == 0 {
-		Config.PollIPCutoff = -1 // Default cutoff
+		Config.PollIPCutoff = 720 // Default cutoff
 	}
 	if Config.NoEmbed {
 		DefaultParseSettings.NoEmbed = true
