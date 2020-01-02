@@ -236,7 +236,7 @@ func (a *MssqlAdapter) SimpleInsert(name, table, cols, fields string) (string, e
 }
 
 // ! DEPRECATED
-func (a *MssqlAdapter) SimpleReplace(name string, table string, columns string, fields string) (string, error) {
+func (a *MssqlAdapter) SimpleReplace(name, table, columns, fields string) (string, error) {
 	log.Print("In SimpleReplace")
 	key, ok := a.keys[table]
 	if !ok {
@@ -271,7 +271,7 @@ func (a *MssqlAdapter) SimpleReplace(name string, table string, columns string, 
 	return a.SimpleUpsert(name, table, columns, fields, "key = "+keyValue)
 }
 
-func (a *MssqlAdapter) SimpleUpsert(name string, table string, columns string, fields string, where string) (string, error) {
+func (a *MssqlAdapter) SimpleUpsert(name, table, columns, fields, where string) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
@@ -975,14 +975,12 @@ func (a *MssqlAdapter) simpleJoin(name string, ins DBInsert, sel DBJoin, joinTyp
 		}
 		q += source + alias + ","
 	}
-	// Remove the trailing comma
 	q = q[0 : len(q)-1]
 
 	q += " FROM [" + sel.Table1 + "] " + joinType + " JOIN [" + sel.Table2 + "] ON "
 	for _, j := range processJoiner(sel.Joiners) {
 		q += "[" + j.LeftTable + "].[" + j.LeftColumn + "] " + j.Operator + " [" + j.RightTable + "].[" + j.RightColumn + "] AND "
 	}
-	// Remove the trailing AND
 	q = q[0 : len(q)-4]
 
 	// Add support for BETWEEN x.x
@@ -1166,17 +1164,17 @@ func _gen_mssql() (err error) {
 }
 
 // Internal methods, not exposed in the interface
-func (a *MssqlAdapter) pushStatement(name string, stype string, querystr string) {
+func (a *MssqlAdapter) pushStatement(name, stype, q string) {
 	if name == "" {
 		return
 	}
-	a.Buffer[name] = DBStmt{querystr, stype}
+	a.Buffer[name] = DBStmt{q, stype}
 	a.BufferOrder = append(a.BufferOrder, name)
 }
 
-func (a *MssqlAdapter) stringyType(ctype string) bool {
-	ctype = strings.ToLower(ctype)
-	return ctype == "char" || ctype == "varchar" || ctype == "datetime" || ctype == "text" || ctype == "nvarchar"
+func (a *MssqlAdapter) stringyType(ct string) bool {
+	ct = strings.ToLower(ct)
+	return ct == "char" || ct == "varchar" || ct == "datetime" || ct == "text" || ct == "nvarchar"
 }
 
 type SetPrimaryKeys interface {

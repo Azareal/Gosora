@@ -338,11 +338,11 @@ func (a *MysqlAdapter) SimpleReplace(name, table, columns, fields string) (strin
 	for _, field := range processFields(fields) {
 		q += field.Name + ","
 	}
-	q = q[0 : len(q)-1]
+	q = q[0 : len(q)-1] + ")"
 
 	// TODO: Shunt the table name logic and associated stmt list up to the a higher layer to reduce the amount of unnecessary overhead in the builder / accumulator
-	a.pushStatement(name, "replace", q+")")
-	return q + ")", nil
+	a.pushStatement(name, "replace", q)
+	return q, nil
 }
 
 func (a *MysqlAdapter) SimpleUpsert(name, table, columns, fields, where string) (string, error) {
@@ -968,15 +968,15 @@ func _gen_mysql() (err error) {
 }
 
 // Internal methods, not exposed in the interface
-func (a *MysqlAdapter) pushStatement(name string, stype string, querystr string) {
+func (a *MysqlAdapter) pushStatement(name, stype, q string) {
 	if name == "" {
 		return
 	}
-	a.Buffer[name] = DBStmt{querystr, stype}
+	a.Buffer[name] = DBStmt{q, stype}
 	a.BufferOrder = append(a.BufferOrder, name)
 }
 
-func (a *MysqlAdapter) stringyType(ctype string) bool {
-	ctype = strings.ToLower(ctype)
-	return ctype == "varchar" || ctype == "tinytext" || ctype == "text" || ctype == "mediumtext" || ctype == "longtext" || ctype == "char" || ctype == "datetime" || ctype == "timestamp" || ctype == "time" || ctype == "date"
+func (a *MysqlAdapter) stringyType(ct string) bool {
+	ct = strings.ToLower(ct)
+	return ct == "varchar" || ct == "tinytext" || ct == "text" || ct == "mediumtext" || ct == "longtext" || ct == "char" || ct == "datetime" || ct == "timestamp" || ct == "time" || ct == "date"
 }

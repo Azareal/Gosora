@@ -86,9 +86,11 @@ ServerCount - The number of instances you're running. This setting is currently 
 
 LastIPCutoff - The number of months which need to pass before the last IP stored for a user is automatically deleted. Capped at 12. 0 defaults to whatever the current default is, currently 3 and -1 disables this feature.
 
-PostIPCutoff - The number of days which need to pass before the IP data for a post is automatically deleted. 0 defaults to whatever the current default is, currently 120 and -1 disables this feature. Default: 0
+PostIPCutoff - The number of days which need to pass before the IP data for a post is automatically deleted. 0 defaults to whatever the current default is, currently 120 and -1 disables this feature.
 
-LogPruneCutoff - The number of days which need to pass before the login and registration logs are pruned. 0 defaults to whatever the current default is, currently 180 and -1 disables this feature. Default: 0
+PollIPCutoff - The number of days which need to pass before the IP data for a poll is automatically deleted. 0 defaults to whatever the current default is, currently -1 and -1 disables this feature.
+
+LogPruneCutoff - The number of days which need to pass before the login and registration logs are pruned. 0 defaults to whatever the current default is, currently 180 and -1 disables this feature.
 
 DisableLiveTopicList - This switch allows you to disable the live topic list. Default: false
 

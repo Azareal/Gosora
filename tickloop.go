@@ -1,15 +1,15 @@
 package main
 
 import (
+	"database/sql"
 	"errors"
 	"log"
-	"time"
 	"strconv"
 	"sync/atomic"
-	"database/sql"
+	"time"
 
 	c "github.com/Azareal/Gosora/common"
-	"github.com/Azareal/Gosora/query_gen"
+	qgen "github.com/Azareal/Gosora/query_gen"
 )
 
 // TODO: Name the tasks so we can figure out which one it was when something goes wrong? Or maybe toss it up WithStack down there?
@@ -59,7 +59,7 @@ func tickLoop(thumbChan chan bool) {
 	if lastDaily < low {
 		dailies()
 	}
-	
+
 	// TODO: Write tests for these
 	// Run this goroutine once every half second
 	halfSecondTicker := time.NewTicker(time.Second / 2)
@@ -172,7 +172,7 @@ func dailies() {
 
 	if c.Config.LogPruneCutoff > -1 {
 		f := func(tbl string) {
-			_, err := qgen.NewAcc().Delete(tbl).DateOlderThan("doneAt",c.Config.LogPruneCutoff,"day").Run()
+			_, err := qgen.NewAcc().Delete(tbl).DateOlderThan("doneAt", c.Config.LogPruneCutoff, "day").Run()
 			if err != nil {
 				c.LogError(err)
 			}
@@ -184,7 +184,7 @@ func dailies() {
 	if c.Config.PostIPCutoff > -1 {
 		// TODO: Use unixtime to remove this MySQLesque logic?
 		f := func(tbl string) {
-			_, err := qgen.NewAcc().Update(tbl).Set("ipaddress='0'").DateOlderThan("createdAt",c.Config.PostIPCutoff,"day").Where("ipaddress!='0'").Exec()
+			_, err := qgen.NewAcc().Update(tbl).Set("ipaddress='0'").DateOlderThan("createdAt", c.Config.PostIPCutoff, "day").Where("ipaddress!='0'").Exec()
 			if err != nil {
 				c.LogError(err)
 			}
@@ -192,6 +192,14 @@ func dailies() {
 		f("topics")
 		f("replies")
 		f("users_replies")
+	}
+
+	if c.Config.PollIPCutoff > -1 {
+		// TODO: Use unixtime to remove this MySQLesque logic?
+		_, err := qgen.NewAcc().Update("polls_votes").Set("ipaddress='0'").DateOlderThan("castAt", c.Config.PollIPCutoff, "day").Where("ipaddress!='0'").Exec()
+		if err != nil {
+			c.LogError(err)
+		}
 
 		// TODO: Find some way of purging the ip data in polls_votes without breaking any anti-cheat measures which might be running... maybe hash it instead?
 	}
@@ -208,7 +216,7 @@ func dailies() {
 			c.LogError(err)
 		}*/
 		mon := time.Now().Month()
-		_, err := qgen.NewAcc().Update("users").Set("last_ip=0").Where("last_ip!=0 AND last_ip NOT LIKE '"+strconv.Itoa(int(mon))+"-%'").Exec()
+		_, err := qgen.NewAcc().Update("users").Set("last_ip=0").Where("last_ip!=0 AND last_ip NOT LIKE '" + strconv.Itoa(int(mon)) + "-%'").Exec()
 		if err != nil {
 			c.LogError(err)
 		}
