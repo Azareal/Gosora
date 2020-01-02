@@ -194,7 +194,12 @@ func dailies() {
 		f("users_replies")
 	}
 
-	if c.Config.PollIPCutoff > -1 {
+	if c.Config.DisablePollIP {
+		_, err := qgen.NewAcc().Update("polls_votes").Set("ipaddress='0'").Where("ipaddress!='0'").Exec()
+		if err != nil {
+			c.LogError(err)
+		}
+	} else if c.Config.PollIPCutoff > -1 {
 		// TODO: Use unixtime to remove this MySQLesque logic?
 		_, err := qgen.NewAcc().Update("polls_votes").Set("ipaddress='0'").DateOlderThan("castAt", c.Config.PollIPCutoff, "day").Where("ipaddress!='0'").Exec()
 		if err != nil {

@@ -97,6 +97,7 @@ type config struct {
 	LogPruneCutoff int
 
 	DisableLastIP bool
+	DisablePollIP bool
 
 	DisableLiveTopicList bool
 	DisableJSAntispam    bool

@@ -234,8 +234,11 @@ func (s *DefaultPollStore) unpackOptionsMap(rawOptions map[int]string) []PollOpt
 }
 
 // TODO: Use a transaction for this?
-func (s *DefaultPollStore) CastVote(optionIndex int, pollID int, uid int, ipaddress string) error {
-	_, err := s.addVote.Exec(pollID, uid, optionIndex, ipaddress)
+func (s *DefaultPollStore) CastVote(optionIndex int, pollID int, uid int, ip string) error {
+	if Config.DisablePollIP {
+		ip = "0"
+	}
+	_, err := s.addVote.Exec(pollID, uid, optionIndex, ip)
 	if err != nil {
 		return err
 	}

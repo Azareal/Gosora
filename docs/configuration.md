@@ -88,9 +88,11 @@ LastIPCutoff - The number of months which need to pass before the last IP stored
 
 PostIPCutoff - The number of days which need to pass before the IP data for a post is automatically deleted. 0 defaults to whatever the current default is, currently 120 and -1 disables this feature.
 
-PollIPCutoff - The number of days which need to pass before the IP data for a poll is automatically deleted. 0 defaults to whatever the current default is, currently -1 and -1 disables this feature.
+PollIPCutoff - The number of days which need to pass before the IP data for a poll is automatically deleted. 0 defaults to whatever the current default is, currently 365 and -1 disables this feature.
 
 DisableLastIP - Disable storing last IPs for users and purge any existing user last IP data. Default: false
+
+DisablePollIP - Disable storing poll vote IPs and purge any existing poll vote IP data. Default: false
 
 LogPruneCutoff - The number of days which need to pass before the login and registration logs are pruned. 0 defaults to whatever the current default is, currently 180 and -1 disables this feature.
 
