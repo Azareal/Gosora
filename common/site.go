@@ -93,8 +93,10 @@ type config struct {
 	ServerCount    int
 	LastIPCutoff   int // Currently just -1, non--1, but will accept the number of months a user's last IP should be retained for in the future before being purged. Please note that the other two cutoffs below operate off the numbers of days instead.
 	PostIPCutoff   int
-	PollIPCutoff int
+	PollIPCutoff   int
 	LogPruneCutoff int
+
+	DisableLastIP bool
 
 	DisableLiveTopicList bool
 	DisableJSAntispam    bool
@@ -230,7 +232,7 @@ func ProcessConfig() (err error) {
 		Config.LastIPCutoff = 12
 	}
 	if Config.PollIPCutoff == 0 {
-		Config.PollIPCutoff = 720 // Default cutoff
+		Config.PollIPCutoff = 365 // Default cutoff
 	}
 	if Config.NoEmbed {
 		DefaultParseSettings.NoEmbed = true

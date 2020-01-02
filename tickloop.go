@@ -205,12 +205,12 @@ func dailies() {
 	}
 
 	// TODO: lastActiveAt isn't currently set, so we can't rely on this to purge last_ips of users who haven't been on in a while
-	/*if c.Config.LastIPCutoff == -1 {
+	if c.Config.DisableLastIP {
 		_, err := qgen.NewAcc().Update("users").Set("last_ip=0").Where("last_ip!=0").Exec()
 		if err != nil {
 			c.LogError(err)
 		}
-	} else */if c.Config.LastIPCutoff > 0 {
+	} else if c.Config.LastIPCutoff > 0 {
 		/*_, err = qgen.NewAcc().Update("users").Set("last_ip='0'").DateOlderThan("lastActiveAt",c.Config.PostIPCutoff,"day").Where("last_ip!='0'").Exec()
 		if err != nil {
 			c.LogError(err)

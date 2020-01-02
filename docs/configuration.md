@@ -90,6 +90,8 @@ PostIPCutoff - The number of days which need to pass before the IP data for a po
 
 PollIPCutoff - The number of days which need to pass before the IP data for a poll is automatically deleted. 0 defaults to whatever the current default is, currently -1 and -1 disables this feature.
 
+DisableLastIP - Disable storing last IPs for users and purge any existing user last IP data. Default: false
+
 LogPruneCutoff - The number of days which need to pass before the login and registration logs are pruned. 0 defaults to whatever the current default is, currently 180 and -1 disables this feature.
 
 DisableLiveTopicList - This switch allows you to disable the live topic list. Default: false

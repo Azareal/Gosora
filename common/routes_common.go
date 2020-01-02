@@ -316,7 +316,7 @@ func preRoute(w http.ResponseWriter, r *http.Request) (User, bool) {
 		}
 	}
 
-	if usercpy.Loggedin && host != usercpy.GetIP() {
+	if !Config.DisableLastIP && usercpy.Loggedin && host != usercpy.GetIP() {
 		mon := time.Now().Month()
 		err = usercpy.UpdateIP(strconv.Itoa(int(mon)) + "-" + host)
 		if err != nil {
