@@ -12,7 +12,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Azareal/Gosora/query_gen"
+	qgen "github.com/Azareal/Gosora/query_gen"
 )
 
 // TODO: Add the watchdog goroutine
@@ -44,10 +44,10 @@ type TopicStore interface {
 type DefaultTopicStore struct {
 	cache TopicCache
 
-	get        *sql.Stmt
-	exists     *sql.Stmt
-	count *sql.Stmt
-	create     *sql.Stmt
+	get    *sql.Stmt
+	exists *sql.Stmt
+	count  *sql.Stmt
+	create *sql.Stmt
 }
 
 // NewDefaultTopicStore gives you a new instance of DefaultTopicStore
@@ -58,11 +58,11 @@ func NewDefaultTopicStore(cache TopicCache) (*DefaultTopicStore, error) {
 	}
 	t := "topics"
 	return &DefaultTopicStore{
-		cache:      cache,
-		get:        acc.Select(t).Columns("title, content, createdBy, createdAt, lastReplyBy, lastReplyAt, lastReplyID, is_closed, sticky, parentID, ipaddress, views, postCount, likeCount, attachCount, poll, data").Where("tid = ?").Prepare(),
-		exists: acc.Exists(t,"tid").Prepare(),
-		count: acc.Count(t).Prepare(),
-		create:     acc.Insert(t).Columns("parentID, title, content, parsed_content, createdAt, lastReplyAt, lastReplyBy, ipaddress, words, createdBy").Fields("?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,?,?").Prepare(),
+		cache:  cache,
+		get:    acc.Select(t).Columns("title, content, createdBy, createdAt, lastReplyBy, lastReplyAt, lastReplyID, is_closed, sticky, parentID, ipaddress, views, postCount, likeCount, attachCount, poll, data").Where("tid = ?").Prepare(),
+		exists: acc.Exists(t, "tid").Prepare(),
+		count:  acc.Count(t).Prepare(),
+		create: acc.Insert(t).Columns("parentID, title, content, parsed_content, createdAt, lastReplyAt, lastReplyBy, ipaddress, words, createdBy").Fields("?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,?,?").Prepare(),
 	}, acc.FirstError()
 }
 
@@ -137,7 +137,7 @@ func (s *DefaultTopicStore) BulkGetMap(ids []int) (list map[int]*Topic, err erro
 
 	// TODO: Add a function for the qlist stuff
 	var q string
-	idList := make([]interface{},len(ids))
+	idList := make([]interface{}, len(ids))
 	for i, id := range ids {
 		idList[i] = strconv.Itoa(id)
 		q += "?,"
@@ -210,8 +210,11 @@ func (s *DefaultTopicStore) Create(fid int, name string, content string, uid int
 	if parsedContent == "" {
 		return 0, ErrNoBody
 	}
-	
+
 	// TODO: Move this statement into the topic store
+	if Config.DisablePostIP {
+		ip = "0"
+	}
 	res, err := s.create.Exec(fid, name, content, parsedContent, uid, ip, WordCount(content), uid)
 	if err != nil {
 		return 0, err

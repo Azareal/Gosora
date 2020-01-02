@@ -1,8 +1,11 @@
 package common
 
 //import "log"
-import "database/sql"
-import "github.com/Azareal/Gosora/query_gen"
+import (
+	"database/sql"
+
+	qgen "github.com/Azareal/Gosora/query_gen"
+)
 
 var Rstore ReplyStore
 
@@ -20,7 +23,7 @@ type SQLReplyStore struct {
 
 	get    *sql.Stmt
 	create *sql.Stmt
-	count *sql.Stmt
+	count  *sql.Stmt
 }
 
 func NewSQLReplyStore(acc *qgen.Accumulator, cache ReplyCache) (*SQLReplyStore, error) {
@@ -32,7 +35,7 @@ func NewSQLReplyStore(acc *qgen.Accumulator, cache ReplyCache) (*SQLReplyStore, 
 		cache:  cache,
 		get:    acc.Select(re).Columns("tid, content, createdBy, createdAt, lastEdit, lastEditBy, ipaddress, likeCount, attachCount, actionType").Where("rid = ?").Prepare(),
 		create: acc.Insert(re).Columns("tid, content, parsed_content, createdAt, lastUpdated, ipaddress, words, createdBy").Fields("?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,?").Prepare(),
-		count: acc.Count(re).Prepare(),
+		count:  acc.Count(re).Prepare(),
 	}, acc.FirstError()
 }
 
@@ -52,6 +55,9 @@ func (s *SQLReplyStore) Get(id int) (*Reply, error) {
 
 // TODO: Write a test for this
 func (s *SQLReplyStore) Create(t *Topic, content string, ip string, uid int) (rid int, err error) {
+	if Config.DisablePostIP {
+		ip = "0"
+	}
 	res, err := s.create.Exec(t.ID, content, ParseMessage(content, t.ParentID, "forums", nil), ip, WordCount(content), uid)
 	if err != nil {
 		return 0, err

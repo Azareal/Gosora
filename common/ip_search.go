@@ -22,11 +22,12 @@ type DefaultIPSearcher struct {
 // NewDefaultIPSearcher gives you a new instance of DefaultIPSearcher
 func NewDefaultIPSearcher() (*DefaultIPSearcher, error) {
 	acc := qgen.NewAcc()
+	uu := "users"
 	return &DefaultIPSearcher{
-		searchUsers:        acc.Select("users").Columns("uid").Where("last_ip=? OR last_ip LIKE CONCAT('%-',?)").Prepare(),
-		searchTopics:       acc.Select("users").Columns("uid").InQ("uid", acc.Select("topics").Columns("createdBy").Where("ipaddress=?")).Prepare(),
-		searchReplies:      acc.Select("users").Columns("uid").InQ("uid", acc.Select("replies").Columns("createdBy").Where("ipaddress=?")).Prepare(),
-		searchUsersReplies: acc.Select("users").Columns("uid").InQ("uid", acc.Select("users_replies").Columns("createdBy").Where("ipaddress=?")).Prepare(),
+		searchUsers:        acc.Select(uu).Columns("uid").Where("last_ip=? OR last_ip LIKE CONCAT('%-',?)").Prepare(),
+		searchTopics:       acc.Select(uu).Columns("uid").InQ("uid", acc.Select("topics").Columns("createdBy").Where("ipaddress=?")).Prepare(),
+		searchReplies:      acc.Select(uu).Columns("uid").InQ("uid", acc.Select("replies").Columns("createdBy").Where("ipaddress=?")).Prepare(),
+		searchUsersReplies: acc.Select(uu).Columns("uid").InQ("uid", acc.Select("users_replies").Columns("createdBy").Where("ipaddress=?")).Prepare(),
 	}, acc.FirstError()
 }
 

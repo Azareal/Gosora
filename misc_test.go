@@ -479,7 +479,7 @@ func topicStoreTest(t *testing.T, newID int) {
 	count := c.Topics.Count()
 	expect(t, count == 1, fmt.Sprintf("Global count for topics should be 1, not %d", count))
 
-	//Create(fid int, topicName string, content string, uid int, ipaddress string) (tid int, err error)
+	//Create(fid int, topicName string, content string, uid int, ip string) (tid int, err error)
 	tid, err := c.Topics.Create(2, "Test Topic", "Topic Content", 1, "::1")
 	expectNilErr(t, err)
 	expect(t, tid == newID, fmt.Sprintf("TID for the new topic should be %d, not %d", newID, tid))

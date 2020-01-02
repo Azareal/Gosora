@@ -10,7 +10,7 @@ var Prstore ProfileReplyStore
 
 type ProfileReplyStore interface {
 	Get(id int) (*ProfileReply, error)
-	Create(profileID int, content string, createdBy int, ipaddress string) (id int, err error)
+	Create(profileID int, content string, createdBy int, ip string) (id int, err error)
 	Count() (count int)
 }
 
@@ -37,8 +37,11 @@ func (s *SQLProfileReplyStore) Get(id int) (*ProfileReply, error) {
 	return &r, err
 }
 
-func (s *SQLProfileReplyStore) Create(profileID int, content string, createdBy int, ipaddress string) (id int, err error) {
-	res, err := s.create.Exec(profileID, content, ParseMessage(content, 0, "", nil), createdBy, ipaddress)
+func (s *SQLProfileReplyStore) Create(profileID int, content string, createdBy int, ip string) (id int, err error) {
+	if Config.DisablePostIP {
+		ip = "0"
+	}
+	res, err := s.create.Exec(profileID, content, ParseMessage(content, 0, "", nil), createdBy, ip)
 	if err != nil {
 		return 0, err
 	}

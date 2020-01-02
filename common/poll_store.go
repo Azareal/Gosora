@@ -49,7 +49,7 @@ type PollStore interface {
 	Get(id int) (*Poll, error)
 	Exists(id int) bool
 	Create(parent Pollable, pollType int, pollOptions map[int]string) (int, error)
-	CastVote(optionIndex int, pollID int, uid int, ipaddress string) error
+	CastVote(optionIndex int, pollID int, uid int, ip string) error
 	Reload(id int) error
 	//Count() int
 

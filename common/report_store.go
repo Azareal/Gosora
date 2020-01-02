@@ -44,7 +44,11 @@ func (s *DefaultReportStore) Create(title string, content string, u *User, itemT
 		return 0, ErrAlreadyReported
 	}
 
-	res, err := s.create.Exec(title, content, ParseMessage(content, 0, "", nil), u.GetIP(), u.ID, u.ID, itemType+"_"+strconv.Itoa(itemID), ReportForumID)
+	ip := u.GetIP()
+	if Config.DisablePostIP {
+		ip = "0"
+	}
+	res, err := s.create.Exec(title, content, ParseMessage(content, 0, "", nil), ip, u.ID, u.ID, itemType+"_"+strconv.Itoa(itemID), ReportForumID)
 	if err != nil {
 		return 0, err
 	}

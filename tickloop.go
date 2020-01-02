@@ -181,7 +181,17 @@ func dailies() {
 		f("registration_logs")
 	}
 
-	if c.Config.PostIPCutoff > -1 {
+	if c.Config.DisablePostIP {
+		f := func(tbl string) {
+			_, err := qgen.NewAcc().Update(tbl).Set("ipaddress='0'").Where("ipaddress!='0'").Exec()
+			if err != nil {
+				c.LogError(err)
+			}
+		}
+		f("topics")
+		f("replies")
+		f("users_replies")
+	} else if c.Config.PostIPCutoff > -1 {
 		// TODO: Use unixtime to remove this MySQLesque logic?
 		f := func(tbl string) {
 			_, err := qgen.NewAcc().Update(tbl).Set("ipaddress='0'").DateOlderThan("createdAt", c.Config.PostIPCutoff, "day").Where("ipaddress!='0'").Exec()
