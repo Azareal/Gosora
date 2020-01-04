@@ -449,12 +449,19 @@ func TestTopicStore(t *testing.T) {
 	tcache := c.NewMemoryTopicCache(c.Config.TopicCacheCapacity)
 	c.Topics, err = c.NewDefaultTopicStore(tcache)
 	expectNilErr(t, err)
-	topicStoreTest(t, 2)
+	c.Config.DisablePostIP = false
+	topicStoreTest(t, 2, "::1")
+	c.Config.DisablePostIP = true
+	topicStoreTest(t, 3, "0")
+
 	c.Topics, err = c.NewDefaultTopicStore(nil)
 	expectNilErr(t, err)
-	topicStoreTest(t, 3)
+	c.Config.DisablePostIP = false
+	topicStoreTest(t, 4, "::1")
+	c.Config.DisablePostIP = true
+	topicStoreTest(t, 5, "0")
 }
-func topicStoreTest(t *testing.T, newID int) {
+func topicStoreTest(t *testing.T, newID int, ip string) {
 	var topic *c.Topic
 	var err error
 
@@ -469,18 +476,15 @@ func topicStoreTest(t *testing.T, newID int) {
 
 	// TODO: Add BulkGetMap() to the TopicStore
 
-	ok := c.Topics.Exists(-1)
-	expect(t, !ok, "TID #-1 shouldn't exist")
-	ok = c.Topics.Exists(0)
-	expect(t, !ok, "TID #0 shouldn't exist")
-	ok = c.Topics.Exists(1)
-	expect(t, ok, "TID #1 should exist")
+	expect(t, !c.Topics.Exists(-1), "TID #-1 shouldn't exist")
+	expect(t, !c.Topics.Exists(0), "TID #0 shouldn't exist")
+	expect(t, c.Topics.Exists(1), "TID #1 should exist")
 
 	count := c.Topics.Count()
 	expect(t, count == 1, fmt.Sprintf("Global count for topics should be 1, not %d", count))
 
 	//Create(fid int, topicName string, content string, uid int, ip string) (tid int, err error)
-	tid, err := c.Topics.Create(2, "Test Topic", "Topic Content", 1, "::1")
+	tid, err := c.Topics.Create(2, "Test Topic", "Topic Content", 1, ip)
 	expectNilErr(t, err)
 	expect(t, tid == newID, fmt.Sprintf("TID for the new topic should be %d, not %d", newID, tid))
 	expect(t, c.Topics.Exists(newID), fmt.Sprintf("TID #%d should exist", newID))
@@ -522,27 +526,27 @@ func topicStoreTest(t *testing.T, newID int) {
 		expectNilErr(t, err)
 	}
 
-	testTopic(newID, "Test Topic", "Topic Content", 1, "::1", 2, false, false)
+	testTopic(newID, "Test Topic", "Topic Content", 1, ip, 2, false, false)
 
 	expectNilErr(t, topic.Lock())
 	shouldNotBeIn(newID)
-	testTopic(newID, "Test Topic", "Topic Content", 1, "::1", 2, true, false)
+	testTopic(newID, "Test Topic", "Topic Content", 1, ip, 2, true, false)
 
 	expectNilErr(t, topic.Unlock())
 	shouldNotBeIn(newID)
-	testTopic(newID, "Test Topic", "Topic Content", 1, "::1", 2, false, false)
+	testTopic(newID, "Test Topic", "Topic Content", 1, ip, 2, false, false)
 
 	expectNilErr(t, topic.Stick())
 	shouldNotBeIn(newID)
-	testTopic(newID, "Test Topic", "Topic Content", 1, "::1", 2, false, true)
+	testTopic(newID, "Test Topic", "Topic Content", 1, ip, 2, false, true)
 
 	expectNilErr(t, topic.Unstick())
 	shouldNotBeIn(newID)
-	testTopic(newID, "Test Topic", "Topic Content", 1, "::1", 2, false, false)
+	testTopic(newID, "Test Topic", "Topic Content", 1, ip, 2, false, false)
 
 	expectNilErr(t, topic.MoveTo(1))
 	shouldNotBeIn(newID)
-	testTopic(newID, "Test Topic", "Topic Content", 1, "::1", 1, false, false)
+	testTopic(newID, "Test Topic", "Topic Content", 1, ip, 1, false, false)
 	// TODO: Add more tests for more *Topic methods
 
 	expectNilErr(t, topic.Delete())
@@ -907,6 +911,13 @@ func TestReplyStore(t *testing.T) {
 	_, err = c.Rstore.Get(0)
 	recordMustNotExist(t, err, "RID #0 shouldn't exist")
 
+	c.Config.DisablePostIP = false
+	testReplyStore(t, 2, 1, "::1")
+	c.Config.DisablePostIP = true
+	testReplyStore(t, 5, 3, "0")
+}
+
+func testReplyStore(t *testing.T, newID int, newPostCount int, ip string) {
 	replyTest2 := func(reply *c.Reply, err error, rid int, parentID int, createdBy int, content string, ip string) {
 		expectNilErr(t, err)
 		expect(t, reply.ID == rid, fmt.Sprintf("RID #%d has the wrong ID. It should be %d not %d", rid, rid, reply.ID))
@@ -928,42 +939,42 @@ func TestReplyStore(t *testing.T) {
 	//_, err = c.Rstore.GetCache().Get(1)
 	//recordMustNotExist(t, err, "RID #1 shouldn't be in the cache")
 
-	_, err = c.Rstore.Get(2)
+	_, err := c.Rstore.Get(newID)
 	recordMustNotExist(t, err, "RID #2 shouldn't exist")
 
 	topic, err := c.Topics.Get(1)
 	expectNilErr(t, err)
-	expect(t, topic.PostCount == 1, fmt.Sprintf("TID #1's post count should be one, not %d", topic.PostCount))
+	expect(t, topic.PostCount == newPostCount, fmt.Sprintf("TID #%d's post count should be %d, not %d", topic.ID, newPostCount, topic.PostCount))
 
-	_, err = c.Rstore.GetCache().Get(2)
-	recordMustNotExist(t, err, "RID #2 shouldn't be in the cache")
+	_, err = c.Rstore.GetCache().Get(newID)
+	recordMustNotExist(t, err, "RID #%d shouldn't be in the cache", newID)
 
-	rid, err := c.Rstore.Create(topic, "Fofofo", "::1", 1)
+	rid, err := c.Rstore.Create(topic, "Fofofo", ip, 1)
 	expectNilErr(t, err)
-	expect(t, rid == 2, fmt.Sprintf("The next reply ID should be 2 not %d", rid))
-	expect(t, topic.PostCount == 1, fmt.Sprintf("The old TID #1 in memory's post count should be one, not %d", topic.PostCount))
+	expect(t, rid == newID, fmt.Sprintf("The next reply ID should be %d not %d", newID, rid))
+	expect(t, topic.PostCount == newPostCount, fmt.Sprintf("The old TID #1 in memory's post count should be %d, not %d", newPostCount+1, topic.PostCount))
 	// TODO: Test the reply count on the topic
 
-	replyTest(2, 1, 1, "Fofofo", "::1")
+	replyTest(newID, 1, 1, "Fofofo", ip)
 
 	topic, err = c.Topics.Get(1)
 	expectNilErr(t, err)
-	expect(t, topic.PostCount == 2, fmt.Sprintf("TID #1's post count should be two, not %d", topic.PostCount))
+	expect(t, topic.PostCount == newPostCount+1, fmt.Sprintf("TID #1's post count should be %d, not %d", newPostCount+1, topic.PostCount))
 
-	err = topic.CreateActionReply("destroy", "::1", 1)
+	err = topic.CreateActionReply("destroy", ip, 1)
 	expectNilErr(t, err)
-	expect(t, topic.PostCount == 2, fmt.Sprintf("The old TID #1 in memory's post count should be two, not %d", topic.PostCount))
-	replyTest(3, 1, 1, "", "::1")
+	expect(t, topic.PostCount == newPostCount+1, fmt.Sprintf("The old TID #1 in memory's post count should be %d, not %d", newPostCount+1, topic.PostCount))
+	replyTest(newID+1, 1, 1, "", ip)
 	// TODO: Check the actionType field of the reply, this might not be loaded by TopicStore, maybe we should add it there?
 
 	topic, err = c.Topics.Get(1)
 	expectNilErr(t, err)
-	expect(t, topic.PostCount == 3, fmt.Sprintf("TID #1's post count should be three, not %d", topic.PostCount))
+	expect(t, topic.PostCount == newPostCount+2, fmt.Sprintf("TID #1's post count should be %d, not %d", newPostCount+2, topic.PostCount))
 
 	// TODO: Expand upon this
-	rid, err = c.Rstore.Create(topic, "hiii", "::1", 1)
+	rid, err = c.Rstore.Create(topic, "hiii", ip, 1)
 	expectNilErr(t, err)
-	replyTest(rid, topic.ID, 1, "hiii", "::1")
+	replyTest(rid, topic.ID, 1, "hiii", ip)
 
 	reply, err := c.Rstore.Get(rid)
 	expectNilErr(t, err)
@@ -1001,28 +1012,34 @@ func TestProfileReplyStore(t *testing.T) {
 	_, err = c.Prstore.Get(1)
 	recordMustNotExist(t, err, "PRID #1 shouldn't exist")
 
+	c.Config.DisablePostIP = false
+	testProfileReplyStore(t, 1, "::1")
+	c.Config.DisablePostIP = true
+	testProfileReplyStore(t, 2, "0")
+}
+func testProfileReplyStore(t *testing.T, newID int, ip string) {
 	// ? - Commented this one out as strong constraints like this put an unreasonable load on the database, we only want errors if a delete which should succeed fails
 	//profileReply := c.BlankProfileReply(1)
 	//err = profileReply.Delete()
 	//expect(t,err != nil,"You shouldn't be able to delete profile replies which don't exist")
 
 	profileID := 1
-	prid, err := c.Prstore.Create(profileID, "Haha", 1, "::1")
+	prid, err := c.Prstore.Create(profileID, "Haha", 1, ip)
 	expectNilErr(t, err)
-	expect(t, prid == 1, "The first profile reply should have an ID of 1")
+	expect(t, prid == newID, fmt.Sprintf("The first profile reply should have an ID of %d", newID))
 
-	profileReply, err := c.Prstore.Get(1)
+	profileReply, err := c.Prstore.Get(newID)
 	expectNilErr(t, err)
-	expect(t, profileReply.ID == 1, fmt.Sprintf("The profile reply should have an ID of 1 not %d", profileReply.ID))
+	expect(t, profileReply.ID == newID, fmt.Sprintf("The profile reply should have an ID of %d not %d", newID, profileReply.ID))
 	expect(t, profileReply.ParentID == 1, fmt.Sprintf("The parent ID of the profile reply should be 1 not %d", profileReply.ParentID))
 	expect(t, profileReply.Content == "Haha", fmt.Sprintf("The profile reply's contents should be 'Haha' not '%s'", profileReply.Content))
 	expect(t, profileReply.CreatedBy == 1, fmt.Sprintf("The profile reply's creator should be 1 not %d", profileReply.CreatedBy))
-	expect(t, profileReply.IP == "::1", fmt.Sprintf("The profile reply's IP should be '::1' not '%s'", profileReply.IP))
+	expect(t, profileReply.IP == ip, fmt.Sprintf("The profile reply's IP should be '%s' not '%s'", ip, profileReply.IP))
 
 	err = profileReply.Delete()
 	expectNilErr(t, err)
-	_, err = c.Prstore.Get(1)
-	expect(t, err != nil, "PRID #1 shouldn't exist after being deleted")
+	_, err = c.Prstore.Get(newID)
+	expect(t, err != nil, fmt.Sprintf("PRID #%d shouldn't exist after being deleted", newID))
 
 	// TODO: Test profileReply.SetBody() and profileReply.Creator()
 }
@@ -1447,7 +1464,7 @@ func TestWidgets(t *testing.T) {
 	ewidget := &c.WidgetEdit{widget, map[string]string{"Name": "Test", "Text": "Testing"}}
 	wid, err := ewidget.Create()
 	expectNilErr(t, err)
-	expect(t,wid==1,"wid should be 1")
+	expect(t, wid == 1, "wid should be 1")
 
 	// TODO: Do a test for the widget body
 	widget2, err := c.Widgets.Get(1)

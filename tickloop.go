@@ -170,6 +170,12 @@ func asmMatches() {
 func dailies() {
 	asmMatches()
 
+	if c.Config.DisableRegLog {
+		_, err := qgen.NewAcc().Purge("registration_logs").Exec()
+		if err != nil {
+			c.LogError(err)
+		}
+	}
 	if c.Config.LogPruneCutoff > -1 {
 		f := func(tbl string) {
 			_, err := qgen.NewAcc().Delete(tbl).DateOlderThan("doneAt", c.Config.LogPruneCutoff, "day").Run()

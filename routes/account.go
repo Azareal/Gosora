@@ -262,9 +262,11 @@ func AccountRegisterSubmit(w http.ResponseWriter, r *http.Request, user c.User) 
 	}
 
 	regLog := c.RegLogItem{Username: name, Email: email, FailureReason: regErrReason, Success: regSuccess, IP: user.GetIP()}
-	_, err = regLog.Create()
-	if err != nil {
-		return c.InternalError(err, w, r)
+	if !c.Config.DisableRegLog {
+		_, err := regLog.Create()
+		if err != nil {
+			return c.InternalError(err, w, r)
+		}
 	}
 	if !regSuccess {
 		return c.LocalError(regErrMsg, w, r, user)
@@ -280,27 +282,32 @@ func AccountRegisterSubmit(w http.ResponseWriter, r *http.Request, user c.User) 
 		group = c.Config.ActivationGroup
 	}
 
+	addReason := func(reason string) error {
+		if c.Config.DisableRegLog {
+			return nil
+		}
+		regLog.FailureReason += reason
+		return regLog.Commit()
+	}
+
 	// TODO: Do the registration attempt logging a little less messily (without having to amend the result after the insert)
 	uid, err := c.Users.Create(name, password, email, group, active)
 	if err != nil {
 		regLog.Success = false
 		if err == c.ErrAccountExists {
-			regLog.FailureReason += "username-exists"
-			err = regLog.Commit()
+			err = addReason("username-exists")
 			if err != nil {
 				return c.InternalError(err, w, r)
 			}
 			return c.LocalError(p.GetErrorPhrase("register_username_unavailable"), w, r, user)
 		} else if err == c.ErrLongUsername {
-			regLog.FailureReason += "username-too-long"
-			err = regLog.Commit()
+			err = addReason("username-too-long")
 			if err != nil {
 				return c.InternalError(err, w, r)
 			}
 			return c.LocalError(p.GetErrorPhrase("register_username_too_long_prefix")+strconv.Itoa(c.Config.MaxUsernameLength), w, r, user)
 		}
-		regLog.FailureReason += "internal-error"
-		err2 := regLog.Commit()
+		err2 := addReason("internal-error")
 		if err2 != nil {
 			return c.InternalError(err2, w, r)
 		}

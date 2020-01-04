@@ -99,6 +99,7 @@ type config struct {
 	DisableLastIP bool
 	DisablePostIP bool
 	DisablePollIP bool
+	DisableRegLog bool
 
 	DisableLiveTopicList bool
 	DisableJSAntispam    bool

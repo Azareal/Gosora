@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/Azareal/Gosora/query_gen"
+	qgen "github.com/Azareal/Gosora/query_gen"
 )
 
 var RegLogs RegLogStore
@@ -16,7 +16,7 @@ type RegLogItem struct {
 	Email         string
 	FailureReason string
 	Success       bool
-	IP     string
+	IP            string
 	DoneAt        string
 }
 
@@ -81,7 +81,7 @@ func (s *SQLRegLogStore) Count() (count int) {
 	return count
 }
 
-func (s *SQLRegLogStore) GetOffset(offset int, perPage int) (logs []RegLogItem, err error) {
+func (s *SQLRegLogStore) GetOffset(offset, perPage int) (logs []RegLogItem, err error) {
 	rows, err := s.getOffset.Query(offset, perPage)
 	if err != nil {
 		return logs, err
@@ -102,11 +102,11 @@ func (s *SQLRegLogStore) GetOffset(offset int, perPage int) (logs []RegLogItem, 
 }
 
 type LoginLogItem struct {
-	ID        int
-	UID       int
-	Success   bool
-	IP string
-	DoneAt    string
+	ID      int
+	UID     int
+	Success bool
+	IP      string
+	DoneAt  string
 }
 
 type LoginLogStmts struct {
