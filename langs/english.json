@@ -1030,6 +1030,7 @@
 		"panel_logs_mod_action_reply_delete":"A reply in <a href='%s'>%s</a> was deleted by <a href='%s'>%s</a>",
 		"panel_logs_mod_action_user_ban":"<a href='%s'>%s</a> was banned by <a href='%s'>%s</a>",
 		"panel_logs_mod_action_user_unban":"<a href='%s'>%s</a> was unbanned by <a href='%s'>%s</a>",
+		"panel_logs_mod_action_user_delete-posts":"<a href='%s'>%s</a> had their posts purged by <a href='%s'>%s</a>",
 		"panel_logs_mod_action_user_activate":"<a href='%s'>%s</a> was activated by <a href='%s'>%s</a>",
 		"panel_logs_mod_action_unknown":"Unknown action '%s' on elementType '%s' by <a href='%s'>%s</a>",
 		"panel_logs_mod_no_logs":"There aren't any events logged.",
