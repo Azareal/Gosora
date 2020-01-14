@@ -339,6 +339,7 @@ func (t *Topic) Delete() error {
 		return err
 	}
 
+	// TODO: Clear reply cache too
 	_, err = topicStmts.delete.Exec(t.ID)
 	t.cacheRemove()
 	if err != nil {

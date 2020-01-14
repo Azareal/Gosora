@@ -403,7 +403,7 @@ func AddHashLinkType(prefix string, handler func(*strings.Builder, string, *int)
 	hashLinkTypes[prefix[0]] = prefix
 }
 
-func WriteURL(sb *strings.Builder, url string, label string) {
+func WriteURL(sb *strings.Builder, url, label string) {
 	sb.Write(URLOpen)
 	sb.WriteString(url)
 	sb.Write(URLOpen2)

@@ -119,7 +119,7 @@ func (s *DefaultUserStore) GetByName(name string) (*User, error) {
 
 // TODO: Optimise this, so we don't wind up hitting the database every-time for small gaps
 // TODO: Make this a little more consistent with DefaultGroupStore's GetRange method
-func (s *DefaultUserStore) GetOffset(offset int, perPage int) (users []*User, err error) {
+func (s *DefaultUserStore) GetOffset(offset, perPage int) (users []*User, err error) {
 	rows, err := s.getOffset.Query(offset, perPage)
 	if err != nil {
 		return users, err

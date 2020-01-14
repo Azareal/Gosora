@@ -141,7 +141,7 @@ func (s *DefaultPageStore) GetByName(name string) (*CustomPage, error) {
 	return p, s.parseAllowedGroups(rawAllowedGroups, p)
 }
 
-func (s *DefaultPageStore) GetOffset(offset int, perPage int) (pages []*CustomPage, err error) {
+func (s *DefaultPageStore) GetOffset(offset, perPage int) (pages []*CustomPage, err error) {
 	rows, err := s.getOffset.Query(offset, perPage)
 	if err != nil {
 		return pages, err

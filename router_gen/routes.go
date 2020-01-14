@@ -111,6 +111,7 @@ func usersRoutes() *RouteGroup {
 		Action("routes.UnbanUser", "/users/unban/", "extraData"),
 		Action("routes.ActivateUser", "/users/activate/", "extraData"),
 		MView("routes.IPSearch", "/users/ips/"), // TODO: .Perms("ViewIPs")?
+		Action("routes.DeletePostsSubmit", "/users/delete-posts/submit/", "extraData"),
 	)
 }
 

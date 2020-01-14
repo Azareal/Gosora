@@ -1,7 +1,7 @@
 package common
 
 import (
-	"log"
+	//"log"
 	"sync"
 	"sync/atomic"
 )
@@ -90,7 +90,7 @@ func (s *MemoryReplyCache) Set(item *Reply) error {
 // Add adds a reply to the cache, similar to Set, but it's only intended for new items. This method might be deprecated in the near future, use Set. May return a capacity overflow error.
 // ? Is this redundant if we have Set? Are the efficiency wins worth this? Is this even used?
 func (s *MemoryReplyCache) Add(item *Reply) error {
-	log.Print("MemoryReplyCache.Add")
+	//log.Print("MemoryReplyCache.Add")
 	s.Lock()
 	if int(s.length) >= s.capacity {
 		s.Unlock()

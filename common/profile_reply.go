@@ -32,8 +32,8 @@ func init() {
 	DbInits.Add(func(acc *qgen.Accumulator) error {
 		ur := "users_replies"
 		profileReplyStmts = ProfileReplyStmts{
-			edit:   acc.Update(ur).Set("content = ?, parsed_content = ?").Where("rid = ?").Prepare(),
-			delete: acc.Delete(ur).Where("rid = ?").Prepare(),
+			edit:   acc.Update(ur).Set("content=?,parsed_content=?").Where("rid=?").Prepare(),
+			delete: acc.Delete(ur).Where("rid=?").Prepare(),
 		}
 		return acc.FirstError()
 	})
@@ -45,6 +45,7 @@ func BlankProfileReply(id int) *ProfileReply {
 }
 
 // TODO: Write tests for this
+// TODO: Remove alerts.
 func (r *ProfileReply) Delete() error {
 	_, err := profileReplyStmts.delete.Exec(r.ID)
 	return err

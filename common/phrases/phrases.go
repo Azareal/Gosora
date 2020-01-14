@@ -126,7 +126,7 @@ func InitPhrases(lang string) error {
 
 		langPack.TmplIndicesToPhrases = make([][][]byte, len(langTmplIndicesToNames))
 		for tmplID, phraseNames := range langTmplIndicesToNames {
-			var phraseSet = make([][]byte, len(phraseNames))
+			phraseSet := make([][]byte, len(phraseNames))
 			for index, phraseName := range phraseNames {
 				phrase, ok := langPack.TmplPhrases[phraseName]
 				if !ok {

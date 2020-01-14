@@ -88,7 +88,7 @@ func ViewProfile(w http.ResponseWriter, r *http.Request, user c.User, header *c.
 		if group.Tag != "" {
 			ru.Tag = group.Tag
 		} else if puser.ID == ru.CreatedBy {
-			ru.Tag = phrases.GetTmplPhrase("profile_owner_tag")
+			ru.Tag = phrases.GetTmplPhrase("profile.owner_tag")
 		}
 
 		// TODO: Add a hook here

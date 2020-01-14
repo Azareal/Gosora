@@ -1172,10 +1172,10 @@ ArgLoop:
 			for i := pos + 2; i < len(node.Args); i++ {
 				op := node.Args[i].String()
 				if op != "" {
-					if op[0] == '.' || op[0] == '$' {
+					if /*op[0] == '.' || */op[0] == '$' {
 						panic("langf args cannot be dynamic")
 					}
-					if op[0] != '"' && !unicode.IsDigit(rune(op[0])) {
+					if op[0] != '.' && op[0] != '"' && !unicode.IsDigit(rune(op[0])) {
 						break
 					}
 					olist = append(olist, op)
@@ -1187,6 +1187,14 @@ ArgLoop:
 
 			ob := ","
 			for _, op := range olist {
+				if op[0] == '.' {
+					param, val3 := c.compileIfVarSub(con, op)
+					if !val3.IsValid() {
+						panic("val3 is invalid")
+					}
+					ob += param + ","
+					continue
+				}
 				allNum := true
 				for _, o := range op {
 					if !unicode.IsDigit(o) {

@@ -505,7 +505,7 @@ func skipFunctionCall(data string, index int) int {
 	return index
 }
 
-func writeFile(name string, content string) (err error) {
+func writeFile(name, content string) (err error) {
 	f, err := os.Create(name)
 	if err != nil {
 		return err

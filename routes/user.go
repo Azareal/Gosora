@@ -13,7 +13,6 @@ func BanUserSubmit(w http.ResponseWriter, r *http.Request, user c.User, suid str
 	if !user.Perms.BanUsers {
 		return c.NoPermissions(w, r, user)
 	}
-
 	uid, err := strconv.Atoi(suid)
 	if err != nil {
 		return c.LocalError("The provided UserID is not a valid number.", w, r, user)
@@ -28,7 +27,6 @@ func BanUserSubmit(w http.ResponseWriter, r *http.Request, user c.User, suid str
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
-
 	// TODO: Is there a difference between IsMod and IsSuperMod? Should we delete the redundant one?
 	if targetUser.IsMod {
 		return c.LocalError("You may not ban another staff member.", w, r, user)
@@ -40,42 +38,57 @@ func BanUserSubmit(w http.ResponseWriter, r *http.Request, user c.User, suid str
 		return c.LocalError("The user you're trying to unban is already banned.", w, r, user)
 	}
 
-	durationDays, err := strconv.Atoi(r.FormValue("ban-duration-days"))
+	durDays, err := strconv.Atoi(r.FormValue("dur-days"))
 	if err != nil {
 		return c.LocalError("You can only use whole numbers for the number of days", w, r, user)
 	}
-
-	durationWeeks, err := strconv.Atoi(r.FormValue("ban-duration-weeks"))
+	durWeeks, err := strconv.Atoi(r.FormValue("dur-weeks"))
 	if err != nil {
 		return c.LocalError("You can only use whole numbers for the number of weeks", w, r, user)
 	}
-
-	durationMonths, err := strconv.Atoi(r.FormValue("ban-duration-months"))
+	durMonths, err := strconv.Atoi(r.FormValue("dur-months"))
 	if err != nil {
 		return c.LocalError("You can only use whole numbers for the number of months", w, r, user)
 	}
-
-	var duration time.Duration
-	if durationDays > 1 && durationWeeks > 1 && durationMonths > 1 {
-		duration, _ = time.ParseDuration("0")
-	} else {
-		var seconds int
-		seconds += durationDays * int(c.Day)
-		seconds += durationWeeks * int(c.Week)
-		seconds += durationMonths * int(c.Month)
-		duration, _ = time.ParseDuration(strconv.Itoa(seconds) + "s")
+	deletePosts := false
+	switch r.FormValue("delete-posts") {
+	case "1":
+		deletePosts = true
 	}
 
-	err = targetUser.Ban(duration, user.ID)
+	var dur time.Duration
+	if durDays > 1 && durWeeks > 1 && durMonths > 1 {
+		dur, _ = time.ParseDuration("0")
+	} else {
+		var secs int
+		secs += durDays * int(c.Day)
+		secs += durWeeks * int(c.Week)
+		secs += durMonths * int(c.Month)
+		dur, _ = time.ParseDuration(strconv.Itoa(secs) + "s")
+	}
+
+	err = targetUser.Ban(dur, user.ID)
 	if err == sql.ErrNoRows {
 		return c.LocalError("The user you're trying to ban no longer exists.", w, r, user)
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
-
 	err = c.ModLogs.Create("ban", uid, "user", user.GetIP(), user.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
+	}
+
+	if deletePosts {
+		err = targetUser.DeletePosts()
+		if err == sql.ErrNoRows {
+			return c.LocalError("The user you're trying to ban no longer exists.", w, r, user)
+		} else if err != nil {
+			return c.InternalError(err, w, r)
+		}
+		err = c.ModLogs.Create("delete-posts", uid, "user", user.GetIP(), user.ID)
+		if err != nil {
+			return c.InternalError(err, w, r)
+		}
 	}
 
 	// TODO: Trickle the hookTable down from the router
@@ -93,7 +106,6 @@ func UnbanUser(w http.ResponseWriter, r *http.Request, user c.User, suid string)
 	if !user.Perms.BanUsers {
 		return c.NoPermissions(w, r, user)
 	}
-
 	uid, err := strconv.Atoi(suid)
 	if err != nil {
 		return c.LocalError("The provided UserID is not a valid number.", w, r, user)
@@ -139,7 +151,6 @@ func ActivateUser(w http.ResponseWriter, r *http.Request, user c.User, suid stri
 	if !user.Perms.ActivateUsers {
 		return c.NoPermissions(w, r, user)
 	}
-
 	uid, err := strconv.Atoi(suid)
 	if err != nil {
 		return c.LocalError("The provided UserID is not a valid number.", w, r, user)
@@ -173,5 +184,47 @@ func ActivateUser(w http.ResponseWriter, r *http.Request, user c.User, suid stri
 	}
 
 	http.Redirect(w, r, "/user/"+strconv.Itoa(targetUser.ID), http.StatusSeeOther)
+	return nil
+}
+
+func DeletePostsSubmit(w http.ResponseWriter, r *http.Request, user c.User, suid string) c.RouteError {
+	if !user.Perms.BanUsers {
+		return c.NoPermissions(w, r, user)
+	}
+	uid, err := strconv.Atoi(suid)
+	if err != nil {
+		return c.LocalError("The provided UserID is not a valid number.", w, r, user)
+	}
+
+	targetUser, err := c.Users.Get(uid)
+	if err == sql.ErrNoRows {
+		return c.LocalError("The user you're trying to purge posts of no longer exists.", w, r, user)
+	} else if err != nil {
+		return c.InternalError(err, w, r)
+	}
+	// TODO: Is there a difference between IsMod and IsSuperMod? Should we delete the redundant one?
+	if targetUser.IsMod {
+		return c.LocalError("You may not purge the posts of another staff member.", w, r, user)
+	}
+
+	err = targetUser.DeletePosts()
+	if err == sql.ErrNoRows {
+		return c.LocalError("The user you're trying to purge posts of no longer exists.", w, r, user)
+	} else if err != nil {
+		return c.InternalError(err, w, r)
+	}
+	err = c.ModLogs.Create("delete-posts", uid, "user", user.GetIP(), user.ID)
+	if err != nil {
+		return c.InternalError(err, w, r)
+	}
+
+	// TODO: Trickle the hookTable down from the router
+	hTbl := c.GetHookTable()
+	skip, rerr := hTbl.VhookSkippable("action_end_delete_posts", targetUser.ID, &user)
+	if skip || rerr != nil {
+		return rerr
+	}
+
+	http.Redirect(w, r, "/user/"+strconv.Itoa(uid), http.StatusSeeOther)
 	return nil
 }

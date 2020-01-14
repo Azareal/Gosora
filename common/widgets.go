@@ -276,10 +276,10 @@ func InitWidgets() (fi error) {
 	return nil
 }
 
-func releaseWidgets(widgets []*Widget) {
-	for _, widget := range widgets {
-		if widget.ShutdownFunc != nil {
-			widget.ShutdownFunc(widget)
+func releaseWidgets(ws []*Widget) {
+	for _, w := range ws {
+		if w.ShutdownFunc != nil {
+			w.ShutdownFunc(w)
 		}
 	}
 }

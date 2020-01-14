@@ -5,7 +5,7 @@
 	<div id="profile_left_pane" class="rowmenu">
 		<div class="topBlock">
 			<div class="rowitem avatarRow">
-				<a href="{{.ProfileOwner.Avatar}}"><img src="{{.ProfileOwner.Avatar}}" class="avatar" alt="Avatar" title="{{.ProfileOwner.Name}}'s Avatar" aria-hidden="true" /></a>
+				<a href="{{.ProfileOwner.Avatar}}"><img src="{{.ProfileOwner.Avatar}}" class="avatar" alt="Avatar" title="{{.ProfileOwner.Name}}'s Avatar" aria-hidden="true"/></a>
 			</div>
 			<div class="rowitem nameRow">
 				<span class="profileName" title="{{.ProfileOwner.Name}}">{{.ProfileOwner.Name}}</span>{{if .ProfileOwner.Tag}}<span class="username" title="{{.ProfileOwner.Tag}}">{{.ProfileOwner.Tag}}</span>{{end}}
@@ -25,23 +25,29 @@
 		</div>
 		<div class="passiveBlock">
 			{{if not .CurrentUser.Loggedin}}<div class="rowitem passive">
-				<a class="profile_menu_item">{{lang "profile_login_for_options"}}</a>
+				<a class="profile_menu_item">{{lang "profile.login_for_options"}}</a>
 			</div>{{else}}
 			{{if .CanMessage}}<div class="rowitem passive">
-				<a href="/user/convos/create/" class="profile_menu_item">{{lang "profile_send_message"}}</a>
+				<a href="/user/convos/create/" class="profile_menu_item">{{lang "profile.send_message"}}</a>
 			</div>{{end}}
 			<!--<div class="rowitem passive">
-				<a class="profile_menu_item">{{lang "profile_add_friend"}}</a>
+				<a class="profile_menu_item">{{lang "profile.add_friend"}}</a>
 			</div>-->
+
 			{{if (.CurrentUser.IsSuperMod) and not (.ProfileOwner.IsSuperMod)}}<div class="rowitem passive">
-				{{if .ProfileOwner.IsBanned}}<a href="/users/unban/{{.ProfileOwner.ID}}?s={{.CurrentUser.Session}}" class="profile_menu_item">{{lang "profile_unban"}}</a>
-			{{else}}<a href="#ban_user" class="profile_menu_item">{{lang "profile_ban"}}</a>{{end}}
-			</div>{{end}}
-			<div class="rowitem passive">
-				{{if .Blocked}}<a href="/user/block/remove/{{.ProfileOwner.ID}}" class="profile_menu_item">{{lang "profile_unblock"}}</a>{{else}}<a href="/user/block/create/{{.ProfileOwner.ID}}" class="profile_menu_item">{{lang "profile_block"}}</a>{{end}}
+				{{if .ProfileOwner.IsBanned}}<a href="/users/unban/{{.ProfileOwner.ID}}?s={{.CurrentUser.Session}}" class="profile_menu_item">{{lang "profile.unban"}}</a>
+			{{else}}<a href="#ban_user" class="profile_menu_item">{{lang "profile.ban"}}</a>{{end}}
 			</div>
 			<div class="rowitem passive">
-				<a href="/report/submit/{{.ProfileOwner.ID}}?s={{.CurrentUser.Session}}&type=user" class="profile_menu_item report_item" aria-label="{{lang "profile_report_user_aria"}}" title="{{lang "profile_report_user_tooltip"}}"></a>
+				<a href="#delete_posts" class="profile_menu_item">{{lang "profile.delete_posts"}}</a>
+			</div>
+			{{end}}
+
+			<div class="rowitem passive">
+				{{if .Blocked}}<a href="/user/block/remove/{{.ProfileOwner.ID}}" class="profile_menu_item">{{lang "profile.unblock"}}</a>{{else}}<a href="/user/block/create/{{.ProfileOwner.ID}}" class="profile_menu_item">{{lang "profile.block"}}</a>{{end}}
+			</div>
+			<div class="rowitem passive">
+				<a href="/report/submit/{{.ProfileOwner.ID}}?s={{.CurrentUser.Session}}&type=user" class="profile_menu_item report_item" aria-label="{{lang "profile.report_user_aria"}}" title="{{lang "profile.report_user_tooltip"}}"></a>
 			</div>
 			{{end}}
 		</div>
@@ -53,37 +59,58 @@
 	{{if .CurrentUser.Perms.BanUsers}}
 	<!-- TODO: Inline the display:none; CSS -->
 	<div id="ban_user_head" class="colstack_item colstack_head hash_hide ban_user_hash" style="display:none;">
-		<div class="rowitem"><h1><a>{{lang "profile_ban_user_head"}}</a></h1></div>
+		<div class="rowitem"><h1><a>{{lang "profile.ban_user_head"}}</a></h1></div>
 	</div>
 	<form id="ban_user_form" class="hash_hide ban_user_hash" action="/users/ban/submit/{{.ProfileOwner.ID}}?s={{.CurrentUser.Session}}" method="post" style="display:none;">
 	<div class="the_form">
 		{{/** TODO: Put a JS duration calculator here instead of this text? **/}}
-		<div class="colline">{{lang "profile_ban_user_notice"}}</div>
+		<div class="colline">{{lang "profile.ban_user_notice"}}</div>
 		<div class="colstack_item">
 			<div class="formrow real_first_child">
-				<div class="formitem formlabel"><a>{{lang "profile_ban_user_days"}}</a></div>
+				<div class="formitem formlabel"><a>{{lang "profile.ban_user_days"}}</a></div>
 				<div class="formitem">
-					<input name="ban-duration-days" type="number" value=0 min=0 />
+					<input name="dur-days" type="number" value=0 min=0/>
 				</div>
 			</div>
 			<div class="formrow">
-				<div class="formitem formlabel"><a>{{lang "profile_ban_user_weeks"}}</a></div>
+				<div class="formitem formlabel"><a>{{lang "profile.ban_user_weeks"}}</a></div>
 				<div class="formitem">
-					<input name="ban-duration-weeks" type="number" value=0 min=0 />
+					<input name="dur-weeks" type="number" value=0 min=0/>
 				</div>
 			</div>
 			<div class="formrow">
-				<div class="formitem formlabel"><a>{{lang "profile_ban_user_months"}}</a></div>
+				<div class="formitem formlabel"><a>{{lang "profile.ban_user_months"}}</a></div>
 				<div class="formitem">
-					<input name="ban-duration-months" type="number" value=0 min=0 />
+					<input name="dur-months" type="number" value=0 min=0/>
 				</div>
+			</div>
+			<div class="formrow">
+				<div class="formitem formlabel"><a>{{lang "profile.ban_delete_posts"}}</a></div>
+				<div class="formitem"><select name="delete-posts">
+					<option value=1>{{lang "option_yes"}}</option>
+					<option selected value=0>{{lang "option_no"}}</option>
+				</select></div>
 			</div>
 			{{/**<!--<div class="formrow">
-				<div class="formitem formlabel"><a>{{lang "profile_ban_user_reason"}}</a></div>
+				<div class="formitem formlabel"><a>{{lang "profile.ban_user_reason"}}</a></div>
 				<div class="formitem"><textarea name="ban-reason" placeholder="A really horrible person" required></textarea></div>
 			</div>-->**/}}
 			<div class="formrow">
-				<div class="formitem"><button name="ban-button" class="formbutton form_middle_button">{{lang "profile_ban_user_button"}}</button></div>
+				<div class="formitem"><button name="ban-button" class="formbutton form_middle_button">{{lang "profile.ban_user_button"}}</button></div>
+			</div>
+		</div>
+	</div>
+	</form>
+
+	<div id="delete_posts_head" class="colstack_item colstack_head hash_hide delete_posts_hash" style="display:none;">
+		<div class="rowitem"><h1><a>{{lang "profile.delete_posts_head"}}</a></h1></div>
+	</div>
+	<form id="delete_posts_form" class="hash_hide delete_posts_hash" action="/users/delete-posts/submit/{{.ProfileOwner.ID}}?s={{.CurrentUser.Session}}" method="post" style="display:none;">
+	<div class="the_form">
+		<div class="colline">{{langf "profile.delete_posts_notice" .ProfileOwner.Posts}}</div>
+		<div class="colstack_item">
+			<div class="formrow real_first_child">
+				<div class="formitem"><button name="delete-posts-button" class="formbutton form_middle_button">{{lang "profile.delete_posts_button"}}</button></div>
 			</div>
 		</div>
 	</div>
@@ -92,7 +119,7 @@
 	{{end}}
 
 	<div id="profile_comments_head" class="colstack_item colstack_head hash_hide">
-		<div class="rowitem"><h1><a>{{lang "profile_comments_head"}}</a></h1></div>
+		<div class="rowitem"><h1><a>{{lang "profile.comments_head"}}</a></h1></div>
 	</div>
 	<div id="profile_comments" class="colstack_item hash_hide">{{template "profile_comments_row.html" . }}</div>
 
@@ -102,17 +129,17 @@
 		<input name="uid" value='{{.ProfileOwner.ID}}' type="hidden" />
 		<div class="colstack_item topic_reply_form" style="border-top:none;">
 			<div class="formrow">
-				<div class="formitem"><textarea class="input_content" name="content" placeholder="{{lang "profile_comments_form_content"}}"></textarea></div>
+				<div class="formitem"><textarea class="input_content" name="content" placeholder="{{lang "profile.comments_form_content"}}"></textarea></div>
 			</div>
 			<div class="formrow quick_button_row">
-				<div class="formitem"><button name="reply-button" class="formbutton">{{lang "profile_comments_form_button"}}</button></div>
+				<div class="formitem"><button name="reply-button" class="formbutton">{{lang "profile.comments_form_button"}}</button></div>
 			</div>
 		</div>
 	</form>
 {{end}}
 {{else}}
 	<div class="colstack_item" style="border-top:none;">
-		<div class="rowitem passive">{{lang "profile_comments_form_guest"}}</div>
+		<div class="rowitem passive">{{lang "profile.comments_form_guest"}}</div>
 	</div>
 {{end}}
 </div>

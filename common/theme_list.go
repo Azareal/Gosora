@@ -43,10 +43,10 @@ func init() {
 	DbInits.Add(func(acc *qgen.Accumulator) error {
 		t := "themes"
 		themeStmts = ThemeStmts{
-			getAll:    acc.Select(t).Columns("uname, default").Prepare(),
+			getAll:    acc.Select(t).Columns("uname,default").Prepare(),
 			isDefault: acc.Select(t).Columns("default").Where("uname = ?").Prepare(),
 			update:    acc.Update(t).Set("default = ?").Where("uname = ?").Prepare(),
-			add:       acc.Insert(t).Columns("uname, default").Fields("?,?").Prepare(),
+			add:       acc.Insert(t).Columns("uname,default").Fields("?,?").Prepare(),
 		}
 		return acc.FirstError()
 	})
@@ -275,7 +275,7 @@ func ResetTemplateOverrides() {
 }
 
 // CreateThemeTemplate creates a theme template on the current default theme
-func CreateThemeTemplate(theme string, name string) {
+func CreateThemeTemplate(theme, name string) {
 	Themes[theme].TmplPtr[name] = func(pi Page, w http.ResponseWriter) error {
 		mapping, ok := Themes[DefaultThemeBox.Load().(string)].TemplatesMap[name]
 		if !ok {

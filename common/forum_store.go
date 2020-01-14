@@ -37,6 +37,7 @@ type ForumStore interface {
 	Delete(id int) error
 	AddTopic(tid int, uid int, fid int) error
 	RemoveTopic(fid int) error
+	RemoveTopics(fid, count int) error
 	UpdateLastTopic(tid int, uid int, fid int) error
 	Exists(id int) bool
 	GetAll() ([]*Forum, error)
@@ -45,7 +46,7 @@ type ForumStore interface {
 	GetAllVisibleIDs() ([]int, error)
 	//GetChildren(parentID int, parentType string) ([]*Forum,error)
 	//GetFirstChild(parentID int, parentType string) (*Forum,error)
-	Create(forumName string, forumDesc string, active bool, preset string) (int, error)
+	Create(name string, desc string, active bool, preset string) (int, error)
 	UpdateOrder(updateMap map[int]int) error
 
 	Count() int
@@ -53,7 +54,7 @@ type ForumStore interface {
 
 type ForumCache interface {
 	CacheGet(id int) (*Forum, error)
-	CacheSet(forum *Forum) error
+	CacheSet(f *Forum) error
 	CacheDelete(id int)
 	Length() int
 }
@@ -311,21 +312,18 @@ func (s *MemoryForumStore) AddTopic(tid int, uid int, fid int) error {
 	return s.Reload(fid)
 }
 
-// TODO: Make this update more atomic
-func (s *MemoryForumStore) RemoveTopic(fid int) error {
-	_, err := s.removeTopics.Exec(1, fid)
-	if err != nil {
-		return err
-	}
-
+func (s *MemoryForumStore) RefreshTopic(fid int) (err error) {
 	var tid int
 	err = s.lastTopic.QueryRow(fid).Scan(&tid)
 	if err == sql.ErrNoRows {
-		_, err = s.updateCache.Exec(0, 0, fid)
-		if err != nil {
-			return err
+		f, err := s.CacheGet(fid)
+		if err != nil || f.LastTopicID != 0 {
+			_, err = s.updateCache.Exec(0, 0, fid)
+			if err != nil {
+				return err
+			}
+			s.Reload(fid)
 		}
-		s.Reload(fid)
 		return nil
 	}
 	if err != nil {
@@ -343,6 +341,22 @@ func (s *MemoryForumStore) RemoveTopic(fid int) error {
 	// TODO: Bypass the database and update this with a lock or an unsafe atomic swap
 	s.Reload(fid)
 	return nil
+}
+
+// TODO: Make this update more atomic
+func (s *MemoryForumStore) RemoveTopic(fid int) error {
+	_, err := s.removeTopics.Exec(1, fid)
+	if err != nil {
+		return err
+	}
+	return s.RefreshTopic(fid)
+}
+func (s *MemoryForumStore) RemoveTopics(fid int, count int) error {
+	_, err := s.removeTopics.Exec(count, fid)
+	if err != nil {
+		return err
+	}
+	return s.RefreshTopic(fid)
 }
 
 // DEPRECATED. forum.Update() will be the way to do this in the future, once it's completed

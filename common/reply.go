@@ -67,13 +67,14 @@ type ReplyStmts struct {
 
 func init() {
 	DbInits.Add(func(acc *qgen.Accumulator) error {
+		re := "replies"
 		replyStmts = ReplyStmts{
-			isLiked:                acc.Select("likes").Columns("targetItem").Where("sentBy = ? and targetItem = ? and targetType='replies'").Prepare(),
+			isLiked:                acc.Select("likes").Columns("targetItem").Where("sentBy=? and targetItem=? and targetType='replies'").Prepare(),
 			createLike:             acc.Insert("likes").Columns("weight, targetItem, targetType, sentBy").Fields("?,?,?,?").Prepare(),
-			edit:                   acc.Update("replies").Set("content = ?, parsed_content = ?").Where("rid = ? AND poll = 0").Prepare(),
-			setPoll:                acc.Update("replies").Set("poll = ?").Where("rid = ? AND poll = 0").Prepare(),
-			delete:                 acc.Delete("replies").Where("rid = ?").Prepare(),
-			addLikesToReply:        acc.Update("replies").Set("likeCount = likeCount + ?").Where("rid = ?").Prepare(),
+			edit:                   acc.Update(re).Set("content = ?, parsed_content = ?").Where("rid = ? AND poll = 0").Prepare(),
+			setPoll:                acc.Update(re).Set("poll = ?").Where("rid = ? AND poll = 0").Prepare(),
+			delete:                 acc.Delete(re).Where("rid = ?").Prepare(),
+			addLikesToReply:        acc.Update(re).Set("likeCount = likeCount + ?").Where("rid = ?").Prepare(),
 			removeRepliesFromTopic: acc.Update("topics").Set("postCount = postCount - ?").Where("tid = ?").Prepare(),
 		}
 		return acc.FirstError()
@@ -105,6 +106,8 @@ func (r *Reply) Like(uid int) (err error) {
 	return err
 }
 
+// TODO: Refresh topic list?
+// TODO: Remove alerts.
 func (r *Reply) Delete() error {
 	_, err := replyStmts.delete.Exec(r.ID)
 	if err != nil {
@@ -112,9 +115,9 @@ func (r *Reply) Delete() error {
 	}
 	// TODO: Move this bit to *Topic
 	_, err = replyStmts.removeRepliesFromTopic.Exec(1, r.ParentID)
-	tcache := Topics.GetCache()
-	if tcache != nil {
-		tcache.Remove(r.ParentID)
+	tc := Topics.GetCache()
+	if tc != nil {
+		tc.Remove(r.ParentID)
 	}
 	_ = Rstore.GetCache().Remove(r.ID)
 	return err

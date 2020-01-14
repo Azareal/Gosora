@@ -123,16 +123,20 @@ type UserStmts struct {
 	delete      *sql.Stmt
 	setAvatar   *sql.Stmt
 	setName     *sql.Stmt
-	incTopics   *sql.Stmt
-	updateLevel *sql.Stmt
 	update      *sql.Stmt
 
 	// TODO: Split these into a sub-struct
-	incScore     *sql.Stmt
-	incPosts     *sql.Stmt
-	incBigposts  *sql.Stmt
-	incMegaposts *sql.Stmt
-	incLiked     *sql.Stmt
+	incScore         *sql.Stmt
+	incPosts         *sql.Stmt
+	incBigposts      *sql.Stmt
+	incMegaposts     *sql.Stmt
+	incPostStats     *sql.Stmt
+	incBigpostStats  *sql.Stmt
+	incMegapostStats *sql.Stmt
+	incLiked         *sql.Stmt
+	incTopics        *sql.Stmt
+	updateLevel      *sql.Stmt
+	resetStats       *sql.Stmt
 
 	decLiked      *sql.Stmt
 	updateLastIP  *sql.Stmt
@@ -141,6 +145,10 @@ type UserStmts struct {
 	setPassword *sql.Stmt
 
 	scheduleAvatarResize *sql.Stmt
+
+	deletePosts *sql.Stmt
+	deleteProfilePosts *sql.Stmt
+	deleteReplyPosts *sql.Stmt
 }
 
 var userStmts UserStmts
@@ -155,16 +163,21 @@ func init() {
 			delete:      acc.Delete(u).Where(w).Prepare(),
 			setAvatar:   acc.Update(u).Set("avatar=?").Where(w).Prepare(),
 			setName:     acc.Update(u).Set("name=?").Where(w).Prepare(),
-			incTopics:   acc.SimpleUpdate(u, "topics=topics+?", w),
-			updateLevel: acc.SimpleUpdate(u, "level=?", w),
 			update:      acc.Update(u).Set("name=?,email=?,group=?").Where(w).Prepare(), // TODO: Implement user_count for users_groups on things which use this
 
-			incScore:     acc.Update(u).Set("score=score+?").Where(w).Prepare(),
-			incPosts:     acc.Update(u).Set("posts=posts+?").Where(w).Prepare(),
-			incBigposts:  acc.Update(u).Set("posts=posts+?,bigposts=bigposts+?").Where(w).Prepare(),
-			incMegaposts: acc.Update(u).Set("posts=posts+?,bigposts=bigposts+?,megaposts=megaposts+?").Where(w).Prepare(),
-			incLiked:     acc.Update(u).Set("liked=liked+?,lastLiked=UTC_TIMESTAMP()").Where(w).Prepare(),
-			decLiked:     acc.Update(u).Set("liked=liked-?").Where(w).Prepare(),
+			incScore:         acc.Update(u).Set("score=score+?").Where(w).Prepare(),
+			incPosts:         acc.Update(u).Set("posts=posts+?").Where(w).Prepare(),
+			incBigposts:      acc.Update(u).Set("posts=posts+?,bigposts=bigposts+?").Where(w).Prepare(),
+			incMegaposts:     acc.Update(u).Set("posts=posts+?,bigposts=bigposts+?,megaposts=megaposts+?").Where(w).Prepare(),
+			incPostStats:     acc.Update(u).Set("posts=posts+?,score=score+?,level=?").Where(w).Prepare(),
+			incBigpostStats:  acc.Update(u).Set("posts=posts+?,bigposts=bigposts+?,score=score+?,level=?").Where(w).Prepare(),
+			incMegapostStats: acc.Update(u).Set("posts=posts+?,bigposts=bigposts+?,megaposts=megaposts+?,score=score+?,level=?").Where(w).Prepare(),
+			incTopics:        acc.SimpleUpdate(u, "topics=topics+?", w),
+			updateLevel:      acc.SimpleUpdate(u, "level=?", w),
+			resetStats:       acc.Update(u).Set("score=0,posts=0,bigposts=0,megaposts=0,topics=0,level=0").Where(w).Prepare(),
+
+			incLiked: acc.Update(u).Set("liked=liked+?,lastLiked=UTC_TIMESTAMP()").Where(w).Prepare(),
+			decLiked: acc.Update(u).Set("liked=liked-?").Where(w).Prepare(),
 			//recalcLastLiked: acc...
 			updateLastIP:  acc.SimpleUpdate(u, "last_ip=?", w),
 			updatePrivacy: acc.Update(u).Set("enable_embeds=?").Where(w).Prepare(),
@@ -172,6 +185,10 @@ func init() {
 			setPassword: acc.Update(u).Set("password=?,salt=?").Where(w).Prepare(),
 
 			scheduleAvatarResize: acc.Insert("users_avatar_queue").Columns("uid").Fields("?").Prepare(),
+
+			deletePosts: acc.Select("topics").Columns("tid,parentID").Where("createdBy=?").Prepare(),
+			deleteProfilePosts: acc.Select("users_replies").Columns("rid").Where("createdBy=?").Prepare(),
+			deleteReplyPosts: acc.Select("replies").Columns("rid,tid").Where("createdBy=?").Prepare(),
 		}
 		return acc.FirstError()
 	})
@@ -302,6 +319,107 @@ func (u *User) Delete() error {
 	return nil
 }
 
+func (u *User) DeletePosts() error {
+	rows, err := userStmts.deletePosts.Query(u.ID)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	defer TopicListThaw.Thaw()
+	defer u.CacheRemove()
+
+	updatedForums := make(map[int]int) // forum[count]
+	tc := Topics.GetCache()
+	for rows.Next() {
+		var tid, parentID int
+		err := rows.Scan(&tid, &parentID)
+		if err != nil {
+			return err
+		}
+		// TODO: Clear reply cache too
+		_, err = topicStmts.delete.Exec(tid)
+		if tc != nil {
+			tc.Remove(tid)
+		}
+		if err != nil {
+			return err
+		}
+		updatedForums[parentID] = updatedForums[parentID] + 1
+
+		_, err = topicStmts.deleteActivitySubs.Exec(tid)
+		if err != nil {
+			return err
+		}
+		_, err = topicStmts.deleteActivity.Exec(tid)
+		if err != nil {
+			return err
+		}
+	}
+	if err = rows.Err(); err != nil {
+		return err
+	}
+	err = u.ResetPostStats()
+	if err != nil {
+		return err
+	}
+	for fid, count := range updatedForums {
+		err := Forums.RemoveTopics(fid, count)
+		if err != nil && err != ErrNoRows {
+			return err
+		}
+	}
+
+	rows, err = userStmts.deleteProfilePosts.Query(u.ID)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var rid int
+		err := rows.Scan(&rid)
+		if err != nil {
+			return err
+		}
+		_, err = profileReplyStmts.delete.Exec(rid)
+		if err != nil {
+			return err
+		}
+		// TODO: Remove alerts.
+	}
+	err = rows.Err()
+	if err != nil {
+		return err
+	}
+
+	rows, err = userStmts.deleteReplyPosts.Query(u.ID)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	rc := Rstore.GetCache()
+	for rows.Next() {
+		var rid, tid int
+		err := rows.Scan(&rid,&tid)
+		if err != nil {
+			return err
+		}
+		_, err = replyStmts.delete.Exec(rid)
+		if err != nil {
+			return err
+		}
+		// TODO: Move this bit to *Topic
+		_, err = replyStmts.removeRepliesFromTopic.Exec(1, tid)
+		if tc != nil {
+			tc.Remove(tid)
+		}
+		_ = rc.Remove(rid)
+		// TODO: Remove alerts.
+	}
+	return rows.Err()
+}
+
 func (u *User) bindStmt(stmt *sql.Stmt, params ...interface{}) (err error) {
 	params = append(params, u.ID)
 	_, err = stmt.Exec(params...)
@@ -339,7 +457,7 @@ func (u *User) ChangeGroup(group int) (err error) {
 }
 
 func (u *User) GetIP() string {
-	spl := strings.Split(u.LastIP,"-")
+	spl := strings.Split(u.LastIP, "-")
 	return spl[len(spl)-1]
 }
 
@@ -365,7 +483,6 @@ func (u *User) Update(name, email string, group int) (err error) {
 }
 
 func (u *User) IncreasePostStats(wcount int, topic bool) (err error) {
-	var mod int
 	baseScore := 1
 	if topic {
 		_, err = userStmts.incTopics.Exec(1, u.ID)
@@ -376,28 +493,19 @@ func (u *User) IncreasePostStats(wcount int, topic bool) (err error) {
 	}
 
 	settings := SettingBox.Load().(SettingMap)
+	var mod, level int
 	if wcount >= settings["megapost_min_words"].(int) {
-		_, err = userStmts.incMegaposts.Exec(1, 1, 1, u.ID)
 		mod = 4
+		level = GetLevel(u.Score + baseScore + mod)
+		_, err = userStmts.incMegapostStats.Exec(1, 1, 1, baseScore+mod, level, u.ID)
 	} else if wcount >= settings["bigpost_min_words"].(int) {
-		_, err = userStmts.incBigposts.Exec(1, 1, u.ID)
 		mod = 1
+		level = GetLevel(u.Score + baseScore + mod)
+		_, err = userStmts.incBigpostStats.Exec(1, 1, baseScore+mod, level, u.ID)
 	} else {
-		_, err = userStmts.incPosts.Exec(1, u.ID)
+		level = GetLevel(u.Score + baseScore + mod)
+		_, err = userStmts.incPostStats.Exec(1, baseScore+mod, level, u.ID)
 	}
-	if err != nil {
-		return err
-	}
-
-	_, err = userStmts.incScore.Exec(baseScore+mod, u.ID)
-	if err != nil {
-		return err
-	}
-	//log.Print(u.Score + baseScore + mod)
-	// TODO: Use a transaction to prevent level desyncs?
-	level := GetLevel(u.Score + baseScore + mod)
-	//log.Print(level)
-	_, err = userStmts.updateLevel.Exec(level, u.ID)
 	if err != nil {
 		return err
 	}
@@ -407,7 +515,6 @@ func (u *User) IncreasePostStats(wcount int, topic bool) (err error) {
 }
 
 func (u *User) DecreasePostStats(wcount int, topic bool) (err error) {
-	var mod int
 	baseScore := -1
 	if topic {
 		_, err = userStmts.incTopics.Exec(-1, u.ID)
@@ -417,26 +524,24 @@ func (u *User) DecreasePostStats(wcount int, topic bool) (err error) {
 		baseScore = -2
 	}
 
+	// TODO: Use a transaction to prevent level desyncs?
+	var mod int
 	settings := SettingBox.Load().(SettingMap)
 	if wcount >= settings["megapost_min_words"].(int) {
-		_, err = userStmts.incMegaposts.Exec(-1, -1, -1, u.ID)
 		mod = 4
+		_, err = userStmts.incMegapostStats.Exec(-1, -1, -1, baseScore-mod, GetLevel(u.Score-baseScore-mod), u.ID)
 	} else if wcount >= settings["bigpost_min_words"].(int) {
-		_, err = userStmts.incBigposts.Exec(-1, -1, u.ID)
 		mod = 1
+		_, err = userStmts.incBigpostStats.Exec(-1, -1, baseScore-mod, GetLevel(u.Score-baseScore-mod), u.ID)
 	} else {
-		_, err = userStmts.incPosts.Exec(-1, u.ID)
+		_, err = userStmts.incPostStats.Exec(-1, baseScore-mod, GetLevel(u.Score-baseScore-mod), u.ID)
 	}
-	if err != nil {
-		return err
-	}
+	u.CacheRemove()
+	return err
+}
 
-	_, err = userStmts.incScore.Exec(baseScore-mod, u.ID)
-	if err != nil {
-		return err
-	}
-	// TODO: Use a transaction to prevent level desyncs?
-	_, err = userStmts.updateLevel.Exec(GetLevel(u.Score-baseScore-mod), u.ID)
+func (u *User) ResetPostStats() (err error) {
+	_, err = userStmts.resetStats.Exec(u.ID)
 	u.CacheRemove()
 	return err
 }

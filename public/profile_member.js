@@ -4,6 +4,9 @@ function handle_profile_hashbit() {
 		case "ban_user":
 			hash_class = "ban_user_hash";
 			break;
+		case "delete_posts":
+			hash_class = "delete_posts_hash";
+			break;
 		default:
 			console.log("Unknown hashbit");
 			return;
