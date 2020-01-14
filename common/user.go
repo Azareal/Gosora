@@ -411,10 +411,21 @@ func (u *User) DeletePosts() error {
 		}
 		// TODO: Move this bit to *Topic
 		_, err = replyStmts.removeRepliesFromTopic.Exec(1, tid)
+		if err != nil {
+			return err
+		}
+		_, err = replyStmts.updateTopicReplies.Exec(tid)
+		if err != nil {
+			return err
+		}
+		_, err = replyStmts.updateTopicReplies2.Exec(tid)
 		if tc != nil {
 			tc.Remove(tid)
 		}
 		_ = rc.Remove(rid)
+		if err != nil {
+			return err
+		}
 		// TODO: Remove alerts.
 	}
 	return rows.Err()
