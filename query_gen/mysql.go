@@ -52,7 +52,7 @@ func (a *MysqlAdapter) BuildConn(config map[string]string) (*sql.DB, error) {
 
 	// First try opening a pipe as those are faster
 	if runtime.GOOS == "linux" {
-		var dbsocket = "/tmp/mysql.sock"
+		dbsocket := "/tmp/mysql.sock"
 		if config["socket"] != "" {
 			dbsocket = config["socket"]
 		}

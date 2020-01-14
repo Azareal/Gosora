@@ -63,6 +63,9 @@ type ReplyStmts struct {
 	delete                 *sql.Stmt
 	addLikesToReply        *sql.Stmt
 	removeRepliesFromTopic *sql.Stmt
+
+	updateTopicReplies  *sql.Stmt
+	updateTopicReplies2 *sql.Stmt
 }
 
 func init() {
@@ -71,11 +74,15 @@ func init() {
 		replyStmts = ReplyStmts{
 			isLiked:                acc.Select("likes").Columns("targetItem").Where("sentBy=? and targetItem=? and targetType='replies'").Prepare(),
 			createLike:             acc.Insert("likes").Columns("weight, targetItem, targetType, sentBy").Fields("?,?,?,?").Prepare(),
-			edit:                   acc.Update(re).Set("content = ?, parsed_content = ?").Where("rid = ? AND poll = 0").Prepare(),
-			setPoll:                acc.Update(re).Set("poll = ?").Where("rid = ? AND poll = 0").Prepare(),
-			delete:                 acc.Delete(re).Where("rid = ?").Prepare(),
-			addLikesToReply:        acc.Update(re).Set("likeCount = likeCount + ?").Where("rid = ?").Prepare(),
-			removeRepliesFromTopic: acc.Update("topics").Set("postCount = postCount - ?").Where("tid = ?").Prepare(),
+			edit:                   acc.Update(re).Set("content=?,parsed_content=?").Where("rid=? AND poll=0").Prepare(),
+			setPoll:                acc.Update(re).Set("poll=?").Where("rid=? AND poll=0").Prepare(),
+			delete:                 acc.Delete(re).Where("rid=?").Prepare(),
+			addLikesToReply:        acc.Update(re).Set("likeCount=likeCount+?").Where("rid=?").Prepare(),
+			removeRepliesFromTopic: acc.Update("topics").Set("postCount=postCount-?").Where("tid=?").Prepare(),
+
+			// TODO: Optimise this to avoid firing an update if it's not the last reply in a topic. We will need to set lastReplyID properly in other places and in the patcher first so we can use it here.
+			updateTopicReplies:  acc.RawPrepare("UPDATE topics t INNER JOIN replies r ON t.tid = r.tid SET t.lastReplyBy = r.createdBy, t.lastReplyAt = r.createdAt, t.lastReplyID = r.rid WHERE t.tid = ?"),
+			updateTopicReplies2: acc.Update("topics").Set("lastReplyAt=createdAt,lastReplyBy=createdBy,lastReplyID=0").Where("postCount=1 AND tid=?").Prepare(),
 		}
 		return acc.FirstError()
 	})
@@ -115,6 +122,14 @@ func (r *Reply) Delete() error {
 	}
 	// TODO: Move this bit to *Topic
 	_, err = replyStmts.removeRepliesFromTopic.Exec(1, r.ParentID)
+	if err != nil {
+		return err
+	}
+	_, err = replyStmts.updateTopicReplies.Exec(r.ParentID)
+	if err != nil {
+		return err
+	}
+	_, err = replyStmts.updateTopicReplies2.Exec(r.ParentID)
 	tc := Topics.GetCache()
 	if tc != nil {
 		tc.Remove(r.ParentID)
