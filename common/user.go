@@ -146,9 +146,9 @@ type UserStmts struct {
 
 	scheduleAvatarResize *sql.Stmt
 
-	deletePosts *sql.Stmt
+	deletePosts        *sql.Stmt
 	deleteProfilePosts *sql.Stmt
-	deleteReplyPosts *sql.Stmt
+	deleteReplyPosts   *sql.Stmt
 }
 
 var userStmts UserStmts
@@ -186,9 +186,9 @@ func init() {
 
 			scheduleAvatarResize: acc.Insert("users_avatar_queue").Columns("uid").Fields("?").Prepare(),
 
-			deletePosts: acc.Select("topics").Columns("tid,parentID").Where("createdBy=?").Prepare(),
+			deletePosts:        acc.Select("topics").Columns("tid,parentID").Where("createdBy=?").Prepare(),
 			deleteProfilePosts: acc.Select("users_replies").Columns("rid").Where("createdBy=?").Prepare(),
-			deleteReplyPosts: acc.Select("replies").Columns("rid,tid").Where("createdBy=?").Prepare(),
+			deleteReplyPosts:   acc.Select("replies").Columns("rid,tid").Where("createdBy=?").Prepare(),
 		}
 		return acc.FirstError()
 	})
@@ -346,6 +346,10 @@ func (u *User) DeletePosts() error {
 		}
 		updatedForums[parentID] = updatedForums[parentID] + 1
 
+		_, err = topicStmts.deleteLikesForTopic.Exec(tid)
+		if err != nil {
+			return err
+		}
 		_, err = topicStmts.deleteActivitySubs.Exec(tid)
 		if err != nil {
 			return err
@@ -401,7 +405,7 @@ func (u *User) DeletePosts() error {
 	rc := Rstore.GetCache()
 	for rows.Next() {
 		var rid, tid int
-		err := rows.Scan(&rid,&tid)
+		err := rows.Scan(&rid, &tid)
 		if err != nil {
 			return err
 		}
@@ -426,7 +430,20 @@ func (u *User) DeletePosts() error {
 		if err != nil {
 			return err
 		}
-		// TODO: Remove alerts.
+
+		_, err = replyStmts.deleteLikesForReply.Exec(rid)
+		if err != nil {
+			return err
+		}
+		_, err = replyStmts.deleteActivitySubs.Exec(rid)
+		if err != nil {
+			return err
+		}
+		_, err = replyStmts.deleteActivity.Exec(rid)
+		if err != nil {
+			return err
+		}
+		// TODO: Restructure alerts so we can delete the "x replied to topic" ones too.
 	}
 	return rows.Err()
 }

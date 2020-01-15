@@ -63,6 +63,9 @@ type ReplyStmts struct {
 	delete                 *sql.Stmt
 	addLikesToReply        *sql.Stmt
 	removeRepliesFromTopic *sql.Stmt
+	deleteLikesForReply    *sql.Stmt
+	deleteActivity         *sql.Stmt
+	deleteActivitySubs     *sql.Stmt
 
 	updateTopicReplies  *sql.Stmt
 	updateTopicReplies2 *sql.Stmt
@@ -79,6 +82,9 @@ func init() {
 			delete:                 acc.Delete(re).Where("rid=?").Prepare(),
 			addLikesToReply:        acc.Update(re).Set("likeCount=likeCount+?").Where("rid=?").Prepare(),
 			removeRepliesFromTopic: acc.Update("topics").Set("postCount=postCount-?").Where("tid=?").Prepare(),
+			deleteLikesForReply:    acc.Delete("likes").Where("targetItem=? AND targetType='replies'").Prepare(),
+			deleteActivity:         acc.Delete("activity_stream").Where("elementID=? AND elementType='post'").Prepare(),
+			deleteActivitySubs:     acc.Delete("activity_subscriptions").Where("targetID=? AND targetType='post'").Prepare(),
 
 			// TODO: Optimise this to avoid firing an update if it's not the last reply in a topic. We will need to set lastReplyID properly in other places and in the patcher first so we can use it here.
 			updateTopicReplies:  acc.RawPrepare("UPDATE topics t INNER JOIN replies r ON t.tid = r.tid SET t.lastReplyBy = r.createdBy, t.lastReplyAt = r.createdAt, t.lastReplyID = r.rid WHERE t.tid = ?"),
@@ -114,9 +120,20 @@ func (r *Reply) Like(uid int) (err error) {
 }
 
 // TODO: Refresh topic list?
-// TODO: Remove alerts.
+// TODO: Restructure alerts so we can delete the "x replied to topic" ones too.
 func (r *Reply) Delete() error {
-	_, err := replyStmts.delete.Exec(r.ID)
+	creator, err := Users.Get(r.CreatedBy)
+	if err == nil {
+		wcount := WordCount(r.Content)
+		err = creator.DecreasePostStats(wcount, false)
+		if err != nil {
+			return err
+		}
+	} else if err != ErrNoRows {
+		return err
+	}
+
+	_, err = replyStmts.delete.Exec(r.ID)
 	if err != nil {
 		return err
 	}
@@ -135,6 +152,18 @@ func (r *Reply) Delete() error {
 		tc.Remove(r.ParentID)
 	}
 	_ = Rstore.GetCache().Remove(r.ID)
+	if err != nil {
+		return err
+	}
+	_, err = replyStmts.deleteLikesForReply.Exec(r.ID)
+	if err != nil {
+		return err
+	}
+	_, err = replyStmts.deleteActivitySubs.Exec(r.ID)
+	if err != nil {
+		return err
+	}
+	_, err = replyStmts.deleteActivity.Exec(r.ID)
 	return err
 }
 

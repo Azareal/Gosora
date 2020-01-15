@@ -197,6 +197,7 @@ type TopicStmts struct {
 	createLike         *sql.Stmt
 	addLikesToTopic    *sql.Stmt
 	delete             *sql.Stmt
+	deleteLikesForTopic *sql.Stmt
 	deleteActivity     *sql.Stmt
 	deleteActivitySubs *sql.Stmt
 	edit               *sql.Stmt
@@ -226,6 +227,7 @@ func init() {
 			createLike:         acc.Insert("likes").Columns("weight, targetItem, targetType, sentBy, createdAt").Fields("?,?,?,?,UTC_TIMESTAMP()").Prepare(),
 			addLikesToTopic:    acc.Update(t).Set("likeCount=likeCount+?").Where("tid = ?").Prepare(),
 			delete:             acc.Delete(t).Where("tid = ?").Prepare(),
+			deleteLikesForTopic:    acc.Delete("likes").Where("targetItem=? AND targetType='topics'").Prepare(),
 			deleteActivity:     acc.Delete("activity_stream").Where("elementID=? AND elementType='topic'").Prepare(),
 			deleteActivitySubs: acc.Delete("activity_subscriptions").Where("targetID=? AND targetType='topic'").Prepare(),
 			edit:               acc.Update(t).Set("title=?,content=?,parsed_content=?").Where("tid=?").Prepare(), // TODO: Only run the content update bits on non-polls, does this matter?
@@ -328,10 +330,10 @@ func (t *Topic) Unlike(uid int) error {
 
 // TODO: Use a transaction here
 func (t *Topic) Delete() error {
-	topicCreator, err := Users.Get(t.CreatedBy)
+	creator, err := Users.Get(t.CreatedBy)
 	if err == nil {
 		wcount := WordCount(t.Content)
-		err = topicCreator.DecreasePostStats(wcount, true)
+		err = creator.DecreasePostStats(wcount, true)
 		if err != nil {
 			return err
 		}
@@ -347,6 +349,10 @@ func (t *Topic) Delete() error {
 	}
 	err = Forums.RemoveTopic(t.ParentID)
 	if err != nil && err != ErrNoRows {
+		return err
+	}
+	_, err = topicStmts.deleteLikesForTopic.Exec(t.ID)
+	if err != nil {
 		return err
 	}
 	_, err = topicStmts.deleteActivitySubs.Exec(t.ID)
