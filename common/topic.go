@@ -328,12 +328,33 @@ func (t *Topic) Unlike(uid int) error {
 	return nil
 }
 
+func handleLikedTopicReplies(tid int) error {
+	rows, err := userStmts.getLikedRepliesOfTopic.Query(tid)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var rid int
+		err := rows.Scan(&rid)
+		if err != nil {
+			return err
+		}
+		_, err = replyStmts.deleteLikesForReply.Exec(rid)
+		if err != nil {
+			return err
+		}
+	}
+
+	return rows.Err()
+}
+
 // TODO: Use a transaction here
 func (t *Topic) Delete() error {
 	creator, err := Users.Get(t.CreatedBy)
 	if err == nil {
-		wcount := WordCount(t.Content)
-		err = creator.DecreasePostStats(wcount, true)
+		err = creator.DecreasePostStats(WordCount(t.Content), true)
 		if err != nil {
 			return err
 		}
@@ -352,6 +373,10 @@ func (t *Topic) Delete() error {
 		return err
 	}
 	_, err = topicStmts.deleteLikesForTopic.Exec(t.ID)
+	if err != nil {
+		return err
+	}
+	err = handleLikedTopicReplies(t.ID)
 	if err != nil {
 		return err
 	}

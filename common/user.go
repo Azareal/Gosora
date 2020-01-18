@@ -330,28 +330,6 @@ func (u *User) DeletePosts() error {
 	defer TopicListThaw.Thaw()
 	defer u.CacheRemove()
 
-	handleLikedTopicReplies := func(tid int) error {
-		rows, err := userStmts.getLikedRepliesOfTopic.Query(tid)
-		if err != nil {
-			return err
-		}
-		defer rows.Close()
-
-		for rows.Next() {
-			var rid int
-			err := rows.Scan(&rid)
-			if err != nil {
-				return err
-			}
-			_, err = replyStmts.deleteLikesForReply.Exec(rid)
-			if err != nil {
-				return err
-			}
-		}
-
-		return rows.Err()
-	}
-
 	updatedForums := make(map[int]int) // forum[count]
 	tc := Topics.GetCache()
 	for rows.Next() {
