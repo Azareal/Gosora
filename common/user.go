@@ -146,9 +146,10 @@ type UserStmts struct {
 
 	scheduleAvatarResize *sql.Stmt
 
-	deletePosts        *sql.Stmt
-	deleteProfilePosts *sql.Stmt
-	deleteReplyPosts   *sql.Stmt
+	deletePosts            *sql.Stmt
+	deleteProfilePosts     *sql.Stmt
+	deleteReplyPosts       *sql.Stmt
+	getLikedRepliesOfTopic *sql.Stmt
 }
 
 var userStmts UserStmts
@@ -186,9 +187,10 @@ func init() {
 
 			scheduleAvatarResize: acc.Insert("users_avatar_queue").Columns("uid").Fields("?").Prepare(),
 
-			deletePosts:        acc.Select("topics").Columns("tid,parentID").Where("createdBy=?").Prepare(),
-			deleteProfilePosts: acc.Select("users_replies").Columns("rid").Where("createdBy=?").Prepare(),
-			deleteReplyPosts:   acc.Select("replies").Columns("rid,tid").Where("createdBy=?").Prepare(),
+			deletePosts:            acc.Select("topics").Columns("tid,parentID").Where("createdBy=?").Prepare(),
+			deleteProfilePosts:     acc.Select("users_replies").Columns("rid").Where("createdBy=?").Prepare(),
+			deleteReplyPosts:       acc.Select("replies").Columns("rid,tid").Where("createdBy=?").Prepare(),
+			getLikedRepliesOfTopic: acc.Select("replies").Columns("rid").Where("tid=? AND likeCount>0").Prepare(),
 		}
 		return acc.FirstError()
 	})
@@ -328,6 +330,28 @@ func (u *User) DeletePosts() error {
 	defer TopicListThaw.Thaw()
 	defer u.CacheRemove()
 
+	handleLikedTopicReplies := func(tid int) error {
+		rows, err := userStmts.getLikedRepliesOfTopic.Query(tid)
+		if err != nil {
+			return err
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var rid int
+			err := rows.Scan(&rid)
+			if err != nil {
+				return err
+			}
+			_, err = replyStmts.deleteLikesForReply.Exec(rid)
+			if err != nil {
+				return err
+			}
+		}
+
+		return rows.Err()
+	}
+
 	updatedForums := make(map[int]int) // forum[count]
 	tc := Topics.GetCache()
 	for rows.Next() {
@@ -347,6 +371,10 @@ func (u *User) DeletePosts() error {
 		updatedForums[parentID] = updatedForums[parentID] + 1
 
 		_, err = topicStmts.deleteLikesForTopic.Exec(tid)
+		if err != nil {
+			return err
+		}
+		err = handleLikedTopicReplies(tid)
 		if err != nil {
 			return err
 		}
@@ -391,8 +419,7 @@ func (u *User) DeletePosts() error {
 		}
 		// TODO: Remove alerts.
 	}
-	err = rows.Err()
-	if err != nil {
+	if err = rows.Err(); err != nil {
 		return err
 	}
 

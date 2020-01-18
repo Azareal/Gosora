@@ -327,9 +327,9 @@ func ReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user c.User, srid
 	}
 
 	// ? - What happens if an error fires after a redirect...?
-	/*replyCreator, err := c.Users.Get(reply.CreatedBy)
+	/*creator, err := c.Users.Get(reply.CreatedBy)
 	if err == nil {
-		err = replyCreator.DecreasePostStats(c.WordCount(reply.Content), false)
+		err = creator.DecreasePostStats(c.WordCount(reply.Content), false)
 		if err != nil {
 			return c.InternalErrorJSQ(err, w, r, js)
 		}

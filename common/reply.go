@@ -124,8 +124,7 @@ func (r *Reply) Like(uid int) (err error) {
 func (r *Reply) Delete() error {
 	creator, err := Users.Get(r.CreatedBy)
 	if err == nil {
-		wcount := WordCount(r.Content)
-		err = creator.DecreasePostStats(wcount, false)
+		err = creator.DecreasePostStats(WordCount(r.Content), false)
 		if err != nil {
 			return err
 		}
