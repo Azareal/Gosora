@@ -239,11 +239,6 @@ li a {
 	border-radius: 3px;
 	background-color: #444444;
 	padding: 16px;
-	/*padding: 18px;*/
-}
-.filter_item {
-	margin-bottom: 5px;
-	padding: 4px;
 }
 .filter_item a {
 	color: #BBBBBB;
@@ -277,10 +272,13 @@ h1, h2, h3, h4, h5 {
 }
 .filter_item {
 	margin-left: 0px !important;
+	border-radius: 0px !important;
+}
+.filter_item:hover {
+	background-color: #505050 !important;
 }
 .filter_selected {
 	background-color: #555555 !important;
-    border-radius: 0px !important;
 }
 /* new end */
 
@@ -973,7 +971,6 @@ input[type=checkbox] + label {
 	height: 18px;
 	margin-bottom: -2px;
 	margin-right: 8px;
-	/*border: 1px solid rgb(120,120,120);*/
 	background-color: rgb(90,90,90);
 	padding-top: 1px;
 	border-radius: 2px;
