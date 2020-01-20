@@ -187,7 +187,7 @@ func init() {
 
 			scheduleAvatarResize: acc.Insert("users_avatar_queue").Columns("uid").Fields("?").Prepare(),
 
-			deletePosts:            acc.Select("topics").Columns("tid,parentID").Where("createdBy=?").Prepare(),
+			deletePosts:            acc.Select("topics").Columns("tid,parentID,poll").Where("createdBy=?").Prepare(),
 			deleteProfilePosts:     acc.Select("users_replies").Columns("rid").Where("createdBy=?").Prepare(),
 			deleteReplyPosts:       acc.Select("replies").Columns("rid,tid").Where("createdBy=?").Prepare(),
 			getLikedRepliesOfTopic: acc.Select("replies").Columns("rid").Where("tid=? AND likeCount>0").Prepare(),
@@ -333,8 +333,8 @@ func (u *User) DeletePosts() error {
 	updatedForums := make(map[int]int) // forum[count]
 	tc := Topics.GetCache()
 	for rows.Next() {
-		var tid, parentID int
-		err := rows.Scan(&tid, &parentID)
+		var tid, parentID, poll int
+		err := rows.Scan(&tid, &parentID, &poll)
 		if err != nil {
 			return err
 		}
@@ -363,6 +363,12 @@ func (u *User) DeletePosts() error {
 		_, err = topicStmts.deleteActivity.Exec(tid)
 		if err != nil {
 			return err
+		}
+		if poll > 0 {
+			err = (&Poll{ID:poll}).Delete()
+			if err != nil {
+				return err
+			}
 		}
 	}
 	if err = rows.Err(); err != nil {

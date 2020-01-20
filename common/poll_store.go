@@ -12,28 +12,6 @@ import (
 
 var Polls PollStore
 
-type Poll struct {
-	ID          int
-	ParentID    int
-	ParentTable string
-	Type        int // 0: Single choice, 1: Multiple choice, 2: Multiple choice w/ points
-	//AntiCheat bool // Apply various mitigations for cheating
-	// GroupPower map[gid]points // The number of points a group can spend in this poll, defaults to 1
-
-	Options      map[int]string
-	Results      map[int]int  // map[optionIndex]points
-	QuickOptions []PollOption // TODO: Fix up the template transpiler so we don't need to use this hack anymore
-	VoteCount    int
-}
-
-func (p *Poll) CastVote(optionIndex int, uid int, ip string) error {
-	return Polls.CastVote(optionIndex, p.ID, uid, ip) // TODO: Move the query into a pollStmts rather than having it in the store
-}
-
-func (p *Poll) Copy() Poll {
-	return *p
-}
-
 type PollOption struct {
 	ID    int
 	Value string

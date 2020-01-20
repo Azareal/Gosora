@@ -226,12 +226,12 @@ func init() {
 			hasLikedTopic:      acc.Select("likes").Columns("targetItem").Where("sentBy=? and targetItem=? and targetType='topics'").Prepare(),
 			createLike:         acc.Insert("likes").Columns("weight, targetItem, targetType, sentBy, createdAt").Fields("?,?,?,?,UTC_TIMESTAMP()").Prepare(),
 			addLikesToTopic:    acc.Update(t).Set("likeCount=likeCount+?").Where("tid = ?").Prepare(),
-			delete:             acc.Delete(t).Where("tid = ?").Prepare(),
+			delete:             acc.Delete(t).Where("tid=?").Prepare(),
 			deleteLikesForTopic:    acc.Delete("likes").Where("targetItem=? AND targetType='topics'").Prepare(),
 			deleteActivity:     acc.Delete("activity_stream").Where("elementID=? AND elementType='topic'").Prepare(),
 			deleteActivitySubs: acc.Delete("activity_subscriptions").Where("targetID=? AND targetType='topic'").Prepare(),
 			edit:               acc.Update(t).Set("title=?,content=?,parsed_content=?").Where("tid=?").Prepare(), // TODO: Only run the content update bits on non-polls, does this matter?
-			setPoll:            acc.Update(t).Set("poll = ?").Where("tid = ? AND poll = 0").Prepare(),
+			setPoll:            acc.Update(t).Set("poll=?").Where("tid=? AND poll=0").Prepare(),
 			createAction:       acc.Insert("replies").Columns("tid, actionType, ipaddress, createdBy, createdAt, lastUpdated, content, parsed_content").Fields("?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),'',''").Prepare(),
 
 			getTopicUser: acc.SimpleLeftJoin("topics AS t", "users AS u", "t.title, t.content, t.createdBy, t.createdAt, t.lastReplyAt, t.lastReplyBy, t.lastReplyID, t.is_closed, t.sticky, t.parentID, t.ipaddress, t.views, t.postCount, t.likeCount, t.attachCount,t.poll, u.name, u.avatar, u.group, u.level", "t.createdBy = u.uid", "tid = ?", "", ""),
@@ -385,7 +385,16 @@ func (t *Topic) Delete() error {
 		return err
 	}
 	_, err = topicStmts.deleteActivity.Exec(t.ID)
-	return err
+	if err != nil {
+		return err
+	}
+	if t.Poll > 0 {
+		err = (&Poll{ID:t.Poll}).Delete()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // TODO: Write tests for this
