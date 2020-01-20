@@ -973,20 +973,23 @@ input[type=checkbox] + label {
 	height: 18px;
 	margin-bottom: -2px;
 	margin-right: 8px;
-	border: 1px solid rgb(120,120,120);
+	/*border: 1px solid rgb(120,120,120);*/
 	background-color: rgb(90,90,90);
 	padding-top: 1px;
 	border-radius: 2px;
 }
-input[type=checkbox]:checked + label .sel {
+input[type=checkbox]:checked + label .sel,
+input[type=checkbox]:not(:checked):hover + label .sel {
 	width: 8px;
 	height: 8px;
-	background: rgb(160,160,160);
-	margin-left: auto;
-	margin-right: auto;
-	margin-top: auto;
-	margin-bottom: auto;
+	margin: auto;
 	border-radius: 2px;
+}
+input[type=checkbox]:checked + label .sel {
+	background: rgb(140,140,140);
+}
+input[type=checkbox]:not(:checked):hover + label .sel {
+	background: rgb(120,120,120);
 }
 .poll_option {
 	display: flex;
