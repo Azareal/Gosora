@@ -4,8 +4,9 @@ import (
 	"database/sql"
 	"errors"
 	"strings"
+	"os"
 
-	"github.com/Azareal/Gosora/query_gen"
+	qgen "github.com/Azareal/Gosora/query_gen"
 )
 
 var Attachments AttachmentStore
@@ -26,9 +27,9 @@ type AttachmentStore interface {
 	Get(id int) (*MiniAttachment, error)
 	MiniGetList(originTable string, originID int) (alist []*MiniAttachment, err error)
 	BulkMiniGetList(originTable string, ids []int) (amap map[int][]*MiniAttachment, err error)
-	Add(sectionID int, sectionTable string, originID int, originTable string, uploadedBy int, path string, extra string) (int, error)
+	Add(sectionID int, sectionTable string, originID int, originTable string, uploadedBy int, path, extra string) (int, error)
 	MoveTo(sectionID int, originID int, originTable string) error
-	MoveToByExtra(sectionID int, originTable string, extra string) error
+	MoveToByExtra(sectionID int, originTable, extra string) error
 	Count() int
 	CountIn(originTable string, oid int) int
 	CountInPath(path string) int
@@ -50,7 +51,7 @@ type DefaultAttachmentStore struct {
 func NewDefaultAttachmentStore(acc *qgen.Accumulator) (*DefaultAttachmentStore, error) {
 	a := "attachments"
 	return &DefaultAttachmentStore{
-		get:         acc.Select(a).Columns("originID, sectionID, uploadedBy, path, extra").Where("attachID = ?").Prepare(),
+		get:         acc.Select(a).Columns("originID, sectionID, uploadedBy, path, extra").Where("attachID=?").Prepare(),
 		getByObj:    acc.Select(a).Columns("attachID, sectionID, uploadedBy, path, extra").Where("originTable = ? AND originID = ?").Prepare(),
 		add:         acc.Insert(a).Columns("sectionID, sectionTable, originID, originTable, uploadedBy, path, extra").Fields("?,?,?,?,?,?,?").Prepare(),
 		count:       acc.Count(a).Prepare(),
@@ -58,7 +59,7 @@ func NewDefaultAttachmentStore(acc *qgen.Accumulator) (*DefaultAttachmentStore, 
 		countInPath: acc.Count(a).Where("path = ?").Prepare(),
 		move:        acc.Update(a).Set("sectionID = ?").Where("originID = ? AND originTable = ?").Prepare(),
 		moveByExtra: acc.Update(a).Set("sectionID = ?").Where("originTable = ? AND extra = ?").Prepare(),
-		delete:      acc.Delete(a).Where("attachID = ?").Prepare(),
+		delete:      acc.Delete(a).Where("attachID=?").Prepare(),
 	}, acc.FirstError()
 }
 
@@ -141,7 +142,7 @@ func (s *DefaultAttachmentStore) Get(id int) (*MiniAttachment, error) {
 	return a, nil
 }
 
-func (s *DefaultAttachmentStore) Add(sectionID int, sectionTable string, originID int, originTable string, uploadedBy int, path string, extra string) (int, error) {
+func (s *DefaultAttachmentStore) Add(sectionID int, sectionTable string, originID int, originTable string, uploadedBy int, path, extra string) (int, error) {
 	res, err := s.add.Exec(sectionID, sectionTable, originID, originTable, uploadedBy, path, extra)
 	if err != nil {
 		return 0, err
@@ -155,7 +156,7 @@ func (s *DefaultAttachmentStore) MoveTo(sectionID int, originID int, originTable
 	return err
 }
 
-func (s *DefaultAttachmentStore) MoveToByExtra(sectionID int, originTable string, extra string) error {
+func (s *DefaultAttachmentStore) MoveToByExtra(sectionID int, originTable, extra string) error {
 	_, err := s.moveByExtra.Exec(sectionID, originTable, extra)
 	return err
 }
@@ -187,4 +188,26 @@ func (s *DefaultAttachmentStore) CountInPath(path string) (count int) {
 func (s *DefaultAttachmentStore) Delete(aid int) error {
 	_, err := s.delete.Exec(aid)
 	return err
+}
+
+// TODO: Add a table for the files and lock the file row when performing tasks related to the file
+func DeleteAttachment(aid int) error {
+	attach, err := Attachments.Get(aid)
+	if err != nil {
+		return err
+	}
+	err = Attachments.Delete(aid)
+	if err != nil {
+		return err
+	}
+
+	count := Attachments.CountInPath(attach.Path)
+	if count == 0 {
+		err := os.Remove("./attachs/" + attach.Path)
+		if err != nil {
+			return err
+		}
+	}
+	
+	return nil
 }

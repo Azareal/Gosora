@@ -184,25 +184,25 @@ func (t *TopicsRow) Topic() *Topic {
 }*/
 
 type TopicStmts struct {
-	getRids            *sql.Stmt
-	getReplies         *sql.Stmt
-	addReplies         *sql.Stmt
-	updateLastReply    *sql.Stmt
-	lock               *sql.Stmt
-	unlock             *sql.Stmt
-	moveTo             *sql.Stmt
-	stick              *sql.Stmt
-	unstick            *sql.Stmt
-	hasLikedTopic      *sql.Stmt
-	createLike         *sql.Stmt
-	addLikesToTopic    *sql.Stmt
-	delete             *sql.Stmt
+	getRids             *sql.Stmt
+	getReplies          *sql.Stmt
+	addReplies          *sql.Stmt
+	updateLastReply     *sql.Stmt
+	lock                *sql.Stmt
+	unlock              *sql.Stmt
+	moveTo              *sql.Stmt
+	stick               *sql.Stmt
+	unstick             *sql.Stmt
+	hasLikedTopic       *sql.Stmt
+	createLike          *sql.Stmt
+	addLikesToTopic     *sql.Stmt
+	delete              *sql.Stmt
 	deleteLikesForTopic *sql.Stmt
-	deleteActivity     *sql.Stmt
-	deleteActivitySubs *sql.Stmt
-	edit               *sql.Stmt
-	setPoll            *sql.Stmt
-	createAction       *sql.Stmt
+	deleteActivity      *sql.Stmt
+	deleteActivitySubs  *sql.Stmt
+	edit                *sql.Stmt
+	setPoll             *sql.Stmt
+	createAction        *sql.Stmt
 
 	getTopicUser *sql.Stmt // TODO: Can we get rid of this?
 	getByReplyID *sql.Stmt
@@ -214,25 +214,25 @@ func init() {
 	DbInits.Add(func(acc *qgen.Accumulator) error {
 		t := "topics"
 		topicStmts = TopicStmts{
-			getRids:            acc.Select("replies").Columns("rid").Where("tid = ?").Orderby("rid ASC").Limit("?,?").Prepare(),
-			getReplies:         acc.SimpleLeftJoin("replies AS r", "users AS u", "r.rid, r.content, r.createdBy, r.createdAt, r.lastEdit, r.lastEditBy, u.avatar, u.name, u.group, u.level, r.ipaddress, r.likeCount, r.attachCount, r.actionType", "r.createdBy = u.uid", "r.tid = ?", "r.rid ASC", "?,?"),
-			addReplies:         acc.Update(t).Set("postCount = postCount + ?, lastReplyBy = ?, lastReplyAt = UTC_TIMESTAMP()").Where("tid = ?").Prepare(),
-			updateLastReply:    acc.Update(t).Set("lastReplyID=?").Where("lastReplyID > ? AND tid = ?").Prepare(),
-			lock:               acc.Update(t).Set("is_closed=1").Where("tid=?").Prepare(),
-			unlock:             acc.Update(t).Set("is_closed=0").Where("tid=?").Prepare(),
-			moveTo:             acc.Update(t).Set("parentID=?").Where("tid=?").Prepare(),
-			stick:              acc.Update(t).Set("sticky=1").Where("tid=?").Prepare(),
-			unstick:            acc.Update(t).Set("sticky=0").Where("tid=?").Prepare(),
-			hasLikedTopic:      acc.Select("likes").Columns("targetItem").Where("sentBy=? and targetItem=? and targetType='topics'").Prepare(),
-			createLike:         acc.Insert("likes").Columns("weight, targetItem, targetType, sentBy, createdAt").Fields("?,?,?,?,UTC_TIMESTAMP()").Prepare(),
-			addLikesToTopic:    acc.Update(t).Set("likeCount=likeCount+?").Where("tid = ?").Prepare(),
-			delete:             acc.Delete(t).Where("tid=?").Prepare(),
-			deleteLikesForTopic:    acc.Delete("likes").Where("targetItem=? AND targetType='topics'").Prepare(),
-			deleteActivity:     acc.Delete("activity_stream").Where("elementID=? AND elementType='topic'").Prepare(),
-			deleteActivitySubs: acc.Delete("activity_subscriptions").Where("targetID=? AND targetType='topic'").Prepare(),
-			edit:               acc.Update(t).Set("title=?,content=?,parsed_content=?").Where("tid=?").Prepare(), // TODO: Only run the content update bits on non-polls, does this matter?
-			setPoll:            acc.Update(t).Set("poll=?").Where("tid=? AND poll=0").Prepare(),
-			createAction:       acc.Insert("replies").Columns("tid, actionType, ipaddress, createdBy, createdAt, lastUpdated, content, parsed_content").Fields("?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),'',''").Prepare(),
+			getRids:             acc.Select("replies").Columns("rid").Where("tid = ?").Orderby("rid ASC").Limit("?,?").Prepare(),
+			getReplies:          acc.SimpleLeftJoin("replies AS r", "users AS u", "r.rid, r.content, r.createdBy, r.createdAt, r.lastEdit, r.lastEditBy, u.avatar, u.name, u.group, u.level, r.ipaddress, r.likeCount, r.attachCount, r.actionType", "r.createdBy = u.uid", "r.tid = ?", "r.rid ASC", "?,?"),
+			addReplies:          acc.Update(t).Set("postCount = postCount + ?, lastReplyBy = ?, lastReplyAt = UTC_TIMESTAMP()").Where("tid = ?").Prepare(),
+			updateLastReply:     acc.Update(t).Set("lastReplyID=?").Where("lastReplyID > ? AND tid = ?").Prepare(),
+			lock:                acc.Update(t).Set("is_closed=1").Where("tid=?").Prepare(),
+			unlock:              acc.Update(t).Set("is_closed=0").Where("tid=?").Prepare(),
+			moveTo:              acc.Update(t).Set("parentID=?").Where("tid=?").Prepare(),
+			stick:               acc.Update(t).Set("sticky=1").Where("tid=?").Prepare(),
+			unstick:             acc.Update(t).Set("sticky=0").Where("tid=?").Prepare(),
+			hasLikedTopic:       acc.Select("likes").Columns("targetItem").Where("sentBy=? and targetItem=? and targetType='topics'").Prepare(),
+			createLike:          acc.Insert("likes").Columns("weight, targetItem, targetType, sentBy, createdAt").Fields("?,?,?,?,UTC_TIMESTAMP()").Prepare(),
+			addLikesToTopic:     acc.Update(t).Set("likeCount=likeCount+?").Where("tid = ?").Prepare(),
+			delete:              acc.Delete(t).Where("tid=?").Prepare(),
+			deleteLikesForTopic: acc.Delete("likes").Where("targetItem=? AND targetType='topics'").Prepare(),
+			deleteActivity:      acc.Delete("activity_stream").Where("elementID=? AND elementType='topic'").Prepare(),
+			deleteActivitySubs:  acc.Delete("activity_subscriptions").Where("targetID=? AND targetType='topic'").Prepare(),
+			edit:                acc.Update(t).Set("title=?,content=?,parsed_content=?").Where("tid=?").Prepare(), // TODO: Only run the content update bits on non-polls, does this matter?
+			setPoll:             acc.Update(t).Set("poll=?").Where("tid=? AND poll=0").Prepare(),
+			createAction:        acc.Insert("replies").Columns("tid, actionType, ipaddress, createdBy, createdAt, lastUpdated, content, parsed_content").Fields("?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),'',''").Prepare(),
 
 			getTopicUser: acc.SimpleLeftJoin("topics AS t", "users AS u", "t.title, t.content, t.createdBy, t.createdAt, t.lastReplyAt, t.lastReplyBy, t.lastReplyID, t.is_closed, t.sticky, t.parentID, t.ipaddress, t.views, t.postCount, t.likeCount, t.attachCount,t.poll, u.name, u.avatar, u.group, u.level", "t.createdBy = u.uid", "tid = ?", "", ""),
 			getByReplyID: acc.SimpleLeftJoin("replies AS r", "topics AS t", "t.tid, t.title, t.content, t.createdBy, t.createdAt, t.is_closed, t.sticky, t.parentID, t.ipaddress, t.views, t.postCount, t.likeCount, t.poll, t.data", "r.tid = t.tid", "rid = ?", "", ""),
@@ -350,6 +350,35 @@ func handleLikedTopicReplies(tid int) error {
 	return rows.Err()
 }
 
+func handleTopicAttachments(tid int) error {
+	f := func(stmt *sql.Stmt) error {
+		rows, err := stmt.Query(tid)
+		if err != nil {
+			return err
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var aid int
+			err := rows.Scan(&aid)
+			if err != nil {
+				return err
+			}
+			err = DeleteAttachment(aid)
+			if err != nil && err != sql.ErrNoRows {
+				return err
+			}
+		}
+
+		return rows.Err()
+	}
+	err := f(userStmts.getAttachmentsOfTopic)
+	if err != nil {
+		return err
+	}
+	return f(userStmts.getAttachmentsOfTopic2)
+}
+
 // TODO: Use a transaction here
 func (t *Topic) Delete() error {
 	creator, err := Users.Get(t.CreatedBy)
@@ -380,6 +409,10 @@ func (t *Topic) Delete() error {
 	if err != nil {
 		return err
 	}
+	err = handleTopicAttachments(t.ID)
+	if err != nil {
+		return err
+	}
 	_, err = topicStmts.deleteActivitySubs.Exec(t.ID)
 	if err != nil {
 		return err
@@ -389,7 +422,7 @@ func (t *Topic) Delete() error {
 		return err
 	}
 	if t.Poll > 0 {
-		err = (&Poll{ID:t.Poll}).Delete()
+		err = (&Poll{ID: t.Poll}).Delete()
 		if err != nil {
 			return err
 		}
@@ -523,7 +556,7 @@ func (ru *ReplyUser) Init() error {
 }
 
 // TODO: Factor TopicUser into a *Topic and *User, as this starting to become overly complicated x.x
-func (t *TopicUser) Replies(offset int, pFrag int, user *User) (rlist []*ReplyUser, ogdesc string, err error) {
+func (t *TopicUser) Replies(offset, pFrag int, user *User) (rlist []*ReplyUser, ogdesc string, err error) {
 	var likedMap map[int]int
 	if user.Liked > 0 {
 		likedMap = make(map[int]int)

@@ -3,13 +3,12 @@ package routes
 import (
 	"database/sql"
 	"net/http"
-	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 
 	c "github.com/Azareal/Gosora/common"
-	"github.com/Azareal/Gosora/query_gen"
+	qgen "github.com/Azareal/Gosora/query_gen"
 )
 
 type AttachmentStmts struct {
@@ -22,11 +21,13 @@ var attachmentStmts AttachmentStmts
 func init() {
 	c.DbInits.Add(func(acc *qgen.Accumulator) error {
 		attachmentStmts = AttachmentStmts{
-			get: acc.Select("attachments").Columns("sectionID, sectionTable, originID, originTable, uploadedBy, path").Where("path = ? AND sectionID = ? AND sectionTable = ?").Prepare(),
+			get: acc.Select("attachments").Columns("sectionID, sectionTable, originID, originTable, uploadedBy, path").Where("path=? AND sectionID=? AND sectionTable=?").Prepare(),
 		}
 		return acc.FirstError()
 	})
 }
+
+var maxAgeYear = "max-age=" + strconv.Itoa(int(c.Year))
 
 func ShowAttachment(w http.ResponseWriter, r *http.Request, user c.User, filename string) c.RouteError {
 	filename = c.Stripslashes(filename)
@@ -61,13 +62,13 @@ func ShowAttachment(w http.ResponseWriter, r *http.Request, user c.User, filenam
 	} else {
 		return c.LocalError("Unknown section", w, r, user)
 	}
-	
+
 	if originTable != "topics" && originTable != "replies" {
 		return c.LocalError("Unknown origin", w, r, user)
 	}
 
 	if !user.Loggedin {
-		w.Header().Set("Cache-Control", "max-age="+strconv.Itoa(int(c.Year)))
+		w.Header().Set("Cache-Control", maxAgeYear)
 	} else {
 		guest := c.GuestUser
 		_, ferr := c.SimpleForumUserCheck(w, r, &guest, sid)
@@ -76,7 +77,7 @@ func ShowAttachment(w http.ResponseWriter, r *http.Request, user c.User, filenam
 		}
 		h := w.Header()
 		if guest.Perms.ViewTopic {
-			h.Set("Cache-Control", "max-age="+strconv.Itoa(int(c.Year)))
+			h.Set("Cache-Control", maxAgeYear)
 		} else {
 			h.Set("Cache-Control", "private")
 		}
@@ -87,32 +88,12 @@ func ShowAttachment(w http.ResponseWriter, r *http.Request, user c.User, filenam
 	return nil
 }
 
-// TODO: Add a table for the files and lock the file row when performing tasks related to the file
 func deleteAttachment(w http.ResponseWriter, r *http.Request, user c.User, aid int, js bool) c.RouteError {
-	attach, err := c.Attachments.Get(aid)
+	err := c.DeleteAttachment(aid)
 	if err == sql.ErrNoRows {
 		return c.NotFoundJSQ(w, r, nil, js)
-	} else if err != nil {
-		return c.InternalErrorJSQ(err, w, r, js)
 	}
-
-	err = c.Attachments.Delete(aid)
-	if err != nil {
-		return c.InternalErrorJSQ(err, w, r, js)
-	}
-
-	count := c.Attachments.CountInPath(attach.Path)
-	if err != nil {
-		return c.InternalErrorJSQ(err, w, r, js)
-	}
-	if count == 0 {
-		err := os.Remove("./attachs/" + attach.Path)
-		if err != nil {
-			return c.InternalErrorJSQ(err, w, r, js)
-		}
-	}
-
-	return nil
+	return c.InternalErrorJSQ(err, w, r, js)
 }
 
 // TODO: Stop duplicating this code

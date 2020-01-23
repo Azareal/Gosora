@@ -150,6 +150,8 @@ type UserStmts struct {
 	deleteProfilePosts     *sql.Stmt
 	deleteReplyPosts       *sql.Stmt
 	getLikedRepliesOfTopic *sql.Stmt
+	getAttachmentsOfTopic  *sql.Stmt
+	getAttachmentsOfTopic2 *sql.Stmt
 }
 
 var userStmts UserStmts
@@ -191,6 +193,8 @@ func init() {
 			deleteProfilePosts:     acc.Select("users_replies").Columns("rid").Where("createdBy=?").Prepare(),
 			deleteReplyPosts:       acc.Select("replies").Columns("rid,tid").Where("createdBy=?").Prepare(),
 			getLikedRepliesOfTopic: acc.Select("replies").Columns("rid").Where("tid=? AND likeCount>0").Prepare(),
+			getAttachmentsOfTopic:  acc.Select("attachments").Columns("attachID").Where("originID=? AND originTable='topics'").Prepare(),
+			getAttachmentsOfTopic2: acc.Select("attachments").Columns("attachID").Where("extra=? AND originTable='replies'").Prepare(),
 		}
 		return acc.FirstError()
 	})
@@ -356,6 +360,10 @@ func (u *User) DeletePosts() error {
 		if err != nil {
 			return err
 		}
+		err = handleTopicAttachments(tid)
+		if err != nil {
+			return err
+		}
 		_, err = topicStmts.deleteActivitySubs.Exec(tid)
 		if err != nil {
 			return err
@@ -365,7 +373,7 @@ func (u *User) DeletePosts() error {
 			return err
 		}
 		if poll > 0 {
-			err = (&Poll{ID:poll}).Delete()
+			err = (&Poll{ID: poll}).Delete()
 			if err != nil {
 				return err
 			}
