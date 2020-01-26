@@ -21,7 +21,7 @@
 			{{end}}
 			<div class="attach_item attach_item_buttons">
 				{{if $.CurrentUser.Perms.UploadFiles}}
-				<input name="upload_files" class="upload_files_post auto_hide" id="upload_files_post_{{.ID}}" multiple type="file" />
+				<input name="upload_files" class="upload_files_post auto_hide" id="upload_files_post_{{.ID}}" multiple type="file"/>
 				<label for="upload_files_post_{{.ID}}" class="formbutton add_file_button">{{lang "topic.upload_button_text"}}</label>{{end}}
 				<button class="attach_item_delete formbutton">{{lang "topic.delete_button_text"}}</button>
 			</div>
@@ -31,7 +31,7 @@
 		<div class="controls button_container{{if .LikeCount}} has_likes{{end}}">
 			<div class="action_button_left">
 			{{if $.CurrentUser.Loggedin}}
-				{{if $.CurrentUser.Perms.LikeItem}}<a href="/reply/like/submit/{{.ID}}?s={{$.CurrentUser.Session}}" class="action_button like_item {{if .Liked}}remove{{else}}add{{end}}_like" aria-label="{{lang "topic.post_like_aria"}}" data-action="like"></a>{{end}}
+				{{if $.CurrentUser.Perms.LikeItem}}{{if ne $.CurrentUser.ID .CreatedBy}}<a href="/reply/like/submit/{{.ID}}?s={{$.CurrentUser.Session}}" class="action_button like_item {{if .Liked}}remove{{else}}add{{end}}_like" aria-label="{{lang "topic.post_like_aria"}}" data-action="like"></a>{{end}}{{end}}
 				<a href="" class="action_button quote_item" aria-label="{{lang "topic.quote_aria"}}" data-action="quote"></a>
 				{{if not $.Topic.IsClosed or $.CurrentUser.Perms.CloseTopic}}
 				{{if $.CurrentUser.Perms.EditReply}}<a href="/reply/edit/submit/{{.ID}}?s={{$.CurrentUser.Session}}" class="action_button edit_item" aria-label="{{lang "topic.post_edit_aria"}}" data-action="edit"></a>{{end}}
@@ -49,6 +49,5 @@
 			</div>
 		</div>
 		{{end}}
-	</div>
-	<div style="clear:both;"></div>
+	</div><div style="clear:both;"></div>
 </article>{{end}}
