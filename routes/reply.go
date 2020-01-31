@@ -26,7 +26,7 @@ func init() {
 	c.DbInits.Add(func(acc *qgen.Accumulator) error {
 		replyStmts = ReplyStmts{
 			// TODO: Less race-y attachment count updates
-			updateAttachs:     acc.Update("replies").Set("attachCount = ?").Where("rid = ?").Prepare(),
+			updateAttachs:     acc.Update("replies").Set("attachCount=?").Where("rid=?").Prepare(),
 			createReplyPaging: acc.Select("replies").Cols("rid").Where("rid >= ? - 1 AND tid = ?").Orderby("rid ASC").Prepare(),
 		}
 		return acc.FirstError()
@@ -513,6 +513,66 @@ func ReplyLikeSubmit(w http.ResponseWriter, r *http.Request, user c.User, srid s
 	}
 
 	skip, rerr := lite.Hooks.VhookSkippable("action_end_like_reply", reply.ID, &user)
+	if skip || rerr != nil {
+		return rerr
+	}
+
+	if !js {
+		http.Redirect(w, r, "/topic/"+strconv.Itoa(reply.ParentID), http.StatusSeeOther)
+	} else {
+		_, _ = w.Write(successJSONBytes)
+	}
+	return nil
+}
+
+func ReplyUnlikeSubmit(w http.ResponseWriter, r *http.Request, user c.User, srid string) c.RouteError {
+	js := r.PostFormValue("js") == "1"
+	rid, err := strconv.Atoi(srid)
+	if err != nil {
+		return c.PreErrorJSQ("The provided Reply ID is not a valid number.", w, r, js)
+	}
+
+	reply, err := c.Rstore.Get(rid)
+	if err == sql.ErrNoRows {
+		return c.PreErrorJSQ("You can't unlike something which doesn't exist!", w, r, js)
+	} else if err != nil {
+		return c.InternalErrorJSQ(err, w, r, js)
+	}
+
+	topic, err := c.Topics.Get(reply.ParentID)
+	if err == sql.ErrNoRows {
+		return c.PreErrorJSQ("The parent topic doesn't exist.", w, r, js)
+	} else if err != nil {
+		return c.InternalErrorJSQ(err, w, r, js)
+	}
+
+	// TODO: Add hooks to make use of headerLite
+	lite, ferr := c.SimpleForumUserCheck(w, r, &user, topic.ParentID)
+	if ferr != nil {
+		return ferr
+	}
+	if !user.Perms.ViewTopic || !user.Perms.LikeItem {
+		return c.NoPermissionsJSQ(w, r, user, js)
+	}
+
+	_, err = c.Users.Get(reply.CreatedBy)
+	if err != nil && err != sql.ErrNoRows {
+		return c.LocalErrorJSQ("The target user doesn't exist", w, r, user, js)
+	} else if err != nil {
+		return c.InternalErrorJSQ(err, w, r, js)
+	}
+
+	err = reply.Unlike(user.ID)
+	if err != nil {
+		return c.InternalErrorJSQ(err, w, r, js)
+	}
+	// TODO: Push dismiss-event alerts to the users.
+	err = c.Activity.DeleteByParams("like", topic.ID, "reply")
+	if err != nil {
+		return c.InternalErrorJSQ(err, w, r, js)
+	}
+
+	skip, rerr := lite.Hooks.VhookSkippable("action_end_unlike_reply", reply.ID, &user)
 	if skip || rerr != nil {
 		return rerr
 	}

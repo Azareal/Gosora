@@ -15,7 +15,7 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/Azareal/Gosora/query_gen"
+	qgen "github.com/Azareal/Gosora/query_gen"
 )
 
 var ErrPluginNotInstallable = errors.New("This plugin is not installable")
@@ -72,7 +72,7 @@ var hookTable = &HookTable{
 	map[string]func(...interface{}) interface{}{
 		//"convo_post_update":nil,
 		//"convo_post_create":nil,
-		
+
 		"forum_trow_assign":       nil,
 		"topics_topic_row_assign": nil,
 		//"topics_user_row_assign": nil,
@@ -89,15 +89,16 @@ var hookTable = &HookTable{
 		"route_topic_list_start": nil,
 		"route_forum_list_start": nil,
 
-		"action_end_create_topic":             nil,
-		"action_end_edit_topic":nil,
-		"action_end_delete_topic":nil,
-		"action_end_lock_topic":nil,
-		"action_end_unlock_topic": nil,
-		"action_end_stick_topic": nil,
+		"action_end_create_topic":  nil,
+		"action_end_edit_topic":    nil,
+		"action_end_delete_topic":  nil,
+		"action_end_lock_topic":    nil,
+		"action_end_unlock_topic":  nil,
+		"action_end_stick_topic":   nil,
 		"action_end_unstick_topic": nil,
-		"action_end_move_topic": nil,
-		"action_end_like_topic":nil,
+		"action_end_move_topic":    nil,
+		"action_end_like_topic":    nil,
+		"action_end_unlike_topic":  nil,
 
 		"action_end_create_reply":             nil,
 		"action_end_edit_reply":               nil,
@@ -105,11 +106,12 @@ var hookTable = &HookTable{
 		"action_end_add_attach_to_reply":      nil,
 		"action_end_remove_attach_from_reply": nil,
 
-		"action_end_like_reply":nil,
+		"action_end_like_reply":   nil,
+		"action_end_unlike_reply": nil,
 
-		"action_end_ban_user":nil,
-		"action_end_unban_user":nil,
-		"action_end_activate_user":nil,
+		"action_end_ban_user":      nil,
+		"action_end_unban_user":    nil,
+		"action_end_activate_user": nil,
 
 		"router_after_filters": nil,
 		"router_pre_route":     nil,
@@ -143,8 +145,8 @@ func GetHookTable() *HookTable {
 }
 
 // Hooks with a single argument. Is this redundant? Might be useful for inlining, as variadics aren't inlined? Are closures even inlined to begin with?
-func (table *HookTable) Hook(name string, data interface{}) interface{} {
-	hooks, ok := table.Hooks[name]
+func (t *HookTable) Hook(name string, data interface{}) interface{} {
+	hooks, ok := t.Hooks[name]
 	if ok {
 		for _, hook := range hooks {
 			data = hook(data)
@@ -154,8 +156,8 @@ func (table *HookTable) Hook(name string, data interface{}) interface{} {
 }
 
 // To cover the case in routes/topic.go's CreateTopic route, we could probably obsolete this use and replace it
-func (table *HookTable) HookSkippable(name string, data interface{}) (skip bool) {
-	hooks, ok := table.Hooks[name]
+func (t *HookTable) HookSkippable(name string, data interface{}) (skip bool) {
+	hooks, ok := t.Hooks[name]
 	if ok {
 		for _, hook := range hooks {
 			skip = hook(data).(bool)
@@ -169,24 +171,24 @@ func (table *HookTable) HookSkippable(name string, data interface{}) (skip bool)
 
 // Hooks with a variable number of arguments
 // TODO: Use RunHook semantics to allow multiple lined up plugins / modules their turn?
-func (table *HookTable) Vhook(name string, data ...interface{}) interface{} {
-	hook := table.Vhooks[name]
+func (t *HookTable) Vhook(name string, data ...interface{}) interface{} {
+	hook := t.Vhooks[name]
 	if hook != nil {
 		return hook(data...)
 	}
 	return nil
 }
 
-func (table *HookTable) VhookNoRet(name string, data ...interface{}) {
-	hook := table.Vhooks[name]
+func (t *HookTable) VhookNoRet(name string, data ...interface{}) {
+	hook := t.Vhooks[name]
 	if hook != nil {
 		_ = hook(data...)
 	}
 }
 
 // TODO: Find a better way of doing this
-func (table *HookTable) VhookNeedHook(name string, data ...interface{}) (ret interface{}, hasHook bool) {
-	hook := table.Vhooks[name]
+func (t *HookTable) VhookNeedHook(name string, data ...interface{}) (ret interface{}, hasHook bool) {
+	hook := t.Vhooks[name]
 	if hook != nil {
 		return hook(data...), true
 	}
@@ -194,8 +196,8 @@ func (table *HookTable) VhookNeedHook(name string, data ...interface{}) (ret int
 }
 
 // Hooks with a variable number of arguments and return values for skipping the parent function and propagating an error upwards
-func (table *HookTable) VhookSkippable(name string, data ...interface{}) (bool, RouteError) {
-	hook := table.VhookSkippable_[name]
+func (t *HookTable) VhookSkippable(name string, data ...interface{}) (bool, RouteError) {
+	hook := t.VhookSkippable_[name]
 	if hook != nil {
 		return hook(data...)
 	}
@@ -204,8 +206,8 @@ func (table *HookTable) VhookSkippable(name string, data ...interface{}) (bool, 
 
 // Hooks which take in and spit out a string. This is usually used for parser components
 // Trying to get a teeny bit of type-safety where-ever possible, especially for such a critical set of hooks
-func (table *HookTable) Sshook(name string, data string) string {
-	ssHooks, ok := table.Sshooks[name]
+func (t *HookTable) Sshook(name, data string) string {
+	ssHooks, ok := t.Sshooks[name]
 	if ok {
 		for _, hook := range ssHooks {
 			data = hook(data)
@@ -331,17 +333,17 @@ type Plugin struct {
 	Data  interface{} // Usually used for hosting the VMs / reusable elements of non-native plugins
 }
 
-func (plugin *Plugin) BypassActive() (active bool, err error) {
-	err = extendStmts.isActive.QueryRow(plugin.UName).Scan(&active)
+func (pl *Plugin) BypassActive() (active bool, err error) {
+	err = extendStmts.isActive.QueryRow(pl.UName).Scan(&active)
 	if err != nil && err != sql.ErrNoRows {
 		return false, err
 	}
 	return active, nil
 }
 
-func (plugin *Plugin) InDatabase() (exists bool, err error) {
+func (pl *Plugin) InDatabase() (exists bool, err error) {
 	var sink bool
-	err = extendStmts.isActive.QueryRow(plugin.UName).Scan(&sink)
+	err = extendStmts.isActive.QueryRow(pl.UName).Scan(&sink)
 	if err != nil && err != sql.ErrNoRows {
 		return false, err
 	}
@@ -349,31 +351,31 @@ func (plugin *Plugin) InDatabase() (exists bool, err error) {
 }
 
 // TODO: Silently add to the database, if it doesn't exist there rather than forcing users to call AddToDatabase instead?
-func (plugin *Plugin) SetActive(active bool) (err error) {
-	_, err = extendStmts.setActive.Exec(active, plugin.UName)
+func (pl *Plugin) SetActive(active bool) (err error) {
+	_, err = extendStmts.setActive.Exec(active, pl.UName)
 	if err == nil {
-		plugin.Active = active
+		pl.Active = active
 	}
 	return err
 }
 
 // TODO: Silently add to the database, if it doesn't exist there rather than forcing users to call AddToDatabase instead?
-func (plugin *Plugin) SetInstalled(installed bool) (err error) {
-	if !plugin.Installable {
+func (pl *Plugin) SetInstalled(installed bool) (err error) {
+	if !pl.Installable {
 		return ErrPluginNotInstallable
 	}
-	_, err = extendStmts.setInstalled.Exec(installed, plugin.UName)
+	_, err = extendStmts.setInstalled.Exec(installed, pl.UName)
 	if err == nil {
-		plugin.Installed = installed
+		pl.Installed = installed
 	}
 	return err
 }
 
-func (plugin *Plugin) AddToDatabase(active bool, installed bool) (err error) {
-	_, err = extendStmts.add.Exec(plugin.UName, active, installed)
+func (pl *Plugin) AddToDatabase(active, installed bool) (err error) {
+	_, err = extendStmts.add.Exec(pl.UName, active, installed)
 	if err == nil {
-		plugin.Active = active
-		plugin.Installed = installed
+		pl.Active = active
+		pl.Installed = installed
 	}
 	return err
 }
@@ -393,12 +395,12 @@ func init() {
 	DbInits.Add(func(acc *qgen.Accumulator) error {
 		pl := "plugins"
 		extendStmts = ExtendStmts{
-			getPlugins: acc.Select(pl).Columns("uname, active, installed").Prepare(),
+			getPlugins: acc.Select(pl).Columns("uname,active,installed").Prepare(),
 
-			isActive:     acc.Select(pl).Columns("active").Where("uname = ?").Prepare(),
-			setActive:    acc.Update(pl).Set("active = ?").Where("uname = ?").Prepare(),
-			setInstalled: acc.Update(pl).Set("installed = ?").Where("uname = ?").Prepare(),
-			add:          acc.Insert(pl).Columns("uname, active, installed").Fields("?,?,?").Prepare(),
+			isActive:     acc.Select(pl).Columns("active").Where("uname=?").Prepare(),
+			setActive:    acc.Update(pl).Set("active=?").Where("uname=?").Prepare(),
+			setInstalled: acc.Update(pl).Set("installed=?").Where("uname=?").Prepare(),
+			add:          acc.Insert(pl).Columns("uname,active,installed").Fields("?,?,?").Prepare(),
 		}
 		return acc.FirstError()
 	})

@@ -394,6 +394,7 @@
 		"topic.view_count_suffix":" views",
 		"topic.plus":"+",
 		"topic.plus_one":"+1",
+		"topic.minus_one":"-1",
 		"topic.gap_up":" up",
 		"topic.quote_button_text":"Quote",
 		"topic.edit_button_text":"Edit",

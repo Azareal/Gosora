@@ -38,8 +38,15 @@
 		<a href="{{.Topic.UserLink}}" class="username real_username" rel="author">{{.Topic.CreatedByName}}</a>&nbsp;&nbsp;
 
 		{{if .CurrentUser.Loggedin}}
-		{{if .CurrentUser.Perms.LikeItem}}<a href="/topic/like/submit/{{.Topic.ID}}?s={{.CurrentUser.Session}}" class="mod_button" {{if .Topic.Liked}}title="{{lang "topic.unlike_tooltip"}}" aria-label="{{lang "topic.unlike_aria"}}"{{else}}title="{{lang "topic.like_tooltip"}}" aria-label="{{lang "topic.like_aria"}}"{{end}}>
-		<button class="username like_label {{if .Topic.Liked}}remove{{else}}add{{end}}_like"></button></a>{{end}}
+		{{if .CurrentUser.Perms.LikeItem}}{{if ne .CurrentUser.ID .Topic.CreatedBy}}
+
+		{{if .Topic.Liked}}
+		<a href="/topic/unlike/submit/{{.Topic.ID}}?s={{.CurrentUser.Session}}" class="mod_button" title="{{lang "topic.unlike_tooltip"}}" aria-label="{{lang "topic.unlike_aria"}}">
+		<button class="username like_label remove_like"></button></a>{{else}}
+		<a href="/topic/like/submit/{{.Topic.ID}}?s={{.CurrentUser.Session}}" class="mod_button" title="{{lang "topic.like_tooltip"}}" aria-label="{{lang "topic.like_aria"}}">
+		<button class="username like_label add_like"></button></a>{{end}}
+		
+		{{end}}{{end}}
 
 		<a href="" class="mod_button quote_item" title="{{lang "topic.quote_tooltip"}}" aria-label="{{lang "topic.quote_aria"}}"><button class="username quote_label"></button></a>
 

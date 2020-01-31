@@ -35,7 +35,7 @@ function ajaxError(xhr,status,errstr) {
 function postLink(event) {
 	event.preventDefault();
 	let formAction = $(event.target).closest('a').attr("href");
-	$.ajax({ url: formAction, type: "POST", dataType: "json", error: ajaxError, data: {js: "1"} });
+	$.ajax({ url: formAction, type: "POST", dataType: "json", error: ajaxError, data: {js: 1} });
 }
 
 function bindToAlerts() {
@@ -98,12 +98,6 @@ function updateAlertList(menuAlerts) {
 	
 	alertListNode.innerHTML = "";
 	let any = false;
-	/*let outList = "";
-	let j = 0;
-	for(var i = 0; i < alertList.length && j < 8; i++) {
-		outList += alertMapping[alertList[i]];
-		j++;
-	}*/
 	let j = 0;
 	for(var i = 0; i < alertList.length && j < 8; i++) {
 		any = true;
@@ -213,9 +207,9 @@ function wsAlertEvent(data) {
 }
 
 function runWebSockets(resume = false) {
-	if(window.location.protocol == "https:") {
-		conn = new WebSocket("wss://" + document.location.host + "/ws/");
-	} else conn = new WebSocket("ws://" + document.location.host + "/ws/");
+	let s = "";
+	if(window.location.protocol == "https:") s = "s";
+	conn = new WebSocket("ws"+s+"://" + document.location.host + "/ws/");
 
 	conn.onerror = (err) => {
 		console.log(err);
@@ -418,20 +412,32 @@ function mainInit(){
 		moreTopicCount = 0;
 	})
 
-	$(".add_like").click(function(event) {
+	$(".add_like,.remove_like").click(function(event) {
 		event.preventDefault();
+		//$(this).unbind("click");
 		let target = this.closest("a").getAttribute("href");
-		console.log("target: ", target);
-		this.classList.remove("add_like");
-		this.classList.add("remove_like");
+		console.log("target:", target);
+
 		let controls = this.closest(".controls");
 		let hadLikes = controls.classList.contains("has_likes");
-		if(!hadLikes) controls.classList.add("has_likes");
 		let likeCountNode = controls.getElementsByClassName("like_count")[0];
 		console.log("likeCountNode",likeCountNode);
-		likeCountNode.innerHTML = parseInt(likeCountNode.innerHTML) + 1;
-		let likeButton = this;
-		
+		if(this.classList.contains("add_like")) {
+			this.classList.remove("add_like");
+			this.classList.add("remove_like");
+			if(!hadLikes) controls.classList.add("has_likes");
+			this.closest("a").setAttribute("href", target.replace("like","unlike"));
+			likeCountNode.innerHTML = parseInt(likeCountNode.innerHTML) + 1;
+		} else {
+			this.classList.remove("remove_like");
+			this.classList.add("add_like");
+			let likeCount = parseInt(likeCountNode.innerHTML);
+			if(likeCount==1) controls.classList.remove("has_likes");
+			this.closest("a").setAttribute("href", target.replace("unlike","like"));
+			likeCountNode.innerHTML = parseInt(likeCountNode.innerHTML) - 1;
+		}
+
+		//let likeButton = this;
 		$.ajax({
 			url: target,
 			type: "POST",
@@ -441,10 +447,7 @@ function mainInit(){
 			success: function (data, status, xhr) {
 				if("success" in data && data["success"] == "1") return;
 				// addNotice("Failed to add a like: {err}")
-				likeButton.classList.add("add_like");
-				likeButton.classList.remove("remove_like");
-				if(!hadLikes) controls.classList.remove("has_likes");
-				likeCountNode.innerHTML = parseInt(likeCountNode.innerHTML) - 1;
+				//likeCountNode.innerHTML = parseInt(likeCountNode.innerHTML) - 1;
 				console.log("data", data);
 				console.log("status", status);
 				console.log("xhr", xhr);
@@ -691,9 +694,9 @@ function mainInit(){
 			$(blockParent).find('.hide_on_block_edit').removeClass("edit_opened");
 			$(blockParent).find('.show_on_block_edit').removeClass("edit_opened");
 			block.classList.remove("in_edit");
-			let newContent = block.querySelector('textarea').value;
-			block.innerHTML = quickParse(newContent);
-			if(srcNode!=null) srcNode.innerText = newContent;
+			let content = block.querySelector('textarea').value;
+			block.innerHTML = quickParse(content);
+			if(srcNode!=null) srcNode.innerText = content;
 
 			let formAction = this.closest('a').getAttribute("href");
 			// TODO: Bounce the parsed post back and set innerHTML to it?
@@ -701,7 +704,7 @@ function mainInit(){
 				url: formAction,
 				type: "POST",
 				dataType: "json",
-				data: { js: "1", edit_item: newContent },
+				data: { js: 1, edit_item: content },
 				error: ajaxError,
 				success: (data,status,xhr) => {
 					if("Content" in data) block.innerHTML = data["Content"];
@@ -720,8 +723,8 @@ function mainInit(){
 			event.preventDefault();
 			let blockParent = $(this).closest('.editable_parent');
 			let block = blockParent.find('.editable_block').eq(0);
-			let newContent = block.find('input').eq(0).val();
-			block.html(newContent);
+			let content = block.find('input').eq(0).val();
+			block.html(content);
 
 			let formAction = $(this).closest('a').attr("href");
 			$.ajax({
@@ -729,7 +732,7 @@ function mainInit(){
 				type: "POST",
 				dataType: "json",
 				error: ajaxError,
-				data: { js: "1", edit_item: newContent }
+				data: { js: 1, edit_item: content }
 			});
 		});
 	});
@@ -771,7 +774,7 @@ function mainInit(){
 
 		$(".submit_edit").click(function(event) {
 			event.preventDefault();
-			var outData = {js: "1"}
+			var outData = {js: 1}
 			var blockParent = $(this).closest('.editable_parent');
 			blockParent.find('.editable_block').each(function() {
 				var fieldName = this.getAttribute("data-field");

@@ -31,7 +31,10 @@
 		<div class="controls button_container{{if .LikeCount}} has_likes{{end}}">
 			<div class="action_button_left">
 			{{if $.CurrentUser.Loggedin}}
-				{{if $.CurrentUser.Perms.LikeItem}}{{if ne $.CurrentUser.ID .CreatedBy}}<a href="/reply/like/submit/{{.ID}}?s={{$.CurrentUser.Session}}" class="action_button like_item {{if .Liked}}remove{{else}}add{{end}}_like" aria-label="{{lang "topic.post_like_aria"}}" data-action="like"></a>{{end}}{{end}}
+				{{if $.CurrentUser.Perms.LikeItem}}{{if ne $.CurrentUser.ID .CreatedBy}}
+				{{if .Liked}}<a href="/reply/unlike/submit/{{.ID}}?s={{$.CurrentUser.Session}}" class="action_button like_item remove_like" aria-label="{{lang "topic.post_unlike_aria"}}" data-action="unlike"></a>{{else}}
+				<a href="/reply/like/submit/{{.ID}}?s={{$.CurrentUser.Session}}" class="action_button like_item add_like" aria-label="{{lang "topic.post_like_aria"}}" data-action="like"></a>{{end}}
+				{{end}}{{end}}
 				<a href="" class="action_button quote_item" aria-label="{{lang "topic.quote_aria"}}" data-action="quote"></a>
 				{{if not $.Topic.IsClosed or $.CurrentUser.Perms.CloseTopic}}
 				{{if $.CurrentUser.Perms.EditReply}}<a href="/reply/edit/submit/{{.ID}}?s={{$.CurrentUser.Session}}" class="action_button edit_item" aria-label="{{lang "topic.post_edit_aria"}}" data-action="edit"></a>{{end}}

@@ -336,7 +336,7 @@ func (t *Topic) Unlike(uid int) error {
 	}
 	_, err = userStmts.decLiked.Exec(1, uid)
 	t.cacheRemove()
-	return nil
+	return err
 }
 
 func handleLikedTopicReplies(tid int) error {

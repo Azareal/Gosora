@@ -10,8 +10,8 @@ import (
 	"database/sql"
 	"errors"
 	"html"
-	"time"
 	"strconv"
+	"time"
 
 	qgen "github.com/Azareal/Gosora/query_gen"
 )
@@ -93,7 +93,7 @@ func init() {
 			updateTopicReplies:  acc.RawPrepare("UPDATE topics t INNER JOIN replies r ON t.tid = r.tid SET t.lastReplyBy = r.createdBy, t.lastReplyAt = r.createdAt, t.lastReplyID = r.rid WHERE t.tid = ?"),
 			updateTopicReplies2: acc.Update("topics").Set("lastReplyAt=createdAt,lastReplyBy=createdBy,lastReplyID=0").Where("postCount=1 AND tid=?").Prepare(),
 
-			getAidsOfReply:  acc.Select("attachments").Columns("attachID").Where("originID=? AND originTable='replies'").Prepare(),
+			getAidsOfReply: acc.Select("attachments").Columns("attachID").Where("originID=? AND originTable='replies'").Prepare(),
 		}
 		return acc.FirstError()
 	})
@@ -120,6 +120,21 @@ func (r *Reply) Like(uid int) (err error) {
 		return err
 	}
 	_, err = userStmts.incLiked.Exec(1, uid)
+	_ = Rstore.GetCache().Remove(r.ID)
+	return err
+}
+
+// TODO: Use a transaction
+func (r *Reply) Unlike(uid int) error {
+	err := Likes.Delete(r.ID, "replies")
+	if err != nil {
+		return err
+	}
+	_, err = replyStmts.addLikesToReply.Exec(-1, r.ID)
+	if err != nil {
+		return err
+	}
+	_, err = userStmts.decLiked.Exec(1, uid)
 	_ = Rstore.GetCache().Remove(r.ID)
 	return err
 }
@@ -166,7 +181,7 @@ func (r *Reply) Delete() error {
 	if err != nil {
 		return err
 	}
-	err = Activity.DeleteByParamsExtra("reply",r.ParentID,"topic",strconv.Itoa(r.ID))
+	err = Activity.DeleteByParamsExtra("reply", r.ParentID, "topic", strconv.Itoa(r.ID))
 	if err != nil {
 		return err
 	}

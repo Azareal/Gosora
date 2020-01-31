@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/Azareal/Gosora/common/phrases"
-	"github.com/Azareal/Gosora/query_gen"
+	qgen "github.com/Azareal/Gosora/query_gen"
 )
 
 type MenuItemList []MenuItem
@@ -66,10 +66,10 @@ func init() {
 	DbInits.Add(func(acc *qgen.Accumulator) error {
 		mi := "menu_items"
 		menuItemStmts = MenuItemStmts{
-			update:      acc.Update(mi).Set("name = ?, htmlID = ?, cssClass = ?, position = ?, path = ?, aria = ?, tooltip = ?, tmplName = ?, guestOnly = ?, memberOnly = ?, staffOnly = ?, adminOnly = ?").Where("miid = ?").Prepare(),
+			update:      acc.Update(mi).Set("name=?,htmlID=?,cssClass=?,position=?,path=?,aria=?,tooltip=?,tmplName=?,guestOnly=?,memberOnly=?,staffOnly=?,adminOnly=?").Where("miid=?").Prepare(),
 			insert:      acc.Insert(mi).Columns("mid, name, htmlID, cssClass, position, path, aria, tooltip, tmplName, guestOnly, memberOnly, staffOnly, adminOnly").Fields("?,?,?,?,?,?,?,?,?,?,?,?,?").Prepare(),
-			delete:      acc.Delete(mi).Where("miid = ?").Prepare(),
-			updateOrder: acc.Update(mi).Set("order = ?").Where("miid = ?").Prepare(),
+			delete:      acc.Delete(mi).Where("miid=?").Prepare(),
+			updateOrder: acc.Update(mi).Set("order=?").Where("miid=?").Prepare(),
 		}
 		return acc.FirstError()
 	})

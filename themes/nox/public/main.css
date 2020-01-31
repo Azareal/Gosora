@@ -1018,6 +1018,9 @@ input[type=checkbox]:not(:checked):hover + label .sel {
 .add_like:before, .remove_like:before {
 	content: "{{lang "topic.plus_one" . }}";
 }
+.remove_like:before {
+	content: "{{lang "topic.minus_one" . }}";
+}
 .button_container .open_edit:after, .edit_item:after {
 	content: "{{lang "topic.edit_button_text" . }}";
 }

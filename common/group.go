@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 
-	"github.com/Azareal/Gosora/query_gen"
+	qgen "github.com/Azareal/Gosora/query_gen"
 )
 
 var blankGroup = Group{ID: 0, Name: ""}
@@ -46,15 +46,15 @@ func init() {
 	DbInits.Add(func(acc *qgen.Accumulator) error {
 		ug := "users_groups"
 		groupStmts = GroupStmts{
-			updateGroup:      acc.Update(ug).Set("name = ?, tag = ?").Where("gid = ?").Prepare(),
-			updateGroupRank:  acc.Update(ug).Set("is_admin = ?, is_mod = ?, is_banned = ?").Where("gid = ?").Prepare(),
-			updateGroupPerms: acc.Update(ug).Set("permissions = ?").Where("gid = ?").Prepare(),
+			updateGroup:      acc.Update(ug).Set("name=?,tag=?").Where("gid=?").Prepare(),
+			updateGroupRank:  acc.Update(ug).Set("is_admin=?,is_mod=?,is_banned=?").Where("gid=?").Prepare(),
+			updateGroupPerms: acc.Update(ug).Set("permissions=?").Where("gid=?").Prepare(),
 		}
 		return acc.FirstError()
 	})
 }
 
-func (g *Group) ChangeRank(isAdmin bool, isMod bool, isBanned bool) (err error) {
+func (g *Group) ChangeRank(isAdmin, isMod, isBanned bool) (err error) {
 	_, err = groupStmts.updateGroupRank.Exec(isAdmin, isMod, isBanned, g.ID)
 	if err != nil {
 		return err
@@ -63,7 +63,7 @@ func (g *Group) ChangeRank(isAdmin bool, isMod bool, isBanned bool) (err error) 
 	return nil
 }
 
-func (g *Group) Update(name string, tag string) (err error) {
+func (g *Group) Update(name, tag string) (err error) {
 	_, err = groupStmts.updateGroup.Exec(name, tag, g.ID)
 	if err != nil {
 		return err
