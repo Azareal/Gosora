@@ -39,7 +39,8 @@ func createTables(adapter qgen.Adapter) (err error) {
 			// TODO: Drop these columns?
 			tC{"url_prefix", "varchar", 20, false, false, "''"},
 			tC{"url_name", "varchar", 100, false, false, "''"},
-			
+			//tC{"pub_key", "text", 0, false, false, "''"},
+
 			tC{"level", "smallint", 0, false, false, "0"},
 			tC{"score", "int", 0, false, false, "0"},
 			tC{"posts", "int", 0, false, false, "0"},
@@ -253,7 +254,7 @@ func createTables(adapter qgen.Adapter) (err error) {
 			tC{"sticky", "boolean", 0, false, false, "0"},
 			// TODO: Add an index for this
 			tC{"parentID", "int", 0, false, false, "2"},
-			tC{"ipaddress", "varchar", 200, false, false, "0.0.0.0.0"},
+			tC{"ip", "varchar", 200, false, false, "''"},
 			tC{"postCount", "int", 0, false, false, "1"},
 			tC{"likeCount", "int", 0, false, false, "0"},
 			tC{"attachCount", "int", 0, false, false, "0"},
@@ -286,7 +287,7 @@ func createTables(adapter qgen.Adapter) (err error) {
 			tC{"lastEdit", "int", 0, false, false, "0"},
 			tC{"lastEditBy", "int", 0, false, false, "0"},
 			tC{"lastUpdated", "datetime", 0, false, false, ""},
-			tC{"ipaddress", "varchar", 200, false, false, "0.0.0.0.0"},
+			tC{"ip", "varchar", 200, false, false, "''"},
 			tC{"likeCount", "int", 0, false, false, "0"},
 			tC{"attachCount", "int", 0, false, false, "0"},
 			tC{"words", "int", 0, false, false, "1"}, // ? - replies has a default of 1 and topics has 0? why?
@@ -357,7 +358,7 @@ func createTables(adapter qgen.Adapter) (err error) {
 			tC{"uid", "int", 0, false, false, ""}, // TODO: Make this a foreign key
 			tC{"option", "int", 0, false, false, "0"},
 			tC{"castAt", "createdAt", 0, false, false, ""},
-			tC{"ipaddress", "varchar", 200, false, false, "0.0.0.0.0"},
+			tC{"ip", "varchar", 200, false, false, "''"},
 		}, nil,
 	)
 
@@ -371,7 +372,7 @@ func createTables(adapter qgen.Adapter) (err error) {
 			tC{"createdBy", "int", 0, false, false, ""}, // TODO: Make this a foreign key
 			tC{"lastEdit", "int", 0, false, false, "0"},
 			tC{"lastEditBy", "int", 0, false, false, "0"},
-			tC{"ipaddress", "varchar", 200, false, false, "0.0.0.0.0"},
+			tC{"ip", "varchar", 200, false, false, "''"},
 		},
 		[]tblKey{
 			tblKey{"rid", "primary", "", false},
@@ -464,6 +465,7 @@ func createTables(adapter qgen.Adapter) (err error) {
 			tC{"elementType", "varchar", 50, false, false, ""}, /* topic, post (calling it post here to differentiate it from the 'reply' event), forum, user */
 			tC{"elementID", "int", 0, false, false, ""},        /* the ID of the element being acted upon */
 			tC{"createdAt", "createdAt", 0, false, false, ""},
+			tC{"extra", "varchar", 200, false, false, "''"},
 		},
 		[]tblKey{
 			tblKey{"asid", "primary", "", false},

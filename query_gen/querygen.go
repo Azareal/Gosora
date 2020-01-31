@@ -130,22 +130,26 @@ type Adapter interface {
 	BuildConn(config map[string]string) (*sql.DB, error)
 	DbVersion() string
 
-	DropTable(name string, table string) (string, error)
-	CreateTable(name string, table string, charset string, collation string, columns []DBTableColumn, keys []DBTableKey) (string, error)
+	DropTable(name, table string) (string, error)
+	CreateTable(name, table, charset, collation string, columns []DBTableColumn, keys []DBTableKey) (string, error)
 	// TODO: Some way to add indices and keys
 	// TODO: Test this
-	AddColumn(name string, table string, column DBTableColumn, key *DBTableKey) (string, error)
-	AddIndex(name string, table string, iname string, colname string) (string, error)
-	AddKey(name string, table string, column string, key DBTableKey) (string, error)
-	AddForeignKey(name string, table string, column string, ftable string, fcolumn string, cascade bool) (out string, e error)
-	SimpleInsert(name string, table string, columns string, fields string) (string, error)
+	AddColumn(name, table string, column DBTableColumn, key *DBTableKey) (string, error)
+	DropColumn(name, table, colname string) (string, error)
+	RenameColumn(name, table, oldName, newName string) (string, error)
+	ChangeColumn(name, table, colName string, col DBTableColumn) (string, error)
+	SetDefaultColumn(name, table, colName, colType, defaultStr string) (string, error)
+	AddIndex(name, table, iname, colname string) (string, error)
+	AddKey(name, table, column string, key DBTableKey) (string, error)
+	AddForeignKey(name, table, column, ftable, fcolumn string, cascade bool) (out string, e error)
+	SimpleInsert(name, table, columns, fields string) (string, error)
 	SimpleUpdate(b *updatePrebuilder) (string, error)
 	SimpleUpdateSelect(b *updatePrebuilder) (string, error) // ! Experimental
-	SimpleDelete(name string, table string, where string) (string, error)
-	Purge(name string, table string) (string, error)
-	SimpleSelect(name string, table string, columns string, where string, orderby string, limit string) (string, error)
+	SimpleDelete(name, table, where string) (string, error)
+	Purge(name, table string) (string, error)
+	SimpleSelect(name, table, columns, where, orderby, limit string) (string, error)
 	ComplexDelete(b *deletePrebuilder) (string, error)
-	SimpleLeftJoin(name string, table1 string, table2 string, columns string, joiners string, where string, orderby string, limit string) (string, error)
+	SimpleLeftJoin(name, table1, table2, columns, joiners, where, orderby, limit string) (string, error)
 	SimpleInnerJoin(string, string, string, string, string, string, string, string) (string, error)
 	SimpleInsertSelect(string, DBInsert, DBSelect) (string, error)
 	SimpleInsertLeftJoin(string, DBInsert, DBJoin) (string, error)
@@ -192,9 +196,9 @@ func PrepareMySQLUpsertCallback(db *sql.DB, query string) (*MySQLUpsertCallback,
 type LitStr string
 
 // TODO: Test this
-func InterfaceMapToInsertStrings(data map[string]interface{}, order string) (cols string, values string) {
-	var done = make(map[string]bool)
-	var addValue = func(value interface{}) {
+func InterfaceMapToInsertStrings(data map[string]interface{}, order string) (cols, values string) {
+	done := make(map[string]bool)
+	addValue := func(value interface{}) {
 		switch value := value.(type) {
 		case string:
 			values += "'" + strings.Replace(value, "'", "\\'", -1) + "',"

@@ -22,7 +22,7 @@ type Poll struct {
 	VoteCount    int
 }
 
-func (p *Poll) CastVote(optionIndex int, uid int, ip string) error {
+func (p *Poll) CastVote(optionIndex, uid int, ip string) error {
 	return Polls.CastVote(optionIndex, p.ID, uid, ip) // TODO: Move the query into a pollStmts rather than having it in the store
 }
 

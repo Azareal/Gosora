@@ -4,7 +4,10 @@ import (
 	"bufio"
 	"database/sql"
 	"strconv"
+	"strings"
+	"unicode"
 
+	meta "github.com/Azareal/Gosora/common/meta"
 	qgen "github.com/Azareal/Gosora/query_gen"
 )
 
@@ -43,6 +46,7 @@ func init() {
 	addPatch(26, patch26)
 	addPatch(27, patch27)
 	addPatch(28, patch28)
+	addPatch(29, patch29)
 }
 
 func patch0(scanner *bufio.Scanner) (err error) {
@@ -749,4 +753,108 @@ func patch27(scanner *bufio.Scanner) error {
 
 func patch28(scanner *bufio.Scanner) error {
 	return execStmt(qgen.Builder.AddColumn("users", tC{"enable_embeds", "int", 0, false, false, "-1"}, nil))
+}
+
+// The word counter might run into problems with some languages where words aren't as obviously demarcated, I would advise turning it off in those cases, or if it becomes annoying in general, really.
+func WordCount(input string) (count int) {
+	input = strings.TrimSpace(input)
+	if input == "" {
+		return 0
+	}
+
+	var inSpace bool
+	for _, value := range input {
+		if unicode.IsSpace(value) || unicode.IsPunct(value) {
+			if !inSpace {
+				inSpace = true
+			}
+		} else if inSpace {
+			count++
+			inSpace = false
+		}
+	}
+
+	return count + 1
+}
+
+func patch29(scanner *bufio.Scanner) error {
+	f := func(tbl, idCol string) error {
+		return acc().Select(tbl).Cols(idCol + ",content").Each(func(rows *sql.Rows) error {
+			var id int
+			var content string
+			err := rows.Scan(&id, &content)
+			if err != nil {
+				return err
+			}
+			_, err = acc().Update(tbl).Set("words=?").Where(idCol+"=?").Exec(WordCount(content), id)
+			return err
+		})
+	}
+	err := f("topics", "tid")
+	if err != nil {
+		return err
+	}
+	err = f("replies", "rid")
+	if err != nil {
+		return err
+	}
+
+	meta, err := meta.NewDefaultMetaStore(acc())
+	if err != nil {
+		return err
+	}
+	err = meta.Set("sched", "recalc")
+	if err != nil {
+		return err
+	}
+
+	fixCol := func(tbl string) error {
+		//err := execStmt(qgen.Builder.RenameColumn(tbl, "ipaddress","ip"))
+		err := execStmt(qgen.Builder.ChangeColumn(tbl, "ipaddress", tC{"ip", "varchar", 200, false, false, "''"}))
+		if err != nil {
+			return err
+		}
+		return execStmt(qgen.Builder.SetDefaultColumn(tbl, "ip", "varchar", ""))
+	}
+
+	err = fixCol("topics")
+	if err != nil {
+		return err
+	}
+	err = fixCol("replies")
+	if err != nil {
+		return err
+	}
+	err = fixCol("polls_votes")
+	if err != nil {
+		return err
+	}
+	err = fixCol("users_replies")
+	if err != nil {
+		return err
+	}
+	err = execStmt(qgen.Builder.SetDefaultColumn("users", "last_ip", "varchar", ""))
+	if err != nil {
+		return err
+	}
+
+	err = execStmt(qgen.Builder.SetDefaultColumn("replies", "lastEdit", "int", "0"))
+	if err != nil {
+		return err
+	}
+	err = execStmt(qgen.Builder.SetDefaultColumn("replies", "lastEditBy", "int", "0"))
+	if err != nil {
+		return err
+	}
+	err = execStmt(qgen.Builder.SetDefaultColumn("users_replies", "lastEdit", "int", "0"))
+	if err != nil {
+		return err
+	}
+	err = execStmt(qgen.Builder.SetDefaultColumn("users_replies", "lastEditBy", "int", "0"))
+	if err != nil {
+		return err
+	}
+
+	return execStmt(qgen.Builder.AddColumn("activity_stream", tC{"extra", "varchar", 200, false, false, "''"}, nil))
+
 }

@@ -3,8 +3,8 @@ package common
 import (
 	"database/sql"
 	"errors"
-	"strings"
 	"os"
+	"strings"
 
 	qgen "github.com/Azareal/Gosora/query_gen"
 )
@@ -28,12 +28,12 @@ type AttachmentStore interface {
 	MiniGetList(originTable string, originID int) (alist []*MiniAttachment, err error)
 	BulkMiniGetList(originTable string, ids []int) (amap map[int][]*MiniAttachment, err error)
 	Add(sectionID int, sectionTable string, originID int, originTable string, uploadedBy int, path, extra string) (int, error)
-	MoveTo(sectionID int, originID int, originTable string) error
+	MoveTo(sectionID, originID int, originTable string) error
 	MoveToByExtra(sectionID int, originTable, extra string) error
 	Count() int
 	CountIn(originTable string, oid int) int
 	CountInPath(path string) int
-	Delete(aid int) error
+	Delete(id int) error
 }
 
 type DefaultAttachmentStore struct {
@@ -55,10 +55,10 @@ func NewDefaultAttachmentStore(acc *qgen.Accumulator) (*DefaultAttachmentStore, 
 		getByObj:    acc.Select(a).Columns("attachID, sectionID, uploadedBy, path, extra").Where("originTable = ? AND originID = ?").Prepare(),
 		add:         acc.Insert(a).Columns("sectionID, sectionTable, originID, originTable, uploadedBy, path, extra").Fields("?,?,?,?,?,?,?").Prepare(),
 		count:       acc.Count(a).Prepare(),
-		countIn:     acc.Count(a).Where("originTable = ? and originID = ?").Prepare(),
+		countIn:     acc.Count(a).Where("originTable=? and originID=?").Prepare(),
 		countInPath: acc.Count(a).Where("path = ?").Prepare(),
-		move:        acc.Update(a).Set("sectionID = ?").Where("originID = ? AND originTable = ?").Prepare(),
-		moveByExtra: acc.Update(a).Set("sectionID = ?").Where("originTable = ? AND extra = ?").Prepare(),
+		move:        acc.Update(a).Set("sectionID=?").Where("originID=? AND originTable=?").Prepare(),
+		moveByExtra: acc.Update(a).Set("sectionID=?").Where("originTable=? AND extra=?").Prepare(),
 		delete:      acc.Delete(a).Where("attachID=?").Prepare(),
 	}, acc.FirstError()
 }
@@ -151,7 +151,7 @@ func (s *DefaultAttachmentStore) Add(sectionID int, sectionTable string, originI
 	return int(lid), err
 }
 
-func (s *DefaultAttachmentStore) MoveTo(sectionID int, originID int, originTable string) error {
+func (s *DefaultAttachmentStore) MoveTo(sectionID, originID int, originTable string) error {
 	_, err := s.move.Exec(sectionID, originID, originTable)
 	return err
 }
@@ -185,8 +185,8 @@ func (s *DefaultAttachmentStore) CountInPath(path string) (count int) {
 	return count
 }
 
-func (s *DefaultAttachmentStore) Delete(aid int) error {
-	_, err := s.delete.Exec(aid)
+func (s *DefaultAttachmentStore) Delete(id int) error {
+	_, err := s.delete.Exec(id)
 	return err
 }
 
@@ -208,6 +208,6 @@ func DeleteAttachment(aid int) error {
 			return err
 		}
 	}
-	
+
 	return nil
 }

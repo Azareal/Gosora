@@ -42,7 +42,7 @@ func (a *PgsqlAdapter) DbVersion() string {
 	return "SELECT version()"
 }
 
-func (a *PgsqlAdapter) DropTable(name string, table string) (string, error) {
+func (a *PgsqlAdapter) DropTable(name, table string) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
@@ -53,7 +53,7 @@ func (a *PgsqlAdapter) DropTable(name string, table string) (string, error) {
 
 // TODO: Implement this
 // We may need to change the CreateTable API to better suit PGSQL and the other database drivers which are coming up
-func (a *PgsqlAdapter) CreateTable(name string, table string, charset string, collation string, columns []DBTableColumn, keys []DBTableKey) (string, error) {
+func (a *PgsqlAdapter) CreateTable(name, table, charset, collation string, columns []DBTableColumn, keys []DBTableKey) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
@@ -112,7 +112,7 @@ func (a *PgsqlAdapter) CreateTable(name string, table string, charset string, co
 }
 
 // TODO: Implement this
-func (a *PgsqlAdapter) AddColumn(name string, table string, column DBTableColumn, key *DBTableKey) (string, error) {
+func (a *PgsqlAdapter) AddColumn(name, table string, column DBTableColumn, key *DBTableKey) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
@@ -120,8 +120,31 @@ func (a *PgsqlAdapter) AddColumn(name string, table string, column DBTableColumn
 }
 
 // TODO: Implement this
+func (a *PgsqlAdapter) DropColumn(name, table, colName string) (string, error) {
+	return "", errors.New("not implemented")
+}
+
+// TODO: Implement this
+func (a *PgsqlAdapter) RenameColumn(name, table, oldName, newName string) (string, error) {
+	return "", errors.New("not implemented")
+}
+
+// TODO: Implement this
+func (a *PgsqlAdapter) ChangeColumn(name, table, colName string, col DBTableColumn) (string, error) {
+	return "", errors.New("not implemented")
+}
+
+// TODO: Implement this
+func (a *PgsqlAdapter) SetDefaultColumn(name, table, colName, colType, defaultStr string) (string, error) {
+	if colType == "text" {
+		return "", errors.New("text fields cannot have default values")
+	}
+	return "", errors.New("not implemented")
+}
+
+// TODO: Implement this
 // TODO: Test to make sure everything works here
-func (a *PgsqlAdapter) AddIndex(name string, table string, iname string, colname string) (string, error) {
+func (a *PgsqlAdapter) AddIndex(name, table, iname, colname string) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
@@ -136,7 +159,7 @@ func (a *PgsqlAdapter) AddIndex(name string, table string, iname string, colname
 
 // TODO: Implement this
 // TODO: Test to make sure everything works here
-func (a *PgsqlAdapter) AddKey(name string, table string, column string, key DBTableKey) (string, error) {
+func (a *PgsqlAdapter) AddKey(name, table, column string, key DBTableKey) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
@@ -148,7 +171,7 @@ func (a *PgsqlAdapter) AddKey(name string, table string, column string, key DBTa
 
 // TODO: Implement this
 // TODO: Test to make sure everything works here
-func (a *PgsqlAdapter) AddForeignKey(name string, table string, column string, ftable string, fcolumn string, cascade bool) (out string, e error) {
+func (a *PgsqlAdapter) AddForeignKey(name, table, column, ftable, fcolumn string, cascade bool) (out string, e error) {
 	var c = func(str string, val bool) {
 		if e != nil || !val {
 			return
@@ -167,7 +190,7 @@ func (a *PgsqlAdapter) AddForeignKey(name string, table string, column string, f
 
 // TODO: Test this
 // ! We need to get the last ID out of this somehow, maybe add returning to every query? Might require some sort of wrapper over the sql statements
-func (a *PgsqlAdapter) SimpleInsert(name string, table string, columns string, fields string) (string, error) {
+func (a *PgsqlAdapter) SimpleInsert(name, table, columns, fields string) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
@@ -225,7 +248,7 @@ func (a *PgsqlAdapter) SimpleReplace(name, table, columns, fields string) (strin
 }
 
 // TODO: Implement this
-func (a *PgsqlAdapter) SimpleUpsert(name string, table string, columns string, fields string, where string) (string, error) {
+func (a *PgsqlAdapter) SimpleUpsert(name, table, columns, fields, where string) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
@@ -307,7 +330,7 @@ func (a *PgsqlAdapter) SimpleUpdateSelect(up *updatePrebuilder) (string, error) 
 }
 
 // TODO: Implement this
-func (a *PgsqlAdapter) SimpleDelete(name string, table string, where string) (string, error) {
+func (a *PgsqlAdapter) SimpleDelete(name, table, where string) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
@@ -330,7 +353,7 @@ func (a *PgsqlAdapter) ComplexDelete(b *deletePrebuilder) (string, error) {
 
 // TODO: Implement this
 // We don't want to accidentally wipe tables, so we'll have a separate method for purging tables instead
-func (a *PgsqlAdapter) Purge(name string, table string) (string, error) {
+func (a *PgsqlAdapter) Purge(name, table string) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
@@ -338,7 +361,7 @@ func (a *PgsqlAdapter) Purge(name string, table string) (string, error) {
 }
 
 // TODO: Implement this
-func (a *PgsqlAdapter) SimpleSelect(name string, table string, columns string, where string, orderby string, limit string) (string, error) {
+func (a *PgsqlAdapter) SimpleSelect(name, table, columns, where, orderby, limit string) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
@@ -360,7 +383,7 @@ func (a *PgsqlAdapter) ComplexSelect(prebuilder *selectPrebuilder) (string, erro
 }
 
 // TODO: Implement this
-func (a *PgsqlAdapter) SimpleLeftJoin(name string, table1 string, table2 string, columns string, joiners string, where string, orderby string, limit string) (string, error) {
+func (a *PgsqlAdapter) SimpleLeftJoin(name, table1, table2, columns, joiners, where, orderby, limit string) (string, error) {
 	if table1 == "" {
 		return "", errors.New("You need a name for the left table")
 	}
@@ -377,7 +400,7 @@ func (a *PgsqlAdapter) SimpleLeftJoin(name string, table1 string, table2 string,
 }
 
 // TODO: Implement this
-func (a *PgsqlAdapter) SimpleInnerJoin(name string, table1 string, table2 string, columns string, joiners string, where string, orderby string, limit string) (string, error) {
+func (a *PgsqlAdapter) SimpleInnerJoin(name, table1, table2, columns, joiners, where, orderby, limit string) (string, error) {
 	if table1 == "" {
 		return "", errors.New("You need a name for the left table")
 	}
@@ -409,7 +432,7 @@ func (a *PgsqlAdapter) SimpleInsertInnerJoin(name string, ins DBInsert, sel DBJo
 }
 
 // TODO: Implement this
-func (a *PgsqlAdapter) SimpleCount(name string, table string, where string, limit string) (string, error) {
+func (a *PgsqlAdapter) SimpleCount(name, table, where, limit string) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
@@ -471,7 +494,7 @@ func _gen_pgsql() (err error) {
 }
 
 // Internal methods, not exposed in the interface
-func (a *PgsqlAdapter) pushStatement(name string, stype string, q string) {
+func (a *PgsqlAdapter) pushStatement(name, stype, q string) {
 	if name == "" {
 		return
 	}

@@ -92,7 +92,7 @@ func (a *MysqlAdapter) DropTable(name, table string) (string, error) {
 	return q, nil
 }
 
-func (a *MysqlAdapter) CreateTable(name string, table string, charset string, collation string, columns []DBTableColumn, keys []DBTableKey) (string, error) {
+func (a *MysqlAdapter) CreateTable(name, table, charset, collation string, columns []DBTableColumn, keys []DBTableKey) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
@@ -143,53 +143,95 @@ func (a *MysqlAdapter) CreateTable(name string, table string, charset string, co
 	return q, nil
 }
 
-func (a *MysqlAdapter) parseColumn(column DBTableColumn) (col DBTableColumn, size string, end string) {
-	// Make it easier to support Cassandra in the future
-	if column.Type == "createdAt" {
-		column.Type = "datetime"
-		// MySQL doesn't support this x.x
-		/*if column.Default == "" {
-			column.Default = "UTC_TIMESTAMP()"
-		}*/
-	} else if column.Type == "json" {
-		column.Type = "text"
+func (a *MysqlAdapter) DropColumn(name, table, colName string) (string, error) {
+	q := "ALTER TABLE `" + table + "` DROP COLUMN `" + colName + "`;"
+	a.pushStatement(name, "drop-column", q)
+	return q, nil
+}
+
+// ! Currently broken in MariaDB. Planned.
+func (a *MysqlAdapter) RenameColumn(name, table, oldName, newName string) (string, error) {
+	q := "ALTER TABLE `" + table + "` RENAME COLUMN `" + oldName + "` TO `" + newName + "`;"
+	a.pushStatement(name, "rename-column", q)
+	return q, nil
+}
+
+func (a *MysqlAdapter) ChangeColumn(name, table, colName string, col DBTableColumn) (string, error) {
+	col.Default = ""
+	col, size, end := a.parseColumn(col)
+	q := "ALTER TABLE `" + table + "` CHANGE COLUMN `" + colName + "` `" + col.Name + "` " + col.Type + size + end
+	a.pushStatement(name, "change-column", q)
+	return q, nil
+}
+
+func (a *MysqlAdapter) SetDefaultColumn(name, table, colName, colType, defaultStr string) (string, error) {
+	if colType == "text" {
+		return "", errors.New("text fields cannot have default values")
 	}
-	if column.Size > 0 {
-		size = "(" + strconv.Itoa(column.Size) + ")"
+	if defaultStr == "" {
+		defaultStr = "''"
+	}
+	// TODO: Exclude the other variants of text like mediumtext and longtext too
+	expr := ""
+	/*if colType == "datetime" && defaultStr[len(defaultStr)-1] == ')' {
+		end += defaultStr
+	} else */if a.stringyType(colType) && defaultStr != "''" {
+		expr += "'" + defaultStr + "'"
+	} else {
+		expr += defaultStr
+	}
+	q := "ALTER TABLE `" + table + "` ALTER COLUMN `" + colName + "` SET DEFAULT " + expr + ";"
+	a.pushStatement(name, "set-default-column", q)
+	return q, nil
+}
+
+func (a *MysqlAdapter) parseColumn(col DBTableColumn) (ocol DBTableColumn, size, end string) {
+	// Make it easier to support Cassandra in the future
+	if col.Type == "createdAt" {
+		col.Type = "datetime"
+		// MySQL doesn't support this x.x
+		/*if col.Default == "" {
+			col.Default = "UTC_TIMESTAMP()"
+		}*/
+	} else if col.Type == "json" {
+		col.Type = "text"
+	}
+	if col.Size > 0 {
+		size = "(" + strconv.Itoa(col.Size) + ")"
 	}
 
 	// TODO: Exclude the other variants of text like mediumtext and longtext too
-	if column.Default != "" && column.Type != "text" {
+	if col.Default != "" && col.Type != "text" {
 		end = " DEFAULT "
-		/*if column.Type == "datetime" && column.Default[len(column.Default)-1] == ')' {
+		/*if col.Type == "datetime" && col.Default[len(col.Default)-1] == ')' {
 			end += column.Default
-		} else */if a.stringyType(column.Type) && column.Default != "''" {
-			end += "'" + column.Default + "'"
+		} else */if a.stringyType(col.Type) && col.Default != "''" {
+			end += "'" + col.Default + "'"
 		} else {
-			end += column.Default
+			end += col.Default
 		}
 	}
 
-	if column.Null {
+	if col.Null {
 		end += " null"
 	} else {
 		end += " not null"
 	}
-	if column.AutoIncrement {
+	if col.AutoIncrement {
 		end += " AUTO_INCREMENT"
 	}
-	return column, size, end
+	return col, size, end
 }
 
 // TODO: Support AFTER column
 // TODO: Test to make sure everything works here
-func (a *MysqlAdapter) AddColumn(name string, table string, column DBTableColumn, key *DBTableKey) (string, error) {
+func (a *MysqlAdapter) AddColumn(name, table string, col DBTableColumn, key *DBTableKey) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
 
-	column, size, end := a.parseColumn(column)
-	q := "ALTER TABLE `" + table + "` ADD COLUMN " + "`" + column.Name + "` " + column.Type + size + end
+	col, size, end := a.parseColumn(col)
+	q := "ALTER TABLE `" + table + "` ADD COLUMN " + "`" + col.Name + "` " + col.Type + size + end
 
 	if key != nil {
 		q += " " + key.Type
@@ -225,7 +267,7 @@ func (a *MysqlAdapter) AddIndex(name, table, iname, colname string) (string, err
 
 // TODO: Test to make sure everything works here
 // Only supports FULLTEXT right now
-func (a *MysqlAdapter) AddKey(name string, table string, column string, key DBTableKey) (string, error) {
+func (a *MysqlAdapter) AddKey(name, table, column string, key DBTableKey) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
@@ -241,7 +283,7 @@ func (a *MysqlAdapter) AddKey(name string, table string, column string, key DBTa
 	return q, nil
 }
 
-func (a *MysqlAdapter) AddForeignKey(name string, table string, column string, ftable string, fcolumn string, cascade bool) (out string, e error) {
+func (a *MysqlAdapter) AddForeignKey(name, table, column, ftable, fcolumn string, cascade bool) (out string, e error) {
 	c := func(str string, val bool) {
 		if e != nil || !val {
 			return
@@ -338,7 +380,7 @@ func (a *MysqlAdapter) SimpleReplace(name, table, columns, fields string) (strin
 	for _, field := range processFields(fields) {
 		q += field.Name + ","
 	}
-	q = q[0 : len(q)-1] + ")"
+	q = q[0:len(q)-1] + ")"
 
 	// TODO: Shunt the table name logic and associated stmt list up to the a higher layer to reduce the amount of unnecessary overhead in the builder / accumulator
 	a.pushStatement(name, "replace", q)
@@ -362,8 +404,7 @@ func (a *MysqlAdapter) SimpleUpsert(name, table, columns, fields, where string) 
 	q := "INSERT INTO `" + table + "`("
 	parsedFields := processFields(fields)
 
-	var insertColumns string
-	var insertValues string
+	var insertColumns, insertValues string
 	setBit := ") ON DUPLICATE KEY UPDATE "
 
 	for columnID, col := range processColumns(columns) {
@@ -667,7 +708,7 @@ func (a *MysqlAdapter) complexSelect(preBuilder *selectPrebuilder, sb *strings.B
 	return nil
 }
 
-func (a *MysqlAdapter) SimpleLeftJoin(name string, table1 string, table2 string, columns string, joiners string, where string, orderby string, limit string) (string, error) {
+func (a *MysqlAdapter) SimpleLeftJoin(name, table1, table2, columns, joiners, where, orderby, limit string) (string, error) {
 	if table1 == "" {
 		return "", errors.New("You need a name for the left table")
 	}
@@ -704,7 +745,7 @@ func (a *MysqlAdapter) SimpleLeftJoin(name string, table1 string, table2 string,
 	return q, nil
 }
 
-func (a *MysqlAdapter) SimpleInnerJoin(name string, table1 string, table2 string, columns string, joiners string, where string, orderby string, limit string) (string, error) {
+func (a *MysqlAdapter) SimpleInnerJoin(name, table1, table2, columns, joiners, where, orderby, limit string) (string, error) {
 	if table1 == "" {
 		return "", errors.New("You need a name for the left table")
 	}

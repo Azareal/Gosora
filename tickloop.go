@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"errors"
 	"log"
 	"strconv"
 	"sync/atomic"
@@ -10,6 +9,7 @@ import (
 
 	c "github.com/Azareal/Gosora/common"
 	qgen "github.com/Azareal/Gosora/query_gen"
+	"github.com/pkg/errors"
 )
 
 // TODO: Name the tasks so we can figure out which one it was when something goes wrong? Or maybe toss it up WithStack down there?
@@ -189,7 +189,7 @@ func dailies() {
 
 	if c.Config.DisablePostIP {
 		f := func(tbl string) {
-			_, err := qgen.NewAcc().Update(tbl).Set("ipaddress='0'").Where("ipaddress!='0'").Exec()
+			_, err := qgen.NewAcc().Update(tbl).Set("ip='0'").Where("ip!='0'").Exec()
 			if err != nil {
 				c.LogError(err)
 			}
@@ -200,7 +200,7 @@ func dailies() {
 	} else if c.Config.PostIPCutoff > -1 {
 		// TODO: Use unixtime to remove this MySQLesque logic?
 		f := func(tbl string) {
-			_, err := qgen.NewAcc().Update(tbl).Set("ipaddress='0'").DateOlderThan("createdAt", c.Config.PostIPCutoff, "day").Where("ipaddress!='0'").Exec()
+			_, err := qgen.NewAcc().Update(tbl).Set("ip='0'").DateOlderThan("createdAt", c.Config.PostIPCutoff, "day").Where("ip!='0'").Exec()
 			if err != nil {
 				c.LogError(err)
 			}
@@ -211,13 +211,13 @@ func dailies() {
 	}
 
 	if c.Config.DisablePollIP {
-		_, err := qgen.NewAcc().Update("polls_votes").Set("ipaddress='0'").Where("ipaddress!='0'").Exec()
+		_, err := qgen.NewAcc().Update("polls_votes").Set("ip='0'").Where("ip!='0'").Exec()
 		if err != nil {
 			c.LogError(err)
 		}
 	} else if c.Config.PollIPCutoff > -1 {
 		// TODO: Use unixtime to remove this MySQLesque logic?
-		_, err := qgen.NewAcc().Update("polls_votes").Set("ipaddress='0'").DateOlderThan("castAt", c.Config.PollIPCutoff, "day").Where("ipaddress!='0'").Exec()
+		_, err := qgen.NewAcc().Update("polls_votes").Set("ip='0'").DateOlderThan("castAt", c.Config.PollIPCutoff, "day").Where("ip!='0'").Exec()
 		if err != nil {
 			c.LogError(err)
 		}
@@ -237,7 +237,7 @@ func dailies() {
 			c.LogError(err)
 		}*/
 		mon := time.Now().Month()
-		_, err := qgen.NewAcc().Update("users").Set("last_ip=0").Where("last_ip!=0 AND last_ip NOT LIKE '" + strconv.Itoa(int(mon)) + "-%'").Exec()
+		_, err := qgen.NewAcc().Update("users").Set("last_ip=0").Where("last_ip!='0' AND last_ip NOT LIKE '" + strconv.Itoa(int(mon)) + "-%'").Exec()
 		if err != nil {
 			c.LogError(err)
 		}
@@ -249,4 +249,48 @@ func dailies() {
 			c.LogError(err)
 		}
 	}
+}
+
+func sched() error {
+	schedStr, err := c.Meta.Get("sched")
+	// TODO: Report this error back correctly...
+	if err != nil && err != sql.ErrNoRows {
+		return errors.WithStack(err)
+	}
+
+	if schedStr == "recalc" {
+		log.Print("Cleaning up orphaned data.")
+
+		count, err := c.Recalc.Replies()
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		log.Printf("Deleted %d orphaned replies.", count)
+
+		count, err = c.Recalc.Subscriptions()
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		log.Printf("Deleted %d orphaned subscriptions.", count)
+
+		count, err = c.Recalc.ActivityStream()
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		log.Printf("Deleted %d orphaned activity stream items.", count)
+
+		err = c.Recalc.Users()
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		log.Print("Recalculated user post stats.")
+
+		count, err = c.Recalc.Attachments()
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		log.Printf("Deleted %d orphaned attachments.", count)
+	}
+
+	return nil
 }

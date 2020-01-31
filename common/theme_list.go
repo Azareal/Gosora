@@ -15,7 +15,7 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/Azareal/Gosora/query_gen"
+	qgen "github.com/Azareal/Gosora/query_gen"
 )
 
 // TODO: Something more thread-safe
@@ -44,8 +44,8 @@ func init() {
 		t := "themes"
 		themeStmts = ThemeStmts{
 			getAll:    acc.Select(t).Columns("uname,default").Prepare(),
-			isDefault: acc.Select(t).Columns("default").Where("uname = ?").Prepare(),
-			update:    acc.Update(t).Set("default = ?").Where("uname = ?").Prepare(),
+			isDefault: acc.Select(t).Columns("default").Where("uname=?").Prepare(),
+			update:    acc.Update(t).Set("default=?").Where("uname=?").Prepare(),
 			add:       acc.Insert(t).Columns("uname,default").Fields("?,?").Prepare(),
 		}
 		return acc.FirstError()

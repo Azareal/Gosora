@@ -3,6 +3,7 @@ package common
 import (
 	"database/sql"
 	"html"
+	"strconv"
 	"time"
 
 	qgen "github.com/Azareal/Gosora/query_gen"
@@ -45,9 +46,20 @@ func BlankProfileReply(id int) *ProfileReply {
 }
 
 // TODO: Write tests for this
-// TODO: Remove alerts.
 func (r *ProfileReply) Delete() error {
 	_, err := profileReplyStmts.delete.Exec(r.ID)
+	if err != nil {
+		return err
+	}
+	// TODO: Better coupling between the two paramsextra queries
+	aids, err := Activity.AidsByParamsExtra("reply", r.ParentID, "user", strconv.Itoa(r.ID))
+	if err != nil {
+		return err
+	}
+	for _, aid := range aids {
+		DismissAlert(r.ParentID, aid)
+	}
+	err = Activity.DeleteByParamsExtra("reply", r.ParentID, "user", strconv.Itoa(r.ID))
 	return err
 }
 

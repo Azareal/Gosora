@@ -791,7 +791,7 @@ func BenchmarkQueryTopicParallel(b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
 		var tu c.TopicUser
 		for pb.Next() {
-			err := db.QueryRow("select topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ipaddress, topics.views, topics.postCount, topics.likeCount, users.name, users.avatar, users.group, users.level from topics left join users ON topics.createdBy = users.uid where tid = ?", 1).Scan(&tu.Title, &tu.Content, &tu.CreatedBy, &tu.CreatedAt, &tu.IsClosed, &tu.Sticky, &tu.ParentID, &tu.IP, &tu.ViewCount, &tu.PostCount, &tu.LikeCount, &tu.CreatedByName, &tu.Avatar, &tu.Group, &tu.Level)
+			err := db.QueryRow("select topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ip, topics.views, topics.postCount, topics.likeCount, users.name, users.avatar, users.group, users.level from topics left join users ON topics.createdBy = users.uid where tid = ?", 1).Scan(&tu.Title, &tu.Content, &tu.CreatedBy, &tu.CreatedAt, &tu.IsClosed, &tu.Sticky, &tu.ParentID, &tu.IP, &tu.ViewCount, &tu.PostCount, &tu.LikeCount, &tu.CreatedByName, &tu.Avatar, &tu.Group, &tu.Level)
 			if err == ErrNoRows {
 				log.Fatal("No rows found!")
 				return
@@ -812,7 +812,7 @@ func BenchmarkQueryPreparedTopicParallel(b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
 		var tu c.TopicUser
 
-		getTopicUser, err := qgen.Builder.SimpleLeftJoin("topics", "users", "topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ipaddress, topics.postCount, topics.likeCount, users.name, users.avatar, users.group, users.level", "topics.createdBy = users.uid", "tid = ?", "", "")
+		getTopicUser, err := qgen.Builder.SimpleLeftJoin("topics", "users", "topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ip, topics.postCount, topics.likeCount, users.name, users.avatar, users.group, users.level", "topics.createdBy = users.uid", "tid = ?", "", "")
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -873,7 +873,7 @@ func BenchmarkQueriesSerial(b *testing.B) {
 	var tu c.TopicUser
 	b.Run("topic", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			err := db.QueryRow("select topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ipaddress, topics.postCount, topics.likeCount, users.name, users.avatar, users.group, users.level from topics left join users ON topics.createdBy = users.uid where tid = ?", 1).Scan(&tu.Title, &tu.Content, &tu.CreatedBy, &tu.CreatedAt, &tu.IsClosed, &tu.Sticky, &tu.ParentID, &tu.IP, &tu.PostCount, &tu.LikeCount, &tu.CreatedByName, &tu.Avatar, &tu.Group, &tu.Level)
+			err := db.QueryRow("select topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ip, topics.postCount, topics.likeCount, users.name, users.avatar, users.group, users.level from topics left join users ON topics.createdBy = users.uid where tid = ?", 1).Scan(&tu.Title, &tu.Content, &tu.CreatedBy, &tu.CreatedAt, &tu.IsClosed, &tu.Sticky, &tu.ParentID, &tu.IP, &tu.PostCount, &tu.LikeCount, &tu.CreatedByName, &tu.Avatar, &tu.Group, &tu.Level)
 			if err == ErrNoRows {
 				b.Fatal("No rows found!")
 				return
@@ -885,7 +885,7 @@ func BenchmarkQueriesSerial(b *testing.B) {
 	})
 	b.Run("topic_replies", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			rows, err := db.Query("select replies.rid, replies.content, replies.createdBy, replies.createdAt, replies.lastEdit, replies.lastEditBy, users.avatar, users.name, users.is_super_admin, users.group, users.level, replies.ipaddress from replies left join users ON replies.createdBy = users.uid where tid = ?", 1)
+			rows, err := db.Query("select replies.rid, replies.content, replies.createdBy, replies.createdAt, replies.lastEdit, replies.lastEditBy, users.avatar, users.name, users.is_super_admin, users.group, users.level, replies.ip from replies left join users ON replies.createdBy = users.uid where tid = ?", 1)
 			if err != nil {
 				b.Fatal(err)
 				return
@@ -907,7 +907,7 @@ func BenchmarkQueriesSerial(b *testing.B) {
 	var group int
 	b.Run("topic_replies_scan", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			rows, err := db.Query("select replies.rid, replies.content, replies.createdBy, replies.createdAt, replies.lastEdit, replies.lastEditBy, users.avatar, users.name, users.is_super_admin, users.group, users.level, replies.ipaddress from replies left join users ON replies.createdBy = users.uid where tid = ?", 1)
+			rows, err := db.Query("select replies.rid, replies.content, replies.createdBy, replies.createdAt, replies.lastEdit, replies.lastEditBy, users.avatar, users.name, users.is_super_admin, users.group, users.level, replies.ip from replies left join users ON replies.createdBy = users.uid where tid = ?", 1)
 			if err != nil {
 				b.Fatal(err)
 				return

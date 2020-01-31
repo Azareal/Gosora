@@ -26,9 +26,9 @@ type WordFilterStore interface {
 	ReloadAll() error
 	GetAll() (filters map[int]*WordFilter, err error)
 	Get(id int) (*WordFilter, error)
-	Create(find string, replace string) (int, error)
+	Create(find, replace string) (int, error)
 	Delete(id int) error
-	Update(id int, find string, replace string) error
+	Update(id int, find, replace string) error
 	Length() int
 	EstCount() int
 	Count() (count int)
@@ -49,10 +49,10 @@ func NewDefaultWordFilterStore(acc *qgen.Accumulator) (*DefaultWordFilterStore, 
 	wf := "word_filters"
 	store := &DefaultWordFilterStore{
 		getAll: acc.Select(wf).Columns("wfid,find,replacement").Prepare(),
-		get:    acc.Select(wf).Columns("find,replacement").Where("wfid = ?").Prepare(),
+		get:    acc.Select(wf).Columns("find,replacement").Where("wfid=?").Prepare(),
 		create: acc.Insert(wf).Columns("find,replacement").Fields("?,?").Prepare(),
-		delete: acc.Delete(wf).Where("wfid = ?").Prepare(),
-		update: acc.Update(wf).Set("find = ?, replacement = ?").Where("wfid = ?").Prepare(),
+		delete: acc.Delete(wf).Where("wfid=?").Prepare(),
+		update: acc.Update(wf).Set("find=?,replacement=?").Where("wfid=?").Prepare(),
 		count:  acc.Count(wf).Prepare(),
 	}
 	// TODO: Should we initialise this elsewhere?
@@ -109,7 +109,7 @@ func (s *DefaultWordFilterStore) Get(id int) (*WordFilter, error) {
 }
 
 // Create adds a new word filter to the database and refreshes the memory cache
-func (s *DefaultWordFilterStore) Create(find string, replace string) (int, error) {
+func (s *DefaultWordFilterStore) Create(find, replace string) (int, error) {
 	res, err := s.create.Exec(find, replace)
 	if err != nil {
 		return 0, err
@@ -130,7 +130,7 @@ func (s *DefaultWordFilterStore) Delete(id int) error {
 	return s.ReloadAll()
 }
 
-func (s *DefaultWordFilterStore) Update(id int, find string, replace string) error {
+func (s *DefaultWordFilterStore) Update(id int, find, replace string) error {
 	_, err := s.update.Exec(find, replace, id)
 	if err != nil {
 		return err

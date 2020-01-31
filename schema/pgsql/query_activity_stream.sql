@@ -6,5 +6,6 @@ CREATE TABLE "activity_stream" (
 	`elementType` varchar (50) not null,
 	`elementID` int not null,
 	`createdAt` timestamp not null,
+	`extra` varchar (200) DEFAULT '' not null,
 	primary key(`asid`)
 );

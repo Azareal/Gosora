@@ -12,7 +12,7 @@ var ErrExceededRateLimit = errors.New("You're exceeding a rate limit. Please wai
 
 // TODO: Persist rate limits to disk
 type RateLimiter interface {
-	LimitIP(limit string, ip string) error
+	LimitIP(limit, ip string) error
 	LimitUser(limit string, user int) error
 }
 
@@ -83,7 +83,7 @@ func NewDefaultRateLimiter() *DefaultRateLimiter {
 	}}
 }
 
-func (l *DefaultRateLimiter) LimitIP(limit string, ip string) error {
+func (l *DefaultRateLimiter) LimitIP(limit, ip string) error {
 	limiter, ok := l.limits[limit]
 	if !ok {
 		return ErrBadRateLimiter

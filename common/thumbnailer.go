@@ -31,12 +31,12 @@ func ThumbTask(thumbChan chan bool) {
 
 			// Has the avatar been removed or already been processed by the thumbnailer?
 			if len(u.RawAvatar) < 2 || u.RawAvatar[1] == '.' {
-				_, _ = acc.Delete("users_avatar_queue").Where("uid = ?").Run(uid)
+				_, _ = acc.Delete("users_avatar_queue").Where("uid=?").Run(uid)
 				return nil
 			}
 			_, err = os.Stat("./uploads/avatar_" + strconv.Itoa(u.ID) + u.RawAvatar)
 			if os.IsNotExist(err) {
-				_, _ = acc.Delete("users_avatar_queue").Where("uid = ?").Run(uid)
+				_, _ = acc.Delete("users_avatar_queue").Where("uid=?").Run(uid)
 				return nil
 			} else if err != nil {
 				return errors.WithStack(err)
@@ -63,7 +63,7 @@ func ThumbTask(thumbChan chan bool) {
 			if err != nil {
 				return errors.WithStack(err)
 			}
-			_, err = acc.Delete("users_avatar_queue").Where("uid = ?").Run(uid)
+			_, err = acc.Delete("users_avatar_queue").Where("uid=?").Run(uid)
 			return errors.WithStack(err)
 		})
 		if err != nil {
@@ -86,18 +86,18 @@ func ThumbTask(thumbChan chan bool) {
 var Thumbnailer ThumbnailerInt
 
 type ThumbnailerInt interface {
-	Resize(format string, inPath string, tmpPath string, outPath string, width int) error
+	Resize(format, inPath, tmpPath, outPath string, width int) error
 }
 
 type RezThumbnailer struct {
 }
 
-func (thumb *RezThumbnailer) Resize(format string, inPath string, tmpPath string, outPath string, width int) error {
+func (thumb *RezThumbnailer) Resize(format, inPath, tmpPath, outPath string, width int) error {
 	// TODO: Sniff the aspect ratio of the image and calculate the dest height accordingly, bug make sure it isn't excessively high
 	return nil
 }
 
-func (thumb *RezThumbnailer) resize(format string, inPath string, outPath string, width int, height int) error {
+func (thumb *RezThumbnailer) resize(format, inPath, outPath string, width, height int) error {
 	return nil
 }
 
@@ -109,7 +109,7 @@ func NewCaireThumbnailer() *CaireThumbnailer {
 	return &CaireThumbnailer{}
 }
 
-func precodeImage(format string, inPath string, tmpPath string) error {
+func precodeImage(format, inPath, tmpPath string) error {
 	imageFile, err := os.Open(inPath)
 	if err != nil {
 		return err
@@ -139,7 +139,7 @@ func precodeImage(format string, inPath string, tmpPath string) error {
 	return jpeg.Encode(outFile, img, nil)
 }
 
-func (thumb *CaireThumbnailer) Resize(format string, inPath string, tmpPath string, outPath string, width int) error {
+func (thumb *CaireThumbnailer) Resize(format, inPath, tmpPath, outPath string, width int) error {
 	err := precodeImage(format, inPath, tmpPath)
 	if err != nil {
 		return err

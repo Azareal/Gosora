@@ -28,6 +28,7 @@ import (
 	_ "github.com/Azareal/Gosora/extend"
 	co "github.com/Azareal/Gosora/common/counters"
 	p "github.com/Azareal/Gosora/common/phrases"
+	meta "github.com/Azareal/Gosora/common/meta"
 	"github.com/Azareal/Gosora/query_gen"
 	"github.com/Azareal/Gosora/routes"
 	"github.com/fsnotify/fsnotify"
@@ -264,6 +265,10 @@ func storeInit() (err error) {
 	}
 	// TODO: Let the admin choose other thumbnailers, maybe ones defined in plugins
 	c.Thumbnailer = c.NewCaireThumbnailer()
+	c.Recalc, err = c.NewDefaultRecalc(acc)
+	if err != nil {
+		return errors.WithStack(err)
+	}
 
 	log.Print("Initialising the view counters")
 	co.GlobalViewCounter, err = co.NewGlobalViewCounter(acc)
@@ -312,7 +317,7 @@ func storeInit() (err error) {
 	}
 
 	log.Print("Initialising the meta store")
-	c.Meta, err = c.NewDefaultMetaStore(acc)
+	c.Meta, err = meta.NewDefaultMetaStore(acc)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -480,6 +485,12 @@ func main() {
 				log.Fatal(err)
 			}
 		}
+	}
+
+	log.Print("Checking for init tasks")
+	err = sched()
+	if err != nil {
+		c.LogError(err)
 	}
 
 	log.Print("Initialising the task system")

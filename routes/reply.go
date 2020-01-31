@@ -136,7 +136,7 @@ func CreateReplySubmit(w http.ResponseWriter, r *http.Request, user c.User) c.Ro
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
 
-	c.AddActivityAndNotifyAll(user.ID, topic.CreatedBy, "reply", "topic", tid)
+	c.AddActivityAndNotifyAll(c.Alert{ActorID: user.ID, TargetUserID: topic.CreatedBy, Event: "reply", ElementType: "topic", ElementID: tid, Extra: strconv.Itoa(rid)})
 	if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}

@@ -15,6 +15,8 @@ import (
 	"strings"
 	"time"
 
+	//"log"
+
 	p "github.com/Azareal/Gosora/common/phrases"
 	qgen "github.com/Azareal/Gosora/query_gen"
 )
@@ -197,9 +199,9 @@ type TopicStmts struct {
 	createLike          *sql.Stmt
 	addLikesToTopic     *sql.Stmt
 	delete              *sql.Stmt
+	deleteReplies       *sql.Stmt
 	deleteLikesForTopic *sql.Stmt
 	deleteActivity      *sql.Stmt
-	deleteActivitySubs  *sql.Stmt
 	edit                *sql.Stmt
 	setPoll             *sql.Stmt
 	createAction        *sql.Stmt
@@ -215,8 +217,8 @@ func init() {
 		t := "topics"
 		topicStmts = TopicStmts{
 			getRids:             acc.Select("replies").Columns("rid").Where("tid = ?").Orderby("rid ASC").Limit("?,?").Prepare(),
-			getReplies:          acc.SimpleLeftJoin("replies AS r", "users AS u", "r.rid, r.content, r.createdBy, r.createdAt, r.lastEdit, r.lastEditBy, u.avatar, u.name, u.group, u.level, r.ipaddress, r.likeCount, r.attachCount, r.actionType", "r.createdBy = u.uid", "r.tid = ?", "r.rid ASC", "?,?"),
-			addReplies:          acc.Update(t).Set("postCount = postCount + ?, lastReplyBy = ?, lastReplyAt = UTC_TIMESTAMP()").Where("tid = ?").Prepare(),
+			getReplies:          acc.SimpleLeftJoin("replies AS r", "users AS u", "r.rid, r.content, r.createdBy, r.createdAt, r.lastEdit, r.lastEditBy, u.avatar, u.name, u.group, u.level, r.ip, r.likeCount, r.attachCount, r.actionType", "r.createdBy = u.uid", "r.tid = ?", "r.rid ASC", "?,?"),
+			addReplies:          acc.Update(t).Set("postCount=postCount+?, lastReplyBy=?, lastReplyAt=UTC_TIMESTAMP()").Where("tid=?").Prepare(),
 			updateLastReply:     acc.Update(t).Set("lastReplyID=?").Where("lastReplyID > ? AND tid = ?").Prepare(),
 			lock:                acc.Update(t).Set("is_closed=1").Where("tid=?").Prepare(),
 			unlock:              acc.Update(t).Set("is_closed=0").Where("tid=?").Prepare(),
@@ -225,17 +227,17 @@ func init() {
 			unstick:             acc.Update(t).Set("sticky=0").Where("tid=?").Prepare(),
 			hasLikedTopic:       acc.Select("likes").Columns("targetItem").Where("sentBy=? and targetItem=? and targetType='topics'").Prepare(),
 			createLike:          acc.Insert("likes").Columns("weight, targetItem, targetType, sentBy, createdAt").Fields("?,?,?,?,UTC_TIMESTAMP()").Prepare(),
-			addLikesToTopic:     acc.Update(t).Set("likeCount=likeCount+?").Where("tid = ?").Prepare(),
+			addLikesToTopic:     acc.Update(t).Set("likeCount=likeCount+?").Where("tid=?").Prepare(),
 			delete:              acc.Delete(t).Where("tid=?").Prepare(),
+			deleteReplies:       acc.Delete("replies").Where("tid=?").Prepare(),
 			deleteLikesForTopic: acc.Delete("likes").Where("targetItem=? AND targetType='topics'").Prepare(),
 			deleteActivity:      acc.Delete("activity_stream").Where("elementID=? AND elementType='topic'").Prepare(),
-			deleteActivitySubs:  acc.Delete("activity_subscriptions").Where("targetID=? AND targetType='topic'").Prepare(),
 			edit:                acc.Update(t).Set("title=?,content=?,parsed_content=?").Where("tid=?").Prepare(), // TODO: Only run the content update bits on non-polls, does this matter?
 			setPoll:             acc.Update(t).Set("poll=?").Where("tid=? AND poll=0").Prepare(),
-			createAction:        acc.Insert("replies").Columns("tid, actionType, ipaddress, createdBy, createdAt, lastUpdated, content, parsed_content").Fields("?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),'',''").Prepare(),
+			createAction:        acc.Insert("replies").Columns("tid, actionType, ip, createdBy, createdAt, lastUpdated, content, parsed_content").Fields("?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),'',''").Prepare(),
 
-			getTopicUser: acc.SimpleLeftJoin("topics AS t", "users AS u", "t.title, t.content, t.createdBy, t.createdAt, t.lastReplyAt, t.lastReplyBy, t.lastReplyID, t.is_closed, t.sticky, t.parentID, t.ipaddress, t.views, t.postCount, t.likeCount, t.attachCount,t.poll, u.name, u.avatar, u.group, u.level", "t.createdBy = u.uid", "tid = ?", "", ""),
-			getByReplyID: acc.SimpleLeftJoin("replies AS r", "topics AS t", "t.tid, t.title, t.content, t.createdBy, t.createdAt, t.is_closed, t.sticky, t.parentID, t.ipaddress, t.views, t.postCount, t.likeCount, t.poll, t.data", "r.tid = t.tid", "rid = ?", "", ""),
+			getTopicUser: acc.SimpleLeftJoin("topics AS t", "users AS u", "t.title, t.content, t.createdBy, t.createdAt, t.lastReplyAt, t.lastReplyBy, t.lastReplyID, t.is_closed, t.sticky, t.parentID, t.ip, t.views, t.postCount, t.likeCount, t.attachCount,t.poll, u.name, u.avatar, u.group, u.level", "t.createdBy=u.uid", "tid=?", "", ""),
+			getByReplyID: acc.SimpleLeftJoin("replies AS r", "topics AS t", "t.tid, t.title, t.content, t.createdBy, t.createdAt, t.is_closed, t.sticky, t.parentID, t.ip, t.views, t.postCount, t.likeCount, t.poll, t.data", "r.tid=t.tid", "rid=?", "", ""),
 		}
 		return acc.FirstError()
 	})
@@ -322,8 +324,17 @@ func (t *Topic) Like(score, uid int) (err error) {
 	return err
 }
 
-// TODO: Implement this
+// TODO: Use a transaction
 func (t *Topic) Unlike(uid int) error {
+	err := Likes.Delete(t.ID,"topics")
+	if err != nil {
+		return err
+	}
+	_, err = topicStmts.addLikesToTopic.Exec(-1, t.ID)
+	if err != nil {
+		return err
+	}
+	_, err = userStmts.decLiked.Exec(1, uid)
 	t.cacheRemove()
 	return nil
 }
@@ -345,43 +356,72 @@ func handleLikedTopicReplies(tid int) error {
 		if err != nil {
 			return err
 		}
+		err = Activity.DeleteByParams("like", rid, "post")
+		if err != nil {
+			return err
+		}
 	}
 
 	return rows.Err()
 }
 
 func handleTopicAttachments(tid int) error {
-	f := func(stmt *sql.Stmt) error {
-		rows, err := stmt.Query(tid)
-		if err != nil {
-			return err
-		}
-		defer rows.Close()
-
-		for rows.Next() {
-			var aid int
-			err := rows.Scan(&aid)
-			if err != nil {
-				return err
-			}
-			err = DeleteAttachment(aid)
-			if err != nil && err != sql.ErrNoRows {
-				return err
-			}
-		}
-
-		return rows.Err()
-	}
-	err := f(userStmts.getAttachmentsOfTopic)
+	err := handleAttachments(userStmts.getAttachmentsOfTopic, tid)
 	if err != nil {
 		return err
 	}
-	return f(userStmts.getAttachmentsOfTopic2)
+	return handleAttachments(userStmts.getAttachmentsOfTopic2, tid)
+}
+
+func handleReplyAttachments(rid int) error {
+	return handleAttachments(replyStmts.getAidsOfReply, rid)
+}
+
+func handleAttachments(stmt *sql.Stmt, id int) error {
+	rows, err := stmt.Query(id)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var aid int
+		err := rows.Scan(&aid)
+		if err != nil {
+			return err
+		}
+		err = DeleteAttachment(aid)
+		if err != nil && err != sql.ErrNoRows {
+			return err
+		}
+	}
+
+	return rows.Err()
+}
+
+// TODO: Only load a row per createdBy, maybe with group by?
+func handleTopicReplies(umap map[int]struct{}, uid int, tid int) error {
+	rows, err := userStmts.getRepliesOfTopic.Query(uid, tid)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var createdBy int
+		err := rows.Scan(&createdBy)
+		if err != nil {
+			return err
+		}
+		umap[createdBy] = struct{}{}
+	}
+
+	return rows.Err()
 }
 
 // TODO: Use a transaction here
 func (t *Topic) Delete() error {
-	creator, err := Users.Get(t.CreatedBy)
+	/*creator, err := Users.Get(t.CreatedBy)
 	if err == nil {
 		err = creator.DecreasePostStats(WordCount(t.Content), true)
 		if err != nil {
@@ -389,10 +429,10 @@ func (t *Topic) Delete() error {
 		}
 	} else if err != ErrNoRows {
 		return err
-	}
+	}*/
 
 	// TODO: Clear reply cache too
-	_, err = topicStmts.delete.Exec(t.ID)
+	_, err := topicStmts.delete.Exec(t.ID)
 	t.cacheRemove()
 	if err != nil {
 		return err
@@ -405,7 +445,30 @@ func (t *Topic) Delete() error {
 	if err != nil {
 		return err
 	}
-	err = handleLikedTopicReplies(t.ID)
+
+	if t.PostCount > 1 {
+		err = handleLikedTopicReplies(t.ID)
+		if err != nil {
+			return err
+		}
+		umap := make(map[int]struct{})
+		err = handleTopicReplies(umap, t.CreatedBy, t.ID)
+		if err != nil {
+			return err
+		}
+		_, err = topicStmts.deleteReplies.Exec(t.ID)
+		if err != nil {
+			return err
+		}
+		for uid := range umap {
+			err = (&User{ID: uid}).RecalcPostStats()
+			if err != nil {
+				//log.Printf("err: %+v\n", err)
+				return err
+			}
+		}
+	}
+	err = (&User{ID: t.CreatedBy}).RecalcPostStats()
 	if err != nil {
 		return err
 	}
@@ -413,7 +476,7 @@ func (t *Topic) Delete() error {
 	if err != nil {
 		return err
 	}
-	_, err = topicStmts.deleteActivitySubs.Exec(t.ID)
+	err = Subscriptions.DeleteResource(t.ID, "topic")
 	if err != nil {
 		return err
 	}

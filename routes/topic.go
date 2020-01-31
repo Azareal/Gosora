@@ -346,10 +346,10 @@ func CreateTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.Ro
 		return c.NoPermissions(w, r, user)
 	}
 
-	tname := c.SanitiseSingleLine(r.PostFormValue("name"))
+	name := c.SanitiseSingleLine(r.PostFormValue("name"))
 	content := c.PreparseMessage(r.PostFormValue("content"))
 	// TODO: Fully parse the post and store it in the parsed column
-	tid, err := c.Topics.Create(fid, tname, content, user.ID, user.GetIP())
+	tid, err := c.Topics.Create(fid, name, content, user.ID, user.GetIP())
 	if err != nil {
 		switch err {
 		case c.ErrNoRows:
@@ -948,6 +948,58 @@ func LikeTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User, stid s
 	}
 
 	skip, rerr := lite.Hooks.VhookSkippable("action_end_like_topic", topic.ID, &user)
+	if skip || rerr != nil {
+		return rerr
+	}
+
+	if !js {
+		http.Redirect(w, r, "/topic/"+strconv.Itoa(tid), http.StatusSeeOther)
+	} else {
+		_, _ = w.Write(successJSONBytes)
+	}
+	return nil
+}
+func UnlikeTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User, stid string) c.RouteError {
+	js := r.PostFormValue("js") == "1"
+	tid, err := strconv.Atoi(stid)
+	if err != nil {
+		return c.PreErrorJSQ(phrases.GetErrorPhrase("id_must_be_integer"), w, r, js)
+	}
+
+	topic, err := c.Topics.Get(tid)
+	if err == sql.ErrNoRows {
+		return c.PreErrorJSQ("The requested topic doesn't exist.", w, r, js)
+	} else if err != nil {
+		return c.InternalErrorJSQ(err, w, r, js)
+	}
+
+	// TODO: Add hooks to make use of headerLite
+	lite, ferr := c.SimpleForumUserCheck(w, r, &user, topic.ParentID)
+	if ferr != nil {
+		return ferr
+	}
+	if !user.Perms.ViewTopic || !user.Perms.LikeItem {
+		return c.NoPermissionsJSQ(w, r, user, js)
+	}
+
+	_, err = c.Users.Get(topic.CreatedBy)
+	if err != nil && err == sql.ErrNoRows {
+		return c.LocalErrorJSQ("The target user doesn't exist", w, r, user, js)
+	} else if err != nil {
+		return c.InternalErrorJSQ(err, w, r, js)
+	}
+
+	err = topic.Unlike(user.ID)
+	if err != nil {
+		return c.InternalErrorJSQ(err, w, r, js)
+	}
+	// TODO: Push dismiss-event alerts to the users.
+	err = c.Activity.DeleteByParams("like", topic.ID, "topic")
+	if err != nil {
+		return c.InternalErrorJSQ(err, w, r, js)
+	}
+
+	skip, rerr := lite.Hooks.VhookSkippable("action_end_unlike_topic", topic.ID, &user)
 	if skip || rerr != nil {
 		return rerr
 	}

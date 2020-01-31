@@ -32,17 +32,18 @@ type ConvoStmts struct {
 
 func init() {
 	DbInits.Add(func(acc *qgen.Accumulator) error {
+		cpo := "conversations_posts"
 		convoStmts = ConvoStmts{
-			fetchPost:  acc.Select("conversations_posts").Columns("cid, body, post, createdBy").Where("pid = ?").Prepare(),
-			getPosts:   acc.Select("conversations_posts").Columns("pid, body, post, createdBy").Where("cid = ?").Limit("?,?").Prepare(),
-			countPosts: acc.Count("conversations_posts").Where("cid = ?").Prepare(),
-			edit:       acc.Update("conversations").Set("lastReplyBy = ?, lastReplyAt = ?").Where("cid = ?").Prepare(),
-			create:     acc.Insert("conversations").Columns("createdAt, lastReplyAt").Fields("UTC_TIMESTAMP(),UTC_TIMESTAMP()").Prepare(),
-			has:        acc.Count("conversations_participants").Where("uid = ? AND cid = ?").Prepare(),
+			fetchPost:  acc.Select(cpo).Columns("cid,body,post,createdBy").Where("pid=?").Prepare(),
+			getPosts:   acc.Select(cpo).Columns("pid,body,post,createdBy").Where("cid=?").Limit("?,?").Prepare(),
+			countPosts: acc.Count(cpo).Where("cid=?").Prepare(),
+			edit:       acc.Update("conversations").Set("lastReplyBy=?,lastReplyAt=?").Where("cid=?").Prepare(),
+			create:     acc.Insert("conversations").Columns("createdAt,lastReplyAt").Fields("UTC_TIMESTAMP(),UTC_TIMESTAMP()").Prepare(),
+			has:        acc.Count("conversations_participants").Where("uid=? AND cid=?").Prepare(),
 
-			editPost:   acc.Update("conversations_posts").Set("body = ?, post = ?").Where("pid = ?").Prepare(),
-			createPost: acc.Insert("conversations_posts").Columns("cid, body, post, createdBy").Fields("?,?,?,?").Prepare(),
-			deletePost: acc.Delete("conversations_posts").Where("pid = ?").Prepare(),
+			editPost:   acc.Update(cpo).Set("body=?,post=?").Where("pid=?").Prepare(),
+			createPost: acc.Insert(cpo).Columns("cid,body,post,createdBy").Fields("?,?,?,?").Prepare(),
+			deletePost: acc.Delete(cpo).Where("pid=?").Prepare(),
 
 			getUsers: acc.Select("conversations_participants").Columns("uid").Where("cid = ?").Prepare(),
 		}
@@ -138,7 +139,7 @@ type ConversationExtra struct {
 
 type ConversationStore interface {
 	Get(id int) (*Conversation, error)
-	GetUser(uid int, offset int) (cos []*Conversation, err error)
+	GetUser(uid, offset int) (cos []*Conversation, err error)
 	GetUserExtra(uid int, offset int) (cos []*ConversationExtra, err error)
 	GetUserCount(uid int) (count int)
 	Delete(id int) error
@@ -160,12 +161,12 @@ type DefaultConversationStore struct {
 
 func NewDefaultConversationStore(acc *qgen.Accumulator) (*DefaultConversationStore, error) {
 	return &DefaultConversationStore{
-		get:                acc.Select("conversations").Columns("createdBy, createdAt, lastReplyBy, lastReplyAt").Where("cid = ?").Prepare(),
-		getUser:            acc.SimpleInnerJoin("conversations_participants AS cp", "conversations AS c", "cp.cid, c.createdBy, c.createdAt, c.lastReplyBy, c.lastReplyAt", "cp.cid = c.cid", "cp.uid = ?", "c.lastReplyAt DESC, c.createdAt DESC, c.cid DESC", "?,?"),
-		getUserCount:       acc.Count("conversations_participants").Where("uid = ?").Prepare(),
-		delete:             acc.Delete("conversations").Where("cid = ?").Prepare(),
-		deletePosts:        acc.Delete("conversations_posts").Where("cid = ?").Prepare(),
-		deleteParticipants: acc.Delete("conversations_participants").Where("cid = ?").Prepare(),
+		get:                acc.Select("conversations").Columns("createdBy, createdAt, lastReplyBy, lastReplyAt").Where("cid=?").Prepare(),
+		getUser:            acc.SimpleInnerJoin("conversations_participants AS cp", "conversations AS c", "cp.cid, c.createdBy, c.createdAt, c.lastReplyBy, c.lastReplyAt", "cp.cid=c.cid", "cp.uid=?", "c.lastReplyAt DESC, c.createdAt DESC, c.cid DESC", "?,?"),
+		getUserCount:       acc.Count("conversations_participants").Where("uid=?").Prepare(),
+		delete:             acc.Delete("conversations").Where("cid=?").Prepare(),
+		deletePosts:        acc.Delete("conversations_posts").Where("cid=?").Prepare(),
+		deleteParticipants: acc.Delete("conversations_participants").Where("cid=?").Prepare(),
 		create:             acc.Insert("conversations").Columns("createdBy, createdAt, lastReplyAt").Fields("?,UTC_TIMESTAMP(),UTC_TIMESTAMP()").Prepare(),
 		addParticipant:     acc.Insert("conversations_participants").Columns("uid, cid").Fields("?,?").Prepare(),
 		count:              acc.Count("conversations").Prepare(),
@@ -178,7 +179,7 @@ func (s *DefaultConversationStore) Get(id int) (*Conversation, error) {
 	return co, err
 }
 
-func (s *DefaultConversationStore) GetUser(uid int, offset int) (cos []*Conversation, err error) {
+func (s *DefaultConversationStore) GetUser(uid, offset int) (cos []*Conversation, err error) {
 	rows, err := s.getUser.Query(uid, offset, Config.ItemsPerPage)
 	if err != nil {
 		return nil, err
@@ -197,7 +198,7 @@ func (s *DefaultConversationStore) GetUser(uid int, offset int) (cos []*Conversa
 	return cos, rows.Err()
 }
 
-func (s *DefaultConversationStore) GetUserExtra(uid int, offset int) (cos []*ConversationExtra, err error) {
+func (s *DefaultConversationStore) GetUserExtra(uid, offset int) (cos []*ConversationExtra, err error) {
 	raw, err := s.GetUser(uid, offset)
 	if err != nil {
 		return nil, err

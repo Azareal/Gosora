@@ -7,6 +7,6 @@ CREATE TABLE `users_replies` (
 	`createdBy` int not null,
 	`lastEdit` int DEFAULT 0 not null,
 	`lastEditBy` int DEFAULT 0 not null,
-	`ipaddress` varchar(200) DEFAULT '0.0.0.0.0' not null,
+	`ip` varchar(200) DEFAULT '' not null,
 	primary key(`rid`)
 ) CHARSET=utf8mb4 COLLATE utf8mb4_general_ci;

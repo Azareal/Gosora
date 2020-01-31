@@ -14,10 +14,13 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/Azareal/Gosora/query_gen"
+	qgen "github.com/Azareal/Gosora/query_gen"
+	meta "github.com/Azareal/Gosora/common/meta"
 )
 
 var SoftwareVersion = Version{Major: 0, Minor: 3, Patch: 0, Tag: "dev"}
+
+var Meta meta.MetaStore
 
 // nolint I don't want to write comments for each of these o.o
 const Hour int = 60 * 60
@@ -57,7 +60,7 @@ type StringList []string
 // TODO: Let admins manage this from the Control Panel
 // apng is commented out for now, as we have no way of re-encoding it into a smaller file
 var AllowedFileExts = StringList{
-	"png", "jpg", "jpe","jpeg","jif","jfi","jfif", "svg", "bmp", "gif", "tiff","tif", "webp", /*"apng",*/ // images
+	"png", "jpg", "jpe", "jpeg", "jif", "jfi", "jfif", "svg", "bmp", "gif", "tiff", "tif", "webp", /*"apng",*/ // images
 
 	"txt", "xml", "json", "yaml", "toml", "ini", "md", "html", "rtf", "js", "py", "rb", "css", "scss", "less", "eqcss", "pcss", "java", "ts", "cs", "c", "cc", "cpp", "cxx", "C", "c++", "h", "hh", "hpp", "hxx", "h++", "rs", "rlib", "htaccess", "gitignore", /*"go","php",*/ // text
 
@@ -68,7 +71,7 @@ var AllowedFileExts = StringList{
 	"bz2", "zip", "zipx", "gz", "7z", "tar", "cab", "rar", "kgb", "pea", "xz", "zz", // archives
 }
 var ImageFileExts = StringList{
-	"png", "jpg", "jpe","jpeg","jif","jfi","jfif", "svg", "bmp", "gif", "tiff","tif", "webp", /* "apng",*/
+	"png", "jpg", "jpe", "jpeg", "jif", "jfi", "jfif", "svg", "bmp", "gif", "tiff", "tif", "webp", /* "apng",*/
 }
 var ArchiveFileExts = StringList{
 	"bz2", "zip", "zipx", "gz", "7z", "tar", "cab", "rar", "kgb", "pea", "xz", "zz",
@@ -151,4 +154,26 @@ func Log(args ...interface{}) {
 
 func Logf(str string, args ...interface{}) {
 	log.Printf(str, args...)
+}
+
+func Countf(stmt *sql.Stmt, args ...interface{}) (count int) {
+	err := stmt.QueryRow(args...).Scan(&count)
+	if err != nil {
+		LogError(err)
+	}
+	return count
+}
+
+func eachall(stmt *sql.Stmt, f func(r *sql.Rows) error) error {
+	rows, err := stmt.Query()
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		if err := f(rows); err != nil {
+			return err
+		}
+	}
+	return rows.Err()
 }

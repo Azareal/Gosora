@@ -197,7 +197,7 @@ func setupData(client *elastic.Client) error {
 		}
 
 		oi := 0
-		err := qgen.NewAcc().Select("topics").Cols("tid, title, content, createdBy, ipaddress").Each(func(rows *sql.Rows) error {
+		err := qgen.NewAcc().Select("topics").Cols("tid,title,content,createdBy,ip").Each(func(rows *sql.Rows) error {
 			t := ESTopic{}
 			err := rows.Scan(&t.ID, &t.Title, &t.Content, &t.CreatedBy, &t.IP)
 			if err != nil {
@@ -233,7 +233,7 @@ func setupData(client *elastic.Client) error {
 			rf(rin[i])
 		}
 		oi := 0
-		err := qgen.NewAcc().Select("replies").Cols("rid, tid, content, createdBy, ipaddress").Each(func(rows *sql.Rows) error {
+		err := qgen.NewAcc().Select("replies").Cols("rid,tid,content,createdBy,ip").Each(func(rows *sql.Rows) error {
 			r := ESReply{}
 			err := rows.Scan(&r.ID, &r.TID, &r.Content, &r.CreatedBy, &r.IP)
 			if err != nil {

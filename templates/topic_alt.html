@@ -83,7 +83,9 @@
 			<div class="controls button_container{{if .Topic.LikeCount}} has_likes{{end}}">
 				<div class="action_button_left">
 				{{if .CurrentUser.Loggedin}}
-					{{if .CurrentUser.Perms.LikeItem}}{{if ne .CurrentUser.ID .Topic.CreatedBy}}<a href="/topic/like/submit/{{.Topic.ID}}?s={{.CurrentUser.Session}}" class="action_button like_item {{if .Topic.Liked}}remove{{else}}add{{end}}_like" aria-label="{{lang "topic.like_aria"}}" data-action="like"></a>{{end}}{{end}}
+					{{if .CurrentUser.Perms.LikeItem}}{{if ne .CurrentUser.ID .Topic.CreatedBy}}
+					{{if .Topic.Liked}}<a href="/topic/unlike/submit/{{.Topic.ID}}?s={{.CurrentUser.Session}}" class="action_button like_item remove_like" aria-label="{{lang "topic.unlike_aria"}}" data-action="unlike"></a>{{else}}<a href="/topic/like/submit/{{.Topic.ID}}?s={{.CurrentUser.Session}}" class="action_button like_item add_like" aria-label="{{lang "topic.like_aria"}}" data-action="like"></a>{{end}}
+					{{end}}{{end}}
 					<a href="" class="action_button quote_item" aria-label="{{lang "topic.quote_aria"}}" data-action="quote"></a>
 					{{if not .Topic.IsClosed or .CurrentUser.Perms.CloseTopic}}
 					{{if .CurrentUser.Perms.EditTopic}}<a href="/topic/edit/{{.Topic.ID}}" class="action_button open_edit" aria-label="{{lang "topic.edit_aria"}}" data-action="edit"></a>{{end}}

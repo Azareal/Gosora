@@ -7,6 +7,6 @@ CREATE TABLE [users_replies] (
 	[createdBy] int not null,
 	[lastEdit] int DEFAULT 0 not null,
 	[lastEditBy] int DEFAULT 0 not null,
-	[ipaddress] nvarchar (200) DEFAULT '0.0.0.0.0' not null,
+	[ip] nvarchar (200) DEFAULT '' not null,
 	primary key([rid])
 );

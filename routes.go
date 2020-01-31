@@ -66,7 +66,7 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError 
 		}
 		// Don't want to throw an internal error due to a socket closing
 		if c.EnableWebsockets && count > 0 {
-			_ = c.WsHub.PushMessage(user.ID, `{"event":"dismiss-alert","id":`+strconv.Itoa(id)+`}`)
+			c.DismissAlert(user.ID, id)
 		}
 		w.Write(successJSONBytes)
 	// TODO: Split this into it's own function

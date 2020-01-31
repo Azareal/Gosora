@@ -21,8 +21,8 @@ type LogItem struct {
 }
 
 type LogStore interface {
-	Create(action string, elementID int, elementType string, ip string, actorID int) (err error)
-	CreateExtra(action string, elementID int, elementType string, ip string, actorID int, extra string) (err error)
+	Create(action string, elementID int, elementType, ip string, actorID int) (err error)
+	CreateExtra(action string, elementID int, elementType, ip string, actorID int, extra string) (err error)
 	Count() int
 	GetOffset(offset, perPage int) (logs []LogItem, err error)
 }
@@ -43,11 +43,11 @@ func NewModLogStore(acc *qgen.Accumulator) (*SQLModLogStore, error) {
 }
 
 // TODO: Make a store for this?
-func (s *SQLModLogStore) Create(action string, elementID int, elementType string, ip string, actorID int) (err error) {
+func (s *SQLModLogStore) Create(action string, elementID int, elementType, ip string, actorID int) (err error) {
 	return s.CreateExtra(action, elementID, elementType, ip, actorID, "")
 }
 
-func (s *SQLModLogStore) CreateExtra(action string, elementID int, elementType string, ip string, actorID int, extra string) (err error) {
+func (s *SQLModLogStore) CreateExtra(action string, elementID int, elementType, ip string, actorID int, extra string) (err error) {
 	_, err = s.create.Exec(action, elementID, elementType, ip, actorID, extra)
 	return err
 }
@@ -99,11 +99,11 @@ func NewAdminLogStore(acc *qgen.Accumulator) (*SQLAdminLogStore, error) {
 }
 
 // TODO: Make a store for this?
-func (s *SQLAdminLogStore) Create(action string, elementID int, elementType string, ip string, actorID int) (err error) {
+func (s *SQLAdminLogStore) Create(action string, elementID int, elementType, ip string, actorID int) (err error) {
 	return s.CreateExtra(action, elementID, elementType, ip, actorID, "")
 }
 
-func (s *SQLAdminLogStore) CreateExtra(action string, elementID int, elementType string, ip string, actorID int, extra string) (err error) {
+func (s *SQLAdminLogStore) CreateExtra(action string, elementID int, elementType, ip string, actorID int, extra string) (err error) {
 	_, err = s.create.Exec(action, elementID, elementType, ip, actorID, extra)
 	return err
 }

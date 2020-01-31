@@ -25,9 +25,9 @@ func NewDefaultIPSearcher() (*DefaultIPSearcher, error) {
 	uu := "users"
 	return &DefaultIPSearcher{
 		searchUsers:        acc.Select(uu).Columns("uid").Where("last_ip=? OR last_ip LIKE CONCAT('%-',?)").Prepare(),
-		searchTopics:       acc.Select(uu).Columns("uid").InQ("uid", acc.Select("topics").Columns("createdBy").Where("ipaddress=?")).Prepare(),
-		searchReplies:      acc.Select(uu).Columns("uid").InQ("uid", acc.Select("replies").Columns("createdBy").Where("ipaddress=?")).Prepare(),
-		searchUsersReplies: acc.Select(uu).Columns("uid").InQ("uid", acc.Select("users_replies").Columns("createdBy").Where("ipaddress=?")).Prepare(),
+		searchTopics:       acc.Select(uu).Columns("uid").InQ("uid", acc.Select("topics").Columns("createdBy").Where("ip=?")).Prepare(),
+		searchReplies:      acc.Select(uu).Columns("uid").InQ("uid", acc.Select("replies").Columns("createdBy").Where("ip=?")).Prepare(),
+		searchUsersReplies: acc.Select(uu).Columns("uid").InQ("uid", acc.Select("users_replies").Columns("createdBy").Where("ip=?")).Prepare(),
 	}, acc.FirstError()
 }
 

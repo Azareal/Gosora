@@ -8,7 +8,7 @@ CREATE TABLE `replies` (
 	`lastEdit` int DEFAULT 0 not null,
 	`lastEditBy` int DEFAULT 0 not null,
 	`lastUpdated` datetime not null,
-	`ipaddress` varchar(200) DEFAULT '0.0.0.0.0' not null,
+	`ip` varchar(200) DEFAULT '' not null,
 	`likeCount` int DEFAULT 0 not null,
 	`attachCount` int DEFAULT 0 not null,
 	`words` int DEFAULT 1 not null,

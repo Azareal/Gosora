@@ -127,6 +127,7 @@ func topicRoutes() *RouteGroup {
 		Action("routes.UnlockTopicSubmit", "/topic/unlock/submit/", "extraData"),
 		Action("routes.MoveTopicSubmit", "/topic/move/submit/", "extraData"),
 		Action("routes.LikeTopicSubmit", "/topic/like/submit/", "extraData"),
+		Action("routes.UnlikeTopicSubmit", "/topic/unlike/submit/", "extraData"),
 		UploadAction("routes.AddAttachToTopicSubmit", "/topic/attach/add/submit/", "extraData").MaxSizeVar("int(c.Config.MaxRequestSize)"),
 		Action("routes.RemoveAttachFromTopicSubmit", "/topic/attach/remove/submit/", "extraData"),
 	)

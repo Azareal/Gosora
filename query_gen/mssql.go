@@ -56,7 +56,7 @@ func (a *MssqlAdapter) DropTable(name, table string) (string, error) {
 // TODO: Add support for foreign keys?
 // TODO: Convert any remaining stringy types to nvarchar
 // We may need to change the CreateTable API to better suit Mssql and the other database drivers which are coming up
-func (a *MssqlAdapter) CreateTable(name string, table string, charset string, collation string, columns []DBTableColumn, keys []DBTableKey) (string, error) {
+func (a *MssqlAdapter) CreateTable(name, table, charset, collation string, columns []DBTableColumn, keys []DBTableKey) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
@@ -137,7 +137,7 @@ func (a *MssqlAdapter) parseColumn(column DBTableColumn) (col DBTableColumn, siz
 
 // TODO: Test this, not sure if some things work
 // TODO: Add support for keys
-func (a *MssqlAdapter) AddColumn(name string, table string, column DBTableColumn, key *DBTableKey) (string, error) {
+func (a *MssqlAdapter) AddColumn(name, table string, column DBTableColumn, key *DBTableKey) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
@@ -146,6 +146,29 @@ func (a *MssqlAdapter) AddColumn(name string, table string, column DBTableColumn
 	q := "ALTER TABLE [" + table + "] ADD [" + column.Name + "] " + column.Type + size + end + ";"
 	a.pushStatement(name, "add-column", q)
 	return q, nil
+}
+
+// TODO: Implement this
+func (a *MssqlAdapter) DropColumn(name, table, colName string) (string, error) {
+	return "", errors.New("not implemented")
+}
+
+// TODO: Implement this
+func (a *MssqlAdapter) RenameColumn(name, table, oldName, newName string) (string, error) {
+	return "", errors.New("not implemented")
+}
+
+// TODO: Implement this
+func (a *MssqlAdapter) ChangeColumn(name, table, colName string, col DBTableColumn) (string, error) {
+	return "", errors.New("not implemented")
+}
+
+// TODO: Implement this
+func (a *MssqlAdapter) SetDefaultColumn(name, table, colName, colType, defaultStr string) (string, error) {
+	if colType == "text" {
+		return "", errors.New("text fields cannot have default values")
+	}
+	return "", errors.New("not implemented")
 }
 
 // TODO: Implement this

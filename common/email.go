@@ -6,11 +6,11 @@ import (
 	"net/mail"
 	"net/smtp"
 	"strings"
-	
+
 	p "github.com/Azareal/Gosora/common/phrases"
 )
 
-func SendActivationEmail(username string, email string, token string) error {
+func SendActivationEmail(username, email, token string) error {
 	schema := "http"
 	if Config.SslSchema {
 		schema += "s"
@@ -21,30 +21,30 @@ func SendActivationEmail(username string, email string, token string) error {
 	return SendEmail(email, subject, msg)
 }
 
-func SendValidationEmail(username string, email string, token string) error {
+func SendValidationEmail(username, email, token string) error {
 	schema := "http"
 	if Config.SslSchema {
 		schema += "s"
 	}
 	r := func(body *string) func(name, val string) {
 		return func(name, val string) {
-			*body = strings.Replace(*body,"{{"+name+"}}",val,-1)
+			*body = strings.Replace(*body, "{{"+name+"}}", val, -1)
 		}
 	}
 	subject := p.GetAccountPhrase("ValidateEmailSubject")
 	r1 := r(&subject)
-	r1("name",Site.Name)
+	r1("name", Site.Name)
 	body := p.GetAccountPhrase("ValidateEmailBody")
 	r2 := r(&body)
-	r2("username",username)
-	r2("schema",schema)
-	r2("url",Site.URL)
-	r2("token",token)
+	r2("username", username)
+	r2("schema", schema)
+	r2("url", Site.URL)
+	r2("token", token)
 	return SendEmail(email, subject, body)
 }
 
 // TODO: Refactor this
-func SendEmail(email string, subject string, msg string) (err error) {
+func SendEmail(email, subject, msg string) (err error) {
 	// This hook is useful for plugin_sendmail or for testing tools. Possibly to hook it into some sort of mail server?
 	ret, hasHook := GetHookTable().VhookNeedHook("email_send_intercept", email, subject, msg)
 	if hasHook {

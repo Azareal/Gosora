@@ -29,13 +29,16 @@ type TopicStore interface {
 	BypassGet(id int) (*Topic, error)
 	BulkGetMap(ids []int) (list map[int]*Topic, err error)
 	Exists(id int) bool
-	Create(fid int, name string, content string, uid int, ip string) (tid int, err error)
+	Create(fid int, name, content string, uid int, ip string) (tid int, err error)
 	AddLastTopic(item *Topic, fid int) error // unimplemented
 	Reload(id int) error                     // Too much SQL logic to move into TopicCache
 	// TODO: Implement these two methods
 	//Replies(tid int) ([]*Reply, error)
 	//RepliesRange(tid int, lower int, higher int) ([]*Reply, error)
 	Count() int
+	CountUser(uid int) int
+	CountMegaUser(uid int) int
+	CountBigUser(uid int) int
 
 	SetCache(cache TopicCache)
 	GetCache() TopicCache
@@ -44,10 +47,12 @@ type TopicStore interface {
 type DefaultTopicStore struct {
 	cache TopicCache
 
-	get    *sql.Stmt
-	exists *sql.Stmt
-	count  *sql.Stmt
-	create *sql.Stmt
+	get           *sql.Stmt
+	exists        *sql.Stmt
+	count         *sql.Stmt
+	countUser     *sql.Stmt
+	countWordUser *sql.Stmt
+	create        *sql.Stmt
 }
 
 // NewDefaultTopicStore gives you a new instance of DefaultTopicStore
@@ -58,38 +63,40 @@ func NewDefaultTopicStore(cache TopicCache) (*DefaultTopicStore, error) {
 	}
 	t := "topics"
 	return &DefaultTopicStore{
-		cache:  cache,
-		get:    acc.Select(t).Columns("title, content, createdBy, createdAt, lastReplyBy, lastReplyAt, lastReplyID, is_closed, sticky, parentID, ipaddress, views, postCount, likeCount, attachCount, poll, data").Where("tid = ?").Prepare(),
-		exists: acc.Exists(t, "tid").Prepare(),
-		count:  acc.Count(t).Prepare(),
-		create: acc.Insert(t).Columns("parentID, title, content, parsed_content, createdAt, lastReplyAt, lastReplyBy, ipaddress, words, createdBy").Fields("?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,?,?").Prepare(),
+		cache:         cache,
+		get:           acc.Select(t).Columns("title, content, createdBy, createdAt, lastReplyBy, lastReplyAt, lastReplyID, is_closed, sticky, parentID, ip, views, postCount, likeCount, attachCount, poll, data").Where("tid=?").Prepare(),
+		exists:        acc.Exists(t, "tid").Prepare(),
+		count:         acc.Count(t).Prepare(),
+		countUser:     acc.Count(t).Where("createdBy=?").Prepare(),
+		countWordUser: acc.Count(t).Where("createdBy=? AND words>=?").Prepare(),
+		create:        acc.Insert(t).Columns("parentID, title, content, parsed_content, createdAt, lastReplyAt, lastReplyBy, ip, words, createdBy").Fields("?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,?,?").Prepare(),
 	}, acc.FirstError()
 }
 
 func (s *DefaultTopicStore) DirtyGet(id int) *Topic {
-	topic, err := s.cache.Get(id)
+	t, err := s.cache.Get(id)
 	if err == nil {
-		return topic
+		return t
 	}
-	topic, err = s.BypassGet(id)
+	t, err = s.BypassGet(id)
 	if err == nil {
-		_ = s.cache.Set(topic)
-		return topic
+		_ = s.cache.Set(t)
+		return t
 	}
 	return BlankTopic()
 }
 
 // TODO: Log weird cache errors?
-func (s *DefaultTopicStore) Get(id int) (topic *Topic, err error) {
-	topic, err = s.cache.Get(id)
+func (s *DefaultTopicStore) Get(id int) (t *Topic, err error) {
+	t, err = s.cache.Get(id)
 	if err == nil {
-		return topic, nil
+		return t, nil
 	}
-	topic, err = s.BypassGet(id)
+	t, err = s.BypassGet(id)
 	if err == nil {
-		_ = s.cache.Set(topic)
+		_ = s.cache.Set(t)
 	}
-	return topic, err
+	return t, err
 }
 
 // BypassGet will always bypass the cache and pull the topic directly from the database
@@ -101,6 +108,15 @@ func (s *DefaultTopicStore) BypassGet(id int) (*Topic, error) {
 	}
 	return t, err
 }
+
+/*func (s *DefaultTopicStore) GetByUser(uid int) (list map[int]*Topic, err error) {
+	t := &Topic{ID: id}
+	err := s.get.QueryRow(id).Scan(&t.Title, &t.Content, &t.CreatedBy, &t.CreatedAt, &t.LastReplyBy, &t.LastReplyAt, &t.LastReplyID, &t.IsClosed, &t.Sticky, &t.ParentID, &t.IP, &t.ViewCount, &t.PostCount, &t.LikeCount, &t.AttachCount, &t.Poll, &t.Data)
+	if err == nil {
+		t.Link = BuildTopicURL(NameToSlug(t.Title), id)
+	}
+	return t, err
+}*/
 
 // TODO: Avoid duplicating much of this logic from user_store.go
 func (s *DefaultTopicStore) BulkGetMap(ids []int) (list map[int]*Topic, err error) {
@@ -144,7 +160,7 @@ func (s *DefaultTopicStore) BulkGetMap(ids []int) (list map[int]*Topic, err erro
 	}
 	q = q[0 : len(q)-1]
 
-	rows, err := qgen.NewAcc().Select("topics").Columns("tid,title,content,createdBy,createdAt,lastReplyBy,lastReplyAt,lastReplyID,is_closed,sticky,parentID,ipaddress,views,postCount,likeCount,attachCount,poll,data").Where("tid IN(" + q + ")").Query(idList...)
+	rows, err := qgen.NewAcc().Select("topics").Columns("tid,title,content,createdBy,createdAt,lastReplyBy,lastReplyAt,lastReplyID,is_closed,sticky,parentID,ip,views,postCount,likeCount,attachCount,poll,data").Where("tid IN(" + q + ")").Query(idList...)
 	if err != nil {
 		return list, err
 	}
@@ -197,7 +213,7 @@ func (s *DefaultTopicStore) Exists(id int) bool {
 	return s.exists.QueryRow(id).Scan(&id) == nil
 }
 
-func (s *DefaultTopicStore) Create(fid int, name string, content string, uid int, ip string) (tid int, err error) {
+func (s *DefaultTopicStore) Create(fid int, name, content string, uid int, ip string) (tid int, err error) {
 	if name == "" {
 		return 0, ErrNoTitle
 	}
@@ -236,11 +252,16 @@ func (s *DefaultTopicStore) AddLastTopic(t *Topic, fid int) error {
 
 // Count returns the total number of topics on these forums
 func (s *DefaultTopicStore) Count() (count int) {
-	err := s.count.QueryRow().Scan(&count)
-	if err != nil {
-		LogError(err)
-	}
-	return count
+	return Countf(s.count)
+}
+func (s *DefaultTopicStore) CountUser(uid int) (count int) {
+	return Countf(s.countUser, uid)
+}
+func (s *DefaultTopicStore) CountMegaUser(uid int) (count int) {
+	return Countf(s.countWordUser, uid, SettingBox.Load().(SettingMap)["megapost_min_words"].(int))
+}
+func (s *DefaultTopicStore) CountBigUser(uid int) (count int) {
+	return Countf(s.countWordUser, uid, SettingBox.Load().(SettingMap)["bigpost_min_words"].(int))
 }
 
 func (s *DefaultTopicStore) SetCache(cache TopicCache) {

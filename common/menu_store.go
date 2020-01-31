@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"sync/atomic"
 
-	"github.com/Azareal/Gosora/query_gen"
+	qgen "github.com/Azareal/Gosora/query_gen"
 )
 
 var Menus *DefaultMenuStore
@@ -40,7 +40,7 @@ func (s *DefaultMenuStore) Get(mid int) (*MenuListHolder, error) {
 }
 
 func (s *DefaultMenuStore) Items(mid int) (mlist MenuItemList, err error) {
-	err = qgen.NewAcc().Select("menu_items").Columns("miid,name,htmlID,cssClass,position,path,aria,tooltip,order,tmplName,guestOnly,memberOnly,staffOnly,adminOnly").Where("mid = " + strconv.Itoa(mid)).Orderby("order ASC").Each(func(rows *sql.Rows) error {
+	err = qgen.NewAcc().Select("menu_items").Columns("miid,name,htmlID,cssClass,position,path,aria,tooltip,order,tmplName,guestOnly,memberOnly,staffOnly,adminOnly").Where("mid=" + strconv.Itoa(mid)).Orderby("order ASC").Each(func(rows *sql.Rows) error {
 		i := MenuItem{MenuID: mid}
 		err := rows.Scan(&i.ID, &i.Name, &i.HTMLID, &i.CSSClass, &i.Position, &i.Path, &i.Aria, &i.Tooltip, &i.Order, &i.TmplName, &i.GuestOnly, &i.MemberOnly, &i.SuperModOnly, &i.AdminOnly)
 		if err != nil {

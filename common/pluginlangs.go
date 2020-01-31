@@ -66,18 +66,17 @@ func InitPluginLangs() error {
 			continue
 		}
 
-		e := func(field string, name string) error {
-			return errors.New("The "+field+" field must not be blank on plugin '" + name + "'")
+		e := func(field, name string) error {
+			return errors.New("The " + field + " field must not be blank on plugin '" + name + "'")
 		}
-
 		if plugin.UName == "" {
-			return e("UName",pluginItem)
+			return e("UName", pluginItem)
 		}
 		if plugin.Name == "" {
-			return e("Name",pluginItem)
+			return e("Name", pluginItem)
 		}
 		if plugin.Author == "" {
-			return e("Author",pluginItem)
+			return e("Author", pluginItem)
 		}
 		if plugin.Main == "" {
 			return errors.New("Couldn't find a main file for plugin '" + pluginItem + "'")

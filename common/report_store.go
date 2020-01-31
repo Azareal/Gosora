@@ -17,7 +17,7 @@ var ErrAlreadyReported = errors.New("This item has already been reported")
 
 // The report system mostly wraps around the topic system for simplicty
 type ReportStore interface {
-	Create(title string, content string, user *User, itemType string, itemID int) (int, error)
+	Create(title, content string, user *User, itemType string, itemID int) (int, error)
 }
 
 type DefaultReportStore struct {
@@ -28,13 +28,13 @@ type DefaultReportStore struct {
 func NewDefaultReportStore(acc *qgen.Accumulator) (*DefaultReportStore, error) {
 	t := "topics"
 	return &DefaultReportStore{
-		create: acc.Insert(t).Columns("title, content, parsed_content, ipaddress, createdAt, lastReplyAt, createdBy, lastReplyBy, data, parentID, css_class").Fields("?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,?,?,'report'").Prepare(),
-		exists: acc.Count(t).Where("data = ? AND data != '' AND parentID = ?").Prepare(),
+		create: acc.Insert(t).Columns("title, content, parsed_content, ip, createdAt, lastReplyAt, createdBy, lastReplyBy, data, parentID, css_class").Fields("?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,?,?,'report'").Prepare(),
+		exists: acc.Count(t).Where("data=? AND data!='' AND parentID=?").Prepare(),
 	}, acc.FirstError()
 }
 
 // ! There's a data race in this. If two users report one item at the exact same time, then both reports will go through
-func (s *DefaultReportStore) Create(title string, content string, u *User, itemType string, itemID int) (tid int, err error) {
+func (s *DefaultReportStore) Create(title, content string, u *User, itemType string, itemID int) (tid int, err error) {
 	var count int
 	err = s.exists.QueryRow(itemType+"_"+strconv.Itoa(itemID), ReportForumID).Scan(&count)
 	if err != nil && err != sql.ErrNoRows {

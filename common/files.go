@@ -59,7 +59,7 @@ func (list SFileList) JSTmplInit() error {
 		tmplName := strings.TrimSuffix(path, ".jgo")
 		shortName := strings.TrimPrefix(tmplName, "template_")
 
-		replace := func(data []byte, replaceThis string, withThis string) []byte {
+		replace := func(data []byte, replaceThis, withThis string) []byte {
 			return bytes.Replace(data, []byte(replaceThis), []byte(withThis), -1)
 		}
 
@@ -107,7 +107,7 @@ func (list SFileList) JSTmplInit() error {
 		}*/
 
 		// ? Can we just use a regex? I'm thinking of going more efficient, or just outright rolling wasm, this is a temp hack in a place where performance doesn't particularly matter
-		each := func(phrase string, handle func(index int)) {
+		each := func(phrase string, h func(index int)) {
 			//fmt.Println("find each '" + phrase + "'")
 			index := endBrace
 			if index < 0 {
@@ -121,7 +121,7 @@ func (list SFileList) JSTmplInit() error {
 				if !foundIt {
 					break
 				}
-				handle(index)
+				h(index)
 			}
 		}
 		each("strconv.Itoa(", func(index int) {
@@ -292,7 +292,7 @@ func (list SFileList) Init() error {
 	})
 }
 
-func (list SFileList) Add(path string, prefix string) error {
+func (list SFileList) Add(path, prefix string) error {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
 		return err

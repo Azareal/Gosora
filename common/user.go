@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	//"log"
 
 	qgen "github.com/Azareal/Gosora/query_gen"
 	"github.com/go-sql-driver/mysql"
@@ -137,6 +138,7 @@ type UserStmts struct {
 	incTopics        *sql.Stmt
 	updateLevel      *sql.Stmt
 	resetStats       *sql.Stmt
+	setStats         *sql.Stmt
 
 	decLiked      *sql.Stmt
 	updateLastIP  *sql.Stmt
@@ -152,6 +154,7 @@ type UserStmts struct {
 	getLikedRepliesOfTopic *sql.Stmt
 	getAttachmentsOfTopic  *sql.Stmt
 	getAttachmentsOfTopic2 *sql.Stmt
+	getRepliesOfTopic      *sql.Stmt
 }
 
 var userStmts UserStmts
@@ -168,6 +171,8 @@ func init() {
 			setName:     acc.Update(u).Set("name=?").Where(w).Prepare(),
 			update:      acc.Update(u).Set("name=?,email=?,group=?").Where(w).Prepare(), // TODO: Implement user_count for users_groups on things which use this
 
+			// Stat Statements
+			// TODO: Do +0 to avoid having as many statements?
 			incScore:         acc.Update(u).Set("score=score+?").Where(w).Prepare(),
 			incPosts:         acc.Update(u).Set("posts=posts+?").Where(w).Prepare(),
 			incBigposts:      acc.Update(u).Set("posts=posts+?,bigposts=bigposts+?").Where(w).Prepare(),
@@ -178,6 +183,7 @@ func init() {
 			incTopics:        acc.SimpleUpdate(u, "topics=topics+?", w),
 			updateLevel:      acc.SimpleUpdate(u, "level=?", w),
 			resetStats:       acc.Update(u).Set("score=0,posts=0,bigposts=0,megaposts=0,topics=0,level=0").Where(w).Prepare(),
+			setStats:         acc.Update(u).Set("score=?,posts=?,bigposts=?,megaposts=?,topics=?,level=?").Where(w).Prepare(),
 
 			incLiked: acc.Update(u).Set("liked=liked+?,lastLiked=UTC_TIMESTAMP()").Where(w).Prepare(),
 			decLiked: acc.Update(u).Set("liked=liked-?").Where(w).Prepare(),
@@ -189,12 +195,14 @@ func init() {
 
 			scheduleAvatarResize: acc.Insert("users_avatar_queue").Columns("uid").Fields("?").Prepare(),
 
-			deletePosts:            acc.Select("topics").Columns("tid,parentID,poll").Where("createdBy=?").Prepare(),
-			deleteProfilePosts:     acc.Select("users_replies").Columns("rid").Where("createdBy=?").Prepare(),
+			// Delete All Posts Statements
+			deletePosts:            acc.Select("topics").Columns("tid,parentID,postCount,poll").Where("createdBy=?").Prepare(),
+			deleteProfilePosts:     acc.Select("users_replies").Columns("rid,uid").Where("createdBy=?").Prepare(),
 			deleteReplyPosts:       acc.Select("replies").Columns("rid,tid").Where("createdBy=?").Prepare(),
 			getLikedRepliesOfTopic: acc.Select("replies").Columns("rid").Where("tid=? AND likeCount>0").Prepare(),
 			getAttachmentsOfTopic:  acc.Select("attachments").Columns("attachID").Where("originID=? AND originTable='topics'").Prepare(),
 			getAttachmentsOfTopic2: acc.Select("attachments").Columns("attachID").Where("extra=? AND originTable='replies'").Prepare(),
+			getRepliesOfTopic:      acc.Select("replies").Columns("words").Where("createdBy!=? AND tid=?").Prepare(),
 		}
 		return acc.FirstError()
 	})
@@ -325,6 +333,7 @@ func (u *User) Delete() error {
 	return nil
 }
 
+// TODO: dismiss-event
 func (u *User) DeletePosts() error {
 	rows, err := userStmts.deletePosts.Query(u.ID)
 	if err != nil {
@@ -336,9 +345,10 @@ func (u *User) DeletePosts() error {
 
 	updatedForums := make(map[int]int) // forum[count]
 	tc := Topics.GetCache()
+	umap := make(map[int]struct{})
 	for rows.Next() {
-		var tid, parentID, poll int
-		err := rows.Scan(&tid, &parentID, &poll)
+		var tid, parentID, postCount,poll int
+		err := rows.Scan(&tid, &parentID, &postCount, &poll)
 		if err != nil {
 			return err
 		}
@@ -356,15 +366,25 @@ func (u *User) DeletePosts() error {
 		if err != nil {
 			return err
 		}
-		err = handleLikedTopicReplies(tid)
-		if err != nil {
-			return err
-		}
 		err = handleTopicAttachments(tid)
 		if err != nil {
 			return err
 		}
-		_, err = topicStmts.deleteActivitySubs.Exec(tid)
+		if postCount > 1 {
+			err = handleLikedTopicReplies(tid)
+			if err != nil {
+				return err
+			}
+			err = handleTopicReplies(umap, u.ID, tid)
+			if err != nil {
+				return err
+			}
+			_, err = topicStmts.deleteReplies.Exec(tid)
+			if err != nil {
+				return err
+			}
+		}
+		err = Subscriptions.DeleteResource(tid,"topic")
 		if err != nil {
 			return err
 		}
@@ -386,6 +406,12 @@ func (u *User) DeletePosts() error {
 	if err != nil {
 		return err
 	}
+	for uid, _ := range umap {
+		err = (&User{ID: uid}).RecalcPostStats()
+		if err != nil {
+			return err
+		}
+	}
 	for fid, count := range updatedForums {
 		err := Forums.RemoveTopics(fid, count)
 		if err != nil && err != ErrNoRows {
@@ -400,8 +426,8 @@ func (u *User) DeletePosts() error {
 	defer rows.Close()
 
 	for rows.Next() {
-		var rid int
-		err := rows.Scan(&rid)
+		var rid, uid int
+		err := rows.Scan(&rid,&uid)
 		if err != nil {
 			return err
 		}
@@ -409,7 +435,12 @@ func (u *User) DeletePosts() error {
 		if err != nil {
 			return err
 		}
-		// TODO: Remove alerts.
+		// TODO: Optimise this
+		// TODO: dismiss-event
+		err = Activity.DeleteByParamsExtra("reply",uid,"user",strconv.Itoa(rid))
+		if err != nil {
+			return err
+		}
 	}
 	if err = rows.Err(); err != nil {
 		return err
@@ -451,6 +482,10 @@ func (u *User) DeletePosts() error {
 		}
 
 		_, err = replyStmts.deleteLikesForReply.Exec(rid)
+		if err != nil {
+			return err
+		}
+		err = Activity.DeleteByParamsExtra("reply",tid,"topic",strconv.Itoa(rid))
 		if err != nil {
 			return err
 		}
@@ -557,6 +592,42 @@ func (u *User) IncreasePostStats(wcount int, topic bool) (err error) {
 		return err
 	}
 	err = GroupPromotions.PromoteIfEligible(u, level, u.Posts+1)
+	u.CacheRemove()
+	return err
+}
+
+func (u *User) countf(stmt *sql.Stmt) (count int) {
+	err := stmt.QueryRow().Scan(&count)
+	if err != nil {
+		LogError(err)
+	}
+	return count
+}
+
+func (u *User) RecalcPostStats() error {
+	var score int
+	tcount := Topics.CountUser(u.ID)
+	rcount := Rstore.CountUser(u.ID)
+	//log.Print("tcount:", tcount)
+	//log.Print("rcount:", rcount)
+	score += tcount * 2
+	score += rcount
+
+	var tmega, tbig, rmega, rbig int
+	if tcount > 0 {
+		tmega = Topics.CountMegaUser(u.ID)
+		score += tmega * 3
+		tbig := Topics.CountBigUser(u.ID)
+		score += tbig
+	}
+	if rcount > 0 {
+		rmega = Rstore.CountMegaUser(u.ID)
+		score += rmega * 3
+		rbig = Rstore.CountBigUser(u.ID)
+		score += rbig
+	}
+
+	_, err := userStmts.setStats.Exec(score, tcount+rcount, tbig+rbig, tmega+rmega, tcount, GetLevel(score), u.ID)
 	u.CacheRemove()
 	return err
 }

@@ -39,13 +39,13 @@ func ProfileReplyCreateSubmit(w http.ResponseWriter, r *http.Request, user c.Use
 		return c.LocalError("You can't make a blank post", w, r, user)
 	}
 	// TODO: Fully parse the post and store it in the parsed column
-	_, err = c.Prstore.Create(profileOwner.ID, content, user.ID, user.GetIP())
+	prid, err := c.Prstore.Create(profileOwner.ID, content, user.ID, user.GetIP())
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
 
 	// ! Be careful about leaking per-route permission state with &user
-	alert := c.Alert{ActorID: user.ID, TargetUserID: profileOwner.ID, Event: "reply", ElementType: "user", ElementID: profileOwner.ID, Actor: &user}
+	alert := c.Alert{ActorID: user.ID, TargetUserID: profileOwner.ID, Event: "reply", ElementType: "user", ElementID: profileOwner.ID, Actor: &user, Extra: strconv.Itoa(prid)}
 	err = c.AddActivityAndNotifyTarget(alert)
 	if err != nil {
 		return c.InternalError(err, w, r)

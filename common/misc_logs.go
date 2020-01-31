@@ -31,7 +31,7 @@ func init() {
 	DbInits.Add(func(acc *qgen.Accumulator) error {
 		rl := "registration_logs"
 		regLogStmts = RegLogStmts{
-			update: acc.Update(rl).Set("username = ?, email = ?, failureReason = ?, success = ?").Where("rlid = ?").Prepare(),
+			update: acc.Update(rl).Set("username=?, email=?, failureReason=?, success=?").Where("rlid=?").Prepare(),
 			create: acc.Insert(rl).Columns("username, email, failureReason, success, ipaddress, doneAt").Fields("?,?,?,?,?,UTC_TIMESTAMP()").Prepare(),
 		}
 		return acc.FirstError()
@@ -57,7 +57,7 @@ func (l *RegLogItem) Create() (id int, err error) {
 
 type RegLogStore interface {
 	Count() (count int)
-	GetOffset(offset int, perPage int) (logs []RegLogItem, err error)
+	GetOffset(offset, perPage int) (logs []RegLogItem, err error)
 }
 
 type SQLRegLogStore struct {
@@ -120,8 +120,8 @@ func init() {
 	DbInits.Add(func(acc *qgen.Accumulator) error {
 		ll := "login_logs"
 		loginLogStmts = LoginLogStmts{
-			update: acc.Update(ll).Set("uid = ?, success = ?").Where("lid = ?").Prepare(),
-			create: acc.Insert(ll).Columns("uid, success, ipaddress, doneAt").Fields("?,?,?,UTC_TIMESTAMP()").Prepare(),
+			update: acc.Update(ll).Set("uid=?,success=?").Where("lid=?").Prepare(),
+			create: acc.Insert(ll).Columns("uid,success,ipaddress,doneAt").Fields("?,?,?,UTC_TIMESTAMP()").Prepare(),
 		}
 		return acc.FirstError()
 	})
@@ -147,7 +147,7 @@ func (l *LoginLogItem) Create() (id int, err error) {
 type LoginLogStore interface {
 	Count() (count int)
 	CountUser(uid int) (count int)
-	GetOffset(uid int, offset int, perPage int) (logs []LoginLogItem, err error)
+	GetOffset(uid, offset, perPage int) (logs []LoginLogItem, err error)
 }
 
 type SQLLoginLogStore struct {
@@ -160,8 +160,8 @@ func NewLoginLogStore(acc *qgen.Accumulator) (*SQLLoginLogStore, error) {
 	ll := "login_logs"
 	return &SQLLoginLogStore{
 		count:           acc.Count(ll).Prepare(),
-		countForUser:    acc.Count(ll).Where("uid = ?").Prepare(),
-		getOffsetByUser: acc.Select(ll).Columns("lid, success, ipaddress, doneAt").Where("uid = ?").Orderby("doneAt DESC").Limit("?,?").Prepare(),
+		countForUser:    acc.Count(ll).Where("uid=?").Prepare(),
+		getOffsetByUser: acc.Select(ll).Columns("lid,success,ipaddress,doneAt").Where("uid=?").Orderby("doneAt DESC").Limit("?,?").Prepare(),
 	}, acc.FirstError()
 }
 
@@ -181,7 +181,7 @@ func (s *SQLLoginLogStore) CountUser(uid int) (count int) {
 	return count
 }
 
-func (s *SQLLoginLogStore) GetOffset(uid int, offset int, perPage int) (logs []LoginLogItem, err error) {
+func (s *SQLLoginLogStore) GetOffset(uid, offset, perPage int) (logs []LoginLogItem, err error) {
 	rows, err := s.getOffsetByUser.Query(uid, offset, perPage)
 	if err != nil {
 		return logs, err

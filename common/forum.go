@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Azareal/Gosora/query_gen"
+	qgen "github.com/Azareal/Gosora/query_gen"
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -27,9 +27,9 @@ type Forum struct {
 	Link       string
 	Name       string
 	Desc       string
-	Tmpl string
+	Tmpl       string
 	Active     bool
-	Order int
+	Order      int
 	Preset     string
 	ParentID   int
 	ParentType string
@@ -60,8 +60,8 @@ var forumStmts ForumStmts
 func init() {
 	DbInits.Add(func(acc *qgen.Accumulator) error {
 		forumStmts = ForumStmts{
-			update:    acc.Update("forums").Set("name = ?, desc = ?, active = ?, preset = ?").Where("fid = ?").Prepare(),
-			setPreset: acc.Update("forums").Set("preset = ?").Where("fid = ?").Prepare(),
+			update:    acc.Update("forums").Set("name=?,desc=?,active=?,preset=?").Where("fid=?").Prepare(),
+			setPreset: acc.Update("forums").Set("preset=?").Where("fid=?").Prepare(),
 		}
 		return acc.FirstError()
 	})
@@ -74,7 +74,7 @@ func (f *Forum) Copy() (fcopy Forum) {
 }
 
 // TODO: Write tests for this
-func (f *Forum) Update(name string, desc string, active bool, preset string) error {
+func (f *Forum) Update(name, desc string, active bool, preset string) error {
 	if name == "" {
 		name = f.Name
 	}
@@ -137,6 +137,7 @@ func (sf SortForum) Len() int {
 func (sf SortForum) Swap(i, j int) {
 	sf[i], sf[j] = sf[j], sf[i]
 }
+
 /*func (sf SortForum) Less(i,j int) bool {
 	l := sf.less(i,j)
 	if l {
@@ -156,7 +157,7 @@ func (sf SortForum) Less(i, j int) bool {
 }
 
 // ! Don't use this outside of tests and possibly template_init.go
-func BlankForum(fid int, link string, name string, desc string, active bool, preset string, parentID int, parentType string, topicCount int) *Forum {
+func BlankForum(fid int, link, name, desc string, active bool, preset string, parentID int, parentType string, topicCount int) *Forum {
 	return &Forum{ID: fid, Link: link, Name: name, Desc: desc, Active: active, Preset: preset, ParentID: parentID, ParentType: parentType, TopicCount: topicCount}
 }
 

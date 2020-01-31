@@ -12,10 +12,11 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
 	//"fmt"
 
 	"github.com/Azareal/Gosora/common/phrases"
-	"github.com/Azareal/Gosora/query_gen"
+	qgen "github.com/Azareal/Gosora/query_gen"
 )
 
 type Alert struct {
@@ -25,15 +26,16 @@ type Alert struct {
 	Event        string
 	ElementType  string
 	ElementID    int
-	CreatedAt time.Time
+	CreatedAt    time.Time
+	Extra        string
 
 	Actor *User
 }
 
 type AlertStmts struct {
-	notifyWatchers   *sql.Stmt
-	notifyOne        *sql.Stmt
-	getWatchers      *sql.Stmt
+	notifyWatchers *sql.Stmt
+	notifyOne      *sql.Stmt
+	getWatchers    *sql.Stmt
 }
 
 var alertStmts AlertStmts
@@ -45,10 +47,10 @@ func init() {
 		alertStmts = AlertStmts{
 			notifyWatchers: acc.SimpleInsertInnerJoin(
 				qgen.DBInsert{"activity_stream_matches", "watcher,asid", ""},
-				qgen.DBJoin{"activity_stream", "activity_subscriptions", "activity_subscriptions.user, activity_stream.asid", "activity_subscriptions.targetType = activity_stream.elementType AND activity_subscriptions.targetID = activity_stream.elementID AND activity_subscriptions.user != activity_stream.actor", "asid = ?", "", ""},
+				qgen.DBJoin{"activity_stream", "activity_subscriptions", "activity_subscriptions.user, activity_stream.asid", "activity_subscriptions.targetType = activity_stream.elementType AND activity_subscriptions.targetID = activity_stream.elementID AND activity_subscriptions.user != activity_stream.actor", "asid=?", "", ""},
 			),
-			notifyOne:        acc.Insert("activity_stream_matches").Columns("watcher,asid").Fields("?,?").Prepare(),
-			getWatchers:      acc.SimpleInnerJoin("activity_stream", "activity_subscriptions", "activity_subscriptions.user", "activity_subscriptions.targetType = activity_stream.elementType AND activity_subscriptions.targetID = activity_stream.elementID AND activity_subscriptions.user != activity_stream.actor", "asid = ?", "", ""),
+			notifyOne:   acc.Insert("activity_stream_matches").Columns("watcher,asid").Fields("?,?").Prepare(),
+			getWatchers: acc.SimpleInnerJoin("activity_stream", "activity_subscriptions", "activity_subscriptions.user", "activity_subscriptions.targetType = activity_stream.elementType AND activity_subscriptions.targetID = activity_stream.elementID AND activity_subscriptions.user != activity_stream.actor", "asid=?", "", ""),
 		}
 		return acc.FirstError()
 	})
@@ -123,6 +125,7 @@ func BuildAlert(alert Alert, user User /* The current user */) (out string, err 
 	case "post":
 		topic, err := TopicByReplyID(alert.ElementID)
 		if err != nil {
+			DebugLogf("Unable to find linked topic by reply ID %d", alert.ElementID)
 			return "", errors.New(phrases.GetErrorPhrase("alerts_no_linked_topic_by_reply"))
 		}
 		url = topic.Link
@@ -146,49 +149,49 @@ func BuildAlert(alert Alert, user User /* The current user */) (out string, err 
 	return buildAlertString(phraseName, []string{alert.Actor.Name, area}, url, alert.Actor.Avatar, alert.ASID), nil
 }
 
-func buildAlertString(msg string, sub []string, path string, avatar string, asid int) string {
-	var substring string
+func buildAlertString(msg string, sub []string, path, avatar string, asid int) string {
+	var subString string
 	for _, item := range sub {
-		substring += "\"" + escapeTextInJson(item) + "\","
+		subString += "\"" + escapeTextInJson(item) + "\","
 	}
-	if len(substring) > 0 {
-		substring = substring[:len(substring)-1]
+	if len(subString) > 0 {
+		subString = subString[:len(subString)-1]
 	}
 
-	return `{"msg":"` + escapeTextInJson(msg) + `","sub":[` + substring + `],"path":"` + escapeTextInJson(path) + `","avatar":"` + escapeTextInJson(avatar) + `","id":` + strconv.Itoa(asid) + `}`
+	return `{"msg":"` + escapeTextInJson(msg) + `","sub":[` + subString + `],"path":"` + escapeTextInJson(path) + `","avatar":"` + escapeTextInJson(avatar) + `","id":` + strconv.Itoa(asid) + `}`
 }
 
-func AddActivityAndNotifyAll(actor int, targetUser int, event string, elementType string, elementID int) error {
-	id, err := Activity.Add(Alert{ActorID: actor, TargetUserID: targetUser, Event: event, ElementType: elementType, ElementID: elementID})
+func AddActivityAndNotifyAll(a Alert) error {
+	id, err := Activity.Add(a)
 	if err != nil {
 		return err
 	}
 	return NotifyWatchers(id)
 }
 
-func AddActivityAndNotifyTarget(alert Alert) error {
-	id, err := Activity.Add(alert)
+func AddActivityAndNotifyTarget(a Alert) error {
+	id, err := Activity.Add(a)
 	if err != nil {
 		return err
 	}
 
-	err = NotifyOne(alert.TargetUserID, id)
+	err = NotifyOne(a.TargetUserID, id)
 	if err != nil {
 		return err
 	}
-	alert.ASID = id
+	a.ASID = id
 
 	// Live alerts, if the target is online and WebSockets is enabled
 	if EnableWebsockets {
-	go func() {
-		_ = WsHub.pushAlert(alert.TargetUserID, alert)
-		//fmt.Println("err:",err)
-	}()
+		go func() {
+			_ = WsHub.pushAlert(a.TargetUserID, a)
+			//fmt.Println("err:",err)
+		}()
 	}
 	return nil
 }
 
-func NotifyOne(watcher int, asid int) error {
+func NotifyOne(watcher, asid int) error {
 	_, err := alertStmts.notifyOne.Exec(watcher, asid)
 	return err
 }
@@ -235,4 +238,8 @@ func notifyWatchers(asid int) {
 		return
 	}
 	_ = WsHub.pushAlerts(uids, alert)
+}
+
+func DismissAlert(uid, aid int) {
+	_ = WsHub.PushMessage(uid, `{"event":"dismiss-alert","id":`+strconv.Itoa(aid)+`}`)
 }

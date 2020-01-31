@@ -21,6 +21,7 @@ type UserStore interface {
 	GetByName(name string) (*User, error)
 	Exists(id int) bool
 	GetOffset(offset, perPage int) ([]*User, error)
+	Each(f func(*User) error) error
 	//BulkGet(ids []int) ([]*User, error)
 	BulkGetMap(ids []int) (map[int]*User, error)
 	BypassGet(id int) (*User, error)
@@ -38,6 +39,7 @@ type DefaultUserStore struct {
 	get        *sql.Stmt
 	getByName  *sql.Stmt
 	getOffset  *sql.Stmt
+	getAll *sql.Stmt
 	exists     *sql.Stmt
 	register   *sql.Stmt
 	nameExists *sql.Stmt
@@ -57,6 +59,7 @@ func NewDefaultUserStore(cache UserCache) (*DefaultUserStore, error) {
 		get:        acc.Select(u).Columns("name, group, active, is_super_admin, session, email, avatar, message, level, score, posts, liked, last_ip, temp_group, enable_embeds").Where("uid = ?").Prepare(),
 		getByName:  acc.Select(u).Columns("uid, name, group, active, is_super_admin, session, email, avatar, message, level, score, posts, liked, last_ip, temp_group, enable_embeds").Where("name = ?").Prepare(),
 		getOffset:  acc.Select(u).Columns("uid, name, group, active, is_super_admin, session, email, avatar, message, level, score, posts, liked, last_ip, temp_group, enable_embeds").Orderby("uid ASC").Limit("?,?").Prepare(),
+		getAll:  acc.Select(u).Columns("uid, name, group, active, is_super_admin, session, email, avatar, message, level, score, posts, liked, last_ip, temp_group, enable_embeds").Prepare(),
 		exists:     acc.Exists(u, "uid").Prepare(),
 		register:   acc.Insert(u).Columns("name, email, password, salt, group, is_super_admin, session, active, message, createdAt, lastActiveAt, lastLiked, oldestItemLikedCreatedAt").Fields("?,?,?,?,?,0,'',?,'',UTC_TIMESTAMP(),UTC_TIMESTAMP(),UTC_TIMESTAMP(),UTC_TIMESTAMP()").Prepare(), // TODO: Implement user_count on users_groups here
 		nameExists: acc.Exists(u, "name").Prepare(),
@@ -142,6 +145,29 @@ func (s *DefaultUserStore) GetOffset(offset, perPage int) (users []*User, err er
 		users = append(users, u)
 	}
 	return users, rows.Err()
+}
+func (s *DefaultUserStore) Each(f func(*User) error) error {
+	rows, err := s.getAll.Query()
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	var embeds int
+	for rows.Next() {
+		u := new(User)
+		if err := rows.Scan(&u.ID, &u.Name, &u.Group, &u.Active, &u.IsSuperAdmin, &u.Session, &u.Email, &u.RawAvatar, &u.Message, &u.Level, &u.Score, &u.Posts, &u.Liked, &u.LastIP, &u.TempGroup, &embeds); err != nil {
+			return err
+		}
+		if embeds != -1 {
+			u.ParseSettings = DefaultParseSettings.CopyPtr()
+			u.ParseSettings.NoEmbed = embeds == 0
+		}
+		u.Init()
+		if err := f(u); err != nil {
+			return err
+		}
+	}
+	return rows.Err()
 }
 
 // TODO: Optimise the query to avoid preparing it on the spot? Maybe, use knowledge of the most common IN() parameter counts?
@@ -265,7 +291,7 @@ func (s *DefaultUserStore) Exists(id int) bool {
 
 // TODO: Change active to a bool?
 // TODO: Use unique keys for the usernames
-func (s *DefaultUserStore) Create(name string, password string, email string, group int, active bool) (int, error) {
+func (s *DefaultUserStore) Create(name, password, email string, group int, active bool) (int, error) {
 	// TODO: Strip spaces?
 
 	// ? This number might be a little screwy with Unicode, but it's the only consistent thing we have, as Unicode characters can be any number of bytes in theory?
@@ -297,11 +323,7 @@ func (s *DefaultUserStore) Create(name string, password string, email string, gr
 
 // Count returns the total number of users registered on the forums
 func (s *DefaultUserStore) Count() (count int) {
-	err := s.count.QueryRow().Scan(&count)
-	if err != nil {
-		LogError(err)
-	}
-	return count
+	return Countf(s.count)
 }
 
 func (s *DefaultUserStore) SetCache(cache UserCache) {

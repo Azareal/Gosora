@@ -917,7 +917,7 @@ func TestReplyStore(t *testing.T) {
 	testReplyStore(t, 5, 3, "0")
 }
 
-func testReplyStore(t *testing.T, newID int, newPostCount int, ip string) {
+func testReplyStore(t *testing.T, newID, newPostCount int, ip string) {
 	replyTest2 := func(reply *c.Reply, err error, rid int, parentID int, createdBy int, content string, ip string) {
 		expectNilErr(t, err)
 		expect(t, reply.ID == rid, fmt.Sprintf("RID #%d has the wrong ID. It should be %d not %d", rid, rid, reply.ID))
@@ -1028,20 +1028,20 @@ func testProfileReplyStore(t *testing.T, newID int, ip string) {
 	expectNilErr(t, err)
 	expect(t, prid == newID, fmt.Sprintf("The first profile reply should have an ID of %d", newID))
 
-	profileReply, err := c.Prstore.Get(newID)
+	pr, err := c.Prstore.Get(newID)
 	expectNilErr(t, err)
-	expect(t, profileReply.ID == newID, fmt.Sprintf("The profile reply should have an ID of %d not %d", newID, profileReply.ID))
-	expect(t, profileReply.ParentID == 1, fmt.Sprintf("The parent ID of the profile reply should be 1 not %d", profileReply.ParentID))
-	expect(t, profileReply.Content == "Haha", fmt.Sprintf("The profile reply's contents should be 'Haha' not '%s'", profileReply.Content))
-	expect(t, profileReply.CreatedBy == 1, fmt.Sprintf("The profile reply's creator should be 1 not %d", profileReply.CreatedBy))
-	expect(t, profileReply.IP == ip, fmt.Sprintf("The profile reply's IP should be '%s' not '%s'", ip, profileReply.IP))
+	expect(t, pr.ID == newID, fmt.Sprintf("The profile reply should have an ID of %d not %d", newID, pr.ID))
+	expect(t, pr.ParentID == 1, fmt.Sprintf("The parent ID of the profile reply should be 1 not %d", pr.ParentID))
+	expect(t, pr.Content == "Haha", fmt.Sprintf("The profile reply's contents should be 'Haha' not '%s'", pr.Content))
+	expect(t, pr.CreatedBy == 1, fmt.Sprintf("The profile reply's creator should be 1 not %d", pr.CreatedBy))
+	expect(t, pr.IP == ip, fmt.Sprintf("The profile reply's IP should be '%s' not '%s'", ip, pr.IP))
 
-	err = profileReply.Delete()
+	err = pr.Delete()
 	expectNilErr(t, err)
 	_, err = c.Prstore.Get(newID)
 	expect(t, err != nil, fmt.Sprintf("PRID #%d shouldn't exist after being deleted", newID))
 
-	// TODO: Test profileReply.SetBody() and profileReply.Creator()
+	// TODO: Test pr.SetBody() and pr.Creator()
 }
 
 func TestActivityStream(t *testing.T) {

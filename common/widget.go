@@ -3,11 +3,11 @@ package common
 import (
 	"database/sql"
 	"encoding/json"
-	"strings"
 	"strconv"
+	"strings"
 	"sync/atomic"
 
-	"github.com/Azareal/Gosora/query_gen"
+	qgen "github.com/Azareal/Gosora/query_gen"
 )
 
 type WidgetStmts struct {
@@ -16,7 +16,7 @@ type WidgetStmts struct {
 	delete      *sql.Stmt
 	create      *sql.Stmt
 	update      *sql.Stmt
-	
+
 	//qgen.SimpleModel
 }
 
@@ -29,9 +29,9 @@ func init() {
 			//getList: acc.Select(w).Columns("wid, position, side, type, active, location, data").Orderby("position ASC").Prepare(),
 			getDockList: acc.Select(w).Columns("wid, position, type, active, location, data").Where("side = ?").Orderby("position ASC").Prepare(),
 			//model: acc.SimpleModel(w,"position,type,active,location,data","wid"),
-			delete:      acc.Delete(w).Where("wid = ?").Prepare(),
-			create:      acc.Insert(w).Columns("position, side, type, active, location, data").Fields("?,?,?,?,?,?").Prepare(),
-			update:      acc.Update(w).Set("position = ?, side = ?, type = ?, active = ?, location = ?, data = ?").Where("wid = ?").Prepare(),
+			delete: acc.Delete(w).Where("wid=?").Prepare(),
+			create: acc.Insert(w).Columns("position, side, type, active, location, data").Fields("?,?,?,?,?,?").Prepare(),
+			update: acc.Update(w).Set("position=?,side=?,type=?,active=?,location=?,data=?").Where("wid=?").Prepare(),
 		}
 		return acc.FirstError()
 	})
@@ -87,7 +87,7 @@ func (w *Widget) Allowed(zone string, zoneid int) bool {
 		if len(loc) == 0 {
 			continue
 		}
-		sloc := strings.Split(":",loc)
+		sloc := strings.Split(":", loc)
 		if len(sloc) > 1 {
 			iloc, _ := strconv.Atoi(sloc[1])
 			if zoneid != 0 && iloc != zoneid {

@@ -11,7 +11,7 @@ CREATE TABLE [topics] (
 	[is_closed] bit DEFAULT 0 not null,
 	[sticky] bit DEFAULT 0 not null,
 	[parentID] int DEFAULT 2 not null,
-	[ipaddress] nvarchar (200) DEFAULT '0.0.0.0.0' not null,
+	[ip] nvarchar (200) DEFAULT '' not null,
 	[postCount] int DEFAULT 1 not null,
 	[likeCount] int DEFAULT 0 not null,
 	[attachCount] int DEFAULT 0 not null,

@@ -11,8 +11,13 @@ var Rstore ReplyStore
 
 type ReplyStore interface {
 	Get(id int) (*Reply, error)
-	Create(topic *Topic, content string, ip string, uid int) (id int, err error)
+	Each(f func(*Reply) error) error
+	Exists(id int) bool
+	Create(t *Topic, content string, ip string, uid int) (id int, err error)
 	Count() (count int)
+	CountUser(uid int) (count int)
+	CountMegaUser(uid int) (count int)
+	CountBigUser(uid int) (count int)
 
 	SetCache(cache ReplyCache)
 	GetCache() ReplyCache
@@ -21,9 +26,13 @@ type ReplyStore interface {
 type SQLReplyStore struct {
 	cache ReplyCache
 
-	get    *sql.Stmt
-	create *sql.Stmt
-	count  *sql.Stmt
+	get           *sql.Stmt
+	getAll        *sql.Stmt
+	exists        *sql.Stmt
+	create        *sql.Stmt
+	count         *sql.Stmt
+	countUser     *sql.Stmt
+	countWordUser *sql.Stmt
 }
 
 func NewSQLReplyStore(acc *qgen.Accumulator, cache ReplyCache) (*SQLReplyStore, error) {
@@ -32,10 +41,14 @@ func NewSQLReplyStore(acc *qgen.Accumulator, cache ReplyCache) (*SQLReplyStore, 
 	}
 	re := "replies"
 	return &SQLReplyStore{
-		cache:  cache,
-		get:    acc.Select(re).Columns("tid, content, createdBy, createdAt, lastEdit, lastEditBy, ipaddress, likeCount, attachCount, actionType").Where("rid = ?").Prepare(),
-		create: acc.Insert(re).Columns("tid, content, parsed_content, createdAt, lastUpdated, ipaddress, words, createdBy").Fields("?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,?").Prepare(),
-		count:  acc.Count(re).Prepare(),
+		cache:         cache,
+		get:           acc.Select(re).Columns("tid, content, createdBy, createdAt, lastEdit, lastEditBy, ip, likeCount, attachCount, actionType").Where("rid=?").Prepare(),
+		getAll:        acc.Select(re).Columns("rid,tid, content, createdBy, createdAt, lastEdit, lastEditBy, ip, likeCount, attachCount, actionType").Prepare(),
+		exists:        acc.Exists(re, "rid").Prepare(),
+		create:        acc.Insert(re).Columns("tid, content, parsed_content, createdAt, lastUpdated, ip, words, createdBy").Fields("?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,?").Prepare(),
+		count:         acc.Count(re).Prepare(),
+		countUser:     acc.Count(re).Where("createdBy=?").Prepare(),
+		countWordUser: acc.Count(re).Where("createdBy=? AND words>=?").Prepare(),
 	}, acc.FirstError()
 }
 
@@ -53,8 +66,38 @@ func (s *SQLReplyStore) Get(id int) (*Reply, error) {
 	return r, err
 }
 
+/*func (s *SQLReplyStore) eachr(f func(*sql.Rows) error) error {
+	return eachall(s.getAll, f)
+}*/
+
+func (s *SQLReplyStore) Each(f func(*Reply) error) error {
+	rows, err := s.getAll.Query()
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		r := new(Reply)
+		if err := rows.Scan(&r.ID, &r.ParentID, &r.Content, &r.CreatedBy, &r.CreatedAt, &r.LastEdit, &r.LastEditBy, &r.IP, &r.LikeCount, &r.AttachCount, &r.ActionType); err != nil {
+			return err
+		}
+		if err := f(r); err != nil {
+			return err
+		}
+	}
+	return rows.Err()
+}
+
+func (s *SQLReplyStore) Exists(id int) bool {
+	err := s.exists.QueryRow(id).Scan(&id)
+	if err != nil && err != ErrNoRows {
+		LogError(err)
+	}
+	return err != ErrNoRows
+}
+
 // TODO: Write a test for this
-func (s *SQLReplyStore) Create(t *Topic, content string, ip string, uid int) (rid int, err error) {
+func (s *SQLReplyStore) Create(t *Topic, content, ip string, uid int) (rid int, err error) {
 	if Config.DisablePostIP {
 		ip = "0"
 	}
@@ -74,11 +117,16 @@ func (s *SQLReplyStore) Create(t *Topic, content string, ip string, uid int) (ri
 // TODO: Write a test for this
 // Count returns the total number of topic replies on these forums
 func (s *SQLReplyStore) Count() (count int) {
-	err := s.count.QueryRow().Scan(&count)
-	if err != nil {
-		LogError(err)
-	}
-	return count
+	return Countf(s.count)
+}
+func (s *SQLReplyStore) CountUser(uid int) (count int) {
+	return Countf(s.countUser, uid)
+}
+func (s *SQLReplyStore) CountMegaUser(uid int) (count int) {
+	return Countf(s.countWordUser, uid, SettingBox.Load().(SettingMap)["megapost_min_words"].(int))
+}
+func (s *SQLReplyStore) CountBigUser(uid int) (count int) {
+	return Countf(s.countWordUser, uid, SettingBox.Load().(SettingMap)["bigpost_min_words"].(int))
 }
 
 func (s *SQLReplyStore) SetCache(cache ReplyCache) {

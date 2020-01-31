@@ -11,6 +11,7 @@ import (
 	"errors"
 	"html"
 	"time"
+	"strconv"
 
 	qgen "github.com/Azareal/Gosora/query_gen"
 )
@@ -69,6 +70,8 @@ type ReplyStmts struct {
 
 	updateTopicReplies  *sql.Stmt
 	updateTopicReplies2 *sql.Stmt
+
+	getAidsOfReply *sql.Stmt
 }
 
 func init() {
@@ -89,6 +92,8 @@ func init() {
 			// TODO: Optimise this to avoid firing an update if it's not the last reply in a topic. We will need to set lastReplyID properly in other places and in the patcher first so we can use it here.
 			updateTopicReplies:  acc.RawPrepare("UPDATE topics t INNER JOIN replies r ON t.tid = r.tid SET t.lastReplyBy = r.createdBy, t.lastReplyAt = r.createdAt, t.lastReplyID = r.rid WHERE t.tid = ?"),
 			updateTopicReplies2: acc.Update("topics").Set("lastReplyAt=createdAt,lastReplyBy=createdBy,lastReplyID=0").Where("postCount=1 AND tid=?").Prepare(),
+
+			getAidsOfReply:  acc.Select("attachments").Columns("attachID").Where("originID=? AND originTable='replies'").Prepare(),
 		}
 		return acc.FirstError()
 	})
@@ -120,7 +125,6 @@ func (r *Reply) Like(uid int) (err error) {
 }
 
 // TODO: Refresh topic list?
-// TODO: Restructure alerts so we can delete the "x replied to topic" ones too.
 func (r *Reply) Delete() error {
 	creator, err := Users.Get(r.CreatedBy)
 	if err == nil {
@@ -155,6 +159,14 @@ func (r *Reply) Delete() error {
 		return err
 	}
 	_, err = replyStmts.deleteLikesForReply.Exec(r.ID)
+	if err != nil {
+		return err
+	}
+	err = handleReplyAttachments(r.ID)
+	if err != nil {
+		return err
+	}
+	err = Activity.DeleteByParamsExtra("reply",r.ParentID,"topic",strconv.Itoa(r.ID))
 	if err != nil {
 		return err
 	}

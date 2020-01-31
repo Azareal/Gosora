@@ -18,8 +18,8 @@ var customPageStmts CustomPageStmts
 func init() {
 	DbInits.Add(func(acc *qgen.Accumulator) error {
 		customPageStmts = CustomPageStmts{
-			update: acc.Update("pages").Set("name = ?, title = ?, body = ?, allowedGroups = ?, menuID = ?").Where("pid = ?").Prepare(),
-			create: acc.Insert("pages").Columns("name, title, body, allowedGroups, menuID").Fields("?,?,?,?,?").Prepare(),
+			update: acc.Update("pages").Set("name=?,title=?,body=?,allowedGroups=?,menuID=?").Where("pid=?").Prepare(),
+			create: acc.Insert("pages").Columns("name,title,body,allowedGroups,menuID").Fields("?,?,?,?,?").Prepare(),
 		}
 		return acc.FirstError()
 	})
@@ -74,7 +74,7 @@ type PageStore interface {
 	Count() (count int)
 	Get(id int) (*CustomPage, error)
 	GetByName(name string) (*CustomPage, error)
-	GetOffset(offset int, perPage int) (pages []*CustomPage, err error)
+	GetOffset(offset, perPage int) (pages []*CustomPage, err error)
 	Reload(id int) error
 	Delete(id int) error
 }
@@ -91,11 +91,11 @@ type DefaultPageStore struct {
 func NewDefaultPageStore(acc *qgen.Accumulator) (*DefaultPageStore, error) {
 	pa := "pages"
 	return &DefaultPageStore{
-		get:       acc.Select(pa).Columns("name, title, body, allowedGroups, menuID").Where("pid = ?").Prepare(),
-		getByName: acc.Select(pa).Columns("pid, name, title, body, allowedGroups, menuID").Where("name = ?").Prepare(),
+		get:       acc.Select(pa).Columns("name, title, body, allowedGroups, menuID").Where("pid=?").Prepare(),
+		getByName: acc.Select(pa).Columns("pid, name, title, body, allowedGroups, menuID").Where("name=?").Prepare(),
 		getOffset: acc.Select(pa).Columns("pid, name, title, body, allowedGroups, menuID").Orderby("pid DESC").Limit("?,?").Prepare(),
 		count:     acc.Count(pa).Prepare(),
-		delete:    acc.Delete(pa).Where("pid = ?").Prepare(),
+		delete:    acc.Delete(pa).Where("pid=?").Prepare(),
 	}, acc.FirstError()
 }
 

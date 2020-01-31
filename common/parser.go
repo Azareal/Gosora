@@ -108,7 +108,7 @@ type TagToAction struct {
 }
 
 // TODO: Write a test for this
-func tryStepForward(i int, step int, runes []rune) (int, bool) {
+func tryStepForward(i, step int, runes []rune) (int, bool) {
 	i += step
 	if i < len(runes) {
 		return i, true
@@ -117,7 +117,7 @@ func tryStepForward(i int, step int, runes []rune) (int, bool) {
 }
 
 // TODO: Write a test for this
-func tryStepBackward(i int, step int, runes []rune) (int, bool) {
+func tryStepBackward(i, step int, runes []rune) (int, bool) {
 	if i == 0 {
 		return i, false
 	}
@@ -369,7 +369,7 @@ func PreparseMessage(msg string) string {
 
 // TODO: Test this
 // TODO: Use this elsewhere in the parser?
-func peek(cur int, skip int, runes []rune) rune {
+func peek(cur, skip int, runes []rune) rune {
 	if (cur + skip) < len(runes) {
 		return runes[cur+skip]
 	}
@@ -972,7 +972,7 @@ func parseMediaString(data string, settings *ParseSettings) (media MediaEmbed, o
 }
 
 // TODO: Write a test for this
-func CoerceIntString(data string) (res int, length int) {
+func CoerceIntString(data string) (res, length int) {
 	if !(data[0] > 47 && data[0] < 58) {
 		return 0, 1
 	}

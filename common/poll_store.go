@@ -61,9 +61,9 @@ func NewDefaultPollStore(cache PollCache) (*DefaultPollStore, error) {
 		exists:                acc.Select("polls").Columns("pollID").Where("pollID = ?").Prepare(),
 		createPoll:            acc.Insert("polls").Columns("parentID, parentTable, type, options").Fields("?,?,?,?").Prepare(),
 		createPollOption:      acc.Insert("polls_options").Columns("pollID, option, votes").Fields("?,?,0").Prepare(),
-		addVote:               acc.Insert("polls_votes").Columns("pollID, uid, option, castAt, ipaddress").Fields("?,?,?,UTC_TIMESTAMP(),?").Prepare(),
+		addVote:               acc.Insert("polls_votes").Columns("pollID,uid,option,castAt,ip").Fields("?,?,?,UTC_TIMESTAMP(),?").Prepare(),
 		incVoteCount:          acc.Update("polls").Set("votes = votes + 1").Where("pollID = ?").Prepare(),
-		incVoteCountForOption: acc.Update("polls_options").Set("votes = votes + 1").Where("option = ? AND pollID = ?").Prepare(),
+		incVoteCountForOption: acc.Update("polls_options").Set("votes = votes + 1").Where("option=? AND pollID=?").Prepare(),
 		//count: acc.SimpleCount("polls", "", ""),
 	}, acc.FirstError()
 }
