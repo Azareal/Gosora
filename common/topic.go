@@ -326,7 +326,7 @@ func (t *Topic) Like(score, uid int) (err error) {
 
 // TODO: Use a transaction
 func (t *Topic) Unlike(uid int) error {
-	err := Likes.Delete(t.ID,"topics")
+	err := Likes.Delete(t.ID, "topics")
 	if err != nil {
 		return err
 	}
@@ -647,11 +647,12 @@ func (t *TopicUser) Replies(offset, pFrag int, user *User) (rlist []*ReplyUser, 
 
 	hTbl := GetHookTable()
 	rf := func(r *ReplyUser) error {
+		//log.Printf("before r: %+v\n", r)
 		err := r.Init()
 		if err != nil {
 			return err
 		}
-
+		//log.Printf("after r: %+v\n", r)
 		r.ContentHtml = ParseMessage(r.Content, t.ParentID, "forums", user.ParseSettings)
 		// TODO: Do this more efficiently by avoiding the allocations entirely in ParseMessage, if there's nothing to do.
 		if r.ContentHtml == r.Content {
@@ -686,12 +687,14 @@ func (t *TopicUser) Replies(offset, pFrag int, user *User) (rlist []*ReplyUser, 
 	// TODO: Factor the user fields out and embed a user struct instead
 	if err == nil {
 		//log.Print("reply cached serve")
-		reply := &ReplyUser{ClassName: "", Reply: *re, CreatedByName: ruser.Name, Avatar: ruser.Avatar /*URLPrefix: ruser.URLPrefix, URLName: ruser.URLName, */, Level: ruser.Level}
+		reply := &ReplyUser{ClassName: "", Reply: *re, CreatedByName: ruser.Name, Avatar: ruser.Avatar /*URLPrefix: ruser.URLPrefix, URLName: ruser.URLName, */, Level: ruser.Level, Tag: ruser.Tag}
+		reply.Group = ruser.Group
 		err = rf(reply)
 		if err != nil {
 			return nil, "", err
 		}
 	} else {
+		//log.Print("reply query serve")
 		rows, err := topicStmts.getReplies.Query(t.ID, offset, Config.ItemsPerPage)
 		if err != nil {
 			return nil, "", err
