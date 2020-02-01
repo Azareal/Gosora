@@ -14,6 +14,7 @@ type ActivityStream interface {
 	Delete(id int) error
 	DeleteByParams(event string, targetID int, targetType string) error
 	DeleteByParamsExtra(event string, targetID int, targetType, extra string) error
+	AidsByParams(event string, elementID int, elementType string) (aids []int, err error)
 	AidsByParamsExtra(event string, elementID int, elementType, extra string) (aids []int, err error)
 	Count() (count int)
 }
@@ -24,6 +25,7 @@ type DefaultActivityStream struct {
 	delete              *sql.Stmt
 	deleteByParams      *sql.Stmt
 	deleteByParamsExtra *sql.Stmt
+	aidsByParams   *sql.Stmt
 	aidsByParamsExtra   *sql.Stmt
 	count               *sql.Stmt
 }
@@ -36,6 +38,7 @@ func NewDefaultActivityStream(acc *qgen.Accumulator) (*DefaultActivityStream, er
 		delete:              acc.Delete(as).Where("asid=?").Prepare(),
 		deleteByParams:      acc.Delete(as).Where("event=? AND elementID=? AND elementType=?").Prepare(),
 		deleteByParamsExtra: acc.Delete(as).Where("event=? AND elementID=? AND elementType=? AND extra=?").Prepare(),
+		aidsByParams:   acc.Select(as).Columns("asid").Where("event=? AND elementID=? AND elementType=?").Prepare(),
 		aidsByParamsExtra:   acc.Select(as).Columns("asid").Where("event=? AND elementID=? AND elementType=? AND extra=?").Prepare(),
 		count:               acc.Count(as).Prepare(),
 	}, acc.FirstError()
@@ -69,6 +72,22 @@ func (s *DefaultActivityStream) DeleteByParams(event string, elementID int, elem
 func (s *DefaultActivityStream) DeleteByParamsExtra(event string, elementID int, elementType, extra string) error {
 	_, err := s.deleteByParamsExtra.Exec(event, elementID, elementType, extra)
 	return err
+}
+
+func (s *DefaultActivityStream) AidsByParams(event string, elementID int, elementType string) (aids []int, err error) {
+	rows, err := s.aidsByParams.Query(event, elementID, elementType)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var aid int
+		if err := rows.Scan(&aid); err != nil {
+			return nil, err
+		}
+		aids = append(aids, aid)
+	}
+	return aids, rows.Err()
 }
 
 func (s *DefaultActivityStream) AidsByParamsExtra(event string, elementID int, elementType, extra string) (aids []int, err error) {

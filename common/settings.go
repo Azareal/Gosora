@@ -7,7 +7,7 @@ import (
 	"strings"
 	"sync/atomic"
 
-	"github.com/Azareal/Gosora/query_gen"
+	qgen "github.com/Azareal/Gosora/query_gen"
 )
 
 var SettingBox atomic.Value // An atomic value pointing to a SettingBox
@@ -16,7 +16,7 @@ var SettingBox atomic.Value // An atomic value pointing to a SettingBox
 type SettingMap map[string]interface{}
 
 type SettingStore interface {
-	ParseSetting(sname string, scontent string, stype string, sconstraint string) string
+	ParseSetting(sname, scontent, stype, sconstraint string) string
 	BypassGet(name string) (*Setting, error)
 	BypassGetAll(name string) ([]*Setting, error)
 }
@@ -47,9 +47,9 @@ func init() {
 	DbInits.Add(func(acc *qgen.Accumulator) error {
 		s := "settings"
 		settingStmts = SettingStmts{
-			getAll: acc.Select(s).Columns("name, content, type, constraints").Prepare(),
-			get:    acc.Select(s).Columns("content, type, constraints").Where("name = ?").Prepare(),
-			update: acc.Update(s).Set("content = ?").Where("name = ?").Prepare(),
+			getAll: acc.Select(s).Columns("name,content,type,constraints").Prepare(),
+			get:    acc.Select(s).Columns("content,type,constraints").Where("name=?").Prepare(),
+			update: acc.Update(s).Set("content=?").Where("name=?").Prepare(),
 		}
 		return acc.FirstError()
 	})
@@ -80,7 +80,7 @@ func LoadSettings() error {
 }
 
 // TODO: Add better support for HTML attributes (html-attribute). E.g. Meta descriptions.
-func (sBox SettingMap) ParseSetting(sname string, scontent string, stype string, constraint string) (err error) {
+func (sBox SettingMap) ParseSetting(sname, scontent, stype, constraint string) (err error) {
 	ssBox := map[string]interface{}(sBox)
 	switch stype {
 	case "bool":
@@ -146,7 +146,7 @@ func (sBox SettingMap) BypassGetAll() (settingList []*Setting, err error) {
 	return settingList, rows.Err()
 }
 
-func (sBox SettingMap) Update(name string, content string) RouteError {
+func (sBox SettingMap) Update(name, content string) RouteError {
 	s, err := sBox.BypassGet(name)
 	if err == ErrNoRows {
 		return FromError(err)

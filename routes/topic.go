@@ -993,7 +993,15 @@ func UnlikeTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User, stid
 	if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
-	// TODO: Push dismiss-event alerts to the users.
+
+	// TODO: Better coupling between the two params queries
+	aids, err := c.Activity.AidsByParams("like", topic.ID, "topic")
+	if err != nil {
+		return c.InternalErrorJSQ(err, w, r, js)
+	}
+	for _, aid := range aids {
+		c.DismissAlert(topic.CreatedBy, aid)
+	}
 	err = c.Activity.DeleteByParams("like", topic.ID, "topic")
 	if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)

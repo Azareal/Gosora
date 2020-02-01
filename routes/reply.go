@@ -566,8 +566,16 @@ func ReplyUnlikeSubmit(w http.ResponseWriter, r *http.Request, user c.User, srid
 	if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
-	// TODO: Push dismiss-event alerts to the users.
-	err = c.Activity.DeleteByParams("like", topic.ID, "reply")
+
+	// TODO: Better coupling between the two params queries
+	aids, err := c.Activity.AidsByParams("like", reply.ID, "post")
+	if err != nil {
+		return c.InternalErrorJSQ(err, w, r, js)
+	}
+	for _, aid := range aids {
+		c.DismissAlert(reply.CreatedBy, aid)
+	}
+	err = c.Activity.DeleteByParams("like", reply.ID, "post")
 	if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
