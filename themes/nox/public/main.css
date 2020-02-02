@@ -18,6 +18,10 @@ a {
 a:hover {
 	color: #cccccc;
 }
+::selection {
+	color: #111111;
+	background-color: #bbbbbb;
+}
 
 nav.nav {
 	background: {{$darkest_bg}};
