@@ -31,6 +31,8 @@
 		"UploadFiles": "Can upload files",
 		"UploadAvatars": "Can upload avatars",
 		"UseConvos":"Can use conversations",
+		"CreateProfileReply": "Can create profile replies",
+		"AutoEmbed":"Automatically embed media they post",
 		
 		"ViewTopic":   "Can view topics",
 		"LikeItem":    "Can like items",
@@ -919,6 +921,7 @@
 		"panel_group_tag_placeholder":"VIP",
 		"panel_group_update_button":"Update Group",
 		"panel_group_extended_permissions":"Extended Permissions",
+		"panel_group_mod_permissions":"Moderator Permissions",
 
 		"panel_group_promotions_level_prefix":"level ",
 		"panel_group_promotions_posts_prefix":"posts ",
@@ -1029,6 +1032,7 @@
 		"panel_logs_mod_action_topic_move_dest":"<a href='%s'>%s</a> was moved to <a href='%s'>%s</a> by <a href='%s'>%s</a>",
 		"panel_logs_mod_action_topic_unknown":"Unknown action '%s' on elementType '%s' by <a href='%s'>%s</a>",
 		"panel_logs_mod_action_reply_delete":"A reply in <a href='%s'>%s</a> was deleted by <a href='%s'>%s</a>",
+		"panel_logs_mod_action_profile_reply_delete":"A reply on <a href='%s'>%s</a>'s profile was deleted by <a href='%s'>%s</a>",
 		"panel_logs_mod_action_user_ban":"<a href='%s'>%s</a> was banned by <a href='%s'>%s</a>",
 		"panel_logs_mod_action_user_unban":"<a href='%s'>%s</a> was unbanned by <a href='%s'>%s</a>",
 		"panel_logs_mod_action_user_delete-posts":"<a href='%s'>%s</a> had their posts purged by <a href='%s'>%s</a>",

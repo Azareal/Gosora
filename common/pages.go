@@ -251,8 +251,8 @@ type AccountBlocksPage struct {
 type AccountPrivacyPage struct {
 	*Header
 	ProfileComments bool
-	ReceiveConvos bool
-	EnableEmbeds bool
+	ReceiveConvos   bool
+	EnableEmbeds    bool
 }
 
 type AccountDashPage struct {
@@ -594,6 +594,7 @@ type PanelEditGroupPermsPage struct {
 	Name        string
 	LocalPerms  []NameLangToggle
 	GlobalPerms []NameLangToggle
+	ModPerms    []NameLangToggle
 }
 
 type GroupPromotionExtend struct {

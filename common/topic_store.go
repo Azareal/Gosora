@@ -222,14 +222,14 @@ func (s *DefaultTopicStore) Create(fid int, name, content string, uid int, ip st
 		return 0, ErrLongTitle
 	}
 
-	parsedContent := strings.TrimSpace(ParseMessage(content, fid, "forums", nil))
+	parsedContent := strings.TrimSpace(ParseMessage(content, fid, "forums", nil, nil))
 	if parsedContent == "" {
 		return 0, ErrNoBody
 	}
 
 	// TODO: Move this statement into the topic store
 	if Config.DisablePostIP {
-		ip = "0"
+		ip = ""
 	}
 	res, err := s.create.Exec(fid, name, content, parsedContent, uid, ip, WordCount(content), uid)
 	if err != nil {

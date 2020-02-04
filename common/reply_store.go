@@ -99,9 +99,9 @@ func (s *SQLReplyStore) Exists(id int) bool {
 // TODO: Write a test for this
 func (s *SQLReplyStore) Create(t *Topic, content, ip string, uid int) (rid int, err error) {
 	if Config.DisablePostIP {
-		ip = "0"
+		ip = ""
 	}
-	res, err := s.create.Exec(t.ID, content, ParseMessage(content, t.ParentID, "forums", nil), ip, WordCount(content), uid)
+	res, err := s.create.Exec(t.ID, content, ParseMessage(content, t.ParentID, "forums", nil, nil), ip, WordCount(content), uid)
 	if err != nil {
 		return 0, err
 	}

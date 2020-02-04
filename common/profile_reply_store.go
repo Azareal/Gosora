@@ -50,9 +50,9 @@ func (s *SQLProfileReplyStore) Exists(id int) bool {
 
 func (s *SQLProfileReplyStore) Create(profileID int, content string, createdBy int, ip string) (id int, err error) {
 	if Config.DisablePostIP {
-		ip = "0"
+		ip = ""
 	}
-	res, err := s.create.Exec(profileID, content, ParseMessage(content, 0, "", nil), createdBy, ip)
+	res, err := s.create.Exec(profileID, content, ParseMessage(content, 0, "", nil, nil), createdBy, ip)
 	if err != nil {
 		return 0, err
 	}

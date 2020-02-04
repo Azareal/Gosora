@@ -465,19 +465,25 @@ func (ps *ParseSettings) CopyPtr() *ParseSettings {
 // TODO: Write a test for this
 // TODO: We need a lot more hooks here. E.g. To add custom media types and handlers.
 // TODO: Use templates to reduce the amount of boilerplate?
-func ParseMessage(msg string, sectionID int, sectionType string, settings *ParseSettings /*, user User*/) string {
+func ParseMessage(msg string, sectionID int, sectionType string, settings *ParseSettings, user *User) string {
 	if settings == nil {
 		settings = DefaultParseSettings
 	}
+	if user == nil {
+		user = &GuestUser
+	}
 	// TODO: Word boundary detection for these to avoid mangling code
-	msg = strings.Replace(msg, ":)", "😀", -1)
-	msg = strings.Replace(msg, ":(", "😞", -1)
-	msg = strings.Replace(msg, ":D", "😃", -1)
-	msg = strings.Replace(msg, ":P", "😛", -1)
-	msg = strings.Replace(msg, ":O", "😲", -1)
-	msg = strings.Replace(msg, ":p", "😛", -1)
-	msg = strings.Replace(msg, ":o", "😲", -1)
-	msg = strings.Replace(msg, ";)", "😉", -1)
+	rep := func(find, replace string) {
+		msg = strings.Replace(msg, find, replace, -1)
+	}
+	rep(":)", "😀")
+	rep(":(", "😞")
+	rep(":D", "😃")
+	rep(":P", "😛")
+	rep(":O", "😲")
+	rep(":p", "😛")
+	rep(":o", "😲")
+	rep(";)", "😉")
 
 	// Word filter list. E.g. Swear words and other things the admins don't like
 	wordFilters, err := WordFilters.GetAll()

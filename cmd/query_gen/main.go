@@ -118,6 +118,8 @@ func seedTables(a qgen.Adapter) error {
 		UploadFiles
 		UploadAvatars
 		UseConvos
+		CreateProfileReply
+		AutoEmbed
 		// CreateConvo ?
 		// CreateConvoReply ?
 
@@ -142,7 +144,7 @@ func seedTables(a qgen.Adapter) error {
 		}
 		return string(jBytes)
 	}
-	addGroup := func(name string, perms c.Perms, mod bool, admin bool, banned bool, tag string) {
+	addGroup := func(name string, perms c.Perms, mod, admin, banned bool, tag string) {
 		mi, ai, bi := "0", "0", "0"
 		if mod {
 			mi = "1"
@@ -161,10 +163,10 @@ func seedTables(a qgen.Adapter) error {
 	perms.EditGroupAdmin = false
 	addGroup("Administrator", perms, true, true, false, "Admin")
 
-	perms = c.Perms{BanUsers: true, ActivateUsers: true, EditUser: true, EditUserEmail: false, EditUserGroup: true, ViewIPs: true, UploadFiles: true, UploadAvatars: true, UseConvos: true, ViewTopic: true, LikeItem: true, CreateTopic: true, EditTopic: true, DeleteTopic: true, CreateReply: true, EditReply: true, DeleteReply: true, PinTopic: true, CloseTopic: true, MoveTopic: true}
+	perms = c.Perms{BanUsers: true, ActivateUsers: true, EditUser: true, EditUserEmail: false, EditUserGroup: true, ViewIPs: true, UploadFiles: true, UploadAvatars: true, UseConvos: true, CreateProfileReply: true, AutoEmbed: true, ViewTopic: true, LikeItem: true, CreateTopic: true, EditTopic: true, DeleteTopic: true, CreateReply: true, EditReply: true, DeleteReply: true, PinTopic: true, CloseTopic: true, MoveTopic: true}
 	addGroup("Moderator", perms, true, false, false, "Mod")
 
-	perms = c.Perms{UploadFiles: true, UploadAvatars: true, UseConvos: true, ViewTopic: true, LikeItem: true, CreateTopic: true, CreateReply: true}
+	perms = c.Perms{UploadFiles: true, UploadAvatars: true, UseConvos: true, CreateProfileReply: true, AutoEmbed: true, ViewTopic: true, LikeItem: true, CreateTopic: true, CreateReply: true}
 	addGroup("Member", perms, false, false, false, "")
 
 	perms = c.Perms{ViewTopic: true}

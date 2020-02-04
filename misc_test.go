@@ -59,17 +59,17 @@ func TestUserStore(t *testing.T) {
 func userStoreTest(t *testing.T, newUserID int) {
 	ucache := c.Users.GetCache()
 	// Go doesn't have short-circuiting, so this'll allow us to do one liner tests
-	isCacheLengthZero := func(ucache c.UserCache) bool {
-		if ucache == nil {
+	isCacheLengthZero := func(uc c.UserCache) bool {
+		if uc == nil {
 			return true
 		}
-		return ucache.Length() == 0
+		return uc.Length() == 0
 	}
-	cacheLength := func(ucache c.UserCache) int {
-		if ucache == nil {
+	cacheLength := func(uc c.UserCache) int {
+		if uc == nil {
 			return 0
 		}
-		return ucache.Length()
+		return uc.Length()
 	}
 	expect(t, isCacheLengthZero(ucache), fmt.Sprintf("The initial ucache length should be zero, not %d", cacheLength(ucache)))
 
@@ -84,7 +84,7 @@ func userStoreTest(t *testing.T, newUserID int) {
 	user, err := c.Users.Get(1)
 	recordMustExist(t, err, "Couldn't find UID #1")
 
-	expectW := func(cond bool, expec bool, prefix string, suffix string) {
+	expectW := func(cond, expec bool, prefix, suffix string) {
 		midfix := "should not be"
 		if expec {
 			midfix = "should be"
@@ -93,7 +93,7 @@ func userStoreTest(t *testing.T, newUserID int) {
 	}
 
 	// TODO: Add email checks too? Do them separately?
-	expectUser := func(u *c.User, uid int, name string, group int, super bool, admin bool, mod bool, banned bool) {
+	expectUser := func(u *c.User, uid int, name string, group int, super, admin, mod, banned bool) {
 		expect(t, u.ID == uid, fmt.Sprintf("u.ID should be %d. Got '%d' instead.", uid, u.ID))
 		expect(t, u.Name == name, fmt.Sprintf("u.Name should be '%s', not '%s'", name, u.Name))
 		expectW(u.Group == group, true, u.Name, "in group"+strconv.Itoa(group))
@@ -258,7 +258,7 @@ func userStoreTest(t *testing.T, newUserID int) {
 	dummyRequest2 := httptest.NewRequest("", "/forum/"+strconv.Itoa(generalForumID), bytesBuffer)
 	var user2 *c.User
 
-	changeGroupTest := func(oldGroup int, newGroup int) {
+	changeGroupTest := func(oldGroup, newGroup int) {
 		err = user.ChangeGroup(newGroup)
 		expectNilErr(t, err)
 		// ! I don't think ChangeGroup should be changing the value of user... Investigate this.
@@ -270,7 +270,7 @@ func userStoreTest(t *testing.T, newUserID int) {
 		*user2 = *user
 	}
 
-	changeGroupTest2 := func(rank string, firstShouldBe bool, secondShouldBe bool) {
+	changeGroupTest2 := func(rank string, firstShouldBe, secondShouldBe bool) {
 		head, err := c.UserCheck(dummyResponseRecorder, dummyRequest1, user)
 		if err != nil {
 			t.Fatal(err)
@@ -364,7 +364,7 @@ func expectNilErr(t *testing.T, item error) {
 	}
 }
 
-func expectIntToBeX(t *testing.T, item int, expect int, errmsg string) {
+func expectIntToBeX(t *testing.T, item, expect int, errmsg string) {
 	if item != expect {
 		debug.PrintStack()
 		t.Fatalf(errmsg, item)
@@ -452,14 +452,14 @@ func TestTopicStore(t *testing.T) {
 	c.Config.DisablePostIP = false
 	topicStoreTest(t, 2, "::1")
 	c.Config.DisablePostIP = true
-	topicStoreTest(t, 3, "0")
+	topicStoreTest(t, 3, "")
 
 	c.Topics, err = c.NewDefaultTopicStore(nil)
 	expectNilErr(t, err)
 	c.Config.DisablePostIP = false
 	topicStoreTest(t, 4, "::1")
 	c.Config.DisablePostIP = true
-	topicStoreTest(t, 5, "0")
+	topicStoreTest(t, 5, "")
 }
 func topicStoreTest(t *testing.T, newID int, ip string) {
 	var topic *c.Topic
@@ -914,20 +914,20 @@ func TestReplyStore(t *testing.T) {
 	c.Config.DisablePostIP = false
 	testReplyStore(t, 2, 1, "::1")
 	c.Config.DisablePostIP = true
-	testReplyStore(t, 5, 3, "0")
+	testReplyStore(t, 5, 3, "")
 }
 
 func testReplyStore(t *testing.T, newID, newPostCount int, ip string) {
-	replyTest2 := func(reply *c.Reply, err error, rid int, parentID int, createdBy int, content string, ip string) {
+	replyTest2 := func(r *c.Reply, err error, rid, parentID, createdBy int, content, ip string) {
 		expectNilErr(t, err)
-		expect(t, reply.ID == rid, fmt.Sprintf("RID #%d has the wrong ID. It should be %d not %d", rid, rid, reply.ID))
-		expect(t, reply.ParentID == parentID, fmt.Sprintf("The parent topic of RID #%d should be %d not %d", rid, parentID, reply.ParentID))
-		expect(t, reply.CreatedBy == createdBy, fmt.Sprintf("The creator of RID #%d should be %d not %d", rid, createdBy, reply.CreatedBy))
-		expect(t, reply.Content == content, fmt.Sprintf("The contents of RID #%d should be '%s' not %s", rid, content, reply.Content))
-		expect(t, reply.IP == ip, fmt.Sprintf("The IP of RID#%d should be '%s' not %s", rid, ip, reply.IP))
+		expect(t, r.ID == rid, fmt.Sprintf("RID #%d has the wrong ID. It should be %d not %d", rid, rid, r.ID))
+		expect(t, r.ParentID == parentID, fmt.Sprintf("The parent topic of RID #%d should be %d not %d", rid, parentID, r.ParentID))
+		expect(t, r.CreatedBy == createdBy, fmt.Sprintf("The creator of RID #%d should be %d not %d", rid, createdBy, r.CreatedBy))
+		expect(t, r.Content == content, fmt.Sprintf("The contents of RID #%d should be '%s' not %s", rid, content, r.Content))
+		expect(t, r.IP == ip, fmt.Sprintf("The IP of RID#%d should be '%s' not %s", rid, ip, r.IP))
 	}
 
-	replyTest := func(rid int, parentID int, createdBy int, content string, ip string) {
+	replyTest := func(rid, parentID, createdBy int, content, ip string) {
 		reply, err := c.Rstore.Get(rid)
 		replyTest2(reply, err, rid, parentID, createdBy, content, ip)
 		reply, err = c.Rstore.GetCache().Get(rid)
@@ -1015,7 +1015,7 @@ func TestProfileReplyStore(t *testing.T) {
 	c.Config.DisablePostIP = false
 	testProfileReplyStore(t, 1, "::1")
 	c.Config.DisablePostIP = true
-	testProfileReplyStore(t, 2, "0")
+	testProfileReplyStore(t, 2, "")
 }
 func testProfileReplyStore(t *testing.T, newID int, ip string) {
 	// ? - Commented this one out as strong constraints like this put an unreasonable load on the database, we only want errors if a delete which should succeed fails
@@ -1466,22 +1466,22 @@ func TestWidgets(t *testing.T) {
 	expectNilErr(t, err)
 	expect(t, wid == 1, "wid should be 1")
 
+	wtest := func(w, w2 *c.Widget) {
+		expect(t, w.Position == w2.Position, "wrong position")
+		expect(t, w.Side == w2.Side, "wrong side")
+		expect(t, w.Type == w2.Type, "wrong type")
+		expect(t, w2.Enabled, "not enabled")
+		expect(t, w.Location == w2.Location, "wrong location")
+	}
+
 	// TODO: Do a test for the widget body
 	widget2, err := c.Widgets.Get(1)
 	expectNilErr(t, err)
-	expect(t, widget2.Position == widget.Position, "wrong position")
-	expect(t, widget2.Side == widget.Side, "wrong side")
-	expect(t, widget2.Type == widget.Type, "wrong type")
-	expect(t, widget2.Enabled, "not enabled")
-	expect(t, widget2.Location == widget.Location, "wrong location")
+	wtest(widget, widget2)
 
 	widgets = c.Docks.RightSidebar.Items
 	expect(t, len(widgets) == 1, fmt.Sprintf("RightSidebar should have 1 item, not %d", len(widgets)))
-	expect(t, widgets[0].Position == widget.Position, "wrong position")
-	expect(t, widgets[0].Side == widget.Side, "wrong side")
-	expect(t, widgets[0].Type == widget.Type, "wrong type")
-	expect(t, widgets[0].Enabled, "not enabled")
-	expect(t, widgets[0].Location == widget.Location, "wrong location")
+	wtest(widget, widgets[0])
 
 	widget2.Enabled = false
 	ewidget = &c.WidgetEdit{widget2, map[string]string{"Name": "Test", "Text": "Testing"}}
@@ -1493,7 +1493,7 @@ func TestWidgets(t *testing.T) {
 	expect(t, widget2.Position == widget.Position, "wrong position")
 	expect(t, widget2.Side == widget.Side, "wrong side")
 	expect(t, widget2.Type == widget.Type, "wrong type")
-	expect(t, !widget2.Enabled, "not enabled")
+	expect(t, !widget2.Enabled, "should not be enabled")
 	expect(t, widget2.Location == widget.Location, "wrong location")
 
 	widgets = c.Docks.RightSidebar.Items
@@ -1501,7 +1501,7 @@ func TestWidgets(t *testing.T) {
 	expect(t, widgets[0].Position == widget.Position, "wrong position")
 	expect(t, widgets[0].Side == widget.Side, "wrong side")
 	expect(t, widgets[0].Type == widget.Type, "wrong type")
-	expect(t, !widgets[0].Enabled, "not enabled")
+	expect(t, !widgets[0].Enabled, "should not be enabled")
 	expect(t, widgets[0].Location == widget.Location, "wrong location")
 
 	err = widget2.Delete()

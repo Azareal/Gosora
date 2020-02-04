@@ -300,7 +300,7 @@ func TestParser(t *testing.T) {
 
 	// TODO: Fix this hack and make the results a bit more reproducible, push the tests further in the process.
 	for _, item := range l.Items {
-		if res := c.ParseMessage(item.Msg, 1, "forums", nil); res != item.Expects {
+		if res := c.ParseMessage(item.Msg, 1, "forums", nil, nil); res != item.Expects {
 			if item.Name != "" {
 				t.Error("Name: ", item.Name)
 			}
@@ -321,7 +321,7 @@ func TestParser(t *testing.T) {
 	l.Add("//"+c.Site.URL+"\n", "<a href='https://"+c.Site.URL+"'>"+c.Site.URL+"</a><br>")
 	l.Add("//"+c.Site.URL+"\n//"+c.Site.URL, "<a href='https://"+c.Site.URL+"'>"+c.Site.URL+"</a><br><a href='https://"+c.Site.URL+"'>"+c.Site.URL+"</a>")
 	for _, item := range l.Items {
-		if res := c.ParseMessage(item.Msg, 1, "forums", nil); res != item.Expects {
+		if res := c.ParseMessage(item.Msg, 1, "forums", nil, nil); res != item.Expects {
 			if item.Name != "" {
 				t.Error("Name: ", item.Name)
 			}
@@ -345,7 +345,7 @@ func TestParser(t *testing.T) {
 		}
 		c.WriteURL(sb, c.BuildTopicURL("", tid), "#nnid-"+strconv.Itoa(tid))
 	})
-	res := c.ParseMessage("#nnid-1", 1, "forums", nil)
+	res := c.ParseMessage("#nnid-1", 1, "forums", nil, nil)
 	expect := "<a href='/topic/1'>#nnid-1</a>"
 	if res != expect {
 		t.Error("Bad output:", "'"+res+"'")
@@ -363,7 +363,7 @@ func TestParser(t *testing.T) {
 		}
 		c.WriteURL(sb, c.BuildTopicURL("", tid), "#longidnameneedtooverflowhack-"+strconv.Itoa(tid))
 	})
-	res = c.ParseMessage("#longidnameneedtooverflowhack-1", 1, "forums", nil)
+	res = c.ParseMessage("#longidnameneedtooverflowhack-1", 1, "forums", nil,nil)
 	expect = "<a href='/topic/1'>#longidnameneedtooverflowhack-1</a>"
 	if res != expect {
 		t.Error("Bad output:", "'"+res+"'")

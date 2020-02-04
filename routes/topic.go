@@ -72,14 +72,7 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user c.User, header *c.He
 	header.Title = topic.Title
 	header.Path = c.BuildTopicURL(c.NameToSlug(topic.Title), topic.ID)
 
-	// TODO: Cache ContentHTML when possible?
-	topic.ContentHTML = c.ParseMessage(topic.Content, topic.ParentID, "forums", user.ParseSettings)
-	// TODO: Do this more efficiently by avoiding the allocations entirely in ParseMessage, if there's nothing to do.
-	if topic.ContentHTML == topic.Content {
-		topic.ContentHTML = topic.Content
-	}
 	topic.ContentLines = strings.Count(topic.Content, "\n")
-
 	if len(topic.Content) > 200 {
 		header.OGDesc = topic.Content[:197] + "..."
 	} else {
@@ -90,6 +83,22 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user c.User, header *c.He
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
+
+	var parseSettings *c.ParseSettings
+	if !postGroup.Perms.AutoEmbed && (user.ParseSettings == nil || !user.ParseSettings.NoEmbed) {
+		parseSettings = c.DefaultParseSettings.CopyPtr()
+		parseSettings.NoEmbed = true
+	} else {
+		parseSettings = user.ParseSettings
+	}
+
+	// TODO: Cache ContentHTML when possible?
+	topic.ContentHTML = c.ParseMessage(topic.Content, topic.ParentID, "forums", parseSettings, &user)
+	// TODO: Do this more efficiently by avoiding the allocations entirely in ParseMessage, if there's nothing to do.
+	if topic.ContentHTML == topic.Content {
+		topic.ContentHTML = topic.Content
+	}
+	
 	topic.Tag = postGroup.Tag
 	if postGroup.IsMod {
 		topic.ClassName = c.Config.StaffCSS
@@ -604,7 +613,7 @@ func EditTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User, stid s
 	if !js {
 		http.Redirect(w, r, "/topic/"+strconv.Itoa(tid), http.StatusSeeOther)
 	} else {
-		outBytes, err := json.Marshal(JsonReply{c.ParseMessage(topic.Content, topic.ParentID, "forums", user.ParseSettings)})
+		outBytes, err := json.Marshal(JsonReply{c.ParseMessage(topic.Content, topic.ParentID, "forums", user.ParseSettings, &user)})
 		if err != nil {
 			return c.InternalErrorJSQ(err, w, r, js)
 		}

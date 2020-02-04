@@ -199,7 +199,7 @@ func (r *Reply) SetPost(content string) error {
 		return err
 	}
 	content = PreparseMessage(html.UnescapeString(content))
-	parsedContent := ParseMessage(content, topic.ParentID, "forums", nil)
+	parsedContent := ParseMessage(content, topic.ParentID, "forums", nil, nil)
 	_, err = replyStmts.edit.Exec(content, parsedContent, r.ID) // TODO: Sniff if this changed anything to see if we hit an existing poll
 	_ = Rstore.GetCache().Remove(r.ID)
 	return err

@@ -336,6 +336,17 @@ func GroupsEditPerms(w http.ResponseWriter, r *http.Request, user c.User, sgid s
 		globalPerms = append(globalPerms, c.NameLangToggle{permStr, p.GetPermPhrase(permStr), perm})
 	}
 
+	addPerm("UploadFiles", g.Perms.UploadFiles)
+	addPerm("UploadAvatars", g.Perms.UploadAvatars)
+	addPerm("UseConvos", g.Perms.UseConvos)
+	addPerm("CreateProfileReply", g.Perms.CreateProfileReply)
+	addPerm("AutoEmbed", g.Perms.AutoEmbed)
+
+	var modPerms []c.NameLangToggle
+	addPerm = func(permStr string, perm bool) {
+		modPerms = append(modPerms, c.NameLangToggle{permStr, p.GetPermPhrase(permStr), perm})
+	}
+
 	addPerm("BanUsers", g.Perms.BanUsers)
 	addPerm("ActivateUsers", g.Perms.ActivateUsers)
 	addPerm("EditUser", g.Perms.EditUser)
@@ -355,11 +366,8 @@ func GroupsEditPerms(w http.ResponseWriter, r *http.Request, user c.User, sgid s
 	addPerm("ManagePlugins", g.Perms.ManagePlugins)
 	addPerm("ViewAdminLogs", g.Perms.ViewAdminLogs)
 	addPerm("ViewIPs", g.Perms.ViewIPs)
-	addPerm("UploadFiles", g.Perms.UploadFiles)
-	addPerm("UploadAvatars", g.Perms.UploadAvatars)
-	addPerm("UseConvos", g.Perms.UseConvos)
 
-	pi := c.PanelEditGroupPermsPage{basePage, g.ID, g.Name, localPerms, globalPerms}
+	pi := c.PanelEditGroupPermsPage{basePage, g.ID, g.Name, localPerms, globalPerms, modPerms}
 	return renderTemplate("panel_group_edit_perms", w, r, basePage.Header, pi)
 }
 

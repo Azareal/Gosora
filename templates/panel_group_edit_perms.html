@@ -4,7 +4,7 @@
 <main class="colstack_right">
 {{template "panel_before_head.html" . }}
 	<div class="colstack_item colstack_head">
-		<div class="rowitem"><h1>{{.Name}}{{lang "panel_group_head_suffix"}}</h1></div>
+		<div class="rowitem"><h1>{{.Name}}{{lang "panel_group_head_suffix"}} - #{{.ID}}</h1></div>
 	</div>
 	<form action="/panel/groups/edit/perms/submit/{{.ID}}?s={{.CurrentUser.Session}}" method="post">
 	{{if .CurrentUser.Perms.EditGroupLocalPerms}}
@@ -33,6 +33,29 @@
 	</div>
 	<div class="colstack_item rowlist formlist the_form panel_group_perms">
 		{{range .GlobalPerms}}
+		<div class="formrow">
+			<div class="formitem">
+				<a>{{.LangStr}}</a>
+				<div class="to_right">
+					<select name="perm-{{.Name}}">
+						<option{{if .Toggle}} selected{{end}} value=1>{{lang "option_yes"}}</option>
+						<option{{if not .Toggle}} selected{{end}} value=0>{{lang "option_no"}}</option>
+					</select>
+				</div>
+			</div>
+		</div>
+		{{end}}
+		<div class="formrow">
+			<div class="formitem"><button name="panel-button" class="formbutton form_middle_button">{{lang "panel_group_update_button"}}</button></div>
+		</div>
+	</div>
+	{{end}}
+	{{if .CurrentUser.Perms.EditGroupGlobalPerms}}
+	<div class="colstack_item colstack_head">
+		<div class="rowitem"><h1>{{lang "panel_group_mod_permissions"}}</h1></div>
+	</div>
+	<div class="colstack_item rowlist formlist the_form panel_group_perms">
+		{{range .ModPerms}}
 		<div class="formrow">
 			<div class="formitem">
 				<a>{{.LangStr}}</a>

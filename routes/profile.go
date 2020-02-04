@@ -20,7 +20,7 @@ var profileStmts ProfileStmts
 func init() {
 	c.DbInits.Add(func(acc *qgen.Accumulator) error {
 		profileStmts = ProfileStmts{
-			getReplies: acc.SimpleLeftJoin("users_replies", "users", "users_replies.rid, users_replies.content, users_replies.createdBy, users_replies.createdAt, users_replies.lastEdit, users_replies.lastEditBy, users.avatar, users.name, users.group", "users_replies.createdBy = users.uid", "users_replies.uid = ?", "", ""),
+			getReplies: acc.SimpleLeftJoin("users_replies", "users", "users_replies.rid, users_replies.content, users_replies.createdBy, users_replies.createdAt, users_replies.lastEdit, users_replies.lastEditBy, users.avatar, users.name, users.group", "users_replies.createdBy=users.uid", "users_replies.uid=?", "", ""),
 		}
 		return acc.FirstError()
 	})
@@ -28,11 +28,10 @@ func init() {
 
 // TODO: Remove the View part of the name?
 func ViewProfile(w http.ResponseWriter, r *http.Request, user c.User, header *c.Header) c.RouteError {
-	var err error
-	var replyCreatedAt time.Time
-	var replyContent, replyCreatedByName, replyAvatar string
-	var rid, replyCreatedBy, replyLastEdit, replyLastEditBy, replyGroup int
-	var replyList []*c.ReplyUser
+	var reCreatedAt time.Time
+	var reContent, reCreatedByName, reAvatar string
+	var rid, reCreatedBy, reLastEdit, reLastEditBy, reGroup int
+	var reList []*c.ReplyUser
 
 	// TODO: Do a 301 if it's the wrong username? Do a canonical too?
 	_, pid, err := ParseSEOURL(r.URL.Path[len("/user/"):])
@@ -71,28 +70,24 @@ func ViewProfile(w http.ResponseWriter, r *http.Request, user c.User, header *c.
 	defer rows.Close()
 
 	for rows.Next() {
-		err := rows.Scan(&rid, &replyContent, &replyCreatedBy, &replyCreatedAt, &replyLastEdit, &replyLastEditBy, &replyAvatar, &replyCreatedByName, &replyGroup)
+		err := rows.Scan(&rid, &reContent, &reCreatedBy, &reCreatedAt, &reLastEdit, &reLastEditBy, &reAvatar, &reCreatedByName, &reGroup)
 		if err != nil {
 			return c.InternalError(err, w, r)
 		}
 
-		replyLiked := false
-		replyLikeCount := 0
-		ru := &c.ReplyUser{Reply: c.Reply{rid, puser.ID, replyContent, replyCreatedBy, replyGroup, replyCreatedAt, replyLastEdit, replyLastEditBy, 0, "", replyLiked, replyLikeCount, 0, ""}, ContentHtml: c.ParseMessage(replyContent, 0, "", user.ParseSettings), CreatedByName: replyCreatedByName, Avatar: replyAvatar, Level: 0}
-		ru.Init()
-
-		group, err := c.Groups.Get(ru.Group)
+		reLiked := false
+		reLikeCount := 0
+		ru := &c.ReplyUser{Reply: c.Reply{rid, puser.ID, reContent, reCreatedBy, reGroup, reCreatedAt, reLastEdit, reLastEditBy, 0, "", reLiked, reLikeCount, 0, ""}, ContentHtml: c.ParseMessage(reContent, 0, "", user.ParseSettings, &user), CreatedByName: reCreatedByName, Avatar: reAvatar, Level: 0}
+		_, err = ru.Init()
 		if err != nil {
 			return c.InternalError(err, w, r)
 		}
-		if group.Tag != "" {
-			ru.Tag = group.Tag
-		} else if puser.ID == ru.CreatedBy {
+		if puser.ID == ru.CreatedBy {
 			ru.Tag = phrases.GetTmplPhrase("profile.owner_tag")
 		}
 
 		// TODO: Add a hook here
-		replyList = append(replyList, ru)
+		reList = append(reList, ru)
 	}
 	if err := rows.Err(); err != nil {
 		return c.InternalError(err, w, r)
@@ -114,8 +109,8 @@ func ViewProfile(w http.ResponseWriter, r *http.Request, user c.User, header *c.
 		}
 	}
 	canMessage := (!blockedInv && user.Perms.UseConvos) || user.IsSuperMod
-	canComment := !blockedInv && user.Perms.ViewTopic && user.Perms.CreateReply
+	canComment := !blockedInv && user.Perms.CreateProfileReply
 
-	ppage := c.ProfilePage{header, replyList, *puser, currentScore, nextScore, blocked, canMessage, canComment}
+	ppage := c.ProfilePage{header, reList, *puser, currentScore, nextScore, blocked, canMessage, canComment}
 	return renderTemplate("profile", w, r, header, ppage)
 }

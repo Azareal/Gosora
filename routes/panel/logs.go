@@ -39,21 +39,21 @@ func LogsRegs(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError 
 
 // TODO: Log errors when something really screwy is going on?
 // TODO: Base the slugs on the localised usernames?
-func handleUnknownUser(user *c.User, err error) *c.User {
+func handleUnknownUser(u *c.User, err error) *c.User {
 	if err != nil {
 		return &c.User{Name: p.GetTmplPhrase("user_unknown"), Link: c.BuildProfileURL("unknown", 0)}
 	}
-	return user
+	return u
 }
-func handleUnknownTopic(topic *c.Topic, err error) *c.Topic {
+func handleUnknownTopic(t *c.Topic, err error) *c.Topic {
 	if err != nil {
 		return &c.Topic{Title: p.GetTmplPhrase("topic_unknown"), Link: c.BuildTopicURL("unknown", 0)}
 	}
-	return topic
+	return t
 }
 
 // TODO: Move the log building logic into /common/ and it's own abstraction
-func topicElementTypeAction(action string, elementType string, elementID int, actor *c.User, topic *c.Topic) (out string) {
+func topicElementTypeAction(action, elementType string, elementID int, actor *c.User, topic *c.Topic) (out string) {
 	if action == "delete" {
 		return p.GetTmplPhrasef("panel_logs_mod_action_topic_delete", elementID, actor.Link, actor.Name)
 	}
@@ -80,7 +80,7 @@ func topicElementTypeAction(action string, elementType string, elementID int, ac
 	return fmt.Sprintf(out, topic.Link, topic.Title, actor.Link, actor.Name)
 }
 
-func modlogsElementType(action string, elementType string, elementID int, actor *c.User) (out string) {
+func modlogsElementType(action, elementType string, elementID int, actor *c.User) (out string) {
 	switch elementType {
 	case "topic":
 		topic := handleUnknownTopic(c.Topics.Get(elementID))
@@ -93,6 +93,18 @@ func modlogsElementType(action string, elementType string, elementID int, actor 
 			topic := handleUnknownTopic(c.TopicByReplyID(elementID))
 			out = p.GetTmplPhrasef("panel_logs_mod_action_reply_delete", topic.Link, topic.Title, actor.Link, actor.Name)
 		}
+	case "profile-reply":
+		if action == "delete" {
+			// TODO: Optimise this
+			var profile *c.User
+			profileReply, err := c.Prstore.Get(elementID)
+			if err != nil {
+				profile = &c.User{Name: p.GetTmplPhrase("user_unknown"), Link: c.BuildProfileURL("unknown", 0)}
+			} else {
+				profile = handleUnknownUser(c.Users.Get(profileReply.ParentID))
+			}
+			out = p.GetTmplPhrasef("panel_logs_mod_action_profile_reply_delete", profile.Link, profile.Name, actor.Link, actor.Name)
+		}
 	}
 	if out == "" {
 		out = p.GetTmplPhrasef("panel_logs_mod_action_unknown", action, elementType, actor.Link, actor.Name)
@@ -100,7 +112,7 @@ func modlogsElementType(action string, elementType string, elementID int, actor 
 	return out
 }
 
-func adminlogsElementType(action string, elementType string, elementID int, actor *c.User, extra string) (out string) {
+func adminlogsElementType(action, elementType string, elementID int, actor *c.User, extra string) (out string) {
 	switch elementType {
 	// TODO: Record more detail for this, e.g. which field/s was changed
 	case "user":

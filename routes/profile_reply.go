@@ -10,7 +10,7 @@ import (
 )
 
 func ProfileReplyCreateSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
-	if !user.Perms.ViewTopic || !user.Perms.CreateReply {
+	if !user.Perms.CreateProfileReply {
 		return c.NoPermissions(w, r, user)
 	}
 	uid, err := strconv.Atoi(r.PostFormValue("uid"))
@@ -74,6 +74,9 @@ func ProfileReplyEditSubmit(w http.ResponseWriter, r *http.Request, user c.User,
 	if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
+	if !user.Perms.CreateProfileReply {
+		return c.NoPermissionsJSQ(w, r, user, js)
+	}
 	// ? Does the admin understand that this group perm affects this?
 	if user.ID != creator.ID && !user.Perms.EditReply {
 		return c.NoPermissionsJSQ(w, r, user, js)
@@ -126,6 +129,11 @@ func ProfileReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user c.Use
 		//http.Redirect(w,r, "/user/" + strconv.Itoa(creator.ID), http.StatusSeeOther)
 	} else {
 		w.Write(successJSONBytes)
+	}
+
+	err = c.ModLogs.Create("delete", reply.ParentID, "profile-reply", user.GetIP(), user.ID)
+	if err != nil {
+		return c.InternalErrorJSQ(err, w, r, js)
 	}
 	return nil
 }

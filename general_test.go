@@ -936,7 +936,7 @@ func BenchmarkParserSerial(b *testing.B) {
 	f := func(name, msg string) func(b *testing.B) {
 		return func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
-				_ = c.ParseMessage(msg, 0, "", nil)
+				_ = c.ParseMessage(msg, 0, "", nil, nil)
 			}
 		}
 	}

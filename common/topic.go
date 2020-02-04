@@ -400,7 +400,7 @@ func handleAttachments(stmt *sql.Stmt, id int) error {
 }
 
 // TODO: Only load a row per createdBy, maybe with group by?
-func handleTopicReplies(umap map[int]struct{}, uid int, tid int) error {
+func handleTopicReplies(umap map[int]struct{}, uid, tid int) error {
 	rows, err := userStmts.getRepliesOfTopic.Query(uid, tid)
 	if err != nil {
 		return err
@@ -505,7 +505,7 @@ func (t *Topic) Update(name, content string) error {
 	}
 
 	content = PreparseMessage(html.UnescapeString(content))
-	parsedContent := ParseMessage(content, t.ParentID, "forums", nil)
+	parsedContent := ParseMessage(content, t.ParentID, "forums", nil, nil)
 	_, err := topicStmts.edit.Exec(name, content, parsedContent, t.ID)
 	t.cacheRemove()
 	return err
@@ -518,9 +518,9 @@ func (t *Topic) SetPoll(pollID int) error {
 }
 
 // TODO: Have this go through the ReplyStore?
-func (t *Topic) CreateActionReply(action string, ip string, uid int) (err error) {
+func (t *Topic) CreateActionReply(action, ip string, uid int) (err error) {
 	if Config.DisablePostIP {
-		ip = "0"
+		ip = ""
 	}
 	res, err := topicStmts.createAction.Exec(t.ID, action, ip, uid)
 	if err != nil {
@@ -566,13 +566,13 @@ var unlockai = "&#x1F513"
 var stickai = "&#x1F4CC"
 var unstickai = "&#x1F4CC" + aipost
 
-func (ru *ReplyUser) Init() error {
+func (ru *ReplyUser) Init() (group *Group, err error) {
 	ru.UserLink = BuildProfileURL(NameToSlug(ru.CreatedByName), ru.CreatedBy)
 	ru.ContentLines = strings.Count(ru.Content, "\n")
 
 	postGroup, err := Groups.Get(ru.Group)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if postGroup.IsMod {
 		ru.ClassName = Config.StaffCSS
@@ -581,9 +581,6 @@ func (ru *ReplyUser) Init() error {
 
 	// TODO: Make a function for this? Build a more sophisticated noavatar handling system? Do bulk user loads and let the c.UserStore initialise this?
 	ru.Avatar, ru.MicroAvatar = BuildAvatar(ru.CreatedBy, ru.Avatar)
-	if ru.Tag == "" {
-		ru.Tag = postGroup.Tag
-	}
 
 	// We really shouldn't have inline HTML, we should do something about this...
 	if ru.ActionType != "" {
@@ -604,18 +601,18 @@ func (ru *ReplyUser) Init() error {
 				forum, err := Forums.Get(fid)
 				if err == nil {
 					ru.ActionType = p.GetTmplPhrasef("topic.action_topic_move_dest", forum.Link, forum.Name, ru.UserLink, ru.CreatedByName)
-					return nil
+					return postGroup, nil
 				}
 			}
 		default:
 			// TODO: Only fire this off if a corresponding phrase for the ActionType doesn't exist? Or maybe have some sort of action registry?
 			ru.ActionType = p.GetTmplPhrasef("topic.action_topic_default", ru.ActionType)
-			return nil
+			return postGroup, nil
 		}
 		ru.ActionType = p.GetTmplPhrasef("topic.action_topic_"+action, ru.UserLink, ru.CreatedByName)
 	}
 
-	return nil
+	return postGroup, nil
 }
 
 // TODO: Factor TopicUser into a *Topic and *User, as this starting to become overly complicated x.x
@@ -648,12 +645,21 @@ func (t *TopicUser) Replies(offset, pFrag int, user *User) (rlist []*ReplyUser, 
 	hTbl := GetHookTable()
 	rf := func(r *ReplyUser) error {
 		//log.Printf("before r: %+v\n", r)
-		err := r.Init()
+		group, err := r.Init()
 		if err != nil {
 			return err
 		}
 		//log.Printf("after r: %+v\n", r)
-		r.ContentHtml = ParseMessage(r.Content, t.ParentID, "forums", user.ParseSettings)
+
+		var parseSettings *ParseSettings
+		if !group.Perms.AutoEmbed && (user.ParseSettings == nil || !user.ParseSettings.NoEmbed) {
+			parseSettings = DefaultParseSettings.CopyPtr()
+			parseSettings.NoEmbed = true
+		} else {
+			parseSettings = user.ParseSettings
+		}
+
+		r.ContentHtml = ParseMessage(r.Content, t.ParentID, "forums", parseSettings, user)
 		// TODO: Do this more efficiently by avoiding the allocations entirely in ParseMessage, if there's nothing to do.
 		if r.ContentHtml == r.Content {
 			r.ContentHtml = r.Content
