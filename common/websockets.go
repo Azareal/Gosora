@@ -160,7 +160,7 @@ func wsPageResponses(wsUser *WSUser, conn *websocket.Conn, page string) {
 		if !Forums.Exists(topic.ParentID) {
 			return
 		}
-		var usercpy *User = BlankUser()
+		usercpy := BlankUser()
 		*usercpy = *wsUser.User
 		usercpy.Init()
 
@@ -304,7 +304,7 @@ func adminStatsTicker() {
 
 	var totunit, uunit, gunit string
 
-	lessThanSwitch := func(number int, lowerBound int, midBound int) string {
+	lessThanSwitch := func(number, lowerBound, midBound int) string {
 		switch {
 		case number < lowerBound:
 			return "stat_green"
@@ -313,8 +313,7 @@ func adminStatsTicker() {
 		}
 		return "stat_red"
 	}
-
-	greaterThanSwitch := func(number int, lowerBound int, midBound int) string {
+	greaterThanSwitch := func(number, lowerBound, midBound int) string {
 		switch {
 		case number > midBound:
 			return "stat_green"
@@ -411,26 +410,32 @@ AdminStatLoop:
 
 			// nolint
 			// TODO: Use JSON for this to make things more portable and easier to convert to MessagePack, if need be?
-			if !noStatUpdates {
-				w.Write([]byte("set #dash-totonline <span>" + p.GetTmplPhrasef("panel_dashboard_online", totonline, totunit) + "</span>\r"))
-				w.Write([]byte("set #dash-gonline <span>" + p.GetTmplPhrasef("panel_dashboard_guests_online", gonline, gunit) + "</span>\r"))
-				w.Write([]byte("set #dash-uonline <span>" + p.GetTmplPhrasef("panel_dashboard_users_online", uonline, uunit) + "</span>\r"))
-				w.Write([]byte("set #dash-reqs <span>" + strconv.Itoa(reqCount) + " reqs / second</span>\r"))
-
-				w.Write([]byte("set-class #dash-totonline grid_item grid_stat " + onlineColour + "\r"))
-				w.Write([]byte("set-class #dash-gonline grid_item grid_stat " + onlineGuestsColour + "\r"))
-				w.Write([]byte("set-class #dash-uonline grid_item grid_stat " + onlineUsersColour + "\r"))
-				//w.Write([]byte("set-class #dash-reqs grid_item grid_stat grid_end_group \r"))
+			write := func(msg string) {
+				w.Write([]byte(msg + "\r"))
 			}
-
-			w.Write([]byte("set #dash-cpu <span>" + p.GetTmplPhrasef("panel_dashboard_cpu",cpustr) + "%</span>\r"))
-			w.Write([]byte("set-class #dash-cpu grid_item grid_istat " + cpuColour + "\r"))
+			push := func(id, msg string) {
+				write("set #" + id + " <span>"+msg+"</span>")
+			}
+			pushc := func(id, classes string) {
+				write("set-class #" + id + " " + classes)
+			}
+			if !noStatUpdates {
+				push("dash-totonline",p.GetTmplPhrasef("panel_dashboard_online", totonline, totunit))
+				push("dash-gonline",p.GetTmplPhrasef("panel_dashboard_guests_online", gonline, gunit))
+				push("dash-uonline",p.GetTmplPhrasef("panel_dashboard_users_online", uonline, uunit))
+				push("dash-reqs",strconv.Itoa(reqCount) + " reqs / second")
+				pushc("dash-totonline","grid_item grid_stat " + onlineColour)
+				pushc("dash-gonline","grid_item grid_stat " + onlineGuestsColour)
+				pushc("dash-uonline","grid_item grid_stat " + onlineUsersColour)
+				//pushc("dash-reqs","grid_item grid_stat grid_end_group")
+			}
+			push("dash-cpu",p.GetTmplPhrasef("panel_dashboard_cpu",cpustr) + "%")
+			pushc("dash-cpu","grid_item grid_istat " + cpuColour)
 
 			if !noRAMUpdates {
-				w.Write([]byte("set #dash-ram <span>" + p.GetTmplPhrasef("panel_dashboard_ram",ramstr) + "</span>\r"))
-				w.Write([]byte("set-class #dash-ram grid_item grid_istat " + ramColour + "\r"))
+				push("dash-ram", p.GetTmplPhrasef("panel_dashboard_ram",ramstr))
+				pushc("dash-ram","grid_item grid_istat " + ramColour)
 			}
-
 			w.Close()
 		}
 		adminStatsMutex.Unlock()
