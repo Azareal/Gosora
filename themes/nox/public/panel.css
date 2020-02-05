@@ -123,6 +123,9 @@
 .stat_green {
 	background-color: rgb(68,88,68);
 }
+.stat_orange {
+	background-color: rgb(88,78,68);
+}
 .stat_red {
 	background-color: rgb(88,68,68);
 }
