@@ -25,9 +25,9 @@ type PluginList map[string]*Plugin
 // TODO: Have a proper store rather than a map?
 var Plugins PluginList = make(map[string]*Plugin)
 
-func (list PluginList) Add(plugin *Plugin) {
-	buildPlugin(plugin)
-	list[plugin.UName] = plugin
+func (list PluginList) Add(pl *Plugin) {
+	buildPlugin(pl)
+	list[pl.UName] = pl
 }
 
 func buildPlugin(pl *Plugin) {
@@ -415,7 +415,7 @@ func InitExtend() (err error) {
 }
 
 // Load polls the database to see which plugins have been activated and which have been installed
-func (plugins PluginList) Load() error {
+func (l PluginList) Load() error {
 	rows, err := extendStmts.getPlugins.Query()
 	if err != nil {
 		return err
@@ -431,13 +431,13 @@ func (plugins PluginList) Load() error {
 		}
 
 		// Was the plugin deleted at some point?
-		plugin, ok := plugins[uname]
+		plugin, ok := l[uname]
 		if !ok {
 			continue
 		}
 		plugin.Active = active
 		plugin.Installed = installed
-		plugins[uname] = plugin
+		l[uname] = plugin
 	}
 	return rows.Err()
 }
