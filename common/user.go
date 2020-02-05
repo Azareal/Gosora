@@ -250,7 +250,7 @@ func (u *User) setTempGroupTx(tx *sql.Tx, tempGroup int) error {
 }
 
 // Make this more stateless?
-func (u *User) ScheduleGroupUpdate(gid int, issuedBy int, duration time.Duration) error {
+func (u *User) ScheduleGroupUpdate(gid, issuedBy int, duration time.Duration) error {
 	var temp bool
 	if duration.Nanoseconds() != 0 {
 		temp = true

@@ -27,7 +27,7 @@ func init() {
 		w := "widgets"
 		widgetStmts = WidgetStmts{
 			//getList: acc.Select(w).Columns("wid, position, side, type, active, location, data").Orderby("position ASC").Prepare(),
-			getDockList: acc.Select(w).Columns("wid, position, type, active, location, data").Where("side = ?").Orderby("position ASC").Prepare(),
+			getDockList: acc.Select(w).Columns("wid, position, type, active, location, data").Where("side=?").Orderby("position ASC").Prepare(),
 			//model: acc.SimpleModel(w,"position,type,active,location,data","wid"),
 			delete: acc.Delete(w).Where("wid=?").Prepare(),
 			create: acc.Insert(w).Columns("position, side, type, active, location, data").Fields("?,?,?,?,?,?").Prepare(),
@@ -50,7 +50,7 @@ type Widget struct {
 
 	Literal      bool
 	TickMask     atomic.Value
-	InitFunc     func(w *Widget, schedule *WidgetScheduler) error
+	InitFunc     func(w *Widget, sched *WidgetScheduler) error
 	ShutdownFunc func(w *Widget) error
 	BuildFunc    func(w *Widget, hvars interface{}) (string, error)
 	TickFunc     func(w *Widget) error

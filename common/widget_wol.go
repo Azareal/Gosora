@@ -16,8 +16,8 @@ type wolUsers struct {
 	UserCount int
 }
 
-func wolInit(w *Widget, schedule *WidgetScheduler) error {
-	schedule.Add(w)
+func wolInit(w *Widget, sched *WidgetScheduler) error {
+	sched.Add(w)
 	return nil
 }
 

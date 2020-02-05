@@ -16,24 +16,24 @@ func NewDefaultWidgetStore() *DefaultWidgetStore {
 	return &DefaultWidgetStore{widgets: make(map[int]*Widget)}
 }
 
-func (w *DefaultWidgetStore) Get(id int) (*Widget, error) {
-	w.RLock()
-	defer w.RUnlock()
-	widget, ok := w.widgets[id]
+func (s *DefaultWidgetStore) Get(id int) (*Widget, error) {
+	s.RLock()
+	defer s.RUnlock()
+	w, ok := s.widgets[id]
 	if !ok {
-		return widget, sql.ErrNoRows
+		return w, sql.ErrNoRows
 	}
-	return widget, nil
+	return w, nil
 }
 
-func (w *DefaultWidgetStore) set(widget *Widget) {
-	w.Lock()
-	defer w.Unlock()
-	w.widgets[widget.ID] = widget
+func (s *DefaultWidgetStore) set(w *Widget) {
+	s.Lock()
+	defer s.Unlock()
+	s.widgets[w.ID] = w
 }
 
-func (w *DefaultWidgetStore) delete(id int) {
-	w.Lock()
-	defer w.Unlock()
-	delete(w.widgets, id)
+func (s *DefaultWidgetStore) delete(id int) {
+	s.Lock()
+	defer s.Unlock()
+	delete(s.widgets, id)
 }

@@ -18,7 +18,7 @@ type UserCache interface {
 	RemoveUnsafe(id int) error
 	Flush()
 	Length() int
-	SetCapacity(capacity int)
+	SetCapacity(cap int)
 	GetCapacity() int
 }
 
@@ -32,10 +32,10 @@ type MemoryUserCache struct {
 }
 
 // NewMemoryUserCache gives you a new instance of MemoryUserCache
-func NewMemoryUserCache(capacity int) *MemoryUserCache {
+func NewMemoryUserCache(cap int) *MemoryUserCache {
 	return &MemoryUserCache{
 		items:    make(map[int]*User),
-		capacity: capacity,
+		capacity: cap,
 	}
 }
 
@@ -219,9 +219,9 @@ func (s *MemoryUserCache) Length() int {
 }
 
 // SetCapacity sets the maximum number of users which this cache can hold
-func (s *MemoryUserCache) SetCapacity(capacity int) {
+func (s *MemoryUserCache) SetCapacity(cap int) {
 	// Ints are moved in a single instruction, so this should be thread-safe
-	s.capacity = capacity
+	s.capacity = cap
 }
 
 // GetCapacity returns the maximum number of users this cache can hold

@@ -52,7 +52,7 @@ func (u *WSUser) WriteAll(msg string) error {
 	return nil
 }
 
-func (u *WSUser) WriteToPage(msg string, page string) error {
+func (u *WSUser) WriteToPage(msg, page string) error {
 	return u.WriteToPageBytes([]byte(msg), page)
 }
 

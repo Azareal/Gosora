@@ -7,10 +7,10 @@ import (
 	"errors"
 	"log"
 	"sort"
-	"sync"
 	"strconv"
+	"sync"
 
-	"github.com/Azareal/Gosora/query_gen"
+	qgen "github.com/Azareal/Gosora/query_gen"
 )
 
 var Groups GroupStore
@@ -22,15 +22,15 @@ type GroupStore interface {
 	Get(id int) (*Group, error)
 	GetCopy(id int) (Group, error)
 	Exists(id int) bool
-	Create(name string, tag string, isAdmin bool, isMod bool, isBanned bool) (id int, err error)
+	Create(name, tag string, isAdmin, isMod, isBanned bool) (id int, err error)
 	GetAll() ([]*Group, error)
-	GetRange(lower int, higher int) ([]*Group, error)
+	GetRange(lower, higher int) ([]*Group, error)
 	Reload(id int) error // ? - Should we move this to GroupCache? It might require us to do some unnecessary casting though
 	Count() int
 }
 
 type GroupCache interface {
-	CacheSet(group *Group) error
+	CacheSet(g *Group) error
 	SetCanSee(gid int, canSee []int) error
 	Length() int
 }
@@ -52,10 +52,10 @@ func NewMemoryGroupStore() (*MemoryGroupStore, error) {
 	return &MemoryGroupStore{
 		groups:     make(map[int]*Group),
 		groupCount: 0,
-		getAll:     acc.Select(ug).Columns("gid, name, permissions, plugin_perms, is_mod, is_admin, is_banned, tag").Prepare(),
-		get:        acc.Select(ug).Columns("name, permissions, plugin_perms, is_mod, is_admin, is_banned, tag").Where("gid = ?").Prepare(),
+		getAll:     acc.Select(ug).Columns("gid,name,permissions,plugin_perms,is_mod,is_admin,is_banned,tag").Prepare(),
+		get:        acc.Select(ug).Columns("name,permissions,plugin_perms,is_mod,is_admin,is_banned,tag").Where("gid=?").Prepare(),
 		count:      acc.Count(ug).Prepare(),
-		userCount:  acc.Count("users").Where("group = ?").Prepare(),
+		userCount:  acc.Count("users").Where("group=?").Prepare(),
 	}, acc.FirstError()
 }
 
@@ -98,8 +98,8 @@ func (s *MemoryGroupStore) LoadGroups() error {
 }
 
 // TODO: Hit the database when the item isn't in memory
-func (s *MemoryGroupStore) dirtyGetUnsafe(gid int) *Group {
-	group, ok := s.groups[gid]
+func (s *MemoryGroupStore) dirtyGetUnsafe(id int) *Group {
+	group, ok := s.groups[id]
 	if !ok {
 		return &blankGroup
 	}
@@ -107,9 +107,9 @@ func (s *MemoryGroupStore) dirtyGetUnsafe(gid int) *Group {
 }
 
 // TODO: Hit the database when the item isn't in memory
-func (s *MemoryGroupStore) DirtyGet(gid int) *Group {
+func (s *MemoryGroupStore) DirtyGet(id int) *Group {
 	s.RLock()
-	group, ok := s.groups[gid]
+	group, ok := s.groups[id]
 	s.RUnlock()
 	if !ok {
 		return &blankGroup
@@ -118,9 +118,9 @@ func (s *MemoryGroupStore) DirtyGet(gid int) *Group {
 }
 
 // TODO: Hit the database when the item isn't in memory
-func (s *MemoryGroupStore) Get(gid int) (*Group, error) {
+func (s *MemoryGroupStore) Get(id int) (*Group, error) {
 	s.RLock()
-	group, ok := s.groups[gid]
+	group, ok := s.groups[id]
 	s.RUnlock()
 	if !ok {
 		return nil, ErrNoRows
@@ -129,9 +129,9 @@ func (s *MemoryGroupStore) Get(gid int) (*Group, error) {
 }
 
 // TODO: Hit the database when the item isn't in memory
-func (s *MemoryGroupStore) GetCopy(gid int) (Group, error) {
+func (s *MemoryGroupStore) GetCopy(id int) (Group, error) {
 	s.RLock()
-	group, ok := s.groups[gid]
+	group, ok := s.groups[id]
 	s.RUnlock()
 	if !ok {
 		return blankGroup, ErrNoRows
@@ -147,7 +147,7 @@ func (s *MemoryGroupStore) Reload(id int) error {
 		return nil
 	}
 	canSee := g.CanSee
-	
+
 	g = &Group{ID: id, CanSee: canSee}
 	err = s.get.QueryRow(id).Scan(&g.Name, &g.PermissionsText, &g.PluginPermsText, &g.IsMod, &g.IsAdmin, &g.IsBanned, &g.Tag)
 	if err != nil {
@@ -159,7 +159,7 @@ func (s *MemoryGroupStore) Reload(id int) error {
 		LogError(err)
 		return nil
 	}
-	
+
 	s.CacheSet(g)
 	TopicListThaw.Thaw()
 	return nil
@@ -218,16 +218,16 @@ func (s *MemoryGroupStore) CacheSet(g *Group) error {
 }
 
 // TODO: Hit the database when the item isn't in memory
-func (s *MemoryGroupStore) Exists(gid int) bool {
+func (s *MemoryGroupStore) Exists(id int) bool {
 	s.RLock()
-	group, ok := s.groups[gid]
+	group, ok := s.groups[id]
 	s.RUnlock()
 	return ok && group.Name != ""
 }
 
 // ? Allow two groups with the same name?
 // TODO: Refactor this
-func (s *MemoryGroupStore) Create(name string, tag string, isAdmin bool, isMod bool, isBanned bool) (gid int, err error) {
+func (s *MemoryGroupStore) Create(name, tag string, isAdmin, isMod, isBanned bool) (gid int, err error) {
 	permstr := "{}"
 	tx, err := qgen.Builder.Begin()
 	if err != nil {
@@ -329,7 +329,7 @@ func (s *MemoryGroupStore) GetAllMap() (map[int]*Group, error) {
 
 // ? - Set the lower and higher numbers to 0 to remove the bounds
 // TODO: Might be a little slow right now, maybe we can cache the groups in a slice or break the map up into chunks
-func (s *MemoryGroupStore) GetRange(lower int, higher int) (groups []*Group, err error) {
+func (s *MemoryGroupStore) GetRange(lower, higher int) (groups []*Group, err error) {
 	if lower == 0 && higher == 0 {
 		return s.GetAll()
 	}

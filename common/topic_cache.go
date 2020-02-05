@@ -17,7 +17,7 @@ type TopicCache interface {
 	RemoveUnsafe(id int) error
 	Flush()
 	Length() int
-	SetCapacity(capacity int)
+	SetCapacity(cap int)
 	GetCapacity() int
 }
 
@@ -31,10 +31,10 @@ type MemoryTopicCache struct {
 }
 
 // NewMemoryTopicCache gives you a new instance of MemoryTopicCache
-func NewMemoryTopicCache(capacity int) *MemoryTopicCache {
+func NewMemoryTopicCache(cap int) *MemoryTopicCache {
 	return &MemoryTopicCache{
 		items:    make(map[int]*Topic),
-		capacity: capacity,
+		capacity: cap,
 	}
 }
 
@@ -150,9 +150,9 @@ func (s *MemoryTopicCache) Length() int {
 }
 
 // SetCapacity sets the maximum number of topics which this cache can hold
-func (s *MemoryTopicCache) SetCapacity(capacity int) {
+func (s *MemoryTopicCache) SetCapacity(cap int) {
 	// Ints are moved in a single instruction, so this should be thread-safe
-	s.capacity = capacity
+	s.capacity = cap
 }
 
 // GetCapacity returns the maximum number of topics this cache can hold

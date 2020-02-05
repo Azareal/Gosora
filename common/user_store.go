@@ -25,7 +25,7 @@ type UserStore interface {
 	//BulkGet(ids []int) ([]*User, error)
 	BulkGetMap(ids []int) (map[int]*User, error)
 	BypassGet(id int) (*User, error)
-	Create(name string, password string, email string, group int, active bool) (int, error)
+	Create(name, password, email string, group int, active bool) (int, error)
 	Reload(id int) error
 	Count() int
 
@@ -56,7 +56,7 @@ func NewDefaultUserStore(cache UserCache) (*DefaultUserStore, error) {
 	// TODO: Add an admin version of registerStmt with more flexibility?
 	return &DefaultUserStore{
 		cache:      cache,
-		get:        acc.Select(u).Columns("name, group, active, is_super_admin, session, email, avatar, message, level, score, posts, liked, last_ip, temp_group, enable_embeds").Where("uid = ?").Prepare(),
+		get:        acc.Select(u).Columns("name, group, active, is_super_admin, session, email, avatar, message, level, score, posts, liked, last_ip, temp_group, enable_embeds").Where("uid=?").Prepare(),
 		getByName:  acc.Select(u).Columns("uid, name, group, active, is_super_admin, session, email, avatar, message, level, score, posts, liked, last_ip, temp_group, enable_embeds").Where("name = ?").Prepare(),
 		getOffset:  acc.Select(u).Columns("uid, name, group, active, is_super_admin, session, email, avatar, message, level, score, posts, liked, last_ip, temp_group, enable_embeds").Orderby("uid ASC").Limit("?,?").Prepare(),
 		getAll:  acc.Select(u).Columns("uid, name, group, active, is_super_admin, session, email, avatar, message, level, score, posts, liked, last_ip, temp_group, enable_embeds").Prepare(),

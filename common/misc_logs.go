@@ -31,8 +31,8 @@ func init() {
 	DbInits.Add(func(acc *qgen.Accumulator) error {
 		rl := "registration_logs"
 		regLogStmts = RegLogStmts{
-			update: acc.Update(rl).Set("username=?, email=?, failureReason=?, success=?").Where("rlid=?").Prepare(),
-			create: acc.Insert(rl).Columns("username, email, failureReason, success, ipaddress, doneAt").Fields("?,?,?,?,?,UTC_TIMESTAMP()").Prepare(),
+			update: acc.Update(rl).Set("username=?,email=?,failureReason=?,success=?").Where("rlid=?").Prepare(),
+			create: acc.Insert(rl).Columns("username,email,failureReason,success,ipaddress,doneAt").Fields("?,?,?,?,?,UTC_TIMESTAMP()").Prepare(),
 		}
 		return acc.FirstError()
 	})
@@ -69,7 +69,7 @@ func NewRegLogStore(acc *qgen.Accumulator) (*SQLRegLogStore, error) {
 	rl := "registration_logs"
 	return &SQLRegLogStore{
 		count:     acc.Count(rl).Prepare(),
-		getOffset: acc.Select(rl).Columns("rlid, username, email, failureReason, success, ipaddress, doneAt").Orderby("doneAt DESC").Limit("?,?").Prepare(),
+		getOffset: acc.Select(rl).Columns("rlid,username,email,failureReason,success,ipaddress,doneAt").Orderby("doneAt DESC").Limit("?,?").Prepare(),
 	}, acc.FirstError()
 }
 

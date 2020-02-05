@@ -39,8 +39,8 @@ func init() {
 
 //easyjson:json
 type WsTopicList struct {
-	Topics   []*WsTopicsRow
-	LastPage int // Not for WebSockets, but for the JSON endpoint for /topics/ to keep the paginator functional
+	Topics     []*WsTopicsRow
+	LastPage   int // Not for WebSockets, but for the JSON endpoint for /topics/ to keep the paginator functional
 	LastUpdate int64
 }
 
@@ -214,7 +214,7 @@ func wsPageResume(wsUser *WSUser, conn *websocket.Conn, page string, resume int6
 	if page == "/" {
 		page = Config.DefaultPath
 	}
-	
+
 	switch {
 	// TODO: Synchronise this bit of resume with tick updating lastTopicList?
 	case page == "/topics/":
@@ -414,27 +414,27 @@ AdminStatLoop:
 				w.Write([]byte(msg + "\r"))
 			}
 			push := func(id, msg string) {
-				write("set #" + id + " <span>"+msg+"</span>")
+				write("set #" + id + " <span>" + msg + "</span>")
 			}
 			pushc := func(id, classes string) {
 				write("set-class #" + id + " " + classes)
 			}
 			if !noStatUpdates {
-				push("dash-totonline",p.GetTmplPhrasef("panel_dashboard_online", totonline, totunit))
-				push("dash-gonline",p.GetTmplPhrasef("panel_dashboard_guests_online", gonline, gunit))
-				push("dash-uonline",p.GetTmplPhrasef("panel_dashboard_users_online", uonline, uunit))
-				push("dash-reqs",strconv.Itoa(reqCount) + " reqs / second")
-				pushc("dash-totonline","grid_item grid_stat " + onlineColour)
-				pushc("dash-gonline","grid_item grid_stat " + onlineGuestsColour)
-				pushc("dash-uonline","grid_item grid_stat " + onlineUsersColour)
+				push("dash-totonline", p.GetTmplPhrasef("panel_dashboard_online", totonline, totunit))
+				push("dash-gonline", p.GetTmplPhrasef("panel_dashboard_guests_online", gonline, gunit))
+				push("dash-uonline", p.GetTmplPhrasef("panel_dashboard_users_online", uonline, uunit))
+				push("dash-reqs", strconv.Itoa(reqCount)+" reqs / second")
+				pushc("dash-totonline", "grid_item grid_stat "+onlineColour)
+				pushc("dash-gonline", "grid_item grid_stat "+onlineGuestsColour)
+				pushc("dash-uonline", "grid_item grid_stat "+onlineUsersColour)
 				//pushc("dash-reqs","grid_item grid_stat grid_end_group")
 			}
-			push("dash-cpu",p.GetTmplPhrasef("panel_dashboard_cpu",cpustr) + "%")
-			pushc("dash-cpu","grid_item grid_istat " + cpuColour)
+			push("dash-cpu", p.GetTmplPhrasef("panel_dashboard_cpu", cpustr)+"%")
+			pushc("dash-cpu", "grid_item grid_istat "+cpuColour)
 
 			if !noRAMUpdates {
-				push("dash-ram", p.GetTmplPhrasef("panel_dashboard_ram",ramstr))
-				pushc("dash-ram","grid_item grid_istat " + ramColour)
+				push("dash-ram", p.GetTmplPhrasef("panel_dashboard_ram", ramstr))
+				pushc("dash-ram", "grid_item grid_istat "+ramColour)
 			}
 			w.Close()
 		}

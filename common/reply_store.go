@@ -13,7 +13,7 @@ type ReplyStore interface {
 	Get(id int) (*Reply, error)
 	Each(f func(*Reply) error) error
 	Exists(id int) bool
-	Create(t *Topic, content string, ip string, uid int) (id int, err error)
+	Create(t *Topic, content, ip string, uid int) (id int, err error)
 	Count() (count int)
 	CountUser(uid int) (count int)
 	CountMegaUser(uid int) (count int)

@@ -18,7 +18,7 @@ type ReplyCache interface {
 	RemoveUnsafe(id int) error
 	Flush()
 	Length() int
-	SetCapacity(capacity int)
+	SetCapacity(cap int)
 	GetCapacity() int
 }
 
@@ -32,10 +32,10 @@ type MemoryReplyCache struct {
 }
 
 // NewMemoryReplyCache gives you a new instance of MemoryReplyCache
-func NewMemoryReplyCache(capacity int) *MemoryReplyCache {
+func NewMemoryReplyCache(cap int) *MemoryReplyCache {
 	return &MemoryReplyCache{
 		items:    make(map[int]*Reply),
-		capacity: capacity,
+		capacity: cap,
 	}
 }
 
@@ -152,9 +152,9 @@ func (s *MemoryReplyCache) Length() int {
 }
 
 // SetCapacity sets the maximum number of replies which this cache can hold
-func (s *MemoryReplyCache) SetCapacity(capacity int) {
+func (s *MemoryReplyCache) SetCapacity(cap int) {
 	// Ints are moved in a single instruction, so this should be thread-safe
-	s.capacity = capacity
+	s.capacity = cap
 }
 
 // GetCapacity returns the maximum number of replies this cache can hold
