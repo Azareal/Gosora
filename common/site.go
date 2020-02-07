@@ -95,11 +95,13 @@ type config struct {
 	PostIPCutoff   int
 	PollIPCutoff   int
 	LogPruneCutoff int
+	//SelfDeleteTruncCutoff int // Personal data is stripped from the mod action rows only leaving the TID and the action for later investigation.
 
 	DisableLastIP bool
 	DisablePostIP bool
 	DisablePollIP bool
 	DisableRegLog bool
+	//DisableSelfDeleteLog bool
 
 	DisableLiveTopicList bool
 	DisableJSAntispam    bool
@@ -168,7 +170,18 @@ func LoadConfig() error {
 	return nil
 }
 
+var noavatarCache200 []string
+var noavatarCache48 []string
+
 func ProcessConfig() (err error) {
+	if !Config.DisableDefaultNoavatar {
+		noavatarCache200 = make([]string, 5)
+		noavatarCache48 = make([]string, 5)
+		for i := 0; i < 5; i++ {
+			noavatarCache200[i] = "/s/n" + strconv.Itoa(i) + "-" + strconv.Itoa(200) + ".png?i=0"
+			noavatarCache48[i] = "/s/n" + strconv.Itoa(i) + "-" + strconv.Itoa(48) + ".png?i=0"
+		}
+	}
 	Config.Noavatar = strings.Replace(Config.Noavatar, "{site_url}", Site.URL, -1)
 	guestAvatar = GuestAvatar{buildNoavatar(0, 200), buildNoavatar(0, 48)}
 

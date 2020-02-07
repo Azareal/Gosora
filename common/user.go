@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
 	//"log"
 
 	qgen "github.com/Azareal/Gosora/query_gen"
@@ -347,7 +348,7 @@ func (u *User) DeletePosts() error {
 	tc := Topics.GetCache()
 	umap := make(map[int]struct{})
 	for rows.Next() {
-		var tid, parentID, postCount,poll int
+		var tid, parentID, postCount, poll int
 		err := rows.Scan(&tid, &parentID, &postCount, &poll)
 		if err != nil {
 			return err
@@ -384,7 +385,7 @@ func (u *User) DeletePosts() error {
 				return err
 			}
 		}
-		err = Subscriptions.DeleteResource(tid,"topic")
+		err = Subscriptions.DeleteResource(tid, "topic")
 		if err != nil {
 			return err
 		}
@@ -427,7 +428,7 @@ func (u *User) DeletePosts() error {
 
 	for rows.Next() {
 		var rid, uid int
-		err := rows.Scan(&rid,&uid)
+		err := rows.Scan(&rid, &uid)
 		if err != nil {
 			return err
 		}
@@ -437,7 +438,7 @@ func (u *User) DeletePosts() error {
 		}
 		// TODO: Optimise this
 		// TODO: dismiss-event
-		err = Activity.DeleteByParamsExtra("reply",uid,"user",strconv.Itoa(rid))
+		err = Activity.DeleteByParamsExtra("reply", uid, "user", strconv.Itoa(rid))
 		if err != nil {
 			return err
 		}
@@ -485,7 +486,7 @@ func (u *User) DeletePosts() error {
 		if err != nil {
 			return err
 		}
-		err = Activity.DeleteByParamsExtra("reply",tid,"topic",strconv.Itoa(rid))
+		err = Activity.DeleteByParamsExtra("reply", tid, "topic", strconv.Itoa(rid))
 		if err != nil {
 			return err
 		}
@@ -720,6 +721,11 @@ func buildNoavatar(uid, width int) string {
 		}
 	}
 	if !Config.DisableDefaultNoavatar && uid < 5 {
+		if width == 200 {
+			return noavatarCache200[uid]
+		} else if width == 48 {
+			return noavatarCache48[uid]
+		}
 		return "/s/n" + strconv.Itoa(uid) + "-" + strconv.Itoa(width) + ".png?i=0"
 	}
 	return strings.Replace(strings.Replace(Config.Noavatar, "{id}", strconv.Itoa(uid), 1), "{width}", strconv.Itoa(width), 1)
@@ -727,7 +733,7 @@ func buildNoavatar(uid, width int) string {
 
 // ? Make this part of *User?
 // TODO: Write tests for this
-func BuildAvatar(uid int, avatar string) (normalAvatar string, microAvatar string) {
+func BuildAvatar(uid int, avatar string) (normalAvatar, microAvatar string) {
 	if avatar == "" {
 		if uid == 0 {
 			return guestAvatar.Normal, guestAvatar.Micro
