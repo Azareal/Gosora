@@ -923,9 +923,11 @@
 		"panel_group_extended_permissions":"Extended Permissions",
 		"panel_group_mod_permissions":"Moderator Permissions",
 
-		"panel_group_promotions_level_prefix":"level ",
-		"panel_group_promotions_posts_prefix":"posts ",
-		"panel_group_promotions_delete_button":"Delete",
+		"panel_group_promotions_row_level_prefix":"level ",
+		"panel_group_promotions_row_posts_prefix":"posts ",
+		"panel_group_promotions_row_registered_minutes":"registered for %d minutes",
+		"panel_group_promotions_row_delete_button":"Delete",
+
 		"panel_group_promotions_create_head":"Add Promotion",
 		"panel_group_promotions_from":"From",
 		"panel_group_promotions_to":"To",
@@ -933,6 +935,9 @@
 		"panel_group_promotions_level":"Level",
 		"panel_group_promotions_posts":"Posts",
 		"panel_group_promotion_registered_for":"Registered For",
+		"panel_group_promotion_registered_months_suffix":" months",
+		"panel_group_promotion_registered_days_suffix":" days",
+		"panel_group_promotion_registered_hours_suffix":" hours",
 		"panel_group_promotions_create_button":"Add Promotion",
 
 		"panel_word_filters_head":"Word Filters",

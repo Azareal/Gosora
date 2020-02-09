@@ -11,11 +11,11 @@
 		{{range .Promotions}}
 		<div class="rowitem">
 			<a href="#p-{{.ID}}">{{.FromGroup.Name}} -> {{.ToGroup.Name}}{{if .TwoWay}} (two way){{end}}</a>
-			{{if .Level}}<span>&nbsp;-&nbsp;{{lang "panel_group_promotions_level_prefix"}}{{.Level}}</span>{{end}}
-			{{if .Posts}}<span>&nbsp;-&nbsp;{{lang "panel_group_promotions_posts_prefix"}}{{.Posts}}</span>{{end}}
-			{{if .RegisteredFor}}<span>&nbsp;-&nbsp;registered for {{.RegisteredFor}} minutes</span>{{end}}
+			{{if .Level}}<span>&nbsp;-&nbsp;{{lang "panel_group_promotions_row_level_prefix"}}{{.Level}}</span>{{end}}
+			{{if .Posts}}<span>&nbsp;-&nbsp;{{lang "panel_group_promotions_row_posts_prefix"}}{{.Posts}}</span>{{end}}
+			{{if .RegisteredFor}}<span>&nbsp;-&nbsp;{{langf "panel_group_promotions_row_registered_minutes" .RegisteredFor}}</span>{{end}}
 			<div class="to_right">
-				<a href="/panel/groups/promotions/delete/submit/{{$.ID}}-{{.ID}}?s={{$.CurrentUser.Session}}"><button form="nn">{{lang "panel_group_promotions_delete_button"}}</button></a>
+				<a href="/panel/groups/promotions/delete/submit/{{$.ID}}-{{.ID}}?s={{$.CurrentUser.Session}}"><button form="nn">{{lang "panel_group_promotions_row_delete_button"}}</button></a>
 			</div>
 		</div>{{end}}
 		<div class="rowitem">
@@ -66,9 +66,9 @@
 		<div class="formrow">
 			<div class="formitem formlabel"><a>{{lang "panel_group_promotion_registered_for"}}</a></div>
 			<div class="formitem">
-				<input name="registered_months" type="number" value="0"/> months<br>
-				<input name="registered_days" type="number" value="0"/> days<br>
-				<input name="registered_hours" type="number" value="0"/> hours
+				<input name="registered_months" type="number" value="0"/>{{lang "panel_group_promotion_registered_months_suffix"}}<br>
+				<input name="registered_days" type="number" value="0"/>{{lang "panel_group_promotion_registered_days_suffix"}}<br>
+				<input name="registered_hours" type="number" value="0"/>{{lang "panel_group_promotion_registered_hours_suffix"}}
 			</div>
 		</div>
 		<div class="formrow form_button_row">
