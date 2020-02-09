@@ -206,7 +206,7 @@ func AccountRegisterSubmit(w http.ResponseWriter, r *http.Request, user c.User) 
 	regSuccess := true
 	regErrMsg := ""
 	regErrReason := ""
-	regError := func(userMsg string, reason string) {
+	regError := func(userMsg, reason string) {
 		regSuccess = false
 		if regErrMsg == "" {
 			regErrMsg = userMsg
@@ -313,6 +313,18 @@ func AccountRegisterSubmit(w http.ResponseWriter, r *http.Request, user c.User) 
 		}
 		return c.InternalError(err, w, r)
 	}
+
+	u, err := c.Users.Get(uid)
+	if err == sql.ErrNoRows {
+		return c.LocalError("You no longer exist.", w, r, user)
+	} else if err != nil {
+		return c.InternalError(err, w, r)
+	}
+	err = c.GroupPromotions.PromoteIfEligible(u, u.Level, u.Posts, u.CreatedAt)
+	if err != nil {
+		return c.InternalError(err, w, r)
+	}
+	u.CacheRemove()
 
 	session, err := c.Auth.CreateSession(uid)
 	if err != nil {
@@ -731,6 +743,18 @@ func AccountEditEmailTokenSubmit(w http.ResponseWriter, r *http.Request, user c.
 		if err = user.Activate(); err != nil {
 			return c.InternalError(err, w, r)
 		}
+
+		u2, err := c.Users.Get(user.ID)
+		if err == sql.ErrNoRows {
+			return c.LocalError("The user no longer exists.", w, r, user)
+		} else if err != nil {
+			return c.InternalError(err, w, r)
+		}
+		err = c.GroupPromotions.PromoteIfEligible(u2, u2.Level, u2.Posts, u2.CreatedAt)
+		if err != nil {
+			return c.InternalError(err, w, r)
+		}
+		u2.CacheRemove()
 	}
 	http.Redirect(w, r, "/user/edit/email/?verified=1", http.StatusSeeOther)
 	return nil
