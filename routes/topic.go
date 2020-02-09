@@ -39,9 +39,9 @@ var topicStmts TopicStmts
 func init() {
 	c.DbInits.Add(func(acc *qgen.Accumulator) error {
 		topicStmts = TopicStmts{
-			getLikedTopic: acc.Select("likes").Columns("targetItem").Where("sentBy = ? && targetItem = ? && targetType = 'topics'").Prepare(),
+			getLikedTopic: acc.Select("likes").Columns("targetItem").Where("sentBy=? && targetItem=? && targetType='topics'").Prepare(),
 			// TODO: Less race-y attachment count updates
-			updateAttachs: acc.Update("topics").Set("attachCount = ?").Where("tid = ?").Prepare(),
+			updateAttachs: acc.Update("topics").Set("attachCount=?").Where("tid=?").Prepare(),
 		}
 		return acc.FirstError()
 	})
@@ -98,7 +98,7 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user c.User, header *c.He
 	if topic.ContentHTML == topic.Content {
 		topic.ContentHTML = topic.Content
 	}
-	
+
 	topic.Tag = postGroup.Tag
 	if postGroup.IsMod {
 		topic.ClassName = c.Config.StaffCSS
@@ -327,9 +327,9 @@ func CreateTopic(w http.ResponseWriter, r *http.Request, user c.User, header *c.
 		}
 
 		// Do a bulk forum fetch, just in case it's the SqlForumStore?
-		forum := c.Forums.DirtyGet(ffid)
-		if forum.Name != "" && forum.Active {
-			fcopy := forum.Copy()
+		f := c.Forums.DirtyGet(ffid)
+		if f.Name != "" && f.Active {
+			fcopy := f.Copy()
 			// TODO: Abstract this
 			if header.Hooks.HookSkippable("topic_create_frow_assign", &fcopy) {
 				continue
@@ -707,7 +707,7 @@ func StickTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User, stid 
 	return topicActionPost(topic.Stick(), "stick", w, r, lite, topic, user)
 }
 
-func topicActionPre(stid string, action string, w http.ResponseWriter, r *http.Request, user c.User) (*c.Topic, *c.HeaderLite, c.RouteError) {
+func topicActionPre(stid, action string, w http.ResponseWriter, r *http.Request, user c.User) (*c.Topic, *c.HeaderLite, c.RouteError) {
 	tid, err := strconv.Atoi(stid)
 	if err != nil {
 		return nil, nil, c.PreError(phrases.GetErrorPhrase("id_must_be_integer"), w, r)

@@ -7,8 +7,8 @@ import (
 	"github.com/Azareal/Gosora/common/phrases"
 )
 
-func IPSearch(w http.ResponseWriter, r *http.Request, user c.User, header *c.Header) c.RouteError {
-	header.Title = phrases.GetTitlePhrase("ip_search")
+func IPSearch(w http.ResponseWriter, r *http.Request, user c.User, h *c.Header) c.RouteError {
+	h.Title = phrases.GetTitlePhrase("ip_search")
 	// TODO: How should we handle the permissions if we extend this into an alt detector of sorts?
 	if !user.Perms.ViewIPs {
 		return c.NoPermissions(w, r, user)
@@ -26,5 +26,5 @@ func IPSearch(w http.ResponseWriter, r *http.Request, user c.User, header *c.Hea
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
-	return renderTemplate("ip_search", w, r, header, c.IPSearchPage{header, userList, ip})
+	return renderTemplate("ip_search", w, r, h, c.IPSearchPage{h, userList, ip})
 }

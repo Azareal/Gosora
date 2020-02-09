@@ -1,5 +1,5 @@
 <div class="search widget_search">
-	<input class="widget_search_input" name="widget_search" placeholder="Search" type="search" />
+	<input class="widget_search_input" name="widget_search" placeholder="Search" type="search"/>
 </div>
 <div class="rowblock filter_list widget_filter">
 {{range .Forums}}	<div class="rowitem filter_item{{if .Selected}} filter_selected{{end}}" data-fid={{.ID}}><a href="/topics/?fids={{.ID}}" rel="nofollow">{{.Name}} ({{.TopicCount}})</a></div>

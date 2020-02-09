@@ -39,7 +39,7 @@ type DefaultUserStore struct {
 	get        *sql.Stmt
 	getByName  *sql.Stmt
 	getOffset  *sql.Stmt
-	getAll *sql.Stmt
+	getAll     *sql.Stmt
 	exists     *sql.Stmt
 	register   *sql.Stmt
 	nameExists *sql.Stmt
@@ -53,13 +53,14 @@ func NewDefaultUserStore(cache UserCache) (*DefaultUserStore, error) {
 		cache = NewNullUserCache()
 	}
 	u := "users"
+	allCols := "uid, name, group, active, is_super_admin, session, email, avatar, message, level, score, posts, liked, last_ip, temp_group, createdAt, enable_embeds"
 	// TODO: Add an admin version of registerStmt with more flexibility?
 	return &DefaultUserStore{
 		cache:      cache,
-		get:        acc.Select(u).Columns("name, group, active, is_super_admin, session, email, avatar, message, level, score, posts, liked, last_ip, temp_group, enable_embeds").Where("uid=?").Prepare(),
-		getByName:  acc.Select(u).Columns("uid, name, group, active, is_super_admin, session, email, avatar, message, level, score, posts, liked, last_ip, temp_group, enable_embeds").Where("name = ?").Prepare(),
-		getOffset:  acc.Select(u).Columns("uid, name, group, active, is_super_admin, session, email, avatar, message, level, score, posts, liked, last_ip, temp_group, enable_embeds").Orderby("uid ASC").Limit("?,?").Prepare(),
-		getAll:  acc.Select(u).Columns("uid, name, group, active, is_super_admin, session, email, avatar, message, level, score, posts, liked, last_ip, temp_group, enable_embeds").Prepare(),
+		get:        acc.Select(u).Columns("name, group, active, is_super_admin, session, email, avatar, message, level, score, posts, liked, last_ip, temp_group, createdAt, enable_embeds").Where("uid=?").Prepare(),
+		getByName:  acc.Select(u).Columns(allCols).Where("name=?").Prepare(),
+		getOffset:  acc.Select(u).Columns(allCols).Orderby("uid ASC").Limit("?,?").Prepare(),
+		getAll:     acc.Select(u).Columns(allCols).Prepare(),
 		exists:     acc.Exists(u, "uid").Prepare(),
 		register:   acc.Insert(u).Columns("name, email, password, salt, group, is_super_admin, session, active, message, createdAt, lastActiveAt, lastLiked, oldestItemLikedCreatedAt").Fields("?,?,?,?,?,0,'',?,'',UTC_TIMESTAMP(),UTC_TIMESTAMP(),UTC_TIMESTAMP(),UTC_TIMESTAMP()").Prepare(), // TODO: Implement user_count on users_groups here
 		nameExists: acc.Exists(u, "name").Prepare(),
@@ -91,7 +92,7 @@ func (s *DefaultUserStore) Get(id int) (*User, error) {
 
 	u = &User{ID: id, Loggedin: true}
 	var embeds int
-	err = s.get.QueryRow(id).Scan(&u.Name, &u.Group, &u.Active, &u.IsSuperAdmin, &u.Session, &u.Email, &u.RawAvatar, &u.Message, &u.Level, &u.Score, &u.Posts, &u.Liked, &u.LastIP, &u.TempGroup, &embeds)
+	err = s.get.QueryRow(id).Scan(&u.Name, &u.Group, &u.Active, &u.IsSuperAdmin, &u.Session, &u.Email, &u.RawAvatar, &u.Message, &u.Level, &u.Score, &u.Posts, &u.Liked, &u.LastIP, &u.TempGroup, &u.CreatedAt, &embeds)
 	if err == nil {
 		if embeds != -1 {
 			u.ParseSettings = DefaultParseSettings.CopyPtr()
@@ -108,7 +109,7 @@ func (s *DefaultUserStore) Get(id int) (*User, error) {
 func (s *DefaultUserStore) GetByName(name string) (*User, error) {
 	u := &User{Loggedin: true}
 	var embeds int
-	err := s.getByName.QueryRow(name).Scan(&u.ID, &u.Name, &u.Group, &u.Active, &u.IsSuperAdmin, &u.Session, &u.Email, &u.RawAvatar, &u.Message, &u.Level, &u.Score, &u.Posts, &u.Liked, &u.LastIP, &u.TempGroup, &embeds)
+	err := s.getByName.QueryRow(name).Scan(&u.ID, &u.Name, &u.Group, &u.Active, &u.IsSuperAdmin, &u.Session, &u.Email, &u.RawAvatar, &u.Message, &u.Level, &u.Score, &u.Posts, &u.Liked, &u.LastIP, &u.TempGroup, &u.CreatedAt, &embeds)
 	if err == nil {
 		if embeds != -1 {
 			u.ParseSettings = DefaultParseSettings.CopyPtr()
@@ -132,7 +133,7 @@ func (s *DefaultUserStore) GetOffset(offset, perPage int) (users []*User, err er
 	var embeds int
 	for rows.Next() {
 		u := &User{Loggedin: true}
-		err := rows.Scan(&u.ID, &u.Name, &u.Group, &u.Active, &u.IsSuperAdmin, &u.Session, &u.Email, &u.RawAvatar, &u.Message, &u.Level, &u.Score, &u.Posts, &u.Liked, &u.LastIP, &u.TempGroup, &embeds)
+		err := rows.Scan(&u.ID, &u.Name, &u.Group, &u.Active, &u.IsSuperAdmin, &u.Session, &u.Email, &u.RawAvatar, &u.Message, &u.Level, &u.Score, &u.Posts, &u.Liked, &u.LastIP, &u.TempGroup, &u.CreatedAt, &embeds)
 		if err != nil {
 			return nil, err
 		}
@@ -155,7 +156,7 @@ func (s *DefaultUserStore) Each(f func(*User) error) error {
 	var embeds int
 	for rows.Next() {
 		u := new(User)
-		if err := rows.Scan(&u.ID, &u.Name, &u.Group, &u.Active, &u.IsSuperAdmin, &u.Session, &u.Email, &u.RawAvatar, &u.Message, &u.Level, &u.Score, &u.Posts, &u.Liked, &u.LastIP, &u.TempGroup, &embeds); err != nil {
+		if err := rows.Scan(&u.ID, &u.Name, &u.Group, &u.Active, &u.IsSuperAdmin, &u.Session, &u.Email, &u.RawAvatar, &u.Message, &u.Level, &u.Score, &u.Posts, &u.Liked, &u.LastIP, &u.TempGroup, &u.CreatedAt, &embeds); err != nil {
 			return err
 		}
 		if embeds != -1 {
@@ -213,7 +214,7 @@ func (s *DefaultUserStore) BulkGetMap(ids []int) (list map[int]*User, err error)
 	}
 	q = q[0 : len(q)-1]
 
-	rows, err := qgen.NewAcc().Select("users").Columns("uid,name,group,active,is_super_admin,session,email,avatar,message,level,score,posts,liked,last_ip,temp_group,enable_embeds").Where("uid IN(" + q + ")").Query(idList...)
+	rows, err := qgen.NewAcc().Select("users").Columns("uid,name,group,active,is_super_admin,session,email,avatar,message,level,score,posts,liked,last_ip,temp_group,createdAt,enable_embeds").Where("uid IN(" + q + ")").Query(idList...)
 	if err != nil {
 		return list, err
 	}
@@ -222,7 +223,7 @@ func (s *DefaultUserStore) BulkGetMap(ids []int) (list map[int]*User, err error)
 	var embeds int
 	for rows.Next() {
 		u := &User{Loggedin: true}
-		err := rows.Scan(&u.ID, &u.Name, &u.Group, &u.Active, &u.IsSuperAdmin, &u.Session, &u.Email, &u.RawAvatar, &u.Message, &u.Level, &u.Score, &u.Posts, &u.Liked, &u.LastIP, &u.TempGroup, &embeds)
+		err := rows.Scan(&u.ID, &u.Name, &u.Group, &u.Active, &u.IsSuperAdmin, &u.Session, &u.Email, &u.RawAvatar, &u.Message, &u.Level, &u.Score, &u.Posts, &u.Liked, &u.LastIP, &u.TempGroup, &u.CreatedAt, &embeds)
 		if err != nil {
 			return list, err
 		}
@@ -259,7 +260,7 @@ func (s *DefaultUserStore) BulkGetMap(ids []int) (list map[int]*User, err error)
 func (s *DefaultUserStore) BypassGet(id int) (*User, error) {
 	u := &User{ID: id, Loggedin: true}
 	var embeds int
-	err := s.get.QueryRow(id).Scan(&u.Name, &u.Group, &u.Active, &u.IsSuperAdmin, &u.Session, &u.Email, &u.RawAvatar, &u.Message, &u.Level, &u.Score, &u.Posts, &u.Liked, &u.LastIP, &u.TempGroup, &embeds)
+	err := s.get.QueryRow(id).Scan(&u.Name, &u.Group, &u.Active, &u.IsSuperAdmin, &u.Session, &u.Email, &u.RawAvatar, &u.Message, &u.Level, &u.Score, &u.Posts, &u.Liked, &u.LastIP, &u.TempGroup, &u.CreatedAt, &embeds)
 	if err == nil {
 		if embeds != -1 {
 			u.ParseSettings = DefaultParseSettings.CopyPtr()

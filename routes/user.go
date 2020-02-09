@@ -171,6 +171,18 @@ func ActivateUser(w http.ResponseWriter, r *http.Request, user c.User, suid stri
 		return c.InternalError(err, w, r)
 	}
 
+	targetUser, err = c.Users.Get(uid)
+	if err == sql.ErrNoRows {
+		return c.LocalError("The account you're trying to activate no longer exists.", w, r, user)
+	} else if err != nil {
+		return c.InternalError(err, w, r)
+	}
+	err = c.GroupPromotions.PromoteIfEligible(targetUser, targetUser.Level, targetUser.Posts, targetUser.CreatedAt)
+	if err != nil {
+		return c.InternalError(err, w, r)
+	}
+	targetUser.CacheRemove()
+
 	err = c.ModLogs.Create("activate", targetUser.ID, "user", user.GetIP(), user.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)

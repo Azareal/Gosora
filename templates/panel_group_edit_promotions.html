@@ -13,6 +13,7 @@
 			<a href="#p-{{.ID}}">{{.FromGroup.Name}} -> {{.ToGroup.Name}}{{if .TwoWay}} (two way){{end}}</a>
 			{{if .Level}}<span>&nbsp;-&nbsp;{{lang "panel_group_promotions_level_prefix"}}{{.Level}}</span>{{end}}
 			{{if .Posts}}<span>&nbsp;-&nbsp;{{lang "panel_group_promotions_posts_prefix"}}{{.Posts}}</span>{{end}}
+			{{if .RegisteredFor}}<span>&nbsp;-&nbsp;registered for {{.RegisteredFor}} minutes</span>{{end}}
 			<div class="to_right">
 				<a href="/panel/groups/promotions/delete/submit/{{$.ID}}-{{.ID}}?s={{$.CurrentUser.Session}}"><button form="nn">{{lang "panel_group_promotions_delete_button"}}</button></a>
 			</div>
@@ -56,11 +57,19 @@
 		</div>
 		<div class="formrow">
 			<div class="formitem formlabel"><a>{{lang "panel_group_promotions_level"}}</a></div>
-			<div class="formitem"><input name="level" type="number" value=0 /></div>
+			<div class="formitem"><input name="level" type="number" value="0"/></div>
 		</div>
 		<div class="formrow">
 			<div class="formitem formlabel"><a>{{lang "panel_group_promotions_posts"}}</a></div>
-			<div class="formitem"><input name="posts" type="number" value=0 /></div>
+			<div class="formitem"><input name="posts" type="number" value="0"/></div>
+		</div>
+		<div class="formrow">
+			<div class="formitem formlabel"><a>{{lang "panel_group_promotion_registered_for"}}</a></div>
+			<div class="formitem">
+				<input name="registered_months" type="number" value="0"/> months<br>
+				<input name="registered_days" type="number" value="0"/> days<br>
+				<input name="registered_hours" type="number" value="0"/> hours
+			</div>
 		</div>
 		<div class="formrow form_button_row">
 			<div class="formitem"><button name="panel-button" class="formbutton">{{lang "panel_group_promotions_create_button"}}</button></div>

@@ -30,7 +30,7 @@ func createTables(adapter qgen.Adapter) (err error) {
 			tC{"lastActiveAt", "datetime", 0, false, false, ""},
 			tC{"session", "varchar", 200, false, false, "''"},
 			//tC{"authToken", "varchar", 200, false, false, "''"},
-			tC{"last_ip", "varchar", 200, false, false, "0.0.0.0.0"},
+			tC{"last_ip", "varchar", 200, false, false, "''"},
 			tC{"enable_embeds", "int", 0, false, false, "-1"},
 			tC{"email", "varchar", 200, false, false, "''"},
 			tC{"avatar", "varchar", 100, false, false, "''"},
@@ -90,12 +90,27 @@ func createTables(adapter qgen.Adapter) (err error) {
 			// Requirements
 			tC{"level", "int", 0, false, false, ""},
 			tC{"posts", "int", 0, false, false, "0"},
-			tC{"minTime", "int", 0, false, false, ""}, // How long someone needs to have been in their current group before being promoted
+			tC{"minTime", "int", 0, false, false, ""},        // How long someone needs to have been in their current group before being promoted
+			tC{"registeredFor", "int", 0, false, false, "0"}, // minutes
 		},
 		[]tblKey{
 			tblKey{"pid", "primary", "", false},
 		},
 	)
+
+	/*
+		createTable("users_groups_promotions_scheduled","","",
+			[]tC{
+				tC{"prid","int",0,false,false,""},
+				tC{"uid","int",0,false,false,""},
+				tC{"runAt","datetime",0,false,false,""},
+			},
+			[]tblKey{
+				// TODO: Test to see that the compound primary key works
+				tblKey{"prid,uid", "primary", "", false},
+			},
+		)
+	*/
 
 	createTable("users_2fa_keys", mysqlPre, mysqlCol,
 		[]tC{

@@ -15,7 +15,6 @@ func PollVote(w http.ResponseWriter, r *http.Request, user c.User, sPollID strin
 	if err != nil {
 		return c.PreError("The provided PollID is not a valid number.", w, r)
 	}
-
 	poll, err := c.Polls.Get(pollID)
 	if err == sql.ErrNoRows {
 		return c.PreError("The poll you tried to vote for doesn't exist.", w, r)
@@ -72,7 +71,6 @@ func PollResults(w http.ResponseWriter, r *http.Request, user c.User, sPollID st
 	if err != nil {
 		return c.PreError("The provided PollID is not a valid number.", w, r)
 	}
-
 	poll, err := c.Polls.Get(pollID)
 	if err == sql.ErrNoRows {
 		return c.PreError("The poll you tried to vote for doesn't exist.", w, r)
@@ -81,7 +79,7 @@ func PollResults(w http.ResponseWriter, r *http.Request, user c.User, sPollID st
 	}
 
 	// TODO: Abstract this
-	rows, err := qgen.NewAcc().Select("polls_options").Columns("votes").Where("pollID = ?").Orderby("option ASC").Query(poll.ID)
+	rows, err := qgen.NewAcc().Select("polls_options").Columns("votes").Where("pollID=?").Orderby("option ASC").Query(poll.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}

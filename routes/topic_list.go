@@ -32,11 +32,11 @@ func TopicListMostViewed(w http.ResponseWriter, r *http.Request, user c.User, h 
 }
 
 // TODO: Implement search
-func TopicListCommon(w http.ResponseWriter, r *http.Request, user c.User, header *c.Header, torder string, tsorder string) c.RouteError {
-	header.Title = phrases.GetTitlePhrase("topics")
-	header.Zone = "topics"
-	header.Path = "/topics/"
-	header.MetaDesc = header.Settings["meta_desc"].(string)
+func TopicListCommon(w http.ResponseWriter, r *http.Request, user c.User, h *c.Header, torder, tsorder string) c.RouteError {
+	h.Title = phrases.GetTitlePhrase("topics")
+	h.Zone = "topics"
+	h.Path = "/topics/"
+	h.MetaDesc = h.Settings["meta_desc"].(string)
 
 	group, err := c.Groups.Get(user.Group)
 	if err != nil {
@@ -61,8 +61,8 @@ func TopicListCommon(w http.ResponseWriter, r *http.Request, user c.User, header
 			if err != nil {
 				return c.LocalError("Invalid fid forum", w, r, user)
 			}
-			header.Title = forum.Name
-			header.ZoneID = forum.ID
+			h.Title = forum.Name
+			h.ZoneID = forum.ID
 		}
 	}
 
@@ -95,8 +95,8 @@ func TopicListCommon(w http.ResponseWriter, r *http.Request, user c.User, header
 			}
 			for _, fid := range fids {
 				if inSlice(canSee, fid) {
-					forum := c.Forums.DirtyGet(fid)
-					if forum.Name != "" && forum.Active && (forum.ParentType == "" || forum.ParentType == "forum") {
+					f := c.Forums.DirtyGet(fid)
+					if f.Name != "" && f.Active && (f.ParentType == "" || f.ParentType == "forum") {
 						// TODO: Add a hook here for plugin_guilds?
 						cfids = append(cfids, fid)
 					}
@@ -118,10 +118,10 @@ func TopicListCommon(w http.ResponseWriter, r *http.Request, user c.User, header
 			return c.InternalError(err, w, r)
 		}
 		reqUserList := make(map[int]bool)
-		for _, topic := range tMap {
-			reqUserList[topic.CreatedBy] = true
-			reqUserList[topic.LastReplyBy] = true
-			topicList = append(topicList, topic.TopicsRow())
+		for _, t := range tMap {
+			reqUserList[t.CreatedBy] = true
+			reqUserList[t.LastReplyBy] = true
+			topicList = append(topicList, t.TopicsRow())
 		}
 		//fmt.Printf("reqUserList %+v\n", reqUserList)
 
@@ -141,18 +141,18 @@ func TopicListCommon(w http.ResponseWriter, r *http.Request, user c.User, header
 		}
 
 		// TODO: De-dupe this logic in common/topic_list.go?
-		for _, topic := range topicList {
-			topic.Link = c.BuildTopicURL(c.NameToSlug(topic.Title), topic.ID)
+		for _, t := range topicList {
+			t.Link = c.BuildTopicURL(c.NameToSlug(t.Title), t.ID)
 			// TODO: Pass forum to something like topic.Forum and use that instead of these two properties? Could be more flexible.
-			forum := c.Forums.DirtyGet(topic.ParentID)
-			topic.ForumName = forum.Name
-			topic.ForumLink = forum.Link
+			forum := c.Forums.DirtyGet(t.ParentID)
+			t.ForumName = forum.Name
+			t.ForumLink = forum.Link
 
 			// TODO: Create a specialised function with a bit less overhead for getting the last page for a post count
-			_, _, lastPage := c.PageOffset(topic.PostCount, 1, c.Config.ItemsPerPage)
-			topic.LastPage = lastPage
-			topic.Creator = userList[topic.CreatedBy]
-			topic.LastUser = userList[topic.LastReplyBy]
+			_, _, lastPage := c.PageOffset(t.PostCount, 1, c.Config.ItemsPerPage)
+			t.LastPage = lastPage
+			t.Creator = userList[t.CreatedBy]
+			t.LastUser = userList[t.LastReplyBy]
 		}
 
 		// TODO: Reduce the amount of boilerplate here
@@ -165,9 +165,9 @@ func TopicListCommon(w http.ResponseWriter, r *http.Request, user c.User, header
 			return nil
 		}
 
-		header.Title = phrases.GetTitlePhrase("topics_search")
-		pi := c.TopicListPage{header, topicList, forumList, c.Config.DefaultForum, c.TopicListSort{torder, false}, paginator}
-		return renderTemplate("topics", w, r, header, pi)
+		h.Title = phrases.GetTitlePhrase("topics_search")
+		pi := c.TopicListPage{h, topicList, forumList, c.Config.DefaultForum, c.TopicListSort{torder, false}, paginator}
+		return renderTemplate("topics", w, r, h, pi)
 	}
 
 	// TODO: Pass a struct back rather than passing back so many variables
@@ -190,6 +190,6 @@ func TopicListCommon(w http.ResponseWriter, r *http.Request, user c.User, header
 		return nil
 	}
 
-	pi := c.TopicListPage{header, topicList, forumList, c.Config.DefaultForum, c.TopicListSort{torder, false}, paginator}
-	return renderTemplate("topics", w, r, header, pi)
+	pi := c.TopicListPage{h, topicList, forumList, c.Config.DefaultForum, c.TopicListSort{torder, false}, paginator}
+	return renderTemplate("topics", w, r, h, pi)
 }

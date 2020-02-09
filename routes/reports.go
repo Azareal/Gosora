@@ -9,14 +9,14 @@ import (
 	"github.com/Azareal/Gosora/common/counters"
 )
 
-func ReportSubmit(w http.ResponseWriter, r *http.Request, user c.User, sitemID string) c.RouteError {
+func ReportSubmit(w http.ResponseWriter, r *http.Request, user c.User, sItemID string) c.RouteError {
 	headerLite, ferr := c.SimpleUserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
 	js := r.PostFormValue("js") == "1"
 
-	itemID, err := strconv.Atoi(sitemID)
+	itemID, err := strconv.Atoi(sItemID)
 	if err != nil {
 		return c.LocalError("Bad ID", w, r, user)
 	}

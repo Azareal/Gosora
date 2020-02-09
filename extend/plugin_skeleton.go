@@ -31,9 +31,9 @@ func init() {
 	c.Plugins.Add(&c.Plugin{UName: "skeleton", Name: "Skeleton", Author: "Azareal", Init: initSkeleton, Activate: activateSkeleton, Deactivate: deactivateSkeleton})
 }
 
-func initSkeleton(plugin *c.Plugin) error { return nil }
+func initSkeleton(pl *c.Plugin) error { return nil }
 
 // Any errors encountered while trying to activate the plugin are reported back to the admin and the activation is aborted
-func activateSkeleton(plugin *c.Plugin) error { return nil }
+func activateSkeleton(pl *c.Plugin) error { return nil }
 
-func deactivateSkeleton(plugin *c.Plugin) {}
+func deactivateSkeleton(pl *c.Plugin) {}

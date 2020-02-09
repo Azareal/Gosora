@@ -24,7 +24,7 @@ var BanGroup = 4
 
 // TODO: Use something else as the guest avatar, maybe a question mark of some sort?
 // GuestUser is an instance of user which holds guest data to avoid having to initialise a guest every time
-var GuestUser = User{ID: 0, Name: "Guest", Link: "#", Group: 6, Perms: GuestPerms} // BuildAvatar is done in site.go to make sure it's done after init
+var GuestUser = User{ID: 0, Name: "Guest", Link: "#", Group: 6, Perms: GuestPerms, CreatedAt: StartTime} // BuildAvatar is done in site.go to make sure it's done after init
 var ErrNoTempGroup = errors.New("We couldn't find a temporary group for this user")
 
 type User struct {
@@ -56,6 +56,7 @@ type User struct {
 	Score     int
 	Posts     int
 	Liked     int
+	CreatedAt time.Time
 	LastIP    string // ! This part of the UserCache data might fall out of date
 	LastAgent string // ! Temporary hack, don't use
 	TempGroup int
@@ -592,7 +593,7 @@ func (u *User) IncreasePostStats(wcount int, topic bool) (err error) {
 	if err != nil {
 		return err
 	}
-	err = GroupPromotions.PromoteIfEligible(u, level, u.Posts+1)
+	err = GroupPromotions.PromoteIfEligible(u, level, u.Posts+1, u.CreatedAt)
 	u.CacheRemove()
 	return err
 }

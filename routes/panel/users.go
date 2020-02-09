@@ -99,34 +99,34 @@ func UsersEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, suid s
 		return c.LocalError("Only administrators can edit the account of other administrators.", w, r, user)
 	}
 
-	newname := c.SanitiseSingleLine(r.PostFormValue("name"))
-	if newname == "" {
+	newName := c.SanitiseSingleLine(r.PostFormValue("name"))
+	if newName == "" {
 		return c.LocalError("You didn't put in a name.", w, r, user)
 	}
 
 	// TODO: How should activation factor into admin set emails?
 	// TODO: How should we handle secondary emails? Do we even have secondary emails implemented?
-	newemail := c.SanitiseSingleLine(r.PostFormValue("email"))
-	if newemail == "" && targetUser.Email != "" {
+	newEmail := c.SanitiseSingleLine(r.PostFormValue("email"))
+	if newEmail == "" && targetUser.Email != "" {
 		return c.LocalError("You didn't put in an email address.", w, r, user)
 	}
-	if newemail == "-1" {
-		newemail = targetUser.Email
+	if newEmail == "-1" {
+		newEmail = targetUser.Email
 	}
-	if (newemail != targetUser.Email) && !user.Perms.EditUserEmail {
+	if (newEmail != targetUser.Email) && !user.Perms.EditUserEmail {
 		return c.LocalError("You need the EditUserEmail permission to edit the email address of a user.", w, r, user)
 	}
 
-	newpassword := r.PostFormValue("password")
-	if newpassword != "" && !user.Perms.EditUserPassword {
+	newPassword := r.PostFormValue("password")
+	if newPassword != "" && !user.Perms.EditUserPassword {
 		return c.LocalError("You need the EditUserPassword permission to edit the password of a user.", w, r, user)
 	}
 
-	newgroup, err := strconv.Atoi(r.PostFormValue("group"))
+	newGroup, err := strconv.Atoi(r.PostFormValue("group"))
 	if err != nil {
 		return c.LocalError("You need to provide a whole number for the group ID", w, r, user)
 	}
-	group, err := c.Groups.Get(newgroup)
+	group, err := c.Groups.Get(newGroup)
 	if err == sql.ErrNoRows {
 		return c.LocalError("The group you're trying to place this user in doesn't exist.", w, r, user)
 	} else if err != nil {
@@ -139,17 +139,29 @@ func UsersEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, suid s
 		return c.LocalError("You need the EditUserGroupSuperMod permission to assign someone to a super mod group.", w, r, user)
 	}
 
-	err = targetUser.Update(newname, newemail, newgroup)
+	err = targetUser.Update(newName, newEmail, newGroup)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
 
 	red := false
-	if newpassword != "" {
-		c.SetPassword(targetUser.ID, newpassword)
+	if newPassword != "" {
+		c.SetPassword(targetUser.ID, newPassword)
 		// Log the user out as a safety precaution
 		c.Auth.ForceLogout(targetUser.ID)
 		red = true
+	}
+	targetUser.CacheRemove()
+
+	targetUser, err = c.Users.Get(uid)
+	if err == sql.ErrNoRows {
+		return c.LocalError("The user you're trying to edit doesn't exist.", w, r, user)
+	} else if err != nil {
+		return c.InternalError(err, w, r)
+	}
+	err = c.GroupPromotions.PromoteIfEligible(targetUser, targetUser.Level, targetUser.Posts, targetUser.CreatedAt)
+	if err != nil {
+		return c.InternalError(err, w, r)
 	}
 	targetUser.CacheRemove()
 

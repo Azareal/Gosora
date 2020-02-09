@@ -93,14 +93,14 @@ var Template_account_handle = genIntTmpl("account")
 
 func tmplInitUsers() (User, User, User) {
 	avatar, microAvatar := BuildAvatar(62, "")
-	user := User{62, BuildProfileURL("fake-user", 62), "Fake User", "compiler@localhost", 0, false, false, false, false, false, false, GuestPerms, make(map[string]bool), "", false, "", avatar, microAvatar, "", "", 0, 0, 0, 0, "0.0.0.0.0", "", 0, nil}
+	user := User{62, BuildProfileURL("fake-user", 62), "Fake User", "compiler@localhost", 0, false, false, false, false, false, false, GuestPerms, make(map[string]bool), "", false, "", avatar, microAvatar, "", "", 0, 0, 0, 0, StartTime,"0.0.0.0.0", "", 0, nil}
 
 	// TODO: Do a more accurate level calculation for this?
 	avatar, microAvatar = BuildAvatar(1, "")
-	user2 := User{1, BuildProfileURL("admin-alice", 1), "Admin Alice", "alice@localhost", 1, true, true, true, true, false, false, AllPerms, make(map[string]bool), "", true, "", avatar, microAvatar, "", "", 58, 1000, 0, 1000, "127.0.0.1", "", 0, nil}
+	user2 := User{1, BuildProfileURL("admin-alice", 1), "Admin Alice", "alice@localhost", 1, true, true, true, true, false, false, AllPerms, make(map[string]bool), "", true, "", avatar, microAvatar, "", "", 58, 1000, 0, 1000, StartTime, "127.0.0.1", "", 0, nil}
 
 	avatar, microAvatar = BuildAvatar(2, "")
-	user3 := User{2, BuildProfileURL("admin-fred", 62), "Admin Fred", "fred@localhost", 1, true, true, true, true, false, false, AllPerms, make(map[string]bool), "", true, "", avatar, microAvatar, "", "", 42, 900, 0, 900, "::1", "", 0, nil}
+	user3 := User{2, BuildProfileURL("admin-fred", 62), "Admin Fred", "fred@localhost", 1, true, true, true, true, false, false, AllPerms, make(map[string]bool), "", true, "", avatar, microAvatar, "", "", 42, 900, 0, 900, StartTime, "::1", "", 0, nil}
 	return user, user2, user3
 }
 

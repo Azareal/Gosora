@@ -47,6 +47,7 @@ func init() {
 	addPatch(27, patch27)
 	addPatch(28, patch28)
 	addPatch(29, patch29)
+	addPatch(30, patch30)
 }
 
 func patch0(scanner *bufio.Scanner) (err error) {
@@ -833,10 +834,6 @@ func patch29(scanner *bufio.Scanner) error {
 	if err != nil {
 		return err
 	}
-	err = execStmt(qgen.Builder.SetDefaultColumn("users", "last_ip", "varchar", ""))
-	if err != nil {
-		return err
-	}
 
 	err = execStmt(qgen.Builder.SetDefaultColumn("replies", "lastEdit", "int", "0"))
 	if err != nil {
@@ -857,4 +854,12 @@ func patch29(scanner *bufio.Scanner) error {
 
 	return execStmt(qgen.Builder.AddColumn("activity_stream", tC{"extra", "varchar", 200, false, false, "''"}, nil))
 
+}
+
+func patch30(scanner *bufio.Scanner) error {
+	err := execStmt(qgen.Builder.AddColumn("users_groups_promotions", tC{"registeredFor", "int", 0, false, false, "0"}, nil))
+	if err != nil {
+		return err
+	}
+	return execStmt(qgen.Builder.SetDefaultColumn("users", "last_ip", "varchar", ""))
 }

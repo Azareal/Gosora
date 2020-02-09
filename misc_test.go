@@ -499,7 +499,7 @@ func topicStoreTest(t *testing.T, newID int, ip string) {
 		return ""
 	}
 
-	testTopic := func(tid int, title string, content string, createdBy int, ip string, parentID int, isClosed bool, sticky bool) {
+	testTopic := func(tid int, title, content string, createdBy int, ip string, parentID int, isClosed, sticky bool) {
 		topic, err = c.Topics.Get(tid)
 		recordMustExist(t, err, fmt.Sprintf("Couldn't find TID #%d", tid))
 		expect(t, topic.ID == tid, fmt.Sprintf("topic.ID does not match the requested TID. Got '%d' instead.", topic.ID))
@@ -734,7 +734,7 @@ func TestForumPermsStore(t *testing.T) {
 		c.InitPlugins()
 	}
 
-	f := func(fid int, gid int, msg string, inv ...bool) {
+	f := func(fid, gid int, msg string, inv ...bool) {
 		fp, err := c.FPStore.Get(fid, gid)
 		expectNilErr(t, err)
 		vt := fp.ViewTopic
@@ -898,6 +898,64 @@ func TestGroupStore(t *testing.T) {
 	// TODO: Test group deletion
 	// TODO: Test group reload
 	// TODO: Test group cache set
+}
+
+func TestGroupPromotions(t *testing.T) {
+	miscinit(t)
+	if !c.PluginsInited {
+		c.InitPlugins()
+	}
+
+	_, err := c.GroupPromotions.Get(-1)
+	recordMustNotExist(t, err, "GP #-1 shouldn't exist")
+	_, err = c.GroupPromotions.Get(0)
+	recordMustNotExist(t, err, "GP #0 shouldn't exist")
+	_, err = c.GroupPromotions.Get(1)
+	recordMustNotExist(t, err, "GP #1 shouldn't exist")
+	expectNilErr(t, c.GroupPromotions.Delete(1))
+
+	//GetByGroup(gid int) (gps []*GroupPromotion, err error)
+
+	testPromo := func(exid, from, to, level, posts, registeredFor int, shouldFail bool) {
+		gpid, err := c.GroupPromotions.Create(from, to, false, level, posts, registeredFor)
+		expect(t, gpid == exid, fmt.Sprintf("gpid should be %d not %d", exid, gpid))
+		//fmt.Println("gpid:", gpid)
+		gp, err := c.GroupPromotions.Get(gpid)
+		expectNilErr(t, err)
+		expect(t, gp.ID == gpid, fmt.Sprintf("gp.ID should be %d not %d", gpid, gp.ID))
+		expect(t, gp.From == from, fmt.Sprintf("gp.From should be %d not %d", from, gp.From))
+		expect(t, gp.To == to, fmt.Sprintf("gp.To should be %d not %d", to, gp.To))
+		expect(t, !gp.TwoWay, "gp.TwoWay should be false not true")
+		expect(t, gp.Level == level, fmt.Sprintf("gp.Level should be %d not %d", level, gp.Level))
+		expect(t, gp.Posts == posts, fmt.Sprintf("gp.Posts should be %d not %d", posts, gp.Posts))
+		expect(t, gp.MinTime == 0, fmt.Sprintf("gp.MinTime should be %d not %d", 0, gp.MinTime))
+		expect(t, gp.RegisteredFor == registeredFor, fmt.Sprintf("gp.RegisteredFor should be %d not %d", registeredFor, gp.RegisteredFor))
+
+		uid, err := c.Users.Create("Lord_"+strconv.Itoa(gpid), "I_Rule", "", from, false)
+		expectNilErr(t, err)
+		u, err := c.Users.Get(uid)
+		expectNilErr(t, err)
+		expect(t, u.ID == uid, fmt.Sprintf("u.ID should be %d not %d", uid, u.ID))
+		expect(t, u.Group == from, fmt.Sprintf("u.Group should be %d not %d", from, u.Group))
+		err = c.GroupPromotions.PromoteIfEligible(u, u.Level, u.Posts, u.CreatedAt)
+		expectNilErr(t, err)
+		u.CacheRemove()
+		u, err = c.Users.Get(uid)
+		expectNilErr(t, err)
+		expect(t, u.ID == uid, fmt.Sprintf("u.ID should be %d not %d", uid, u.ID))
+		if shouldFail {
+			expect(t, u.Group == from, fmt.Sprintf("u.Group should be (from-group) %d not %d", from, u.Group))
+		} else {
+			expect(t, u.Group == to, fmt.Sprintf("u.Group should be (to-group)%d not %d", to, u.Group))
+		}
+
+		expectNilErr(t, c.GroupPromotions.Delete(gpid))
+		_, err = c.GroupPromotions.Get(gpid)
+		recordMustNotExist(t, err, fmt.Sprintf("GP #%d should no longer exist", gpid))
+	}
+	testPromo(1, 1, 2, 0, 0, 0, false)
+	testPromo(2, 1, 2, 5, 5, 0, true)
+	testPromo(3, 1, 2, 0, 0, 1, true)
 }
 
 func TestReplyStore(t *testing.T) {
@@ -1073,21 +1131,21 @@ func TestActivityStream(t *testing.T) {
 
 func TestLogs(t *testing.T) {
 	miscinit(t)
-	gTests := func(store c.LogStore, phrase string) {
-		expect(t, store.Count() == 0, "There shouldn't be any "+phrase)
-		logs, err := store.GetOffset(0, 25)
+	gTests := func(s c.LogStore, phrase string) {
+		expect(t, s.Count() == 0, "There shouldn't be any "+phrase)
+		logs, err := s.GetOffset(0, 25)
 		expectNilErr(t, err)
 		expect(t, len(logs) == 0, "The log slice should be empty")
 	}
 	gTests(c.ModLogs, "modlogs")
 	gTests(c.AdminLogs, "adminlogs")
 
-	gTests2 := func(store c.LogStore, phrase string) {
-		err := store.Create("something", 0, "bumblefly", "::1", 1)
+	gTests2 := func(s c.LogStore, phrase string) {
+		err := s.Create("something", 0, "bumblefly", "::1", 1)
 		expectNilErr(t, err)
-		count := store.Count()
+		count := s.Count()
 		expect(t, count == 1, fmt.Sprintf("store.Count should return one, not %d", count))
-		logs, err := store.GetOffset(0, 25)
+		logs, err := s.GetOffset(0, 25)
 		recordMustExist(t, err, "We should have at-least one "+phrase)
 		expect(t, len(logs) == 1, "The length of the log slice should be one")
 
@@ -1113,125 +1171,125 @@ func TestPluginManager(t *testing.T) {
 
 	_, ok := c.Plugins["fairy-dust"]
 	expect(t, !ok, "Plugin fairy-dust shouldn't exist")
-	plugin, ok := c.Plugins["bbcode"]
+	pl, ok := c.Plugins["bbcode"]
 	expect(t, ok, "Plugin bbcode should exist")
-	expect(t, !plugin.Installable, "Plugin bbcode shouldn't be installable")
-	expect(t, !plugin.Installed, "Plugin bbcode shouldn't be 'installed'")
-	expect(t, !plugin.Active, "Plugin bbcode shouldn't be active")
-	active, err := plugin.BypassActive()
+	expect(t, !pl.Installable, "Plugin bbcode shouldn't be installable")
+	expect(t, !pl.Installed, "Plugin bbcode shouldn't be 'installed'")
+	expect(t, !pl.Active, "Plugin bbcode shouldn't be active")
+	active, err := pl.BypassActive()
 	expectNilErr(t, err)
 	expect(t, !active, "Plugin bbcode shouldn't be active in the database either")
-	hasPlugin, err := plugin.InDatabase()
+	hasPlugin, err := pl.InDatabase()
 	expectNilErr(t, err)
 	expect(t, !hasPlugin, "Plugin bbcode shouldn't exist in the database")
 	// TODO: Add some test cases for SetActive and SetInstalled before calling AddToDatabase
 
-	expectNilErr(t, plugin.AddToDatabase(true, false))
-	expect(t, !plugin.Installable, "Plugin bbcode shouldn't be installable")
-	expect(t, !plugin.Installed, "Plugin bbcode shouldn't be 'installed'")
-	expect(t, plugin.Active, "Plugin bbcode should be active")
-	active, err = plugin.BypassActive()
+	expectNilErr(t, pl.AddToDatabase(true, false))
+	expect(t, !pl.Installable, "Plugin bbcode shouldn't be installable")
+	expect(t, !pl.Installed, "Plugin bbcode shouldn't be 'installed'")
+	expect(t, pl.Active, "Plugin bbcode should be active")
+	active, err = pl.BypassActive()
 	expectNilErr(t, err)
 	expect(t, active, "Plugin bbcode should be active in the database too")
-	hasPlugin, err = plugin.InDatabase()
+	hasPlugin, err = pl.InDatabase()
 	expectNilErr(t, err)
 	expect(t, hasPlugin, "Plugin bbcode should exist in the database")
-	expect(t, plugin.Init != nil, "Plugin bbcode should have an init function")
-	expectNilErr(t, plugin.Init(plugin))
+	expect(t, pl.Init != nil, "Plugin bbcode should have an init function")
+	expectNilErr(t, pl.Init(pl))
 
-	expectNilErr(t, plugin.SetActive(true))
-	expect(t, !plugin.Installable, "Plugin bbcode shouldn't be installable")
-	expect(t, !plugin.Installed, "Plugin bbcode shouldn't be 'installed'")
-	expect(t, plugin.Active, "Plugin bbcode should still be active")
-	active, err = plugin.BypassActive()
+	expectNilErr(t, pl.SetActive(true))
+	expect(t, !pl.Installable, "Plugin bbcode shouldn't be installable")
+	expect(t, !pl.Installed, "Plugin bbcode shouldn't be 'installed'")
+	expect(t, pl.Active, "Plugin bbcode should still be active")
+	active, err = pl.BypassActive()
 	expectNilErr(t, err)
 	expect(t, active, "Plugin bbcode should still be active in the database too")
-	hasPlugin, err = plugin.InDatabase()
+	hasPlugin, err = pl.InDatabase()
 	expectNilErr(t, err)
 	expect(t, hasPlugin, "Plugin bbcode should still exist in the database")
 
-	expectNilErr(t, plugin.SetActive(false))
-	expect(t, !plugin.Installable, "Plugin bbcode shouldn't be installable")
-	expect(t, !plugin.Installed, "Plugin bbcode shouldn't be 'installed'")
-	expect(t, !plugin.Active, "Plugin bbcode shouldn't be active")
-	active, err = plugin.BypassActive()
+	expectNilErr(t, pl.SetActive(false))
+	expect(t, !pl.Installable, "Plugin bbcode shouldn't be installable")
+	expect(t, !pl.Installed, "Plugin bbcode shouldn't be 'installed'")
+	expect(t, !pl.Active, "Plugin bbcode shouldn't be active")
+	active, err = pl.BypassActive()
 	expectNilErr(t, err)
 	expect(t, !active, "Plugin bbcode shouldn't be active in the database")
-	hasPlugin, err = plugin.InDatabase()
+	hasPlugin, err = pl.InDatabase()
 	expectNilErr(t, err)
 	expect(t, hasPlugin, "Plugin bbcode should still exist in the database")
-	expect(t, plugin.Deactivate != nil, "Plugin bbcode should have an init function")
-	plugin.Deactivate(plugin) // Returns nothing
+	expect(t, pl.Deactivate != nil, "Plugin bbcode should have an init function")
+	pl.Deactivate(pl) // Returns nothing
 
 	// Not installable, should not be mutated
-	expect(t, plugin.SetInstalled(true) == c.ErrPluginNotInstallable, "Plugin was set as installed despite not being installable")
-	expect(t, !plugin.Installable, "Plugin bbcode shouldn't be installable")
-	expect(t, !plugin.Installed, "Plugin bbcode shouldn't be 'installed'")
-	expect(t, !plugin.Active, "Plugin bbcode shouldn't be active")
-	active, err = plugin.BypassActive()
+	expect(t, pl.SetInstalled(true) == c.ErrPluginNotInstallable, "Plugin was set as installed despite not being installable")
+	expect(t, !pl.Installable, "Plugin bbcode shouldn't be installable")
+	expect(t, !pl.Installed, "Plugin bbcode shouldn't be 'installed'")
+	expect(t, !pl.Active, "Plugin bbcode shouldn't be active")
+	active, err = pl.BypassActive()
 	expectNilErr(t, err)
 	expect(t, !active, "Plugin bbcode shouldn't be active in the database either")
-	hasPlugin, err = plugin.InDatabase()
+	hasPlugin, err = pl.InDatabase()
 	expectNilErr(t, err)
 	expect(t, hasPlugin, "Plugin bbcode should still exist in the database")
 
-	expect(t, plugin.SetInstalled(false) == c.ErrPluginNotInstallable, "Plugin was set as not installed despite not being installable")
-	expect(t, !plugin.Installable, "Plugin bbcode shouldn't be installable")
-	expect(t, !plugin.Installed, "Plugin bbcode shouldn't be 'installed'")
-	expect(t, !plugin.Active, "Plugin bbcode shouldn't be active")
-	active, err = plugin.BypassActive()
+	expect(t, pl.SetInstalled(false) == c.ErrPluginNotInstallable, "Plugin was set as not installed despite not being installable")
+	expect(t, !pl.Installable, "Plugin bbcode shouldn't be installable")
+	expect(t, !pl.Installed, "Plugin bbcode shouldn't be 'installed'")
+	expect(t, !pl.Active, "Plugin bbcode shouldn't be active")
+	active, err = pl.BypassActive()
 	expectNilErr(t, err)
 	expect(t, !active, "Plugin bbcode shouldn't be active in the database either")
-	hasPlugin, err = plugin.InDatabase()
+	hasPlugin, err = pl.InDatabase()
 	expectNilErr(t, err)
 	expect(t, hasPlugin, "Plugin bbcode should still exist in the database")
 
 	// This isn't really installable, but we want to get a few tests done before getting plugins which are stateful
-	plugin.Installable = true
-	expectNilErr(t, plugin.SetInstalled(true))
-	expect(t, plugin.Installable, "Plugin bbcode should be installable")
-	expect(t, plugin.Installed, "Plugin bbcode should be 'installed'")
-	expect(t, !plugin.Active, "Plugin bbcode shouldn't be active")
-	active, err = plugin.BypassActive()
+	pl.Installable = true
+	expectNilErr(t, pl.SetInstalled(true))
+	expect(t, pl.Installable, "Plugin bbcode should be installable")
+	expect(t, pl.Installed, "Plugin bbcode should be 'installed'")
+	expect(t, !pl.Active, "Plugin bbcode shouldn't be active")
+	active, err = pl.BypassActive()
 	expectNilErr(t, err)
 	expect(t, !active, "Plugin bbcode shouldn't be active in the database either")
-	hasPlugin, err = plugin.InDatabase()
+	hasPlugin, err = pl.InDatabase()
 	expectNilErr(t, err)
 	expect(t, hasPlugin, "Plugin bbcode should still exist in the database")
 
-	expectNilErr(t, plugin.SetInstalled(false))
-	expect(t, plugin.Installable, "Plugin bbcode should be installable")
-	expect(t, !plugin.Installed, "Plugin bbcode shouldn't be 'installed'")
-	expect(t, !plugin.Active, "Plugin bbcode shouldn't be active")
-	active, err = plugin.BypassActive()
+	expectNilErr(t, pl.SetInstalled(false))
+	expect(t, pl.Installable, "Plugin bbcode should be installable")
+	expect(t, !pl.Installed, "Plugin bbcode shouldn't be 'installed'")
+	expect(t, !pl.Active, "Plugin bbcode shouldn't be active")
+	active, err = pl.BypassActive()
 	expectNilErr(t, err)
 	expect(t, !active, "Plugin bbcode shouldn't be active in the database either")
-	hasPlugin, err = plugin.InDatabase()
+	hasPlugin, err = pl.InDatabase()
 	expectNilErr(t, err)
 	expect(t, hasPlugin, "Plugin bbcode should still exist in the database")
 
 	// Bugs sometimes arise when we try to delete a hook when there are multiple, so test for that
 	// TODO: Do a finer grained test for that case...? A bigger test might catch more odd cases with multiple plugins
-	plugin2, ok := c.Plugins["markdown"]
+	pl2, ok := c.Plugins["markdown"]
 	expect(t, ok, "Plugin markdown should exist")
-	expect(t, !plugin2.Installable, "Plugin markdown shouldn't be installable")
-	expect(t, !plugin2.Installed, "Plugin markdown shouldn't be 'installed'")
-	expect(t, !plugin2.Active, "Plugin markdown shouldn't be active")
-	active, err = plugin2.BypassActive()
+	expect(t, !pl2.Installable, "Plugin markdown shouldn't be installable")
+	expect(t, !pl2.Installed, "Plugin markdown shouldn't be 'installed'")
+	expect(t, !pl2.Active, "Plugin markdown shouldn't be active")
+	active, err = pl2.BypassActive()
 	expectNilErr(t, err)
 	expect(t, !active, "Plugin markdown shouldn't be active in the database either")
-	hasPlugin, err = plugin2.InDatabase()
+	hasPlugin, err = pl2.InDatabase()
 	expectNilErr(t, err)
 	expect(t, !hasPlugin, "Plugin markdown shouldn't exist in the database")
 
-	expectNilErr(t, plugin2.AddToDatabase(true, false))
-	expectNilErr(t, plugin2.Init(plugin2))
-	expectNilErr(t, plugin.SetActive(true))
-	expectNilErr(t, plugin.Init(plugin))
-	plugin2.Deactivate(plugin2)
-	expectNilErr(t, plugin2.SetActive(false))
-	plugin.Deactivate(plugin)
-	expectNilErr(t, plugin.SetActive(false))
+	expectNilErr(t, pl2.AddToDatabase(true, false))
+	expectNilErr(t, pl2.Init(pl2))
+	expectNilErr(t, pl.SetActive(true))
+	expectNilErr(t, pl.Init(pl))
+	pl2.Deactivate(pl2)
+	expectNilErr(t, pl2.SetActive(false))
+	pl.Deactivate(pl)
+	expectNilErr(t, pl.SetActive(false))
 
 	// Hook tests
 	ht := func() *c.HookTable {
@@ -1241,18 +1299,18 @@ func TestPluginManager(t *testing.T) {
 	handle := func(in string) (out string) {
 		return in + "hi"
 	}
-	plugin.AddHook("haha", handle)
+	pl.AddHook("haha", handle)
 	expect(t, ht().Sshook("haha", "ho") == "hohi", "Sshook didn't give hohi")
-	plugin.RemoveHook("haha", handle)
+	pl.RemoveHook("haha", handle)
 	expect(t, ht().Sshook("haha", "ho") == "ho", "Sshook shouldn't have anything bound to it anymore")
 
 	expect(t, ht().Hook("haha", "ho") == "ho", "Hook shouldn't have anything bound to it yet")
 	handle2 := func(inI interface{}) (out interface{}) {
 		return inI.(string) + "hi"
 	}
-	plugin.AddHook("hehe", handle2)
+	pl.AddHook("hehe", handle2)
 	expect(t, ht().Hook("hehe", "ho").(string) == "hohi", "Hook didn't give hohi")
-	plugin.RemoveHook("hehe", handle2)
+	pl.RemoveHook("hehe", handle2)
 	expect(t, ht().Hook("hehe", "ho").(string) == "ho", "Hook shouldn't have anything bound to it anymore")
 
 	// TODO: Add tests for more hook types
@@ -1260,7 +1318,7 @@ func TestPluginManager(t *testing.T) {
 
 func TestPhrases(t *testing.T) {
 	getPhrase := phrases.GetPermPhrase
-	tp := func(name string, expects string) {
+	tp := func(name, expects string) {
 		res := getPhrase(name)
 		expect(t, res == expects, "Not the expected phrase, got '"+res+"' instead")
 	}
@@ -1572,7 +1630,7 @@ func TestAuth(t *testing.T) {
 }
 
 // TODO: Vary the salts? Keep in mind that some algorithms store the salt in the hash therefore the salt string may be blank
-func passwordTest(t *testing.T, realPassword string, hashedPassword string) {
+func passwordTest(t *testing.T, realPassword, hashedPassword string) {
 	if len(hashedPassword) < 10 {
 		t.Error("Hash too short")
 	}
@@ -1638,7 +1696,7 @@ type CountTestList struct {
 	Items []CountTest
 }
 
-func (l *CountTestList) Add(name string, msg string, expects int) {
+func (l *CountTestList) Add(name, msg string, expects int) {
 	l.Items = append(l.Items, CountTest{name, msg, expects})
 }
 

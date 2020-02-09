@@ -6,5 +6,6 @@ CREATE TABLE [users_groups_promotions] (
 	[level] int not null,
 	[posts] int DEFAULT 0 not null,
 	[minTime] int not null,
+	[registeredFor] int DEFAULT 0 not null,
 	primary key([pid])
 );
