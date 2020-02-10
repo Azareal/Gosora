@@ -3,10 +3,11 @@ package common
 import (
 	"errors"
 	"time"
+
 	//"log"
 
-	"strconv"
 	"database/sql"
+	"strconv"
 
 	qgen "github.com/Azareal/Gosora/query_gen"
 )
@@ -45,7 +46,7 @@ func init() {
 			createPost: acc.Insert(cpo).Columns("cid,body,post,createdBy").Fields("?,?,?,?").Prepare(),
 			deletePost: acc.Delete(cpo).Where("pid=?").Prepare(),
 
-			getUsers: acc.Select("conversations_participants").Columns("uid").Where("cid = ?").Prepare(),
+			getUsers: acc.Select("conversations_participants").Columns("uid").Where("cid=?").Prepare(),
 		}
 		return acc.FirstError()
 	})
@@ -160,16 +161,17 @@ type DefaultConversationStore struct {
 }
 
 func NewDefaultConversationStore(acc *qgen.Accumulator) (*DefaultConversationStore, error) {
+	co := "conversations"
 	return &DefaultConversationStore{
-		get:                acc.Select("conversations").Columns("createdBy, createdAt, lastReplyBy, lastReplyAt").Where("cid=?").Prepare(),
+		get:                acc.Select(co).Columns("createdBy, createdAt, lastReplyBy, lastReplyAt").Where("cid=?").Prepare(),
 		getUser:            acc.SimpleInnerJoin("conversations_participants AS cp", "conversations AS c", "cp.cid, c.createdBy, c.createdAt, c.lastReplyBy, c.lastReplyAt", "cp.cid=c.cid", "cp.uid=?", "c.lastReplyAt DESC, c.createdAt DESC, c.cid DESC", "?,?"),
 		getUserCount:       acc.Count("conversations_participants").Where("uid=?").Prepare(),
-		delete:             acc.Delete("conversations").Where("cid=?").Prepare(),
+		delete:             acc.Delete(co).Where("cid=?").Prepare(),
 		deletePosts:        acc.Delete("conversations_posts").Where("cid=?").Prepare(),
 		deleteParticipants: acc.Delete("conversations_participants").Where("cid=?").Prepare(),
-		create:             acc.Insert("conversations").Columns("createdBy, createdAt, lastReplyAt").Fields("?,UTC_TIMESTAMP(),UTC_TIMESTAMP()").Prepare(),
-		addParticipant:     acc.Insert("conversations_participants").Columns("uid, cid").Fields("?,?").Prepare(),
-		count:              acc.Count("conversations").Prepare(),
+		create:             acc.Insert(co).Columns("createdBy, createdAt, lastReplyBy, lastReplyAt").Fields("?,UTC_TIMESTAMP(),?,UTC_TIMESTAMP()").Prepare(),
+		addParticipant:     acc.Insert("conversations_participants").Columns("uid,cid").Fields("?,?").Prepare(),
+		count:              acc.Count(co).Prepare(),
 	}, acc.FirstError()
 }
 
@@ -194,8 +196,14 @@ func (s *DefaultConversationStore) GetUser(uid, offset int) (cos []*Conversation
 		}
 		cos = append(cos, co)
 	}
-
-	return cos, rows.Err()
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+	if len(cos) == 0 {
+		err = sql.ErrNoRows
+	}
+	return cos, err
 }
 
 func (s *DefaultConversationStore) GetUserExtra(uid, offset int) (cos []*ConversationExtra, err error) {
@@ -205,10 +213,6 @@ func (s *DefaultConversationStore) GetUserExtra(uid, offset int) (cos []*Convers
 	}
 	//log.Printf("raw: %+v\n", raw)
 
-	if len(raw) == 0 {
-		//log.Println("r0")
-		return nil, sql.ErrNoRows
-	}
 	if len(raw) == 1 {
 		//log.Print("r0b2")
 		uids, err := raw[0].Uids()
@@ -221,24 +225,24 @@ func (s *DefaultConversationStore) GetUserExtra(uid, offset int) (cos []*Convers
 			return nil, err
 		}
 		//log.Println("r2b2")
-		users := make([]*User,len(umap))
+		users := make([]*User, len(umap))
 		var i int
 		for _, user := range umap {
 			users[i] = user
 			i++
 		}
-		return []*ConversationExtra{&ConversationExtra{raw[0],users}}, nil
+		return []*ConversationExtra{&ConversationExtra{raw[0], users}}, nil
 	}
 	//log.Println("1")
 
-	cmap := make(map[int]*ConversationExtra,len(raw))
+	cmap := make(map[int]*ConversationExtra, len(raw))
 	for _, co := range raw {
-		cmap[co.ID] = &ConversationExtra{co,nil}
+		cmap[co.ID] = &ConversationExtra{co, nil}
 	}
 
 	// TODO: Add a function for the q stuff
 	var q string
-	idList := make([]interface{},len(raw))
+	idList := make([]interface{}, len(raw))
 	for i, co := range raw {
 		idList[i] = strconv.Itoa(co.ID)
 		q += "?,"
@@ -260,7 +264,7 @@ func (s *DefaultConversationStore) GetUserExtra(uid, offset int) (cos []*Convers
 		if err != nil {
 			return nil, err
 		}
-		idmap[cid] = append(idmap[cid],uid)
+		idmap[cid] = append(idmap[cid], uid)
 		puidmap[uid] = struct{}{}
 	}
 	if err = rows.Err(); err != nil {
@@ -270,7 +274,7 @@ func (s *DefaultConversationStore) GetUserExtra(uid, offset int) (cos []*Convers
 	//log.Printf("idmap: %+v\n", idmap)
 	//log.Printf("puidmap: %+v\n",puidmap)
 
-	puids := make([]int,len(puidmap))
+	puids := make([]int, len(puidmap))
 	var i int
 	for puid, _ := range puidmap {
 		puids[i] = puid
@@ -285,7 +289,7 @@ func (s *DefaultConversationStore) GetUserExtra(uid, offset int) (cos []*Convers
 	for cid, uids := range idmap {
 		co := cmap[cid]
 		for _, uid := range uids {
-			co.Users = append(co.Users,umap[uid])
+			co.Users = append(co.Users, umap[uid])
 		}
 		//log.Printf("co.Conversation: %+v\n", co.Conversation)
 		//log.Printf("co.Users: %+v\n", co.Users)
@@ -293,7 +297,7 @@ func (s *DefaultConversationStore) GetUserExtra(uid, offset int) (cos []*Convers
 	}
 	//log.Printf("cmap: %+v\n", cmap)
 	for _, ra := range raw {
-		cos = append(cos,cmap[ra.ID])
+		cos = append(cos, cmap[ra.ID])
 	}
 	//log.Printf("cos: %+v\n", cos)
 
@@ -326,7 +330,7 @@ func (s *DefaultConversationStore) Create(content string, createdBy int, partici
 	if len(participants) == 0 {
 		return 0, errors.New("no participants set")
 	}
-	res, err := s.create.Exec(createdBy)
+	res, err := s.create.Exec(createdBy,createdBy)
 	if err != nil {
 		return 0, err
 	}
