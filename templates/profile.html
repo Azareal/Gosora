@@ -28,7 +28,7 @@
 				<a class="profile_menu_item">{{lang "profile.login_for_options"}}</a>
 			</div>{{else}}
 			{{if .CanMessage}}<div class="rowitem passive">
-				<a href="/user/convos/create/" class="profile_menu_item">{{lang "profile.send_message"}}</a>
+				<a href="/user/convos/create/?with={{.ProfileOwner.ID}}" class="profile_menu_item">{{lang "profile.send_message"}}</a>
 			</div>{{end}}
 			<!--<div class="rowitem passive">
 				<a class="profile_menu_item">{{lang "profile.add_friend"}}</a>

@@ -300,9 +300,10 @@ type ConvoViewRow struct {
 
 type ConvoViewPage struct {
 	*Header
-	Convo *Conversation
-	Posts []ConvoViewRow
-	Users []*User
+	Convo    *Conversation
+	Posts    []ConvoViewRow
+	Users    []*User
+	CanReply bool
 	Paginator
 }
 

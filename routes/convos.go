@@ -3,6 +3,7 @@ package routes
 import (
 	"database/sql"
 	"errors"
+	"html"
 	"net/http"
 	"strconv"
 	"strings"
@@ -94,7 +95,18 @@ func Convo(w http.ResponseWriter, r *http.Request, user c.User, header *c.Header
 		pitems[i] = c.ConvoViewRow{post, uuser, "", 4, canModify}
 	}
 
-	pi := c.Account{header, "dashboard", "convo", c.ConvoViewPage{header, convo, pitems, users, c.Paginator{pageList, page, lastPage}}}
+	canReply := user.Perms.UseConvos || user.Perms.UseConvosOnlyWithMod
+	if !user.Perms.UseConvos && user.Perms.UseConvosOnlyWithMod {
+		u, err := c.Users.Get(convo.CreatedBy)
+		if err != nil {
+			return c.InternalError(err, w, r)
+		}
+		if !u.IsSuperMod {
+			canReply = false
+		}
+	}
+
+	pi := c.Account{header, "dashboard", "convo", c.ConvoViewPage{header, convo, pitems, users, canReply, c.Paginator{pageList, page, lastPage}}}
 	return renderTemplate("account", w, r, header, pi)
 }
 
@@ -104,8 +116,16 @@ func ConvosCreate(w http.ResponseWriter, r *http.Request, user c.User, h *c.Head
 		return c.NoPermissions(w, r, user)
 	}
 	h.AddNotice("convo_dev")
-	recpName := ""
-	pi := c.Account{h, "dashboard", "create_convo", c.ConvoCreatePage{h, recpName}}
+	uid, err := strconv.Atoi(r.FormValue("with"))
+	if err != nil {
+		return c.LocalError("invalid integer in parameter with", w, r, user)
+	}
+	u, err := c.Users.Get(uid)
+	if err != nil {
+		return c.LocalError("Unable to fetch user", w, r, user)
+	}
+	// TODO: Avoid potential double escape?
+	pi := c.Account{h, "dashboard", "create_convo", c.ConvoCreatePage{h, html.EscapeString(u.Name)}}
 	return renderTemplate("account", w, r, h, pi)
 }
 
@@ -206,6 +226,7 @@ func ConvosCreateReplySubmit(w http.ResponseWriter, r *http.Request, user c.User
 	if !convo.Has(user.ID) {
 		return c.LocalError("You are not in this conversation.", w, r, user)
 	}
+	// TODO: Let the user reply if they're the convo creator in a convo with a mod
 	if !user.Perms.UseConvos && user.Perms.UseConvosOnlyWithMod {
 		u, err := c.Users.Get(convo.CreatedBy)
 		if err != nil {

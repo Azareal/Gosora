@@ -93,7 +93,7 @@ var Template_account_handle = genIntTmpl("account")
 
 func tmplInitUsers() (User, User, User) {
 	avatar, microAvatar := BuildAvatar(62, "")
-	user := User{62, BuildProfileURL("fake-user", 62), "Fake User", "compiler@localhost", 0, false, false, false, false, false, false, GuestPerms, make(map[string]bool), "", false, "", avatar, microAvatar, "", "", 0, 0, 0, 0, StartTime,"0.0.0.0.0", "", 0, nil}
+	user := User{62, BuildProfileURL("fake-user", 62), "Fake User", "compiler@localhost", 0, false, false, false, false, false, false, GuestPerms, make(map[string]bool), "", false, "", avatar, microAvatar, "", "", 0, 0, 0, 0, StartTime, "0.0.0.0.0", "", 0, nil}
 
 	// TODO: Do a more accurate level calculation for this?
 	avatar, microAvatar = BuildAvatar(1, "")
@@ -104,7 +104,7 @@ func tmplInitUsers() (User, User, User) {
 	return user, user2, user3
 }
 
-func tmplInitHeaders(user User, user2 User, user3 User) (*Header, *Header, *Header) {
+func tmplInitHeaders(user, user2, user3 User) (*Header, *Header, *Header) {
 	header := &Header{
 		Site:            Site,
 		Settings:        SettingBox.Load().(SettingMap),
@@ -147,11 +147,11 @@ type TItem struct {
 
 type TItemHold map[string]TItem
 
-func (h TItemHold) Add(name string, expects string, expectsInt interface{}) {
+func (h TItemHold) Add(name, expects string, expectsInt interface{}) {
 	h[name] = TItem{expects, expectsInt, true}
 }
 
-func (h TItemHold) AddStd(name string, expects string, expectsInt interface{}) {
+func (h TItemHold) AddStd(name, expects string, expectsInt interface{}) {
 	h[name] = TItem{expects, expectsInt, false}
 }
 
@@ -208,7 +208,7 @@ func CompileTemplates() error {
 	return nil
 }
 
-func compileCommons(c *tmpl.CTemplateSet, head *Header, head2 *Header, forumList []Forum, o TItemHold) error {
+func compileCommons(c *tmpl.CTemplateSet, head, head2 *Header, forumList []Forum, o TItemHold) error {
 	// TODO: Add support for interface{}s
 	_, user2, user3 := tmplInitUsers()
 	now := time.Now()
@@ -352,7 +352,7 @@ func compileTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName string
 	parti := []*User{&user}
 	convo := &Conversation{1, user.ID, time.Now(), 0, time.Now()}
 	convoItems := []ConvoViewRow{ConvoViewRow{&ConversationPost{1, 1, "hey", "", user.ID}, &user, "", 4, true}}
-	convoPage := ConvoViewPage{header, convo, convoItems, parti, Paginator{[]int{1}, 1, 1}}
+	convoPage := ConvoViewPage{header, convo, convoItems, parti, true, Paginator{[]int{1}, 1, 1}}
 	t.AddStd("convo", "c.ConvoViewPage", convoPage)
 
 	convos := []*ConversationExtra{&ConversationExtra{&Conversation{}, []*User{&user}}}
@@ -377,7 +377,7 @@ func compileTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName string
 
 	writeTemplate := func(name string, content interface{}) {
 		log.Print("Writing template '" + name + "'")
-		writeTmpl := func(name string, content string) {
+		writeTmpl := func(name, content string) {
 			if content == "" {
 				return //log.Fatal("No content body for " + name)
 			}
@@ -531,7 +531,7 @@ func compileJSTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName stri
 	}, VoteCount: 7}
 	avatar, microAvatar := BuildAvatar(62, "")
 	miniAttach := []*MiniAttachment{&MiniAttachment{Path: "/"}}
-	topic := TopicUser{1, "blah", "Blah", "Hey there!", 62, false, false, now, now, 1, 1, 0, "", "127.0.0.1", 1, 0, 1, 0, "classname", poll.ID, "weird-data", BuildProfileURL("fake-user", 62), "Fake User", Config.DefaultGroup, avatar, microAvatar, 0, "","","", 58, false, miniAttach, nil, false}
+	topic := TopicUser{1, "blah", "Blah", "Hey there!", 62, false, false, now, now, 1, 1, 0, "", "127.0.0.1", 1, 0, 1, 0, "classname", poll.ID, "weird-data", BuildProfileURL("fake-user", 62), "Fake User", Config.DefaultGroup, avatar, microAvatar, 0, "", "", "", 58, false, miniAttach, nil, false}
 	var replyList []*ReplyUser
 	// TODO: Do we really want the UID here to be zero?
 	avatar, microAvatar = BuildAvatar(0, "")
@@ -559,13 +559,13 @@ func compileJSTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName stri
 	parti := []*User{&user}
 	convo := &Conversation{1, user.ID, time.Now(), 0, time.Now()}
 	convoItems := []ConvoViewRow{ConvoViewRow{&ConversationPost{1, 1, "hey", "", user.ID}, &user, "", 4, true}}
-	convoPage := ConvoViewPage{header, convo, convoItems, parti, Paginator{[]int{1}, 1, 1}}
+	convoPage := ConvoViewPage{header, convo, convoItems, parti, true, Paginator{[]int{1}, 1, 1}}
 	t.AddStd("convo", "c.ConvoViewPage", convoPage)
 
 	t.AddStd("notice", "string", "nonono")
 
 	dirPrefix := "./tmpl_client/"
-	writeTemplate := func(name string, content string) {
+	writeTemplate := func(name, content string) {
 		log.Print("Writing template '" + name + "'")
 		if content == "" {
 			return //log.Fatal("No content body")
@@ -695,29 +695,29 @@ func arithToInt64(in interface{}) (out int64) {
 	return out
 }
 
-func arithDuoToInt64(left interface{}, right interface{}) (leftInt int64, rightInt int64) {
+func arithDuoToInt64(left, right interface{}) (leftInt, rightInt int64) {
 	return arithToInt64(left), arithToInt64(right)
 }
 
 func initDefaultTmplFuncMap() {
 	// TODO: Add support for floats
 	fmap := make(map[string]interface{})
-	fmap["add"] = func(left interface{}, right interface{}) interface{} {
+	fmap["add"] = func(left, right interface{}) interface{} {
 		leftInt, rightInt := arithDuoToInt64(left, right)
 		return leftInt + rightInt
 	}
 
-	fmap["subtract"] = func(left interface{}, right interface{}) interface{} {
+	fmap["subtract"] = func(left, right interface{}) interface{} {
 		leftInt, rightInt := arithDuoToInt64(left, right)
 		return leftInt - rightInt
 	}
 
-	fmap["multiply"] = func(left interface{}, right interface{}) interface{} {
+	fmap["multiply"] = func(left, right interface{}) interface{} {
 		leftInt, rightInt := arithDuoToInt64(left, right)
 		return leftInt * rightInt
 	}
 
-	fmap["divide"] = func(left interface{}, right interface{}) interface{} {
+	fmap["divide"] = func(left, right interface{}) interface{} {
 		leftInt, rightInt := arithDuoToInt64(left, right)
 		if leftInt == 0 || rightInt == 0 {
 			return 0
@@ -725,11 +725,11 @@ func initDefaultTmplFuncMap() {
 		return leftInt / rightInt
 	}
 
-	fmap["dock"] = func(dock interface{}, headerInt interface{}) interface{} {
+	fmap["dock"] = func(dock, headerInt interface{}) interface{} {
 		return template.HTML(BuildWidget(dock.(string), headerInt.(*Header)))
 	}
 
-	fmap["hasWidgets"] = func(dock interface{}, headerInt interface{}) interface{} {
+	fmap["hasWidgets"] = func(dock, headerInt interface{}) interface{} {
 		return HasWidgets(dock.(string), headerInt.(*Header))
 	}
 
@@ -803,7 +803,7 @@ func initDefaultTmplFuncMap() {
 		return ""
 	}
 
-	fmap["dyntmpl"] = func(nameInt interface{}, pageInt interface{}, headerInt interface{}) interface{} {
+	fmap["dyntmpl"] = func(nameInt, pageInt, headerInt interface{}) interface{} {
 		header := headerInt.(*Header)
 		err := header.Theme.RunTmpl(nameInt.(string), pageInt, header.Writer)
 		if err != nil {
