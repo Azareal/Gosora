@@ -118,6 +118,7 @@ func seedTables(a qgen.Adapter) error {
 		UploadFiles
 		UploadAvatars
 		UseConvos
+		UseConvosOnlyWithMod
 		CreateProfileReply
 		AutoEmbed
 		// CreateConvo ?
@@ -163,15 +164,15 @@ func seedTables(a qgen.Adapter) error {
 	perms.EditGroupAdmin = false
 	addGroup("Administrator", perms, true, true, false, "Admin")
 
-	perms = c.Perms{BanUsers: true, ActivateUsers: true, EditUser: true, EditUserEmail: false, EditUserGroup: true, ViewIPs: true, UploadFiles: true, UploadAvatars: true, UseConvos: true, CreateProfileReply: true, AutoEmbed: true, ViewTopic: true, LikeItem: true, CreateTopic: true, EditTopic: true, DeleteTopic: true, CreateReply: true, EditReply: true, DeleteReply: true, PinTopic: true, CloseTopic: true, MoveTopic: true}
+	perms = c.Perms{BanUsers: true, ActivateUsers: true, EditUser: true, EditUserEmail: false, EditUserGroup: true, ViewIPs: true, UploadFiles: true, UploadAvatars: true, UseConvos: true, UseConvosOnlyWithMod: true, CreateProfileReply: true, AutoEmbed: true, ViewTopic: true, LikeItem: true, CreateTopic: true, EditTopic: true, DeleteTopic: true, CreateReply: true, EditReply: true, DeleteReply: true, PinTopic: true, CloseTopic: true, MoveTopic: true}
 	addGroup("Moderator", perms, true, false, false, "Mod")
 
-	perms = c.Perms{UploadFiles: true, UploadAvatars: true, UseConvos: true, CreateProfileReply: true, AutoEmbed: true, ViewTopic: true, LikeItem: true, CreateTopic: true, CreateReply: true}
+	perms = c.Perms{UploadFiles: true, UploadAvatars: true, UseConvos: true, UseConvosOnlyWithMod: true, CreateProfileReply: true, AutoEmbed: true, ViewTopic: true, LikeItem: true, CreateTopic: true, CreateReply: true}
 	addGroup("Member", perms, false, false, false, "")
 
 	perms = c.Perms{ViewTopic: true}
 	addGroup("Banned", perms, false, false, true, "")
-	addGroup("Awaiting Activation", perms, false, false, false, "")
+	addGroup("Awaiting Activation", c.Perms{ViewTopic: true, UseConvosOnlyWithMod: true}, false, false, false, "")
 	addGroup("Not Loggedin", perms, false, false, false, "Guest")
 
 	//

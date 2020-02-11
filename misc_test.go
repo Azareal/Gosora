@@ -1102,6 +1102,58 @@ func testProfileReplyStore(t *testing.T, newID int, ip string) {
 	// TODO: Test pr.SetBody() and pr.Creator()
 }
 
+func TestConvos(t *testing.T) {
+	miscinit(t)
+	if !c.PluginsInited {
+		c.InitPlugins()
+	}
+
+	_, err := c.Convos.Get(-1)
+	recordMustNotExist(t, err, "convo -1 should not exist")
+	_, err = c.Convos.Get(0)
+	recordMustNotExist(t, err, "convo 0 should not exist")
+	_, err = c.Convos.Get(1)
+	recordMustNotExist(t, err, "convo 1 should not exist")
+
+	_, err = c.Convos.GetUser(-1,-1)
+	recordMustNotExist(t, err, "convo getuser -1 -1 should not exist")
+	_, err = c.Convos.GetUser(-1,0)
+	recordMustNotExist(t, err, "convo getuser -1 0 should not exist")
+	_, err = c.Convos.GetUser(0,0)
+	recordMustNotExist(t, err, "convo getuser 0 0 should not exist")
+	_, err = c.Convos.GetUser(1,0)
+	recordMustNotExist(t, err, "convos getuser 1 0 should not exist")
+	expect(t,c.Convos.GetUserCount(-1)==0,"getusercount should be zero")
+	expect(t,c.Convos.GetUserCount(0)==0,"getusercount should be zero")
+	expect(t,c.Convos.GetUserCount(1)==0,"getusercount should be zero")
+
+	_, err = c.Convos.GetUserExtra(-1,-1)
+	recordMustNotExist(t, err, "convos getuserextra -1 -1 should not exist")
+	_, err = c.Convos.GetUserExtra(-1,0)
+	recordMustNotExist(t, err, "convos getuserextra -1 0 should not exist")
+	_, err = c.Convos.GetUserExtra(0,0)
+	recordMustNotExist(t, err, "convos getuserextra 0 0 should not exist")
+	_, err = c.Convos.GetUserExtra(1,0)
+	recordMustNotExist(t, err, "convos getuserextra 1 0 should not exist")
+
+	expect(t,c.Convos.Count()==0,"convos count should be 0")
+
+	cid, err := c.Convos.Create("hehe", 1, []int{2})
+	expectNilErr(t,err)
+	expect(t,cid==1,"cid should be 1")
+	expect(t,c.Convos.Count()==1,"convos count should be 1")
+
+	co, err:= c.Convos.Get(cid)
+	expectNilErr(t,err)
+	expect(t,co.ID==1,"co.ID should be 1")
+	expect(t,co.CreatedBy==1,"co.CreatedBy should be 1")
+	// TODO: CreatedAt test
+	expect(t,co.LastReplyBy==1,"co.LastReplyBy should be 1")
+	// TODO: LastReplyAt test
+
+	// TODO: More tests
+}
+
 func TestActivityStream(t *testing.T) {
 	miscinit(t)
 
@@ -1149,12 +1201,12 @@ func TestLogs(t *testing.T) {
 		recordMustExist(t, err, "We should have at-least one "+phrase)
 		expect(t, len(logs) == 1, "The length of the log slice should be one")
 
-		log := logs[0]
-		expect(t, log.Action == "something", "log.Action is not something")
-		expect(t, log.ElementID == 0, "log.ElementID is not 0")
-		expect(t, log.ElementType == "bumblefly", "log.ElementType is not bumblefly")
-		expect(t, log.IP == "::1", "log.IP is not ::1")
-		expect(t, log.ActorID == 1, "log.ActorID is not 1")
+		l := logs[0]
+		expect(t, l.Action == "something", "l.Action is not something")
+		expect(t, l.ElementID == 0, "l.ElementID is not 0")
+		expect(t, l.ElementType == "bumblefly", "l.ElementType is not bumblefly")
+		expect(t, l.IP == "::1", "l.IP is not ::1")
+		expect(t, l.ActorID == 1, "l.ActorID is not 1")
 		// TODO: Add a test for log.DoneAt? Maybe throw in some dates and times which are clearly impossible but which may occur due to timezone bugs?
 	}
 	gTests2(c.ModLogs, "modlog")

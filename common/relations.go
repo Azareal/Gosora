@@ -29,11 +29,11 @@ type DefaultBlockStore struct {
 func NewDefaultBlockStore(acc *qgen.Accumulator) (*DefaultBlockStore, error) {
 	ub := "users_blocks"
 	return &DefaultBlockStore{
-		isBlocked:      acc.Select(ub).Cols("blocker").Where("blocker = ? AND blockedUser = ?").Prepare(),
+		isBlocked:      acc.Select(ub).Cols("blocker").Where("blocker=? AND blockedUser=?").Prepare(),
 		add:            acc.Insert(ub).Columns("blocker,blockedUser").Fields("?,?").Prepare(),
-		remove:         acc.Delete(ub).Where("blocker = ? AND blockedUser = ?").Prepare(),
-		blockedBy:      acc.Select(ub).Columns("blockedUser").Where("blocker = ?").Limit("?,?").Prepare(),
-		blockedByCount: acc.Count(ub).Where("blocker = ?").Prepare(),
+		remove:         acc.Delete(ub).Where("blocker=? AND blockedUser=?").Prepare(),
+		blockedBy:      acc.Select(ub).Columns("blockedUser").Where("blocker=?").Limit("?,?").Prepare(),
+		blockedByCount: acc.Count(ub).Where("blocker=?").Prepare(),
 	}, acc.FirstError()
 }
 
@@ -102,11 +102,12 @@ type DefaultFriendStore struct {
 }
 
 func NewDefaultFriendStore(acc *qgen.Accumulator) (*DefaultFriendStore, error) {
+	ufi := "users_friends_invites"
 	return &DefaultFriendStore{
-		addInvite:         acc.Insert("users_friends_invites").Columns("requester,target").Fields("?,?").Prepare(),
+		addInvite:         acc.Insert(ufi).Columns("requester,target").Fields("?,?").Prepare(),
 		confirm:           acc.Insert("users_friends").Columns("uid,uid2").Fields("?,?").Prepare(),
-		getOwnSentInvites: acc.Select("users_friends_invites").Cols("requester,target").Where("requester = ?").Prepare(),
-		getOwnRecvInvites: acc.Select("users_friends_invites").Cols("requester,target").Where("target = ?").Prepare(),
+		getOwnSentInvites: acc.Select(ufi).Cols("requester,target").Where("requester=?").Prepare(),
+		getOwnRecvInvites: acc.Select(ufi).Cols("requester,target").Where("target=?").Prepare(),
 	}, acc.FirstError()
 }
 

@@ -8,15 +8,15 @@ import (
 	"github.com/Azareal/Gosora/common/phrases"
 )
 
-func ForumList(w http.ResponseWriter, r *http.Request, user c.User, header *c.Header) c.RouteError {
-	skip, rerr := header.Hooks.VhookSkippable("route_forum_list_start", w, r, &user, header)
+func ForumList(w http.ResponseWriter, r *http.Request, user c.User, h *c.Header) c.RouteError {
+	skip, rerr := h.Hooks.VhookSkippable("route_forum_list_start", w, r, &user, h)
 	if skip || rerr != nil {
 		return rerr
 	}
-	header.Title = phrases.GetTitlePhrase("forums")
-	header.Zone = "forums"
-	header.Path = "/forums/"
-	header.MetaDesc = header.Settings["meta_desc"].(string)
+	h.Title = phrases.GetTitlePhrase("forums")
+	h.Zone = "forums"
+	h.Path = "/forums/"
+	h.MetaDesc = h.Settings["meta_desc"].(string)
 
 	var err error
 	var canSee []int
@@ -44,10 +44,10 @@ func ForumList(w http.ResponseWriter, r *http.Request, user c.User, header *c.He
 					f.LastTopicTime = c.RelativeTime(f.LastTopic.LastReplyAt)
 				}
 			}
-			header.Hooks.Hook("forums_frow_assign", &f)
+			h.Hooks.Hook("forums_frow_assign", &f)
 			forumList = append(forumList, f)
 		}
 	}
 
-	return renderTemplate("forums", w, r, header, c.ForumsPage{header, forumList})
+	return renderTemplate("forums", w, r, h, c.ForumsPage{h, forumList})
 }

@@ -108,7 +108,7 @@ func ViewProfile(w http.ResponseWriter, r *http.Request, user c.User, header *c.
 			return c.InternalError(err, w, r)
 		}
 	}
-	canMessage := (!blockedInv && user.Perms.UseConvos) || user.IsSuperMod
+	canMessage := (!blockedInv && user.Perms.UseConvos) || (!blockedInv && puser.IsSuperMod && user.Perms.UseConvosOnlyWithMod) || user.IsSuperMod
 	canComment := !blockedInv && user.Perms.CreateProfileReply
 
 	ppage := c.ProfilePage{header, reList, *puser, currentScore, nextScore, blocked, canMessage, canComment}

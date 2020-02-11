@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"sync"
 
-	"github.com/Azareal/Gosora/query_gen"
+	qgen "github.com/Azareal/Gosora/query_gen"
 )
 
 var FPStore ForumPermsStore
@@ -13,8 +13,8 @@ var FPStore ForumPermsStore
 type ForumPermsStore interface {
 	Init() error
 	GetAllMap() (bigMap map[int]map[int]*ForumPerms)
-	Get(fid int, gid int) (fperms *ForumPerms, err error)
-	GetCopy(fid int, gid int) (fperms ForumPerms, err error)
+	Get(fid, gid int) (fperms *ForumPerms, err error)
+	GetCopy(fid, gid int) (fperms ForumPerms, err error)
 	ReloadAll() error
 	Reload(id int) error
 }
@@ -36,8 +36,8 @@ func NewMemoryForumPermsStore() (*MemoryForumPermsStore, error) {
 	acc := qgen.NewAcc()
 	fp := "forums_permissions"
 	return &MemoryForumPermsStore{
-		getByForum:      acc.Select(fp).Columns("gid,permissions").Where("fid = ?").Orderby("gid ASC").Prepare(),
-		getByForumGroup: acc.Select(fp).Columns("permissions").Where("fid = ? AND gid = ?").Prepare(),
+		getByForum:      acc.Select(fp).Columns("gid,permissions").Where("fid=?").Orderby("gid ASC").Prepare(),
+		getByForumGroup: acc.Select(fp).Columns("permissions").Where("fid=? AND gid=?").Prepare(),
 
 		evenForums: make(map[int]map[int]*ForumPerms),
 		oddForums:  make(map[int]map[int]*ForumPerms),
@@ -91,7 +91,7 @@ func (s *MemoryForumPermsStore) Reload(fid int) error {
 			return err
 		}
 
-		DebugLog("gid: ", gid)
+		DebugLog("gid:", gid)
 		DebugLogf("perms: %+v\n", perms)
 		pperms, err := s.parseForumPerm(perms)
 		if err != nil {
@@ -101,7 +101,7 @@ func (s *MemoryForumPermsStore) Reload(fid int) error {
 		forumPerms[gid] = pperms
 	}
 	DebugLogf("forumPerms: %+v\n", forumPerms)
-	
+
 	if fid%2 == 0 {
 		s.evenLock.Lock()
 		s.evenForums[fid] = forumPerms
@@ -126,7 +126,7 @@ func (s *MemoryForumPermsStore) Reload(fid int) error {
 		TopicListThaw.Thaw()
 		return nil
 	}
-	
+
 	for _, group := range groups {
 		DebugLogf("Updating the forum permissions for Group #%d", group.ID)
 		canSee := []int{}
@@ -193,7 +193,7 @@ func (s *MemoryForumPermsStore) GetAllMap() (bigMap map[int]map[int]*ForumPerms)
 // TODO: Add a hook here and have plugin_guilds use it
 // TODO: Check if the forum exists?
 // TODO: Fix the races
-func (s *MemoryForumPermsStore) Get(fid int, gid int) (fperms *ForumPerms, err error) {
+func (s *MemoryForumPermsStore) Get(fid, gid int) (fperms *ForumPerms, err error) {
 	var fmap map[int]*ForumPerms
 	var ok bool
 	if fid%2 == 0 {
@@ -218,7 +218,7 @@ func (s *MemoryForumPermsStore) Get(fid int, gid int) (fperms *ForumPerms, err e
 
 // TODO: Check if the forum exists?
 // TODO: Fix the races
-func (s *MemoryForumPermsStore) GetCopy(fid int, gid int) (fperms ForumPerms, err error) {
+func (s *MemoryForumPermsStore) GetCopy(fid, gid int) (fperms ForumPerms, err error) {
 	fPermsPtr, err := s.Get(fid, gid)
 	if err != nil {
 		return fperms, err

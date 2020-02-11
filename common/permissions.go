@@ -40,6 +40,7 @@ var GlobalPermList = []string{
 	"UploadFiles",
 	"UploadAvatars",
 	"UseConvos",
+	"UseConvosOnlyWithMod",
 	"CreateProfileReply",
 	"AutoEmbed",
 }
@@ -68,11 +69,12 @@ type Perms struct {
 	ViewIPs               bool `json:",omitempty"`
 
 	// Global non-staff permissions
-	UploadFiles        bool `json:",omitempty"`
-	UploadAvatars      bool `json:",omitempty"`
-	UseConvos          bool `json:",omitempty"`
-	CreateProfileReply bool `json:",omitempty"`
-	AutoEmbed          bool `json:",omitempty"`
+	UploadFiles            bool `json:",omitempty"`
+	UploadAvatars          bool `json:",omitempty"`
+	UseConvos              bool `json:",omitempty"`
+	UseConvosOnlyWithMod bool `json:",omitempty"`
+	CreateProfileReply     bool `json:",omitempty"`
+	AutoEmbed              bool `json:",omitempty"`
 
 	// Forum permissions
 	ViewTopic bool `json:",omitempty"`
@@ -126,11 +128,12 @@ func init() {
 		ViewAdminLogs:         true,
 		ViewIPs:               true,
 
-		UploadFiles:        true,
-		UploadAvatars:      true,
-		UseConvos:          true,
-		CreateProfileReply: true,
-		AutoEmbed:          true,
+		UploadFiles:            true,
+		UploadAvatars:          true,
+		UseConvos:              true,
+		UseConvosOnlyWithMod: true,
+		CreateProfileReply:     true,
+		AutoEmbed:              true,
 
 		ViewTopic:   true,
 		LikeItem:    true,

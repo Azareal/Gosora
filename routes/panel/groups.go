@@ -352,6 +352,7 @@ func GroupsEditPerms(w http.ResponseWriter, r *http.Request, user c.User, sgid s
 	addPerm("UploadFiles", g.Perms.UploadFiles)
 	addPerm("UploadAvatars", g.Perms.UploadAvatars)
 	addPerm("UseConvos", g.Perms.UseConvos)
+	addPerm("UseConvosOnlyWithMod", g.Perms.UseConvosOnlyWithMod)
 	addPerm("CreateProfileReply", g.Perms.CreateProfileReply)
 	addPerm("AutoEmbed", g.Perms.AutoEmbed)
 

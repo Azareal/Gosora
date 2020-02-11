@@ -31,6 +31,7 @@
 		"UploadFiles": "Can upload files",
 		"UploadAvatars": "Can upload avatars",
 		"UseConvos":"Can use conversations",
+		"UseConvosOnlyWithMod":"Can use conversations only to contact global mods",
 		"CreateProfileReply": "Can create profile replies",
 		"AutoEmbed":"Automatically embed media they post",
 		

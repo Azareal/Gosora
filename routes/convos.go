@@ -100,6 +100,9 @@ func Convo(w http.ResponseWriter, r *http.Request, user c.User, header *c.Header
 
 func ConvosCreate(w http.ResponseWriter, r *http.Request, user c.User, h *c.Header) c.RouteError {
 	accountEditHead("create_convo", w, r, &user, h)
+	if !user.Perms.UseConvos && !user.Perms.UseConvosOnlyWithMod {
+		return c.NoPermissions(w, r, user)
+	}
 	h.AddNotice("convo_dev")
 	recpName := ""
 	pi := c.Account{h, "dashboard", "create_convo", c.ConvoCreatePage{h, recpName}}
@@ -111,7 +114,7 @@ func ConvosCreateSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.R
 	if ferr != nil {
 		return ferr
 	}
-	if !user.Perms.UseConvos {
+	if !user.Perms.UseConvos && !user.Perms.UseConvosOnlyWithMod {
 		return c.NoPermissions(w, r, user)
 	}
 
@@ -131,8 +134,14 @@ func ConvosCreateSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.R
 			return c.InternalError(err, w, r)
 		}
 		// TODO: Should we kick them out of existing conversations if they're moved into a group without permission or the permission is revoked from their group? We might want to give them a chance to delete their messages though to avoid privacy headaches here and it may only be temporarily to tackle a specific incident.
-		if !u.Perms.UseConvos {
+		if !u.Perms.UseConvos && !u.Perms.UseConvosOnlyWithMod {
 			return c.LocalError("One of the recipients doesn't have permission to use the conversations system", w, r, user)
+		}
+		if !user.Perms.UseConvos && !u.IsSuperMod && user.Perms.UseConvosOnlyWithMod {
+			return c.LocalError("You are only allowed to message global moderators.", w, r, user)
+		}
+		if !user.IsSuperMod && !u.Perms.UseConvos && u.Perms.UseConvosOnlyWithMod {
+			return c.LocalError("One of the recipients doesn't have permission to engage with conversation with you.", w, r, user)
 		}
 		blocked, err := c.UserBlocks.IsBlockedBy(u.ID, user.ID)
 		if err != nil {
@@ -176,7 +185,7 @@ func ConvosCreateReplySubmit(w http.ResponseWriter, r *http.Request, user c.User
 	if ferr != nil {
 		return ferr
 	}
-	if !user.Perms.UseConvos {
+	if !user.Perms.UseConvos && !user.Perms.UseConvosOnlyWithMod {
 		return c.NoPermissions(w, r, user)
 	}
 	cid, err := strconv.Atoi(scid)
@@ -196,6 +205,15 @@ func ConvosCreateReplySubmit(w http.ResponseWriter, r *http.Request, user c.User
 	}
 	if !convo.Has(user.ID) {
 		return c.LocalError("You are not in this conversation.", w, r, user)
+	}
+	if !user.Perms.UseConvos && user.Perms.UseConvosOnlyWithMod {
+		u, err := c.Users.Get(convo.CreatedBy)
+		if err != nil {
+			return c.InternalError(err, w, r)
+		}
+		if !u.IsSuperMod {
+			return c.LocalError("You're only allowed to talk to global moderators.", w, r, user)
+		}
 	}
 
 	body := c.PreparseMessage(r.PostFormValue("content"))

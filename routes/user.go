@@ -162,7 +162,6 @@ func ActivateUser(w http.ResponseWriter, r *http.Request, user c.User, suid stri
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
-
 	if targetUser.Active {
 		return c.LocalError("The account you're trying to activate has already been activated.", w, r, user)
 	}
