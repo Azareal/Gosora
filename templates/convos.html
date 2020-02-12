@@ -1,10 +1,10 @@
 <div class="colstack_item colstack_head rowhead">
 	<div class="rowitem">
 		<h1>{{lang "convos_head"}}</h1>
-		{{if not .CurrentUser.IsBanned}}<h2><a class="create_convo_link" href="/user/convos/create/">{{lang "convos_create"}}</a></h2>{{end}}
+		{{if .CurrentUser.Perms.UseConvos or .CurrentUser.Perms.UseConvosIfWithMod}}<h2><a class="create_convo_link" href="/user/convos/create/">{{lang "convos_create"}}</a></h2>{{end}}
 	</div>
 </div>
-{{if not .CurrentUser.IsBanned}}
+{{if .CurrentUser.Perms.UseConvos or .CurrentUser.Perms.UseConvosIfWithMod}}
 <div class="colstack_item the_form convo_create_form auto_hide">
 	<form action="/user/convos/create/submit/?s={{.CurrentUser.Session}}" method="post">
 		<div class="formrow real_first_child">
