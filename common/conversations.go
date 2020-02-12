@@ -54,6 +54,7 @@ func init() {
 
 type Conversation struct {
 	ID          int
+	Link        string
 	CreatedBy   int
 	CreatedAt   time.Time
 	LastReplyBy int
@@ -133,6 +134,10 @@ func (co *Conversation) Create() (int, error) {
 	return int(lastID), err
 }
 
+func BuildConvoURL(coid int) string {
+	return "/user/convo/" + strconv.Itoa(coid)
+}
+
 type ConversationExtra struct {
 	*Conversation
 	Users []*User
@@ -141,7 +146,7 @@ type ConversationExtra struct {
 type ConversationStore interface {
 	Get(id int) (*Conversation, error)
 	GetUser(uid, offset int) (cos []*Conversation, err error)
-	GetUserExtra(uid int, offset int) (cos []*ConversationExtra, err error)
+	GetUserExtra(uid, offset int) (cos []*ConversationExtra, err error)
 	GetUserCount(uid int) (count int)
 	Delete(id int) error
 	Count() (count int)
@@ -330,7 +335,7 @@ func (s *DefaultConversationStore) Create(content string, createdBy int, partici
 	if len(participants) == 0 {
 		return 0, errors.New("no participants set")
 	}
-	res, err := s.create.Exec(createdBy,createdBy)
+	res, err := s.create.Exec(createdBy, createdBy)
 	if err != nil {
 		return 0, err
 	}
@@ -346,6 +351,9 @@ func (s *DefaultConversationStore) Create(content string, createdBy int, partici
 	}
 
 	for _, p := range participants {
+		if p == createdBy {
+			continue
+		}
 		_, err := s.addParticipant.Exec(p, lastID)
 		if err != nil {
 			return 0, err

@@ -283,9 +283,15 @@ type ResetPage struct {
 	MFA   bool
 }
 
+type ConvoListRow struct {
+	*ConversationExtra
+	ShortUsers []*User
+	OneOnOne   bool
+}
+
 type ConvoListPage struct {
 	*Header
-	Convos []*ConversationExtra
+	Convos []ConvoListRow
 	Paginator
 }
 

@@ -9,7 +9,7 @@
 	<form action="/user/convos/create/submit/?s={{.CurrentUser.Session}}" method="post">
 		<div class="formrow real_first_child">
 			<div class="formitem formlabel"><a>{{lang "create_convo_recp"}}</a></div>
-			<div class="formitem"><input name="recp" type="text" /></div>
+			<div class="formitem"><input name="recp" type="text"/></div>
 		</div>
 		<div class="formrow">
 			<div class="formitem"><textarea name="body"></textarea></div>
@@ -27,7 +27,8 @@
 	{{range .Convos}}
 	<div class="rowitem">
 		<span class="to_left">
-			<a href="/user/convo/{{.ID}}">{{range .Users}}<span class="convos_item_user">{{.Name}}</span>&nbsp;{{end}}</a></span></a>
+			{{if .OneOnOne}}{{range .ShortUsers}}<img class="bgsub" src="{{.MicroAvatar}}" height=48 width=48/>{{end}}{{end}}
+			<a href="/user/convo/{{.ID}}">{{range .ShortUsers}}<span class="convos_item_user">{{.Name}}</span>&nbsp;{{end}}</a></span></a>
 		</span>
 		<span title="{{abstime .LastReplyAt}}" class="to_right">{{reltime .LastReplyAt}}</span>
 		<div style="clear:both;"></div>

@@ -1,5 +1,23 @@
-.rowhead .rowitem {
+.rowhead .rowitem, .convos_list .rowitem {
 	display: flex;
+}
+.convos_list .to_left {
+	display: flex;
+}
+.convos_list .rowitem img {
+	width: 26px;
+	height: 26px;
+	margin-right: 8px;
+	border-radius: 24px;
+}
+.convos_list .rowitem a {
+	/*margin-top: auto;
+	margin-bottom: auto;*/
+	margin-top: 4px;
+}
+.convos_list .to_right {
+	margin-top: auto;
+	margin-bottom: auto;
 }
 .convos_item_user:not(:last-child):after {
 	content: ",";

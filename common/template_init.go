@@ -350,13 +350,17 @@ func compileTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName string
 	t.AddStd("account", "c.Account", accountPage)
 
 	parti := []*User{&user}
-	convo := &Conversation{1, user.ID, time.Now(), 0, time.Now()}
+	convo := &Conversation{1, BuildConvoURL(1), user.ID, time.Now(), 0, time.Now()}
 	convoItems := []ConvoViewRow{ConvoViewRow{&ConversationPost{1, 1, "hey", "", user.ID}, &user, "", 4, true}}
 	convoPage := ConvoViewPage{header, convo, convoItems, parti, true, Paginator{[]int{1}, 1, 1}}
 	t.AddStd("convo", "c.ConvoViewPage", convoPage)
 
 	convos := []*ConversationExtra{&ConversationExtra{&Conversation{}, []*User{&user}}}
-	convoListPage := ConvoListPage{header, convos, Paginator{[]int{1}, 1, 1}}
+	var cRows []ConvoListRow
+	for _, convo := range convos {
+		cRows = append(cRows, ConvoListRow{convo, convo.Users, false})
+	}
+	convoListPage := ConvoListPage{header, cRows, Paginator{[]int{1}, 1, 1}}
 	t.AddStd("convos", "c.ConvoListPage", convoListPage)
 
 	basePage := &BasePanelPage{header, PanelStats{}, "dashboard", ReportForumID}
@@ -557,7 +561,7 @@ func compileJSTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName stri
 	t.AddStd("topic_c_poll_input", "c.TopicCPollInput", TopicCPollInput{Index: 0})
 
 	parti := []*User{&user}
-	convo := &Conversation{1, user.ID, time.Now(), 0, time.Now()}
+	convo := &Conversation{1, BuildConvoURL(1), user.ID, time.Now(), 0, time.Now()}
 	convoItems := []ConvoViewRow{ConvoViewRow{&ConversationPost{1, 1, "hey", "", user.ID}, &user, "", 4, true}}
 	convoPage := ConvoViewPage{header, convo, convoItems, parti, true, Paginator{[]int{1}, 1, 1}}
 	t.AddStd("convo", "c.ConvoViewPage", convoPage)

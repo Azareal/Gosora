@@ -30,7 +30,24 @@ func Convos(w http.ResponseWriter, r *http.Request, user c.User, h *c.Header) c.
 		return c.InternalError(err, w, r)
 	}
 
-	pi := c.Account{h, "dashboard", "convos", c.ConvoListPage{h, convos, c.Paginator{pageList, page, lastPage}}}
+	var cRows []c.ConvoListRow
+	for _, convo := range convos {
+		var parti []*c.User
+		notMe := false
+		for _, u := range convo.Users {
+			if u.ID == user.ID {
+				continue
+			}
+			parti = append(parti, u)
+			notMe = true
+		}
+		if !notMe {
+			parti = convo.Users
+		}
+		cRows = append(cRows, c.ConvoListRow{convo, parti, len(parti) == 1})
+	}
+
+	pi := c.Account{h, "dashboard", "convos", c.ConvoListPage{h, cRows, c.Paginator{pageList, page, lastPage}}}
 	return renderTemplate("account", w, r, h, pi)
 }
 
@@ -138,16 +155,29 @@ func ConvosCreateSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.R
 		return c.NoPermissions(w, r, user)
 	}
 
-	recps := c.SanitiseSingleLine(r.PostFormValue("recp"))
+	sRecps := c.SanitiseSingleLine(r.PostFormValue("recp"))
 	body := c.PreparseMessage(r.PostFormValue("body"))
 	rlist := []int{}
+
+	// De-dupe recipients
+	var recps []string
+	unames := make(map[string]struct{})
+	for _, recp := range strings.Split(sRecps, ",") {
+		recp = strings.TrimSpace(recp)
+		_, exists := unames[recp]
+		if !exists {
+			recps = append(recps, recp)
+			unames[recp] = struct{}{}
+		}
+	}
+
 	max := 10 // max number of recipients that can be added at once
-	for i, recp := range strings.Split(recps, ",") {
+	for i, recp := range recps {
 		if i >= max {
 			break
 		}
 
-		u, err := c.Users.GetByName(strings.TrimSpace(recp))
+		u, err := c.Users.GetByName(recp)
 		if err == sql.ErrNoRows {
 			return c.LocalError("One of the recipients doesn't exist", w, r, user)
 		} else if err != nil {
