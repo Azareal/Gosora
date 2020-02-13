@@ -111,8 +111,9 @@
 
 		"alerts_no_actor":"Unable to find the actor",
 		"alerts_no_target_user":"Unable to find the target user",
-		"alerts_no_linked_topic":"Unable to find the linked topic",
-		"alerts_no_linked_topic_by_reply":"Unable to find the linked reply or parent topic",
+		"alerts_no_linked_topic":"Unable to find linked topic",
+		"alerts_no_linked_topic_by_reply":"Unable to find linked reply or parent topic",
+		"alerts_no_linked_convo":"Unable to find linked convo",
 		"alerts_invalid_elementtype":"Invalid elementType",
 
 		"panel_groups_need_name":"The group name can't be left blank.",
@@ -328,7 +329,7 @@
 		"password_reset_email_sent":"An email was sent to you. Please follow the steps within.",
 		"password_reset_token_token_verified":"Your password was successfully updated.",
 
-		"convo_dev":"Messages are currently under development. Some features may not work yet and your messages may be purged every now and then.",
+		"convo_dev":"Conversations are currently under development. Some features may not work yet and your messages may be purged every now and then.",
 
 		"panel_forum_created":"The forum was successfully created.",
 		"panel_forum_deleted":"The forum was successfully deleted.",
@@ -380,6 +381,9 @@
 		"alerts.user_mention":"{0} mentioned you on {1}'s profile",
 		"alerts.new_friend_invite":"You received a friend invite from {0}",
 
+		"alerts.convo_create":"{0} added you to a conversation",
+		"alerts.convo_reply":"{0} replied to a conversation",
+		
 		"alerts.no_alerts":"You don't have any alerts",
 		"alerts.no_alerts_short":"No new alerts",
 
@@ -511,7 +515,7 @@
 		"account_menu_privacy":"Privacy",
 		"account_menu_blocked":"Blocked",
 		"account_menu_penalties":"Penalties",
-		"account_menu_messages":"Messages",
+		"account_menu_messages":"Conversations",
 
 		"account_coming_soon":"Coming Soon",
 

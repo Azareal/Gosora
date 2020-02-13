@@ -183,6 +183,7 @@ func NewDefaultConversationStore(acc *qgen.Accumulator) (*DefaultConversationSto
 func (s *DefaultConversationStore) Get(id int) (*Conversation, error) {
 	co := &Conversation{ID: id}
 	err := s.get.QueryRow(id).Scan(&co.CreatedBy, &co.CreatedAt, &co.LastReplyBy, &co.LastReplyAt)
+	co.Link = BuildConvoURL(co.ID)
 	return co, err
 }
 
@@ -199,6 +200,7 @@ func (s *DefaultConversationStore) GetUser(uid, offset int) (cos []*Conversation
 		if err != nil {
 			return nil, err
 		}
+		co.Link = BuildConvoURL(co.ID)
 		cos = append(cos, co)
 	}
 	err = rows.Err()

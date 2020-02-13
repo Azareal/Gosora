@@ -210,6 +210,26 @@ func ConvosCreateSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.R
 		return c.InternalError(err, w, r)
 	}
 
+	// TODO: Don't bother making the subscription if the convo creator is the only recipient?
+	for _, uid := range rlist {
+		if uid == user.ID {
+			continue
+		}
+		err := c.Subscriptions.Add(uid, cid, "convo")
+		if err != nil {
+			return c.InternalError(err, w, r)
+		}
+	}
+	err = c.Subscriptions.Add(user.ID, cid, "convo")
+	if err != nil {
+		return c.InternalError(err, w, r)
+	}
+
+	err = c.AddActivityAndNotifyAll(c.Alert{ActorID: user.ID, Event: "create", ElementType: "convo", ElementID: cid, Actor: &user})
+	if err != nil {
+		return c.InternalError(err, w, r)
+	}
+
 	http.Redirect(w, r, "/user/convo/"+strconv.Itoa(cid), http.StatusSeeOther)
 	return nil
 }
@@ -269,7 +289,11 @@ func ConvosCreateReplySubmit(w http.ResponseWriter, r *http.Request, user c.User
 
 	body := c.PreparseMessage(r.PostFormValue("content"))
 	post := &c.ConversationPost{CID: cid, Body: body, CreatedBy: user.ID}
-	_, err = post.Create()
+	pid, err := post.Create()
+	if err != nil {
+		return c.InternalError(err, w, r)
+	}
+	err = c.AddActivityAndNotifyAll(c.Alert{ActorID: user.ID, Event: "reply", ElementType: "convo", ElementID: cid, Actor: &user, Extra: strconv.Itoa(pid)})
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}

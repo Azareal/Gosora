@@ -100,6 +100,14 @@ func BuildAlert(alert Alert, user User /* The current user */) (out string, err 
 	var url, area string
 	phraseName := "." + alert.ElementType
 	switch alert.ElementType {
+	case "convo":
+		convo, err := Convos.Get(alert.ElementID)
+		if err != nil {
+			DebugLogf("Unable to find linked convo %d", alert.ElementID)
+			return "", errors.New(phrases.GetErrorPhrase("alerts_no_linked_convo"))
+		}
+		url = convo.Link
+		area = ""
 	case "topic":
 		topic, err := Topics.Get(alert.ElementID)
 		if err != nil {
@@ -138,6 +146,8 @@ func BuildAlert(alert Alert, user User /* The current user */) (out string, err 
 	}
 
 	switch alert.Event {
+	case "create":
+		phraseName += "_create"
 	case "like":
 		phraseName += "_like"
 	case "mention":
@@ -149,6 +159,7 @@ func BuildAlert(alert Alert, user User /* The current user */) (out string, err 
 	return buildAlertString(phraseName, []string{alert.Actor.Name, area}, url, alert.Actor.Avatar, alert.ASID), nil
 }
 
+// TODO: Use a string builder?
 func buildAlertString(msg string, sub []string, path, avatar string, asid int) string {
 	var subString string
 	for _, item := range sub {
