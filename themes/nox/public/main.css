@@ -248,6 +248,7 @@ li a {
 	color: #BBBBBB;
 	text-overflow: ellipsis;
 	overflow: hidden;
+	white-space: nowrap;
 }
 .colstack_right .colstack_item:not(.colstack_head):not(.rowhead) .rowitem:not(:last-child), .rowmsg {
 	margin-bottom: 8px;
