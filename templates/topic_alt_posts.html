@@ -1,5 +1,5 @@
 {{range .ItemList}}<article {{scope "post"}} id="post-{{.ID}}" itemscope itemtype="http://schema.org/CreativeWork" class="rowitem passive deletable_block editable_parent post_item{{if .ActionType}} action_item{{end}}{{if .Attachments}} has_attachs{{end}}">
-	{{template "topic_alt_userinfo.html" . }}
+	{{if js}}js{{/**{{ptmpl "topic_alt_userinfo" .}}**/}}{{else}}{{template "topic_alt_userinfo.html" . }}{{end}}
 	<div class="content_container">
 		{{if .ActionType}}
 			<span class="action_icon" aria-hidden="true">{{.ActionIcon}}</span>
@@ -14,7 +14,7 @@
 			{{range .Attachments}}
 			<div class="attach_item attach_item_item{{if .Image}} attach_image_holder{{end}}">
 				{{if .Image}}<img src="//{{$.Header.Site.URL}}/attachs/{{.Path}}?sid={{.SectionID}}&amp;stype=forums" height=24 width=24 />{{end}}
-				<span class="attach_item_path" aid="{{.ID}}" fullPath="//{{$.Header.Site.URL}}/attachs/{{.Path}}">{{.Path}}</span>
+				<span class="attach_item_path" aid={{.ID}} fullPath="//{{$.Header.Site.URL}}/attachs/{{.Path}}">{{.Path}}</span>
 				<button class="attach_item_select">{{lang "topic.select_button_text"}}</button>
 				<button class="attach_item_copy">{{lang "topic.copy_button_text"}}</button>
 			</div>

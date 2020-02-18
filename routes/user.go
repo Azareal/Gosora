@@ -117,7 +117,6 @@ func UnbanUser(w http.ResponseWriter, r *http.Request, user c.User, suid string)
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
-
 	if !targetUser.IsBanned {
 		return c.LocalError("The user you're trying to unban isn't banned.", w, r, user)
 	}

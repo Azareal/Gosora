@@ -17,7 +17,6 @@ func LogsRegs(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError 
 	if ferr != nil {
 		return ferr
 	}
-
 	logCount := c.RegLogs.Count()
 	page, _ := strconv.Atoi(r.FormValue("page"))
 	perPage := 12
@@ -174,7 +173,6 @@ func LogsMod(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	if ferr != nil {
 		return ferr
 	}
-
 	page, _ := strconv.Atoi(r.FormValue("page"))
 	perPage := 12
 	offset, page, lastPage := c.PageOffset(c.ModLogs.Count(), page, perPage)

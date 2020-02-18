@@ -1,13 +1,13 @@
 (() => {
 	addInitHook("end_init", () => {
 	fetch("/api/watches/")
-	.then(response => {
-		if(response.status!==200) {
+	.then(resp => {
+		if(resp.status!==200) {
 			console.log("error");
-			console.log("response:", response);
+			console.log("response:", resp);
 			return;
 		}
-		response.text().then(data => eval(data));
+		resp.text().then(data => eval(data));
 	})
 	.catch(err => console.log("err:", err));
 	});

@@ -74,15 +74,15 @@ func InitPhrases(lang string) error {
 			return err
 		}
 
-		data, err := ioutil.ReadFile(path)
-		if err != nil {
-			return err
-		}
-
-		var ext = filepath.Ext("/langs/" + path)
+		ext := filepath.Ext("/langs/" + path)
 		if ext != ".json" {
 			log.Printf("Found a '%s' in /langs/", ext)
 			return nil
+		}
+
+		data, err := ioutil.ReadFile(path)
+		if err != nil {
+			return err
 		}
 
 		var langPack LanguagePack
@@ -98,7 +98,7 @@ func InitPhrases(lang string) error {
 
 		// [prefix][name]phrase
 		langPack.TmplPhrasesPrefixes = make(map[string]map[string]string)
-		var conMap = make(map[string]string) // Cache phrase strings so we can de-dupe items to reduce memory use. There appear to be some minor improvements with this, although we would need a more thorough check to be sure.
+		conMap := make(map[string]string) // Cache phrase strings so we can de-dupe items to reduce memory use. There appear to be some minor improvements with this, although we would need a more thorough check to be sure.
 		for name, phrase := range langPack.TmplPhrases {
 			_, ok := conMap[phrase]
 			if !ok {
@@ -304,10 +304,10 @@ func GetTmplPhrasesByPrefix(prefix string) (phrases map[string]string, ok bool) 
 	return res, ok
 }
 
-func getPlaceholder(prefix string, suffix string) string {
+func getPlaceholder(prefix, suffix string) string {
 	return "{lang." + prefix + "[" + suffix + "]}"
 }
-func getPlaceholderBytes(prefix string, suffix string) []byte {
+func getPlaceholderBytes(prefix, suffix string) []byte {
 	return []byte("{lang." + prefix + "[" + suffix + "]}")
 }
 

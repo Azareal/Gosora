@@ -526,7 +526,7 @@ func compileJSTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName stri
 
 	t := TItemHold(make(map[string]TItem))
 
-	topicsRow := &TopicsRow{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, now, now, user3.ID, 1, 1, "", "127.0.0.1", 1, 0, 1, 0, 1, "classname", 0, "", &user2, "", 0, &user3, "General", "/forum/general.2", nil}
+	topicsRow := &TopicsRow{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, now, now, user3.ID, 1, 1, "", "::1", 1, 0, 1, 0, 1, "classname", 0, "", &user2, "", 0, &user3, "General", "/forum/general.2", nil}
 	t.AddStd("topics_topic", "c.TopicsRow", topicsRow)
 
 	poll := Poll{ID: 1, Type: 0, Options: map[int]string{0: "Nothing", 1: "Something"}, Results: map[int]int{0: 5, 1: 2}, QuickOptions: []PollOption{
@@ -535,7 +535,7 @@ func compileJSTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName stri
 	}, VoteCount: 7}
 	avatar, microAvatar := BuildAvatar(62, "")
 	miniAttach := []*MiniAttachment{&MiniAttachment{Path: "/"}}
-	topic := TopicUser{1, "blah", "Blah", "Hey there!", 62, false, false, now, now, 1, 1, 0, "", "127.0.0.1", 1, 0, 1, 0, "classname", poll.ID, "weird-data", BuildProfileURL("fake-user", 62), "Fake User", Config.DefaultGroup, avatar, microAvatar, 0, "", "", "", 58, false, miniAttach, nil, false}
+	topic := TopicUser{1, "blah", "Blah", "Hey there!", 62, false, false, now, now, 1, 1, 0, "", "::1", 1, 0, 1, 0, "classname", poll.ID, "weird-data", BuildProfileURL("fake-user", 62), "Fake User", Config.DefaultGroup, avatar, microAvatar, 0, "", "", "", 58, false, miniAttach, nil, false}
 	var replyList []*ReplyUser
 	// TODO: Do we really want the UID here to be zero?
 	avatar, microAvatar = BuildAvatar(0, "")
@@ -814,6 +814,19 @@ func initDefaultTmplFuncMap() {
 			return err
 		}
 		return ""
+	}
+
+	fmap["ptmpl"] = func(nameInt, pageInt, headerInt interface{}) interface{} {
+		header := headerInt.(*Header)
+		err := header.Theme.RunTmpl(nameInt.(string), pageInt, header.Writer)
+		if err != nil {
+			return err
+		}
+		return ""
+	}
+
+	fmap["js"] = func() interface{} {
+		return false
 	}
 
 	fmap["flush"] = func() interface{} {

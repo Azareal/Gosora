@@ -236,7 +236,7 @@ var imageExts = ["png", "jpg", "jpe","jpeg","jif","jfi","jfif", "svg", "bmp", "g
 		});
 	
 		let bulkActionSender = function(action, selectedTopics, fragBit) {
-			let url = "/topic/"+action+"/submit/"+fragBit+"?s=" + me.User.S;
+			let url = "/topic/"+action+"/submit/"+fragBit+"?s="+me.User.S;
 			$.ajax({
 				url: url,
 				type: "POST",
@@ -265,7 +265,7 @@ var imageExts = ["png", "jpg", "jpe","jpeg","jif","jfi","jfif", "svg", "bmp", "g
 						let fid = this.getAttribute("data-fid");
 						if (fid == null) return;
 						this.classList.add("pane_selected");
-						console.log("fid: " + fid);
+						console.log("fid:" + fid);
 						forumToMoveTo = fid;
 	
 						$("#mover_submit").unbind("click");
@@ -298,8 +298,8 @@ var imageExts = ["png", "jpg", "jpe","jpeg","jif","jfi","jfif", "svg", "bmp", "g
 	}
 	
 	var pollInputIndex = 1;
-	$("#add_poll_button").click((event) => {
-		event.preventDefault();
+	$("#add_poll_button").click((ev) => {
+		ev.preventDefault();
 		$(".poll_content_row").removeClass("auto_hide");
 		$("#has_poll_input").val("1");
 		$(".pollinputinput").click(addPollInput);

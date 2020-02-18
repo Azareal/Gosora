@@ -126,10 +126,10 @@ func LogWarning(err error, extra ...string) {
 }
 
 func errorHeader(w http.ResponseWriter, user User, title string) *Header {
-	header := DefaultHeader(w, user)
-	header.Title = title
-	header.Zone = "error"
-	return header
+	h := DefaultHeader(w, user)
+	h.Title = title
+	h.Zone = "error"
+	return h
 }
 
 // TODO: Dump the request?
@@ -400,4 +400,4 @@ func handleErrorTemplate(w http.ResponseWriter, r *http.Request, pi ErrorPage) {
 }
 
 // Alias of routes.renderTemplate
-var RenderTemplateAlias func(tmplName string, hookName string, w http.ResponseWriter, r *http.Request, header *Header, pi interface{}) error
+var RenderTemplateAlias func(tmplName, hookName string, w http.ResponseWriter, r *http.Request, header *Header, pi interface{}) error

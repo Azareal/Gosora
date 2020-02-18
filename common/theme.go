@@ -16,8 +16,8 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
-	"strings"
 	"strconv"
+	"strings"
 	"text/template"
 
 	p "github.com/Azareal/Gosora/common/phrases"
@@ -91,7 +91,7 @@ type ThemeMapTmplToDock struct {
 func (t *Theme) LoadStaticFiles() error {
 	t.ResourceTemplates = template.New("")
 	fmap := make(map[string]interface{})
-	fmap["lang"] = func(phraseNameInt interface{}, tmplInt interface{}) interface{} {
+	fmap["lang"] = func(phraseNameInt, tmplInt interface{}) interface{} {
 		phraseName, ok := phraseNameInt.(string)
 		if !ok {
 			panic("phraseNameInt is not a string")
@@ -167,7 +167,7 @@ func (t *Theme) AddThemeStaticFiles() error {
 		hasher.Write(data)
 		checksum := hex.EncodeToString(hasher.Sum(nil))
 
-		StaticFiles.Set("/s/"+t.Name+path, SFile{data, gzipData, checksum,t.Name+path + "?h=" + checksum, 0, int64(len(data)), int64(len(gzipData)),strconv.Itoa(len(gzipData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)})
+		StaticFiles.Set("/s/"+t.Name+path, SFile{data, gzipData, checksum, t.Name + path + "?h=" + checksum, 0, int64(len(data)), int64(len(gzipData)), strconv.Itoa(len(gzipData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)})
 
 		DebugLog("Added the '/" + t.Name + path + "' static file for theme " + t.Name + ".")
 		return nil
@@ -252,7 +252,6 @@ func UpdateDefaultTheme(t *Theme) error {
 	if !ok {
 		return ErrNoDefaultTheme
 	}
-
 	err = dtheme.setActive(false)
 	if err != nil {
 		return err

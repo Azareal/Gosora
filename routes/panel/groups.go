@@ -214,19 +214,19 @@ func GroupsPromotionsCreateSubmit(w http.ResponseWriter, r *http.Request, user c
 		return c.LocalError("posts must be integer", w, r, user)
 	}
 
-	registeredHours, err := strconv.Atoi(r.FormValue("registered_hours"))
+	regHours, err := strconv.Atoi(r.FormValue("registered_hours"))
 	if err != nil {
 		return c.LocalError("registered_hours must be integer", w, r, user)
 	}
-	registeredDays, err := strconv.Atoi(r.FormValue("registered_days"))
+	regDays, err := strconv.Atoi(r.FormValue("registered_days"))
 	if err != nil {
 		return c.LocalError("registered_days must be integer", w, r, user)
 	}
-	registeredMonths, err := strconv.Atoi(r.FormValue("registered_months"))
+	regMonths, err := strconv.Atoi(r.FormValue("registered_months"))
 	if err != nil {
 		return c.LocalError("registered_months must be integer", w, r, user)
 	}
-	registeredMinutes := (registeredHours * 60) + (registeredDays * 24 * 60) + (registeredMonths * 30 * 24 * 60)
+	regMinutes := (regHours * 60) + (regDays * 24 * 60) + (regMonths * 30 * 24 * 60)
 
 	g, err := c.Groups.Get(from)
 	ferr := groupCheck(w, r, user, g, err)
@@ -238,7 +238,7 @@ func GroupsPromotionsCreateSubmit(w http.ResponseWriter, r *http.Request, user c
 	if err != nil {
 		return ferr
 	}
-	pid, err := c.GroupPromotions.Create(from, to, twoWay, level, posts, registeredMinutes)
+	pid, err := c.GroupPromotions.Create(from, to, twoWay, level, posts, regMinutes)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}

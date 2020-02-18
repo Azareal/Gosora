@@ -114,6 +114,8 @@ func NewCTemplateSet(in string) *CTemplateSet {
 			"reltime":    true,
 			"scope":      true,
 			"dyntmpl":    true,
+			"ptmpl":      true,
+			"js":         true,
 			"index":      true,
 			"flush":      true,
 		},
@@ -183,7 +185,7 @@ type OutFrag struct {
 	Body     string
 }
 
-func (c *CTemplateSet) CompileByLoggedin(name string, fileDir string, expects string, expectsInt interface{}, varList map[string]VarItem, imports ...string) (stub string, gout string, mout string, err error) {
+func (c *CTemplateSet) CompileByLoggedin(name, fileDir, expects string, expectsInt interface{}, varList map[string]VarItem, imports ...string) (stub, gout, mout string, err error) {
 	c.importMap = map[string]string{}
 	for index, item := range c.baseImportMap {
 		c.importMap[index] = item
@@ -233,15 +235,15 @@ import "errors"
 	// TODO: Try to remove this redundant interface cast
 	stub += `
 // nolint
-func Template_` + fname + `(tmpl_` + fname + `_i interface{}, w io.Writer) error {
-	tmpl_` + fname + `_vars, ok := tmpl_` + fname + `_i.(` + expects + `)
+func Template_` + fname + `(tmpl_i interface{}, w io.Writer) error {
+	tmpl_vars, ok := tmpl_i.(` + expects + `)
 	if !ok {
 		return errors.New("invalid page struct value")
 	}
-	if tmpl_` + fname + `_vars.CurrentUser.Loggedin {
-		return Template_` + fname + `_member(tmpl_` + fname + `_i, w)
+	if tmpl_vars.CurrentUser.Loggedin {
+		return Template_` + fname + `_member(tmpl_i, w)
 	}
-	return Template_` + fname + `_guest(tmpl_` + fname + `_i, w)
+	return Template_` + fname + `_guest(tmpl_i, w)
 }`
 
 	c.fileDir = fileDir
@@ -265,7 +267,7 @@ func Template_` + fname + `(tmpl_` + fname + `_i interface{}, w io.Writer) error
 	return stub, gout, mout, err
 }
 
-func (c *CTemplateSet) Compile(name string, fileDir string, expects string, expectsInt interface{}, varList map[string]VarItem, imports ...string) (out string, err error) {
+func (c *CTemplateSet) Compile(name, fileDir, expects string, expectsInt interface{}, varList map[string]VarItem, imports ...string) (out string, err error) {
 	if c.config.Debug {
 		c.logger.Println("Compiling template '" + name + "'")
 	}
@@ -279,7 +281,7 @@ func (c *CTemplateSet) Compile(name string, fileDir string, expects string, expe
 	return c.compile(name, content, expects, expectsInt, varList, imports...)
 }
 
-func (c *CTemplateSet) compile(name string, content string, expects string, expectsInt interface{}, varList map[string]VarItem, imports ...string) (out string, err error) {
+func (c *CTemplateSet) compile(name, content, expects string, expectsInt interface{}, varList map[string]VarItem, imports ...string) (out string, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			fmt.Println(r)
@@ -363,6 +365,7 @@ func (c *CTemplateSet) compile(name string, content string, expects string, expe
 
 	var outBuf []OutBufferFrame
 	rootHold := "tmpl_" + fname + "_vars"
+	//rootHold := "tmpl_vars"
 	con := CContext{
 		RootHolder:       rootHold,
 		VarHolder:        rootHold,
@@ -486,12 +489,17 @@ func (c *CTemplateSet) compile(name string, content string, expects string, expe
 	}
 
 	if c.lang == "normal" {
-		fout += "// nolint\nfunc Template_" + fname + "(tmpl_" + fname + "_i interface{}, w io.Writer) error {\n"
-		fout += `tmpl_` + fname + `_vars, ok := tmpl_` + fname + `_i.(` + expects + `)
-	if !ok {
-		return errors.New("invalid page struct value")
-	}
+		fout += "// nolint\nfunc Template_" + fname + "(tmpl_i interface{}, w io.Writer) error {\n"
+		fout += `tmpl_` + fname + `_vars, ok := tmpl_i.(` + expects + `)
+if !ok {
+	return errors.New("invalid page struct value")
+}
 `
+		/*fout += `tmpl_vars, ok := tmpl_i.(` + expects + `)
+		if !ok {
+			return errors.New("invalid page struct value")
+		}
+		`*/
 		fout += `var iw http.ResponseWriter
 	gzw, ok := w.(c.GzipResponseWriter)
 	if ok {
@@ -501,6 +509,7 @@ func (c *CTemplateSet) compile(name string, content string, expects string, expe
 `
 	} else {
 		fout += "// nolint\nfunc Template_" + fname + "(tmpl_" + fname + "_vars interface{}, w io.Writer) error {\n"
+		//fout += "// nolint\nfunc Template_" + fname + "(tmpl_vars interface{}, w io.Writer) error {\n"
 	}
 
 	if len(c.langIndexToName) > 0 {
@@ -676,6 +685,15 @@ func (c *CTemplateSet) compileSwitch(con CContext, node parse.Node) {
 				}
 				return
 			}
+		}
+
+		// simple constant folding
+		if expr == "true" {
+			c.compileSwitch(con, node.List)
+			return
+		} else if expr == "false" {
+			c.compileSwitch(con, node.ElseList)
+			return
 		}
 
 		con.Push("startif", "if "+expr+" {\n")
@@ -980,16 +998,16 @@ func (c *CTemplateSet) compileExprSwitch(con CContext, node *parse.CommandNode) 
 	return out
 }
 
-func (c *CTemplateSet) unknownNode(node parse.Node) {
-	elem := reflect.ValueOf(node).Elem()
+func (c *CTemplateSet) unknownNode(n parse.Node) {
+	elem := reflect.ValueOf(n).Elem()
 	c.logger.Println("Unknown Kind:", elem.Kind())
 	c.logger.Println("Unknown Type:", elem.Type().Name())
 	panic("I don't know what node this is! Grr...")
 }
 
-func (c *CTemplateSet) compileIdentSwitchN(con CContext, node *parse.CommandNode) (out string) {
+func (c *CTemplateSet) compileIdentSwitchN(con CContext, n *parse.CommandNode) (out string) {
 	c.detail("in compileIdentSwitchN")
-	out, _, _, _ = c.compileIdentSwitch(con, node)
+	out, _, _, _ = c.compileIdentSwitch(con, n)
 	return out
 }
 
@@ -1052,7 +1070,7 @@ func (c *CTemplateSet) compareJoin(con CContext, pos int, node *parse.CommandNod
 	return pos, out
 }
 
-func (c *CTemplateSet) compileIdentSwitch(con CContext, node *parse.CommandNode) (out string, val reflect.Value, literal bool, notident bool) {
+func (c *CTemplateSet) compileIdentSwitch(con CContext, node *parse.CommandNode) (out string, val reflect.Value, literal, notident bool) {
 	c.dumpCall("compileIdentSwitch", con, node)
 	litString := func(inner string, bytes bool) {
 		if !bytes {
@@ -1136,6 +1154,14 @@ ArgLoop:
 			out = "c.HasWidgets(" + leftParam + "," + rightParam + ")"
 			literal = true
 			break ArgLoop
+		case "js":
+			if c.lang == "js" {
+				out = "true"
+			} else {
+				out = "false"
+			}
+			literal = true
+			break ArgLoop
 		case "lang":
 			// TODO: Implement string literals properly
 			leftOp := node.Args[pos+1].String()
@@ -1172,7 +1198,7 @@ ArgLoop:
 			for i := pos + 2; i < len(node.Args); i++ {
 				op := node.Args[i].String()
 				if op != "" {
-					if /*op[0] == '.' || */op[0] == '$' {
+					if /*op[0] == '.' || */ op[0] == '$' {
 						panic("langf args cannot be dynamic")
 					}
 					if op[0] != '.' && op[0] != '"' && !unicode.IsDigit(rune(op[0])) {
@@ -1262,7 +1288,8 @@ ArgLoop:
 		case "scope":
 			literal = true
 			break ArgLoop
-		case "dyntmpl":
+		// TODO: Optimise ptmpl
+		case "dyntmpl", "ptmpl":
 			var pageParam, headParam string
 			// TODO: Implement string literals properly
 			// TODO: Should we check to see if pos+3 is within the bounds of the slice?

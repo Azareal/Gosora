@@ -43,7 +43,7 @@ func renderTemplate(tmplName string, w http.ResponseWriter, r *http.Request, hea
 	return nil
 }
 
-func buildBasePage(w http.ResponseWriter, r *http.Request, user *c.User, titlePhrase string, zone string) (*c.BasePanelPage, c.RouteError) {
+func buildBasePage(w http.ResponseWriter, r *http.Request, user *c.User, titlePhrase, zone string) (*c.BasePanelPage, c.RouteError) {
 	header, stats, ferr := c.PanelUserCheck(w, r, user)
 	if ferr != nil {
 		return nil, ferr

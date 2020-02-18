@@ -27,7 +27,7 @@ type PollStore interface {
 	Get(id int) (*Poll, error)
 	Exists(id int) bool
 	Create(parent Pollable, pollType int, pollOptions map[int]string) (int, error)
-	CastVote(optionIndex int, pollID int, uid int, ip string) error
+	CastVote(optionIndex, pollID, uid int, ip string) error
 	Reload(id int) error
 	//Count() int
 
@@ -77,24 +77,24 @@ func (s *DefaultPollStore) Exists(id int) bool {
 }
 
 func (s *DefaultPollStore) Get(id int) (*Poll, error) {
-	poll, err := s.cache.Get(id)
+	p, err := s.cache.Get(id)
 	if err == nil {
-		return poll, nil
+		return p, nil
 	}
 
-	poll = &Poll{ID: id}
+	p = &Poll{ID: id}
 	var optionTxt []byte
-	err = s.get.QueryRow(id).Scan(&poll.ParentID, &poll.ParentTable, &poll.Type, &optionTxt, &poll.VoteCount)
+	err = s.get.QueryRow(id).Scan(&p.ParentID, &p.ParentTable, &p.Type, &optionTxt, &p.VoteCount)
 	if err != nil {
 		return nil, err
 	}
 
-	err = json.Unmarshal(optionTxt, &poll.Options)
+	err = json.Unmarshal(optionTxt, &p.Options)
 	if err == nil {
-		poll.QuickOptions = s.unpackOptionsMap(poll.Options)
-		s.cache.Set(poll)
+		p.QuickOptions = s.unpackOptionsMap(p.Options)
+		s.cache.Set(p)
 	}
-	return poll, err
+	return p, err
 }
 
 // TODO: Optimise the query to avoid preparing it on the spot? Maybe, use knowledge of the most common IN() parameter counts?
@@ -212,9 +212,9 @@ func (s *DefaultPollStore) unpackOptionsMap(rawOptions map[int]string) []PollOpt
 }
 
 // TODO: Use a transaction for this?
-func (s *DefaultPollStore) CastVote(optionIndex int, pollID int, uid int, ip string) error {
+func (s *DefaultPollStore) CastVote(optionIndex, pollID, uid int, ip string) error {
 	if Config.DisablePollIP {
-		ip = "0"
+		ip = ""
 	}
 	_, err := s.addVote.Exec(pollID, uid, optionIndex, ip)
 	if err != nil {
