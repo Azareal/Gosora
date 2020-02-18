@@ -114,7 +114,7 @@ func LogWarning(err error, extra ...string) {
 		errmsg += extraBit + "\n"
 	}
 	if err == nil {
-		errmsg += "Unknown error"
+		errmsg += "nil error found"
 	} else {
 		errmsg += err.Error()
 	}
