@@ -92,8 +92,10 @@ func deleteAttachment(w http.ResponseWriter, r *http.Request, user c.User, aid i
 	err := c.DeleteAttachment(aid)
 	if err == sql.ErrNoRows {
 		return c.NotFoundJSQ(w, r, nil, js)
+	} else if err != nil {
+		return c.InternalErrorJSQ(err, w, r, js)
 	}
-	return c.InternalErrorJSQ(err, w, r, js)
+	return nil
 }
 
 // TODO: Stop duplicating this code
