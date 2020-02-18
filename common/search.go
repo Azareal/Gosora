@@ -105,7 +105,7 @@ func (s *SQLSearcher) Query(q string, zones []int) (ids []int, err error) {
 
 		acc := qgen.NewAcc()
 		stmt := acc.RawPrepare("SELECT `topics`.`tid` FROM `topics` INNER JOIN `replies` ON `topics`.`tid` = `replies`.`tid` WHERE (MATCH(`topics`.`title`) AGAINST (? IN NATURAL LANGUAGE MODE) OR MATCH(`topics`.`content`) AGAINST (? IN NATURAL LANGUAGE MODE) OR MATCH(`replies`.`content`) AGAINST (? IN NATURAL LANGUAGE MODE)) AND `topics`.`parentID` IN(" + zList + ");")
-		err := acc.FirstError()
+		err = acc.FirstError()
 		if err != nil {
 			return nil, err
 		}

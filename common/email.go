@@ -65,12 +65,13 @@ func SendEmail(email, subject, msg string) (err error) {
 	body += "\r\n" + msg
 
 	var c *smtp.Client
+	var conn *tls.Conn
 	if Config.SMTPEnableTLS {
 		tlsconfig := &tls.Config{
 			InsecureSkipVerify: true,
 			ServerName:         Config.SMTPServer,
 		}
-		conn, err := tls.Dial("tcp", Config.SMTPServer+":"+Config.SMTPPort, tlsconfig)
+		conn, err = tls.Dial("tcp", Config.SMTPServer+":"+Config.SMTPPort, tlsconfig)
 		if err != nil {
 			LogWarning(err)
 			return err
