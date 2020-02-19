@@ -575,9 +575,14 @@ func TestAttachments(t *testing.T) {
 	expect(t, c.Attachments.Count() == 0, "the number of attachments should be 0")
 	expect(t, c.Attachments.CountIn("topics", 1) == 0, "the number of attachments in topic 1 should be 0")
 	expect(t, c.Attachments.CountInPath(filename) == 0, fmt.Sprintf("the number of attachments with path '%s' should be 0", filename))
+	_, err := c.Attachments.Get(1)
+	if err != nil && err != sql.ErrNoRows {
+		t.Error(err)
+	}
+	expect(t, err == sql.ErrNoRows, ".Get should have no results")
 
 	// Sim an upload, try a proper upload through the proper pathway later on
-	_, err := os.Stat(destFile)
+	_, err = os.Stat(destFile)
 	if err != nil && !os.IsNotExist(err) {
 		expectNilErr(t, err)
 	} else if err == nil {
@@ -622,9 +627,21 @@ func TestAttachments(t *testing.T) {
 	expect(t, a.Image, "a.Image should be true")
 	expect(t, a.Ext == "png", fmt.Sprintf("a.Ext should be png not %s", a.Ext))
 
+	// TODO: Cover the other bits of creation / deletion not covered in the AttachmentStore like updating the reply / topic attachCount
+
 	// TODO: Get attachment tests
 	// TODO: Move attachment tests
-	// TODO: Delete attachment
+
+	expectNilErr(t, c.Attachments.Delete(aid))
+	expect(t, c.Attachments.Count() == 0, "the number of attachments should be 0")
+	expect(t, c.Attachments.CountIn("topics", tid) == 0, fmt.Sprintf("the number of attachments in topic %d should be 0", tid))
+	expect(t, c.Attachments.CountInPath(filename) == 0, fmt.Sprintf("the number of attachments with path '%s' should be 0", filename))
+	_, err = c.Attachments.Get(aid)
+	if err != nil && err != sql.ErrNoRows {
+		t.Error(err)
+	}
+	expect(t, err == sql.ErrNoRows, ".Get should have no results")
+
 	// TODO: Reply attachment test
 	// TODO: Delete reply attachment
 	// TODO: Path overlap tests
