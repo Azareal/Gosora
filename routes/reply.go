@@ -130,6 +130,7 @@ func CreateReplySubmit(w http.ResponseWriter, r *http.Request, user c.User) c.Ro
 			return c.LocalErrorJSQ("Failed to add poll to reply", w, r, user, js) // TODO: Might need to be an internal error as it could leave phantom polls?
 		}
 	}
+	_ = c.Rstore.GetCache().Remove(reply.ID)
 
 	err = c.Forums.UpdateLastTopic(tid, user.ID, topic.ParentID)
 	if err != nil && err != sql.ErrNoRows {
