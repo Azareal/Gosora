@@ -27,7 +27,6 @@ type PollStore interface {
 	Get(id int) (*Poll, error)
 	Exists(id int) bool
 	Create(parent Pollable, pollType int, pollOptions map[int]string) (int, error)
-	CastVote(optionIndex, pollID, uid int, ip string) error
 	Reload(id int) error
 	//Count() int
 
@@ -38,14 +37,11 @@ type PollStore interface {
 type DefaultPollStore struct {
 	cache PollCache
 
-	get                   *sql.Stmt
-	exists                *sql.Stmt
-	createPoll            *sql.Stmt
-	createPollOption      *sql.Stmt
-	addVote               *sql.Stmt
-	incVoteCount          *sql.Stmt
-	incVoteCountForOption *sql.Stmt
-	delete                *sql.Stmt
+	get              *sql.Stmt
+	exists           *sql.Stmt
+	createPoll       *sql.Stmt
+	createPollOption *sql.Stmt
+	delete           *sql.Stmt
 	//count      *sql.Stmt
 }
 
@@ -55,16 +51,14 @@ func NewDefaultPollStore(cache PollCache) (*DefaultPollStore, error) {
 		cache = NewNullPollCache()
 	}
 	// TODO: Add an admin version of registerStmt with more flexibility?
+	p := "polls"
 	return &DefaultPollStore{
-		cache:                 cache,
-		get:                   acc.Select("polls").Columns("parentID, parentTable, type, options, votes").Where("pollID = ?").Prepare(),
-		exists:                acc.Select("polls").Columns("pollID").Where("pollID = ?").Prepare(),
-		createPoll:            acc.Insert("polls").Columns("parentID, parentTable, type, options").Fields("?,?,?,?").Prepare(),
-		createPollOption:      acc.Insert("polls_options").Columns("pollID, option, votes").Fields("?,?,0").Prepare(),
-		addVote:               acc.Insert("polls_votes").Columns("pollID,uid,option,castAt,ip").Fields("?,?,?,UTC_TIMESTAMP(),?").Prepare(),
-		incVoteCount:          acc.Update("polls").Set("votes = votes + 1").Where("pollID = ?").Prepare(),
-		incVoteCountForOption: acc.Update("polls_options").Set("votes = votes + 1").Where("option=? AND pollID=?").Prepare(),
-		//count: acc.SimpleCount("polls", "", ""),
+		cache:            cache,
+		get:              acc.Select(p).Columns("parentID, parentTable, type, options, votes").Where("pollID=?").Prepare(),
+		exists:           acc.Select(p).Columns("pollID").Where("pollID=?").Prepare(),
+		createPoll:       acc.Insert(p).Columns("parentID, parentTable, type, options").Fields("?,?,?,?").Prepare(),
+		createPollOption: acc.Insert("polls_options").Columns("pollID, option, votes").Fields("?,?,0").Prepare(),
+		//count: acc.SimpleCount(p, "", ""),
 	}, acc.FirstError()
 }
 
@@ -209,23 +203,6 @@ func (s *DefaultPollStore) unpackOptionsMap(rawOptions map[int]string) []PollOpt
 		options[id] = PollOption{id, option}
 	}
 	return options
-}
-
-// TODO: Use a transaction for this?
-func (s *DefaultPollStore) CastVote(optionIndex, pollID, uid int, ip string) error {
-	if Config.DisablePollIP {
-		ip = ""
-	}
-	_, err := s.addVote.Exec(pollID, uid, optionIndex, ip)
-	if err != nil {
-		return err
-	}
-	_, err = s.incVoteCount.Exec(pollID)
-	if err != nil {
-		return err
-	}
-	_, err = s.incVoteCountForOption.Exec(optionIndex, pollID)
-	return err
 }
 
 // TODO: Use a transaction for this
