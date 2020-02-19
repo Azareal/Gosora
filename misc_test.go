@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"database/sql"
 	"fmt"
+	"io/ioutil"
 	"net/http/httptest"
+	"os"
 	"runtime/debug"
 	"strconv"
 	"testing"
@@ -514,15 +516,15 @@ func topicStoreTest(t *testing.T, newID int, ip string) {
 		expect(t, topic.GetTable() == "topics", fmt.Sprintf("The topic's table should be 'topics', not %s", topic.GetTable()))
 	}
 
-	tcache := c.Topics.GetCache()
+	tc := c.Topics.GetCache()
 	shouldNotBeIn := func(tid int) {
-		if tcache != nil {
-			_, err = tcache.Get(tid)
+		if tc != nil {
+			_, err = tc.Get(tid)
 			recordMustNotExist(t, err, "Topic cache should be empty")
 		}
 	}
-	if tcache != nil {
-		_, err = tcache.Get(newID)
+	if tc != nil {
+		_, err = tc.Get(newID)
 		expectNilErr(t, err)
 	}
 
@@ -557,6 +559,75 @@ func topicStoreTest(t *testing.T, newID int, ip string) {
 	expect(t, !c.Topics.Exists(newID), fmt.Sprintf("TID #%d shouldn't exist", newID))
 
 	// TODO: Test topic creation and retrieving that created topic plus reload and inspecting the cache
+}
+
+// TODO: Implement this
+func TestAttachments(t *testing.T) {
+	miscinit(t)
+	if !c.PluginsInited {
+		c.InitPlugins()
+	}
+
+	filename := "n0-48.png"
+	srcFile := "./test_data/" + filename
+	destFile := "./attachs/" + filename
+
+	expect(t, c.Attachments.Count() == 0, "the number of attachments should be 0")
+	expect(t, c.Attachments.CountIn("topics", 1) == 0, "the number of attachments in topic 1 should be 0")
+	expect(t, c.Attachments.CountInPath(filename) == 0, fmt.Sprintf("the number of attachments with path '%s' should be 0", filename))
+
+	// Sim an upload, try a proper upload through the proper pathway later on
+	_, err := os.Stat(destFile)
+	if err != nil && !os.IsNotExist(err) {
+		expectNilErr(t, err)
+	} else if err == nil {
+		err := os.Remove(destFile)
+		expectNilErr(t, err)
+	}
+
+	input, err := ioutil.ReadFile(srcFile)
+	expectNilErr(t, err)
+	err = ioutil.WriteFile(destFile, input, 0644)
+	expectNilErr(t, err)
+
+	tid, err := c.Topics.Create(2, "Attach Test", "Fillter Body", 1, "")
+	expectNilErr(t, err)
+	aid, err := c.Attachments.Add(2, "forums", tid, "topics", 1, filename, "")
+	expectNilErr(t, err)
+	expect(t, c.Attachments.Count() == 1, "the number of attachments should be 1")
+	expect(t, c.Attachments.CountIn("topics", tid) == 1, fmt.Sprintf("the number of attachments in topic %d should be 1", tid))
+	expect(t, c.Attachments.CountInPath(filename) == 1, fmt.Sprintf("the number of attachments with path '%s' should be 1", filename))
+
+	a, err := c.Attachments.Get(aid)
+	expectNilErr(t, err)
+	expect(t, a.ID == aid, fmt.Sprintf("a.ID should be %d not %d", aid, a.ID))
+	expect(t, a.SectionID == 2, fmt.Sprintf("a.SectionID should be %d not %d", 2, a.SectionID))
+	expect(t, a.OriginID == tid, fmt.Sprintf("a.OriginID should be %d not %d", tid, a.OriginID))
+	expect(t, a.UploadedBy == 1, fmt.Sprintf("a.UploadedBy should be %d not %d", 1, a.UploadedBy))
+	expect(t, a.Path == filename, fmt.Sprintf("a.Path should be %s not %s", filename, a.Path))
+	expect(t, a.Extra == "", fmt.Sprintf("a.Extra should be blank not %s", a.Extra))
+	expect(t, a.Image, "a.Image should be true")
+	expect(t, a.Ext == "png", fmt.Sprintf("a.Ext should be png not %s", a.Ext))
+
+	alist, err := c.Attachments.MiniGetList("topics", tid)
+	expectNilErr(t, err)
+	expect(t, len(alist) == 1, fmt.Sprintf("len(alist) should be 1 not %d", len(alist)))
+	a = alist[0]
+	expect(t, a.ID == aid, fmt.Sprintf("a.ID should be %d not %d", aid, a.ID))
+	expect(t, a.SectionID == 2, fmt.Sprintf("a.SectionID should be %d not %d", 2, a.SectionID))
+	expect(t, a.OriginID == tid, fmt.Sprintf("a.OriginID should be %d not %d", tid, a.OriginID))
+	expect(t, a.UploadedBy == 1, fmt.Sprintf("a.UploadedBy should be %d not %d", 1, a.UploadedBy))
+	expect(t, a.Path == filename, fmt.Sprintf("a.Path should be %s not %s", filename, a.Path))
+	expect(t, a.Extra == "", fmt.Sprintf("a.Extra should be blank not %s", a.Extra))
+	expect(t, a.Image, "a.Image should be true")
+	expect(t, a.Ext == "png", fmt.Sprintf("a.Ext should be png not %s", a.Ext))
+
+	// TODO: Get attachment tests
+	// TODO: Move attachment tests
+	// TODO: Delete attachment
+	// TODO: Reply attachment test
+	// TODO: Delete reply attachment
+	// TODO: Path overlap tests
 }
 
 func TestForumStore(t *testing.T) {
@@ -1115,40 +1186,40 @@ func TestConvos(t *testing.T) {
 	_, err = c.Convos.Get(1)
 	recordMustNotExist(t, err, "convo 1 should not exist")
 
-	_, err = c.Convos.GetUser(-1,-1)
+	_, err = c.Convos.GetUser(-1, -1)
 	recordMustNotExist(t, err, "convo getuser -1 -1 should not exist")
-	_, err = c.Convos.GetUser(-1,0)
+	_, err = c.Convos.GetUser(-1, 0)
 	recordMustNotExist(t, err, "convo getuser -1 0 should not exist")
-	_, err = c.Convos.GetUser(0,0)
+	_, err = c.Convos.GetUser(0, 0)
 	recordMustNotExist(t, err, "convo getuser 0 0 should not exist")
-	_, err = c.Convos.GetUser(1,0)
+	_, err = c.Convos.GetUser(1, 0)
 	recordMustNotExist(t, err, "convos getuser 1 0 should not exist")
-	expect(t,c.Convos.GetUserCount(-1)==0,"getusercount should be zero")
-	expect(t,c.Convos.GetUserCount(0)==0,"getusercount should be zero")
-	expect(t,c.Convos.GetUserCount(1)==0,"getusercount should be zero")
+	expect(t, c.Convos.GetUserCount(-1) == 0, "getusercount should be zero")
+	expect(t, c.Convos.GetUserCount(0) == 0, "getusercount should be zero")
+	expect(t, c.Convos.GetUserCount(1) == 0, "getusercount should be zero")
 
-	_, err = c.Convos.GetUserExtra(-1,-1)
+	_, err = c.Convos.GetUserExtra(-1, -1)
 	recordMustNotExist(t, err, "convos getuserextra -1 -1 should not exist")
-	_, err = c.Convos.GetUserExtra(-1,0)
+	_, err = c.Convos.GetUserExtra(-1, 0)
 	recordMustNotExist(t, err, "convos getuserextra -1 0 should not exist")
-	_, err = c.Convos.GetUserExtra(0,0)
+	_, err = c.Convos.GetUserExtra(0, 0)
 	recordMustNotExist(t, err, "convos getuserextra 0 0 should not exist")
-	_, err = c.Convos.GetUserExtra(1,0)
+	_, err = c.Convos.GetUserExtra(1, 0)
 	recordMustNotExist(t, err, "convos getuserextra 1 0 should not exist")
 
-	expect(t,c.Convos.Count()==0,"convos count should be 0")
+	expect(t, c.Convos.Count() == 0, "convos count should be 0")
 
 	cid, err := c.Convos.Create("hehe", 1, []int{2})
-	expectNilErr(t,err)
-	expect(t,cid==1,"cid should be 1")
-	expect(t,c.Convos.Count()==1,"convos count should be 1")
+	expectNilErr(t, err)
+	expect(t, cid == 1, "cid should be 1")
+	expect(t, c.Convos.Count() == 1, "convos count should be 1")
 
-	co, err:= c.Convos.Get(cid)
-	expectNilErr(t,err)
-	expect(t,co.ID==1,"co.ID should be 1")
-	expect(t,co.CreatedBy==1,"co.CreatedBy should be 1")
+	co, err := c.Convos.Get(cid)
+	expectNilErr(t, err)
+	expect(t, co.ID == 1, "co.ID should be 1")
+	expect(t, co.CreatedBy == 1, "co.CreatedBy should be 1")
 	// TODO: CreatedAt test
-	expect(t,co.LastReplyBy==1,"co.LastReplyBy should be 1")
+	expect(t, co.LastReplyBy == 1, "co.LastReplyBy should be 1")
 	// TODO: LastReplyAt test
 
 	// TODO: More tests
