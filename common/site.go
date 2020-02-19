@@ -138,6 +138,8 @@ type devConfig struct {
 	NoFsnotify bool // Super Experimental!
 	FullReqLog bool
 	ExtraTmpls string // Experimental flag for adding compiled templates, we'll likely replace this with a better mechanism
+
+	//QuicPort int // Experimental!
 }
 
 // configHolder is purely for having a big struct to unmarshal data into
@@ -248,7 +250,7 @@ func ProcessConfig() (err error) {
 		Config.LastIPCutoff = 12
 	}
 	if Config.PollIPCutoff == 0 {
-		Config.PollIPCutoff = 365 // Default cutoff
+		Config.PollIPCutoff = 180 // Default cutoff
 	}
 	if Config.NoEmbed {
 		DefaultParseSettings.NoEmbed = true
