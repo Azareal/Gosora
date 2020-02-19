@@ -3,6 +3,8 @@ package common
 import (
 	"database/sql"
 	"errors"
+
+	//"fmt"
 	"os"
 	"strings"
 
@@ -34,6 +36,8 @@ type AttachmentStore interface {
 	CountIn(originTable string, oid int) int
 	CountInPath(path string) int
 	Delete(id int) error
+
+	UpdateLinked(otable string, oid int) (err error)
 }
 
 type DefaultAttachmentStore struct {
@@ -46,20 +50,27 @@ type DefaultAttachmentStore struct {
 	move        *sql.Stmt
 	moveByExtra *sql.Stmt
 	delete      *sql.Stmt
+
+	replyUpdateAttachs *sql.Stmt
+	topicUpdateAttachs *sql.Stmt
 }
 
 func NewDefaultAttachmentStore(acc *qgen.Accumulator) (*DefaultAttachmentStore, error) {
 	a := "attachments"
 	return &DefaultAttachmentStore{
 		get:         acc.Select(a).Columns("originID, sectionID, uploadedBy, path, extra").Where("attachID=?").Prepare(),
-		getByObj:    acc.Select(a).Columns("attachID, sectionID, uploadedBy, path, extra").Where("originTable = ? AND originID = ?").Prepare(),
+		getByObj:    acc.Select(a).Columns("attachID, sectionID, uploadedBy, path, extra").Where("originTable=? AND originID=?").Prepare(),
 		add:         acc.Insert(a).Columns("sectionID, sectionTable, originID, originTable, uploadedBy, path, extra").Fields("?,?,?,?,?,?,?").Prepare(),
 		count:       acc.Count(a).Prepare(),
 		countIn:     acc.Count(a).Where("originTable=? and originID=?").Prepare(),
-		countInPath: acc.Count(a).Where("path = ?").Prepare(),
+		countInPath: acc.Count(a).Where("path=?").Prepare(),
 		move:        acc.Update(a).Set("sectionID=?").Where("originID=? AND originTable=?").Prepare(),
 		moveByExtra: acc.Update(a).Set("sectionID=?").Where("originTable=? AND extra=?").Prepare(),
 		delete:      acc.Delete(a).Where("attachID=?").Prepare(),
+
+		// TODO: Less race-y attachment count updates
+		replyUpdateAttachs: acc.Update("replies").Set("attachCount=?").Where("rid=?").Prepare(),
+		topicUpdateAttachs: acc.Update("topics").Set("attachCount=?").Where("tid=?").Prepare(),
 	}, acc.FirstError()
 }
 
@@ -80,7 +91,14 @@ func (s *DefaultAttachmentStore) MiniGetList(originTable string, originID int) (
 		a.Image = ImageFileExts.Contains(a.Ext)
 		alist = append(alist, a)
 	}
-	return alist, rows.Err()
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+	if len(alist) == 0 {
+		err = sql.ErrNoRows
+	}
+	return alist, err
 }
 
 func (s *DefaultAttachmentStore) BulkMiniGetList(originTable string, ids []int) (amap map[int][]*MiniAttachment, err error) {
@@ -190,14 +208,34 @@ func (s *DefaultAttachmentStore) Delete(id int) error {
 	return err
 }
 
+// TODO: Split this out of this store
+func (s *DefaultAttachmentStore) UpdateLinked(otable string, oid int) (err error) {
+	switch otable {
+	case "topics":
+		_, err = s.topicUpdateAttachs.Exec(s.CountIn(otable, oid), oid)
+		if err != nil {
+			return err
+		}
+		err = Topics.Reload(oid)
+	case "replies":
+		_, err = s.replyUpdateAttachs.Exec(s.CountIn(otable, oid), oid)
+	}
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // TODO: Add a table for the files and lock the file row when performing tasks related to the file
 func DeleteAttachment(aid int) error {
 	attach, err := Attachments.Get(aid)
 	if err != nil {
+		//fmt.Println("o1")
 		return err
 	}
 	err = Attachments.Delete(aid)
 	if err != nil {
+		//fmt.Println("o2")
 		return err
 	}
 
@@ -205,9 +243,11 @@ func DeleteAttachment(aid int) error {
 	if count == 0 {
 		err := os.Remove("./attachs/" + attach.Path)
 		if err != nil {
+			//fmt.Println("o3")
 			return err
 		}
 	}
+	//fmt.Println("o4")
 
 	return nil
 }

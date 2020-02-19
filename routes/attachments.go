@@ -101,7 +101,7 @@ func deleteAttachment(w http.ResponseWriter, r *http.Request, user c.User, aid i
 // TODO: Stop duplicating this code
 // TODO: Use a transaction here
 // TODO: Move this function to neutral ground
-func uploadAttachment(w http.ResponseWriter, r *http.Request, user c.User, sid int, sectionTable string, oid int, originTable, extra string) (pathMap map[string]string, rerr c.RouteError) {
+func uploadAttachment(w http.ResponseWriter, r *http.Request, user c.User, sid int, stable string, oid int, otable, extra string) (pathMap map[string]string, rerr c.RouteError) {
 	pathMap = make(map[string]string)
 	files, rerr := uploadFilesWithHash(w, r, user, "./attachs/")
 	if rerr != nil {
@@ -109,7 +109,7 @@ func uploadAttachment(w http.ResponseWriter, r *http.Request, user c.User, sid i
 	}
 
 	for _, filename := range files {
-		aid, err := c.Attachments.Add(sid, sectionTable, oid, originTable, user.ID, filename, extra)
+		aid, err := c.Attachments.Add(sid, stable, oid, otable, user.ID, filename, extra)
 		if err != nil {
 			return nil, c.InternalError(err, w, r)
 		}
@@ -121,21 +121,9 @@ func uploadAttachment(w http.ResponseWriter, r *http.Request, user c.User, sid i
 			pathMap[filename] = strconv.Itoa(aid)
 		}
 
-		switch originTable {
-		case "topics":
-			_, err = topicStmts.updateAttachs.Exec(c.Attachments.CountIn(originTable, oid), oid)
-			if err != nil {
-				return nil, c.InternalError(err, w, r)
-			}
-			err = c.Topics.Reload(oid)
-			if err != nil {
-				return nil, c.InternalError(err, w, r)
-			}
-		case "replies":
-			_, err = replyStmts.updateAttachs.Exec(c.Attachments.CountIn(originTable, oid), oid)
-			if err != nil {
-				return nil, c.InternalError(err, w, r)
-			}
+		err = c.Attachments.UpdateLinked(otable, oid)
+		if err != nil {
+			return nil, c.InternalError(err, w, r)
 		}
 	}
 

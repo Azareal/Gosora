@@ -90,10 +90,11 @@ type DefaultPageStore struct {
 
 func NewDefaultPageStore(acc *qgen.Accumulator) (*DefaultPageStore, error) {
 	pa := "pages"
+	allCols := "pid, name, title, body, allowedGroups, menuID"
 	return &DefaultPageStore{
 		get:       acc.Select(pa).Columns("name, title, body, allowedGroups, menuID").Where("pid=?").Prepare(),
-		getByName: acc.Select(pa).Columns("pid, name, title, body, allowedGroups, menuID").Where("name=?").Prepare(),
-		getOffset: acc.Select(pa).Columns("pid, name, title, body, allowedGroups, menuID").Orderby("pid DESC").Limit("?,?").Prepare(),
+		getByName: acc.Select(pa).Columns(allCols).Where("name=?").Prepare(),
+		getOffset: acc.Select(pa).Columns(allCols).Orderby("pid DESC").Limit("?,?").Prepare(),
 		count:     acc.Count(pa).Prepare(),
 		delete:    acc.Delete(pa).Where("pid=?").Prepare(),
 	}, acc.FirstError()

@@ -30,7 +30,6 @@ import (
 
 type TopicStmts struct {
 	getLikedTopic *sql.Stmt
-	updateAttachs *sql.Stmt
 }
 
 var topicStmts TopicStmts
@@ -40,8 +39,6 @@ func init() {
 	c.DbInits.Add(func(acc *qgen.Accumulator) error {
 		topicStmts = TopicStmts{
 			getLikedTopic: acc.Select("likes").Columns("targetItem").Where("sentBy=? && targetItem=? && targetType='topics'").Prepare(),
-			// TODO: Less race-y attachment count updates
-			updateAttachs: acc.Update("topics").Set("attachCount=?").Where("tid=?").Prepare(),
 		}
 		return acc.FirstError()
 	})
@@ -134,7 +131,7 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user c.User, header *c.He
 
 	if topic.AttachCount > 0 {
 		attachs, err := c.Attachments.MiniGetList("topics", topic.ID)
-		if err != nil {
+		if err != nil && err != sql.ErrNoRows {
 			// TODO: We might want to be a little permissive here in-case of a desync?
 			return c.InternalError(err, w, r)
 		}
@@ -452,6 +449,7 @@ func CreateTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.Ro
 	return nil
 }
 
+// TODO: Move this function
 func uploadFilesWithHash(w http.ResponseWriter, r *http.Request, user c.User, dir string) (filenames []string, rerr c.RouteError) {
 	files, ok := r.MultipartForm.File["upload_files"]
 	if !ok {

@@ -561,92 +561,6 @@ func topicStoreTest(t *testing.T, newID int, ip string) {
 	// TODO: Test topic creation and retrieving that created topic plus reload and inspecting the cache
 }
 
-// TODO: Implement this
-func TestAttachments(t *testing.T) {
-	miscinit(t)
-	if !c.PluginsInited {
-		c.InitPlugins()
-	}
-
-	filename := "n0-48.png"
-	srcFile := "./test_data/" + filename
-	destFile := "./attachs/" + filename
-
-	expect(t, c.Attachments.Count() == 0, "the number of attachments should be 0")
-	expect(t, c.Attachments.CountIn("topics", 1) == 0, "the number of attachments in topic 1 should be 0")
-	expect(t, c.Attachments.CountInPath(filename) == 0, fmt.Sprintf("the number of attachments with path '%s' should be 0", filename))
-	_, err := c.Attachments.Get(1)
-	if err != nil && err != sql.ErrNoRows {
-		t.Error(err)
-	}
-	expect(t, err == sql.ErrNoRows, ".Get should have no results")
-
-	// Sim an upload, try a proper upload through the proper pathway later on
-	_, err = os.Stat(destFile)
-	if err != nil && !os.IsNotExist(err) {
-		expectNilErr(t, err)
-	} else if err == nil {
-		err := os.Remove(destFile)
-		expectNilErr(t, err)
-	}
-
-	input, err := ioutil.ReadFile(srcFile)
-	expectNilErr(t, err)
-	err = ioutil.WriteFile(destFile, input, 0644)
-	expectNilErr(t, err)
-
-	tid, err := c.Topics.Create(2, "Attach Test", "Fillter Body", 1, "")
-	expectNilErr(t, err)
-	aid, err := c.Attachments.Add(2, "forums", tid, "topics", 1, filename, "")
-	expectNilErr(t, err)
-	expect(t, c.Attachments.Count() == 1, "the number of attachments should be 1")
-	expect(t, c.Attachments.CountIn("topics", tid) == 1, fmt.Sprintf("the number of attachments in topic %d should be 1", tid))
-	expect(t, c.Attachments.CountInPath(filename) == 1, fmt.Sprintf("the number of attachments with path '%s' should be 1", filename))
-
-	a, err := c.Attachments.Get(aid)
-	expectNilErr(t, err)
-	expect(t, a.ID == aid, fmt.Sprintf("a.ID should be %d not %d", aid, a.ID))
-	expect(t, a.SectionID == 2, fmt.Sprintf("a.SectionID should be %d not %d", 2, a.SectionID))
-	expect(t, a.OriginID == tid, fmt.Sprintf("a.OriginID should be %d not %d", tid, a.OriginID))
-	expect(t, a.UploadedBy == 1, fmt.Sprintf("a.UploadedBy should be %d not %d", 1, a.UploadedBy))
-	expect(t, a.Path == filename, fmt.Sprintf("a.Path should be %s not %s", filename, a.Path))
-	expect(t, a.Extra == "", fmt.Sprintf("a.Extra should be blank not %s", a.Extra))
-	expect(t, a.Image, "a.Image should be true")
-	expect(t, a.Ext == "png", fmt.Sprintf("a.Ext should be png not %s", a.Ext))
-
-	alist, err := c.Attachments.MiniGetList("topics", tid)
-	expectNilErr(t, err)
-	expect(t, len(alist) == 1, fmt.Sprintf("len(alist) should be 1 not %d", len(alist)))
-	a = alist[0]
-	expect(t, a.ID == aid, fmt.Sprintf("a.ID should be %d not %d", aid, a.ID))
-	expect(t, a.SectionID == 2, fmt.Sprintf("a.SectionID should be %d not %d", 2, a.SectionID))
-	expect(t, a.OriginID == tid, fmt.Sprintf("a.OriginID should be %d not %d", tid, a.OriginID))
-	expect(t, a.UploadedBy == 1, fmt.Sprintf("a.UploadedBy should be %d not %d", 1, a.UploadedBy))
-	expect(t, a.Path == filename, fmt.Sprintf("a.Path should be %s not %s", filename, a.Path))
-	expect(t, a.Extra == "", fmt.Sprintf("a.Extra should be blank not %s", a.Extra))
-	expect(t, a.Image, "a.Image should be true")
-	expect(t, a.Ext == "png", fmt.Sprintf("a.Ext should be png not %s", a.Ext))
-
-	// TODO: Cover the other bits of creation / deletion not covered in the AttachmentStore like updating the reply / topic attachCount
-
-	// TODO: Get attachment tests
-	// TODO: Move attachment tests
-
-	expectNilErr(t, c.Attachments.Delete(aid))
-	expect(t, c.Attachments.Count() == 0, "the number of attachments should be 0")
-	expect(t, c.Attachments.CountIn("topics", tid) == 0, fmt.Sprintf("the number of attachments in topic %d should be 0", tid))
-	expect(t, c.Attachments.CountInPath(filename) == 0, fmt.Sprintf("the number of attachments with path '%s' should be 0", filename))
-	_, err = c.Attachments.Get(aid)
-	if err != nil && err != sql.ErrNoRows {
-		t.Error(err)
-	}
-	expect(t, err == sql.ErrNoRows, ".Get should have no results")
-
-	// TODO: Reply attachment test
-	// TODO: Delete reply attachment
-	// TODO: Path overlap tests
-}
-
 func TestForumStore(t *testing.T) {
 	miscinit(t)
 	if !c.PluginsInited {
@@ -656,7 +570,6 @@ func TestForumStore(t *testing.T) {
 
 	fcache, ok := c.Forums.(c.ForumCache)
 	expect(t, ok, "Unable to cast ForumStore to ForumCache")
-
 	expect(t, c.Forums.Count() == 2, "The forumstore global count should be 2")
 	expect(t, fcache.Length() == 2, "The forum cache length should be 2")
 
@@ -861,16 +774,16 @@ func TestGroupStore(t *testing.T) {
 	recordMustNotExist(t, err, "GID #-1 shouldn't exist")
 
 	// TODO: Refactor the group store to remove GID #0
-	group, err := c.Groups.Get(0)
+	g, err := c.Groups.Get(0)
 	recordMustExist(t, err, "Couldn't find GID #0")
 
-	expect(t, group.ID == 0, fmt.Sprintf("group.ID doesn't not match the requested GID. Got '%d' instead.", group.ID))
-	expect(t, group.Name == "Unknown", fmt.Sprintf("GID #0 is named '%s' and not 'Unknown'", group.Name))
+	expect(t, g.ID == 0, fmt.Sprintf("g.ID doesn't not match the requested GID. Got '%d' instead.", g.ID))
+	expect(t, g.Name == "Unknown", fmt.Sprintf("GID #0 is named '%s' and not 'Unknown'", g.Name))
 
-	group, err = c.Groups.Get(1)
+	g, err = c.Groups.Get(1)
 	recordMustExist(t, err, "Couldn't find GID #1")
-	expect(t, group.ID == 1, fmt.Sprintf("group.ID doesn't not match the requested GID. Got '%d' instead.'", group.ID))
-	expect(t, len(group.CanSee) > 0, "group.CanSee should not be zero")
+	expect(t, g.ID == 1, fmt.Sprintf("g.ID doesn't not match the requested GID. Got '%d' instead.'", g.ID))
+	expect(t, len(g.CanSee) > 0, "g.CanSee should not be zero")
 
 	expect(t, !c.Groups.Exists(-1), "GID #-1 shouldn't exist")
 	// 0 aka Unknown, for system posts and other oddities
@@ -884,13 +797,13 @@ func TestGroupStore(t *testing.T) {
 	expectNilErr(t, err)
 	expect(t, c.Groups.Exists(gid), "The group we just made doesn't exist")
 
-	group, err = c.Groups.Get(gid)
+	g, err = c.Groups.Get(gid)
 	expectNilErr(t, err)
-	expect(t, group.ID == gid, "The group ID should match the requested ID")
-	expect(t, group.IsAdmin, "This should be an admin group")
-	expect(t, group.IsMod, "This should be a mod group")
-	expect(t, !group.IsBanned, "This shouldn't be a ban group")
-	expect(t, len(group.CanSee) == 0, "group.CanSee should be empty")
+	expect(t, g.ID == gid, "The group ID should match the requested ID")
+	expect(t, g.IsAdmin, "This should be an admin group")
+	expect(t, g.IsMod, "This should be a mod group")
+	expect(t, !g.IsBanned, "This shouldn't be a ban group")
+	expect(t, len(g.CanSee) == 0, "g.CanSee should be empty")
 
 	isAdmin = false
 	isMod = true
@@ -899,36 +812,36 @@ func TestGroupStore(t *testing.T) {
 	expectNilErr(t, err)
 	expect(t, c.Groups.Exists(gid), "The group we just made doesn't exist")
 
-	group, err = c.Groups.Get(gid)
+	g, err = c.Groups.Get(gid)
 	expectNilErr(t, err)
-	expect(t, group.ID == gid, "The group ID should match the requested ID")
-	expect(t, !group.IsAdmin, "This should not be an admin group")
-	expect(t, group.IsMod, "This should be a mod group")
-	expect(t, !group.IsBanned, "This shouldn't be a ban group")
+	expect(t, g.ID == gid, "The group ID should match the requested ID")
+	expect(t, !g.IsAdmin, "This should not be an admin group")
+	expect(t, g.IsMod, "This should be a mod group")
+	expect(t, !g.IsBanned, "This shouldn't be a ban group")
 
 	// TODO: Make sure this pointer doesn't change once we refactor the group store to stop updating the pointer
-	err = group.ChangeRank(false, false, true)
+	err = g.ChangeRank(false, false, true)
 	expectNilErr(t, err)
 
-	group, err = c.Groups.Get(gid)
+	g, err = c.Groups.Get(gid)
 	expectNilErr(t, err)
-	expect(t, group.ID == gid, "The group ID should match the requested ID")
-	expect(t, !group.IsAdmin, "This shouldn't be an admin group")
-	expect(t, !group.IsMod, "This shouldn't be a mod group")
-	expect(t, group.IsBanned, "This should be a ban group")
+	expect(t, g.ID == gid, "The group ID should match the requested ID")
+	expect(t, !g.IsAdmin, "This shouldn't be an admin group")
+	expect(t, !g.IsMod, "This shouldn't be a mod group")
+	expect(t, g.IsBanned, "This should be a ban group")
 
-	err = group.ChangeRank(true, true, true)
+	err = g.ChangeRank(true, true, true)
 	expectNilErr(t, err)
 
-	group, err = c.Groups.Get(gid)
+	g, err = c.Groups.Get(gid)
 	expectNilErr(t, err)
-	expect(t, group.ID == gid, "The group ID should match the requested ID")
-	expect(t, group.IsAdmin, "This should be an admin group")
-	expect(t, group.IsMod, "This should be a mod group")
-	expect(t, !group.IsBanned, "This shouldn't be a ban group")
-	expect(t, len(group.CanSee) == 0, "len(group.CanSee) should be 0")
+	expect(t, g.ID == gid, "The group ID should match the requested ID")
+	expect(t, g.IsAdmin, "This should be an admin group")
+	expect(t, g.IsMod, "This should be a mod group")
+	expect(t, !g.IsBanned, "This shouldn't be a ban group")
+	expect(t, len(g.CanSee) == 0, "len(g.CanSee) should be 0")
 
-	err = group.ChangeRank(false, true, true)
+	err = g.ChangeRank(false, true, true)
 	expectNilErr(t, err)
 
 	forum, err := c.Forums.Get(2)
@@ -944,26 +857,26 @@ func TestGroupStore(t *testing.T) {
 	err = forum.SetPerms(&forumPerms, "custom", gid)
 	expectNilErr(t, err)
 
-	group, err = c.Groups.Get(gid)
+	g, err = c.Groups.Get(gid)
 	expectNilErr(t, err)
-	expect(t, group.ID == gid, "The group ID should match the requested ID")
-	expect(t, !group.IsAdmin, "This shouldn't be an admin group")
-	expect(t, group.IsMod, "This should be a mod group")
-	expect(t, !group.IsBanned, "This shouldn't be a ban group")
-	expect(t, group.CanSee != nil, "group.CanSee must not be nil")
-	expect(t, len(group.CanSee) == 1, "len(group.CanSee) should not be one")
-	expect(t, group.CanSee[0] == 2, "group.CanSee[0] should be 2")
-	canSee := group.CanSee
+	expect(t, g.ID == gid, "The group ID should match the requested ID")
+	expect(t, !g.IsAdmin, "This shouldn't be an admin group")
+	expect(t, g.IsMod, "This should be a mod group")
+	expect(t, !g.IsBanned, "This shouldn't be a ban group")
+	expect(t, g.CanSee != nil, "g.CanSee must not be nil")
+	expect(t, len(g.CanSee) == 1, "len(g.CanSee) should not be one")
+	expect(t, g.CanSee[0] == 2, "g.CanSee[0] should be 2")
+	canSee := g.CanSee
 
 	// Make sure the data is static
 	c.Groups.Reload(gid)
 
-	group, err = c.Groups.Get(gid)
+	g, err = c.Groups.Get(gid)
 	expectNilErr(t, err)
-	expect(t, group.ID == gid, "The group ID should match the requested ID")
-	expect(t, !group.IsAdmin, "This shouldn't be an admin group")
-	expect(t, group.IsMod, "This should be a mod group")
-	expect(t, !group.IsBanned, "This shouldn't be a ban group")
+	expect(t, g.ID == gid, "The group ID should match the requested ID")
+	expect(t, !g.IsAdmin, "This shouldn't be an admin group")
+	expect(t, g.IsMod, "This should be a mod group")
+	expect(t, !g.IsBanned, "This shouldn't be a ban group")
 
 	// TODO: Don't enforce a specific order here
 	canSeeTest := func(a, b []int) bool {
@@ -981,7 +894,7 @@ func TestGroupStore(t *testing.T) {
 		return true
 	}
 
-	expect(t, canSeeTest(group.CanSee, canSee), "group.CanSee is not being reused")
+	expect(t, canSeeTest(g.CanSee, canSee), "g.CanSee is not being reused")
 
 	// TODO: Test group deletion
 	// TODO: Test group reload
@@ -1051,7 +964,6 @@ func TestReplyStore(t *testing.T) {
 	if !c.PluginsInited {
 		c.InitPlugins()
 	}
-
 	_, err := c.Rstore.Get(-1)
 	recordMustNotExist(t, err, "RID #-1 shouldn't exist")
 	_, err = c.Rstore.Get(0)
@@ -1074,10 +986,10 @@ func testReplyStore(t *testing.T, newID, newPostCount int, ip string) {
 	}
 
 	replyTest := func(rid, parentID, createdBy int, content, ip string) {
-		reply, err := c.Rstore.Get(rid)
-		replyTest2(reply, err, rid, parentID, createdBy, content, ip)
-		reply, err = c.Rstore.GetCache().Get(rid)
-		replyTest2(reply, err, rid, parentID, createdBy, content, ip)
+		r, err := c.Rstore.Get(rid)
+		replyTest2(r, err, rid, parentID, createdBy, content, ip)
+		r, err = c.Rstore.GetCache().Get(rid)
+		replyTest2(r, err, rid, parentID, createdBy, content, ip)
 	}
 	replyTest(1, 1, 1, "A reply!", "::1")
 
@@ -1143,6 +1055,143 @@ func testReplyStore(t *testing.T, newID, newPostCount int, ip string) {
 
 	// TODO: Add tests for *Reply
 	// TODO: Add tests for ReplyCache
+}
+
+// TODO: Implement this
+func TestAttachments(t *testing.T) {
+	miscinit(t)
+	if !c.PluginsInited {
+		c.InitPlugins()
+	}
+
+	filename := "n0-48.png"
+	srcFile := "./test_data/" + filename
+	destFile := "./attachs/" + filename
+
+	expect(t, c.Attachments.Count() == 0, "the number of attachments should be 0")
+	expect(t, c.Attachments.CountIn("topics", 1) == 0, "the number of attachments in topic 1 should be 0")
+	expect(t, c.Attachments.CountInPath(filename) == 0, fmt.Sprintf("the number of attachments with path '%s' should be 0", filename))
+	_, err := c.Attachments.Get(1)
+	if err != nil && err != sql.ErrNoRows {
+		t.Error(err)
+	}
+	expect(t, err == sql.ErrNoRows, ".Get should have no results")
+	_, err = c.Attachments.MiniGetList("topics", 1)
+	if err != nil && err != sql.ErrNoRows {
+		t.Error(err)
+	}
+	expect(t, err == sql.ErrNoRows, ".MiniGetList should have no results")
+	_, err = c.Attachments.BulkMiniGetList("topics", []int{1})
+	if err != nil && err != sql.ErrNoRows {
+		t.Error(err)
+	}
+	expect(t, err == sql.ErrNoRows, ".BulkMiniGetList should have no results")
+
+	// Sim an upload, try a proper upload through the proper pathway later on
+	_, err = os.Stat(destFile)
+	if err != nil && !os.IsNotExist(err) {
+		expectNilErr(t, err)
+	} else if err == nil {
+		err := os.Remove(destFile)
+		expectNilErr(t, err)
+	}
+
+	input, err := ioutil.ReadFile(srcFile)
+	expectNilErr(t, err)
+	err = ioutil.WriteFile(destFile, input, 0644)
+	expectNilErr(t, err)
+
+	tid, err := c.Topics.Create(2, "Attach Test", "Fillter Body", 1, "")
+	expectNilErr(t, err)
+	aid, err := c.Attachments.Add(2, "forums", tid, "topics", 1, filename, "")
+	expectNilErr(t, err)
+	expectNilErr(t, c.Attachments.UpdateLinked("topics", tid))
+	expect(t, c.Attachments.Count() == 1, "the number of attachments should be 1")
+	expect(t, c.Attachments.CountIn("topics", tid) == 1, fmt.Sprintf("the number of attachments in topic %d should be 1", tid))
+	expect(t, c.Attachments.CountInPath(filename) == 1, fmt.Sprintf("the number of attachments with path '%s' should be 1", filename))
+
+	var a *c.MiniAttachment
+	f := func(aid, sid, oid, uploadedBy int, path, extra, ext string) {
+		expect(t, a.ID == aid, fmt.Sprintf("ID should be %d not %d", aid, a.ID))
+		expect(t, a.SectionID == sid, fmt.Sprintf("SectionID should be %d not %d", sid, a.SectionID))
+		expect(t, a.OriginID == oid, fmt.Sprintf("OriginID should be %d not %d", oid, a.OriginID))
+		expect(t, a.UploadedBy == uploadedBy, fmt.Sprintf("UploadedBy should be %d not %d", uploadedBy, a.UploadedBy))
+		expect(t, a.Path == path, fmt.Sprintf("Path should be %s not %s", path, a.Path))
+		expect(t, a.Extra == extra, fmt.Sprintf("Extra should be %s not %s", extra, a.Extra))
+		expect(t, a.Image, "Image should be true")
+		expect(t, a.Ext == ext, fmt.Sprintf("Ext should be %s not %s", ext, a.Ext))
+	}
+
+	f2 := func(aid, oid int, extra string, topic bool) {
+		var tbl string
+		if topic {
+			tbl = "topics"
+		} else {
+			tbl = "replies"
+		}
+		a, err = c.Attachments.Get(aid)
+		expectNilErr(t, err)
+		f(aid, 2, oid, 1, filename, extra, "png")
+
+		alist, err := c.Attachments.MiniGetList(tbl, oid)
+		expectNilErr(t, err)
+		expect(t, len(alist) == 1, fmt.Sprintf("len(alist) should be 1 not %d", len(alist)))
+		a = alist[0]
+		f(aid, 2, oid, 1, filename, extra, "png")
+
+		amap, err := c.Attachments.BulkMiniGetList(tbl, []int{oid})
+		expectNilErr(t, err)
+		expect(t, len(amap) == 1, fmt.Sprintf("len(amap) should be 1 not %d", len(amap)))
+		alist, ok := amap[oid]
+		if !ok {
+			t.Logf("key %d not found in amap", oid)
+		}
+		expect(t, len(alist) == 1, fmt.Sprintf("len(alist) should be 1 not %d", len(alist)))
+		a = alist[0]
+		f(aid, 2, oid, 1, filename, extra, "png")
+	}
+
+	topic, err := c.Topics.Get(tid)
+	expectNilErr(t, err)
+	expect(t, topic.AttachCount == 1, fmt.Sprintf("topic.AttachCount should be 1 not %d", topic.AttachCount))
+	f2(aid, tid, "", true)
+
+	// TODO: Cover the other bits of creation / deletion not covered in the AttachmentStore like updating the reply / topic attachCount
+
+	// TODO: Move attachment tests
+
+	expectNilErr(t, c.Attachments.Delete(aid))
+	expect(t, c.Attachments.Count() == 0, "the number of attachments should be 0")
+	expect(t, c.Attachments.CountIn("topics", tid) == 0, fmt.Sprintf("the number of attachments in topic %d should be 0", tid))
+	expect(t, c.Attachments.CountInPath(filename) == 0, fmt.Sprintf("the number of attachments with path '%s' should be 0", filename))
+	_, err = c.Attachments.Get(aid)
+	if err != nil && err != sql.ErrNoRows {
+		t.Error(err)
+	}
+	expect(t, err == sql.ErrNoRows, ".Get should have no results")
+	_, err = c.Attachments.MiniGetList("topics", tid)
+	if err != nil && err != sql.ErrNoRows {
+		t.Error(err)
+	}
+	expect(t, err == sql.ErrNoRows, ".MiniGetList should have no results")
+	_, err = c.Attachments.BulkMiniGetList("topics", []int{tid})
+	if err != nil && err != sql.ErrNoRows {
+		t.Error(err)
+	}
+	expect(t, err == sql.ErrNoRows, ".BulkMiniGetList should have no results")
+
+	rid, err := c.Rstore.Create(topic, "Reply Filler", "", 1)
+	expectNilErr(t, err)
+	aid, err = c.Attachments.Add(2, "forums", rid, "replies", 1, filename, strconv.Itoa(topic.ID))
+	expectNilErr(t, err)
+	expectNilErr(t, c.Attachments.UpdateLinked("replies", rid))
+	r, err := c.Rstore.Get(rid)
+	expectNilErr(t, err)
+	expect(t, r.AttachCount == 1, fmt.Sprintf("r.AttachCount should be 1 not %d", r.AttachCount))
+	f2(aid, rid, strconv.Itoa(topic.ID), false)
+
+	// TODO: Delete reply attachment
+	// TODO: Path overlap tests
 }
 
 func TestProfileReplyStore(t *testing.T) {

@@ -15,7 +15,6 @@ import (
 )
 
 type ReplyStmts struct {
-	updateAttachs     *sql.Stmt
 	createReplyPaging *sql.Stmt
 }
 
@@ -25,8 +24,6 @@ var replyStmts ReplyStmts
 func init() {
 	c.DbInits.Add(func(acc *qgen.Accumulator) error {
 		replyStmts = ReplyStmts{
-			// TODO: Less race-y attachment count updates
-			updateAttachs:     acc.Update("replies").Set("attachCount=?").Where("rid=?").Prepare(),
 			createReplyPaging: acc.Select("replies").Cols("rid").Where("rid >= ? - 1 AND tid=?").Orderby("rid ASC").Prepare(),
 		}
 		return acc.FirstError()
