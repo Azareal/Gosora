@@ -69,6 +69,7 @@ func writeStatements(a qgen.Adapter) (err error) {
 }
 
 type si = map[string]interface{}
+type tK = tblKey
 
 func seedTables(a qgen.Adapter) error {
 	qgen.Install.AddIndex("topics", "parentID", "parentID")
@@ -79,6 +80,10 @@ func seedTables(a qgen.Adapter) error {
 	qgen.Install.AddIndex("attachments", "originID", "originID")
 	qgen.Install.AddIndex("attachments", "path", "path")
 	qgen.Install.AddIndex("activity_stream_matches", "watcher", "watcher")
+	// TODO: Remove these keys to save space when Elasticsearch is active?
+	qgen.Install.AddKey("topics", "title", tK{"title", "fulltext", "", false})
+	qgen.Install.AddKey("topics", "content", tK{"content", "fulltext", "", false})
+	qgen.Install.AddKey("replies", "content", tK{"content", "fulltext", "", false})
 
 	qgen.Install.SimpleInsert("sync", "last_update", "UTC_TIMESTAMP()")
 	qgen.Install.SimpleInsert("settings", "name, content, type, constraints", "'activation_type','1','list','1-3'")
