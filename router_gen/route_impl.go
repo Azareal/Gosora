@@ -93,14 +93,6 @@ func MView(fname string, path string, args ...string) *RouteImpl {
 	return route
 }
 
-func MemberView(fname string, path string, args ...string) *RouteImpl {
-	route := route(fname, path, false, false, args...)
-	if !route.hasBefore("SuperModOnly", "AdminOnly") {
-		route.Before("MemberOnly")
-	}
-	return route
-}
-
 func ModView(fname string, path string, args ...string) *RouteImpl {
 	route := route(fname, path, false, false, args...)
 	if !route.hasBefore("AdminOnly") {
