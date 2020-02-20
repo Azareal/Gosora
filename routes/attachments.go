@@ -121,7 +121,7 @@ func uploadAttachment(w http.ResponseWriter, r *http.Request, user c.User, sid i
 			pathMap[filename] = strconv.Itoa(aid)
 		}
 
-		err = c.Attachments.UpdateLinked(otable, oid)
+		err = c.Attachments.AddLinked(otable, oid)
 		if err != nil {
 			return nil, c.InternalError(err, w, r)
 		}

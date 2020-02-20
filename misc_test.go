@@ -1071,7 +1071,12 @@ func TestAttachments(t *testing.T) {
 	expect(t, c.Attachments.Count() == 0, "the number of attachments should be 0")
 	expect(t, c.Attachments.CountIn("topics", 1) == 0, "the number of attachments in topic 1 should be 0")
 	expect(t, c.Attachments.CountInPath(filename) == 0, fmt.Sprintf("the number of attachments with path '%s' should be 0", filename))
-	_, err := c.Attachments.Get(1)
+	_, err := c.Attachments.FGet(1)
+	if err != nil && err != sql.ErrNoRows {
+		t.Error(err)
+	}
+	expect(t, err == sql.ErrNoRows, ".FGet should have no results")
+	_, err = c.Attachments.Get(1)
 	if err != nil && err != sql.ErrNoRows {
 		t.Error(err)
 	}
@@ -1087,31 +1092,43 @@ func TestAttachments(t *testing.T) {
 	}
 	expect(t, err == sql.ErrNoRows, ".BulkMiniGetList should have no results")
 
-	// Sim an upload, try a proper upload through the proper pathway later on
-	_, err = os.Stat(destFile)
-	if err != nil && !os.IsNotExist(err) {
+	simUpload := func() {
+		// Sim an upload, try a proper upload through the proper pathway later on
+		_, err = os.Stat(destFile)
+		if err != nil && !os.IsNotExist(err) {
+			expectNilErr(t, err)
+		} else if err == nil {
+			err := os.Remove(destFile)
+			expectNilErr(t, err)
+		}
+
+		input, err := ioutil.ReadFile(srcFile)
 		expectNilErr(t, err)
-	} else if err == nil {
-		err := os.Remove(destFile)
+		err = ioutil.WriteFile(destFile, input, 0644)
 		expectNilErr(t, err)
 	}
-
-	input, err := ioutil.ReadFile(srcFile)
-	expectNilErr(t, err)
-	err = ioutil.WriteFile(destFile, input, 0644)
-	expectNilErr(t, err)
+	simUpload()
 
 	tid, err := c.Topics.Create(2, "Attach Test", "Fillter Body", 1, "")
 	expectNilErr(t, err)
 	aid, err := c.Attachments.Add(2, "forums", tid, "topics", 1, filename, "")
 	expectNilErr(t, err)
-	expectNilErr(t, c.Attachments.UpdateLinked("topics", tid))
+	expectNilErr(t, c.Attachments.AddLinked("topics", tid))
 	expect(t, c.Attachments.Count() == 1, "the number of attachments should be 1")
 	expect(t, c.Attachments.CountIn("topics", tid) == 1, fmt.Sprintf("the number of attachments in topic %d should be 1", tid))
 	expect(t, c.Attachments.CountInPath(filename) == 1, fmt.Sprintf("the number of attachments with path '%s' should be 1", filename))
 
-	var a *c.MiniAttachment
-	f := func(aid, sid, oid, uploadedBy int, path, extra, ext string) {
+	e := func(a *c.MiniAttachment, aid, sid, oid, uploadedBy int, path, extra, ext string) {
+		expect(t, a.ID == aid, fmt.Sprintf("ID should be %d not %d", aid, a.ID))
+		expect(t, a.SectionID == sid, fmt.Sprintf("SectionID should be %d not %d", sid, a.SectionID))
+		expect(t, a.OriginID == oid, fmt.Sprintf("OriginID should be %d not %d", oid, a.OriginID))
+		expect(t, a.UploadedBy == uploadedBy, fmt.Sprintf("UploadedBy should be %d not %d", uploadedBy, a.UploadedBy))
+		expect(t, a.Path == path, fmt.Sprintf("Path should be %s not %s", path, a.Path))
+		expect(t, a.Extra == extra, fmt.Sprintf("Extra should be %s not %s", extra, a.Extra))
+		expect(t, a.Image, "Image should be true")
+		expect(t, a.Ext == ext, fmt.Sprintf("Ext should be %s not %s", ext, a.Ext))
+	}
+	e2 := func(a *c.Attachment, aid, sid, oid, uploadedBy int, path, extra, ext string) {
 		expect(t, a.ID == aid, fmt.Sprintf("ID should be %d not %d", aid, a.ID))
 		expect(t, a.SectionID == sid, fmt.Sprintf("SectionID should be %d not %d", sid, a.SectionID))
 		expect(t, a.OriginID == oid, fmt.Sprintf("OriginID should be %d not %d", oid, a.OriginID))
@@ -1129,15 +1146,19 @@ func TestAttachments(t *testing.T) {
 		} else {
 			tbl = "replies"
 		}
-		a, err = c.Attachments.Get(aid)
+		fa, err := c.Attachments.FGet(aid)
 		expectNilErr(t, err)
-		f(aid, 2, oid, 1, filename, extra, "png")
+		e2(fa, aid, 2, oid, 1, filename, extra, "png")
+
+		a, err := c.Attachments.Get(aid)
+		expectNilErr(t, err)
+		e(a, aid, 2, oid, 1, filename, extra, "png")
 
 		alist, err := c.Attachments.MiniGetList(tbl, oid)
 		expectNilErr(t, err)
 		expect(t, len(alist) == 1, fmt.Sprintf("len(alist) should be 1 not %d", len(alist)))
 		a = alist[0]
-		f(aid, 2, oid, 1, filename, extra, "png")
+		e(a, aid, 2, oid, 1, filename, extra, "png")
 
 		amap, err := c.Attachments.BulkMiniGetList(tbl, []int{oid})
 		expectNilErr(t, err)
@@ -1148,7 +1169,7 @@ func TestAttachments(t *testing.T) {
 		}
 		expect(t, len(alist) == 1, fmt.Sprintf("len(alist) should be 1 not %d", len(alist)))
 		a = alist[0]
-		f(aid, 2, oid, 1, filename, extra, "png")
+		e(a, aid, 2, oid, 1, filename, extra, "png")
 	}
 
 	topic, err := c.Topics.Get(tid)
@@ -1156,41 +1177,61 @@ func TestAttachments(t *testing.T) {
 	expect(t, topic.AttachCount == 1, fmt.Sprintf("topic.AttachCount should be 1 not %d", topic.AttachCount))
 	f2(aid, tid, "", true)
 
-	// TODO: Cover the other bits of creation / deletion not covered in the AttachmentStore like updating the reply / topic attachCount
-
 	// TODO: Move attachment tests
 
-	expectNilErr(t, c.Attachments.Delete(aid))
-	expect(t, c.Attachments.Count() == 0, "the number of attachments should be 0")
-	expect(t, c.Attachments.CountIn("topics", tid) == 0, fmt.Sprintf("the number of attachments in topic %d should be 0", tid))
-	expect(t, c.Attachments.CountInPath(filename) == 0, fmt.Sprintf("the number of attachments with path '%s' should be 0", filename))
-	_, err = c.Attachments.Get(aid)
-	if err != nil && err != sql.ErrNoRows {
-		t.Error(err)
+	deleteTest := func(aid, oid int, topic bool) {
+		var tbl string
+		if topic {
+			tbl = "topics"
+		} else {
+			tbl = "replies"
+		}
+		//expectNilErr(t, c.Attachments.Delete(aid))
+		expectNilErr(t, c.DeleteAttachment(aid))
+		expect(t, c.Attachments.Count() == 0, "the number of attachments should be 0")
+		expect(t, c.Attachments.CountIn(tbl, oid) == 0, fmt.Sprintf("the number of attachments in topic %d should be 0", tid))
+		expect(t, c.Attachments.CountInPath(filename) == 0, fmt.Sprintf("the number of attachments with path '%s' should be 0", filename))
+		_, err = c.Attachments.FGet(aid)
+		if err != nil && err != sql.ErrNoRows {
+			t.Error(err)
+		}
+		expect(t, err == sql.ErrNoRows, ".FGet should have no results")
+		_, err = c.Attachments.Get(aid)
+		if err != nil && err != sql.ErrNoRows {
+			t.Error(err)
+		}
+		expect(t, err == sql.ErrNoRows, ".Get should have no results")
+		_, err = c.Attachments.MiniGetList(tbl, oid)
+		if err != nil && err != sql.ErrNoRows {
+			t.Error(err)
+		}
+		expect(t, err == sql.ErrNoRows, ".MiniGetList should have no results")
+		_, err = c.Attachments.BulkMiniGetList(tbl, []int{oid})
+		if err != nil && err != sql.ErrNoRows {
+			t.Error(err)
+		}
+		expect(t, err == sql.ErrNoRows, ".BulkMiniGetList should have no results")
 	}
-	expect(t, err == sql.ErrNoRows, ".Get should have no results")
-	_, err = c.Attachments.MiniGetList("topics", tid)
-	if err != nil && err != sql.ErrNoRows {
-		t.Error(err)
-	}
-	expect(t, err == sql.ErrNoRows, ".MiniGetList should have no results")
-	_, err = c.Attachments.BulkMiniGetList("topics", []int{tid})
-	if err != nil && err != sql.ErrNoRows {
-		t.Error(err)
-	}
-	expect(t, err == sql.ErrNoRows, ".BulkMiniGetList should have no results")
+	deleteTest(aid, tid, true)
+	topic, err = c.Topics.Get(tid)
+	expectNilErr(t, err)
+	expect(t, topic.AttachCount == 0, fmt.Sprintf("topic.AttachCount should be 0 not %d", topic.AttachCount))
 
+	simUpload()
 	rid, err := c.Rstore.Create(topic, "Reply Filler", "", 1)
 	expectNilErr(t, err)
 	aid, err = c.Attachments.Add(2, "forums", rid, "replies", 1, filename, strconv.Itoa(topic.ID))
 	expectNilErr(t, err)
-	expectNilErr(t, c.Attachments.UpdateLinked("replies", rid))
+	expectNilErr(t, c.Attachments.AddLinked("replies", rid))
 	r, err := c.Rstore.Get(rid)
 	expectNilErr(t, err)
 	expect(t, r.AttachCount == 1, fmt.Sprintf("r.AttachCount should be 1 not %d", r.AttachCount))
 	f2(aid, rid, strconv.Itoa(topic.ID), false)
+	deleteTest(aid, rid, false)
+	r, err = c.Rstore.Get(rid)
+	expectNilErr(t, err)
+	expect(t, r.AttachCount == 0, fmt.Sprintf("r.AttachCount should be 0 not %d", r.AttachCount))
 
-	// TODO: Delete reply attachment
 	// TODO: Path overlap tests
 }
 

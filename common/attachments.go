@@ -25,7 +25,22 @@ type MiniAttachment struct {
 	Ext   string
 }
 
+type Attachment struct {
+	ID           int
+	SectionTable string
+	SectionID    int
+	OriginTable  string
+	OriginID     int
+	UploadedBy   int
+	Path         string
+	Extra        string
+
+	Image bool
+	Ext   string
+}
+
 type AttachmentStore interface {
+	FGet(id int) (*Attachment, error)
 	Get(id int) (*MiniAttachment, error)
 	MiniGetList(originTable string, originID int) (alist []*MiniAttachment, err error)
 	BulkMiniGetList(originTable string, ids []int) (amap map[int][]*MiniAttachment, err error)
@@ -37,10 +52,12 @@ type AttachmentStore interface {
 	CountInPath(path string) int
 	Delete(id int) error
 
-	UpdateLinked(otable string, oid int) (err error)
+	AddLinked(otable string, oid int) (err error)
+	RemoveLinked(otable string, oid int) (err error)
 }
 
 type DefaultAttachmentStore struct {
+	fget        *sql.Stmt
 	get         *sql.Stmt
 	getByObj    *sql.Stmt
 	add         *sql.Stmt
@@ -58,6 +75,7 @@ type DefaultAttachmentStore struct {
 func NewDefaultAttachmentStore(acc *qgen.Accumulator) (*DefaultAttachmentStore, error) {
 	a := "attachments"
 	return &DefaultAttachmentStore{
+		fget:        acc.Select(a).Columns("originTable, originID, sectionTable, sectionID, uploadedBy, path, extra").Where("attachID=?").Prepare(),
 		get:         acc.Select(a).Columns("originID, sectionID, uploadedBy, path, extra").Where("attachID=?").Prepare(),
 		getByObj:    acc.Select(a).Columns("attachID, sectionID, uploadedBy, path, extra").Where("originTable=? AND originID=?").Prepare(),
 		add:         acc.Insert(a).Columns("sectionID, sectionTable, originID, originTable, uploadedBy, path, extra").Fields("?,?,?,?,?,?,?").Prepare(),
@@ -145,6 +163,21 @@ func (s *DefaultAttachmentStore) BulkMiniGetList(originTable string, ids []int) 
 	return amap, rows.Err()
 }
 
+func (s *DefaultAttachmentStore) FGet(id int) (*Attachment, error) {
+	a := &Attachment{ID: id}
+	err := s.fget.QueryRow(id).Scan(&a.OriginTable, &a.OriginID, &a.SectionTable, &a.SectionID, &a.UploadedBy, &a.Path, &a.Extra)
+	if err != nil {
+		return nil, err
+	}
+	extarr := strings.Split(a.Path, ".")
+	if len(extarr) < 2 {
+		return nil, errors.New("corrupt attachment path")
+	}
+	a.Ext = extarr[len(extarr)-1]
+	a.Image = ImageFileExts.Contains(a.Ext)
+	return a, nil
+}
+
 func (s *DefaultAttachmentStore) Get(id int) (*MiniAttachment, error) {
 	a := &MiniAttachment{ID: id}
 	err := s.get.QueryRow(id).Scan(&a.OriginID, &a.SectionID, &a.UploadedBy, &a.Path, &a.Extra)
@@ -209,7 +242,7 @@ func (s *DefaultAttachmentStore) Delete(id int) error {
 }
 
 // TODO: Split this out of this store
-func (s *DefaultAttachmentStore) UpdateLinked(otable string, oid int) (err error) {
+func (s *DefaultAttachmentStore) AddLinked(otable string, oid int) (err error) {
 	switch otable {
 	case "topics":
 		_, err = s.topicUpdateAttachs.Exec(s.CountIn(otable, oid), oid)
@@ -219,6 +252,37 @@ func (s *DefaultAttachmentStore) UpdateLinked(otable string, oid int) (err error
 		err = Topics.Reload(oid)
 	case "replies":
 		_, err = s.replyUpdateAttachs.Exec(s.CountIn(otable, oid), oid)
+		if err != nil {
+			return err
+		}
+		err = Rstore.GetCache().Remove(oid)
+	}
+	if err == sql.ErrNoRows {
+		err = nil
+	}
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// TODO: Split this out of this store
+func (s *DefaultAttachmentStore) RemoveLinked(otable string, oid int) (err error) {
+	switch otable {
+	case "topics":
+		_, err = s.topicUpdateAttachs.Exec(s.CountIn(otable, oid), oid)
+		if err != nil {
+			return err
+		}
+		if tc := Topics.GetCache(); tc != nil {
+			tc.Remove(oid)
+		}
+	case "replies":
+		_, err = s.replyUpdateAttachs.Exec(s.CountIn(otable, oid), oid)
+		if err != nil {
+			return err
+		}
+		err = Rstore.GetCache().Remove(oid)
 	}
 	if err != nil {
 		return err
@@ -228,26 +292,31 @@ func (s *DefaultAttachmentStore) UpdateLinked(otable string, oid int) (err error
 
 // TODO: Add a table for the files and lock the file row when performing tasks related to the file
 func DeleteAttachment(aid int) error {
-	attach, err := Attachments.Get(aid)
+	a, err := Attachments.FGet(aid)
 	if err != nil {
-		//fmt.Println("o1")
 		return err
 	}
-	err = Attachments.Delete(aid)
+	err = deleteAttachment(a)
 	if err != nil {
-		//fmt.Println("o2")
+		return err
+	}
+	_ = Attachments.RemoveLinked(a.OriginTable, a.OriginID)
+	return nil
+}
+
+func deleteAttachment(a *Attachment) error {
+	err := Attachments.Delete(a.ID)
+	if err != nil {
 		return err
 	}
 
-	count := Attachments.CountInPath(attach.Path)
+	count := Attachments.CountInPath(a.Path)
 	if count == 0 {
-		err := os.Remove("./attachs/" + attach.Path)
+		err := os.Remove("./attachs/" + a.Path)
 		if err != nil {
-			//fmt.Println("o3")
 			return err
 		}
 	}
-	//fmt.Println("o4")
 
 	return nil
 }

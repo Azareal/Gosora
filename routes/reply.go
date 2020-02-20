@@ -383,7 +383,6 @@ func AddAttachToReplySubmit(w http.ResponseWriter, r *http.Request, user c.User,
 	if len(pathMap) == 0 {
 		return c.InternalErrorJS(errors.New("no paths for attachment add"), w, r)
 	}
-	_ = c.Rstore.GetCache().Remove(reply.ID)
 
 	skip, rerr := lite.Hooks.VhookSkippable("action_end_add_attach_to_reply", reply.ID, &user)
 	if skip || rerr != nil {
@@ -447,7 +446,6 @@ func RemoveAttachFromReplySubmit(w http.ResponseWriter, r *http.Request, user c.
 			return rerr
 		}
 	}
-	_ = c.Rstore.GetCache().Remove(reply.ID)
 
 	skip, rerr := lite.Hooks.VhookSkippable("action_end_remove_attach_from_reply", reply.ID, &user)
 	if skip || rerr != nil {

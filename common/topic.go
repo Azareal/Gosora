@@ -216,7 +216,7 @@ func init() {
 	DbInits.Add(func(acc *qgen.Accumulator) error {
 		t := "topics"
 		topicStmts = TopicStmts{
-			getRids:             acc.Select("replies").Columns("rid").Where("tid = ?").Orderby("rid ASC").Limit("?,?").Prepare(),
+			getRids:             acc.Select("replies").Columns("rid").Where("tid=?").Orderby("rid ASC").Limit("?,?").Prepare(),
 			getReplies:          acc.SimpleLeftJoin("replies AS r", "users AS u", "r.rid, r.content, r.createdBy, r.createdAt, r.lastEdit, r.lastEditBy, u.avatar, u.name, u.group, u.level, r.ip, r.likeCount, r.attachCount, r.actionType", "r.createdBy = u.uid", "r.tid = ?", "r.rid ASC", "?,?"),
 			addReplies:          acc.Update(t).Set("postCount=postCount+?, lastReplyBy=?, lastReplyAt=UTC_TIMESTAMP()").Where("tid=?").Prepare(),
 			updateLastReply:     acc.Update(t).Set("lastReplyID=?").Where("lastReplyID > ? AND tid = ?").Prepare(),
@@ -390,7 +390,11 @@ func handleAttachments(stmt *sql.Stmt, id int) error {
 		if err != nil {
 			return err
 		}
-		err = DeleteAttachment(aid)
+		a, err := Attachments.FGet(aid)
+		if err != nil {
+			return err
+		}
+		err = deleteAttachment(a)
 		if err != nil && err != sql.ErrNoRows {
 			return err
 		}
