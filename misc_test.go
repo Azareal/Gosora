@@ -1269,6 +1269,7 @@ func TestPolls(t *testing.T) {
 	pid, err := c.Polls.Create(topic, pollType, map[int]string{0: "item 1", 1: "item 2", 2: "item 3"})
 	expectNilErr(t, err)
 	expect(t, pid == 1, fmt.Sprintf("poll id should be 1 not %d", pid))
+	expect(t, c.Polls.Exists(1), "poll 1 should exist")
 	p, err := c.Polls.Get(1)
 	expectNilErr(t, err)
 	expect(t, p.ID == 1, fmt.Sprintf("p.ID should be 1 not %d", p.ID))
@@ -1279,7 +1280,22 @@ func TestPolls(t *testing.T) {
 	// TODO: More fields
 	expect(t, p.VoteCount == 0, fmt.Sprintf("p.VoteCount should be 0 not %d", p.VoteCount))
 
-	// TODO: More tests
+	expectNilErr(t, p.CastVote(0, 1, ""))
+	expectNilErr(t, c.Polls.Reload(p.ID))
+	p, err = c.Polls.Get(1)
+	expectNilErr(t, err)
+	expect(t, p.ID == 1, fmt.Sprintf("p.ID should be 1 not %d", p.ID))
+	expect(t, p.ParentID == tid, fmt.Sprintf("p.ParentID should be %d not %d", tid, p.ParentID))
+	expect(t, p.ParentTable == "topics", fmt.Sprintf("p.ParentID should be %s not %s", "topics", p.ParentTable))
+	expect(t, p.Type == 0, fmt.Sprintf("p.ParentID should be 0 not %d", p.Type))
+	expect(t, !p.AntiCheat, "p.AntiCheat should be false")
+	// TODO: More fields
+	expect(t, p.VoteCount == 1, fmt.Sprintf("p.VoteCount should be 1 not %d", p.VoteCount))
+
+	expectNilErr(t, p.Delete())
+	expect(t, !c.Polls.Exists(1), "poll 1 should no longer exist")
+	_, err = c.Polls.Get(1)
+	recordMustNotExist(t, err, "poll 1 should no longer exist")
 }
 
 func TestProfileReplyStore(t *testing.T) {

@@ -207,11 +207,11 @@ func (s *DefaultPollStore) unpackOptionsMap(rawOptions map[int]string) []PollOpt
 
 // TODO: Use a transaction for this
 func (s *DefaultPollStore) Create(parent Pollable, pollType int, pollOptions map[int]string) (id int, err error) {
+	// TODO: Move the option names into the polls_options table and get rid of this json sludge?
 	pollOptionsTxt, err := json.Marshal(pollOptions)
 	if err != nil {
 		return 0, err
 	}
-
 	res, err := s.createPoll.Exec(parent.GetID(), parent.GetTable(), pollType, pollOptionsTxt)
 	if err != nil {
 		return 0, err

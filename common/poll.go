@@ -50,6 +50,7 @@ func (p *Poll) Delete() error {
 		return err
 	}
 	_, err = pollStmts.deletePoll.Exec(p.ID)
+	_ = Polls.GetCache().Remove(p.ID)
 	return err
 }
 
