@@ -53,43 +53,43 @@ func (a *PgsqlAdapter) DropTable(name, table string) (string, error) {
 
 // TODO: Implement this
 // We may need to change the CreateTable API to better suit PGSQL and the other database drivers which are coming up
-func (a *PgsqlAdapter) CreateTable(name, table, charset, collation string, columns []DBTableColumn, keys []DBTableKey) (string, error) {
+func (a *PgsqlAdapter) CreateTable(name, table, charset, collation string, cols []DBTableColumn, keys []DBTableKey) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
-	if len(columns) == 0 {
+	if len(cols) == 0 {
 		return "", errors.New("You can't have a table with no columns")
 	}
 
 	q := "CREATE TABLE \"" + table + "\" ("
-	for _, column := range columns {
-		if column.AutoIncrement {
-			column.Type = "serial"
-		} else if column.Type == "createdAt" {
-			column.Type = "timestamp"
-		} else if column.Type == "datetime" {
-			column.Type = "timestamp"
+	for _, col := range cols {
+		if col.AutoIncrement {
+			col.Type = "serial"
+		} else if col.Type == "createdAt" {
+			col.Type = "timestamp"
+		} else if col.Type == "datetime" {
+			col.Type = "timestamp"
 		}
 
 		var size string
-		if column.Size > 0 {
-			size = " (" + strconv.Itoa(column.Size) + ")"
+		if col.Size > 0 {
+			size = " (" + strconv.Itoa(col.Size) + ")"
 		}
 
 		var end string
-		if column.Default != "" {
+		if col.Default != "" {
 			end = " DEFAULT "
-			if a.stringyType(column.Type) && column.Default != "''" {
-				end += "'" + column.Default + "'"
+			if a.stringyType(col.Type) && col.Default != "''" {
+				end += "'" + col.Default + "'"
 			} else {
-				end += column.Default
+				end += col.Default
 			}
 		}
-		if !column.Null {
+		if !col.Null {
 			end += " not null"
 		}
 
-		q += "\n\t`" + column.Name + "` " + column.Type + size + end + ","
+		q += "\n\t`" + col.Name + "` " + col.Type + size + end + ","
 	}
 
 	if len(keys) > 0 {
@@ -165,6 +165,18 @@ func (a *PgsqlAdapter) AddKey(name, table, column string, key DBTableKey) (strin
 	}
 	if column == "" {
 		return "", errors.New("You need a name for the column")
+	}
+	return "", errors.New("not implemented")
+}
+
+// TODO: Implement this
+// TODO: Test to make sure everything works here
+func (a *PgsqlAdapter) RemoveIndex(name, table, iname string) (string, error) {
+	if table == "" {
+		return "", errors.New("You need a name for this table")
+	}
+	if iname == "" {
+		return "", errors.New("You need a name for the index")
 	}
 	return "", errors.New("not implemented")
 }

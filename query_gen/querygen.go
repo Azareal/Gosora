@@ -141,6 +141,7 @@ type Adapter interface {
 	SetDefaultColumn(name, table, colName, colType, defaultStr string) (string, error)
 	AddIndex(name, table, iname, colname string) (string, error)
 	AddKey(name, table, column string, key DBTableKey) (string, error)
+	RemoveIndex(name, table, column string) (string, error)
 	AddForeignKey(name, table, column, ftable, fcolumn string, cascade bool) (out string, e error)
 	SimpleInsert(name, table, columns, fields string) (string, error)
 	SimpleUpdate(b *updatePrebuilder) (string, error)

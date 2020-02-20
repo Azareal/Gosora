@@ -283,6 +283,20 @@ func (a *MysqlAdapter) AddKey(name, table, column string, key DBTableKey) (strin
 	return q, nil
 }
 
+func (a *MysqlAdapter) RemoveIndex(name, table, iname string) (string, error) {
+	if table == "" {
+		return "", errors.New("You need a name for this table")
+	}
+	if iname == "" {
+		return "", errors.New("You need a name for the index")
+	}
+	q := "ALTER TABLE `" + table + "` DROP INDEX `" + iname + "`"
+
+	// TODO: Shunt the table name logic and associated stmt list up to the a higher layer to reduce the amount of unnecessary overhead in the builder / accumulator
+	a.pushStatement(name, "remove-index", q)
+	return q, nil
+}
+
 func (a *MysqlAdapter) AddForeignKey(name, table, column, ftable, fcolumn string, cascade bool) (out string, e error) {
 	c := func(str string, val bool) {
 		if e != nil || !val {
@@ -587,9 +601,12 @@ func (a *MysqlAdapter) buildFlexiWhere(where string, dateCutoff *dateCutoff) (q 
 	}
 	q = " WHERE"
 	if dateCutoff != nil {
-		if dateCutoff.Type == 0 {
+		switch dateCutoff.Type {
+		case 0:
 			q += " " + dateCutoff.Column + " BETWEEN (UTC_TIMESTAMP() - interval " + strconv.Itoa(dateCutoff.Quantity) + " " + dateCutoff.Unit + ") AND UTC_TIMESTAMP() AND"
-		} else {
+		case 11:
+			q += " " + dateCutoff.Column + " < UTC_TIMESTAMP() - interval ? " + dateCutoff.Unit + " AND"
+		default:
 			q += " " + dateCutoff.Column + " < UTC_TIMESTAMP() - interval " + strconv.Itoa(dateCutoff.Quantity) + " " + dateCutoff.Unit + " AND"
 		}
 	}

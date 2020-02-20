@@ -188,7 +188,7 @@ func (a *MssqlAdapter) AddIndex(name, table, iname, colname string) (string, err
 
 // TODO: Implement this
 // TODO: Test to make sure everything works here
-func (a *MssqlAdapter) AddKey(name string, table string, column string, key DBTableKey) (string, error) {
+func (a *MssqlAdapter) AddKey(name, table, column string, key DBTableKey) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
@@ -200,7 +200,19 @@ func (a *MssqlAdapter) AddKey(name string, table string, column string, key DBTa
 
 // TODO: Implement this
 // TODO: Test to make sure everything works here
-func (a *MssqlAdapter) AddForeignKey(name string, table string, column string, ftable string, fcolumn string, cascade bool) (out string, e error) {
+func (a *MssqlAdapter) RemoveIndex(name, table, iname string) (string, error) {
+	if table == "" {
+		return "", errors.New("You need a name for this table")
+	}
+	if iname == "" {
+		return "", errors.New("You need a name for the index")
+	}
+	return "", errors.New("not implemented")
+}
+
+// TODO: Implement this
+// TODO: Test to make sure everything works here
+func (a *MssqlAdapter) AddForeignKey(name, table, column, ftable, fcolumn string, cascade bool) (out string, e error) {
 	c := func(str string, val bool) {
 		if e != nil || !val {
 			return

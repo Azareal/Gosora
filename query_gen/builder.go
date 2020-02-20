@@ -136,6 +136,10 @@ func (b *builder) AddKey(table, column string, key DBTableKey) (stmt *sql.Stmt, 
 	return b.prepare(b.adapter.AddKey("", table, column, key))
 }
 
+func (b *builder) RemoveIndex(table, iname string) (stmt *sql.Stmt, err error) {
+	return b.prepare(b.adapter.RemoveIndex("", table, iname))
+}
+
 func (b *builder) AddForeignKey(table, column, ftable, fcolumn string, cascade bool) (stmt *sql.Stmt, err error) {
 	return b.prepare(b.adapter.AddForeignKey("", table, column, ftable, fcolumn, cascade))
 }
