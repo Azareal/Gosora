@@ -1057,7 +1057,6 @@ func testReplyStore(t *testing.T, newID, newPostCount int, ip string) {
 	// TODO: Add tests for ReplyCache
 }
 
-// TODO: Implement this
 func TestAttachments(t *testing.T) {
 	miscinit(t)
 	if !c.PluginsInited {
@@ -1109,10 +1108,11 @@ func TestAttachments(t *testing.T) {
 	}
 	simUpload()
 
-	tid, err := c.Topics.Create(2, "Attach Test", "Fillter Body", 1, "")
+	tid, err := c.Topics.Create(2, "Attach Test", "Filler Body", 1, "")
 	expectNilErr(t, err)
 	aid, err := c.Attachments.Add(2, "forums", tid, "topics", 1, filename, "")
 	expectNilErr(t, err)
+	expect(t, aid == 1, fmt.Sprintf("aid should be 1 not %d", aid))
 	expectNilErr(t, c.Attachments.AddLinked("topics", tid))
 	expect(t, c.Attachments.Count() == 1, "the number of attachments should be 1")
 	expect(t, c.Attachments.CountIn("topics", tid) == 1, fmt.Sprintf("the number of attachments in topic %d should be 1", tid))
@@ -1222,6 +1222,7 @@ func TestAttachments(t *testing.T) {
 	expectNilErr(t, err)
 	aid, err = c.Attachments.Add(2, "forums", rid, "replies", 1, filename, strconv.Itoa(topic.ID))
 	expectNilErr(t, err)
+	expect(t, aid == 2, fmt.Sprintf("aid should be 2 not %d", aid))
 	expectNilErr(t, c.Attachments.AddLinked("replies", rid))
 	r, err := c.Rstore.Get(rid)
 	expectNilErr(t, err)
@@ -1233,6 +1234,46 @@ func TestAttachments(t *testing.T) {
 	expect(t, r.AttachCount == 0, fmt.Sprintf("r.AttachCount should be 0 not %d", r.AttachCount))
 
 	// TODO: Path overlap tests
+}
+
+func TestPolls(t *testing.T) {
+	miscinit(t)
+	if !c.PluginsInited {
+		c.InitPlugins()
+	}
+
+	expect(t, !c.Polls.Exists(-1), "poll -1 should not exist")
+	expect(t, !c.Polls.Exists(0), "poll 0 should not exist")
+	expect(t, !c.Polls.Exists(1), "poll 1 should not exist")
+	_, err := c.Polls.Get(-1)
+	recordMustNotExist(t, err, "poll -1 shouldn't exist")
+	_, err = c.Polls.Get(0)
+	recordMustNotExist(t, err, "poll 0 shouldn't exist")
+	_, err = c.Polls.Get(1)
+	recordMustNotExist(t, err, "poll 1 shouldn't exist")
+
+	tid, err := c.Topics.Create(2, "Poll Test", "Filler Body", 1, "")
+	expectNilErr(t, err)
+	topic, err := c.Topics.Get(tid)
+	/*Options      map[int]string
+		Results      map[int]int  // map[optionIndex]points
+		QuickOptions []PollOption // TODO: Fix up the template transpiler so we don't need to use this hack anymore
+	}*/
+	pollType := 0 // Basic single choice
+	pid, err := c.Polls.Create(topic, pollType, map[int]string{0: "item 1", 1: "item 2", 2: "item 3"})
+	expectNilErr(t, err)
+	expect(t, pid == 1, fmt.Sprintf("poll id should be 1 not %d", pid))
+	p, err := c.Polls.Get(1)
+	expectNilErr(t, err)
+	expect(t, p.ID == 1, fmt.Sprintf("p.ID should be 1 not %d", p.ID))
+	expect(t, p.ParentID == tid, fmt.Sprintf("p.ParentID should be %d not %d", tid, p.ParentID))
+	expect(t, p.ParentTable == "topics", fmt.Sprintf("p.ParentID should be %s not %s", "topics", p.ParentTable))
+	expect(t, p.Type == 0, fmt.Sprintf("p.ParentID should be 0 not %d", p.Type))
+	expect(t, !p.AntiCheat, "p.AntiCheat should be false")
+	// TODO: More fields
+	expect(t, p.VoteCount == 0, fmt.Sprintf("p.VoteCount should be 0 not %d", p.VoteCount))
+
+	// TODO: More tests
 }
 
 func TestProfileReplyStore(t *testing.T) {
