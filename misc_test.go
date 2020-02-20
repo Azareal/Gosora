@@ -1139,7 +1139,7 @@ func TestAttachments(t *testing.T) {
 		expect(t, a.Ext == ext, fmt.Sprintf("Ext should be %s not %s", ext, a.Ext))
 	}
 
-	f2 := func(aid, oid int, extra string, topic bool) {
+	f2 := func(aid, sid, oid int, extra string, topic bool) {
 		var tbl string
 		if topic {
 			tbl = "topics"
@@ -1148,17 +1148,17 @@ func TestAttachments(t *testing.T) {
 		}
 		fa, err := c.Attachments.FGet(aid)
 		expectNilErr(t, err)
-		e2(fa, aid, 2, oid, 1, filename, extra, "png")
+		e2(fa, aid, sid, oid, 1, filename, extra, "png")
 
 		a, err := c.Attachments.Get(aid)
 		expectNilErr(t, err)
-		e(a, aid, 2, oid, 1, filename, extra, "png")
+		e(a, aid, sid, oid, 1, filename, extra, "png")
 
 		alist, err := c.Attachments.MiniGetList(tbl, oid)
 		expectNilErr(t, err)
 		expect(t, len(alist) == 1, fmt.Sprintf("len(alist) should be 1 not %d", len(alist)))
 		a = alist[0]
-		e(a, aid, 2, oid, 1, filename, extra, "png")
+		e(a, aid, sid, oid, 1, filename, extra, "png")
 
 		amap, err := c.Attachments.BulkMiniGetList(tbl, []int{oid})
 		expectNilErr(t, err)
@@ -1169,15 +1169,19 @@ func TestAttachments(t *testing.T) {
 		}
 		expect(t, len(alist) == 1, fmt.Sprintf("len(alist) should be 1 not %d", len(alist)))
 		a = alist[0]
-		e(a, aid, 2, oid, 1, filename, extra, "png")
+		e(a, aid, sid, oid, 1, filename, extra, "png")
 	}
 
 	topic, err := c.Topics.Get(tid)
 	expectNilErr(t, err)
 	expect(t, topic.AttachCount == 1, fmt.Sprintf("topic.AttachCount should be 1 not %d", topic.AttachCount))
-	f2(aid, tid, "", true)
+	f2(aid, 2, tid, "", true)
+	expectNilErr(t, topic.MoveTo(1))
+	f2(aid, 1, tid, "", true)
+	expectNilErr(t, c.Attachments.MoveTo(2, tid, "topics"))
+	f2(aid, 2, tid, "", true)
 
-	// TODO: Move attachment tests
+	// TODO: ShowAttachment test
 
 	deleteTest := func(aid, oid int, topic bool) {
 		var tbl string
@@ -1227,7 +1231,9 @@ func TestAttachments(t *testing.T) {
 	r, err := c.Rstore.Get(rid)
 	expectNilErr(t, err)
 	expect(t, r.AttachCount == 1, fmt.Sprintf("r.AttachCount should be 1 not %d", r.AttachCount))
-	f2(aid, rid, strconv.Itoa(topic.ID), false)
+	f2(aid, 2, rid, strconv.Itoa(topic.ID), false)
+	expectNilErr(t, c.Attachments.MoveTo(1, rid, "replies"))
+	f2(aid, 1, rid, strconv.Itoa(topic.ID), false)
 	deleteTest(aid, rid, false)
 	r, err = c.Rstore.Get(rid)
 	expectNilErr(t, err)
