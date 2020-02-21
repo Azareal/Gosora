@@ -48,6 +48,7 @@ func init() {
 	addPatch(28, patch28)
 	addPatch(29, patch29)
 	addPatch(30, patch30)
+	addPatch(31, patch31)
 }
 
 func patch0(scanner *bufio.Scanner) (err error) {
@@ -528,7 +529,7 @@ func patch13(scanner *bufio.Scanner) error {
 }
 
 func patch14(scanner *bufio.Scanner) error {
-	err := execStmt(qgen.Builder.AddKey("topics", "title", tK{"title", "fulltext", "", false}))
+	/*err := execStmt(qgen.Builder.AddKey("topics", "title", tK{"title", "fulltext", "", false}))
 	if err != nil {
 		return err
 	}
@@ -539,7 +540,7 @@ func patch14(scanner *bufio.Scanner) error {
 	err = execStmt(qgen.Builder.AddKey("replies", "content", tK{"content", "fulltext", "", false}))
 	if err != nil {
 		return err
-	}
+	}*/
 
 	return nil
 }
@@ -862,4 +863,32 @@ func patch30(scanner *bufio.Scanner) error {
 		return err
 	}
 	return execStmt(qgen.Builder.SetDefaultColumn("users", "last_ip", "varchar", ""))
+}
+
+func patch31(scanner *bufio.Scanner) error {
+	err := execStmt(qgen.Builder.RemoveIndex("topics", "title"))
+	if err != nil {
+		return err
+	}
+	err = execStmt(qgen.Builder.RemoveIndex("topics", "content"))
+	if err != nil {
+		return err
+	}
+	err = execStmt(qgen.Builder.RemoveIndex("replies", "content"))
+	if err != nil {
+		return err
+	}
+	err = execStmt(qgen.Builder.AddKey("topics", "title", tK{"title", "fulltext", "", false}))
+	if err != nil {
+		return err
+	}
+	err = execStmt(qgen.Builder.AddKey("topics", "content", tK{"content", "fulltext", "", false}))
+	if err != nil {
+		return err
+	}
+	err = execStmt(qgen.Builder.AddKey("replies", "content", tK{"content", "fulltext", "", false}))
+	if err != nil {
+		return err
+	}
+	return nil
 }

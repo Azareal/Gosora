@@ -1298,6 +1298,40 @@ func TestPolls(t *testing.T) {
 	recordMustNotExist(t, err, "poll 1 should no longer exist")
 }
 
+func TestSearch(t *testing.T) {
+	miscinit(t)
+	if !c.PluginsInited {
+		c.InitPlugins()
+	}
+
+	title := "search"
+	body := "bab bab bab bab"
+	q := "search"
+	tid, err := c.Topics.Create(2, title, body, 1, "")
+	expectNilErr(t, err)
+
+	tids, err := c.RepliesSearch.Query(q, []int{2})
+	fmt.Printf("tids: %+v\n", tids)
+	expectNilErr(t, err)
+	expect(t, len(tids) == 1, fmt.Sprintf("len(tids) should be 1 not %d", len(tids)))
+
+	topic, err := c.Topics.Get(tids[0])
+	expectNilErr(t, err)
+	expect(t, topic.ID == tid, fmt.Sprintf("topic.ID should be %d not %d", tid, topic.ID))
+	expect(t, topic.Title == title, fmt.Sprintf("topic.Title should be %s not %s", title, topic.Title))
+
+	tids, err = c.RepliesSearch.Query(q, []int{1,2})
+	fmt.Printf("tids: %+v\n", tids)
+	expectNilErr(t, err)
+	expect(t, len(tids) == 1, fmt.Sprintf("len(tids) should be 1 not %d", len(tids)))
+
+	q = "bab"
+	tids, err = c.RepliesSearch.Query(q, []int{1,2})
+	fmt.Printf("tids: %+v\n", tids)
+	expectNilErr(t, err)
+	expect(t, len(tids) == 1, fmt.Sprintf("len(tids) should be 1 not %d", len(tids)))
+}
+
 func TestProfileReplyStore(t *testing.T) {
 	miscinit(t)
 	if !c.PluginsInited {

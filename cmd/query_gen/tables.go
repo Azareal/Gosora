@@ -287,6 +287,7 @@ func createTables(adapter qgen.Adapter) (err error) {
 		},
 		[]tblKey{
 			tblKey{"tid", "primary", "", false},
+			tblKey{"title", "fulltext", "", false},
 			tblKey{"content", "fulltext", "", false},
 		},
 	)
