@@ -21,5 +21,6 @@ CREATE TABLE "topics" (
 	`poll` int DEFAULT 0 not null,
 	`data` varchar (200) DEFAULT '' not null,
 	primary key(`tid`),
+	fulltext key(`title`),
 	fulltext key(`content`)
 );

@@ -1,6 +1,6 @@
 <div class="colstack_item colstack_head">
 	<div class="rowitem">
-		<h1>{{.Route}}{{lang "panel_statistics_views_head_suffix"}}</h1>
+		<h1>{{.Route}}{{lang "panel_stats_views_head_suffix"}}</h1>
 		{{template "panel_analytics_time_range.html" . }}
 	</div>
 </div>
@@ -9,13 +9,13 @@
 	<div class="ct_chart"></div>
 </div>
 <div class="colstack_item colstack_head">
-	<div class="rowitem"><a>{{lang "panel_statistics_details_head"}}</a></div>
+	<div class="rowitem"><a>{{lang "panel_stats_details_head"}}</a></div>
 </div>
-<div id="panel_analytics_views_table" class="colstack_item rowlist" aria-label="{{lang "panel_statistics_route_views_table_aria"}}">
+<div id="panel_analytics_views_table" class="colstack_item rowlist" aria-label="{{lang "panel_stats_route_views_table_aria"}}">
 	{{range .ViewItems}}
 	<div class="rowitem panel_compactrow editable_parent">
 		<a class="panel_upshift unix_to_24_hour_time">{{.Time}}</a>
-		<span class="panel_compacttext to_right">{{.Count}}{{lang "panel_statistics_views_suffix"}}</span>
+		<span class="panel_compacttext to_right">{{.Count}}{{lang "panel_stats_views_suffix"}}</span>
 	</div>
 	{{end}}
 </div>

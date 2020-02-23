@@ -6,7 +6,7 @@ import (
 	"sync/atomic"
 
 	c "github.com/Azareal/Gosora/common"
-	"github.com/Azareal/Gosora/query_gen"
+	qgen "github.com/Azareal/Gosora/query_gen"
 	"github.com/pkg/errors"
 )
 
@@ -35,7 +35,7 @@ func NewDefaultReferrerTracker() (*DefaultReferrerTracker, error) {
 	refTracker := &DefaultReferrerTracker{
 		odd:    make(map[string]*ReferrerItem),
 		even:   make(map[string]*ReferrerItem),
-		insert: acc.Insert("viewchunks_referrers").Columns("count, createdAt, domain").Fields("?,UTC_TIMESTAMP(),?").Prepare(), // TODO: Do something more efficient than doing a query for each referrer
+		insert: acc.Insert("viewchunks_referrers").Columns("count,createdAt,domain").Fields("?,UTC_TIMESTAMP(),?").Prepare(), // TODO: Do something more efficient than doing a query for each referrer
 	}
 	c.AddScheduledFifteenMinuteTask(refTracker.Tick)
 	//c.AddScheduledSecondTask(refTracker.Tick)
@@ -51,7 +51,7 @@ func (ref *DefaultReferrerTracker) Tick() (err error) {
 		if count != 0 {
 			err := ref.insertChunk(referrer, count) // TODO: Bulk insert for speed?
 			if err != nil {
-				return errors.Wrap(errors.WithStack(err),"ref counter")
+				return errors.Wrap(errors.WithStack(err), "ref counter")
 			}
 		}
 		delete(referrersToDelete, referrer)
@@ -69,16 +69,16 @@ func (ref *DefaultReferrerTracker) Tick() (err error) {
 			count := atomic.SwapInt64(&counter.Count, 0)
 			err := ref.insertChunk(referrer, count) // TODO: Bulk insert for speed?
 			if err != nil {
-				return errors.Wrap(errors.WithStack(err),"ref counter")
+				return errors.Wrap(errors.WithStack(err), "ref counter")
 			}
 		}
 		return nil
 	}
-	err = refLoop(&ref.oddLock,ref.odd)
+	err = refLoop(&ref.oddLock, ref.odd)
 	if err != nil {
 		return err
 	}
-	return refLoop(&ref.evenLock,ref.even)
+	return refLoop(&ref.evenLock, ref.even)
 }
 
 func (ref *DefaultReferrerTracker) insertChunk(referrer string, count int64) error {

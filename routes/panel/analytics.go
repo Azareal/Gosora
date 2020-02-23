@@ -11,7 +11,7 @@ import (
 
 	c "github.com/Azareal/Gosora/common"
 	p "github.com/Azareal/Gosora/common/phrases"
-	"github.com/Azareal/Gosora/query_gen"
+	qgen "github.com/Azareal/Gosora/query_gen"
 )
 
 // TODO: Move this to another file, probably common/pages.go
@@ -25,11 +25,11 @@ type AnalyticsTimeRange struct {
 
 func analyticsTimeRange(rawTimeRange string) (*AnalyticsTimeRange, error) {
 	tRange := &AnalyticsTimeRange{
-		Quantity: 6,
-		Unit: "hour",
-		Slices: 12,
+		Quantity:   6,
+		Unit:       "hour",
+		Slices:     12,
 		SliceWidth: 60 * 30,
-		Range: "six-hours",
+		Range:      "six-hours",
 	}
 
 	switch rawTimeRange {
@@ -198,6 +198,50 @@ func analyticsRowsToAverageMap2(rows *sql.Rows, labelList []int64, avgMap map[in
 	return avgMap, rows.Err()
 }
 
+func analyticsRowsToAverageMap3(rows *sql.Rows, labelList []int64, avgMap map[int64]int64, typ int) (map[int64]int64, error) {
+	defer rows.Close()
+	for rows.Next() {
+		var low, high, avg int64
+		var createdAt time.Time
+		err := rows.Scan(&low, &high, &avg, &createdAt)
+		if err != nil {
+			return avgMap, err
+		}
+		unixCreatedAt := createdAt.Unix()
+		// TODO: Bulk log this
+		if c.Dev.SuperDebug {
+			log.Print("low: ", low)
+			log.Print("high: ", high)
+			log.Print("avg: ", avg)
+			log.Print("createdAt: ", createdAt)
+			log.Print("unixCreatedAt: ", unixCreatedAt)
+		}
+		var dat int64
+		switch typ {
+		case 0:
+			dat = low
+		case 1:
+			dat = high
+		default:
+			dat = avg
+		}
+		pAvgMap := make(map[int64]pAvg)
+		for _, value := range labelList {
+			if unixCreatedAt > value {
+				prev := pAvgMap[value]
+				prev.Avg += dat
+				prev.Tot++
+				pAvgMap[value] = prev
+				break
+			}
+		}
+		for key, pAvg := range pAvgMap {
+			avgMap[key] = pAvg.Avg / pAvg.Tot
+		}
+	}
+	return avgMap, rows.Err()
+}
+
 func PreAnalyticsDetail(w http.ResponseWriter, r *http.Request, user *c.User) (*c.BasePanelPage, c.RouteError) {
 	bp, ferr := buildBasePage(w, r, user, "analytics", "analytics")
 	if ferr != nil {
@@ -223,7 +267,7 @@ func AnalyticsViews(w http.ResponseWriter, r *http.Request, user c.User) c.Route
 
 	c.DebugLog("in panel.AnalyticsViews")
 	// TODO: Add some sort of analytics store / iterator?
-	rows, err := qgen.NewAcc().Select("viewchunks").Columns("count, createdAt").Where("route = ''").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
+	rows, err := qgen.NewAcc().Select("viewchunks").Columns("count,createdAt").Where("route=''").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
 	if err != nil && err != sql.ErrNoRows {
 		return c.InternalError(err, w, r)
 	}
@@ -232,13 +276,13 @@ func AnalyticsViews(w http.ResponseWriter, r *http.Request, user c.User) c.Route
 		return c.InternalError(err, w, r)
 	}
 
-	viewList := make([]int64,len(revLabelList))
-	viewItems := make([]c.PanelAnalyticsItem,len(revLabelList))
+	viewList := make([]int64, len(revLabelList))
+	viewItems := make([]c.PanelAnalyticsItem, len(revLabelList))
 	for i, value := range revLabelList {
 		viewList[i] = viewMap[value]
 		viewItems[i] = c.PanelAnalyticsItem{Time: value, Count: viewMap[value]}
 	}
-	
+
 	graph := c.PanelTimeGraph{Series: [][]int64{viewList}, Labels: labelList}
 	c.DebugLogf("graph: %+v\n", graph)
 	var ttime string
@@ -263,7 +307,7 @@ func AnalyticsRouteViews(w http.ResponseWriter, r *http.Request, user c.User, ro
 
 	c.DebugLog("in panel.AnalyticsRouteViews")
 	// TODO: Validate the route is valid
-	rows, err := qgen.NewAcc().Select("viewchunks").Columns("count, createdAt").Where("route = ?").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query(route)
+	rows, err := qgen.NewAcc().Select("viewchunks").Columns("count,createdAt").Where("route=?").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query(route)
 	if err != nil && err != sql.ErrNoRows {
 		return c.InternalError(err, w, r)
 	}
@@ -300,7 +344,7 @@ func AnalyticsAgentViews(w http.ResponseWriter, r *http.Request, user c.User, ag
 
 	c.DebugLog("in panel.AnalyticsAgentViews")
 	// TODO: Verify the agent is valid
-	rows, err := qgen.NewAcc().Select("viewchunks_agents").Columns("count, createdAt").Where("browser = ?").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query(agent)
+	rows, err := qgen.NewAcc().Select("viewchunks_agents").Columns("count,createdAt").Where("browser=?").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query(agent)
 	if err != nil && err != sql.ErrNoRows {
 		return c.InternalError(err, w, r)
 	}
@@ -343,7 +387,7 @@ func AnalyticsForumViews(w http.ResponseWriter, r *http.Request, user c.User, sf
 
 	c.DebugLog("in panel.AnalyticsForumViews")
 	// TODO: Verify the agent is valid
-	rows, err := qgen.NewAcc().Select("viewchunks_forums").Columns("count, createdAt").Where("forum = ?").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query(fid)
+	rows, err := qgen.NewAcc().Select("viewchunks_forums").Columns("count,createdAt").Where("forum=?").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query(fid)
 	if err != nil && err != sql.ErrNoRows {
 		return c.InternalError(err, w, r)
 	}
@@ -382,7 +426,7 @@ func AnalyticsSystemViews(w http.ResponseWriter, r *http.Request, user c.User, s
 
 	c.DebugLog("in panel.AnalyticsSystemViews")
 	// TODO: Verify the OS name is valid
-	rows, err := qgen.NewAcc().Select("viewchunks_systems").Columns("count, createdAt").Where("system = ?").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query(system)
+	rows, err := qgen.NewAcc().Select("viewchunks_systems").Columns("count,createdAt").Where("system=?").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query(system)
 	if err != nil && err != sql.ErrNoRows {
 		return c.InternalError(err, w, r)
 	}
@@ -421,7 +465,7 @@ func AnalyticsLanguageViews(w http.ResponseWriter, r *http.Request, user c.User,
 
 	c.DebugLog("in panel.AnalyticsLanguageViews")
 	// TODO: Verify the language code is valid
-	rows, err := qgen.NewAcc().Select("viewchunks_langs").Columns("count, createdAt").Where("lang = ?").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query(lang)
+	rows, err := qgen.NewAcc().Select("viewchunks_langs").Columns("count,createdAt").Where("lang=?").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query(lang)
 	if err != nil && err != sql.ErrNoRows {
 		return c.InternalError(err, w, r)
 	}
@@ -460,7 +504,7 @@ func AnalyticsReferrerViews(w http.ResponseWriter, r *http.Request, user c.User,
 
 	c.DebugLog("in panel.AnalyticsReferrerViews")
 	// TODO: Verify the agent is valid
-	rows, err := qgen.NewAcc().Select("viewchunks_referrers").Columns("count, createdAt").Where("domain = ?").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query(domain)
+	rows, err := qgen.NewAcc().Select("viewchunks_referrers").Columns("count,createdAt").Where("domain=?").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query(domain)
 	if err != nil && err != sql.ErrNoRows {
 		return c.InternalError(err, w, r)
 	}
@@ -491,7 +535,7 @@ func AnalyticsTopics(w http.ResponseWriter, r *http.Request, user c.User) c.Rout
 	revLabelList, labelList, viewMap := analyticsTimeRangeToLabelList(timeRange)
 
 	c.DebugLog("in panel.AnalyticsTopics")
-	rows, err := qgen.NewAcc().Select("topicchunks").Columns("count, createdAt").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
+	rows, err := qgen.NewAcc().Select("topicchunks").Columns("count,createdAt").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
 	if err != nil && err != sql.ErrNoRows {
 		return c.InternalError(err, w, r)
 	}
@@ -524,7 +568,7 @@ func AnalyticsPosts(w http.ResponseWriter, r *http.Request, user c.User) c.Route
 	revLabelList, labelList, viewMap := analyticsTimeRangeToLabelList(timeRange)
 
 	c.DebugLog("in panel.AnalyticsPosts")
-	rows, err := qgen.NewAcc().Select("postchunks").Columns("count, createdAt").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
+	rows, err := qgen.NewAcc().Select("postchunks").Columns("count,createdAt").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
 	if err != nil && err != sql.ErrNoRows {
 		return c.InternalError(err, w, r)
 	}
@@ -557,7 +601,7 @@ func AnalyticsMemory(w http.ResponseWriter, r *http.Request, user c.User) c.Rout
 	revLabelList, labelList, avgMap := analyticsTimeRangeToLabelList(timeRange)
 
 	c.DebugLog("in panel.AnalyticsMemory")
-	rows, err := qgen.NewAcc().Select("memchunks").Columns("count, createdAt").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
+	rows, err := qgen.NewAcc().Select("memchunks").Columns("count,createdAt").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
 	if err != nil && err != sql.ErrNoRows {
 		return c.InternalError(err, w, r)
 	}
@@ -593,7 +637,7 @@ func AnalyticsActiveMemory(w http.ResponseWriter, r *http.Request, user c.User) 
 	revLabelList, labelList, avgMap := analyticsTimeRangeToLabelList(timeRange)
 
 	c.DebugLog("in panel.AnalyticsActiveMemory")
-	rows, err := qgen.NewAcc().Select("memchunks").Columns("stack, heap, createdAt").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
+	rows, err := qgen.NewAcc().Select("memchunks").Columns("stack,heap,createdAt").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
 	if err != nil && err != sql.ErrNoRows {
 		return c.InternalError(err, w, r)
 	}
@@ -624,6 +668,51 @@ func AnalyticsActiveMemory(w http.ResponseWriter, r *http.Request, user c.User) 
 	c.DebugLogf("graph: %+v\n", graph)
 	pi := c.PanelAnalyticsActiveMemory{graph, avgItems, timeRange.Range, timeRange.Unit, "time", typ}
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_analytics_right", "analytics", "panel_analytics_active_memory", pi})
+}
+
+func AnalyticsPerf(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
+	basePage, ferr := PreAnalyticsDetail(w, r, &user)
+	if ferr != nil {
+		return ferr
+	}
+	timeRange, err := analyticsTimeRange(r.FormValue("timeRange"))
+	if err != nil {
+		return c.LocalError(err.Error(), w, r, user)
+	}
+	revLabelList, labelList, avgMap := analyticsTimeRangeToLabelList(timeRange)
+
+	c.DebugLog("in panel.AnalyticsPerf")
+	rows, err := qgen.NewAcc().Select("perfchunks").Columns("low,high,avg,createdAt").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
+	if err != nil && err != sql.ErrNoRows {
+		return c.InternalError(err, w, r)
+	}
+
+	var typ int
+	switch r.FormValue("type") {
+	case "0":
+		typ = 0
+	case "1":
+		typ = 1
+	default:
+		typ = 2
+	}
+	avgMap, err = analyticsRowsToAverageMap3(rows, labelList, avgMap, typ)
+	if err != nil {
+		return c.InternalError(err, w, r)
+	}
+
+	// TODO: Adjust for the missing chunks in week and month
+	var avgList []int64
+	var avgItems []c.PanelAnalyticsItemUnit
+	for _, value := range revLabelList {
+		avgList = append(avgList, avgMap[value])
+		cv, cu := c.ConvertByteUnit(float64(avgMap[value]))
+		avgItems = append(avgItems, c.PanelAnalyticsItemUnit{Time: value, Unit: cu, Count: int64(cv)})
+	}
+	graph := c.PanelTimeGraph{Series: [][]int64{avgList}, Labels: labelList}
+	c.DebugLogf("graph: %+v\n", graph)
+	pi := c.PanelAnalyticsPerf{graph, avgItems, timeRange.Range, timeRange.Unit, "time", typ}
+	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_analytics_right", "analytics", "panel_analytics_performance", pi})
 }
 
 func analyticsRowsToRefMap(rows *sql.Rows) (map[string]int, error) {
@@ -736,7 +825,7 @@ func AnalyticsForums(w http.ResponseWriter, r *http.Request, user c.User) c.Rout
 	}
 	revLabelList, labelList, viewMap := analyticsTimeRangeToLabelList(timeRange)
 
-	rows, err := qgen.NewAcc().Select("viewchunks_forums").Columns("count, forum, createdAt").Where("forum != ''").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
+	rows, err := qgen.NewAcc().Select("viewchunks_forums").Columns("count,forum,createdAt").Where("forum!=''").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
 	if err != nil && err != sql.ErrNoRows {
 		return c.InternalError(err, w, r)
 	}
@@ -820,7 +909,7 @@ func AnalyticsRoutes(w http.ResponseWriter, r *http.Request, user c.User) c.Rout
 	}
 	revLabelList, labelList, viewMap := analyticsTimeRangeToLabelList(timeRange)
 
-	rows, err := qgen.NewAcc().Select("viewchunks").Columns("count, route, createdAt").Where("route != ''").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
+	rows, err := qgen.NewAcc().Select("viewchunks").Columns("count,route,createdAt").Where("route!=''").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
 	if err != nil && err != sql.ErrNoRows {
 		return c.InternalError(err, w, r)
 	}
@@ -892,7 +981,7 @@ func AnalyticsAgents(w http.ResponseWriter, r *http.Request, user c.User) c.Rout
 	}
 	revLabelList, labelList, viewMap := analyticsTimeRangeToLabelList(timeRange)
 
-	rows, err := qgen.NewAcc().Select("viewchunks_agents").Columns("count, browser, createdAt").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
+	rows, err := qgen.NewAcc().Select("viewchunks_agents").Columns("count,browser,createdAt").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
 	if err != nil && err != sql.ErrNoRows {
 		return c.InternalError(err, w, r)
 	}
@@ -978,7 +1067,7 @@ func AnalyticsSystems(w http.ResponseWriter, r *http.Request, user c.User) c.Rou
 	}
 	revLabelList, labelList, viewMap := analyticsTimeRangeToLabelList(timeRange)
 
-	rows, err := qgen.NewAcc().Select("viewchunks_systems").Columns("count, system, createdAt").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
+	rows, err := qgen.NewAcc().Select("viewchunks_systems").Columns("count,system,createdAt").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
 	if err != nil && err != sql.ErrNoRows {
 		return c.InternalError(err, w, r)
 	}
@@ -1042,7 +1131,7 @@ func AnalyticsLanguages(w http.ResponseWriter, r *http.Request, user c.User) c.R
 	}
 	revLabelList, labelList, viewMap := analyticsTimeRangeToLabelList(timeRange)
 
-	rows, err := qgen.NewAcc().Select("viewchunks_langs").Columns("count, lang, createdAt").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
+	rows, err := qgen.NewAcc().Select("viewchunks_langs").Columns("count,lang,createdAt").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
 	if err != nil && err != sql.ErrNoRows {
 		return c.InternalError(err, w, r)
 	}
@@ -1125,7 +1214,7 @@ func AnalyticsReferrers(w http.ResponseWriter, r *http.Request, user c.User) c.R
 		return c.LocalError(err.Error(), w, r, user)
 	}
 
-	rows, err := qgen.NewAcc().Select("viewchunks_referrers").Columns("count, domain").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
+	rows, err := qgen.NewAcc().Select("viewchunks_referrers").Columns("count,domain").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
 	if err != nil && err != sql.ErrNoRows {
 		return c.InternalError(err, w, r)
 	}

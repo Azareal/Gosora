@@ -5,7 +5,7 @@ import (
 	"sync/atomic"
 
 	c "github.com/Azareal/Gosora/common"
-	"github.com/Azareal/Gosora/query_gen"
+	qgen "github.com/Azareal/Gosora/query_gen"
 	"github.com/pkg/errors"
 )
 
@@ -22,7 +22,7 @@ func NewPostCounter() (*DefaultPostCounter, error) {
 	acc := qgen.NewAcc()
 	co := &DefaultPostCounter{
 		currentBucket: 0,
-		insert:        acc.Insert("postchunks").Columns("count, createdAt").Fields("?,UTC_TIMESTAMP()").Prepare(),
+		insert:        acc.Insert("postchunks").Columns("count,createdAt").Fields("?,UTC_TIMESTAMP()").Prepare(),
 	}
 	c.AddScheduledFifteenMinuteTask(co.Tick)
 	//c.AddScheduledSecondTask(co.Tick)
@@ -44,7 +44,7 @@ func (co *DefaultPostCounter) Tick() (err error) {
 	atomic.AddInt64(&co.buckets[oldBucket], -previousViewChunk)
 	err = co.insertChunk(previousViewChunk)
 	if err != nil {
-		return errors.Wrap(errors.WithStack(err),"post counter")
+		return errors.Wrap(errors.WithStack(err), "post counter")
 	}
 	return nil
 }

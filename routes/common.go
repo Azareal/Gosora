@@ -8,6 +8,7 @@ import (
 	"time"
 
 	c "github.com/Azareal/Gosora/common"
+	co "github.com/Azareal/Gosora/common/counters"
 )
 
 var successJSONBytes = []byte(`{"success":1}`)
@@ -89,7 +90,7 @@ func renderTemplate(tmplName string, w http.ResponseWriter, r *http.Request, hea
 	return renderTemplate2(tmplName, tmplName, w, r, header, pi)
 }
 
-func renderTemplate2(tmplName string, hookName string, w http.ResponseWriter, r *http.Request, header *c.Header, pi interface{}) c.RouteError {
+func renderTemplate2(tmplName, hookName string, w http.ResponseWriter, r *http.Request, header *c.Header, pi interface{}) c.RouteError {
 	err := renderTemplate3(tmplName, tmplName, w, r, header, pi)
 	if err != nil {
 		return c.InternalError(err, w, r)
@@ -114,7 +115,7 @@ func FootHeaders(w http.ResponseWriter, header *c.Header) {
 	}
 }
 
-func renderTemplate3(tmplName string, hookName string, w http.ResponseWriter, r *http.Request, h *c.Header, pi interface{}) error {
+func renderTemplate3(tmplName, hookName string, w http.ResponseWriter, r *http.Request, h *c.Header, pi interface{}) error {
 	s := h.Stylesheets
 	h.Stylesheets = nil
 	c.PrepResources(&h.CurrentUser, h, h.Theme)
@@ -134,9 +135,11 @@ func renderTemplate3(tmplName string, hookName string, w http.ResponseWriter, r 
 	}
 
 	FootHeaders(w, h)
-	if h.CurrentUser.IsAdmin {
-		h.Elapsed1 = time.Since(h.StartedAt).String()
-	}
+	since := time.Since(h.StartedAt)
+	//if h.CurrentUser.IsAdmin {
+	h.Elapsed1 = since.String()
+	//}
+	co.PerfCounter.Push(since)
 	if c.RunPreRenderHook("pre_render_"+hookName, w, r, &h.CurrentUser, pi) {
 		return nil
 	}

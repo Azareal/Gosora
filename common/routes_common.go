@@ -113,25 +113,25 @@ func panelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (header 
 	}
 	// TODO: We should probably initialise header.ExtData
 	// ? - Should we only show this in debug mode? It might be useful for detecting issues in production, if we show it there as-well
-	if user.IsAdmin {
+	//if user.IsAdmin {
 		header.StartedAt = time.Now()
-	}
+	//}
 
 	header.AddSheet(theme.Name + "/main.css")
 	header.AddSheet(theme.Name + "/panel.css")
 	if len(theme.Resources) > 0 {
 		rlist := theme.Resources
-		for _, resource := range rlist {
-			if resource.Location == "global" || resource.Location == "panel" {
-				extarr := strings.Split(resource.Name, ".")
+		for _, res := range rlist {
+			if res.Location == "global" || res.Location == "panel" {
+				extarr := strings.Split(res.Name, ".")
 				ext := extarr[len(extarr)-1]
 				if ext == "css" {
-					header.AddSheet(resource.Name)
+					header.AddSheet(res.Name)
 				} else if ext == "js" {
-					if resource.Async {
-						header.AddScriptAsync(resource.Name)
+					if res.Async {
+						header.AddScriptAsync(res.Name)
 					} else {
-						header.AddScript(resource.Name)
+						header.AddScript(res.Name)
 					}
 				}
 			}
@@ -224,9 +224,9 @@ func userCheck(w http.ResponseWriter, r *http.Request, user *User) (header *Head
 
 	// An optimisation so we don't populate StartedAt for users who shouldn't see the stat anyway
 	// ? - Should we only show this in debug mode? It might be useful for detecting issues in production, if we show it there as-well
-	if user.IsAdmin {
+	//if user.IsAdmin {
 		header.StartedAt = time.Now()
-	}
+	//}
 
 	//PrepResources(user,header,theme)
 	return header, nil
@@ -237,20 +237,20 @@ func PrepResources(user *User, h *Header, theme *Theme) {
 
 	if len(theme.Resources) > 0 {
 		rlist := theme.Resources
-		for _, resource := range rlist {
-			if resource.Loggedin && !user.Loggedin {
+		for _, res := range rlist {
+			if res.Loggedin && !user.Loggedin {
 				continue
 			}
-			if resource.Location == "global" || resource.Location == "frontend" {
-				extarr := strings.Split(resource.Name, ".")
+			if res.Location == "global" || res.Location == "frontend" {
+				extarr := strings.Split(res.Name, ".")
 				ext := extarr[len(extarr)-1]
 				if ext == "css" {
-					h.AddSheet(resource.Name)
+					h.AddSheet(res.Name)
 				} else if ext == "js" {
-					if resource.Async {
-						h.AddScriptAsync(resource.Name)
+					if res.Async {
+						h.AddScriptAsync(res.Name)
 					} else {
-						h.AddScript(resource.Name)
+						h.AddScript(res.Name)
 					}
 				}
 			}

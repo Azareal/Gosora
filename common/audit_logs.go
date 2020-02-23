@@ -35,10 +35,12 @@ type SQLModLogStore struct {
 
 func NewModLogStore(acc *qgen.Accumulator) (*SQLModLogStore, error) {
 	ml := "moderation_logs"
+	// TODO: Shorten name of ipaddress column to ip
+	cols := "action, elementID, elementType, ipaddress, actorID, doneAt, extra"
 	return &SQLModLogStore{
-		create:    acc.Insert(ml).Columns("action, elementID, elementType, ipaddress, actorID, doneAt, extra").Fields("?,?,?,?,?,UTC_TIMESTAMP(),?").Prepare(),
+		create:    acc.Insert(ml).Columns(cols).Fields("?,?,?,?,?,UTC_TIMESTAMP(),?").Prepare(),
 		count:     acc.Count(ml).Prepare(),
-		getOffset: acc.Select(ml).Columns("action, elementID, elementType, ipaddress, actorID, doneAt, extra").Orderby("doneAt DESC").Limit("?,?").Prepare(),
+		getOffset: acc.Select(ml).Columns(cols).Orderby("doneAt DESC").Limit("?,?").Prepare(),
 	}, acc.FirstError()
 }
 
@@ -91,10 +93,11 @@ type SQLAdminLogStore struct {
 
 func NewAdminLogStore(acc *qgen.Accumulator) (*SQLAdminLogStore, error) {
 	al := "administration_logs"
+	cols := "action, elementID, elementType, ipaddress, actorID, doneAt, extra"
 	return &SQLAdminLogStore{
-		create:    acc.Insert(al).Columns("action, elementID, elementType, ipaddress, actorID, doneAt, extra").Fields("?,?,?,?,?,UTC_TIMESTAMP(),?").Prepare(),
+		create:    acc.Insert(al).Columns(cols).Fields("?,?,?,?,?,UTC_TIMESTAMP(),?").Prepare(),
 		count:     acc.Count(al).Prepare(),
-		getOffset: acc.Select(al).Columns("action, elementID, elementType, ipaddress, actorID, doneAt, extra").Orderby("doneAt DESC").Limit("?,?").Prepare(),
+		getOffset: acc.Select(al).Columns(cols).Orderby("doneAt DESC").Limit("?,?").Prepare(),
 	}, acc.FirstError()
 }
 

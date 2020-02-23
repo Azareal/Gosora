@@ -49,6 +49,7 @@ func init() {
 	addPatch(29, patch29)
 	addPatch(30, patch30)
 	addPatch(31, patch31)
+	addPatch(32, patch32)
 }
 
 func patch0(scanner *bufio.Scanner) (err error) {
@@ -891,4 +892,16 @@ func patch31(scanner *bufio.Scanner) error {
 		return err
 	}
 	return nil
+}
+
+
+func patch32(scanner *bufio.Scanner) error {
+	return execStmt(qgen.Builder.CreateTable("perfchunks", "", "",
+	[]tC{
+		tC{"low", "int", 0, false, false, "0"},
+		tC{"high", "int", 0, false, false, "0"},
+		tC{"avg", "int", 0, false, false, "0"},
+		tC{"createdAt", "datetime", 0, false, false, ""},
+	}, nil,
+))
 }

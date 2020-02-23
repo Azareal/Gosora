@@ -1,0 +1,30 @@
+<div class="colstack_item colstack_head">
+	<div class="rowitem">
+		<h1>{{lang "panel_stats_perf_head"}}</h1>
+		<select form="timeRangeForm" class="typeSelector to_right autoSubmitRedirect" name="type">
+			<option value="0"{{if eq .PerfType 0}} selected{{end}}>{{lang "panel_stats_perf_low"}}</option>
+			<option value="1"{{if eq .PerfType 1}} selected{{end}}>{{lang "panel_stats_perf_high"}}</option>
+			<option value="2"{{if eq .PerfType 2}} selected{{end}}>{{lang "panel_stats_perf_avg"}}</option>
+		</select>
+		<noscript><input form="timeRangeForm" type="submit" /></noscript>
+		{{template "panel_analytics_time_range_month.html" . }}
+	</div>
+</div>
+<form id="timeRangeForm" name="timeRangeForm" action="/panel/analytics/perf/" method="get"></form>
+<div id="panel_analytics_memory" class="colstack_graph_holder">
+	<div class="ct_chart" aria-label="{{lang "panel_stats_perf_chart_aria"}}"></div>
+</div>
+<div class="colstack_item colstack_head">
+	<div class="rowitem">
+		<h1>{{lang "panel_stats_details_head"}}</h1>
+	</div>
+</div>
+<div id="panel_analytics_perf_table" class="colstack_item rowlist" aria-label="{{lang "panel_stats_perf_table_aria"}}">
+	{{range .ViewItems}}
+	<div class="rowitem panel_compactrow editable_parent">
+		<a class="panel_upshift unix_to_{{if or (or (or (eq $.TimeRange "six-hours") (eq $.TimeRange "twelve-hours")) (eq $.TimeRange "one-day")) (eq $.TimeRange "two-days")}}24_hour_time{{else}}date{{end}}">{{.Time}}</a>
+		<span class="panel_compacttext to_right">{{.Count}}{{.Unit}}</span>
+	</div>
+	{{else}}<div class="rowitem passive rowmsg">{{lang "panel_stats_perf_no_perf"}}</div>{{end}}
+</div>
+{{template "panel_analytics_script_perf.html" . }}

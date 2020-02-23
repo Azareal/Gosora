@@ -38,6 +38,8 @@ func Debug(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	// TODO: Fetch the adapter from Builder rather than getting it from a global?
 	goroutines := runtime.NumGoroutine()
 	cpus := runtime.NumCPU()
+
+	debugTasks := c.DebugPageTasks{c.ScheduledHalfSecondTaskCount(),c.ScheduledSecondTaskCount(),c.ScheduledFifteenMinuteTaskCount(),c.ScheduledHourTaskCount(),c.ShutdownTaskCount()}
 	var memStats runtime.MemStats
 	runtime.ReadMemStats(&memStats)
 
@@ -113,10 +115,11 @@ func Debug(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	if fErr != nil {
 		return c.InternalError(fErr,w,r)
 	}
-	gitSize, _ := c.DirSize("./.git")
+	//gitSize, _ := c.DirSize("./.git")
+	gitSize := 0
 
 	debugDisk := c.DebugPageDisk{staticSize,attachSize,uploadsSize,logsSize,backupsSize,gitSize}
 
-	pi := c.PanelDebugPage{basePage, goVersion, dbVersion, uptime, openConnCount, qgen.Builder.GetAdapter().GetName(), goroutines, cpus, memStats, debugCache, debugDatabase, debugDisk}
+	pi := c.PanelDebugPage{basePage, goVersion, dbVersion, uptime, openConnCount, qgen.Builder.GetAdapter().GetName(), goroutines, cpus,debugTasks, memStats, debugCache, debugDatabase, debugDisk}
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_dashboard_right", "debug_page", "panel_debug", pi})
 }

@@ -23,7 +23,7 @@ type DefaultViewCounter struct {
 func NewGlobalViewCounter(acc *qgen.Accumulator) (*DefaultViewCounter, error) {
 	co := &DefaultViewCounter{
 		currentBucket: 0,
-		insert:        acc.Insert("viewchunks").Columns("count,  createdAt, route").Fields("?,UTC_TIMESTAMP(),''").Prepare(),
+		insert:        acc.Insert("viewchunks").Columns("count,createdAt,route").Fields("?,UTC_TIMESTAMP(),''").Prepare(),
 	}
 	c.AddScheduledFifteenMinuteTask(co.Tick) // This is run once every fifteen minutes to match the frequency of the RouteViewCounter
 	//c.AddScheduledSecondTask(co.Tick)
@@ -31,6 +31,7 @@ func NewGlobalViewCounter(acc *qgen.Accumulator) (*DefaultViewCounter, error) {
 	return co, acc.FirstError()
 }
 
+// TODO: Simplify the atomics used here
 func (co *DefaultViewCounter) Tick() (err error) {
 	oldBucket := co.currentBucket
 	var nextBucket int64 // 0

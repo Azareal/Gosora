@@ -372,10 +372,11 @@ func compileTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName string
 	dbVersion := qgen.Builder.DbVersion()
 	var memStats runtime.MemStats
 	runtime.ReadMemStats(&memStats)
+	debugTasks := DebugPageTasks{0,0,0,0,0}
 	debugCache := DebugPageCache{1, 1, 1, 2, 2, 2, true}
 	debugDatabase := DebugPageDatabase{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
 	debugDisk := DebugPageDisk{1, 1, 1, 1, 1, 1}
-	dpage := PanelDebugPage{basePage, goVersion, dbVersion, "0s", 1, qgen.Builder.GetAdapter().GetName(), 1, 1, memStats, debugCache, debugDatabase, debugDisk}
+	dpage := PanelDebugPage{basePage, goVersion, dbVersion, "0s", 1, qgen.Builder.GetAdapter().GetName(), 1, 1, debugTasks, memStats, debugCache, debugDatabase, debugDisk}
 	t.AddStd("panel_debug", "c.PanelDebugPage", dpage)
 	//t.AddStd("panel_analytics", "c.PanelAnalytics", Panel{basePage, "panel_dashboard_right","panel_dashboard", inter})
 

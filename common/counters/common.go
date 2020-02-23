@@ -40,3 +40,13 @@ type RWMutexCounterBucket struct {
 	counter int
 	sync.RWMutex
 }
+
+type MutexCounterBucket struct {
+	counter int
+	sync.Mutex
+}
+
+type MutexCounter64Bucket struct {
+	counter int64
+	sync.Mutex
+}

@@ -733,6 +733,15 @@ func createTables(adapter qgen.Adapter) (err error) {
 		}, nil,
 	)
 
+	createTable("perfchunks", "", "",
+		[]tC{
+			tC{"low", "int", 0, false, false, "0"},
+			tC{"high", "int", 0, false, false, "0"},
+			tC{"avg", "int", 0, false, false, "0"},
+			tC{"createdAt", "datetime", 0, false, false, ""},
+		}, nil,
+	)
+
 	createTable("sync", "", "",
 		[]tC{
 			tC{"last_update", "datetime", 0, false, false, ""},

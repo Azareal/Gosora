@@ -38,6 +38,46 @@ function memStuff(window, document, Chartist) {
   };
 }
 
+function perfStuff(window, document, Chartist) {
+	'use strict';
+
+	Chartist.plugins = Chartist.plugins || {};
+	Chartist.plugins.perfUnits = function(options) {
+	options = Chartist.extend({}, {}, options);
+
+    return function perfUnits(chart) {
+    	if(!chart instanceof Chartist.Line) return;
+			
+		chart.on('created', function() {
+			console.log("running created")
+			const vbits = document.getElementsByClassName("ct-vertical");
+			if(vbits==null) return;
+
+			let tbits = [];
+			for(let i = 0; i < vbits.length; i++) {
+				tbits[i] = vbits[i].innerHTML;
+			}
+			console.log("tbits:",tbits);
+			
+			const calc = (places) => {
+				if(places==3) return;
+			
+				const matcher = vbits[0].innerHTML;
+				let allMatch = true;
+       			for(let i = 0; i < tbits.length; i++) {
+					let val = convertPerfUnit(tbits[i], places);
+					if(val!=matcher) allMatch = false;
+					vbits[i].innerHTML = val;
+				}
+					
+				if(allMatch) calc(places + 1);
+			}
+			calc(0);
+       });
+    };
+  };
+}
+
 const Kilobyte = 1024;
 const Megabyte = Kilobyte * 1024;
 const Gigabyte = Megabyte * 1024;
@@ -60,9 +100,30 @@ function convertByteUnit(bytes, places = 0) {
 	}
 }
 
+let ms = 1000;
+let sec = ms * 1000;
+let min = sec * 60;
+let hour = min * 60;
+let day = hour * 24;
+function convertPerfUnit(quan, places = 0) {
+	let out;
+	if(quan >= day) out = [quan / day, "d"];
+	else if(quan >= hour) out = [quan / hour, "h"];
+	else if(quan >= min) out = [quan / min, "m"];
+	else if(quan >= sec) out = [quan / sec, "s"];
+	else if(quan >= ms) out = [quan / ms, "ms"];
+	else out = [quan,"μs"];
+
+	if(places==0) return Math.ceil(out[0]) + out[1];
+	else {
+		let ex = Math.pow(10, places);
+		return (Math.round(out[0], ex) / ex) + out[1];
+	}
+}
+
 // TODO: Fully localise this
 // TODO: Load rawLabels and seriesData dynamically rather than potentially fiddling with nonces for the CSP?
-function buildStatsChart(rawLabels, seriesData, timeRange, legendNames, bytes = false) {
+function buildStatsChart(rawLabels, seriesData, timeRange, legendNames, typ=0) {
 	console.log("buildStatsChart");
 	console.log("seriesData:",seriesData);
 	let labels = [];
@@ -122,7 +183,8 @@ function buildStatsChart(rawLabels, seriesData, timeRange, legendNames, bytes = 
 	if(legendNames.length > 0) config.plugins = [
 		Chartist.plugins.legend({legendNames: legendNames})
 		];
-	if(bytes) config.plugins.push(Chartist.plugins.byteUnits());
+	if(typ==1) config.plugins.push(Chartist.plugins.byteUnits());
+	else if(typ==2) config.plugins.push(Chartist.plugins.perfUnits());
 	Chartist.Line('.ct_chart', {
 		labels: labels,
 		series: seriesData,

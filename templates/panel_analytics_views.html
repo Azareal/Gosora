@@ -1,23 +1,23 @@
 <div class="colstack_item colstack_head">
 	<div class="rowitem">
-		<h1>{{lang "panel_statistics_requests_head"}}</h1>
+		<h1>{{lang "panel_stats_requests_head"}}</h1>
 		{{template "panel_analytics_time_range.html" . }}
 	</div>
 </div>
 <form id="timeRangeForm" name="timeRangeForm" action="/panel/analytics/views/" method="get"></form>
 <div id="panel_analytics_views" class="colstack_graph_holder">
-	<div class="ct_chart" aria-label="{{lang "panel_statistics_requests_chart_aria"}}"></div>
+	<div class="ct_chart" aria-label="{{lang "panel_stats_requests_chart_aria"}}"></div>
 </div>
 <div class="colstack_item colstack_head">
 	<div class="rowitem">
-		<h1>{{lang "panel_statistics_details_head"}}</h1>
+		<h1>{{lang "panel_stats_details_head"}}</h1>
 	</div>
 </div>
-<div id="panel_analytics_views_table" class="colstack_item rowlist" aria-label="{{lang "panel_statistics_requests_table_aria"}}">
+<div id="panel_analytics_views_table" class="colstack_item rowlist" aria-label="{{lang "panel_stats_requests_table_aria"}}">
 	{{range .ViewItems}}
 	<div class="rowitem panel_compactrow editable_parent">
-		<a class="panel_upshift unix_{{if or (or (or (eq $.TimeRange "six-hours") (eq $.TimeRange "twelve-hours")) (eq $.TimeRange "one-day")) (eq $.TimeRange "two-days")}}to_24_hour_time{{else}}to_date{{end}}">{{.Time}}</a>
-		<span class="panel_compacttext to_right">{{.Count}}{{lang "panel_statistics_views_suffix"}}</span>
+		<a class="panel_upshift unix_to_{{if or (or (or (eq $.TimeRange "six-hours") (eq $.TimeRange "twelve-hours")) (eq $.TimeRange "one-day")) (eq $.TimeRange "two-days")}}24_hour_time{{else}}date{{end}}">{{.Time}}</a>
+		<span class="panel_compacttext to_right">{{.Count}}{{lang "panel_stats_views_suffix"}}</span>
 	</div>
 	{{end}}
 </div>

@@ -24,6 +24,22 @@
 	{{template "panel_debug_stat.html" .CPUs}}
 	{{template "panel_debug_stat_q.html"}}
 </div>
+{{template "panel_debug_subhead.html" "panel_debug_tasks"}}
+<div id="panel_debug" class="colstack_grid">
+	{{template "panel_debug_stat_head.html" "panel_debug_tasks_half_second"}}
+	{{template "panel_debug_stat_head.html" "panel_debug_tasks_second"}}
+	{{template "panel_debug_stat_head.html" "panel_debug_tasks_fifteen_minute"}}
+	{{template "panel_debug_stat.html" .Tasks.HalfSecond}}
+	{{template "panel_debug_stat.html" .Tasks.Second}}
+	{{template "panel_debug_stat.html" .Tasks.FifteenMinute}}
+	
+	{{template "panel_debug_stat_head.html" "panel_debug_tasks_hour"}}
+	{{template "panel_debug_stat_head.html" "panel_debug_tasks_shutdown"}}
+	{{template "panel_debug_stat_head_q.html"}}
+	{{template "panel_debug_stat.html" .Tasks.Hour}}
+	{{template "panel_debug_stat.html" .Tasks.Shutdown}}
+	{{template "panel_debug_stat_q.html"}}
+</div>
 {{template "panel_debug_subhead.html" "panel_debug_memory_stats"}}
 <div id="panel_debug" class="colstack_grid">
 	{{template "panel_debug_stat_head.html" "panel_debug_memory_stats_sys"}}

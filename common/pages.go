@@ -354,6 +354,14 @@ type PanelAnalyticsActiveMemory struct {
 	TimeType  string
 	MemType   int
 }
+type PanelAnalyticsPerf struct {
+	Graph PanelTimeGraph
+	ViewItems []PanelAnalyticsItemUnit
+	TimeRange string
+	Unit string
+	TimeType string
+	PerfType int
+}
 
 type PanelStats struct {
 	Users       int
@@ -654,6 +662,14 @@ type PanelRegLogsPage struct {
 	Paginator
 }
 
+type DebugPageTasks struct {
+	HalfSecond int
+	Second int
+	FifteenMinute int
+	Hour int
+	Shutdown int
+}
+
 type DebugPageCache struct {
 	Topics  int
 	Users   int
@@ -711,8 +727,9 @@ type PanelDebugPage struct {
 
 	Goroutines int
 	CPUs       int
-	MemStats   runtime.MemStats
 
+	Tasks DebugPageTasks
+	MemStats   runtime.MemStats
 	Cache    DebugPageCache
 	Database DebugPageDatabase
 	Disk     DebugPageDisk

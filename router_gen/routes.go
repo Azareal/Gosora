@@ -258,6 +258,7 @@ func panelRoutes() *RouteGroup {
 		View("panel.AnalyticsActiveMemory", "/panel/analytics/active-memory/").Before("ParseForm"),
 		View("panel.AnalyticsTopics", "/panel/analytics/topics/").Before("ParseForm"),
 		View("panel.AnalyticsForums", "/panel/analytics/forums/").Before("ParseForm"),
+		View("panel.AnalyticsPerf", "/panel/analytics/perf/").Before("ParseForm"),
 
 		View("panel.Groups", "/panel/groups/"),
 		View("panel.GroupsEdit", "/panel/groups/edit/", "extraData"),

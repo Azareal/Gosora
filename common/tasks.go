@@ -64,6 +64,27 @@ func AddShutdownTask(task func() error) {
 	ShutdownTasks = append(ShutdownTasks, task)
 }
 
+// ScheduledHalfSecondTaskCount is not concurrency safe
+func ScheduledHalfSecondTaskCount() int {
+	return len(ScheduledHalfSecondTasks)
+}
+// ScheduledSecondTaskCount is not concurrency safe
+func ScheduledSecondTaskCount() int {
+	return len(ScheduledSecondTasks)
+}
+// ScheduledFifteenMinuteTaskCount is not concurrency safe
+func ScheduledFifteenMinuteTaskCount() int {
+	return len(ScheduledFifteenMinuteTasks)
+}
+// ScheduledHourTaskCount is not concurrency safe
+func ScheduledHourTaskCount() int {
+	return len(ScheduledHourTasks)
+}
+// ShutdownTaskCount is not concurrency safe
+func ShutdownTaskCount() int {
+	return len(ShutdownTasks)
+}
+
 // TODO: Use AddScheduledSecondTask
 func HandleExpiredScheduledGroups() error {
 	rows, err := taskStmts.getExpiredScheduledGroups.Query()

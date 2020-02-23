@@ -1,6 +1,6 @@
 <div class="colstack_item colstack_head">
 	<div class="rowitem">
-		<h1>{{lang "panel_statistics_operating_systems_head"}}</h1>
+		<h1>{{lang "panel_stats_operating_systems_head"}}</h1>
 		{{template "panel_analytics_time_range.html" . }}
 	</div>
 </div>
@@ -12,8 +12,8 @@
 	{{range .ItemList}}
 	<div class="rowitem panel_compactrow editable_parent">
 		<a href="/panel/analytics/system/{{.Agent}}" class="panel_upshift">{{.FriendlyAgent}}</a>
-		<span class="panel_compacttext to_right">{{.Count}}{{lang "panel_statistics_views_suffix"}}</span>
+		<span class="panel_compacttext to_right">{{.Count}}{{lang "panel_stats_views_suffix"}}</span>
 	</div>
-	{{else}}<div class="rowitem passive rowmsg">{{lang "panel_statistics_operating_systems_no_operating_systems"}}</div>{{end}}
+	{{else}}<div class="rowitem passive rowmsg">{{lang "panel_stats_operating_systems_no_operating_systems"}}</div>{{end}}
 </div>
 {{template "panel_analytics_script.html" . }}

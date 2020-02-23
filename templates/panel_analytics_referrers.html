@@ -1,9 +1,9 @@
 <div class="colstack_item colstack_head">
 	<div class="rowitem">
-		<h1>{{lang "panel_statistics_referrers_head"}}</h1>
+		<h1>{{lang "panel_stats_referrers_head"}}</h1>
 		<select form="timeRangeForm" class="spamSelector to_right autoSubmitRedirect" name="spam">
-			<option value="0"{{if not .ShowSpam}} selected{{end}}>{{lang "panel_statistics_spam_hide"}}</option>
-			<option value="1"{{if .ShowSpam}} selected{{end}}>{{lang "panel_statistics_spam_show"}}</option>
+			<option value="0"{{if not .ShowSpam}} selected{{end}}>{{lang "panel_stats_spam_hide"}}</option>
+			<option value="1"{{if .ShowSpam}} selected{{end}}>{{lang "panel_stats_spam_show"}}</option>
 		</select>
 		<noscript><input form="timeRangeForm" type="submit" /></noscript>
 		{{template "panel_analytics_time_range.html" . }}
@@ -14,7 +14,7 @@
 	{{range .ItemList}}
 	<div class="rowitem panel_compactrow editable_parent">
 		<a href="/panel/analytics/referrer/{{.Agent}}" class="panel_upshift">{{.Agent}}</a>
-		<span class="panel_compacttext to_right">{{.Count}}{{lang "panel_statistics_views_suffix"}}</span>
+		<span class="panel_compacttext to_right">{{.Count}}{{lang "panel_stats_views_suffix"}}</span>
 	</div>
-	{{else}}<div class="rowitem passive rowmsg">{{lang "panel_statistics_referrers_no_referrers"}}</div>{{end}}
+	{{else}}<div class="rowitem passive rowmsg">{{lang "panel_stats_referrers_no_referrers"}}</div>{{end}}
 </div>
