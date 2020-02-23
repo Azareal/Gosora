@@ -37,7 +37,7 @@ Other modern features like alerts, likes, advanced dashboard with live stats (CP
 
 # Requirements
 
-Go 1.12 or newer - You will need to install this. Pick the .msi, if you want everything sorted out for you rather than having to go around updating the environment settings. https://golang.org/doc/install
+Go 1.13 or newer - You will need to install this. Pick the .msi, if you want everything sorted out for you rather than having to go around updating the environment settings. https://golang.org/doc/install
 
 For Ubuntu, you can consult: https://tecadmin.net/install-go-on-ubuntu/
 You will also want to run `ln -s /usr/local/go/bin/go` (replace /usr/local with where ever you put Go), so that go becomes visible to other users.

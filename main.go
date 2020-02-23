@@ -25,13 +25,14 @@ import (
 	"time"
 
 	c "github.com/Azareal/Gosora/common"
-	_ "github.com/Azareal/Gosora/extend"
 	co "github.com/Azareal/Gosora/common/counters"
-	p "github.com/Azareal/Gosora/common/phrases"
 	meta "github.com/Azareal/Gosora/common/meta"
-	"github.com/Azareal/Gosora/query_gen"
+	p "github.com/Azareal/Gosora/common/phrases"
+	_ "github.com/Azareal/Gosora/extend"
+	qgen "github.com/Azareal/Gosora/query_gen"
 	"github.com/Azareal/Gosora/routes"
 	"github.com/fsnotify/fsnotify"
+	//"github.com/lucas-clemente/quic-go/http3"
 	"github.com/pkg/errors"
 )
 
@@ -56,13 +57,13 @@ func afterDBInit() (err error) {
 	log.Print("Exitted storeInit")
 
 	var uids []int
-	tcache := c.Topics.GetCache()
-	if tcache != nil {
+	tc := c.Topics.GetCache()
+	if tc != nil {
 		// Preload ten topics to get the wheels going
 		var count = 10
-		if tcache.GetCapacity() <= 10 {
+		if tc.GetCapacity() <= 10 {
 			count = 2
-			if tcache.GetCapacity() <= 2 {
+			if tc.GetCapacity() <= 2 {
 				count = 0
 			}
 		}
@@ -103,8 +104,8 @@ func afterDBInit() (err error) {
 		}
 	}
 
-	ucache := c.Users.GetCache()
-	if ucache != nil {
+	uc := c.Users.GetCache()
+	if uc != nil {
 		// Preload associated users too...
 		for _, uid := range uids {
 			_, _ = c.Users.Get(uid)
@@ -312,6 +313,10 @@ func storeInit() (err error) {
 		return errors.WithStack(err)
 	}
 	co.MemoryCounter, err = co.NewMemoryCounter(acc)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	co.PerfCounter, err = co.NewDefaultPerfCounter(acc)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -623,6 +628,14 @@ func startServer() {
 
 	// TODO: Let users run *both* HTTP and HTTPS
 	log.Print("Initialising the HTTP server")
+	/*if c.Dev.QuicPort != 0 {
+		sQuicPort := strconv.Itoa(c.Dev.QuicPort)
+		log.Print("Listening on quic port " + sQuicPort)
+		go func() {
+			c.StoppedServer(http3.ListenAndServeQUIC(":"+sQuicPort, c.Config.SslFullchain, c.Config.SslPrivkey, router))
+		}()
+	}*/
+
 	if !c.Site.EnableSsl {
 		if c.Site.Port == "" {
 			c.Site.Port = "80"
