@@ -44,8 +44,8 @@ func (ver *Version) String() (out string) {
 
 // GenerateSafeString is for generating a cryptographically secure set of random bytes which is base64 encoded and safe for URLs
 // TODO: Write a test for this
-func GenerateSafeString(length int) (string, error) {
-	rb := make([]byte, length)
+func GenerateSafeString(len int) (string, error) {
+	rb := make([]byte, len)
 	_, err := rand.Read(rb)
 	if err != nil {
 		return "", err
@@ -55,8 +55,8 @@ func GenerateSafeString(length int) (string, error) {
 
 // GenerateStd32SafeString is for generating a cryptographically secure set of random bytes which is base32 encoded
 // ? - Safe for URLs? Mostly likely due to the small range of characters
-func GenerateStd32SafeString(length int) (string, error) {
-	rb := make([]byte, length)
+func GenerateStd32SafeString(len int) (string, error) {
+	rb := make([]byte, len)
 	_, err := rand.Read(rb)
 	if err != nil {
 		return "", err
@@ -82,7 +82,7 @@ func RelativeTimeFromString(in string) (string, error) {
 func RelativeTime(t time.Time) string {
 	diff := time.Since(t)
 	hours := diff.Hours()
-	seconds := diff.Seconds()
+	secs := diff.Seconds()
 	weeks := int(hours / 24 / 7)
 	months := int(hours / 24 / 31)
 	switch {
@@ -104,18 +104,18 @@ func RelativeTime(t time.Time) string {
 		return "1 day ago"
 	case int(hours/24) > 1:
 		return fmt.Sprintf("%d days ago", int(hours/24))
-	case seconds <= 1:
+	case secs <= 1:
 		return "a moment ago"
-	case seconds < 60:
-		return fmt.Sprintf("%d seconds ago", int(seconds))
-	case seconds < 120:
+	case secs < 60:
+		return fmt.Sprintf("%d seconds ago", int(secs))
+	case secs < 120:
 		return "a minute ago"
-	case seconds < 3600:
-		return fmt.Sprintf("%d minutes ago", int(seconds/60))
-	case seconds < 7200:
+	case secs < 3600:
+		return fmt.Sprintf("%d minutes ago", int(secs/60))
+	case secs < 7200:
 		return "an hour ago"
 	}
-	return fmt.Sprintf("%d hours ago", int(seconds/60/60))
+	return fmt.Sprintf("%d hours ago", int(secs/60/60))
 }
 
 // TODO: Finish this faster and more localised version of RelativeTime
@@ -125,7 +125,7 @@ func RelativeTime(t time.Time) string {
 func RelativeTimeBytes(t time.Time, lang int) []byte {
 	diff := time.Since(t)
 	hours := diff.Hours()
-	seconds := diff.Seconds()
+	secs := diff.Seconds()
 	weeks := int(hours / 24 / 7)
 	months := int(hours / 24 / 31)
 	switch {
@@ -146,20 +146,46 @@ func RelativeTimeBytes(t time.Time, lang int) []byte {
 		return phrases.RTime.Day(lang)
 	case int(hours/24) > 1:
 		return phrases.RTime.Days(lang, int(hours/24))
-	case seconds <= 1:
+	case secs <= 1:
 		return phrases.RTime.Moment(lang)
-	case seconds < 60:
-		return phrases.RTime.Seconds(lang, int(seconds))
-	case seconds < 120:
+	case secs < 60:
+		return phrases.RTime.Seconds(lang, int(secs))
+	case secs < 120:
 		return phrases.RTime.Minute(lang)
-	case seconds < 3600:
-		return phrases.RTime.Minutes(lang, int(seconds/60))
-	case seconds < 7200:
+	case secs < 3600:
+		return phrases.RTime.Minutes(lang, int(secs/60))
+	case secs < 7200:
 		return phrases.RTime.Hour(lang)
 	}
-	return phrases.RTime.Hours(lang, int(seconds/60/60))
+	return phrases.RTime.Hours(lang, int(secs/60/60))
 }
 */
+
+var pMs = 1000;
+var pSec = pMs * 1000;
+var pMin = pSec * 60;
+var pHour = pMin * 60;
+var pDay = pHour * 24;
+func ConvertPerfUnit(quan float64) (out float64, unit string) {
+	f := func() (float64, string) {
+		switch {
+		case quan >= float64(pDay):
+			return quan / float64(pDay), "d"
+		case quan >= float64(pHour):
+			return quan / float64(pHour), "h"
+		case quan >= float64(pMin):
+			return quan / float64(pMin), "m"
+		case quan >= float64(pSec):
+			return quan / float64(pSec), "s"
+		case quan >= float64(pMs):
+			return quan / float64(pMs), "ms"
+		}
+		return quan, "μs"
+	}
+	out, unit = f()
+	return math.Ceil(out), unit
+}
+
 
 // TODO: Write a test for this
 func ConvertByteUnit(bytes float64) (float64, string) {

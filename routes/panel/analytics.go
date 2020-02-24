@@ -706,7 +706,7 @@ func AnalyticsPerf(w http.ResponseWriter, r *http.Request, user c.User) c.RouteE
 	var avgItems []c.PanelAnalyticsItemUnit
 	for _, value := range revLabelList {
 		avgList = append(avgList, avgMap[value])
-		cv, cu := c.ConvertByteUnit(float64(avgMap[value]))
+		cv, cu := c.ConvertPerfUnit(float64(avgMap[value]))
 		avgItems = append(avgItems, c.PanelAnalyticsItemUnit{Time: value, Unit: cu, Count: int64(cv)})
 	}
 	graph := c.PanelTimeGraph{Series: [][]int64{avgList}, Labels: labelList}
