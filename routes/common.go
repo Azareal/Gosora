@@ -139,6 +139,7 @@ func renderTemplate3(tmplName, hookName string, w http.ResponseWriter, r *http.R
 	//if h.CurrentUser.IsAdmin {
 	h.Elapsed1 = since.String()
 	//}
+	co.PerfCounter.Push(since)
 	if c.RunPreRenderHook("pre_render_"+hookName, w, r, &h.CurrentUser, pi) {
 		return nil
 	}
@@ -146,7 +147,7 @@ func renderTemplate3(tmplName, hookName string, w http.ResponseWriter, r *http.R
 	if err != nil {
 		return err
 	}
-	co.PerfCounter.Push(since)
+	//co.PerfCounter.Push(since)
 	return nil
 }
 
