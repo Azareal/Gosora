@@ -230,6 +230,11 @@ func (a *PgsqlAdapter) SimpleInsert(name, table, columns, fields string) (string
 	return q, nil
 }
 
+// TODO: Implement this
+func (a *PgsqlAdapter) SimpleBulkInsert(name, table, columns string, fieldSet []string) (string, error) {
+	return "", nil
+}
+
 func (a *PgsqlAdapter) buildColumns(cols string) (q string) {
 	if cols == "" {
 		return ""

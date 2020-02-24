@@ -267,13 +267,25 @@ func (a *MysqlAdapter) AddIndex(name, table, iname, colname string) (string, err
 
 // TODO: Test to make sure everything works here
 // Only supports FULLTEXT right now
-func (a *MysqlAdapter) AddKey(name, table, column string, key DBTableKey) (string, error) {
+func (a *MysqlAdapter) AddKey(name, table, cols string, key DBTableKey) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
+	if cols == "" {
+		return "", errors.New("You need to specify columns")
+	}
+
+	var colstr string
+	for _, col := range strings.Split(cols,",") {
+		colstr += "`" + col + "`,"
+	}
+	if len(colstr) > 1 {
+		colstr = colstr[:len(colstr)-1]
+	}
+
 	var q string
 	if key.Type == "fulltext" {
-		q = "ALTER TABLE `" + table + "` ADD FULLTEXT(`" + column + "`)"
+		q = "ALTER TABLE `" + table + "` ADD FULLTEXT(" + colstr + ")"
 	} else {
 		return "", errors.New("Only fulltext is supported by AddKey right now")
 	}
@@ -360,6 +372,50 @@ func (a *MysqlAdapter) SimpleInsert(name, table, columns, fields string) (string
 	// TODO: Shunt the table name logic and associated stmt list up to the a higher layer to reduce the amount of unnecessary overhead in the builder / accumulator
 	q := sb.String()
 	a.pushStatement(name, "insert", q)
+	return q, nil
+}
+
+func (a *MysqlAdapter) SimpleBulkInsert(name, table, columns string, fieldSet []string) (string, error) {
+	if table == "" {
+		return "", errors.New("You need a name for this table")
+	}
+
+	var sb strings.Builder
+	sb.Grow(silen1 + len(table))
+	sb.WriteString("INSERT INTO `")
+	sb.WriteString(table)
+	sb.WriteString("`(")
+	if columns != "" {
+		sb.WriteString(a.buildColumns(columns))
+		sb.WriteString(") VALUES (")
+		for oi, fields := range fieldSet {
+			if oi != 0 {
+				sb.WriteString(",(")
+			}
+			fs := processFields(fields)
+			sb.Grow(len(fs) * 3)
+			for i, field := range fs {
+				if i != 0 {
+					sb.WriteString(",")
+				}
+				nameLen := len(field.Name)
+				if field.Name[0] == '"' && field.Name[nameLen-1] == '"' && nameLen >= 3 {
+					field.Name = "'" + field.Name[1:nameLen-1] + "'"
+				}
+				if field.Name[0] == '\'' && field.Name[nameLen-1] == '\'' && nameLen >= 3 {
+					field.Name = "'" + strings.Replace(field.Name[1:nameLen-1], "'", "''", -1) + "'"
+				}
+				sb.WriteString(field.Name)
+			}
+			sb.WriteString(")")
+		}
+	} else {
+		sb.WriteString(") VALUES ()")
+	}
+
+	// TODO: Shunt the table name logic and associated stmt list up to the a higher layer to reduce the amount of unnecessary overhead in the builder / accumulator
+	q := sb.String()
+	a.pushStatement(name, "bulk-insert", q)
 	return q, nil
 }
 

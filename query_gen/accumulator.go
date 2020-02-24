@@ -20,233 +20,241 @@ type Accumulator struct {
 	firstErr error
 }
 
-func (build *Accumulator) SetConn(conn *sql.DB) {
-	build.conn = conn
+func (acc *Accumulator) SetConn(conn *sql.DB) {
+	acc.conn = conn
 }
 
-func (build *Accumulator) SetAdapter(name string) error {
+func (acc *Accumulator) SetAdapter(name string) error {
 	adap, err := GetAdapter(name)
 	if err != nil {
 		return err
 	}
-	build.adapter = adap
+	acc.adapter = adap
 	return nil
 }
 
-func (build *Accumulator) GetAdapter() Adapter {
-	return build.adapter
+func (acc *Accumulator) GetAdapter() Adapter {
+	return acc.adapter
 }
 
-func (build *Accumulator) FirstError() error {
-	return build.firstErr
+func (acc *Accumulator) FirstError() error {
+	return acc.firstErr
 }
 
-func (build *Accumulator) RecordError(err error) {
+func (acc *Accumulator) RecordError(err error) {
 	if err == nil {
 		return
 	}
-	if build.firstErr == nil {
-		build.firstErr = err
+	if acc.firstErr == nil {
+		acc.firstErr = err
 	}
 }
 
-func (build *Accumulator) prepare(res string, err error) *sql.Stmt {
+func (acc *Accumulator) prepare(res string, err error) *sql.Stmt {
 	// TODO: Can we make this less noisy on debug mode?
 	if LogPrepares {
 		log.Print("res: ", res)
 	}
 	if err != nil {
-		build.RecordError(err)
+		acc.RecordError(err)
 		return nil
 	}
-	stmt, err := build.conn.Prepare(res)
-	build.RecordError(err)
+	stmt, err := acc.conn.Prepare(res)
+	acc.RecordError(err)
 	return stmt
 }
 
-func (build *Accumulator) RawPrepare(res string) *sql.Stmt {
-	return build.prepare(res, nil)
+func (acc *Accumulator) RawPrepare(res string) *sql.Stmt {
+	return acc.prepare(res, nil)
 }
 
-func (build *Accumulator) query(query string, args ...interface{}) (rows *sql.Rows, err error) {
-	err = build.FirstError()
+func (acc *Accumulator) query(q string, args ...interface{}) (rows *sql.Rows, err error) {
+	err = acc.FirstError()
 	if err != nil {
 		return rows, err
 	}
-	return build.conn.Query(query, args...)
+	return acc.conn.Query(q, args...)
 }
 
-func (build *Accumulator) exec(query string, args ...interface{}) (res sql.Result, err error) {
-	err = build.FirstError()
+func (acc *Accumulator) exec(q string, args ...interface{}) (res sql.Result, err error) {
+	err = acc.FirstError()
 	if err != nil {
 		return res, err
 	}
-	return build.conn.Exec(query, args...)
+	return acc.conn.Exec(q, args...)
 }
 
-func (build *Accumulator) Tx(handler func(*TransactionBuilder) error) {
-	tx, err := build.conn.Begin()
+func (acc *Accumulator) Tx(handler func(*TransactionBuilder) error) {
+	tx, err := acc.conn.Begin()
 	if err != nil {
-		build.RecordError(err)
+		acc.RecordError(err)
 		return
 	}
-	err = handler(&TransactionBuilder{tx, build.adapter, nil})
+	err = handler(&TransactionBuilder{tx, acc.adapter, nil})
 	if err != nil {
 		tx.Rollback()
-		build.RecordError(err)
+		acc.RecordError(err)
 		return
 	}
-	build.RecordError(tx.Commit())
+	acc.RecordError(tx.Commit())
 }
 
-func (build *Accumulator) SimpleSelect(table, columns, where, orderby, limit string) *sql.Stmt {
-	return build.prepare(build.adapter.SimpleSelect("", table, columns, where, orderby, limit))
+func (acc *Accumulator) SimpleSelect(table, columns, where, orderby, limit string) *sql.Stmt {
+	return acc.prepare(acc.adapter.SimpleSelect("", table, columns, where, orderby, limit))
 }
 
-func (build *Accumulator) SimpleCount(table, where, limit string) *sql.Stmt {
-	return build.prepare(build.adapter.SimpleCount("", table, where, limit))
+func (acc *Accumulator) SimpleCount(table, where, limit string) *sql.Stmt {
+	return acc.prepare(acc.adapter.SimpleCount("", table, where, limit))
 }
 
-func (build *Accumulator) SimpleLeftJoin(table1, table2, columns, joiners, where, orderby, limit string) *sql.Stmt {
-	return build.prepare(build.adapter.SimpleLeftJoin("", table1, table2, columns, joiners, where, orderby, limit))
+func (acc *Accumulator) SimpleLeftJoin(table1, table2, columns, joiners, where, orderby, limit string) *sql.Stmt {
+	return acc.prepare(acc.adapter.SimpleLeftJoin("", table1, table2, columns, joiners, where, orderby, limit))
 }
 
-func (build *Accumulator) SimpleInnerJoin(table1, table2, columns, joiners, where, orderby, limit string) *sql.Stmt {
-	return build.prepare(build.adapter.SimpleInnerJoin("", table1, table2, columns, joiners, where, orderby, limit))
+func (acc *Accumulator) SimpleInnerJoin(table1, table2, columns, joiners, where, orderby, limit string) *sql.Stmt {
+	return acc.prepare(acc.adapter.SimpleInnerJoin("", table1, table2, columns, joiners, where, orderby, limit))
 }
 
-func (build *Accumulator) CreateTable(table string, charset string, collation string, columns []DBTableColumn, keys []DBTableKey) *sql.Stmt {
-	return build.prepare(build.adapter.CreateTable("", table, charset, collation, columns, keys))
+func (acc *Accumulator) CreateTable(table, charset, collation string, columns []DBTableColumn, keys []DBTableKey) *sql.Stmt {
+	return acc.prepare(acc.adapter.CreateTable("", table, charset, collation, columns, keys))
 }
 
-func (build *Accumulator) SimpleInsert(table, columns, fields string) *sql.Stmt {
-	return build.prepare(build.adapter.SimpleInsert("", table, columns, fields))
+func (acc *Accumulator) SimpleInsert(table, columns, fields string) *sql.Stmt {
+	return acc.prepare(acc.adapter.SimpleInsert("", table, columns, fields))
 }
 
-func (build *Accumulator) SimpleInsertSelect(ins DBInsert, sel DBSelect) *sql.Stmt {
-	return build.prepare(build.adapter.SimpleInsertSelect("", ins, sel))
+func (acc *Accumulator) SimpleBulkInsert(table, cols string, fieldSet []string) *sql.Stmt {
+	return acc.prepare(acc.adapter.SimpleBulkInsert("", table, cols, fieldSet))
 }
 
-func (build *Accumulator) SimpleInsertLeftJoin(ins DBInsert, sel DBJoin) *sql.Stmt {
-	return build.prepare(build.adapter.SimpleInsertLeftJoin("", ins, sel))
+func (acc *Accumulator) SimpleInsertSelect(ins DBInsert, sel DBSelect) *sql.Stmt {
+	return acc.prepare(acc.adapter.SimpleInsertSelect("", ins, sel))
 }
 
-func (build *Accumulator) SimpleInsertInnerJoin(ins DBInsert, sel DBJoin) *sql.Stmt {
-	return build.prepare(build.adapter.SimpleInsertInnerJoin("", ins, sel))
+func (acc *Accumulator) SimpleInsertLeftJoin(ins DBInsert, sel DBJoin) *sql.Stmt {
+	return acc.prepare(acc.adapter.SimpleInsertLeftJoin("", ins, sel))
 }
 
-func (build *Accumulator) SimpleUpdate(table, set, where string) *sql.Stmt {
-	return build.prepare(build.adapter.SimpleUpdate(qUpdate(table, set, where)))
+func (acc *Accumulator) SimpleInsertInnerJoin(ins DBInsert, sel DBJoin) *sql.Stmt {
+	return acc.prepare(acc.adapter.SimpleInsertInnerJoin("", ins, sel))
 }
 
-func (build *Accumulator) SimpleUpdateSelect(table, set, table2, cols, where, orderby, limit string) *sql.Stmt {
-	pre := qUpdate(table, set, "").WhereQ(build.GetAdapter().Builder().Select().Table(table2).Columns(cols).Where(where).Orderby(orderby).Limit(limit))
-	return build.prepare(build.adapter.SimpleUpdateSelect(pre))
+func (acc *Accumulator) SimpleUpdate(table, set, where string) *sql.Stmt {
+	return acc.prepare(acc.adapter.SimpleUpdate(qUpdate(table, set, where)))
 }
 
-func (build *Accumulator) SimpleDelete(table, where string) *sql.Stmt {
-	return build.prepare(build.adapter.SimpleDelete("", table, where))
+func (acc *Accumulator) SimpleUpdateSelect(table, set, table2, cols, where, orderby, limit string) *sql.Stmt {
+	pre := qUpdate(table, set, "").WhereQ(acc.GetAdapter().Builder().Select().Table(table2).Columns(cols).Where(where).Orderby(orderby).Limit(limit))
+	return acc.prepare(acc.adapter.SimpleUpdateSelect(pre))
+}
+
+func (acc *Accumulator) SimpleDelete(table, where string) *sql.Stmt {
+	return acc.prepare(acc.adapter.SimpleDelete("", table, where))
 }
 
 // I don't know why you need this, but here it is x.x
-func (build *Accumulator) Purge(table string) *sql.Stmt {
-	return build.prepare(build.adapter.Purge("", table))
+func (acc *Accumulator) Purge(table string) *sql.Stmt {
+	return acc.prepare(acc.adapter.Purge("", table))
 }
 
-func (build *Accumulator) prepareTx(tx *sql.Tx, res string, err error) (stmt *sql.Stmt) {
+func (acc *Accumulator) prepareTx(tx *sql.Tx, res string, err error) (stmt *sql.Stmt) {
 	if err != nil {
-		build.RecordError(err)
+		acc.RecordError(err)
 		return nil
 	}
 	stmt, err = tx.Prepare(res)
-	build.RecordError(err)
+	acc.RecordError(err)
 	return stmt
 }
 
 // These ones support transactions
-func (build *Accumulator) SimpleSelectTx(tx *sql.Tx, table string, columns string, where string, orderby string, limit string) (stmt *sql.Stmt) {
-	res, err := build.adapter.SimpleSelect("", table, columns, where, orderby, limit)
-	return build.prepareTx(tx, res, err)
+func (acc *Accumulator) SimpleSelectTx(tx *sql.Tx, table, columns, where, orderby, limit string) (stmt *sql.Stmt) {
+	res, err := acc.adapter.SimpleSelect("", table, columns, where, orderby, limit)
+	return acc.prepareTx(tx, res, err)
 }
 
-func (build *Accumulator) SimpleCountTx(tx *sql.Tx, table string, where string, limit string) (stmt *sql.Stmt) {
-	res, err := build.adapter.SimpleCount("", table, where, limit)
-	return build.prepareTx(tx, res, err)
+func (acc *Accumulator) SimpleCountTx(tx *sql.Tx, table, where, limit string) (stmt *sql.Stmt) {
+	res, err := acc.adapter.SimpleCount("", table, where, limit)
+	return acc.prepareTx(tx, res, err)
 }
 
-func (build *Accumulator) SimpleLeftJoinTx(tx *sql.Tx, table1 string, table2 string, columns string, joiners string, where string, orderby string, limit string) (stmt *sql.Stmt) {
-	res, err := build.adapter.SimpleLeftJoin("", table1, table2, columns, joiners, where, orderby, limit)
-	return build.prepareTx(tx, res, err)
+func (acc *Accumulator) SimpleLeftJoinTx(tx *sql.Tx, table1, table2, columns, joiners, where, orderby, limit string) (stmt *sql.Stmt) {
+	res, err := acc.adapter.SimpleLeftJoin("", table1, table2, columns, joiners, where, orderby, limit)
+	return acc.prepareTx(tx, res, err)
 }
 
-func (build *Accumulator) SimpleInnerJoinTx(tx *sql.Tx, table1 string, table2 string, columns string, joiners string, where string, orderby string, limit string) (stmt *sql.Stmt) {
-	res, err := build.adapter.SimpleInnerJoin("", table1, table2, columns, joiners, where, orderby, limit)
-	return build.prepareTx(tx, res, err)
+func (acc *Accumulator) SimpleInnerJoinTx(tx *sql.Tx, table1, table2, columns, joiners, where, orderby, limit string) (stmt *sql.Stmt) {
+	res, err := acc.adapter.SimpleInnerJoin("", table1, table2, columns, joiners, where, orderby, limit)
+	return acc.prepareTx(tx, res, err)
 }
 
-func (build *Accumulator) CreateTableTx(tx *sql.Tx, table string, charset string, collation string, columns []DBTableColumn, keys []DBTableKey) (stmt *sql.Stmt) {
-	res, err := build.adapter.CreateTable("", table, charset, collation, columns, keys)
-	return build.prepareTx(tx, res, err)
+func (acc *Accumulator) CreateTableTx(tx *sql.Tx, table, charset, collation string, columns []DBTableColumn, keys []DBTableKey) (stmt *sql.Stmt) {
+	res, err := acc.adapter.CreateTable("", table, charset, collation, columns, keys)
+	return acc.prepareTx(tx, res, err)
 }
 
-func (build *Accumulator) SimpleInsertTx(tx *sql.Tx, table string, columns string, fields string) (stmt *sql.Stmt) {
-	res, err := build.adapter.SimpleInsert("", table, columns, fields)
-	return build.prepareTx(tx, res, err)
+func (acc *Accumulator) SimpleInsertTx(tx *sql.Tx, table, columns, fields string) (stmt *sql.Stmt) {
+	res, err := acc.adapter.SimpleInsert("", table, columns, fields)
+	return acc.prepareTx(tx, res, err)
 }
 
-func (build *Accumulator) SimpleInsertSelectTx(tx *sql.Tx, ins DBInsert, sel DBSelect) (stmt *sql.Stmt) {
-	res, err := build.adapter.SimpleInsertSelect("", ins, sel)
-	return build.prepareTx(tx, res, err)
+func (acc *Accumulator) SimpleInsertSelectTx(tx *sql.Tx, ins DBInsert, sel DBSelect) (stmt *sql.Stmt) {
+	res, err := acc.adapter.SimpleInsertSelect("", ins, sel)
+	return acc.prepareTx(tx, res, err)
 }
 
-func (build *Accumulator) SimpleInsertLeftJoinTx(tx *sql.Tx, ins DBInsert, sel DBJoin) (stmt *sql.Stmt) {
-	res, err := build.adapter.SimpleInsertLeftJoin("", ins, sel)
-	return build.prepareTx(tx, res, err)
+func (acc *Accumulator) SimpleInsertLeftJoinTx(tx *sql.Tx, ins DBInsert, sel DBJoin) (stmt *sql.Stmt) {
+	res, err := acc.adapter.SimpleInsertLeftJoin("", ins, sel)
+	return acc.prepareTx(tx, res, err)
 }
 
-func (build *Accumulator) SimpleInsertInnerJoinTx(tx *sql.Tx, ins DBInsert, sel DBJoin) (stmt *sql.Stmt) {
-	res, err := build.adapter.SimpleInsertInnerJoin("", ins, sel)
-	return build.prepareTx(tx, res, err)
+func (acc *Accumulator) SimpleInsertInnerJoinTx(tx *sql.Tx, ins DBInsert, sel DBJoin) (stmt *sql.Stmt) {
+	res, err := acc.adapter.SimpleInsertInnerJoin("", ins, sel)
+	return acc.prepareTx(tx, res, err)
 }
 
-func (build *Accumulator) SimpleUpdateTx(tx *sql.Tx, table string, set string, where string) (stmt *sql.Stmt) {
-	res, err := build.adapter.SimpleUpdate(qUpdate(table, set, where))
-	return build.prepareTx(tx, res, err)
+func (acc *Accumulator) SimpleUpdateTx(tx *sql.Tx, table, set, where string) (stmt *sql.Stmt) {
+	res, err := acc.adapter.SimpleUpdate(qUpdate(table, set, where))
+	return acc.prepareTx(tx, res, err)
 }
 
-func (build *Accumulator) SimpleDeleteTx(tx *sql.Tx, table string, where string) (stmt *sql.Stmt) {
-	res, err := build.adapter.SimpleDelete("", table, where)
-	return build.prepareTx(tx, res, err)
+func (acc *Accumulator) SimpleDeleteTx(tx *sql.Tx, table, where string) (stmt *sql.Stmt) {
+	res, err := acc.adapter.SimpleDelete("", table, where)
+	return acc.prepareTx(tx, res, err)
 }
 
 // I don't know why you need this, but here it is x.x
-func (build *Accumulator) PurgeTx(tx *sql.Tx, table string) (stmt *sql.Stmt) {
-	res, err := build.adapter.Purge("", table)
-	return build.prepareTx(tx, res, err)
+func (acc *Accumulator) PurgeTx(tx *sql.Tx, table string) (stmt *sql.Stmt) {
+	res, err := acc.adapter.Purge("", table)
+	return acc.prepareTx(tx, res, err)
 }
 
-func (build *Accumulator) Delete(table string) *accDeleteBuilder {
-	return &accDeleteBuilder{table, "", nil, build}
+func (acc *Accumulator) Delete(table string) *accDeleteBuilder {
+	return &accDeleteBuilder{table, "", nil, acc}
 }
 
-func (build *Accumulator) Update(table string) *accUpdateBuilder {
-	return &accUpdateBuilder{qUpdate(table, "", ""), build}
+func (acc *Accumulator) Update(table string) *accUpdateBuilder {
+	return &accUpdateBuilder{qUpdate(table, "", ""), acc}
 }
 
-func (build *Accumulator) Select(table string) *AccSelectBuilder {
-	return &AccSelectBuilder{table, "", "", "", "", nil, nil, "", build}
+func (acc *Accumulator) Select(table string) *AccSelectBuilder {
+	return &AccSelectBuilder{table, "", "", "", "", nil, nil, "", acc}
 }
 
-func (build *Accumulator) Exists(tbl, col string) *AccSelectBuilder {
-	return build.Select(tbl).Columns(col).Where(col + "=?")
+func (acc *Accumulator) Exists(tbl, col string) *AccSelectBuilder {
+	return acc.Select(tbl).Columns(col).Where(col + "=?")
 }
 
-func (build *Accumulator) Insert(table string) *accInsertBuilder {
-	return &accInsertBuilder{table, "", "", build}
+func (acc *Accumulator) Insert(table string) *accInsertBuilder {
+	return &accInsertBuilder{table, "", "", acc}
 }
 
-func (build *Accumulator) Count(table string) *accCountBuilder {
-	return &accCountBuilder{table, "", "", nil, nil, "", build}
+func (acc *Accumulator) BulkInsert(table string) *accBulkInsertBuilder {
+	return &accBulkInsertBuilder{table, "", nil, acc}
+}
+
+func (acc *Accumulator) Count(table string) *accCountBuilder {
+	return &accCountBuilder{table, "", "", nil, nil, "", acc}
 }
 
 type SimpleModel struct {
@@ -255,7 +263,7 @@ type SimpleModel struct {
 	update *sql.Stmt
 }
 
-func (build *Accumulator) SimpleModel(tbl, colstr, primary string) SimpleModel {
+func (acc *Accumulator) SimpleModel(tbl, colstr, primary string) SimpleModel {
 	var qlist, uplist string
 	for _, col := range strings.Split(colstr, ",") {
 		qlist += "?,"
@@ -268,9 +276,9 @@ func (build *Accumulator) SimpleModel(tbl, colstr, primary string) SimpleModel {
 
 	where := primary + "=?"
 	return SimpleModel{
-		delete: build.Delete(tbl).Where(where).Prepare(),
-		create: build.Insert(tbl).Columns(colstr).Fields(qlist).Prepare(),
-		update: build.Update(tbl).Set(uplist).Where(where).Prepare(),
+		delete: acc.Delete(tbl).Where(where).Prepare(),
+		create: acc.Insert(tbl).Columns(colstr).Fields(qlist).Prepare(),
+		update: acc.Update(tbl).Set(uplist).Where(where).Prepare(),
 	}
 }
 
@@ -298,8 +306,8 @@ func (m SimpleModel) CreateID(args ...interface{}) (int, error) {
 	return int(lastID), err
 }
 
-func (build *Accumulator) Model(table string) *accModelBuilder {
-	return &accModelBuilder{table, "", build}
+func (acc *Accumulator) Model(table string) *accModelBuilder {
+	return &accModelBuilder{table, "", acc}
 }
 
 type accModelBuilder struct {

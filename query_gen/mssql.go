@@ -106,7 +106,6 @@ func (a *MssqlAdapter) parseColumn(column DBTableColumn) (col DBTableColumn, siz
 	case "boolean":
 		column.Type = "bit"
 	}
-
 	if column.Size > 0 {
 		size = " (" + strconv.Itoa(column.Size) + ")"
 	}
@@ -230,6 +229,18 @@ func (a *MssqlAdapter) AddForeignKey(name, table, column, ftable, fcolumn string
 }
 
 func (a *MssqlAdapter) SimpleInsert(name, table, cols, fields string) (string, error) {
+	q, err := a.simpleBulkInsert(name, table, cols, []string{fields})
+	a.pushStatement(name, "insert", q)
+	return q, err
+}
+
+func (a *MssqlAdapter) SimpleBulkInsert(name, table, cols string, fieldSet []string) (string, error) {
+	q, err := a.simpleBulkInsert(name, table, cols, fieldSet)
+	a.pushStatement(name, "bulk-insert", q)
+	return q, err
+}
+
+func (a *MssqlAdapter) simpleBulkInsert(name, table, cols string, fieldSet []string) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
@@ -252,21 +263,24 @@ func (a *MssqlAdapter) SimpleInsert(name, table, cols, fields string) (string, e
 	q = q[0 : len(q)-1]
 
 	q += ") VALUES ("
-	for _, field := range processFields(fields) {
-		field.Name = strings.Replace(field.Name, "UTC_TIMESTAMP()", "GETUTCDATE()", -1)
-		//log.Print("field.Name ", field.Name)
-		nameLen := len(field.Name)
-		if field.Name[0] == '"' && field.Name[nameLen-1] == '"' && nameLen >= 3 {
-			field.Name = "'" + field.Name[1:nameLen-1] + "'"
+	for oi, fields := range fieldSet {
+		if oi != 0 {
+			q += ",("
 		}
-		if field.Name[0] == '\'' && field.Name[nameLen-1] == '\'' && nameLen >= 3 {
-			field.Name = "'" + strings.Replace(field.Name[1:nameLen-1], "'", "''", -1) + "'"
+		for _, field := range processFields(fields) {
+			field.Name = strings.Replace(field.Name, "UTC_TIMESTAMP()", "GETUTCDATE()", -1)
+			//log.Print("field.Name ", field.Name)
+			nameLen := len(field.Name)
+			if field.Name[0] == '"' && field.Name[nameLen-1] == '"' && nameLen >= 3 {
+				field.Name = "'" + field.Name[1:nameLen-1] + "'"
+			}
+			if field.Name[0] == '\'' && field.Name[nameLen-1] == '\'' && nameLen >= 3 {
+				field.Name = "'" + strings.Replace(field.Name[1:nameLen-1], "'", "''", -1) + "'"
+			}
+			q += field.Name + ","
 		}
-		q += field.Name + ","
+		q = q[0:len(q)-1] + ")"
 	}
-	q = q[0:len(q)-1] + ")"
-
-	a.pushStatement(name, "insert", q)
 	return q, nil
 }
 

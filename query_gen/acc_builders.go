@@ -2,32 +2,33 @@ package qgen
 
 import (
 	"database/sql"
+	//"fmt"
 	"strconv"
 )
 
 type accDeleteBuilder struct {
-	table string
-	where string
+	table      string
+	where      string
 	dateCutoff *dateCutoff // We might want to do this in a slightly less hacky way
 
 	build *Accumulator
 }
 
-func (b *accDeleteBuilder) Where(where string) *accDeleteBuilder {
+func (b *accDeleteBuilder) Where(w string) *accDeleteBuilder {
 	if b.where != "" {
 		b.where += " AND "
 	}
-	b.where += where
+	b.where += w
 	return b
 }
 
-func (b *accDeleteBuilder) DateCutoff(column string, quantity int, unit string) *accDeleteBuilder {
-	b.dateCutoff = &dateCutoff{column, quantity, unit, 0}
+func (b *accDeleteBuilder) DateCutoff(col string, quantity int, unit string) *accDeleteBuilder {
+	b.dateCutoff = &dateCutoff{col, quantity, unit, 0}
 	return b
 }
 
-func (b *accDeleteBuilder) DateOlderThan(column string, quantity int, unit string) *accDeleteBuilder {
-	b.dateCutoff = &dateCutoff{column, quantity, unit, 1}
+func (b *accDeleteBuilder) DateOlderThan(col string, quantity int, unit string) *accDeleteBuilder {
+	b.dateCutoff = &dateCutoff{col, quantity, unit, 1}
 	return b
 }
 
@@ -78,13 +79,13 @@ func (u *accUpdateBuilder) Where(where string) *accUpdateBuilder {
 	return u
 }
 
-func (b *accUpdateBuilder) DateCutoff(column string, quantity int, unit string) *accUpdateBuilder {
-	b.up.dateCutoff = &dateCutoff{column, quantity, unit, 0}
+func (b *accUpdateBuilder) DateCutoff(col string, quantity int, unit string) *accUpdateBuilder {
+	b.up.dateCutoff = &dateCutoff{col, quantity, unit, 0}
 	return b
 }
 
-func (b *accUpdateBuilder) DateOlderThan(column string, quantity int, unit string) *accUpdateBuilder {
-	b.up.dateCutoff = &dateCutoff{column, quantity, unit, 1}
+func (b *accUpdateBuilder) DateOlderThan(col string, quantity int, unit string) *accUpdateBuilder {
+	b.up.dateCutoff = &dateCutoff{col, quantity, unit, 1}
 	return b
 }
 
@@ -105,6 +106,7 @@ func (b *accUpdateBuilder) Exec(args ...interface{}) (res sql.Result, err error)
 	if err != nil {
 		return res, err
 	}
+	//fmt.Println("query:", query)
 	return b.build.exec(query, args...)
 }
 
@@ -121,13 +123,13 @@ type AccSelectBuilder struct {
 	build *Accumulator
 }
 
-func (b *AccSelectBuilder) Columns(columns string) *AccSelectBuilder {
-	b.columns = columns
+func (b *AccSelectBuilder) Columns(cols string) *AccSelectBuilder {
+	b.columns = cols
 	return b
 }
 
-func (b *AccSelectBuilder) Cols(columns string) *AccSelectBuilder {
-	b.columns = columns
+func (b *AccSelectBuilder) Cols(cols string) *AccSelectBuilder {
+	b.columns = cols
 	return b
 }
 
@@ -140,13 +142,13 @@ func (b *AccSelectBuilder) Where(where string) *AccSelectBuilder {
 }
 
 // TODO: Don't implement the SQL at the accumulator level but the adapter level
-func (b *AccSelectBuilder) In(column string, inList []int) *AccSelectBuilder {
+func (b *AccSelectBuilder) In(col string, inList []int) *AccSelectBuilder {
 	if len(inList) == 0 {
 		return b
 	}
 
 	// TODO: Optimise this
-	where := column + " IN("
+	where := col + " IN("
 	for _, item := range inList {
 		where += strconv.Itoa(item) + ","
 	}
@@ -160,19 +162,19 @@ func (b *AccSelectBuilder) In(column string, inList []int) *AccSelectBuilder {
 }
 
 // TODO: Don't implement the SQL at the accumulator level but the adapter level
-func (b *AccSelectBuilder) InPQuery(column string, inList []int) (*sql.Rows, error) {
+func (b *AccSelectBuilder) InPQuery(col string, inList []int) (*sql.Rows, error) {
 	if len(inList) == 0 {
 		return nil, sql.ErrNoRows
 	}
 	// TODO: Optimise this
-	where := column + " IN("
+	where := col + " IN("
 
-	idList := make([]interface{},len(inList))
+	idList := make([]interface{}, len(inList))
 	for i, id := range inList {
 		idList[i] = strconv.Itoa(id)
 		where += "?,"
 	}
-	where = where[0 : len(where)-1] + ")"
+	where = where[0:len(where)-1] + ")"
 
 	if b.where != "" {
 		where += " AND " + b.where
@@ -182,14 +184,19 @@ func (b *AccSelectBuilder) InPQuery(column string, inList []int) (*sql.Rows, err
 	return b.Query(idList...)
 }
 
-func (b *AccSelectBuilder) InQ(column string, subBuilder *AccSelectBuilder) *AccSelectBuilder {
-	b.inChain = subBuilder
-	b.inColumn = column
+func (b *AccSelectBuilder) InQ(col string, sb *AccSelectBuilder) *AccSelectBuilder {
+	b.inChain = sb
+	b.inColumn = col
 	return b
 }
 
-func (b *AccSelectBuilder) DateCutoff(column string, quantity int, unit string) *AccSelectBuilder {
-	b.dateCutoff = &dateCutoff{column, quantity, unit, 0}
+func (b *AccSelectBuilder) DateCutoff(col string, quantity int, unit string) *AccSelectBuilder {
+	b.dateCutoff = &dateCutoff{col, quantity, unit, 0}
+	return b
+}
+
+func (b *AccSelectBuilder) DateOlderThanQ(col, unit string) *AccSelectBuilder {
+	b.dateCutoff = &dateCutoff{col, 0, unit, 11}
 	return b
 }
 
@@ -251,7 +258,7 @@ func (b *AccSelectBuilder) QueryRow(args ...interface{}) *AccRowWrap {
 }
 
 // Experimental, reduces lines
-func (b *AccSelectBuilder) Each(handle func(*sql.Rows) error) error {
+func (b *AccSelectBuilder) Each(h func(*sql.Rows) error) error {
 	query, err := b.query()
 	if err != nil {
 		return err
@@ -263,14 +270,13 @@ func (b *AccSelectBuilder) Each(handle func(*sql.Rows) error) error {
 	defer rows.Close()
 
 	for rows.Next() {
-		err = handle(rows)
-		if err != nil {
+		if err = h(rows); err != nil {
 			return err
 		}
 	}
 	return rows.Err()
 }
-func (b *AccSelectBuilder) EachInt(handle func(int) error) error {
+func (b *AccSelectBuilder) EachInt(h func(int) error) error {
 	query, err := b.query()
 	if err != nil {
 		return err
@@ -287,8 +293,7 @@ func (b *AccSelectBuilder) EachInt(handle func(int) error) error {
 		if err != nil {
 			return err
 		}
-		err = handle(theInt)
-		if err != nil {
+		if err = h(theInt); err != nil {
 			return err
 		}
 	}
@@ -303,8 +308,8 @@ type accInsertBuilder struct {
 	build *Accumulator
 }
 
-func (b *accInsertBuilder) Columns(columns string) *accInsertBuilder {
-	b.columns = columns
+func (b *accInsertBuilder) Columns(cols string) *accInsertBuilder {
+	b.columns = cols
 	return b
 }
 
@@ -334,7 +339,50 @@ func (b *accInsertBuilder) Run(args ...interface{}) (int, error) {
 	if err != nil {
 		return 0, err
 	}
+	lastID, err := res.LastInsertId()
+	return int(lastID), err
+}
 
+
+type accBulkInsertBuilder struct {
+	table   string
+	columns string
+	fieldSet []string
+
+	build *Accumulator
+}
+
+func (b *accBulkInsertBuilder) Columns(cols string) *accBulkInsertBuilder {
+	b.columns = cols
+	return b
+}
+
+func (b *accBulkInsertBuilder) Fields(fieldSet ...string) *accBulkInsertBuilder {
+	b.fieldSet = fieldSet
+	return b
+}
+
+func (b *accBulkInsertBuilder) Prepare() *sql.Stmt {
+	return b.build.SimpleBulkInsert(b.table, b.columns, b.fieldSet)
+}
+
+func (b *accBulkInsertBuilder) Exec(args ...interface{}) (res sql.Result, err error) {
+	query, err := b.build.adapter.SimpleBulkInsert("", b.table, b.columns, b.fieldSet)
+	if err != nil {
+		return res, err
+	}
+	return b.build.exec(query, args...)
+}
+
+func (b *accBulkInsertBuilder) Run(args ...interface{}) (int, error) {
+	query, err := b.build.adapter.SimpleBulkInsert("", b.table, b.columns, b.fieldSet)
+	if err != nil {
+		return 0, err
+	}
+	res, err := b.build.exec(query, args...)
+	if err != nil {
+		return 0, err
+	}
 	lastID, err := res.LastInsertId()
 	return int(lastID), err
 }
@@ -350,11 +398,11 @@ type accCountBuilder struct {
 	build *Accumulator
 }
 
-func (b *accCountBuilder) Where(where string) *accCountBuilder {
+func (b *accCountBuilder) Where(w string) *accCountBuilder {
 	if b.where != "" {
 		b.where += " AND "
 	}
-	b.where += where
+	b.where += w
 	return b
 }
 

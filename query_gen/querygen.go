@@ -144,6 +144,7 @@ type Adapter interface {
 	RemoveIndex(name, table, column string) (string, error)
 	AddForeignKey(name, table, column, ftable, fcolumn string, cascade bool) (out string, e error)
 	SimpleInsert(name, table, columns, fields string) (string, error)
+	SimpleBulkInsert(name, table, columns string, fieldSet []string) (string, error)
 	SimpleUpdate(b *updatePrebuilder) (string, error)
 	SimpleUpdateSelect(b *updatePrebuilder) (string, error) // ! Experimental
 	SimpleDelete(name, table, where string) (string, error)
