@@ -20,7 +20,8 @@ func Debug(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	dbVersion := qgen.Builder.DbVersion()
 	upDuration := time.Since(c.StartTime)
 	hours := int(upDuration.Hours())
-	minutes := int(upDuration.Minutes())
+	mins := int(upDuration.Minutes())
+	secs := int(upDuration.Seconds())
 	var uptime string
 	if hours > 24 {
 		days := hours / 24
@@ -28,9 +29,14 @@ func Debug(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 		uptime += strconv.Itoa(days) + "d"
 		uptime += strconv.Itoa(hours) + "h"
 	} else if hours >= 1 {
+		mins -= hours * 60
 		uptime += strconv.Itoa(hours) + "h"
+		uptime += strconv.Itoa(mins) + "m"
+	} else if mins >= 1 {
+		secs -= mins * 60
+		uptime += strconv.Itoa(mins) + "m"
+		uptime += strconv.Itoa(secs) + "s"
 	}
-	uptime += strconv.Itoa(minutes) + "m"
 
 	dbStats := qgen.Builder.GetConn().Stats()
 	openConnCount := dbStats.OpenConnections
