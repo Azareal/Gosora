@@ -139,11 +139,15 @@ func renderTemplate3(tmplName, hookName string, w http.ResponseWriter, r *http.R
 	//if h.CurrentUser.IsAdmin {
 	h.Elapsed1 = since.String()
 	//}
-	co.PerfCounter.Push(since)
 	if c.RunPreRenderHook("pre_render_"+hookName, w, r, &h.CurrentUser, pi) {
 		return nil
 	}
-	return h.Theme.RunTmpl(tmplName, pi, w)
+	err := h.Theme.RunTmpl(tmplName, pi, w)
+	if err != nil {
+		return err
+	}
+	co.PerfCounter.Push(since)
+	return nil
 }
 
 // TODO: Rename renderTemplate to RenderTemplate instead of using this hack to avoid breaking things
