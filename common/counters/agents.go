@@ -2,6 +2,7 @@ package counters
 
 import (
 	"database/sql"
+	"sync/atomic"
 
 	c "github.com/Azareal/Gosora/common"
 	qgen "github.com/Azareal/Gosora/query_gen"
@@ -11,18 +12,14 @@ import (
 var AgentViewCounter *DefaultAgentViewCounter
 
 type DefaultAgentViewCounter struct {
-	agentBuckets []*RWMutexCounterBucket //[AgentID]count
-	insert       *sql.Stmt
+	buckets []int64 //[AgentID]count
+	insert  *sql.Stmt
 }
 
 func NewDefaultAgentViewCounter(acc *qgen.Accumulator) (*DefaultAgentViewCounter, error) {
-	var agentBuckets = make([]*RWMutexCounterBucket, len(agentMapEnum))
-	for bucketID, _ := range agentBuckets {
-		agentBuckets[bucketID] = &RWMutexCounterBucket{counter: 0}
-	}
 	co := &DefaultAgentViewCounter{
-		agentBuckets: agentBuckets,
-		insert:       acc.Insert("viewchunks_agents").Columns("count, createdAt, browser").Fields("?,UTC_TIMESTAMP(),?").Prepare(),
+		buckets: make([]int64, len(agentMapEnum)),
+		insert:  acc.Insert("viewchunks_agents").Columns("count,createdAt,browser").Fields("?,UTC_TIMESTAMP(),?").Prepare(),
 	}
 	c.AddScheduledFifteenMinuteTask(co.Tick)
 	//c.AddScheduledSecondTask(co.Tick)
@@ -31,14 +28,9 @@ func NewDefaultAgentViewCounter(acc *qgen.Accumulator) (*DefaultAgentViewCounter
 }
 
 func (co *DefaultAgentViewCounter) Tick() error {
-	for agentID, agentBucket := range co.agentBuckets {
-		var count int
-		agentBucket.RLock()
-		count = agentBucket.counter
-		agentBucket.counter = 0
-		agentBucket.RUnlock()
-
-		err := co.insertChunk(count, agentID) // TODO: Bulk insert for speed?
+	for id, _ := range co.buckets {
+		count := atomic.SwapInt64(&co.buckets[id], 0)
+		err := co.insertChunk(count, id) // TODO: Bulk insert for speed?
 		if err != nil {
 			return errors.Wrap(errors.WithStack(err), "agent counter")
 		}
@@ -46,7 +38,7 @@ func (co *DefaultAgentViewCounter) Tick() error {
 	return nil
 }
 
-func (co *DefaultAgentViewCounter) insertChunk(count int, agent int) error {
+func (co *DefaultAgentViewCounter) insertChunk(count int64, agent int) error {
 	if count == 0 {
 		return nil
 	}
@@ -58,11 +50,9 @@ func (co *DefaultAgentViewCounter) insertChunk(count int, agent int) error {
 
 func (co *DefaultAgentViewCounter) Bump(agent int) {
 	// TODO: Test this check
-	c.DebugDetail("co.agentBuckets[", agent, "]: ", co.agentBuckets[agent])
-	if len(co.agentBuckets) <= agent || agent < 0 {
+	c.DebugDetail("co.buckets[", agent, "]: ", co.buckets[agent])
+	if len(co.buckets) <= agent || agent < 0 {
 		return
 	}
-	co.agentBuckets[agent].Lock()
-	co.agentBuckets[agent].counter++
-	co.agentBuckets[agent].Unlock()
+	atomic.AddInt64(&co.buckets[agent], 1)
 }

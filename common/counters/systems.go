@@ -2,6 +2,7 @@ package counters
 
 import (
 	"database/sql"
+	"sync/atomic"
 
 	c "github.com/Azareal/Gosora/common"
 	qgen "github.com/Azareal/Gosora/query_gen"
@@ -11,18 +12,14 @@ import (
 var OSViewCounter *DefaultOSViewCounter
 
 type DefaultOSViewCounter struct {
-	buckets []*RWMutexCounterBucket //[OSID]count
+	buckets []int64 //[OSID]count
 	insert  *sql.Stmt
 }
 
 func NewDefaultOSViewCounter(acc *qgen.Accumulator) (*DefaultOSViewCounter, error) {
-	var osBuckets = make([]*RWMutexCounterBucket, len(osMapEnum))
-	for bucketID, _ := range osBuckets {
-		osBuckets[bucketID] = &RWMutexCounterBucket{counter: 0}
-	}
 	co := &DefaultOSViewCounter{
-		buckets: osBuckets,
-		insert:  acc.Insert("viewchunks_systems").Columns("count, createdAt, system").Fields("?,UTC_TIMESTAMP(),?").Prepare(),
+		buckets: make([]int64, len(osMapEnum)),
+		insert:  acc.Insert("viewchunks_systems").Columns("count,createdAt,system").Fields("?,UTC_TIMESTAMP(),?").Prepare(),
 	}
 	c.AddScheduledFifteenMinuteTask(co.Tick)
 	//c.AddScheduledSecondTask(co.Tick)
@@ -31,13 +28,8 @@ func NewDefaultOSViewCounter(acc *qgen.Accumulator) (*DefaultOSViewCounter, erro
 }
 
 func (co *DefaultOSViewCounter) Tick() error {
-	for id, bucket := range co.buckets {
-		var count int
-		bucket.RLock()
-		count = bucket.counter
-		bucket.counter = 0 // TODO: Add a SetZero method to reduce the amount of duplicate code between the OS and agent counters?
-		bucket.RUnlock()
-
+	for id, _ := range co.buckets {
+		count := atomic.SwapInt64(&co.buckets[id], 0)
 		err := co.insertChunk(count, id) // TODO: Bulk insert for speed?
 		if err != nil {
 			return errors.Wrap(errors.WithStack(err), "system counter")
@@ -46,7 +38,7 @@ func (co *DefaultOSViewCounter) Tick() error {
 	return nil
 }
 
-func (co *DefaultOSViewCounter) insertChunk(count int, os int) error {
+func (co *DefaultOSViewCounter) insertChunk(count int64, os int) error {
 	if count == 0 {
 		return nil
 	}
@@ -62,7 +54,5 @@ func (co *DefaultOSViewCounter) Bump(id int) {
 	if len(co.buckets) <= id || id < 0 {
 		return
 	}
-	co.buckets[id].Lock()
-	co.buckets[id].counter++
-	co.buckets[id].Unlock()
+	atomic.AddInt64(&co.buckets[id], 1)
 }
