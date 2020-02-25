@@ -2,6 +2,7 @@ package counters
 
 import (
 	"database/sql"
+	"sync/atomic"
 
 	c "github.com/Azareal/Gosora/common"
 	qgen "github.com/Azareal/Gosora/query_gen"
@@ -12,7 +13,7 @@ var LangViewCounter *DefaultLangViewCounter
 
 var langCodes = []string{
 	"unknown",
-	"none",
+	"",
 	"af",
 	"ar",
 	"az",
@@ -98,26 +99,22 @@ var langCodes = []string{
 }
 
 type DefaultLangViewCounter struct {
-	buckets        []*RWMutexCounterBucket //[OSID]count
+	//buckets        []*MutexCounterBucket //[OSID]count
+	buckets        []int64 //[OSID]count
 	codesToIndices map[string]int
 
 	insert *sql.Stmt
 }
 
 func NewDefaultLangViewCounter(acc *qgen.Accumulator) (*DefaultLangViewCounter, error) {
-	langBuckets := make([]*RWMutexCounterBucket, len(langCodes))
-	for bucketID, _ := range langBuckets {
-		langBuckets[bucketID] = &RWMutexCounterBucket{counter: 0}
-	}
 	codesToIndices := make(map[string]int, len(langCodes))
 	for index, code := range langCodes {
 		codesToIndices[code] = index
 	}
-
 	co := &DefaultLangViewCounter{
-		buckets:        langBuckets,
+		buckets:        make([]int64, len(langCodes)),
 		codesToIndices: codesToIndices,
-		insert:         acc.Insert("viewchunks_langs").Columns("count, createdAt, lang").Fields("?,UTC_TIMESTAMP(),?").Prepare(),
+		insert:         acc.Insert("viewchunks_langs").Columns("count,createdAt,lang").Fields("?,UTC_TIMESTAMP(),?").Prepare(),
 	}
 
 	c.AddScheduledFifteenMinuteTask(co.Tick)
@@ -127,13 +124,8 @@ func NewDefaultLangViewCounter(acc *qgen.Accumulator) (*DefaultLangViewCounter, 
 }
 
 func (co *DefaultLangViewCounter) Tick() error {
-	for id, bucket := range co.buckets {
-		var count int
-		bucket.RLock()
-		count = bucket.counter
-		bucket.counter = 0 // TODO: Add a SetZero method to reduce the amount of duplicate code between the OS and agent counters?
-		bucket.RUnlock()
-
+	for id := 0; id < len(co.buckets); id++ {
+		count := atomic.SwapInt64(&co.buckets[id], 0)
 		err := co.insertChunk(count, id) // TODO: Bulk insert for speed?
 		if err != nil {
 			return errors.Wrap(errors.WithStack(err), "langview counter")
@@ -142,11 +134,14 @@ func (co *DefaultLangViewCounter) Tick() error {
 	return nil
 }
 
-func (co *DefaultLangViewCounter) insertChunk(count int, id int) error {
+func (co *DefaultLangViewCounter) insertChunk(count int64, id int) error {
 	if count == 0 {
 		return nil
 	}
 	langCode := langCodes[id]
+	if langCode == "" {
+		langCode = "none"
+	}
 	c.DebugLogf("Inserting a vchunk with a count of %d for lang %s (%d)", count, langCode, id)
 	_, err := co.insert.Exec(count, langCode)
 	return err
@@ -166,9 +161,7 @@ func (co *DefaultLangViewCounter) Bump(langCode string) (validCode bool) {
 	if len(co.buckets) <= id || id < 0 {
 		return validCode
 	}
-	co.buckets[id].Lock()
-	co.buckets[id].counter++
-	co.buckets[id].Unlock()
+	atomic.AddInt64(&co.buckets[id], 1)
 
 	return validCode
 }

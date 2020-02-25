@@ -742,10 +742,10 @@ func (r *GenRouter) handleError(err c.RouteError, w http.ResponseWriter, req *ht
 func (r *GenRouter) Handle(_ string, _ http.Handler) {
 }
 
-func (r *GenRouter) HandleFunc(pattern string, handle func(http.ResponseWriter, *http.Request, c.User) c.RouteError) {
+func (r *GenRouter) HandleFunc(pattern string, h func(http.ResponseWriter, *http.Request, c.User) c.RouteError) {
 	r.Lock()
 	defer r.Unlock()
-	r.extraRoutes[pattern] = handle
+	r.extraRoutes[pattern] = h
 }
 
 func (r *GenRouter) RemoveFunc(pattern string) error {
@@ -770,11 +770,11 @@ func (r *GenRouter) DumpRequest(req *http.Request, prepend string) {
 	r.requestLogger.Print(prepend + 
 		"\nUA: " + c.SanitiseSingleLine(req.UserAgent()) + "\n" +
 		"Method: " + c.SanitiseSingleLine(req.Method) + "\n" + heads + 
-		"req.Host: " + c.SanitiseSingleLine(req.Host) + "\n" + 
-		"req.URL.Path: " + c.SanitiseSingleLine(req.URL.Path) + "\n" + 
-		"req.URL.RawQuery: " + c.SanitiseSingleLine(req.URL.RawQuery) + "\n" + 
-		"req.Referer(): " + c.SanitiseSingleLine(req.Referer()) + "\n" + 
-		"req.RemoteAddr: " + req.RemoteAddr + "\n")
+		"Host: " + c.SanitiseSingleLine(req.Host) + "\n" + 
+		"URL.Path: " + c.SanitiseSingleLine(req.URL.Path) + "\n" + 
+		"URL.RawQuery: " + c.SanitiseSingleLine(req.URL.RawQuery) + "\n" + 
+		"Referer(): " + c.SanitiseSingleLine(req.Referer()) + "\n" + 
+		"RemoteAddr: " + req.RemoteAddr + "\n")
 }
 
 func (r *GenRouter) SuspiciousRequest(req *http.Request, prepend string) {
@@ -785,8 +785,8 @@ func (r *GenRouter) SuspiciousRequest(req *http.Request, prepend string) {
 	co.AgentViewCounter.Bump(29)
 }
 
-func isLocalHost(host string) bool {
-	return host=="localhost" || host=="127.0.0.1" || host=="::1"
+func isLocalHost(h string) bool {
+	return h=="localhost" || h=="127.0.0.1" || h=="::1"
 }
 
 // TODO: Pass the default path or config struct to the router rather than accessing it via a package global
@@ -943,10 +943,10 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		var items []string
 		var buffer []byte
 		var os string
-		for _, item := range StringToBytes(ua) {
-			if (item > 64 && item < 91) || (item > 96 && item < 123) {
-				buffer = append(buffer, item)
-			} else if item == ' ' || item == '(' || item == ')' || item == '-' || (item > 47 && item < 58) || item == '_' || item == ';' || item == ':' || item == '.' || item == '+' || item == '~' || item == '@' || (item == ':' && bytes.Equal(buffer,[]byte("http"))) || item == ',' || item == '/' {
+		for _, it := range StringToBytes(ua) {
+			if (it > 64 && it < 91) || (it > 96 && it < 123) {
+				buffer = append(buffer, it)
+			} else if it == ' ' || it == '(' || it == ')' || it == '-' || (it > 47 && it < 58) || it == '_' || it == ';' || it == ':' || it == '.' || it == '+' || it == '~' || it == '@' || (it == ':' && bytes.Equal(buffer,[]byte("http"))) || it == ',' || it == '/' {
 				if len(buffer) != 0 {
 					if len(buffer) > 2 {
 						// Use an unsafe zero copy conversion here just to use the switch, it's not safe for this string to escape from here, as it will get mutated, so do a regular string conversion in append
@@ -972,7 +972,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			} else {
 				// TODO: Test this
 				items = items[:0]
-				r.SuspiciousRequest(req,"Illegal char "+strconv.Itoa(int(item))+" in UA")
+				r.SuspiciousRequest(req,"Illegal char "+strconv.Itoa(int(it))+" in UA")
 				r.requestLogger.Print("UA Buffer: ", buffer)
 				r.requestLogger.Print("UA Buffer String: ", string(buffer))
 				break
@@ -1050,16 +1050,12 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			break
 		}
 		c.DebugDetail("llLang:", llLang)
-		if llLang == "" {
-			co.LangViewCounter.Bump("none")
-		} else {
-			validCode := co.LangViewCounter.Bump(llLang)
-			if !validCode {
-				r.DumpRequest(req,"Invalid ISO Code")
-			}
+		validCode := co.LangViewCounter.Bump(llLang)
+		if !validCode {
+			r.DumpRequest(req,"Invalid ISO Code")
 		}
 	} else {
-		co.LangViewCounter.Bump("none")
+		co.LangViewCounter.Bump("")
 	}
 
 	if !c.Config.RefNoTrack {
@@ -1114,7 +1110,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	//c.StoppedServer("Profile end")
 }
 	
-func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c.User, prefix string, extraData string) c.RouteError {
+func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c.User, prefix, extraData string) c.RouteError {
 	var err c.RouteError
 	switch(prefix) {
 		case "/overview":
@@ -2657,8 +2653,8 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 				return handle(w,req,user)
 			}
 
-			lowerPath := strings.ToLower(req.URL.Path)
-			if strings.Contains(lowerPath,"admin") || strings.Contains(lowerPath,"sql") || strings.Contains(lowerPath,"manage") || strings.Contains(lowerPath,"//") || strings.Contains(lowerPath,"\\\\") || strings.Contains(lowerPath,"wp") || strings.Contains(lowerPath,"wordpress") || strings.Contains(lowerPath,"config") || strings.Contains(lowerPath,"setup") || strings.Contains(lowerPath,"install") || strings.Contains(lowerPath,"update") || strings.Contains(lowerPath,"php") {
+			lp := strings.ToLower(req.URL.Path)
+			if strings.Contains(lp,"admin") || strings.Contains(lp,"sql") || strings.Contains(lp,"manage") || strings.Contains(lp,"//") || strings.Contains(lp,"\\\\") || strings.Contains(lp,"wp") || strings.Contains(lp,"wordpress") || strings.Contains(lp,"config") || strings.Contains(lp,"setup") || strings.Contains(lp,"install") || strings.Contains(lp,"update") || strings.Contains(lp,"php") || strings.Contains(lp,"pl") || strings.Contains(lp,"wget") || strings.Contains(lp,"wp-") || strings.Contains(lp,"include") || strings.Contains(lp,"vendor") || strings.Contains(lp,"bin") || strings.Contains(lp,"system") || strings.Contains(lp,"eval") || strings.Contains(lp,"config") {
 				r.SuspiciousRequest(req,"Bad Route")
 			} else {
 				r.DumpRequest(req,"Bad Route")
