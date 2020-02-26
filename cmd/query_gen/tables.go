@@ -662,6 +662,7 @@ func createTables(adapter qgen.Adapter) (err error) {
 	createTable("viewchunks", "", "",
 		[]tC{
 			tC{"count", "int", 0, false, false, "0"},
+			tC{"avg", "int", 0, false, false, "0"},
 			tC{"createdAt", "datetime", 0, false, false, ""},
 			tC{"route", "varchar", 200, false, false, ""}, // todo: set a default empty here
 		}, nil,

@@ -97,7 +97,7 @@ func (s *SQLReplyStore) Exists(id int) bool {
 }
 
 // TODO: Write a test for this
-func (s *SQLReplyStore) Create(t *Topic, content, ip string, uid int) (rid int, err error) {
+func (s *SQLReplyStore) Create(t *Topic, content, ip string, uid int) (id int, err error) {
 	if Config.DisablePostIP {
 		ip = ""
 	}
@@ -110,8 +110,8 @@ func (s *SQLReplyStore) Create(t *Topic, content, ip string, uid int) (rid int, 
 	if err != nil {
 		return 0, err
 	}
-	rid = int(lastID)
-	return rid, t.AddReply(rid, uid)
+	id = int(lastID)
+	return id, t.AddReply(id, uid)
 }
 
 // TODO: Write a test for this

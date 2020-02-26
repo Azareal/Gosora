@@ -113,6 +113,7 @@ type config struct {
 	EnableCDNPush          bool
 	DisableNoavatarRange   bool
 	DisableDefaultNoavatar bool
+	DisableAnalytics       bool
 
 	RefNoTrack bool
 	RefNoRef   bool

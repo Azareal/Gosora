@@ -50,6 +50,7 @@ func init() {
 	addPatch(30, patch30)
 	addPatch(31, patch31)
 	addPatch(32, patch32)
+	addPatch(33, patch33)
 }
 
 func patch0(scanner *bufio.Scanner) (err error) {
@@ -428,22 +429,22 @@ func patch10(scanner *bufio.Scanner) error {
 
 	err = acc().Select("topics").Cols("tid").EachInt(func(tid int) error {
 		stid := itoa(tid)
-		count, err := acc().Count("attachments").Where("originTable = 'topics' and originID = " + stid).Total()
+		count, err := acc().Count("attachments").Where("originTable = 'topics' and originID=" + stid).Total()
 		if err != nil {
 			return err
 		}
 
 		hasReply := false
-		err = acc().Select("replies").Cols("rid").Where("tid = " + stid).Orderby("rid DESC").Limit("1").EachInt(func(rid int) error {
+		err = acc().Select("replies").Cols("rid").Where("tid=" + stid).Orderby("rid DESC").Limit("1").EachInt(func(rid int) error {
 			hasReply = true
-			_, err := acc().Update("topics").Set("lastReplyID = ?, attachCount = ?").Where("tid = "+stid).Exec(rid, count)
+			_, err := acc().Update("topics").Set("lastReplyID=?, attachCount=?").Where("tid="+stid).Exec(rid, count)
 			return err
 		})
 		if err != nil {
 			return err
 		}
 		if !hasReply {
-			_, err = acc().Update("topics").Set("attachCount = ?").Where("tid = " + stid).Exec(count)
+			_, err = acc().Update("topics").Set("attachCount=?").Where("tid=" + stid).Exec(count)
 		}
 		return err
 	})
@@ -894,14 +895,17 @@ func patch31(scanner *bufio.Scanner) error {
 	return nil
 }
 
-
 func patch32(scanner *bufio.Scanner) error {
 	return execStmt(qgen.Builder.CreateTable("perfchunks", "", "",
-	[]tC{
-		tC{"low", "int", 0, false, false, "0"},
-		tC{"high", "int", 0, false, false, "0"},
-		tC{"avg", "int", 0, false, false, "0"},
-		tC{"createdAt", "datetime", 0, false, false, ""},
-	}, nil,
-))
+		[]tC{
+			tC{"low", "int", 0, false, false, "0"},
+			tC{"high", "int", 0, false, false, "0"},
+			tC{"avg", "int", 0, false, false, "0"},
+			tC{"createdAt", "datetime", 0, false, false, ""},
+		}, nil,
+	))
+}
+
+func patch33(scanner *bufio.Scanner) error {
+	return execStmt(qgen.Builder.AddColumn("viewchunks", tC{"avg", "int", 0, false, false, "0"}, nil))
 }

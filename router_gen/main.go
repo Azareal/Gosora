@@ -47,23 +47,24 @@ func main() {
 		allRouteNames = append(allRouteNames, RouteName{name, strings.Replace(name, "common.", "c.", -1)})
 		allRouteMap[name] = len(allRouteNames) - 1
 	}
+	mapIt("routes.Error")
 	countToIndents := func(indent int) (indentor string) {
 		for i := 0; i < indent; i++ {
 			indentor += "\t"
 		}
 		return indentor
 	}
-	runBefore := func(runnables []Runnable, indent int) (out string) {
-		indentor := countToIndents(indent)
+	runBefore := func(runnables []Runnable, indentCount int) (out string) {
+		indent := countToIndents(indentCount)
 		if len(runnables) > 0 {
 			for _, runnable := range runnables {
 				if runnable.Literal {
-					out += "\n\t" + indentor + runnable.Contents
+					out += "\n\t" + indent + runnable.Contents
 				} else {
-					out += "\n" + indentor + "err = c." + runnable.Contents + "(w,req,user)\n" +
-						indentor + "if err != nil {\n" +
-						indentor + "\treturn err\n" +
-						indentor + "}\n" + indentor
+					out += "\n" + indent + "err = c." + runnable.Contents + "(w,req,user)\n" +
+						indent + "if err != nil {\n" +
+						indent + "\treturn err\n" +
+						indent + "}\n" + indent
 				}
 			}
 		}
@@ -74,13 +75,13 @@ func main() {
 		mapIt(route.Name)
 		end := len(route.Path) - 1
 		out += "\n\t\tcase \"" + route.Path[0:end] + "\":"
+		//out += "\n\t\t\tid = " + strconv.Itoa(allRouteMap[route.Name])
 		out += runBefore(route.RunBefore, 4)
-		out += "\n\t\t\tco.RouteViewCounter.Bump(" + strconv.Itoa(allRouteMap[route.Name]) + ")"
 		if !route.Action && !route.NoHead {
-			out += "\n\t\t\thead, err := c.UserCheck(w,req,&user)"
+			out += "\n\t\t\th, err := c.UserCheck(w,req,&user)"
 			out += "\n\t\t\tif err != nil {\n\t\t\t\treturn err\n\t\t\t}"
 			vcpy := route.Vars
-			route.Vars = []string{"head"}
+			route.Vars = []string{"h"}
 			route.Vars = append(route.Vars, vcpy...)
 		}
 		out += "\n\t\t\terr = " + strings.Replace(route.Name, "common.", "c.", -1) + "(w,req,user"
@@ -88,6 +89,11 @@ func main() {
 			out += "," + item
 		}
 		out += `)`
+		if !route.Action && !route.NoHead {
+			out += "\n\t\t\tco.RouteViewCounter.Bump2(" + strconv.Itoa(allRouteMap[route.Name]) + ", h.StartedAt)"
+		} else {
+			out += "\n\t\t\tco.RouteViewCounter.Bump(" + strconv.Itoa(allRouteMap[route.Name]) + ")"
+		}
 	}
 
 	for _, group := range r.routeGroups {
@@ -105,6 +111,7 @@ func main() {
 			mapIt(route.Name)
 
 			out += "\n\t\t\t\tcase \"" + route.Path + "\":"
+			//out += "\n\t\t\t\t\tid = " + strconv.Itoa(allRouteMap[route.Name])
 			if len(route.RunBefore) > 0 {
 			skipRunnable:
 				for _, runnable := range route.RunBefore {
@@ -136,12 +143,11 @@ func main() {
 					}
 				}
 			}
-			out += "\n\t\t\t\t\tco.RouteViewCounter.Bump(" + strconv.Itoa(allRouteMap[route.Name]) + ")"
 			if !route.Action && !route.NoHead && !group.NoHead {
-				out += "\n\t\t\t\thead, err := c.UserCheck(w,req,&user)"
+				out += "\n\t\t\t\th, err := c.UserCheck(w,req,&user)"
 				out += "\n\t\t\t\tif err != nil {\n\t\t\t\t\treturn err\n\t\t\t\t}"
 				vcpy := route.Vars
-				route.Vars = []string{"head"}
+				route.Vars = []string{"h"}
 				route.Vars = append(route.Vars, vcpy...)
 			}
 			out += "\n\t\t\t\t\terr = " + strings.Replace(route.Name, "common.", "c.", -1) + "(w,req,user"
@@ -149,18 +155,23 @@ func main() {
 				out += "," + item
 			}
 			out += ")"
+			if !route.Action && !route.NoHead && !group.NoHead {
+				out += "\n\t\t\t\t\tco.RouteViewCounter.Bump2(" + strconv.Itoa(allRouteMap[route.Name]) + ", h.StartedAt)"
+			} else {
+				out += "\n\t\t\t\t\tco.RouteViewCounter.Bump(" + strconv.Itoa(allRouteMap[route.Name]) + ")"
+			}
 		}
 
 		if defaultRoute.Name != "" {
 			mapIt(defaultRoute.Name)
 			out += "\n\t\t\t\tdefault:"
+			//out += "\n\t\t\t\t\tid = " + strconv.Itoa(allRouteMap[defaultRoute.Name])
 			out += runBefore(defaultRoute.RunBefore, 4)
-			out += "\n\t\t\t\t\tco.RouteViewCounter.Bump(" + strconv.Itoa(allRouteMap[defaultRoute.Name]) + ")"
 			if !defaultRoute.Action && !defaultRoute.NoHead && !group.NoHead {
-				out += "\n\t\t\t\t\thead, err := c.UserCheck(w,req,&user)"
+				out += "\n\t\t\t\t\th, err := c.UserCheck(w,req,&user)"
 				out += "\n\t\t\t\t\tif err != nil {\n\t\t\t\t\t\treturn err\n\t\t\t\t\t}"
 				vcpy := defaultRoute.Vars
-				defaultRoute.Vars = []string{"head"}
+				defaultRoute.Vars = []string{"h"}
 				defaultRoute.Vars = append(defaultRoute.Vars, vcpy...)
 			}
 			out += "\n\t\t\t\t\terr = " + strings.Replace(defaultRoute.Name, "common.", "c.", -1) + "(w,req,user"
@@ -168,6 +179,11 @@ func main() {
 				out += ", " + item
 			}
 			out += ")"
+			if !defaultRoute.Action && !defaultRoute.NoHead && !group.NoHead {
+				out += "\n\t\t\t\t\tco.RouteViewCounter.Bump2(" + strconv.Itoa(allRouteMap[defaultRoute.Name]) + ", h.StartedAt)"
+			} else {
+				out += "\n\t\t\t\t\tco.RouteViewCounter.Bump(" + strconv.Itoa(allRouteMap[defaultRoute.Name]) + ")"
+			}
 		}
 		out += `
 			}`
@@ -180,6 +196,7 @@ func main() {
 	mapIt("routes.RobotsTxt")
 	mapIt("routes.SitemapXml")
 	mapIt("routes.OpenSearchXml")
+	mapIt("routes.Favicon")
 	mapIt("routes.BadRoute")
 	mapIt("routes.HTTPSRedirect")
 	tmplVars.AllRouteNames = allRouteNames
@@ -462,7 +479,7 @@ func (r *GenRouter) DumpRequest(req *http.Request, prepend string) {
 	var heads string
 	for key, value := range req.Header {
 		for _, vvalue := range value {
-			heads += "Header '" + c.SanitiseSingleLine(key) + "': " + c.SanitiseSingleLine(vvalue) + "!\n"
+			heads += "Header '" + c.SanitiseSingleLine(key) + "': " + c.SanitiseSingleLine(vvalue) + "\n"
 		}
 	}
 
@@ -472,7 +489,7 @@ func (r *GenRouter) DumpRequest(req *http.Request, prepend string) {
 		"Host: " + c.SanitiseSingleLine(req.Host) + "\n" + 
 		"URL.Path: " + c.SanitiseSingleLine(req.URL.Path) + "\n" + 
 		"URL.RawQuery: " + c.SanitiseSingleLine(req.URL.RawQuery) + "\n" + 
-		"Referer(): " + c.SanitiseSingleLine(req.Referer()) + "\n" + 
+		"Referer: " + c.SanitiseSingleLine(req.Referer()) + "\n" + 
 		"RemoteAddr: " + req.RemoteAddr + "\n")
 }
 
@@ -562,9 +579,9 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			break
 		}
 	}
-	lowerPath := strings.ToLower(req.URL.Path)
+	lp := strings.ToLower(req.URL.Path)
 	// TODO: Flag any requests which has a dot with anything but a number after that
-	if strings.Contains(req.URL.Path,"..") || strings.Contains(req.URL.Path,"--") || strings.Contains(lowerPath,".php") || strings.Contains(lowerPath,".asp") || strings.Contains(lowerPath,".cgi") || strings.Contains(lowerPath,".py") || strings.Contains(lowerPath,".sql") || strings.Contains(lowerPath,".action") {
+	if strings.Contains(lp,"..")/* || strings.Contains(lp,"--")*/ || strings.Contains(lp,".php") || strings.Contains(lp,".asp") || strings.Contains(lp,".cgi") || strings.Contains(lp,".py") || strings.Contains(lp,".sql") || strings.Contains(lp,".action") {
 		r.SuspiciousRequest(req,"Bad snippet in path")
 	}
 
@@ -572,6 +589,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if req.URL.Path == "/" {
 		req.URL.Path = c.Config.DefaultPath
 	}
+	//log.Print("URL.Path: ", req.URL.Path)
 	
 	var prefix, extraData string
 	prefix = req.URL.Path[0:strings.IndexByte(req.URL.Path[1:],'/') + 1]
@@ -603,10 +621,14 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		r.DumpRequest(req,"before routes.StaticFile")
 	}
 	// Increment the request counter
-	co.GlobalViewCounter.Bump()
+	if !c.Config.DisableAnalytics {
+		co.GlobalViewCounter.Bump()
+	}
 	
 	if prefix == "/s" { //old prefix: /static
-		co.RouteViewCounter.Bump({{index .AllRouteMap "routes.StaticFile"}})
+		if !c.Config.DisableAnalytics {
+			co.RouteViewCounter.Bump({{index .AllRouteMap "routes.StaticFile"}})
+		}
 		req.URL.Path += extraData
 		routes.StaticFile(w, req)
 		return
@@ -626,8 +648,10 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	// Track the user agents. Unfortunately, everyone pretends to be Mozilla, so this'll be a little less efficient than I would like.
 	// TODO: Add a setting to disable this?
 	// TODO: Use a more efficient detector instead of smashing every possible combination in
-	ua := strings.TrimSpace(strings.Replace(strings.TrimPrefix(req.UserAgent(),"Mozilla/5.0 ")," Safari/537.36","",-1)) // Noise, no one's going to be running this and it would require some sort of agent ranking system to determine which identifier should be prioritised over another
 	var agent string
+	if !c.Config.DisableAnalytics {
+	
+	ua := strings.TrimSpace(strings.Replace(strings.TrimPrefix(req.UserAgent(),"Mozilla/5.0 ")," Safari/537.36","",-1)) // Noise, no one's going to be running this and it would require some sort of agent ranking system to determine which identifier should be prioritised over another
 	if ua == "" {
 		co.AgentViewCounter.Bump({{.AllAgentMap.blank}})
 		if c.Dev.DebugMode {
@@ -736,8 +760,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	// TODO: Do we want to track missing language headers too? Maybe as it's own type, e.g. "noheader"?
 	lang := req.Header.Get("Accept-Language")
 	if lang != "" {
-		lang = strings.TrimSpace(lang)
-		lLang := strings.Split(lang,"-")
+		lLang := strings.Split(strings.TrimSpace(lang),"-")
 		tLang := strings.Split(strings.Split(lLang[0],";")[0],",")
 		c.DebugDetail("tLang:", tLang)
 		var llLang string
@@ -764,10 +787,13 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			ref = strings.TrimPrefix(strings.TrimPrefix(ref,"http://"),"https://")
 			ref = strings.Split(ref,"/")[0]
 			portless := strings.Split(ref,":")[0]
+			// TODO: Handle c.Site.Host in uppercase too?
 			if portless != "localhost" && portless != "127.0.0.1" && portless != c.Site.Host {
 				co.ReferrerTracker.Bump(ref)
 			}
 		}
+	}
+
 	}
 	
 	// Deal with the session stuff, etc.
@@ -804,12 +830,15 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if ferr != nil {
 		r.handleError(ferr,w,req,user)
 	}
+	/*if !c.Config.DisableAnalytics {
+		co.RouteViewCounter.Bump(id)
+	}*/
 
 	hTbl.VhookNoRet("router_end", w, req, user, prefix, extraData)
 	//c.StoppedServer("Profile end")
 }
 	
-func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c.User, prefix, extraData string) c.RouteError {
+func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c.User, prefix, extraData string) /*(id int, orerr */c.RouteError/*)*/ {
 	var err c.RouteError
 	switch(prefix) {` + out + `
 		/*case "/sitemaps": // TODO: Count these views
@@ -817,6 +846,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 			err = sitemapSwitch(w,req)*/
 		case "/uploads":
 			if extraData == "" {
+				co.RouteViewCounter.Bump({{index .AllRouteMap "routes.UploadedFile"}})
 				return c.NotFound(w,req,nil)
 			}
 			gzw, ok := w.(c.GzipResponseWriter)
@@ -826,10 +856,10 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 				h.Del("Content-Type")
 				h.Del("Content-Encoding")
 			}
-			co.RouteViewCounter.Bump({{index .AllRouteMap "routes.UploadedFile"}})
 			req.URL.Path += extraData
 			// TODO: Find a way to propagate errors up from this?
 			r.UploadHandler(w,req) // TODO: Count these views
+			co.RouteViewCounter.Bump({{index .AllRouteMap "routes.UploadedFile"}})
 			return nil
 		case "":
 			// Stop the favicons, robots.txt file, etc. resolving to the topics list
@@ -848,6 +878,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					}
 					req.URL.Path = "/s/favicon.ico"
 					routes.StaticFile(w,req)
+					co.RouteViewCounter.Bump({{index .AllRouteMap "routes.Favicon"}})
 					return nil
 				case "opensearch.xml":
 					co.RouteViewCounter.Bump({{index .AllRouteMap "routes.OpenSearchXml"}})
@@ -856,17 +887,19 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					co.RouteViewCounter.Bump({{index .AllRouteMap "routes.SitemapXml"}})
 					return routes.SitemapXml(w,req)*/
 			}
+			co.RouteViewCounter.Bump({{index .AllRouteMap "routes.Error"}})
 			return c.NotFound(w,req,nil)
 		default:
 			// A fallback for dynamic routes, e.g. ones declared by plugins
 			r.RLock()
-			handle, ok := r.extraRoutes[req.URL.Path]
+			h, ok := r.extraRoutes[req.URL.Path]
 			r.RUnlock()
 			
 			if ok {
-				co.RouteViewCounter.Bump({{index .AllRouteMap "routes.DynamicRoute"}}) // TODO: Be more specific about *which* dynamic route it is
 				req.URL.Path += extraData
-				return handle(w,req,user)
+				// TODO: Be more specific about *which* dynamic route it is
+				co.RouteViewCounter.Bump({{index .AllRouteMap "routes.DynamicRoute"}})
+				return h(w,req,user)
 			}
 
 			lp := strings.ToLower(req.URL.Path)
@@ -904,5 +937,8 @@ func writeFile(name, content string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	f.Close()
+	err = f.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
 }

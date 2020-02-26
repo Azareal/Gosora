@@ -157,7 +157,7 @@ func (co *DefaultLangViewCounter) Bump(langCode string) (validCode bool) {
 	}
 
 	// TODO: Test this check
-	c.DebugDetail("co.buckets[", id, "]: ", co.buckets[id])
+	c.DebugDetail("buckets[", id, "]: ", co.buckets[id])
 	if len(co.buckets) <= id || id < 0 {
 		return validCode
 	}

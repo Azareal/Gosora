@@ -50,7 +50,7 @@ func (co *DefaultAgentViewCounter) insertChunk(count int64, agent int) error {
 
 func (co *DefaultAgentViewCounter) Bump(agent int) {
 	// TODO: Test this check
-	c.DebugDetail("co.buckets[", agent, "]: ", co.buckets[agent])
+	c.DebugDetail("buckets[", agent, "]: ", co.buckets[agent])
 	if len(co.buckets) <= agent || agent < 0 {
 		return
 	}

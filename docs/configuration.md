@@ -116,6 +116,8 @@ DisableNoavatarRange - This switch lets you disable the noavatar algorithm which
 
 DisableDefaultNoavatar - This switch lets you disable the default noavatar algorithm which may intercept noavatars for increased efficiency. Default: false
 
+DisableAnalytics - This switch lets you disable the analytics subsystem. Default: false
+
 RefNoTrack - This switch disables tracking the referrers of users who click from another site to your site and the referrers of any requests to resources from other sites as-well.
 
 RefNoRef - This switch makes it so that if a user clicks on a link, then the incoming site won't know which site they're coming from.

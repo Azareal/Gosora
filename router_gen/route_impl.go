@@ -63,8 +63,9 @@ func (r *RouteImpl) NoGzip() *RouteImpl {
 	return r.LitBeforeMultiline(`gzw, ok := w.(c.GzipResponseWriter)
 	if ok {
 		w = gzw.ResponseWriter
-		w.Header().Del("Content-Type")
-		w.Header().Del("Content-Encoding")
+		h := w.Header()
+		h.Del("Content-Type")
+		h.Del("Content-Encoding")
 	}`)
 }
 
@@ -77,15 +78,15 @@ func blankRoute() *RouteImpl {
 	return &RouteImpl{"", "", false, false, []string{}, []Runnable{}, nil}
 }
 
-func route(fname string, path string, action bool, special bool, args ...string) *RouteImpl {
+func route(fname, path string, action, special bool, args ...string) *RouteImpl {
 	return &RouteImpl{fname, path, action, special, args, []Runnable{}, nil}
 }
 
-func View(fname string, path string, args ...string) *RouteImpl {
+func View(fname, path string, args ...string) *RouteImpl {
 	return route(fname, path, false, false, args...)
 }
 
-func MView(fname string, path string, args ...string) *RouteImpl {
+func MView(fname, path string, args ...string) *RouteImpl {
 	route := route(fname, path, false, false, args...)
 	if !route.hasBefore("SuperModOnly", "AdminOnly") {
 		route.Before("MemberOnly")
@@ -93,7 +94,7 @@ func MView(fname string, path string, args ...string) *RouteImpl {
 	return route
 }
 
-func MemberView(fname string, path string, args ...string) *RouteImpl {
+func MemberView(fname, path string, args ...string) *RouteImpl {
 	route := route(fname, path, false, false, args...)
 	if !route.hasBefore("SuperModOnly", "AdminOnly") {
 		route.Before("MemberOnly")
@@ -101,7 +102,7 @@ func MemberView(fname string, path string, args ...string) *RouteImpl {
 	return route
 }
 
-func ModView(fname string, path string, args ...string) *RouteImpl {
+func ModView(fname, path string, args ...string) *RouteImpl {
 	route := route(fname, path, false, false, args...)
 	if !route.hasBefore("AdminOnly") {
 		route.Before("SuperModOnly")
@@ -109,7 +110,7 @@ func ModView(fname string, path string, args ...string) *RouteImpl {
 	return route
 }
 
-func Action(fname string, path string, args ...string) *RouteImpl {
+func Action(fname, path string, args ...string) *RouteImpl {
 	route := route(fname, path, true, false, args...)
 	route.Before("NoSessionMismatch")
 	if !route.hasBefore("SuperModOnly", "AdminOnly") {
@@ -118,11 +119,11 @@ func Action(fname string, path string, args ...string) *RouteImpl {
 	return route
 }
 
-func AnonAction(fname string, path string, args ...string) *RouteImpl {
+func AnonAction(fname, path string, args ...string) *RouteImpl {
 	return route(fname, path, true, false, args...).Before("ParseForm")
 }
 
-func Special(fname string, path string, args ...string) *RouteImpl {
+func Special(fname, path string, args ...string) *RouteImpl {
 	return route(fname, path, false, true, args...).LitBefore("req.URL.Path += extraData")
 }
 
@@ -131,7 +132,7 @@ type uploadAction struct {
 	Route *RouteImpl
 }
 
-func UploadAction(fname string, path string, args ...string) *uploadAction {
+func UploadAction(fname, path string, args ...string) *uploadAction {
 	route := route(fname, path, true, false, args...)
 	if !route.hasBefore("SuperModOnly", "AdminOnly") {
 		route.Before("MemberOnly")
@@ -154,6 +155,6 @@ type RouteSet struct {
 	Items []*RouteImpl
 }
 
-func Set(name string, path string, routes ...*RouteImpl) RouteSet {
+func Set(name, path string, routes ...*RouteImpl) RouteSet {
 	return RouteSet{name, path, routes}
 }

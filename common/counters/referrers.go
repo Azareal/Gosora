@@ -85,7 +85,7 @@ func (ref *DefaultReferrerTracker) insertChunk(referrer string, count int64) err
 	if count == 0 {
 		return nil
 	}
-	c.DebugDetailf("Inserting a vchunk with a count of %d for referrer %s", count, referrer)
+	c.DebugDetailf("Inserting a vchunk with a count of %d for ref %s", count, referrer)
 	_, err := ref.insert.Exec(count, referrer)
 	return err
 }

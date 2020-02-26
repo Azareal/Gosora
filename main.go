@@ -32,6 +32,7 @@ import (
 	qgen "github.com/Azareal/Gosora/query_gen"
 	"github.com/Azareal/Gosora/routes"
 	"github.com/fsnotify/fsnotify"
+
 	//"github.com/lucas-clemente/quic-go/http3"
 	"github.com/pkg/errors"
 )
@@ -272,21 +273,37 @@ func storeInit() (err error) {
 	}
 
 	log.Print("Initialising the view counters")
-	co.GlobalViewCounter, err = co.NewGlobalViewCounter(acc)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	co.AgentViewCounter, err = co.NewDefaultAgentViewCounter(acc)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	co.OSViewCounter, err = co.NewDefaultOSViewCounter(acc)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	co.LangViewCounter, err = co.NewDefaultLangViewCounter(acc)
-	if err != nil {
-		return errors.WithStack(err)
+	if !c.Config.DisableAnalytics {
+		co.GlobalViewCounter, err = co.NewGlobalViewCounter(acc)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		co.AgentViewCounter, err = co.NewDefaultAgentViewCounter(acc)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		co.OSViewCounter, err = co.NewDefaultOSViewCounter(acc)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		co.LangViewCounter, err = co.NewDefaultLangViewCounter(acc)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		if !c.Config.RefNoTrack {
+			co.ReferrerTracker, err = co.NewDefaultReferrerTracker()
+			if err != nil {
+				return errors.WithStack(err)
+			}
+		}
+		co.MemoryCounter, err = co.NewMemoryCounter(acc)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		co.PerfCounter, err = co.NewDefaultPerfCounter(acc)
+		if err != nil {
+			return errors.WithStack(err)
+		}
 	}
 	co.RouteViewCounter, err = co.NewDefaultRouteViewCounter(acc)
 	if err != nil {
@@ -305,18 +322,6 @@ func storeInit() (err error) {
 		return errors.WithStack(err)
 	}
 	co.ForumViewCounter, err = co.NewDefaultForumViewCounter()
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	co.ReferrerTracker, err = co.NewDefaultReferrerTracker()
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	co.MemoryCounter, err = co.NewMemoryCounter(acc)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	co.PerfCounter, err = co.NewDefaultPerfCounter(acc)
 	if err != nil {
 		return errors.WithStack(err)
 	}
