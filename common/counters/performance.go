@@ -2,9 +2,8 @@ package counters
 
 import (
 	"database/sql"
-	"sync/atomic"
-	"time"
 	"math"
+	"time"
 
 	c "github.com/Azareal/Gosora/common"
 	qgen "github.com/Azareal/Gosora/query_gen"
@@ -14,9 +13,9 @@ import (
 var PerfCounter *DefaultPerfCounter
 
 type PerfCounterBucket struct {
-	low *MutexCounter64Bucket
+	low  *MutexCounter64Bucket
 	high *MutexCounter64Bucket
-	avg *MutexCounter64Bucket
+	avg  *MutexCounter64Bucket
 }
 
 // TODO: Track perf on a per route basis
@@ -28,14 +27,14 @@ type DefaultPerfCounter struct {
 
 func NewDefaultPerfCounter(acc *qgen.Accumulator) (*DefaultPerfCounter, error) {
 	co := &DefaultPerfCounter{
-		buckets:       	[]PerfCounterBucket{
+		buckets: []PerfCounterBucket{
 			PerfCounterBucket{
-				low: &MutexCounter64Bucket{counter: 0},
+				low:  &MutexCounter64Bucket{counter: math.MaxInt64},
 				high: &MutexCounter64Bucket{counter: 0},
-				avg: &MutexCounter64Bucket{counter: 0},
+				avg:  &MutexCounter64Bucket{counter: 0},
 			},
 		},
-		insert:         acc.Insert("perfchunks").Columns("low,high,avg,createdAt").Fields("?,?,?,UTC_TIMESTAMP()").Prepare(),
+		insert: acc.Insert("perfchunks").Columns("low,high,avg,createdAt").Fields("?,?,?,UTC_TIMESTAMP()").Prepare(),
 	}
 
 	c.AddScheduledFifteenMinuteTask(co.Tick)
@@ -45,11 +44,19 @@ func NewDefaultPerfCounter(acc *qgen.Accumulator) (*DefaultPerfCounter, error) {
 }
 
 func (co *DefaultPerfCounter) Tick() error {
-	getCounter := func(b *MutexCounter64Bucket) int64 {
-		return atomic.SwapInt64(&b.counter, 0)
+	getCounter := func(b *MutexCounter64Bucket) (c int64) {
+		b.Lock()
+		c = b.counter
+		b.counter = 0
+		b.Unlock()
+		return c
 	}
 	for _, b := range co.buckets {
-		low := atomic.SwapInt64(&b.low.counter, math.MaxInt64)
+		var low int64
+		b.low.Lock()
+		low = b.low.counter
+		b.low.counter = math.MaxInt64
+		b.low.Unlock()
 		if low == math.MaxInt64 {
 			low = 0
 		}
@@ -73,41 +80,34 @@ func (co *DefaultPerfCounter) insertChunk(low, high, avg int64) error {
 	return err
 }
 
-func (co *DefaultPerfCounter) Push(dur time.Duration) {
+func (co *DefaultPerfCounter) Push(dur time.Duration /*_ bool*/) {
 	id := 0
 	b := co.buckets[id]
-	//c.DebugDetail("co.buckets[", id, "]: ", b)
+	//c.DebugDetail("buckets[", id, "]: ", b)
 	micro := dur.Microseconds()
 
 	low := b.low
+	low.Lock()
 	if micro < low.counter {
-		low.Lock()
-		if micro < low.counter {
-			atomic.StoreInt64(&low.counter,micro)
-		}
-		low.Unlock()
+		low.counter = micro
 	}
+	low.Unlock()
 
 	high := b.high
+	high.Lock()
 	if micro > high.counter {
-		high.Lock()
-		if micro > high.counter {
-			atomic.StoreInt64(&high.counter,micro)
-		}
-		high.Unlock()
+		high.counter = micro
 	}
+	high.Unlock()
 
 	avg := b.avg
-	// TODO: Sync semantics are slightly loose but it should be close enough for our purposes here
+	avg.Lock()
 	if micro != avg.counter {
-		t := false
-		avg.Lock()
 		if avg.counter == 0 {
-			t = atomic.CompareAndSwapInt64(&avg.counter, 0, micro)
+			avg.counter = micro
+		} else {
+			avg.counter = (micro + avg.counter) / 2
 		}
-		if !t && micro != avg.counter {
-			atomic.StoreInt64(&avg.counter,(micro+avg.counter) / 2)
-		}
-		avg.Unlock()
 	}
+	avg.Unlock()
 }
