@@ -80,11 +80,14 @@ func (co *DefaultPerfCounter) insertChunk(low, high, avg int64) error {
 	return err
 }
 
-func (co *DefaultPerfCounter) Push(dur time.Duration /*_ bool*/) {
+func (co *DefaultPerfCounter) Push(dur time.Duration /*,_ bool*/) {
 	id := 0
 	b := co.buckets[id]
 	//c.DebugDetail("buckets[", id, "]: ", b)
 	micro := dur.Microseconds()
+	if micro == math.MaxInt32 {
+		c.LogWarning(errors.New("dur should not be int32 max"))
+	}
 
 	low := b.low
 	low.Lock()
