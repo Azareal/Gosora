@@ -85,8 +85,8 @@ func (co *DefaultPerfCounter) Push(dur time.Duration /*,_ bool*/) {
 	b := co.buckets[id]
 	//c.DebugDetail("buckets[", id, "]: ", b)
 	micro := dur.Microseconds()
-	if micro == math.MaxInt32 {
-		c.LogWarning(errors.New("dur should not be int32 max"))
+	if micro >= math.MaxInt32 {
+		c.LogWarning(errors.New("dur should not be int32 max or higher"))
 	}
 
 	low := b.low
