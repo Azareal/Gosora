@@ -20,15 +20,15 @@ type PerfCounterBucket struct {
 
 // TODO: Track perf on a per route basis
 type DefaultPerfCounter struct {
-	buckets []PerfCounterBucket
+	buckets []*PerfCounterBucket
 
 	insert *sql.Stmt
 }
 
 func NewDefaultPerfCounter(acc *qgen.Accumulator) (*DefaultPerfCounter, error) {
 	co := &DefaultPerfCounter{
-		buckets: []PerfCounterBucket{
-			PerfCounterBucket{
+		buckets: []*PerfCounterBucket{
+			&PerfCounterBucket{
 				low:  &MutexCounter64Bucket{counter: math.MaxInt64},
 				high: &MutexCounter64Bucket{counter: 0},
 				avg:  &MutexCounter64Bucket{counter: 0},
