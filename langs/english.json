@@ -800,6 +800,7 @@
 		"panel_menu_stats_topics":"Topics",
 		"panel_menu_stats_forums":"Forums",
 		"panel_menu_stats_routes":"Routes",
+		"panel_menu_stats_routes_perf":"Routes Perf",
 		"panel_menu_stats_agents":"Agents",
 		"panel_menu_stats_systems":"Systems",
 		"panel_menu_stats_languages":"Languages",

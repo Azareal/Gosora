@@ -81,6 +81,7 @@ func analyticsTimeRange(rawTimeRange string) (*AnalyticsTimeRange, error) {
 	return tRange, nil
 }
 
+// TODO: Clamp it rather than using an offset off the current time to avoid chaotic changes in stats as adjacent sets converge and diverge?
 func analyticsTimeRangeToLabelList(timeRange *AnalyticsTimeRange) (revLabelList []int64, labelList []int64, viewMap map[int64]int64) {
 	viewMap = make(map[int64]int64)
 	currentTime := time.Now().Unix()
@@ -715,6 +716,171 @@ func AnalyticsPerf(w http.ResponseWriter, r *http.Request, user c.User) c.RouteE
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_analytics_right", "analytics", "panel_analytics_performance", pi})
 }
 
+func analyticsRowsToAvgDuoMap(rows *sql.Rows, labelList []int64, avgMap map[int64]int64) (map[string]map[int64]int64, map[string]int, error) {
+	aMap := make(map[string]map[int64]int64)
+	nameMap := make(map[string]int)
+	defer rows.Close()
+	for rows.Next() {
+		var count int64
+		var name string
+		var createdAt time.Time
+		err := rows.Scan(&count, &name, &createdAt)
+		if err != nil {
+			return aMap, nameMap, err
+		}
+
+		// TODO: Bulk log this
+		unixCreatedAt := createdAt.Unix()
+		if c.Dev.SuperDebug {
+			log.Print("count: ", count)
+			log.Print("name: ", name)
+			log.Print("createdAt: ", createdAt)
+			log.Print("unixCreatedAt: ", unixCreatedAt)
+		}
+
+		vvMap, ok := aMap[name]
+		if !ok {
+			vvMap = make(map[int64]int64)
+			for key, val := range avgMap {
+				vvMap[key] = val
+			}
+			aMap[name] = vvMap
+		}
+		for _, value := range labelList {
+			if unixCreatedAt > value {
+				vvMap[value] = (vvMap[value] + count) / 2
+				break
+			}
+		}
+		nameMap[name] = (nameMap[name] + int(count)) / 2
+	}
+	return aMap, nameMap, rows.Err()
+}
+
+func sortOVList(ovList []OVItem) (tOVList []OVItem) {
+	// Use bubble sort for now as there shouldn't be too many items
+	for i := 0; i < len(ovList)-1; i++ {
+		for j := 0; j < len(ovList)-1; j++ {
+			if ovList[j].count > ovList[j+1].count {
+				temp := ovList[j]
+				ovList[j] = ovList[j+1]
+				ovList[j+1] = temp
+			}
+		}
+	}
+
+	// Invert the direction
+	for i := len(ovList) - 1; i >= 0; i-- {
+		tOVList = append(tOVList, ovList[i])
+	}
+	return tOVList
+}
+
+func analyticsAMapToOVList(aMap map[string]map[int64]int64) (ovList []OVItem) {
+	// Order the map
+	for name, avgMap := range aMap {
+		var totcount int
+		for _, count := range avgMap {
+			totcount = (totcount + int(count)) / 2
+		}
+		ovList = append(ovList, OVItem{name, totcount, avgMap})
+	}
+
+	return sortOVList(ovList)
+}
+
+func AnalyticsRoutesPerf(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
+	basePage, ferr := PreAnalyticsDetail(w, r, &user)
+	if ferr != nil {
+		return ferr
+	}
+	basePage.AddScript("chartist/chartist-plugin-legend.min.js")
+	basePage.AddSheet("chartist/chartist-plugin-legend.css")
+
+	timeRange, err := analyticsTimeRange(r.FormValue("timeRange"))
+	if err != nil {
+		return c.LocalError(err.Error(), w, r, user)
+	}
+	// avgMap contains timestamps but not the averages for those stamps
+	revLabelList, labelList, avgMap := analyticsTimeRangeToLabelList(timeRange)
+
+	rows, err := qgen.NewAcc().Select("viewchunks").Columns("avg,route,createdAt").Where("count!=0 AND route!=''").DateCutoff("createdAt", timeRange.Quantity, timeRange.Unit).Query()
+	if err != nil && err != sql.ErrNoRows {
+		return c.InternalError(err, w, r)
+	}
+	aMap, routeMap, err := analyticsRowsToAvgDuoMap(rows, labelList, avgMap)
+	if err != nil {
+		return c.InternalError(err, w, r)
+	}
+	//c.DebugLogf("aMap: %+v\n", aMap)
+	//c.DebugLogf("routeMap: %+v\n", routeMap)
+	ovList := analyticsAMapToOVList(aMap)
+	//c.DebugLogf("ovList: %+v\n", ovList)
+
+	ex := strings.Split(r.FormValue("ex"), ",")
+	inEx := func(name string) bool {
+		for _, e := range ex {
+			if e == name {
+				return true
+			}
+		}
+		return false
+	}
+
+	/*
+	// TODO: Adjust for the missing chunks in week and month
+	var avgList []int64
+	var avgItems []c.PanelAnalyticsItemUnit
+	for _, value := range revLabelList {
+		avgList = append(avgList, avgMap[value])
+		cv, cu := c.ConvertPerfUnit(float64(avgMap[value]))
+		avgItems = append(avgItems, c.PanelAnalyticsItemUnit{Time: value, Unit: cu, Count: int64(cv)})
+	}
+	graph := c.PanelTimeGraph{Series: [][]int64{avgList}, Labels: labelList}
+	c.DebugLogf("graph: %+v\n", graph)
+	pi := c.PanelAnalyticsPerf{graph, avgItems, timeRange.Range, timeRange.Unit, "time", typ}
+	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_analytics_right", "analytics", "panel_analytics_performance", pi})
+	*/
+
+	var vList [][]int64
+	var legendList []string
+	var i int
+	for _, ovitem := range ovList {
+		if inEx(ovitem.name) {
+			continue
+		}
+		var viewList []int64
+		for _, value := range revLabelList {
+			viewList = append(viewList, ovitem.viewMap[value])
+		}
+		vList = append(vList, viewList)
+		legendList = append(legendList, ovitem.name)
+		if i >= 6 {
+			break
+		}
+		i++
+	}
+	graph := c.PanelTimeGraph{Series: vList, Labels: labelList, Legends: legendList}
+	c.DebugLogf("graph: %+v\n", graph)
+
+	// TODO: Sort this slice
+	var routeItems []c.PanelAnalyticsRoutesPerfItem
+	for route, count := range routeMap {
+		if inEx(route) {
+			continue
+		}
+		cv, cu := c.ConvertPerfUnit(float64(count))
+		routeItems = append(routeItems, c.PanelAnalyticsRoutesPerfItem{
+			Route: route,
+			Unit: cu,
+			Count: int(cv),
+		})
+	}
+
+	pi := c.PanelAnalyticsRoutesPerfPage{basePage, routeItems, graph, timeRange.Range}
+	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_analytics_right", "analytics", "panel_analytics_routes_perf", pi})
+}
+
 func analyticsRowsToRefMap(rows *sql.Rows) (map[string]int, error) {
 	nameMap := make(map[string]int)
 	defer rows.Close()
@@ -792,23 +958,7 @@ func analyticsVMapToOVList(vMap map[string]map[int64]int64) (ovList []OVItem) {
 		ovList = append(ovList, OVItem{name, totcount, viewMap})
 	}
 
-	// Use bubble sort for now as there shouldn't be too many items
-	for i := 0; i < len(ovList)-1; i++ {
-		for j := 0; j < len(ovList)-1; j++ {
-			if ovList[j].count > ovList[j+1].count {
-				temp := ovList[j]
-				ovList[j] = ovList[j+1]
-				ovList[j+1] = temp
-			}
-		}
-	}
-
-	// Invert the direction
-	var tOVList []OVItem
-	for i := len(ovList) - 1; i >= 0; i-- {
-		tOVList = append(tOVList, ovList[i])
-	}
-	return tOVList
+	return sortOVList(ovList)
 }
 
 func AnalyticsForums(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
@@ -917,7 +1067,10 @@ func AnalyticsRoutes(w http.ResponseWriter, r *http.Request, user c.User) c.Rout
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
+	//c.DebugLogf("vMap: %+v\n", vMap)
+	//c.DebugLogf("routeMap: %+v\n", routeMap)
 	ovList := analyticsVMapToOVList(vMap)
+	//c.DebugLogf("ovList: %+v\n", ovList)
 
 	ex := strings.Split(r.FormValue("ex"), ",")
 	inEx := func(name string) bool {

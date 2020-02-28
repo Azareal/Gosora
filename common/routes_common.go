@@ -98,9 +98,9 @@ func cascadeForumPerms(fp *ForumPerms, u *User) {
 
 // Even if they have the right permissions, the control panel is only open to supermods+. There are many areas without subpermissions which assume that the current user is a supermod+ and admins are extremely unlikely to give these permissions to someone who isn't at-least a supermod to begin with
 // TODO: Do a panel specific theme?
-func panelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (header *Header, stats PanelStats, rerr RouteError) {
+func panelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (h *Header, stats PanelStats, rerr RouteError) {
 	theme := GetThemeByReq(r)
-	header = &Header{
+	h = &Header{
 		Site:        Site,
 		Settings:    SettingBox.Load().(SettingMap),
 		Themes:      Themes,
@@ -110,15 +110,16 @@ func panelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (header 
 		Zone:        "panel",
 		Writer:      w,
 		IsoCode:     phrases.GetLangPack().IsoCode,
+		StartedAt:   time.Now(),
 	}
 	// TODO: We should probably initialise header.ExtData
 	// ? - Should we only show this in debug mode? It might be useful for detecting issues in production, if we show it there as-well
 	//if user.IsAdmin {
-		header.StartedAt = time.Now()
+	//h.StartedAt = time.Now()
 	//}
 
-	header.AddSheet(theme.Name + "/main.css")
-	header.AddSheet(theme.Name + "/panel.css")
+	h.AddSheet(theme.Name + "/main.css")
+	h.AddSheet(theme.Name + "/panel.css")
 	if len(theme.Resources) > 0 {
 		rlist := theme.Resources
 		for _, res := range rlist {
@@ -126,12 +127,12 @@ func panelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (header 
 				extarr := strings.Split(res.Name, ".")
 				ext := extarr[len(extarr)-1]
 				if ext == "css" {
-					header.AddSheet(res.Name)
+					h.AddSheet(res.Name)
 				} else if ext == "js" {
 					if res.Async {
-						header.AddScriptAsync(res.Name)
+						h.AddScriptAsync(res.Name)
 					} else {
-						header.AddScript(res.Name)
+						h.AddScript(res.Name)
 					}
 				}
 			}
@@ -146,7 +147,7 @@ func panelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (header 
 	stats.Groups = Groups.Count()
 	stats.Forums = Forums.Count()
 	stats.Pages = Pages.Count()
-	stats.Settings = len(header.Settings)
+	stats.Settings = len(h.Settings)
 	stats.WordFilters = WordFilters.EstCount()
 	stats.Themes = len(Themes)
 	stats.Reports = 0 // TODO: Do the report count. Only show open threads?
@@ -160,12 +161,12 @@ func panelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (header 
 				tname = "_" + theme.Name
 			}
 		}
-		header.AddPreScriptAsync("template_" + name + tname + ".js")
+		h.AddPreScriptAsync("template_" + name + tname + ".js")
 	}
 	addPreScript("alert")
 	addPreScript("notice")
 
-	return header, stats, nil
+	return h, stats, nil
 }
 
 func simplePanelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (headerLite *HeaderLite, rerr RouteError) {
@@ -225,7 +226,7 @@ func userCheck(w http.ResponseWriter, r *http.Request, user *User) (header *Head
 	// An optimisation so we don't populate StartedAt for users who shouldn't see the stat anyway
 	// ? - Should we only show this in debug mode? It might be useful for detecting issues in production, if we show it there as-well
 	//if user.IsAdmin {
-		header.StartedAt = time.Now()
+	header.StartedAt = time.Now()
 	//}
 
 	//PrepResources(user,header,theme)

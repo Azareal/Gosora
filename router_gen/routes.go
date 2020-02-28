@@ -243,6 +243,7 @@ func panelRoutes() *RouteGroup {
 
 		View("panel.AnalyticsViews", "/panel/analytics/views/").Before("ParseForm"),
 		View("panel.AnalyticsRoutes", "/panel/analytics/routes/").Before("ParseForm"),
+		View("panel.AnalyticsRoutesPerf", "/panel/analytics/routes-perf/").Before("ParseForm"),
 		View("panel.AnalyticsAgents", "/panel/analytics/agents/").Before("ParseForm"),
 		View("panel.AnalyticsSystems", "/panel/analytics/systems/").Before("ParseForm"),
 		View("panel.AnalyticsLanguages", "/panel/analytics/langs/").Before("ParseForm"),

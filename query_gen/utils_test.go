@@ -46,6 +46,8 @@ func TestProcessWhere(t *testing.T) {
 	expectTokens(t, whs, MT{TokenColumn, "uid"}, MT{TokenOp, "="}, MT{TokenNumber, "0"})
 	whs = processWhere("uid=20")
 	expectTokens(t, whs, MT{TokenColumn, "uid"}, MT{TokenOp, "="}, MT{TokenNumber, "20"})
+	whs = processWhere("uid=uid+1")
+	expectTokens(t, whs, MT{TokenColumn, "uid"}, MT{TokenOp, "="}, MT{TokenColumn, "uid"}, MT{TokenOp, "+"}, MT{TokenNumber, "1"})
 	whs = processWhere("uid='1'")
 	expectTokens(t, whs, MT{TokenColumn, "uid"}, MT{TokenOp, "="}, MT{TokenString, "1"})
 	whs = processWhere("uid='t'")

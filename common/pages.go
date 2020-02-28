@@ -472,6 +472,19 @@ type PanelAnalyticsRoutesPage struct {
 	TimeRange string
 }
 
+type PanelAnalyticsRoutesPerfItem struct {
+	Route string
+	Count int
+	Unit string
+}
+
+type PanelAnalyticsRoutesPerfPage struct {
+	*BasePanelPage
+	ItemList  []PanelAnalyticsRoutesPerfItem
+	Graph     PanelTimeGraph
+	TimeRange string
+}
+
 // TODO: Rename the fields as this structure is being used in a generic way now
 type PanelAnalyticsAgentsItem struct {
 	Agent         string
