@@ -28,7 +28,7 @@ type DefaultMemoryCounter struct {
 
 func NewMemoryCounter(acc *qgen.Accumulator) (*DefaultMemoryCounter, error) {
 	co := &DefaultMemoryCounter{
-		insert: acc.Insert("memchunks").Columns("count, stack, heap, createdAt").Fields("?,?,?,UTC_TIMESTAMP()").Prepare(),
+		insert: acc.Insert("memchunks").Columns("count,stack,heap,createdAt").Fields("?,?,?,UTC_TIMESTAMP()").Prepare(),
 	}
 	c.AddScheduledFifteenMinuteTask(co.Tick)
 	//c.AddScheduledSecondTask(co.Tick)
@@ -57,19 +57,16 @@ func NewMemoryCounter(acc *qgen.Accumulator) (*DefaultMemoryCounter, error) {
 func (co *DefaultMemoryCounter) Tick() (err error) {
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
-	var avgMem, avgStack, avgHeap uint64
+	var rTotMem, rTotCount, rStackMem, rStackCount, rHeapMem, rHeapCount uint64
+
 	co.Lock()
 
-	co.totCount++
-	co.totMem += m.Sys
-	co.stackCount++
-	co.stackMem += m.StackInuse
-	co.heapCount++
-	co.heapMem += m.HeapAlloc
-
-	avgMem = co.totMem / co.totCount
-	avgStack = co.stackMem / co.stackCount
-	avgHeap = co.heapMem / co.heapCount
+	rTotMem = co.totMem
+	rTotCount = co.totCount
+	rStackMem = co.stackMem
+	rStackCount = co.stackCount
+	rHeapMem = co.heapMem
+	rHeapCount = co.heapCount
 
 	co.totMem = 0
 	co.totCount = 0
@@ -79,6 +76,11 @@ func (co *DefaultMemoryCounter) Tick() (err error) {
 	co.heapCount = 0
 
 	co.Unlock()
+
+	var avgMem, avgStack, avgHeap uint64
+	avgMem = (rTotMem + m.Sys) / (rTotCount + 1)
+	avgStack = (rStackMem + m.StackInuse) / (rStackCount + 1)
+	avgHeap = (rHeapMem + m.HeapAlloc) / (rHeapCount + 1)
 
 	c.DebugLogf("Inserting a memchunk with a value of %d - %d - %d", avgMem, avgStack, avgHeap)
 	_, err = co.insert.Exec(avgMem, avgStack, avgHeap)

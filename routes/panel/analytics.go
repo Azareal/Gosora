@@ -827,21 +827,6 @@ func AnalyticsRoutesPerf(w http.ResponseWriter, r *http.Request, user c.User) c.
 		return false
 	}
 
-	/*
-	// TODO: Adjust for the missing chunks in week and month
-	var avgList []int64
-	var avgItems []c.PanelAnalyticsItemUnit
-	for _, value := range revLabelList {
-		avgList = append(avgList, avgMap[value])
-		cv, cu := c.ConvertPerfUnit(float64(avgMap[value]))
-		avgItems = append(avgItems, c.PanelAnalyticsItemUnit{Time: value, Unit: cu, Count: int64(cv)})
-	}
-	graph := c.PanelTimeGraph{Series: [][]int64{avgList}, Labels: labelList}
-	c.DebugLogf("graph: %+v\n", graph)
-	pi := c.PanelAnalyticsPerf{graph, avgItems, timeRange.Range, timeRange.Unit, "time", typ}
-	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_analytics_right", "analytics", "panel_analytics_performance", pi})
-	*/
-
 	var vList [][]int64
 	var legendList []string
 	var i int

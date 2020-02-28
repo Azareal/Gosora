@@ -50,7 +50,7 @@ func (co *DefaultOSViewCounter) insertChunk(count int64, os int) error {
 
 func (co *DefaultOSViewCounter) Bump(id int) {
 	// TODO: Test this check
-	c.DebugDetail("co.buckets[", id, "]: ", co.buckets[id])
+	c.DebugDetail("buckets[", id, "]: ", co.buckets[id])
 	if len(co.buckets) <= id || id < 0 {
 		return
 	}

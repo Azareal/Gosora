@@ -665,7 +665,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		// WIP UA Parser
 		var items []string
 		var buffer []byte
-		var os string
+		var os int
 		for _, it := range StringToBytes(ua) {
 			if (it > 64 && it < 91) || (it > 96 && it < 123) {
 				buffer = append(buffer, it)
@@ -675,15 +675,15 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 						// Use an unsafe zero copy conversion here just to use the switch, it's not safe for this string to escape from here, as it will get mutated, so do a regular string conversion in append
 						switch(BytesToString(buffer)) {
 						case "Windows":
-							os = "windows"
+							os = {{.AllOSMap.windows}}
 						case "Linux":
-							os = "linux"
+							os = {{.AllOSMap.linux}}
 						case "Mac":
-							os = "mac"
+							os = {{.AllOSMap.mac}}
 						case "iPhone":
-							os = "iphone"
+							os = {{.AllOSMap.iphone}}
 						case "Android":
-							os = "android"
+							os = {{.AllOSMap.android}}
 						case "like","compatible":
 							// Skip these words
 						default:
@@ -700,9 +700,6 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				r.requestLogger.Print("UA Buffer String: ", string(buffer))
 				break
 			}
-		}
-		if os == "" {
-			os = "unknown"
 		}
 
 		// Iterate over this in reverse as the real UA tends to be on the right side
@@ -726,11 +723,11 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		// Special handling
 		switch(agent) {
 		case "chrome":
-			if os == "android" {
+			if os == {{.AllOSMap.android}} {
 				agent = "androidchrome"
 			}
 		case "safari":
-			if os == "iphone" {
+			if os == {{.AllOSMap.iphone}} {
 				agent = "mobilesafari"
 			}
 		case "trident":
@@ -754,7 +751,8 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		} else {
 			co.AgentViewCounter.Bump(agentMapEnum[agent])
 		}
-		co.OSViewCounter.Bump(osMapEnum[os])
+		//co.OSViewCounter.Bump(osMapEnum[os])
+		co.OSViewCounter.Bump(os)
 	}
 
 	// TODO: Do we want to track missing language headers too? Maybe as it's own type, e.g. "noheader"?

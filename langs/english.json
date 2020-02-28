@@ -984,6 +984,7 @@
 		"panel_stats_post_counts_head":"Post Counts",
 		"panel_stats_referrers_head":"Referrers",
 		"panel_stats_routes_head":"Routes",
+		"panel_stats_routes_perf_head":"Routes Performance",
 		"panel_stats_operating_systems_head":"Operating Systems",
 		"panel_stats_topic_counts_head":"Topic Counts",
 		"panel_stats_requests_head":"Requests",
