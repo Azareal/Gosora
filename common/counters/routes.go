@@ -7,6 +7,7 @@ import (
 
 	c "github.com/Azareal/Gosora/common"
 	qgen "github.com/Azareal/Gosora/query_gen"
+	"github.com/Azareal/Gosora/uutils"
 	"github.com/pkg/errors"
 )
 
@@ -150,6 +151,32 @@ func (co *DefaultRouteViewCounter) Bump2(route int, t time.Time) {
 		return
 	}
 	micro := int(time.Since(t).Microseconds())
+	//co.PerfCounter.Push(since, true)
+	b.Lock()
+	b.counter++
+	if micro != b.avg {
+		if b.avg == 0 {
+			b.avg = micro
+		} else {
+			b.avg = (micro + b.avg) / 2
+		}
+	}
+	b.Unlock()
+}
+
+// TODO: Eliminate the lock?
+func (co *DefaultRouteViewCounter) Bump3(route int, nano int64) {
+	if c.Config.DisableAnalytics {
+		return
+	}
+	// TODO: Test this check
+	b := co.buckets[route]
+	c.DebugDetail("buckets[", route, "]: ", b)
+	if len(co.buckets) <= route || route < 0 {
+		return
+	}
+	micro := int((uutils.Nanotime() - nano) / 1000)
+	//co.PerfCounter.Push(since, true)
 	b.Lock()
 	b.counter++
 	if micro != b.avg {

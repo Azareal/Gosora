@@ -83,6 +83,9 @@ func main() {
 			vcpy := route.Vars
 			route.Vars = []string{"h"}
 			route.Vars = append(route.Vars, vcpy...)
+		} else if route.Name != "common.RouteWebsockets" {
+			//out += "\n\t\t\tsa := time.Now()"
+			out += "\n\t\t\tcn := uutils.Nanotime()"
 		}
 		out += "\n\t\t\terr = " + strings.Replace(route.Name, "common.", "c.", -1) + "(w,req,user"
 		for _, item := range route.Vars {
@@ -91,8 +94,10 @@ func main() {
 		out += `)`
 		if !route.Action && !route.NoHead {
 			out += "\n\t\t\tco.RouteViewCounter.Bump2(" + strconv.Itoa(allRouteMap[route.Name]) + ", h.StartedAt)"
-		} else {
-			out += "\n\t\t\tco.RouteViewCounter.Bump(" + strconv.Itoa(allRouteMap[route.Name]) + ")"
+		} else if route.Name != "common.RouteWebsockets" {
+			//out += "\n\t\t\tco.RouteViewCounter.Bump(" + strconv.Itoa(allRouteMap[route.Name]) + ")"
+			//out += "\n\t\t\tco.RouteViewCounter.Bump2(" + strconv.Itoa(allRouteMap[route.Name]) + ", sa)"
+			out += "\n\t\t\tco.RouteViewCounter.Bump3(" + strconv.Itoa(allRouteMap[route.Name]) + ", cn)"
 		}
 	}
 
@@ -149,6 +154,8 @@ func main() {
 				vcpy := route.Vars
 				route.Vars = []string{"h"}
 				route.Vars = append(route.Vars, vcpy...)
+			} else {
+				out += "\n\t\t\t\t\tcn := uutils.Nanotime()"
 			}
 			out += "\n\t\t\t\t\terr = " + strings.Replace(route.Name, "common.", "c.", -1) + "(w,req,user"
 			for _, item := range route.Vars {
@@ -158,7 +165,8 @@ func main() {
 			if !route.Action && !route.NoHead && !group.NoHead {
 				out += "\n\t\t\t\t\tco.RouteViewCounter.Bump2(" + strconv.Itoa(allRouteMap[route.Name]) + ", h.StartedAt)"
 			} else {
-				out += "\n\t\t\t\t\tco.RouteViewCounter.Bump(" + strconv.Itoa(allRouteMap[route.Name]) + ")"
+				//out += "\n\t\t\t\t\tco.RouteViewCounter.Bump(" + strconv.Itoa(allRouteMap[route.Name]) + ")"
+				out += "\n\t\t\t\t\tco.RouteViewCounter.Bump3(" + strconv.Itoa(allRouteMap[route.Name]) + ", cn)"
 			}
 		}
 
@@ -341,9 +349,11 @@ import (
 	"errors"
 	"os"
 	"net/http"
+	"time"
 
 	c "github.com/Azareal/Gosora/common"
 	co "github.com/Azareal/Gosora/common/counters"
+	"github.com/Azareal/Gosora/uutils"
 	"github.com/Azareal/Gosora/routes"
 	"github.com/Azareal/Gosora/routes/panel"
 )
@@ -384,6 +394,7 @@ var markToAgent = map[string]string{ {{range $index, $element := .AllAgentMarkNa
 
 // TODO: Stop spilling these into the package scope?
 func init() {
+	_ = time.Now()
 	co.SetRouteMapEnum(routeMapEnum)
 	co.SetReverseRouteMapEnum(reverseRouteMapEnum)
 	co.SetAgentMapEnum(agentMapEnum)
@@ -666,14 +677,14 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		var items []string
 		var buffer []byte
 		var os int
-		for _, it := range StringToBytes(ua) {
+		for _, it := range uutils.StringToBytes(ua) {
 			if (it > 64 && it < 91) || (it > 96 && it < 123) {
 				buffer = append(buffer, it)
 			} else if it == ' ' || it == '(' || it == ')' || it == '-' || (it > 47 && it < 58) || it == '_' || it == ';' || it == ':' || it == '.' || it == '+' || it == '~' || it == '@' || (it == ':' && bytes.Equal(buffer,[]byte("http"))) || it == ',' || it == '/' {
 				if len(buffer) != 0 {
 					if len(buffer) > 2 {
 						// Use an unsafe zero copy conversion here just to use the switch, it's not safe for this string to escape from here, as it will get mutated, so do a regular string conversion in append
-						switch(BytesToString(buffer)) {
+						switch(uutils.BytesToString(buffer)) {
 						case "Windows":
 							os = {{.AllOSMap.windows}}
 						case "Linux":

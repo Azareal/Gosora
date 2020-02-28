@@ -1,9 +1,10 @@
 package tmpl
 
 import (
-	"reflect"
-	"runtime"
-	"unsafe"
+	//"reflect"
+	//"runtime"
+	//"unsafe"
+	"github.com/Azareal/Gosora/uutils"
 )
 
 var GetFrag = func(name string) [][]byte {
@@ -14,6 +15,9 @@ type WriteString interface {
 	WriteString(s string) (n int, err error)
 }
 
+var StringToBytes = uutils.StringToBytes
+
+/*
 func StringToBytes(s string) (bytes []byte) {
 	str := (*reflect.StringHeader)(unsafe.Pointer(&s))
 	slice := (*reflect.SliceHeader)(unsafe.Pointer(&bytes))
@@ -23,3 +27,4 @@ func StringToBytes(s string) (bytes []byte) {
 	runtime.KeepAlive(&s)
 	return bytes
 }
+*/

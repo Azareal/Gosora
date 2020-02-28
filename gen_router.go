@@ -13,9 +13,11 @@ import (
 	"errors"
 	"os"
 	"net/http"
+	"time"
 
 	c "github.com/Azareal/Gosora/common"
 	co "github.com/Azareal/Gosora/common/counters"
+	"github.com/Azareal/Gosora/uutils"
 	"github.com/Azareal/Gosora/routes"
 	"github.com/Azareal/Gosora/routes/panel"
 )
@@ -677,6 +679,7 @@ var markToAgent = map[string]string{
 
 // TODO: Stop spilling these into the package scope?
 func init() {
+	_ = time.Now()
 	co.SetRouteMapEnum(routeMapEnum)
 	co.SetReverseRouteMapEnum(reverseRouteMapEnum)
 	co.SetAgentMapEnum(agentMapEnum)
@@ -959,14 +962,14 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		var items []string
 		var buffer []byte
 		var os int
-		for _, it := range StringToBytes(ua) {
+		for _, it := range uutils.StringToBytes(ua) {
 			if (it > 64 && it < 91) || (it > 96 && it < 123) {
 				buffer = append(buffer, it)
 			} else if it == ' ' || it == '(' || it == ')' || it == '-' || (it > 47 && it < 58) || it == '_' || it == ';' || it == ':' || it == '.' || it == '+' || it == '~' || it == '@' || (it == ':' && bytes.Equal(buffer,[]byte("http"))) || it == ',' || it == '/' {
 				if len(buffer) != 0 {
 					if len(buffer) > 2 {
 						// Use an unsafe zero copy conversion here just to use the switch, it's not safe for this string to escape from here, as it will get mutated, so do a regular string conversion in append
-						switch(BytesToString(buffer)) {
+						switch(uutils.BytesToString(buffer)) {
 						case "Windows":
 							os = 1
 						case "Linux":
@@ -1166,8 +1169,9 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					return err
 				}
 				
+			cn := uutils.Nanotime()
 			err = routes.ChangeTheme(w,req,user)
-			co.RouteViewCounter.Bump(5)
+			co.RouteViewCounter.Bump3(5, cn)
 		case "/attachs":
 				err = c.ParseForm(w,req,user)
 				if err != nil {
@@ -1181,23 +1185,26 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					h.Del("Content-Type")
 					h.Del("Content-Encoding")
 					}
+			cn := uutils.Nanotime()
 			err = routes.ShowAttachment(w,req,user,extraData)
-			co.RouteViewCounter.Bump(6)
+			co.RouteViewCounter.Bump3(6, cn)
 		case "/ws":
 					req.URL.Path += extraData
 			err = c.RouteWebsockets(w,req,user)
-			co.RouteViewCounter.Bump(7)
 		case "/api":
 			switch(req.URL.Path) {
 				case "/api/phrases/":
+					cn := uutils.Nanotime()
 					err = routeAPIPhrases(w,req,user)
-					co.RouteViewCounter.Bump(8)
+					co.RouteViewCounter.Bump3(8, cn)
 				case "/api/me/":
+					cn := uutils.Nanotime()
 					err = routes.APIMe(w,req,user)
-					co.RouteViewCounter.Bump(9)
+					co.RouteViewCounter.Bump3(9, cn)
 				case "/api/watches/":
+					cn := uutils.Nanotime()
 					err = routeJSAntispam(w,req,user)
-					co.RouteViewCounter.Bump(10)
+					co.RouteViewCounter.Bump3(10, cn)
 				default:
 					err = routeAPI(w,req,user)
 					co.RouteViewCounter.Bump(11)
@@ -1220,8 +1227,9 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = routes.ReportSubmit(w,req,user,extraData)
-					co.RouteViewCounter.Bump(12)
+					co.RouteViewCounter.Bump3(12, cn)
 			}
 		case "/topics":
 			switch(req.URL.Path) {
@@ -1260,122 +1268,141 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 			
 			switch(req.URL.Path) {
 				case "/panel/forums/":
+					cn := uutils.Nanotime()
 					err = panel.Forums(w,req,user)
-					co.RouteViewCounter.Bump(16)
+					co.RouteViewCounter.Bump3(16, cn)
 				case "/panel/forums/create/":
 					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = panel.ForumsCreateSubmit(w,req,user)
-					co.RouteViewCounter.Bump(17)
+					co.RouteViewCounter.Bump3(17, cn)
 				case "/panel/forums/delete/":
 					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = panel.ForumsDelete(w,req,user,extraData)
-					co.RouteViewCounter.Bump(18)
+					co.RouteViewCounter.Bump3(18, cn)
 				case "/panel/forums/delete/submit/":
 					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = panel.ForumsDeleteSubmit(w,req,user,extraData)
-					co.RouteViewCounter.Bump(19)
+					co.RouteViewCounter.Bump3(19, cn)
 				case "/panel/forums/order/edit/submit/":
 					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = panel.ForumsOrderSubmit(w,req,user)
-					co.RouteViewCounter.Bump(20)
+					co.RouteViewCounter.Bump3(20, cn)
 				case "/panel/forums/edit/":
+					cn := uutils.Nanotime()
 					err = panel.ForumsEdit(w,req,user,extraData)
-					co.RouteViewCounter.Bump(21)
+					co.RouteViewCounter.Bump3(21, cn)
 				case "/panel/forums/edit/submit/":
 					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = panel.ForumsEditSubmit(w,req,user,extraData)
-					co.RouteViewCounter.Bump(22)
+					co.RouteViewCounter.Bump3(22, cn)
 				case "/panel/forums/edit/perms/submit/":
 					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = panel.ForumsEditPermsSubmit(w,req,user,extraData)
-					co.RouteViewCounter.Bump(23)
+					co.RouteViewCounter.Bump3(23, cn)
 				case "/panel/forums/edit/perms/":
+					cn := uutils.Nanotime()
 					err = panel.ForumsEditPermsAdvance(w,req,user,extraData)
-					co.RouteViewCounter.Bump(24)
+					co.RouteViewCounter.Bump3(24, cn)
 				case "/panel/forums/edit/perms/adv/submit/":
 					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = panel.ForumsEditPermsAdvanceSubmit(w,req,user,extraData)
-					co.RouteViewCounter.Bump(25)
+					co.RouteViewCounter.Bump3(25, cn)
 				case "/panel/settings/":
+					cn := uutils.Nanotime()
 					err = panel.Settings(w,req,user)
-					co.RouteViewCounter.Bump(26)
+					co.RouteViewCounter.Bump3(26, cn)
 				case "/panel/settings/edit/":
+					cn := uutils.Nanotime()
 					err = panel.SettingEdit(w,req,user,extraData)
-					co.RouteViewCounter.Bump(27)
+					co.RouteViewCounter.Bump3(27, cn)
 				case "/panel/settings/edit/submit/":
 					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = panel.SettingEditSubmit(w,req,user,extraData)
-					co.RouteViewCounter.Bump(28)
+					co.RouteViewCounter.Bump3(28, cn)
 				case "/panel/settings/word-filters/":
+					cn := uutils.Nanotime()
 					err = panel.WordFilters(w,req,user)
-					co.RouteViewCounter.Bump(29)
+					co.RouteViewCounter.Bump3(29, cn)
 				case "/panel/settings/word-filters/create/":
 					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = panel.WordFiltersCreateSubmit(w,req,user)
-					co.RouteViewCounter.Bump(30)
+					co.RouteViewCounter.Bump3(30, cn)
 				case "/panel/settings/word-filters/edit/":
+					cn := uutils.Nanotime()
 					err = panel.WordFiltersEdit(w,req,user,extraData)
-					co.RouteViewCounter.Bump(31)
+					co.RouteViewCounter.Bump3(31, cn)
 				case "/panel/settings/word-filters/edit/submit/":
 					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = panel.WordFiltersEditSubmit(w,req,user,extraData)
-					co.RouteViewCounter.Bump(32)
+					co.RouteViewCounter.Bump3(32, cn)
 				case "/panel/settings/word-filters/delete/submit/":
 					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = panel.WordFiltersDeleteSubmit(w,req,user,extraData)
-					co.RouteViewCounter.Bump(33)
+					co.RouteViewCounter.Bump3(33, cn)
 				case "/panel/pages/":
 					err = c.AdminOnly(w,req,user)
 					if err != nil {
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = panel.Pages(w,req,user)
-					co.RouteViewCounter.Bump(34)
+					co.RouteViewCounter.Bump3(34, cn)
 				case "/panel/pages/create/submit/":
 					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -1387,16 +1414,18 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = panel.PagesCreateSubmit(w,req,user)
-					co.RouteViewCounter.Bump(35)
+					co.RouteViewCounter.Bump3(35, cn)
 				case "/panel/pages/edit/":
 					err = c.AdminOnly(w,req,user)
 					if err != nil {
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = panel.PagesEdit(w,req,user,extraData)
-					co.RouteViewCounter.Bump(36)
+					co.RouteViewCounter.Bump3(36, cn)
 				case "/panel/pages/edit/submit/":
 					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -1408,8 +1437,9 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = panel.PagesEditSubmit(w,req,user,extraData)
-					co.RouteViewCounter.Bump(37)
+					co.RouteViewCounter.Bump3(37, cn)
 				case "/panel/pages/delete/submit/":
 					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -1421,128 +1451,149 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = panel.PagesDeleteSubmit(w,req,user,extraData)
-					co.RouteViewCounter.Bump(38)
+					co.RouteViewCounter.Bump3(38, cn)
 				case "/panel/themes/":
+					cn := uutils.Nanotime()
 					err = panel.Themes(w,req,user)
-					co.RouteViewCounter.Bump(39)
+					co.RouteViewCounter.Bump3(39, cn)
 				case "/panel/themes/default/":
 					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = panel.ThemesSetDefault(w,req,user,extraData)
-					co.RouteViewCounter.Bump(40)
+					co.RouteViewCounter.Bump3(40, cn)
 				case "/panel/themes/menus/":
+					cn := uutils.Nanotime()
 					err = panel.ThemesMenus(w,req,user)
-					co.RouteViewCounter.Bump(41)
+					co.RouteViewCounter.Bump3(41, cn)
 				case "/panel/themes/menus/edit/":
+					cn := uutils.Nanotime()
 					err = panel.ThemesMenusEdit(w,req,user,extraData)
-					co.RouteViewCounter.Bump(42)
+					co.RouteViewCounter.Bump3(42, cn)
 				case "/panel/themes/menus/item/edit/":
+					cn := uutils.Nanotime()
 					err = panel.ThemesMenuItemEdit(w,req,user,extraData)
-					co.RouteViewCounter.Bump(43)
+					co.RouteViewCounter.Bump3(43, cn)
 				case "/panel/themes/menus/item/edit/submit/":
 					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = panel.ThemesMenuItemEditSubmit(w,req,user,extraData)
-					co.RouteViewCounter.Bump(44)
+					co.RouteViewCounter.Bump3(44, cn)
 				case "/panel/themes/menus/item/create/submit/":
 					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = panel.ThemesMenuItemCreateSubmit(w,req,user)
-					co.RouteViewCounter.Bump(45)
+					co.RouteViewCounter.Bump3(45, cn)
 				case "/panel/themes/menus/item/delete/submit/":
 					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = panel.ThemesMenuItemDeleteSubmit(w,req,user,extraData)
-					co.RouteViewCounter.Bump(46)
+					co.RouteViewCounter.Bump3(46, cn)
 				case "/panel/themes/menus/item/order/edit/submit/":
 					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = panel.ThemesMenuItemOrderSubmit(w,req,user,extraData)
-					co.RouteViewCounter.Bump(47)
+					co.RouteViewCounter.Bump3(47, cn)
 				case "/panel/themes/widgets/":
+					cn := uutils.Nanotime()
 					err = panel.ThemesWidgets(w,req,user)
-					co.RouteViewCounter.Bump(48)
+					co.RouteViewCounter.Bump3(48, cn)
 				case "/panel/themes/widgets/edit/submit/":
 					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = panel.ThemesWidgetsEditSubmit(w,req,user,extraData)
-					co.RouteViewCounter.Bump(49)
+					co.RouteViewCounter.Bump3(49, cn)
 				case "/panel/themes/widgets/create/submit/":
 					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = panel.ThemesWidgetsCreateSubmit(w,req,user)
-					co.RouteViewCounter.Bump(50)
+					co.RouteViewCounter.Bump3(50, cn)
 				case "/panel/themes/widgets/delete/submit/":
 					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = panel.ThemesWidgetsDeleteSubmit(w,req,user,extraData)
-					co.RouteViewCounter.Bump(51)
+					co.RouteViewCounter.Bump3(51, cn)
 				case "/panel/plugins/":
+					cn := uutils.Nanotime()
 					err = panel.Plugins(w,req,user)
-					co.RouteViewCounter.Bump(52)
+					co.RouteViewCounter.Bump3(52, cn)
 				case "/panel/plugins/activate/":
 					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = panel.PluginsActivate(w,req,user,extraData)
-					co.RouteViewCounter.Bump(53)
+					co.RouteViewCounter.Bump3(53, cn)
 				case "/panel/plugins/deactivate/":
 					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = panel.PluginsDeactivate(w,req,user,extraData)
-					co.RouteViewCounter.Bump(54)
+					co.RouteViewCounter.Bump3(54, cn)
 				case "/panel/plugins/install/":
 					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = panel.PluginsInstall(w,req,user,extraData)
-					co.RouteViewCounter.Bump(55)
+					co.RouteViewCounter.Bump3(55, cn)
 				case "/panel/users/":
+					cn := uutils.Nanotime()
 					err = panel.Users(w,req,user)
-					co.RouteViewCounter.Bump(56)
+					co.RouteViewCounter.Bump3(56, cn)
 				case "/panel/users/edit/":
+					cn := uutils.Nanotime()
 					err = panel.UsersEdit(w,req,user,extraData)
-					co.RouteViewCounter.Bump(57)
+					co.RouteViewCounter.Bump3(57, cn)
 				case "/panel/users/edit/submit/":
 					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = panel.UsersEditSubmit(w,req,user,extraData)
-					co.RouteViewCounter.Bump(58)
+					co.RouteViewCounter.Bump3(58, cn)
 				case "/panel/users/avatar/submit/":
 					err = c.HandleUploadRoute(w,req,user,int(c.Config.MaxRequestSize))
 					if err != nil {
@@ -1553,190 +1604,220 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = panel.UsersAvatarSubmit(w,req,user,extraData)
-					co.RouteViewCounter.Bump(59)
+					co.RouteViewCounter.Bump3(59, cn)
 				case "/panel/users/avatar/remove/submit/":
 					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = panel.UsersAvatarRemoveSubmit(w,req,user,extraData)
-					co.RouteViewCounter.Bump(60)
+					co.RouteViewCounter.Bump3(60, cn)
 				case "/panel/analytics/views/":
 					err = c.ParseForm(w,req,user)
 					if err != nil {
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = panel.AnalyticsViews(w,req,user)
-					co.RouteViewCounter.Bump(61)
+					co.RouteViewCounter.Bump3(61, cn)
 				case "/panel/analytics/routes/":
 					err = c.ParseForm(w,req,user)
 					if err != nil {
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = panel.AnalyticsRoutes(w,req,user)
-					co.RouteViewCounter.Bump(62)
+					co.RouteViewCounter.Bump3(62, cn)
 				case "/panel/analytics/routes-perf/":
 					err = c.ParseForm(w,req,user)
 					if err != nil {
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = panel.AnalyticsRoutesPerf(w,req,user)
-					co.RouteViewCounter.Bump(63)
+					co.RouteViewCounter.Bump3(63, cn)
 				case "/panel/analytics/agents/":
 					err = c.ParseForm(w,req,user)
 					if err != nil {
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = panel.AnalyticsAgents(w,req,user)
-					co.RouteViewCounter.Bump(64)
+					co.RouteViewCounter.Bump3(64, cn)
 				case "/panel/analytics/systems/":
 					err = c.ParseForm(w,req,user)
 					if err != nil {
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = panel.AnalyticsSystems(w,req,user)
-					co.RouteViewCounter.Bump(65)
+					co.RouteViewCounter.Bump3(65, cn)
 				case "/panel/analytics/langs/":
 					err = c.ParseForm(w,req,user)
 					if err != nil {
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = panel.AnalyticsLanguages(w,req,user)
-					co.RouteViewCounter.Bump(66)
+					co.RouteViewCounter.Bump3(66, cn)
 				case "/panel/analytics/referrers/":
 					err = c.ParseForm(w,req,user)
 					if err != nil {
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = panel.AnalyticsReferrers(w,req,user)
-					co.RouteViewCounter.Bump(67)
+					co.RouteViewCounter.Bump3(67, cn)
 				case "/panel/analytics/route/":
+					cn := uutils.Nanotime()
 					err = panel.AnalyticsRouteViews(w,req,user,extraData)
-					co.RouteViewCounter.Bump(68)
+					co.RouteViewCounter.Bump3(68, cn)
 				case "/panel/analytics/agent/":
+					cn := uutils.Nanotime()
 					err = panel.AnalyticsAgentViews(w,req,user,extraData)
-					co.RouteViewCounter.Bump(69)
+					co.RouteViewCounter.Bump3(69, cn)
 				case "/panel/analytics/forum/":
+					cn := uutils.Nanotime()
 					err = panel.AnalyticsForumViews(w,req,user,extraData)
-					co.RouteViewCounter.Bump(70)
+					co.RouteViewCounter.Bump3(70, cn)
 				case "/panel/analytics/system/":
+					cn := uutils.Nanotime()
 					err = panel.AnalyticsSystemViews(w,req,user,extraData)
-					co.RouteViewCounter.Bump(71)
+					co.RouteViewCounter.Bump3(71, cn)
 				case "/panel/analytics/lang/":
+					cn := uutils.Nanotime()
 					err = panel.AnalyticsLanguageViews(w,req,user,extraData)
-					co.RouteViewCounter.Bump(72)
+					co.RouteViewCounter.Bump3(72, cn)
 				case "/panel/analytics/referrer/":
+					cn := uutils.Nanotime()
 					err = panel.AnalyticsReferrerViews(w,req,user,extraData)
-					co.RouteViewCounter.Bump(73)
+					co.RouteViewCounter.Bump3(73, cn)
 				case "/panel/analytics/posts/":
 					err = c.ParseForm(w,req,user)
 					if err != nil {
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = panel.AnalyticsPosts(w,req,user)
-					co.RouteViewCounter.Bump(74)
+					co.RouteViewCounter.Bump3(74, cn)
 				case "/panel/analytics/memory/":
 					err = c.ParseForm(w,req,user)
 					if err != nil {
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = panel.AnalyticsMemory(w,req,user)
-					co.RouteViewCounter.Bump(75)
+					co.RouteViewCounter.Bump3(75, cn)
 				case "/panel/analytics/active-memory/":
 					err = c.ParseForm(w,req,user)
 					if err != nil {
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = panel.AnalyticsActiveMemory(w,req,user)
-					co.RouteViewCounter.Bump(76)
+					co.RouteViewCounter.Bump3(76, cn)
 				case "/panel/analytics/topics/":
 					err = c.ParseForm(w,req,user)
 					if err != nil {
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = panel.AnalyticsTopics(w,req,user)
-					co.RouteViewCounter.Bump(77)
+					co.RouteViewCounter.Bump3(77, cn)
 				case "/panel/analytics/forums/":
 					err = c.ParseForm(w,req,user)
 					if err != nil {
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = panel.AnalyticsForums(w,req,user)
-					co.RouteViewCounter.Bump(78)
+					co.RouteViewCounter.Bump3(78, cn)
 				case "/panel/analytics/perf/":
 					err = c.ParseForm(w,req,user)
 					if err != nil {
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = panel.AnalyticsPerf(w,req,user)
-					co.RouteViewCounter.Bump(79)
+					co.RouteViewCounter.Bump3(79, cn)
 				case "/panel/groups/":
+					cn := uutils.Nanotime()
 					err = panel.Groups(w,req,user)
-					co.RouteViewCounter.Bump(80)
+					co.RouteViewCounter.Bump3(80, cn)
 				case "/panel/groups/edit/":
+					cn := uutils.Nanotime()
 					err = panel.GroupsEdit(w,req,user,extraData)
-					co.RouteViewCounter.Bump(81)
+					co.RouteViewCounter.Bump3(81, cn)
 				case "/panel/groups/edit/promotions/":
+					cn := uutils.Nanotime()
 					err = panel.GroupsEditPromotions(w,req,user,extraData)
-					co.RouteViewCounter.Bump(82)
+					co.RouteViewCounter.Bump3(82, cn)
 				case "/panel/groups/promotions/create/submit/":
 					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = panel.GroupsPromotionsCreateSubmit(w,req,user,extraData)
-					co.RouteViewCounter.Bump(83)
+					co.RouteViewCounter.Bump3(83, cn)
 				case "/panel/groups/promotions/delete/submit/":
 					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = panel.GroupsPromotionsDeleteSubmit(w,req,user,extraData)
-					co.RouteViewCounter.Bump(84)
+					co.RouteViewCounter.Bump3(84, cn)
 				case "/panel/groups/edit/perms/":
+					cn := uutils.Nanotime()
 					err = panel.GroupsEditPerms(w,req,user,extraData)
-					co.RouteViewCounter.Bump(85)
+					co.RouteViewCounter.Bump3(85, cn)
 				case "/panel/groups/edit/submit/":
 					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = panel.GroupsEditSubmit(w,req,user,extraData)
-					co.RouteViewCounter.Bump(86)
+					co.RouteViewCounter.Bump3(86, cn)
 				case "/panel/groups/edit/perms/submit/":
 					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = panel.GroupsEditPermsSubmit(w,req,user,extraData)
-					co.RouteViewCounter.Bump(87)
+					co.RouteViewCounter.Bump3(87, cn)
 				case "/panel/groups/create/":
 					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = panel.GroupsCreateSubmit(w,req,user)
-					co.RouteViewCounter.Bump(88)
+					co.RouteViewCounter.Bump3(88, cn)
 				case "/panel/backups/":
 					err = c.SuperAdminOnly(w,req,user)
 					if err != nil {
@@ -1750,25 +1831,30 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					h.Del("Content-Type")
 					h.Del("Content-Encoding")
 					}
+					cn := uutils.Nanotime()
 					err = panel.Backups(w,req,user,extraData)
-					co.RouteViewCounter.Bump(89)
+					co.RouteViewCounter.Bump3(89, cn)
 				case "/panel/logs/regs/":
+					cn := uutils.Nanotime()
 					err = panel.LogsRegs(w,req,user)
-					co.RouteViewCounter.Bump(90)
+					co.RouteViewCounter.Bump3(90, cn)
 				case "/panel/logs/mod/":
+					cn := uutils.Nanotime()
 					err = panel.LogsMod(w,req,user)
-					co.RouteViewCounter.Bump(91)
+					co.RouteViewCounter.Bump3(91, cn)
 				case "/panel/logs/admin/":
+					cn := uutils.Nanotime()
 					err = panel.LogsAdmin(w,req,user)
-					co.RouteViewCounter.Bump(92)
+					co.RouteViewCounter.Bump3(92, cn)
 				case "/panel/debug/":
 					err = c.AdminOnly(w,req,user)
 					if err != nil {
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = panel.Debug(w,req,user)
-					co.RouteViewCounter.Bump(93)
+					co.RouteViewCounter.Bump3(93, cn)
 				default:
 					err = panel.Dashboard(w,req,user)
 					co.RouteViewCounter.Bump(94)
@@ -1810,8 +1896,9 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = routes.AccountEditPasswordSubmit(w,req,user)
-					co.RouteViewCounter.Bump(97)
+					co.RouteViewCounter.Bump3(97, cn)
 				case "/user/edit/avatar/submit/":
 					err = c.MemberOnly(w,req,user)
 					if err != nil {
@@ -1827,8 +1914,9 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = routes.AccountEditAvatarSubmit(w,req,user)
-					co.RouteViewCounter.Bump(98)
+					co.RouteViewCounter.Bump3(98, cn)
 				case "/user/edit/avatar/revoke/submit/":
 					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -1840,8 +1928,9 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = routes.AccountEditRevokeAvatarSubmit(w,req,user)
-					co.RouteViewCounter.Bump(99)
+					co.RouteViewCounter.Bump3(99, cn)
 				case "/user/edit/username/submit/":
 					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -1853,8 +1942,9 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = routes.AccountEditUsernameSubmit(w,req,user)
-					co.RouteViewCounter.Bump(100)
+					co.RouteViewCounter.Bump3(100, cn)
 				case "/user/edit/privacy/":
 					err = c.MemberOnly(w,req,user)
 					if err != nil {
@@ -1878,8 +1968,9 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = routes.AccountEditPrivacySubmit(w,req,user)
-					co.RouteViewCounter.Bump(102)
+					co.RouteViewCounter.Bump3(102, cn)
 				case "/user/edit/mfa/":
 					err = c.MemberOnly(w,req,user)
 					if err != nil {
@@ -1915,8 +2006,9 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = routes.AccountEditMFASetupSubmit(w,req,user)
-					co.RouteViewCounter.Bump(105)
+					co.RouteViewCounter.Bump3(105, cn)
 				case "/user/edit/mfa/disable/submit/":
 					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -1928,8 +2020,9 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = routes.AccountEditMFADisableSubmit(w,req,user)
-					co.RouteViewCounter.Bump(106)
+					co.RouteViewCounter.Bump3(106, cn)
 				case "/user/edit/email/":
 					err = c.MemberOnly(w,req,user)
 					if err != nil {
@@ -1943,8 +2036,9 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					err = routes.AccountEditEmail(w,req,user,h)
 					co.RouteViewCounter.Bump2(107, h.StartedAt)
 				case "/user/edit/token/":
+					cn := uutils.Nanotime()
 					err = routes.AccountEditEmailTokenSubmit(w,req,user,extraData)
-					co.RouteViewCounter.Bump(108)
+					co.RouteViewCounter.Bump3(108, cn)
 				case "/user/edit/logins/":
 					err = c.MemberOnly(w,req,user)
 					if err != nil {
@@ -2028,8 +2122,9 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = routes.ConvosCreateSubmit(w,req,user)
-					co.RouteViewCounter.Bump(115)
+					co.RouteViewCounter.Bump3(115, cn)
 				case "/user/convo/create/submit/":
 					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -2041,8 +2136,9 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = routes.ConvosCreateReplySubmit(w,req,user,extraData)
-					co.RouteViewCounter.Bump(116)
+					co.RouteViewCounter.Bump3(116, cn)
 				case "/user/convo/delete/submit/":
 					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -2054,8 +2150,9 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = routes.ConvosDeleteReplySubmit(w,req,user,extraData)
-					co.RouteViewCounter.Bump(117)
+					co.RouteViewCounter.Bump3(117, cn)
 				case "/user/convo/edit/submit/":
 					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -2067,8 +2164,9 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = routes.ConvosEditReplySubmit(w,req,user,extraData)
-					co.RouteViewCounter.Bump(118)
+					co.RouteViewCounter.Bump3(118, cn)
 				case "/user/block/create/":
 					err = c.MemberOnly(w,req,user)
 					if err != nil {
@@ -2092,8 +2190,9 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = routes.RelationsBlockCreateSubmit(w,req,user,extraData)
-					co.RouteViewCounter.Bump(120)
+					co.RouteViewCounter.Bump3(120, cn)
 				case "/user/block/remove/":
 					err = c.MemberOnly(w,req,user)
 					if err != nil {
@@ -2117,8 +2216,9 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = routes.RelationsBlockRemoveSubmit(w,req,user,extraData)
-					co.RouteViewCounter.Bump(122)
+					co.RouteViewCounter.Bump3(122, cn)
 				default:
 					req.URL.Path += extraData
 					h, err := c.UserCheck(w,req,&user)
@@ -2141,8 +2241,9 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = routes.BanUserSubmit(w,req,user,extraData)
-					co.RouteViewCounter.Bump(124)
+					co.RouteViewCounter.Bump3(124, cn)
 				case "/users/unban/":
 					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -2154,8 +2255,9 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = routes.UnbanUser(w,req,user,extraData)
-					co.RouteViewCounter.Bump(125)
+					co.RouteViewCounter.Bump3(125, cn)
 				case "/users/activate/":
 					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -2167,8 +2269,9 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = routes.ActivateUser(w,req,user,extraData)
-					co.RouteViewCounter.Bump(126)
+					co.RouteViewCounter.Bump3(126, cn)
 				case "/users/ips/":
 					err = c.MemberOnly(w,req,user)
 					if err != nil {
@@ -2192,8 +2295,9 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = routes.DeletePostsSubmit(w,req,user,extraData)
-					co.RouteViewCounter.Bump(128)
+					co.RouteViewCounter.Bump3(128, cn)
 			}
 		case "/topic":
 			switch(req.URL.Path) {
@@ -2212,8 +2316,9 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = routes.CreateTopicSubmit(w,req,user)
-					co.RouteViewCounter.Bump(129)
+					co.RouteViewCounter.Bump3(129, cn)
 				case "/topic/edit/submit/":
 					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -2225,8 +2330,9 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = routes.EditTopicSubmit(w,req,user,extraData)
-					co.RouteViewCounter.Bump(130)
+					co.RouteViewCounter.Bump3(130, cn)
 				case "/topic/delete/submit/":
 					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -2239,8 +2345,9 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					}
 					
 					req.URL.Path += extraData
+					cn := uutils.Nanotime()
 					err = routes.DeleteTopicSubmit(w,req,user)
-					co.RouteViewCounter.Bump(131)
+					co.RouteViewCounter.Bump3(131, cn)
 				case "/topic/stick/submit/":
 					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -2252,8 +2359,9 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = routes.StickTopicSubmit(w,req,user,extraData)
-					co.RouteViewCounter.Bump(132)
+					co.RouteViewCounter.Bump3(132, cn)
 				case "/topic/unstick/submit/":
 					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -2265,8 +2373,9 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = routes.UnstickTopicSubmit(w,req,user,extraData)
-					co.RouteViewCounter.Bump(133)
+					co.RouteViewCounter.Bump3(133, cn)
 				case "/topic/lock/submit/":
 					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -2279,8 +2388,9 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					}
 					
 					req.URL.Path += extraData
+					cn := uutils.Nanotime()
 					err = routes.LockTopicSubmit(w,req,user)
-					co.RouteViewCounter.Bump(134)
+					co.RouteViewCounter.Bump3(134, cn)
 				case "/topic/unlock/submit/":
 					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -2292,8 +2402,9 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = routes.UnlockTopicSubmit(w,req,user,extraData)
-					co.RouteViewCounter.Bump(135)
+					co.RouteViewCounter.Bump3(135, cn)
 				case "/topic/move/submit/":
 					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -2305,8 +2416,9 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = routes.MoveTopicSubmit(w,req,user,extraData)
-					co.RouteViewCounter.Bump(136)
+					co.RouteViewCounter.Bump3(136, cn)
 				case "/topic/like/submit/":
 					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -2318,8 +2430,9 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = routes.LikeTopicSubmit(w,req,user,extraData)
-					co.RouteViewCounter.Bump(137)
+					co.RouteViewCounter.Bump3(137, cn)
 				case "/topic/unlike/submit/":
 					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -2331,8 +2444,9 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = routes.UnlikeTopicSubmit(w,req,user,extraData)
-					co.RouteViewCounter.Bump(138)
+					co.RouteViewCounter.Bump3(138, cn)
 				case "/topic/attach/add/submit/":
 					err = c.MemberOnly(w,req,user)
 					if err != nil {
@@ -2348,8 +2462,9 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = routes.AddAttachToTopicSubmit(w,req,user,extraData)
-					co.RouteViewCounter.Bump(139)
+					co.RouteViewCounter.Bump3(139, cn)
 				case "/topic/attach/remove/submit/":
 					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -2361,8 +2476,9 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = routes.RemoveAttachFromTopicSubmit(w,req,user,extraData)
-					co.RouteViewCounter.Bump(140)
+					co.RouteViewCounter.Bump3(140, cn)
 				default:
 					h, err := c.UserCheck(w,req,&user)
 					if err != nil {
@@ -2388,8 +2504,9 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = routes.CreateReplySubmit(w,req,user)
-					co.RouteViewCounter.Bump(142)
+					co.RouteViewCounter.Bump3(142, cn)
 				case "/reply/edit/submit/":
 					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -2401,8 +2518,9 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = routes.ReplyEditSubmit(w,req,user,extraData)
-					co.RouteViewCounter.Bump(143)
+					co.RouteViewCounter.Bump3(143, cn)
 				case "/reply/delete/submit/":
 					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -2414,8 +2532,9 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = routes.ReplyDeleteSubmit(w,req,user,extraData)
-					co.RouteViewCounter.Bump(144)
+					co.RouteViewCounter.Bump3(144, cn)
 				case "/reply/like/submit/":
 					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -2427,8 +2546,9 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = routes.ReplyLikeSubmit(w,req,user,extraData)
-					co.RouteViewCounter.Bump(145)
+					co.RouteViewCounter.Bump3(145, cn)
 				case "/reply/unlike/submit/":
 					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -2440,8 +2560,9 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = routes.ReplyUnlikeSubmit(w,req,user,extraData)
-					co.RouteViewCounter.Bump(146)
+					co.RouteViewCounter.Bump3(146, cn)
 				case "/reply/attach/add/submit/":
 					err = c.MemberOnly(w,req,user)
 					if err != nil {
@@ -2457,8 +2578,9 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = routes.AddAttachToReplySubmit(w,req,user,extraData)
-					co.RouteViewCounter.Bump(147)
+					co.RouteViewCounter.Bump3(147, cn)
 				case "/reply/attach/remove/submit/":
 					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -2470,8 +2592,9 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = routes.RemoveAttachFromReplySubmit(w,req,user,extraData)
-					co.RouteViewCounter.Bump(148)
+					co.RouteViewCounter.Bump3(148, cn)
 			}
 		case "/profile":
 			switch(req.URL.Path) {
@@ -2486,8 +2609,9 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = routes.ProfileReplyCreateSubmit(w,req,user)
-					co.RouteViewCounter.Bump(149)
+					co.RouteViewCounter.Bump3(149, cn)
 				case "/profile/reply/edit/submit/":
 					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -2499,8 +2623,9 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = routes.ProfileReplyEditSubmit(w,req,user,extraData)
-					co.RouteViewCounter.Bump(150)
+					co.RouteViewCounter.Bump3(150, cn)
 				case "/profile/reply/delete/submit/":
 					err = c.NoSessionMismatch(w,req,user)
 					if err != nil {
@@ -2512,8 +2637,9 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = routes.ProfileReplyDeleteSubmit(w,req,user,extraData)
-					co.RouteViewCounter.Bump(151)
+					co.RouteViewCounter.Bump3(151, cn)
 			}
 		case "/poll":
 			switch(req.URL.Path) {
@@ -2528,11 +2654,13 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = routes.PollVote(w,req,user,extraData)
-					co.RouteViewCounter.Bump(152)
+					co.RouteViewCounter.Bump3(152, cn)
 				case "/poll/results/":
+					cn := uutils.Nanotime()
 					err = routes.PollResults(w,req,user,extraData)
-					co.RouteViewCounter.Bump(153)
+					co.RouteViewCounter.Bump3(153, cn)
 			}
 		case "/accounts":
 			switch(req.URL.Path) {
@@ -2561,16 +2689,18 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = routes.AccountLogout(w,req,user)
-					co.RouteViewCounter.Bump(156)
+					co.RouteViewCounter.Bump3(156, cn)
 				case "/accounts/login/submit/":
 					err = c.ParseForm(w,req,user)
 					if err != nil {
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = routes.AccountLoginSubmit(w,req,user)
-					co.RouteViewCounter.Bump(157)
+					co.RouteViewCounter.Bump3(157, cn)
 				case "/accounts/mfa_verify/":
 				h, err := c.UserCheck(w,req,&user)
 				if err != nil {
@@ -2584,16 +2714,18 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = routes.AccountLoginMFAVerifySubmit(w,req,user)
-					co.RouteViewCounter.Bump(159)
+					co.RouteViewCounter.Bump3(159, cn)
 				case "/accounts/create/submit/":
 					err = c.ParseForm(w,req,user)
 					if err != nil {
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = routes.AccountRegisterSubmit(w,req,user)
-					co.RouteViewCounter.Bump(160)
+					co.RouteViewCounter.Bump3(160, cn)
 				case "/accounts/password-reset/":
 				h, err := c.UserCheck(w,req,&user)
 				if err != nil {
@@ -2607,8 +2739,9 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = routes.AccountPasswordResetSubmit(w,req,user)
-					co.RouteViewCounter.Bump(162)
+					co.RouteViewCounter.Bump3(162, cn)
 				case "/accounts/password-reset/token/":
 				h, err := c.UserCheck(w,req,&user)
 				if err != nil {
@@ -2622,8 +2755,9 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 						return err
 					}
 					
+					cn := uutils.Nanotime()
 					err = routes.AccountPasswordResetTokenSubmit(w,req,user)
-					co.RouteViewCounter.Bump(164)
+					co.RouteViewCounter.Bump3(164, cn)
 			}
 		/*case "/sitemaps": // TODO: Count these views
 			req.URL.Path += extraData

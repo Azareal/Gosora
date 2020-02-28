@@ -834,6 +834,9 @@ func AnalyticsRoutesPerf(w http.ResponseWriter, r *http.Request, user c.User) c.
 		if inEx(ovitem.name) {
 			continue
 		}
+		if strings.HasPrefix(ovitem.name,"panel.") {
+			continue
+		}
 		var viewList []int64
 		for _, value := range revLabelList {
 			viewList = append(viewList, ovitem.viewMap[value])

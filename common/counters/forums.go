@@ -27,7 +27,7 @@ func NewDefaultForumViewCounter() (*DefaultForumViewCounter, error) {
 	co := &DefaultForumViewCounter{
 		oddMap:  make(map[int]*RWMutexCounterBucket),
 		evenMap: make(map[int]*RWMutexCounterBucket),
-		insert:  acc.Insert("viewchunks_forums").Columns("count, createdAt, forum").Fields("?,UTC_TIMESTAMP(),?").Prepare(),
+		insert:  acc.Insert("viewchunks_forums").Columns("count,createdAt,forum").Fields("?,UTC_TIMESTAMP(),?").Prepare(),
 	}
 	c.AddScheduledFifteenMinuteTask(co.Tick) // There could be a lot of routes, so we don't want to be running this every second
 	//c.AddScheduledSecondTask(co.Tick)
@@ -38,17 +38,17 @@ func NewDefaultForumViewCounter() (*DefaultForumViewCounter, error) {
 func (co *DefaultForumViewCounter) Tick() error {
 	cLoop := func(l *sync.RWMutex, m map[int]*RWMutexCounterBucket) error {
 		l.RLock()
-		for forumID, forum := range m {
+		for fid, f := range m {
 			l.RUnlock()
 			var count int
-			forum.RLock()
-			count = forum.counter
-			forum.RUnlock()
+			f.RLock()
+			count = f.counter
+			f.RUnlock()
 			// TODO: Only delete the bucket when it's zero to avoid hitting popular forums?
 			l.Lock()
-			delete(m, forumID)
+			delete(m, fid)
 			l.Unlock()
-			err := co.insertChunk(count, forumID)
+			err := co.insertChunk(count, fid)
 			if err != nil {
 				return errors.Wrap(errors.WithStack(err),"forum counter")
 			}
@@ -64,7 +64,7 @@ func (co *DefaultForumViewCounter) Tick() error {
 	return cLoop(&co.evenLock,co.evenMap)
 }
 
-func (co *DefaultForumViewCounter) insertChunk(count int, forum int) error {
+func (co *DefaultForumViewCounter) insertChunk(count, forum int) error {
 	if count == 0 {
 		return nil
 	}
@@ -73,34 +73,34 @@ func (co *DefaultForumViewCounter) insertChunk(count int, forum int) error {
 	return err
 }
 
-func (co *DefaultForumViewCounter) Bump(forumID int) {
+func (co *DefaultForumViewCounter) Bump(fid int) {
 	// Is the ID even?
-	if forumID%2 == 0 {
+	if fid%2 == 0 {
 		co.evenLock.RLock()
-		forum, ok := co.evenMap[forumID]
+		f, ok := co.evenMap[fid]
 		co.evenLock.RUnlock()
 		if ok {
-			forum.Lock()
-			forum.counter++
-			forum.Unlock()
+			f.Lock()
+			f.counter++
+			f.Unlock()
 		} else {
 			co.evenLock.Lock()
-			co.evenMap[forumID] = &RWMutexCounterBucket{counter: 1}
+			co.evenMap[fid] = &RWMutexCounterBucket{counter: 1}
 			co.evenLock.Unlock()
 		}
 		return
 	}
 
 	co.oddLock.RLock()
-	forum, ok := co.oddMap[forumID]
+	f, ok := co.oddMap[fid]
 	co.oddLock.RUnlock()
 	if ok {
-		forum.Lock()
-		forum.counter++
-		forum.Unlock()
+		f.Lock()
+		f.counter++
+		f.Unlock()
 	} else {
 		co.oddLock.Lock()
-		co.oddMap[forumID] = &RWMutexCounterBucket{counter: 1}
+		co.oddMap[fid] = &RWMutexCounterBucket{counter: 1}
 		co.oddLock.Unlock()
 	}
 }

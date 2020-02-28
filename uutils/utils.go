@@ -1,27 +1,13 @@
-package main
+package uutils
 
 import (
-	//"reflect"
-	//"runtime"
-	//"unsafe"
-	"github.com/Azareal/Gosora/uutils"
+	"reflect"
+	"runtime"
+	"unsafe"
 )
 
 // TODO: Add a safe build mode for things like Google Appengine
 
-var GetFrag = func(name string) [][]byte {
-	return nil
-}
-
-type WriteString interface {
-	WriteString(s string) (n int, err error)
-}
-
-var StringToBytes = uutils.StringToBytes
-var BytesToString = uutils.BytesToString
-var Nanotime = uutils.Nanotime
-
-/*
 func StringToBytes(s string) (bytes []byte) {
 	str := (*reflect.StringHeader)(unsafe.Pointer(&s))
 	slice := (*reflect.SliceHeader)(unsafe.Pointer(&bytes))
@@ -47,4 +33,4 @@ func nanotime() int64
 
 func Nanotime() int64 {
 	return nanotime()
-}*/
+}

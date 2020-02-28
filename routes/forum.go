@@ -21,7 +21,7 @@ var forumStmts ForumStmts
 func init() {
 	c.DbInits.Add(func(acc *qgen.Accumulator) error {
 		forumStmts = ForumStmts{
-			getTopics: acc.Select("topics").Columns("tid, title, content, createdBy, is_closed, sticky, createdAt, lastReplyAt, lastReplyBy, lastReplyID, parentID, views, postCount, likeCount").Where("parentID = ?").Orderby("sticky DESC, lastReplyAt DESC, createdBy DESC").Limit("?,?").Prepare(),
+			getTopics: acc.Select("topics").Columns("tid, title, content, createdBy, is_closed, sticky, createdAt, lastReplyAt, lastReplyBy, lastReplyID, parentID, views, postCount, likeCount").Where("parentID=?").Orderby("sticky DESC, lastReplyAt DESC, createdBy DESC").Limit("?,?").Prepare(),
 		}
 		return acc.FirstError()
 	})
