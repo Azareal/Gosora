@@ -1104,8 +1104,10 @@ ArgLoop:
 			leftParam, _ := c.compileIfVarSub(con, leftOp)
 			// TODO: Refactor this
 			// TODO: Validate that this is actually a time.Time
-			litString("time.Since("+leftParam+").String()", false)
+			//litString("time.Since("+leftParam+").String()", false)
 			c.importMap["time"] = "time"
+			c.importMap["github.com/Azareal/Gosora/uutils"] = "github.com/Azareal/Gosora/uutils"
+			litString("time.Duration(uutils.Nanotime() - "+leftParam+").String()", false)
 			break ArgLoop
 		case "dock":
 			// TODO: Implement string literals properly

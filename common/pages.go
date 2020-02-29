@@ -44,7 +44,8 @@ type Header struct {
 	GoogSiteVerify string
 	IsoCode        string
 	LooseCSP       bool
-	StartedAt      time.Time
+	//StartedAt      time.Time
+	StartedAt int64
 	Elapsed1       string
 	Writer         http.ResponseWriter
 	ExtData        ExtData

@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/Azareal/Gosora/common/phrases"
+	"github.com/Azareal/Gosora/uutils"
 )
 
 // nolint
@@ -26,6 +27,7 @@ var SimpleForumUserCheck func(w http.ResponseWriter, r *http.Request, user *User
 var ForumUserCheck func(header *Header, w http.ResponseWriter, r *http.Request, user *User, fid int) (err RouteError) = forumUserCheck
 var SimpleUserCheck func(w http.ResponseWriter, r *http.Request, user *User) (headerLite *HeaderLite, err RouteError) = simpleUserCheck
 var UserCheck func(w http.ResponseWriter, r *http.Request, user *User) (header *Header, err RouteError) = userCheck
+var UserCheckNano func(w http.ResponseWriter, r *http.Request, user *User, nano int64) (header *Header, err RouteError) = userCheck2
 
 func simpleForumUserCheck(w http.ResponseWriter, r *http.Request, user *User, fid int) (header *HeaderLite, rerr RouteError) {
 	header, rerr = SimpleUserCheck(w, r, user)
@@ -110,7 +112,8 @@ func panelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (h *Head
 		Zone:        "panel",
 		Writer:      w,
 		IsoCode:     phrases.GetLangPack().IsoCode,
-		StartedAt:   time.Now(),
+		//StartedAt:   time.Now(),
+		StartedAt: uutils.Nanotime(),
 	}
 	// TODO: We should probably initialise header.ExtData
 	// ? - Should we only show this in debug mode? It might be useful for detecting issues in production, if we show it there as-well
@@ -198,9 +201,13 @@ func GetThemeByReq(r *http.Request) *Theme {
 	return theme
 }
 
+func userCheck(w http.ResponseWriter, r *http.Request, user *User) (header *Header, rerr RouteError) {
+	return userCheck2(w,r,user,uutils.Nanotime())
+}
+
 // TODO: Add the ability for admins to restrict certain themes to certain groups?
 // ! Be careful about firing errors off here as CustomError uses this
-func userCheck(w http.ResponseWriter, r *http.Request, user *User) (header *Header, rerr RouteError) {
+func userCheck2(w http.ResponseWriter, r *http.Request, user *User, nano int64) (header *Header, rerr RouteError) {
 	theme := GetThemeByReq(r)
 	header = &Header{
 		Site:        Site,
@@ -212,6 +219,7 @@ func userCheck(w http.ResponseWriter, r *http.Request, user *User) (header *Head
 		Zone:        "frontend",
 		Writer:      w,
 		IsoCode:     phrases.GetLangPack().IsoCode,
+		StartedAt: nano,
 	}
 	// TODO: Optimise this by avoiding accessing a map string index
 	header.GoogSiteVerify = header.Settings["google_site_verify"].(string)
@@ -226,7 +234,7 @@ func userCheck(w http.ResponseWriter, r *http.Request, user *User) (header *Head
 	// An optimisation so we don't populate StartedAt for users who shouldn't see the stat anyway
 	// ? - Should we only show this in debug mode? It might be useful for detecting issues in production, if we show it there as-well
 	//if user.IsAdmin {
-	header.StartedAt = time.Now()
+	//header.StartedAt = time.Now()
 	//}
 
 	//PrepResources(user,header,theme)

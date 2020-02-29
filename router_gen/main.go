@@ -78,23 +78,24 @@ func main() {
 		//out += "\n\t\t\tid = " + strconv.Itoa(allRouteMap[route.Name])
 		out += runBefore(route.RunBefore, 4)
 		if !route.Action && !route.NoHead {
-			out += "\n\t\t\th, err := c.UserCheck(w,req,&user)"
+			//out += "\n\t\t\th, err := c.UserCheck(w,req,&user)"
+			out += "\n\t\t\th, err := c.UserCheckNano(w,req,&user,cn)"
 			out += "\n\t\t\tif err != nil {\n\t\t\t\treturn err\n\t\t\t}"
 			vcpy := route.Vars
 			route.Vars = []string{"h"}
 			route.Vars = append(route.Vars, vcpy...)
-		} else if route.Name != "common.RouteWebsockets" {
+		}/* else if route.Name != "common.RouteWebsockets" {
 			//out += "\n\t\t\tsa := time.Now()"
-			out += "\n\t\t\tcn := uutils.Nanotime()"
-		}
+			//out += "\n\t\t\tcn := uutils.Nanotime()"
+		}*/
 		out += "\n\t\t\terr = " + strings.Replace(route.Name, "common.", "c.", -1) + "(w,req,user"
 		for _, item := range route.Vars {
 			out += "," + item
 		}
 		out += `)`
-		if !route.Action && !route.NoHead {
+		/*if !route.Action && !route.NoHead {
 			out += "\n\t\t\tco.RouteViewCounter.Bump2(" + strconv.Itoa(allRouteMap[route.Name]) + ", h.StartedAt)"
-		} else if route.Name != "common.RouteWebsockets" {
+		} else */if route.Name != "common.RouteWebsockets" {
 			//out += "\n\t\t\tco.RouteViewCounter.Bump(" + strconv.Itoa(allRouteMap[route.Name]) + ")"
 			//out += "\n\t\t\tco.RouteViewCounter.Bump2(" + strconv.Itoa(allRouteMap[route.Name]) + ", sa)"
 			out += "\n\t\t\tco.RouteViewCounter.Bump3(" + strconv.Itoa(allRouteMap[route.Name]) + ", cn)"
@@ -149,25 +150,26 @@ func main() {
 				}
 			}
 			if !route.Action && !route.NoHead && !group.NoHead {
-				out += "\n\t\t\t\th, err := c.UserCheck(w,req,&user)"
+				//out += "\n\t\t\t\th, err := c.UserCheck(w,req,&user)"
+				out += "\n\t\t\t\th, err := c.UserCheckNano(w,req,&user,cn)"
 				out += "\n\t\t\t\tif err != nil {\n\t\t\t\t\treturn err\n\t\t\t\t}"
 				vcpy := route.Vars
 				route.Vars = []string{"h"}
 				route.Vars = append(route.Vars, vcpy...)
 			} else {
-				out += "\n\t\t\t\t\tcn := uutils.Nanotime()"
+				//out += "\n\t\t\t\t\tcn := uutils.Nanotime()"
 			}
 			out += "\n\t\t\t\t\terr = " + strings.Replace(route.Name, "common.", "c.", -1) + "(w,req,user"
 			for _, item := range route.Vars {
 				out += "," + item
 			}
 			out += ")"
-			if !route.Action && !route.NoHead && !group.NoHead {
+			/*if !route.Action && !route.NoHead && !group.NoHead {
 				out += "\n\t\t\t\t\tco.RouteViewCounter.Bump2(" + strconv.Itoa(allRouteMap[route.Name]) + ", h.StartedAt)"
-			} else {
+			} else {*/
 				//out += "\n\t\t\t\t\tco.RouteViewCounter.Bump(" + strconv.Itoa(allRouteMap[route.Name]) + ")"
 				out += "\n\t\t\t\t\tco.RouteViewCounter.Bump3(" + strconv.Itoa(allRouteMap[route.Name]) + ", cn)"
-			}
+			//}
 		}
 
 		if defaultRoute.Name != "" {
@@ -176,7 +178,8 @@ func main() {
 			//out += "\n\t\t\t\t\tid = " + strconv.Itoa(allRouteMap[defaultRoute.Name])
 			out += runBefore(defaultRoute.RunBefore, 4)
 			if !defaultRoute.Action && !defaultRoute.NoHead && !group.NoHead {
-				out += "\n\t\t\t\t\th, err := c.UserCheck(w,req,&user)"
+				//out += "\n\t\t\t\t\th, err := c.UserCheck(w,req,&user)"
+				out += "\n\t\t\t\t\th, err := c.UserCheckNano(w,req,&user,cn)"
 				out += "\n\t\t\t\t\tif err != nil {\n\t\t\t\t\t\treturn err\n\t\t\t\t\t}"
 				vcpy := defaultRoute.Vars
 				defaultRoute.Vars = []string{"h"}
@@ -187,11 +190,12 @@ func main() {
 				out += ", " + item
 			}
 			out += ")"
-			if !defaultRoute.Action && !defaultRoute.NoHead && !group.NoHead {
+			/*if !defaultRoute.Action && !defaultRoute.NoHead && !group.NoHead {
 				out += "\n\t\t\t\t\tco.RouteViewCounter.Bump2(" + strconv.Itoa(allRouteMap[defaultRoute.Name]) + ", h.StartedAt)"
-			} else {
-				out += "\n\t\t\t\t\tco.RouteViewCounter.Bump(" + strconv.Itoa(allRouteMap[defaultRoute.Name]) + ")"
-			}
+			} else {*/
+				//out += "\n\t\t\t\t\tco.RouteViewCounter.Bump(" + strconv.Itoa(allRouteMap[defaultRoute.Name]) + ")"
+				out += "\n\t\t\tco.RouteViewCounter.Bump3(" + strconv.Itoa(allRouteMap[defaultRoute.Name]) + ", cn)"
+			//}
 		}
 		out += `
 			}`
@@ -849,6 +853,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	
 func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c.User, prefix, extraData string) /*(id int, orerr */c.RouteError/*)*/ {
 	var err c.RouteError
+	cn := uutils.Nanotime()
 	switch(prefix) {` + out + `
 		/*case "/sitemaps": // TODO: Count these views
 			req.URL.Path += extraData

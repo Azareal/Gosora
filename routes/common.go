@@ -9,6 +9,7 @@ import (
 
 	c "github.com/Azareal/Gosora/common"
 	co "github.com/Azareal/Gosora/common/counters"
+	"github.com/Azareal/Gosora/uutils"
 )
 
 var successJSONBytes = []byte(`{"success":1}`)
@@ -136,7 +137,7 @@ func renderTemplate3(tmplName, hookName string, w http.ResponseWriter, r *http.R
 
 	FootHeaders(w, h)
 	if h.Zone != "error" {
-	since := time.Since(h.StartedAt)
+	since := time.Duration(uutils.Nanotime() - h.StartedAt)
 	//if h.CurrentUser.IsAdmin {
 	h.Elapsed1 = since.String()
 	//}
