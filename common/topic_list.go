@@ -402,5 +402,8 @@ func ArgQToTopicCount(argList []interface{}, qlist string) (topicCount int, err 
 }
 
 func TopicCountInForums(forums []Forum) (topicCount int, err error) {
-	return ArgQToTopicCount(ForumListToArgQ(forums))
+	for _, f := range forums {
+		topicCount += f.TopicCount
+	}
+	return topicCount, nil
 }

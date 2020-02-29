@@ -834,7 +834,7 @@ func AnalyticsRoutesPerf(w http.ResponseWriter, r *http.Request, user c.User) c.
 		if inEx(ovitem.name) {
 			continue
 		}
-		if strings.HasPrefix(ovitem.name,"panel.") {
+		if strings.HasPrefix(ovitem.name, "panel.") {
 			continue
 		}
 		var viewList []int64
@@ -842,8 +842,9 @@ func AnalyticsRoutesPerf(w http.ResponseWriter, r *http.Request, user c.User) c.
 			viewList = append(viewList, ovitem.viewMap[value])
 		}
 		vList = append(vList, viewList)
-		legendList = append(legendList, ovitem.name)
-		if i >= 6 {
+		shortName := strings.Replace(ovitem.name, "routes.", "r.", -1)
+		legendList = append(legendList, shortName)
+		if i >= 7 {
 			break
 		}
 		i++
@@ -860,7 +861,7 @@ func AnalyticsRoutesPerf(w http.ResponseWriter, r *http.Request, user c.User) c.
 		cv, cu := c.ConvertPerfUnit(float64(count))
 		routeItems = append(routeItems, c.PanelAnalyticsRoutesPerfItem{
 			Route: route,
-			Unit: cu,
+			Unit:  cu,
 			Count: int(cv),
 		})
 	}
@@ -1082,8 +1083,9 @@ func AnalyticsRoutes(w http.ResponseWriter, r *http.Request, user c.User) c.Rout
 			viewList = append(viewList, ovitem.viewMap[value])
 		}
 		vList = append(vList, viewList)
-		legendList = append(legendList, ovitem.name)
-		if i >= 6 {
+		shortName := strings.Replace(ovitem.name, "routes.", "r.", -1)
+		legendList = append(legendList, shortName)
+		if i >= 7 {
 			break
 		}
 		i++
