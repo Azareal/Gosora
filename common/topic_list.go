@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/Azareal/Gosora/query_gen"
+	qgen "github.com/Azareal/Gosora/query_gen"
 )
 
 var TopicList TopicListInt
@@ -172,13 +172,17 @@ func (tList *DefaultTopicList) GetListByCanSee(canSee []int, page int, orderby s
 
 	var filteredForums []Forum
 	if len(filterIDs) > 0 {
-		for _, forum := range forumList {
-			if inSlice(filterIDs, forum.ID) {
-				filteredForums = append(filteredForums, forum)
+		for _, f := range forumList {
+			if inSlice(filterIDs, f.ID) {
+				filteredForums = append(filteredForums, f)
 			}
 		}
 	} else {
 		filteredForums = forumList
+	}
+	var topicCount int
+	for _, f := range filteredForums {
+		topicCount += f.TopicCount
 	}
 
 	// ? - Should we be showing plugin_guilds posts on /topics/?
@@ -188,7 +192,7 @@ func (tList *DefaultTopicList) GetListByCanSee(canSee []int, page int, orderby s
 		return topicList, filteredForums, Paginator{[]int{}, 1, 1}, nil
 	}
 
-	topicList, paginator, err = tList.getList(page, orderby, argList, qlist)
+	topicList, paginator, err = tList.getList(page, orderby, topicCount, argList, qlist)
 	return topicList, filteredForums, paginator, err
 }
 
@@ -222,12 +226,14 @@ func (tList *DefaultTopicList) GetList(page int, orderby string, filterIDs []int
 
 	// We need a list of the visible forums for Quick Topic
 	// ? - Would it be useful, if we could post in social groups from /topics/?
+	var topicCount int
 	for _, fid := range canSee {
 		f := Forums.DirtyGet(fid)
 		if f.Name != "" && f.Active && (f.ParentType == "" || f.ParentType == "forum") {
 			fcopy := f.Copy()
 			// TODO: Add a hook here for plugin_guilds
 			forumList = append(forumList, fcopy)
+			topicCount += fcopy.TopicCount
 		}
 	}
 
@@ -238,18 +244,18 @@ func (tList *DefaultTopicList) GetList(page int, orderby string, filterIDs []int
 		return topicList, forumList, Paginator{[]int{}, 1, 1}, err
 	}
 
-	topicList, paginator, err = tList.getList(page, orderby, argList, qlist)
+	topicList, paginator, err = tList.getList(page, orderby, topicCount, argList, qlist)
 	return topicList, forumList, paginator, err
 }
 
 // TODO: Rename this to TopicListStore and pass back a TopicList instance holding the pagination data and topic list rather than passing them back one argument at a time
-func (tList *DefaultTopicList) getList(page int, orderby string, argList []interface{}, qlist string) (topicList []*TopicsRow, paginator Paginator, err error) {
+func (tList *DefaultTopicList) getList(page int, orderby string, topicCount int, argList []interface{}, qlist string) (topicList []*TopicsRow, paginator Paginator, err error) {
 	//log.Printf("argList: %+v\n",argList)
 	//log.Printf("qlist: %+v\n",qlist)
-	topicCount, err := ArgQToTopicCount(argList, qlist)
+	/*topicCount, err := ArgQToTopicCount(argList, qlist)
 	if err != nil {
 		return nil, Paginator{nil, 1, 1}, err
-	}
+	}*/
 	offset, page, lastPage := PageOffset(topicCount, page, Config.ItemsPerPage)
 
 	var orderq string
