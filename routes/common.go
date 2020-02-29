@@ -137,11 +137,11 @@ func renderTemplate3(tmplName, hookName string, w http.ResponseWriter, r *http.R
 
 	FootHeaders(w, h)
 	if h.Zone != "error" {
-	since := time.Duration(uutils.Nanotime() - h.StartedAt)
-	//if h.CurrentUser.IsAdmin {
-	h.Elapsed1 = since.String()
-	//}
-	co.PerfCounter.Push(since/*, false*/)
+		since := time.Duration(uutils.Nanotime() - h.StartedAt)
+		if h.CurrentUser.IsAdmin {
+			h.Elapsed1 = since.String()
+		}
+		co.PerfCounter.Push(since /*, false*/)
 	}
 	if c.RunPreRenderHook("pre_render_"+hookName, w, r, &h.CurrentUser, pi) {
 		return nil

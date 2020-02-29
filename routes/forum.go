@@ -21,7 +21,7 @@ var forumStmts ForumStmts
 func init() {
 	c.DbInits.Add(func(acc *qgen.Accumulator) error {
 		forumStmts = ForumStmts{
-			getTopics: acc.Select("topics").Columns("tid, title, content, createdBy, is_closed, sticky, createdAt, lastReplyAt, lastReplyBy, lastReplyID, parentID, views, postCount, likeCount").Where("parentID=?").Orderby("sticky DESC, lastReplyAt DESC, createdBy DESC").Limit("?,?").Prepare(),
+			getTopics: acc.Select("topics").Columns("tid, title, content, createdBy, is_closed, sticky, createdAt, lastReplyAt, lastReplyBy, lastReplyID, views, postCount, likeCount").Where("parentID=?").Orderby("sticky DESC, lastReplyAt DESC, createdBy DESC").Limit("?,?").Prepare(),
 		}
 		return acc.FirstError()
 	})
@@ -69,11 +69,12 @@ func ViewForum(w http.ResponseWriter, r *http.Request, user c.User, header *c.He
 	reqUserList := make(map[int]bool)
 	for rows.Next() {
 		t := c.TopicsRow{ID: 0}
-		err := rows.Scan(&t.ID, &t.Title, &t.Content, &t.CreatedBy, &t.IsClosed, &t.Sticky, &t.CreatedAt, &t.LastReplyAt, &t.LastReplyBy, &t.LastReplyID, &t.ParentID, &t.ViewCount, &t.PostCount, &t.LikeCount)
+		err := rows.Scan(&t.ID, &t.Title, &t.Content, &t.CreatedBy, &t.IsClosed, &t.Sticky, &t.CreatedAt, &t.LastReplyAt, &t.LastReplyBy, &t.LastReplyID, &t.ViewCount, &t.PostCount, &t.LikeCount)
 		if err != nil {
 			return c.InternalError(err, w, r)
 		}
 
+		t.ParentID = fid
 		t.Link = c.BuildTopicURL(c.NameToSlug(t.Title), t.ID)
 		// TODO: Create a specialised function with a bit less overhead for getting the last page for a post count
 		_, _, lastPage := c.PageOffset(t.PostCount, 1, c.Config.ItemsPerPage)
