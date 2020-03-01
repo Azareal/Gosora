@@ -135,6 +135,26 @@
 	margin-top: 0px;
 	margin-bottom: 0px;
 }
+
+.ct-series-e .ct-bar, .ct-series-e .ct-line, .ct-series-e .ct-point, .ct-series-e .ct-slice-donut {
+    stroke: #c73eaf !important;
+}
+.ct-series-e.ct-point {
+	stroke: #c73eaf !important;
+}
+.ct-series-e.ct-point:hover {
+	stroke: #c73eaf !important;
+}
+.ct-legend .ct-series-4:before {
+	background-color: #c73eaf !important;
+	border-color: /*#ed4cd0*/#c73eaf !important;
+}
+
+.ct-legend .ct-series-7:before {
+	background-color: #6b0392 !important;
+	border-color: #6b0392 !important;
+}
+
 select + .timeRangeSelector {
 	margin-left: 8px;
 }
