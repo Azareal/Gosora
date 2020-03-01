@@ -230,7 +230,7 @@ select + .timeRangeSelector {
 	border-color: #ed4cd0 !important;
 }
 
-.ct-series-f .ct-bar, .ct-series-f .ct-line, .ct-series-f .ct-point, .ct-series-f .ct-slice-donut {
+/*.ct-series-f .ct-bar, .ct-series-f .ct-line, .ct-series-f .ct-point, .ct-series-f .ct-slice-donut {
     stroke: darkred !important;
 }
 .ct-series-f.ct-point {
@@ -242,11 +242,15 @@ select + .timeRangeSelector {
 .ct-legend .ct-series-5:before {
 	background-color: darkred !important;
 	border-color: darkred !important;
+}*/
+.ct-legend .ct-series-7:before {
+	background-color: #6b0392 !important;
+	border-color: #6b0392 !important;
 }
 
 #panel_setting .formlabel {
 	display: none;
-}
+}/*
 #panel_setting textarea {
 	width: 100%;
 	height: 80px;
