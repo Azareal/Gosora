@@ -217,17 +217,17 @@ select + .timeRangeSelector {
 	margin-left: 0px;
 }
 .ct-series-e .ct-bar, .ct-series-e .ct-line, .ct-series-e .ct-point, .ct-series-e .ct-slice-donut {
-    stroke: #ed4cd0 !important;
+    stroke: #c73eaf !important;
 }
 .ct-series-e.ct-point {
-	stroke: #ed4cd0 !important;
+	stroke: #c73eaf !important;
 }
 .ct-series-e.ct-point:hover {
-	stroke: #ed4cd0 !important;
+	stroke: #c73eaf !important;
 }
 .ct-legend .ct-series-4:before {
-	background-color: #ed4cd0 !important;
-	border-color: #ed4cd0 !important;
+	background-color: #c73eaf !important;
+	border-color: /*#ed4cd0*/#c73eaf !important;
 }
 
 /*.ct-series-f .ct-bar, .ct-series-f .ct-line, .ct-series-f .ct-point, .ct-series-f .ct-slice-donut {
