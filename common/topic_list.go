@@ -20,6 +20,7 @@ type TopicListHolder struct {
 type TopicListInt interface {
 	GetListByCanSee(canSee []int, page int, orderby string, filterIDs []int) (topicList []*TopicsRow, forumList []Forum, paginator Paginator, err error)
 	GetListByGroup(group *Group, page int, orderby string, filterIDs []int) (topicList []*TopicsRow, forumList []Forum, paginator Paginator, err error)
+	GetListByForum(f *Forum, page int, orderby string) (topicList []*TopicsRow, paginator Paginator, err error)
 	GetList(page int, orderby string, filterIDs []int) (topicList []*TopicsRow, forumList []Forum, paginator Paginator, err error)
 }
 
@@ -32,15 +33,21 @@ type DefaultTopicList struct {
 
 	//permTree atomic.Value // [string(canSee)]canSee
 	//permTree map[string][]int // [string(canSee)]canSee
+
+	getTopicsByForum *sql.Stmt
 }
 
 // We've removed the topic list cache cap as admins really shouldn't be abusing groups like this with plugin_guilds around and it was extremely fiddly.
 // If this becomes a problem later on, then we can revisit this with a fresh perspective, particularly with regards to what people expect a group to really be
 // Also, keep in mind that as-long as the groups don't all have unique sets of forums they can see, then we can optimise a large portion of the work away.
-func NewDefaultTopicList() (*DefaultTopicList, error) {
+func NewDefaultTopicList(acc *qgen.Accumulator) (*DefaultTopicList, error) {
 	tList := &DefaultTopicList{
-		oddGroups:  make(map[int]*TopicListHolder),
-		evenGroups: make(map[int]*TopicListHolder),
+		oddGroups:        make(map[int]*TopicListHolder),
+		evenGroups:       make(map[int]*TopicListHolder),
+		getTopicsByForum: acc.Select("topics").Columns("tid, title, content, createdBy, is_closed, sticky, createdAt, lastReplyAt, lastReplyBy, lastReplyID, views, postCount, likeCount").Where("parentID=?").Orderby("sticky DESC, lastReplyAt DESC, createdBy DESC").Limit("?,?").Prepare(),
+	}
+	if err := acc.FirstError(); err != nil {
+		return nil, err
 	}
 
 	err := tList.Tick()
@@ -121,6 +128,67 @@ func (tList *DefaultTopicList) Tick() error {
 	return nil
 }
 
+// TODO: Add Topics() method to *Forum?
+// TODO: Implement orderby
+func (tList *DefaultTopicList) GetListByForum(f *Forum, page int, orderby string) (topicList []*TopicsRow, paginator Paginator, err error) {
+	// TODO: Does forum.TopicCount take the deleted items into consideration for guests? We don't have soft-delete yet, only hard-delete
+	offset, page, lastPage := PageOffset(f.TopicCount, page, Config.ItemsPerPage)
+
+	rows, err := tList.getTopicsByForum.Query(f.ID, offset, Config.ItemsPerPage)
+	if err != nil {
+		return nil, Paginator{nil, 1, 1}, err
+	}
+	defer rows.Close()
+
+	// TODO: Use something other than TopicsRow as we don't need to store the forum name and link on each and every topic item?
+	reqUserList := make(map[int]bool)
+	for rows.Next() {
+		t := TopicsRow{ID: 0}
+		err := rows.Scan(&t.ID, &t.Title, &t.Content, &t.CreatedBy, &t.IsClosed, &t.Sticky, &t.CreatedAt, &t.LastReplyAt, &t.LastReplyBy, &t.LastReplyID, &t.ViewCount, &t.PostCount, &t.LikeCount)
+		if err != nil {
+			return nil, Paginator{nil, 1, 1}, err
+		}
+
+		t.ParentID = f.ID
+		t.Link = BuildTopicURL(NameToSlug(t.Title), t.ID)
+		// TODO: Create a specialised function with a bit less overhead for getting the last page for a post count
+		_, _, lastPage := PageOffset(t.PostCount, 1, Config.ItemsPerPage)
+		t.LastPage = lastPage
+
+		//header.Hooks.VhookNoRet("forum_trow_assign", &t, &forum)
+		topicList = append(topicList, &t)
+		reqUserList[t.CreatedBy] = true
+		reqUserList[t.LastReplyBy] = true
+	}
+	if err = rows.Err(); err != nil {
+		return nil, Paginator{nil, 1, 1}, err
+	}
+
+	// Convert the user ID map to a slice, then bulk load the users
+	idSlice := make([]int, len(reqUserList))
+	var i int
+	for userID := range reqUserList {
+		idSlice[i] = userID
+		i++
+	}
+
+	// TODO: What if a user is deleted via the Control Panel?
+	userList, err := Users.BulkGetMap(idSlice)
+	if err != nil {
+		return nil, Paginator{nil, 1, 1}, err
+	}
+
+	// Second pass to the add the user data
+	// TODO: Use a pointer to TopicsRow instead of TopicsRow itself?
+	for _, t := range topicList {
+		t.Creator = userList[t.CreatedBy]
+		t.LastUser = userList[t.LastReplyBy]
+	}
+
+	pageList := Paginate(page, lastPage, 5)
+	return topicList, Paginator{pageList, page, lastPage}, nil
+}
+
 func (tList *DefaultTopicList) GetListByGroup(group *Group, page int, orderby string, filterIDs []int) (topicList []*TopicsRow, forumList []Forum, paginator Paginator, err error) {
 	if page == 0 {
 		page = 1
@@ -148,13 +216,13 @@ func (tList *DefaultTopicList) GetListByGroup(group *Group, page int, orderby st
 	return tList.GetListByCanSee(group.CanSee, page, orderby, filterIDs)
 }
 
-func (tList *DefaultTopicList) GetListByCanSee(canSee []int, page int, orderby string, filterIDs []int) (topicList []*TopicsRow, forumList []Forum, paginator Paginator, err error) {
+func (tList *DefaultTopicList) GetListByCanSee(canSee []int, page int, orderby string, filterIDs []int) (topicList []*TopicsRow, forumList []Forum, pagi Paginator, err error) {
 	// TODO: Optimise this by filtering canSee and then fetching the forums?
 	// We need a list of the visible forums for Quick Topic
 	// ? - Would it be useful, if we could post in social groups from /topics/?
 	for _, fid := range canSee {
 		f := Forums.DirtyGet(fid)
-		if f.Name != "" && f.Active && (f.ParentType == "" || f.ParentType == "forum") {
+		if f.Name != "" && f.Active && (f.ParentType == "" || f.ParentType == "forum") && f.TopicCount != 0 {
 			fcopy := f.Copy()
 			// TODO: Add a hook here for plugin_guilds
 			forumList = append(forumList, fcopy)
@@ -180,6 +248,11 @@ func (tList *DefaultTopicList) GetListByCanSee(canSee []int, page int, orderby s
 	} else {
 		filteredForums = forumList
 	}
+	if len(filteredForums) == 1 && orderby == "" {
+		topicList, pagi, err = tList.GetListByForum(&filteredForums[0], page, orderby)
+		return topicList, forumList, pagi, err
+	}
+
 	var topicCount int
 	for _, f := range filteredForums {
 		topicCount += f.TopicCount
@@ -192,12 +265,12 @@ func (tList *DefaultTopicList) GetListByCanSee(canSee []int, page int, orderby s
 		return topicList, filteredForums, Paginator{[]int{}, 1, 1}, nil
 	}
 
-	topicList, paginator, err = tList.getList(page, orderby, topicCount, argList, qlist)
-	return topicList, filteredForums, paginator, err
+	topicList, pagi, err = tList.getList(page, orderby, topicCount, argList, qlist)
+	return topicList, filteredForums, pagi, err
 }
 
 // TODO: Reduce the number of returns
-func (tList *DefaultTopicList) GetList(page int, orderby string, filterIDs []int) (topicList []*TopicsRow, forumList []Forum, paginator Paginator, err error) {
+func (tList *DefaultTopicList) GetList(page int, orderby string, filterIDs []int) (topicList []*TopicsRow, forumList []Forum, pagi Paginator, err error) {
 	// TODO: Make CanSee a method on *Group with a canSee field? Have a CanSee method on *User to cover the case of superadmins?
 	cCanSee, err := Forums.GetAllVisibleIDs()
 	if err != nil {
@@ -229,12 +302,16 @@ func (tList *DefaultTopicList) GetList(page int, orderby string, filterIDs []int
 	var topicCount int
 	for _, fid := range canSee {
 		f := Forums.DirtyGet(fid)
-		if f.Name != "" && f.Active && (f.ParentType == "" || f.ParentType == "forum") {
+		if f.Name != "" && f.Active && (f.ParentType == "" || f.ParentType == "forum") && f.TopicCount != 0 {
 			fcopy := f.Copy()
 			// TODO: Add a hook here for plugin_guilds
 			forumList = append(forumList, fcopy)
 			topicCount += fcopy.TopicCount
 		}
+	}
+	if len(forumList) == 1 && orderby == "" {
+		topicList, pagi, err = tList.GetListByForum(&forumList[0], page, orderby)
+		return topicList, forumList, pagi, err
 	}
 
 	// ? - Should we be showing plugin_guilds posts on /topics/?
@@ -244,26 +321,23 @@ func (tList *DefaultTopicList) GetList(page int, orderby string, filterIDs []int
 		return topicList, forumList, Paginator{[]int{}, 1, 1}, err
 	}
 
-	topicList, paginator, err = tList.getList(page, orderby, topicCount, argList, qlist)
-	return topicList, forumList, paginator, err
+	topicList, pagi, err = tList.getList(page, orderby, topicCount, argList, qlist)
+	return topicList, forumList, pagi, err
 }
 
 // TODO: Rename this to TopicListStore and pass back a TopicList instance holding the pagination data and topic list rather than passing them back one argument at a time
+// TODO: Make orderby an enum of sorts
 func (tList *DefaultTopicList) getList(page int, orderby string, topicCount int, argList []interface{}, qlist string) (topicList []*TopicsRow, paginator Paginator, err error) {
 	//log.Printf("argList: %+v\n",argList)
 	//log.Printf("qlist: %+v\n",qlist)
-	/*topicCount, err := ArgQToTopicCount(argList, qlist)
-	if err != nil {
-		return nil, Paginator{nil, 1, 1}, err
-	}*/
-	offset, page, lastPage := PageOffset(topicCount, page, Config.ItemsPerPage)
 
 	var orderq string
 	if orderby == "most-viewed" {
-		orderq = "views DESC, lastReplyAt DESC, createdBy DESC"
+		orderq = "views DESC,lastReplyAt DESC,createdBy DESC"
 	} else {
-		orderq = "sticky DESC, lastReplyAt DESC, createdBy DESC"
+		orderq = "sticky DESC,lastReplyAt DESC,createdBy DESC"
 	}
+	offset, page, lastPage := PageOffset(topicCount, page, Config.ItemsPerPage)
 
 	// TODO: Prepare common qlist lengths to speed this up in common cases, prepared statements are prepared lazily anyway, so it probably doesn't matter if we do ten or so
 	stmt, err := qgen.Builder.SimpleSelect("topics", "tid,title,content,createdBy,is_closed,sticky,createdAt,lastReplyAt,lastReplyBy,lastReplyID,parentID,views,postCount,likeCount,attachCount,poll,data", "parentID IN("+qlist+")", orderq, "?,?")
@@ -284,7 +358,7 @@ func (tList *DefaultTopicList) getList(page int, orderby string, topicCount int,
 	rcache := Rstore.GetCache()
 	rcap := rcache.GetCapacity()
 	rlen := rcache.Length()
-	tcache := Topics.GetCache()
+	tc := Topics.GetCache()
 	reqUserList := make(map[int]bool)
 	for rows.Next() {
 		// TODO: Embed Topic structs in TopicsRow to make it easier for us to reuse this work in the topic cache
@@ -312,13 +386,13 @@ func (tList *DefaultTopicList) getList(page int, orderby string, topicCount int,
 
 		//log.Print("rlen: ", rlen)
 		//log.Print("rcap: ", rcap)
-		//log.Print("topic.PostCount: ", t.PostCount)
-		//log.Print("topic.PostCount == 2 && rlen < rcap: ", topic.PostCount == 2 && rlen < rcap)
+		//log.Print("t.PostCount: ", t.PostCount)
+		//log.Print("t.PostCount == 2 && rlen < rcap: ", t.PostCount == 2 && rlen < rcap)
 
 		// Avoid the extra queries on topic list pages, if we already have what we want...
 		hRids := false
-		if tcache != nil {
-			if t, err := tcache.Get(t.ID); err == nil {
+		if tc != nil {
+			if t, err := tc.Get(t.ID); err == nil {
 				hRids = len(t.Rids) != 0
 			}
 		}
@@ -338,9 +412,9 @@ func (tList *DefaultTopicList) getList(page int, orderby string, topicCount int,
 			t.Rids = []int{rids[0]}
 		}
 
-		if tcache != nil {
-			if _, err := tcache.Get(t.ID); err == sql.ErrNoRows {
-				_ = tcache.Set(t.Topic())
+		if tc != nil {
+			if _, err := tc.Get(t.ID); err == sql.ErrNoRows {
+				_ = tc.Set(t.Topic())
 			}
 		}
 	}
@@ -364,9 +438,9 @@ func (tList *DefaultTopicList) getList(page int, orderby string, topicCount int,
 
 	// Second pass to the add the user data
 	// TODO: Use a pointer to TopicsRow instead of TopicsRow itself?
-	for _, topic := range topicList {
-		topic.Creator = userList[topic.CreatedBy]
-		topic.LastUser = userList[topic.LastReplyBy]
+	for _, t := range topicList {
+		t.Creator = userList[t.CreatedBy]
+		t.LastUser = userList[t.LastReplyBy]
 	}
 
 	pageList := Paginate(page, lastPage, 5)

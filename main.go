@@ -253,7 +253,7 @@ func storeInit() (err error) {
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	c.TopicList, err = c.NewDefaultTopicList()
+	c.TopicList, err = c.NewDefaultTopicList(acc)
 	if err != nil {
 		return errors.WithStack(err)
 	}

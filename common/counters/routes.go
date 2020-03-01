@@ -3,6 +3,7 @@ package counters
 import (
 	"database/sql"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	c "github.com/Azareal/Gosora/common"
@@ -14,7 +15,7 @@ import (
 var RouteViewCounter *DefaultRouteViewCounter
 
 type RVBucket struct {
-	counter int
+	counter int64
 	avg     int
 
 	sync.Mutex
@@ -49,17 +50,16 @@ func NewDefaultRouteViewCounter(acc *qgen.Accumulator) (*DefaultRouteViewCounter
 
 type RVCount struct {
 	RouteID int
-	Count   int
+	Count   int64
 	Avg     int
 }
 
 func (co *DefaultRouteViewCounter) Tick() (err error) {
 	var tb []RVCount
 	for routeID, b := range co.buckets {
-		var count, avg int
+		var avg int
+		count := atomic.SwapInt64(&b.counter, 0)
 		b.Lock()
-		count = b.counter
-		b.counter = 0
 		avg = b.avg
 		b.avg = 0
 		b.Unlock()
@@ -96,9 +96,9 @@ func (co *DefaultRouteViewCounter) Tick() (err error) {
 	return nil
 }
 
-func (co *DefaultRouteViewCounter) insertChunk(count, avg, route int) error {
+func (co *DefaultRouteViewCounter) insertChunk(count int64, avg, route int) error {
 	routeName := reverseRouteMapEnum[route]
-	c.DebugLogf("Inserting a vchunk with a count of %d, avg of %d for route %s (%d)", count, avg, routeName, route)
+	c.DebugLogf("Inserting vchunk with count %d, avg %d for route %s (%d)", count, avg, routeName, route)
 	_, err := co.insert.Exec(count, avg, routeName)
 	return err
 }
@@ -109,9 +109,9 @@ func (co *DefaultRouteViewCounter) insert5Chunk(rvs []RVCount) error {
 	for _, rv := range rvs {
 		routeName := reverseRouteMapEnum[rv.RouteID]
 		if rv.Avg == 0 {
-			c.DebugLogf("Queueing a vchunk with a count of %d for routes %s (%d)", rv.Count, routeName, rv.RouteID)
+			c.DebugLogf("Queueing vchunk with count %d for routes %s (%d)", rv.Count, routeName, rv.RouteID)
 		} else {
-			c.DebugLogf("Queueing a vchunk with count %d, avg %d for routes %s (%d)", rv.Count, rv.Avg, routeName, rv.RouteID)
+			c.DebugLogf("Queueing vchunk with count %d, avg %d for routes %s (%d)", rv.Count, rv.Avg, routeName, rv.RouteID)
 		}
 		args[i] = rv.Count
 		args[i+1] = rv.Avg
@@ -129,14 +129,11 @@ func (co *DefaultRouteViewCounter) Bump(route int) {
 	}
 	// TODO: Test this check
 	b := co.buckets[route]
-	c.DebugDetail("buckets[", route, "]: ", b)
+	c.DebugDetail("bucket ", route, ": ", b)
 	if len(co.buckets) <= route || route < 0 {
 		return
 	}
-	// TODO: Avoid lock by using atomic increment?
-	b.Lock()
-	b.counter++
-	b.Unlock()
+	atomic.AddInt64(&b.counter, 1)
 }
 
 // TODO: Eliminate the lock?
@@ -146,14 +143,14 @@ func (co *DefaultRouteViewCounter) Bump2(route int, t time.Time) {
 	}
 	// TODO: Test this check
 	b := co.buckets[route]
-	c.DebugDetail("buckets[", route, "]: ", b)
+	c.DebugDetail("bucket ", route, ": ", b)
 	if len(co.buckets) <= route || route < 0 {
 		return
 	}
 	micro := int(time.Since(t).Microseconds())
 	//co.PerfCounter.Push(since, true)
+	atomic.AddInt64(&b.counter, 1)
 	b.Lock()
-	b.counter++
 	if micro != b.avg {
 		if b.avg == 0 {
 			b.avg = micro
@@ -171,14 +168,14 @@ func (co *DefaultRouteViewCounter) Bump3(route int, nano int64) {
 	}
 	// TODO: Test this check
 	b := co.buckets[route]
-	c.DebugDetail("buckets[", route, "]: ", b)
+	c.DebugDetail("bucket ", route, ": ", b)
 	if len(co.buckets) <= route || route < 0 {
 		return
 	}
 	micro := int((uutils.Nanotime() - nano) / 1000)
 	//co.PerfCounter.Push(since, true)
+	atomic.AddInt64(&b.counter, 1)
 	b.Lock()
-	b.counter++
 	if micro != b.avg {
 		if b.avg == 0 {
 			b.avg = micro
