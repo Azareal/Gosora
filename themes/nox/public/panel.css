@@ -226,8 +226,8 @@ select + .timeRangeSelector {
 	stroke: #ed4cd0 !important;
 }
 .ct-legend .ct-series-4:before {
-	background-color: #ed4cd0;
-	border-color: #ed4cd0;
+	background-color: #ed4cd0 !important;
+	border-color: #ed4cd0 !important;
 }
 
 #panel_setting .formlabel {
