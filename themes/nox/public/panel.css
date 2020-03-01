@@ -216,6 +216,19 @@ select + .timeRangeSelector {
 .ct-legend {
 	margin-left: 0px;
 }
+.ct-series-e .ct-bar, .ct-series-e .ct-line, .ct-series-e .ct-point, .ct-series-e .ct-slice-donut {
+    stroke: #ed4cd0 !important;
+}
+.ct-series-e.ct-point {
+	stroke: #ed4cd0 !important;
+}
+.ct-series-e.ct-point:hover {
+	stroke: #ed4cd0 !important;
+}
+.ct-legend .ct-series-4:before {
+	background-color: #ed4cd0;
+	border-color: #ed4cd0;
+}
 
 #panel_setting .formlabel {
 	display: none;
