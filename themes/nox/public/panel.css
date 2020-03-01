@@ -230,6 +230,20 @@ select + .timeRangeSelector {
 	border-color: #ed4cd0 !important;
 }
 
+.ct-series-f .ct-bar, .ct-series-f .ct-line, .ct-series-f .ct-point, .ct-series-f .ct-slice-donut {
+    stroke: darkred !important;
+}
+.ct-series-f.ct-point {
+	stroke: darkred !important;
+}
+.ct-series-f.ct-point:hover {
+	stroke: darkred !important;
+}
+.ct-legend .ct-series-5:before {
+	background-color: darkred !important;
+	border-color: darkred !important;
+}
+
 #panel_setting .formlabel {
 	display: none;
 }
