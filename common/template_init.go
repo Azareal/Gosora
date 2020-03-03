@@ -372,7 +372,7 @@ func compileTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName string
 	dbVersion := qgen.Builder.DbVersion()
 	var memStats runtime.MemStats
 	runtime.ReadMemStats(&memStats)
-	debugTasks := DebugPageTasks{0,0,0,0,0}
+	debugTasks := DebugPageTasks{0, 0, 0, 0, 0}
 	debugCache := DebugPageCache{1, 1, 1, 2, 2, 2, true}
 	debugDatabase := DebugPageDatabase{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
 	debugDisk := DebugPageDisk{1, 1, 1, 1, 1, 1}
@@ -657,9 +657,11 @@ func getTemplateList(c *tmpl.CTemplateSet, wg *sync.WaitGroup, prefix string) st
 	out := "package " + c.GetConfig().PackageName + "\n\n"
 	getterstr := "\n// nolint\nGetFrag = func(name string) [][]byte {\nswitch(name) {\n"
 	for templateName, count := range tFragCount {
-		out += "var " + templateName + "_frags = make([][]byte," + strconv.Itoa(count) + ")\n"
+		//out += "var " + templateName + "_frags = make([][]byte," + strconv.Itoa(count) + ")\n"
+		out += "var " + templateName + "_frags [" + strconv.Itoa(count) + "][]byte\n"
 		getterstr += "\tcase \"" + templateName + "\":\n"
-		getterstr += "\treturn " + templateName + "_frags\n"
+		//getterstr += "\treturn " + templateName + "_frags\n"
+		getterstr += "\treturn " + templateName + "_frags[:]\n"
 	}
 	getterstr += "}\nreturn nil\n}\n"
 	out += pout + "\n" + getterstr + "}\n"
