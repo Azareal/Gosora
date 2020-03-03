@@ -323,6 +323,10 @@
 .ct-series-a.ct-point:hover {
 	stroke: hsl(359,98%,30%) !important;
 }
+.ct-legend .ct-series-7:before {
+	background-color: #6b0392 !important;
+	border-color: #6b0392 !important;
+}
 /*.ct-chart-line {
 	height: 300px !important;
 }*/

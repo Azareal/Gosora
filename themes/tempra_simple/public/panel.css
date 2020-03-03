@@ -85,17 +85,17 @@
 	margin-top: -3px;
 }
 
-.panel_rank_tag_admin:before  { content: "👑"; }
-.panel_rank_tag_mod:before    { content: "👮"; }
-.panel_rank_tag_banned:before { content: "⛓️"; }
-.panel_rank_tag_guest:before  { content: "👽"; }
-.panel_rank_tag_member:before { content: "👪"; }
+.panel_rank_tag_admin:before  { content:"👑"; }
+.panel_rank_tag_mod:before    { content:"👮"; }
+.panel_rank_tag_banned:before { content:"⛓️"; }
+.panel_rank_tag_guest:before  { content:"👽"; }
+.panel_rank_tag_member:before { content:"👪"; }
 
-.forum_preset_announce:before { content: "📣"; }
-.forum_preset_members:before  { content: "👪"; }
-.forum_preset_staff:before    { content: "👮"; }
-.forum_preset_admins:before   { content: "👑"; }
-.forum_preset_archive:before  { content: "☠️"; }
+.forum_preset_announce:before { content:"📣"; }
+.forum_preset_members:before  { content:"👪"; }
+.forum_preset_staff:before    { content:"👮"; }
+.forum_preset_admins:before   { content:"👑"; }
+.forum_preset_archive:before  { content:"☠️"; }
 .forum_preset_all, .forum_preset_custom, .forum_preset_ {
 	display: none !important;
 }
@@ -176,6 +176,10 @@
 .ct-legend {
 	margin-top: 0px;
 	margin-bottom: 0px;
+}
+.ct-legend .ct-series-7:before {
+	background-color: #6b0392 !important;
+	border-color: #6b0392 !important;
 }
 select + .timeRangeSelector {
 	margin-left: 8px;
