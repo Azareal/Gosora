@@ -83,7 +83,7 @@ func wsTopicListTick(h *WsHubImpl) error {
 
 	// Don't waste CPU time if nothing has happened
 	// TODO: Get a topic list method which strips stickies?
-	tList, _, _, err := TopicList.GetList(1, "", nil)
+	tList, _, _, err := TopicList.GetList(1, 0, nil)
 	if err != nil {
 		h.lastTick = tickStart
 		return err // TODO: Do we get ErrNoRows here?
@@ -152,7 +152,7 @@ func wsTopicListTick(h *WsHubImpl) error {
 
 	canSeeRenders := make(map[string][]byte)
 	for name, canSee := range canSeeMap {
-		topicList, forumList, _, err := TopicList.GetListByCanSee(canSee, 1, "", nil)
+		topicList, forumList, _, err := TopicList.GetListByCanSee(canSee, 1, 0, nil)
 		if err != nil {
 			return err // TODO: Do we get ErrNoRows here?
 		}

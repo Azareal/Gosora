@@ -37,7 +37,7 @@ func ViewForum(w http.ResponseWriter, r *http.Request, user c.User, header *c.He
 	header.Title = forum.Name
 	header.OGDesc = forum.Desc
 
-	topicList, pagi, err := c.TopicList.GetListByForum(forum, page, "")
+	topicList, pagi, err := c.TopicList.GetListByForum(forum, page, 0)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}

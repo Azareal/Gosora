@@ -74,14 +74,14 @@ func afterDBInit() (err error) {
 		}
 
 		// TODO: Use the same cached data for both the topic list and the topic fetches...
-		tList, _, _, err := c.TopicList.GetListByCanSee(group.CanSee, 1, "", nil)
+		tList, _, _, err := c.TopicList.GetListByCanSee(group.CanSee, 1, 0, nil)
 		if err != nil {
 			return err
 		}
 		ctList := make([]*c.TopicsRow, len(tList))
 		copy(ctList, tList)
 
-		tList, _, _, err = c.TopicList.GetListByCanSee(group.CanSee, 2, "", nil)
+		tList, _, _, err = c.TopicList.GetListByCanSee(group.CanSee, 2, 0, nil)
 		if err != nil {
 			return err
 		}
@@ -89,7 +89,7 @@ func afterDBInit() (err error) {
 			ctList = append(ctList, tItem)
 		}
 
-		tList, _, _, err = c.TopicList.GetListByCanSee(group.CanSee, 3, "", nil)
+		tList, _, _, err = c.TopicList.GetListByCanSee(group.CanSee, 3, 0, nil)
 		if err != nil {
 			return err
 		}

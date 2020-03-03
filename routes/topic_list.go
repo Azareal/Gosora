@@ -24,15 +24,15 @@ func TopicList(w http.ResponseWriter, r *http.Request, user c.User, h *c.Header)
 	if skip || rerr != nil {
 		return rerr
 	}
-	return TopicListCommon(w, r, user, h, "lastupdated", "")
+	return TopicListCommon(w, r, user, h, "lastupdated", 0)
 }
 
 func TopicListMostViewed(w http.ResponseWriter, r *http.Request, user c.User, h *c.Header) c.RouteError {
-	return TopicListCommon(w, r, user, h, "mostviewed", "most-viewed")
+	return TopicListCommon(w, r, user, h, "mostviewed", c.TopicListMostViewed)
 }
 
 // TODO: Implement search
-func TopicListCommon(w http.ResponseWriter, r *http.Request, user c.User, h *c.Header, torder, tsorder string) c.RouteError {
+func TopicListCommon(w http.ResponseWriter, r *http.Request, user c.User, h *c.Header, torder string, tsorder int) c.RouteError {
 	h.Title = phrases.GetTitlePhrase("topics")
 	h.Zone = "topics"
 	h.Path = "/topics/"
@@ -70,7 +70,7 @@ func TopicListCommon(w http.ResponseWriter, r *http.Request, user c.User, h *c.H
 	// TODO: Simplify this block after initially landing search
 	var topicList []*c.TopicsRow
 	var forumList []c.Forum
-	var paginator c.Paginator
+	var pagi c.Paginator
 	q := r.FormValue("q")
 	if q != "" && c.RepliesSearch != nil {
 		var canSee []int
@@ -96,7 +96,7 @@ func TopicListCommon(w http.ResponseWriter, r *http.Request, user c.User, h *c.H
 			for _, fid := range fids {
 				if inSlice(canSee, fid) {
 					f := c.Forums.DirtyGet(fid)
-					if f.Name != "" && f.Active && (f.ParentType == "" || f.ParentType == "forum") {
+					if f.Name != "" && f.Active && (f.ParentType == "" || f.ParentType == "forum") && f.TopicCount != 0 {
 						// TODO: Add a hook here for plugin_guilds?
 						cfids = append(cfids, fid)
 					}
@@ -143,7 +143,7 @@ func TopicListCommon(w http.ResponseWriter, r *http.Request, user c.User, h *c.H
 		// TODO: De-dupe this logic in common/topic_list.go?
 		for _, t := range topicList {
 			t.Link = c.BuildTopicURL(c.NameToSlug(t.Title), t.ID)
-			// TODO: Pass forum to something like topic.Forum and use that instead of these two properties? Could be more flexible.
+			// TODO: Pass forum to something like t.Forum and use that instead of these two properties? Could be more flexible.
 			forum := c.Forums.DirtyGet(t.ParentID)
 			t.ForumName = forum.Name
 			t.ForumLink = forum.Link
@@ -157,7 +157,7 @@ func TopicListCommon(w http.ResponseWriter, r *http.Request, user c.User, h *c.H
 
 		// TODO: Reduce the amount of boilerplate here
 		if r.FormValue("js") == "1" {
-			outBytes, err := wsTopicList(topicList, paginator.LastPage).MarshalJSON()
+			outBytes, err := wsTopicList(topicList, pagi.LastPage).MarshalJSON()
 			if err != nil {
 				return c.InternalError(err, w, r)
 			}
@@ -166,15 +166,15 @@ func TopicListCommon(w http.ResponseWriter, r *http.Request, user c.User, h *c.H
 		}
 
 		h.Title = phrases.GetTitlePhrase("topics_search")
-		pi := c.TopicListPage{h, topicList, forumList, c.Config.DefaultForum, c.TopicListSort{torder, false}, paginator}
+		pi := c.TopicListPage{h, topicList, forumList, c.Config.DefaultForum, c.TopicListSort{torder, false}, pagi}
 		return renderTemplate("topics", w, r, h, pi)
 	}
 
 	// TODO: Pass a struct back rather than passing back so many variables
 	if user.IsSuperAdmin {
-		topicList, forumList, paginator, err = c.TopicList.GetList(page, tsorder, fids)
+		topicList, forumList, pagi, err = c.TopicList.GetList(page, tsorder, fids)
 	} else {
-		topicList, forumList, paginator, err = c.TopicList.GetListByGroup(group, page, tsorder, fids)
+		topicList, forumList, pagi, err = c.TopicList.GetListByGroup(group, page, tsorder, fids)
 	}
 	if err != nil {
 		return c.InternalError(err, w, r)
@@ -182,7 +182,7 @@ func TopicListCommon(w http.ResponseWriter, r *http.Request, user c.User, h *c.H
 
 	// TODO: Reduce the amount of boilerplate here
 	if r.FormValue("js") == "1" {
-		outBytes, err := wsTopicList(topicList, paginator.LastPage).MarshalJSON()
+		outBytes, err := wsTopicList(topicList, pagi.LastPage).MarshalJSON()
 		if err != nil {
 			return c.InternalError(err, w, r)
 		}
@@ -190,6 +190,6 @@ func TopicListCommon(w http.ResponseWriter, r *http.Request, user c.User, h *c.H
 		return nil
 	}
 
-	pi := c.TopicListPage{h, topicList, forumList, c.Config.DefaultForum, c.TopicListSort{torder, false}, paginator}
+	pi := c.TopicListPage{h, topicList, forumList, c.Config.DefaultForum, c.TopicListSort{torder, false}, pagi}
 	return renderTemplate("topics", w, r, h, pi)
 }

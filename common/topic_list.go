@@ -11,6 +11,11 @@ import (
 
 var TopicList TopicListInt
 
+const (
+	TopicListDefault = iota
+	TopicListMostViewed
+)
+
 type TopicListHolder struct {
 	List      []*TopicsRow
 	ForumList []Forum
@@ -18,10 +23,10 @@ type TopicListHolder struct {
 }
 
 type TopicListInt interface {
-	GetListByCanSee(canSee []int, page int, orderby string, filterIDs []int) (topicList []*TopicsRow, forumList []Forum, paginator Paginator, err error)
-	GetListByGroup(group *Group, page int, orderby string, filterIDs []int) (topicList []*TopicsRow, forumList []Forum, paginator Paginator, err error)
-	GetListByForum(f *Forum, page int, orderby string) (topicList []*TopicsRow, paginator Paginator, err error)
-	GetList(page int, orderby string, filterIDs []int) (topicList []*TopicsRow, forumList []Forum, paginator Paginator, err error)
+	GetListByCanSee(canSee []int, page int, orderby int, filterIDs []int) (topicList []*TopicsRow, forumList []Forum, paginator Paginator, err error)
+	GetListByGroup(group *Group, page int, orderby int, filterIDs []int) (topicList []*TopicsRow, forumList []Forum, paginator Paginator, err error)
+	GetListByForum(f *Forum, page int, orderby int) (topicList []*TopicsRow, paginator Paginator, err error)
+	GetList(page int, orderby int, filterIDs []int) (topicList []*TopicsRow, forumList []Forum, paginator Paginator, err error)
 }
 
 type DefaultTopicList struct {
@@ -104,7 +109,7 @@ func (tList *DefaultTopicList) Tick() error {
 
 	canSeeHolders := make(map[string]*TopicListHolder)
 	for name, canSee := range permTree {
-		topicList, forumList, paginator, err := tList.GetListByCanSee(canSee, 1, "", nil)
+		topicList, forumList, paginator, err := tList.GetListByCanSee(canSee, 1, 0, nil)
 		if err != nil {
 			return err
 		}
@@ -130,7 +135,7 @@ func (tList *DefaultTopicList) Tick() error {
 
 // TODO: Add Topics() method to *Forum?
 // TODO: Implement orderby
-func (tList *DefaultTopicList) GetListByForum(f *Forum, page int, orderby string) (topicList []*TopicsRow, paginator Paginator, err error) {
+func (tList *DefaultTopicList) GetListByForum(f *Forum, page int, orderby int) (topicList []*TopicsRow, paginator Paginator, err error) {
 	// TODO: Does forum.TopicCount take the deleted items into consideration for guests? We don't have soft-delete yet, only hard-delete
 	offset, page, lastPage := PageOffset(f.TopicCount, page, Config.ItemsPerPage)
 
@@ -189,12 +194,12 @@ func (tList *DefaultTopicList) GetListByForum(f *Forum, page int, orderby string
 	return topicList, Paginator{pageList, page, lastPage}, nil
 }
 
-func (tList *DefaultTopicList) GetListByGroup(group *Group, page int, orderby string, filterIDs []int) (topicList []*TopicsRow, forumList []Forum, paginator Paginator, err error) {
+func (tList *DefaultTopicList) GetListByGroup(group *Group, page int, orderby int, filterIDs []int) (topicList []*TopicsRow, forumList []Forum, paginator Paginator, err error) {
 	if page == 0 {
 		page = 1
 	}
 	// TODO: Cache the first three pages not just the first along with all the topics on this beaten track
-	if page == 1 && orderby == "" && len(filterIDs) == 0 {
+	if page == 1 && orderby == 0 && len(filterIDs) == 0 {
 		var hold *TopicListHolder
 		var ok bool
 		if group.ID%2 == 0 {
@@ -216,7 +221,7 @@ func (tList *DefaultTopicList) GetListByGroup(group *Group, page int, orderby st
 	return tList.GetListByCanSee(group.CanSee, page, orderby, filterIDs)
 }
 
-func (tList *DefaultTopicList) GetListByCanSee(canSee []int, page int, orderby string, filterIDs []int) (topicList []*TopicsRow, forumList []Forum, pagi Paginator, err error) {
+func (tList *DefaultTopicList) GetListByCanSee(canSee []int, page int, orderby int, filterIDs []int) (topicList []*TopicsRow, forumList []Forum, pagi Paginator, err error) {
 	// TODO: Optimise this by filtering canSee and then fetching the forums?
 	// We need a list of the visible forums for Quick Topic
 	// ? - Would it be useful, if we could post in social groups from /topics/?
@@ -248,7 +253,7 @@ func (tList *DefaultTopicList) GetListByCanSee(canSee []int, page int, orderby s
 	} else {
 		filteredForums = forumList
 	}
-	if len(filteredForums) == 1 && orderby == "" {
+	if len(filteredForums) == 1 && orderby == 0 {
 		topicList, pagi, err = tList.GetListByForum(&filteredForums[0], page, orderby)
 		return topicList, forumList, pagi, err
 	}
@@ -270,7 +275,7 @@ func (tList *DefaultTopicList) GetListByCanSee(canSee []int, page int, orderby s
 }
 
 // TODO: Reduce the number of returns
-func (tList *DefaultTopicList) GetList(page int, orderby string, filterIDs []int) (topicList []*TopicsRow, forumList []Forum, pagi Paginator, err error) {
+func (tList *DefaultTopicList) GetList(page, orderby int, filterIDs []int) (topicList []*TopicsRow, forumList []Forum, pagi Paginator, err error) {
 	// TODO: Make CanSee a method on *Group with a canSee field? Have a CanSee method on *User to cover the case of superadmins?
 	cCanSee, err := Forums.GetAllVisibleIDs()
 	if err != nil {
@@ -309,7 +314,7 @@ func (tList *DefaultTopicList) GetList(page int, orderby string, filterIDs []int
 			topicCount += fcopy.TopicCount
 		}
 	}
-	if len(forumList) == 1 && orderby == "" {
+	if len(forumList) == 1 && orderby == 0 {
 		topicList, pagi, err = tList.GetListByForum(&forumList[0], page, orderby)
 		return topicList, forumList, pagi, err
 	}
@@ -327,12 +332,12 @@ func (tList *DefaultTopicList) GetList(page int, orderby string, filterIDs []int
 
 // TODO: Rename this to TopicListStore and pass back a TopicList instance holding the pagination data and topic list rather than passing them back one argument at a time
 // TODO: Make orderby an enum of sorts
-func (tList *DefaultTopicList) getList(page int, orderby string, topicCount int, argList []interface{}, qlist string) (topicList []*TopicsRow, paginator Paginator, err error) {
+func (tList *DefaultTopicList) getList(page, orderby, topicCount int, argList []interface{}, qlist string) (topicList []*TopicsRow, paginator Paginator, err error) {
 	//log.Printf("argList: %+v\n",argList)
 	//log.Printf("qlist: %+v\n",qlist)
 
 	var orderq string
-	if orderby == "most-viewed" {
+	if orderby == TopicListMostViewed {
 		orderq = "views DESC,lastReplyAt DESC,createdBy DESC"
 	} else {
 		orderq = "sticky DESC,lastReplyAt DESC,createdBy DESC"
