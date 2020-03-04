@@ -144,30 +144,34 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError 
 			return c.InternalErrorJS(err, w, r)
 		}
 
-		var msglist string
-		//var sb strings.Builder
+		if count == 0 || len(alerts) == 0 || (rCreatedAt != 0 && rCreatedAt >= topCreatedAt && count == rCount) {
+			_, _ = io.WriteString(w, `{}`)
+			return nil
+		}
+
 		var ok bool
-		for _, alert := range alerts {
+		var sb strings.Builder
+		sb.WriteString(`{"msgs":[`)
+		for i, alert := range alerts {
+			if i != 0 {
+				sb.WriteRune(',')
+			}
 			alert.Actor, ok = list[alert.ActorID]
 			if !ok {
 				return c.InternalErrorJS(errors.New("No such actor"), w, r)
 			}
-			res, err := c.BuildAlert(alert, user)
+			err := c.BuildAlertSb(&sb, alert, user)
 			if err != nil {
 				return c.LocalErrorJS(err.Error(), w, r)
 			}
-			//sb.Write(res)
-			msglist += res + ","
 		}
-		if len(msglist) != 0 {
-			msglist = msglist[0 : len(msglist)-1]
-		}
+		sb.WriteString(`],"count":`)
+		sb.WriteString(strconv.Itoa(count))
+		sb.WriteString(`,"tc":`)
+		sb.WriteString(strconv.Itoa(int(topCreatedAt)))
+		sb.WriteRune('}')
 
-		if count == 0 || msglist == "" || (rCreatedAt != 0 && rCreatedAt >= topCreatedAt && count == rCount) {
-			_, _ = io.WriteString(w, `{}`)
-		} else {
-			_, _ = io.WriteString(w, `{"msgs":[`+msglist+`],"count":`+strconv.Itoa(count)+`,"tc":`+strconv.Itoa(int(topCreatedAt))+`}`)
-		}
+		_, _ = io.WriteString(w, sb.String())
 	default:
 		return c.PreErrorJS("Invalid Module", w, r)
 	}

@@ -62,114 +62,237 @@ func escapeTextInJson(in string) string {
 	return strings.Replace(in, "/", "\\/", -1)
 }
 
-func BuildAlert(alert Alert, user User /* The current user */) (out string, err error) {
+func BuildAlert(a Alert, user User /* The current user */) (out string, err error) {
 	var targetUser *User
-	if alert.Actor == nil {
-		alert.Actor, err = Users.Get(alert.ActorID)
+	if a.Actor == nil {
+		a.Actor, err = Users.Get(a.ActorID)
 		if err != nil {
 			return "", errors.New(phrases.GetErrorPhrase("alerts_no_actor"))
 		}
 	}
 
-	/*if alert.ElementType != "forum" {
-		targetUser, err = users.Get(alert.TargetUserID)
+	/*if a.ElementType != "forum" {
+		targetUser, err = users.Get(a.TargetUserID)
 		if err != nil {
 			LocalErrorJS("Unable to find the target user",w,r)
 			return
 		}
 	}*/
-	if alert.Event == "friend_invite" {
-		return buildAlertString(".new_friend_invite", []string{alert.Actor.Name}, alert.Actor.Link, alert.Actor.Avatar, alert.ASID), nil
+	if a.Event == "friend_invite" {
+		return buildAlertString(".new_friend_invite", []string{a.Actor.Name}, a.Actor.Link, a.Actor.Avatar, a.ASID), nil
 	}
 
 	// Not that many events for us to handle in a forum
-	if alert.ElementType == "forum" {
-		if alert.Event == "reply" {
-			topic, err := Topics.Get(alert.ElementID)
+	if a.ElementType == "forum" {
+		if a.Event == "reply" {
+			topic, err := Topics.Get(a.ElementID)
 			if err != nil {
-				DebugLogf("Unable to find linked topic %d", alert.ElementID)
+				DebugLogf("Unable to find linked topic %d", a.ElementID)
 				return "", errors.New(phrases.GetErrorPhrase("alerts_no_linked_topic"))
 			}
 			// Store the forum ID in the targetUser column instead of making a new one? o.O
 			// Add an additional column for extra information later on when we add the ability to link directly to posts. We don't need the forum data for now...
-			return buildAlertString(".forum_new_topic", []string{alert.Actor.Name, topic.Title}, topic.Link, alert.Actor.Avatar, alert.ASID), nil
+			return buildAlertString(".forum_new_topic", []string{a.Actor.Name, topic.Title}, topic.Link, a.Actor.Avatar, a.ASID), nil
 		}
-		return buildAlertString(".forum_unknown_action", []string{alert.Actor.Name}, "", alert.Actor.Avatar, alert.ASID), nil
+		return buildAlertString(".forum_unknown_action", []string{a.Actor.Name}, "", a.Actor.Avatar, a.ASID), nil
 	}
 
-	var url, area string
-	phraseName := "." + alert.ElementType
-	switch alert.ElementType {
+	var url, area, phraseName string
+	own := false
+	switch a.ElementType {
 	case "convo":
-		convo, err := Convos.Get(alert.ElementID)
+		convo, err := Convos.Get(a.ElementID)
 		if err != nil {
-			DebugLogf("Unable to find linked convo %d", alert.ElementID)
+			DebugLogf("Unable to find linked convo %d", a.ElementID)
 			return "", errors.New(phrases.GetErrorPhrase("alerts_no_linked_convo"))
 		}
 		url = convo.Link
-		area = ""
 	case "topic":
-		topic, err := Topics.Get(alert.ElementID)
+		topic, err := Topics.Get(a.ElementID)
 		if err != nil {
-			DebugLogf("Unable to find linked topic %d", alert.ElementID)
+			DebugLogf("Unable to find linked topic %d", a.ElementID)
 			return "", errors.New(phrases.GetErrorPhrase("alerts_no_linked_topic"))
 		}
 		url = topic.Link
 		area = topic.Title
-		if alert.TargetUserID == user.ID {
-			phraseName += "_own"
-		}
+		own = a.TargetUserID == user.ID
 	case "user":
-		targetUser, err = Users.Get(alert.ElementID)
+		targetUser, err = Users.Get(a.ElementID)
 		if err != nil {
-			DebugLogf("Unable to find target user %d", alert.ElementID)
+			DebugLogf("Unable to find target user %d", a.ElementID)
 			return "", errors.New(phrases.GetErrorPhrase("alerts_no_target_user"))
 		}
 		area = targetUser.Name
 		url = targetUser.Link
-		if alert.TargetUserID == user.ID {
-			phraseName += "_own"
-		}
+		own = a.TargetUserID == user.ID
 	case "post":
-		topic, err := TopicByReplyID(alert.ElementID)
+		topic, err := TopicByReplyID(a.ElementID)
 		if err != nil {
-			DebugLogf("Unable to find linked topic by reply ID %d", alert.ElementID)
+			DebugLogf("Unable to find linked topic by reply ID %d", a.ElementID)
 			return "", errors.New(phrases.GetErrorPhrase("alerts_no_linked_topic_by_reply"))
 		}
 		url = topic.Link
 		area = topic.Title
-		if alert.TargetUserID == user.ID {
-			phraseName += "_own"
-		}
+		own = a.TargetUserID == user.ID
 	default:
 		return "", errors.New(phrases.GetErrorPhrase("alerts_invalid_elementtype"))
 	}
 
-	switch alert.Event {
-	case "create":
-		phraseName += "_create"
-	case "like":
-		phraseName += "_like"
-	case "mention":
-		phraseName += "_mention"
-	case "reply":
-		phraseName += "_reply"
+	badEv := false
+	switch a.Event {
+	case "create", "like", "mention", "reply":
+		// skip
+	default:
+		badEv = true
 	}
 
-	return buildAlertString(phraseName, []string{alert.Actor.Name, area}, url, alert.Actor.Avatar, alert.ASID), nil
+	if own && !badEv {
+		phraseName = "." + a.ElementType + "_own_" + a.Event
+	} else if !badEv {
+		phraseName = "." + a.ElementType + "_" + a.Event
+	} else if own {
+		phraseName = "." + a.ElementType + "_own"
+	} else {
+		phraseName = "." + a.ElementType
+	}
+
+	return buildAlertString(phraseName, []string{a.Actor.Name, area}, url, a.Actor.Avatar, a.ASID), nil
+}
+
+func buildAlertString(msg string, sub []string, path, avatar string, asid int) string {
+	var sb strings.Builder
+	buildAlertSb(&sb, msg, sub, path, avatar, asid)
+	return sb.String()
 }
 
 // TODO: Use a string builder?
-func buildAlertString(msg string, sub []string, path, avatar string, asid int) string {
-	var subString string
-	for _, item := range sub {
-		subString += "\"" + escapeTextInJson(item) + "\","
+func buildAlertSb(sb *strings.Builder, msg string, sub []string, path, avatar string, asid int) {
+	sb.WriteString(`{"msg":"`)
+	sb.WriteString(escapeTextInJson(msg))
+	sb.WriteString(`","sub":[`)
+	for i, it := range sub {
+		if i != 0 {
+			sb.WriteString(",\"")
+		} else {
+			sb.WriteString("\"")
+		}
+		sb.WriteString(escapeTextInJson(it))
+		sb.WriteString("\"")
 	}
-	if len(subString) > 0 {
-		subString = subString[:len(subString)-1]
+	sb.WriteString(`],"path":"`)
+	sb.WriteString(escapeTextInJson(path))
+	sb.WriteString(`","avatar":"`)
+	sb.WriteString(escapeTextInJson(avatar))
+	sb.WriteString(`","id":`)
+	sb.WriteString(strconv.Itoa(asid))
+	sb.WriteRune('}')
+}
+
+func BuildAlertSb(sb *strings.Builder, a Alert, user User /* The current user */) (err error) {
+	var targetUser *User
+	if a.Actor == nil {
+		a.Actor, err = Users.Get(a.ActorID)
+		if err != nil {
+			return errors.New(phrases.GetErrorPhrase("alerts_no_actor"))
+		}
 	}
 
-	return `{"msg":"` + escapeTextInJson(msg) + `","sub":[` + subString + `],"path":"` + escapeTextInJson(path) + `","avatar":"` + escapeTextInJson(avatar) + `","id":` + strconv.Itoa(asid) + `}`
+	/*if a.ElementType != "forum" {
+		targetUser, err = users.Get(a.TargetUserID)
+		if err != nil {
+			LocalErrorJS("Unable to find the target user",w,r)
+			return
+		}
+	}*/
+	if a.Event == "friend_invite" {
+		buildAlertSb(sb, ".new_friend_invite", []string{a.Actor.Name}, a.Actor.Link, a.Actor.Avatar, a.ASID)
+		return nil
+	}
+
+	// Not that many events for us to handle in a forum
+	if a.ElementType == "forum" {
+		if a.Event == "reply" {
+			topic, err := Topics.Get(a.ElementID)
+			if err != nil {
+				DebugLogf("Unable to find linked topic %d", a.ElementID)
+				return errors.New(phrases.GetErrorPhrase("alerts_no_linked_topic"))
+			}
+			// Store the forum ID in the targetUser column instead of making a new one? o.O
+			// Add an additional column for extra information later on when we add the ability to link directly to posts. We don't need the forum data for now...
+			buildAlertSb(sb, ".forum_new_topic", []string{a.Actor.Name, topic.Title}, topic.Link, a.Actor.Avatar, a.ASID)
+			return nil
+		}
+		buildAlertSb(sb, ".forum_unknown_action", []string{a.Actor.Name}, "", a.Actor.Avatar, a.ASID)
+		return nil
+	}
+
+	var url, area string
+	own := false
+	switch a.ElementType {
+	case "convo":
+		convo, err := Convos.Get(a.ElementID)
+		if err != nil {
+			DebugLogf("Unable to find linked convo %d", a.ElementID)
+			return errors.New(phrases.GetErrorPhrase("alerts_no_linked_convo"))
+		}
+		url = convo.Link
+	case "topic":
+		topic, err := Topics.Get(a.ElementID)
+		if err != nil {
+			DebugLogf("Unable to find linked topic %d", a.ElementID)
+			return errors.New(phrases.GetErrorPhrase("alerts_no_linked_topic"))
+		}
+		url = topic.Link
+		area = topic.Title
+		own = a.TargetUserID == user.ID
+	case "user":
+		targetUser, err = Users.Get(a.ElementID)
+		if err != nil {
+			DebugLogf("Unable to find target user %d", a.ElementID)
+			return errors.New(phrases.GetErrorPhrase("alerts_no_target_user"))
+		}
+		area = targetUser.Name
+		url = targetUser.Link
+		own = a.TargetUserID == user.ID
+	case "post":
+		topic, err := TopicByReplyID(a.ElementID)
+		if err != nil {
+			DebugLogf("Unable to find linked topic by reply ID %d", a.ElementID)
+			return errors.New(phrases.GetErrorPhrase("alerts_no_linked_topic_by_reply"))
+		}
+		url = topic.Link
+		area = topic.Title
+		own = a.TargetUserID == user.ID
+	default:
+		return errors.New(phrases.GetErrorPhrase("alerts_invalid_elementtype"))
+	}
+
+	sb.WriteString(`{"msg":"`)
+	sb.WriteRune('.')
+	sb.WriteString(a.ElementType)
+	if own {
+		sb.WriteString("_own_")
+	} else {
+		sb.WriteRune('_')
+	}
+	switch a.Event {
+	case "create", "like", "mention", "reply":
+		sb.WriteString(a.Event)
+	}
+
+	sb.WriteString(`","sub":["`)
+	sb.WriteString(escapeTextInJson(a.Actor.Name))
+	sb.WriteString("\",\"")
+	sb.WriteString(escapeTextInJson(area))
+	sb.WriteString(`"],"path":"`)
+	sb.WriteString(escapeTextInJson(url))
+	sb.WriteString(`","avatar":"`)
+	sb.WriteString(escapeTextInJson(a.Actor.Avatar))
+	sb.WriteString(`","id":`)
+	sb.WriteString(strconv.Itoa(a.ASID))
+	sb.WriteRune('}')
+
+	return nil
 }
 
 func AddActivityAndNotifyAll(a Alert) error {
