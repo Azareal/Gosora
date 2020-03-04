@@ -5,24 +5,24 @@
 		{{range .Header.Stylesheets}}
 		<link href="/s/{{.}}" rel="stylesheet" type="text/css">{{end}}
 		{{range .Header.PreScriptsAsync}}
-		<script async type="text/javascript" src="/s/{{.}}"></script>{{end}}
-		<meta property="x-loggedin" content="{{.CurrentUser.Loggedin}}" />
-		<script type="text/javascript" src="/s/init.js?i=10"></script>
+		<script async src="/s/{{.}}"></script>{{end}}
+		<meta property="x-loggedin" content="{{.CurrentUser.Loggedin}}"/>
+		<script src="/s/init.js?i=10"></script>
 		{{range .Header.ScriptsAsync}}
-		<script async type="text/javascript" src="/s/{{.}}"></script>{{end}}
-		<script type="text/javascript" src="/s/jquery-3.1.1.min.js"></script>
+		<script async src="/s/{{.}}"></script>{{end}}
+		<script src="/s/jquery-3.1.1.min.js"></script>
 		{{range .Header.Scripts}}
-		<script type="text/javascript" src="/s/{{.}}"></script>{{end}}
-		<meta name="viewport" content="width=device-width,initial-scale = 1.0, maximum-scale=1.0,user-scalable=no" />
-		{{if .Header.MetaDesc}}<meta name="description" content="{{.Header.MetaDesc}}" />{{end}}
+		<script src="/s/{{.}}"></script>{{end}}
+		<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+		{{if .Header.MetaDesc}}<meta name="description" content="{{.Header.MetaDesc}}"/>{{end}}
 		{{/** TODO: Have page / forum / topic level tags and descriptions below as-well **/}}
-		<meta property="og:type" content="website" />
+		<meta property="og:type" content="website"/>
 		<meta property="og:site_name" content="{{.Header.Site.Name}}">
 		<meta property="og:title" content="{{.Title}} | {{.Header.Site.Name}}">
 		<meta name="twitter:title" content="{{.Title}} | {{.Header.Site.Name}}" />
-		{{if .OGDesc}}<meta property="og:description" content="{{.OGDesc}}" />
-		<meta property="twitter:description" content="{{.OGDesc}}" />{{end}}
-		{{if .GoogSiteVerify}}<meta name="google-site-verification" content="{{.GoogSiteVerify}}" />{{end}}
+		{{if .OGDesc}}<meta property="og:description" content="{{.OGDesc}}"/>
+		<meta property="twitter:description" content="{{.OGDesc}}"/>{{end}}
+		{{if .GoogSiteVerify}}<meta name="google-site-verification" content="{{.GoogSiteVerify}}"/>{{end}}
 		<link rel="search" type="application/opensearchdescription+xml" title="{{.Header.Site.Name}}" href="/opensearch.xml">
 	</head>
 	<body>
@@ -39,8 +39,7 @@
 					<li class="menu_left menu_hamburger" title="{{lang "menu_hamburger_tooltip"}}"><a></a></li>
 				</ul>
 				</div>
-				</div>
-				<div style="clear:both;"></div>
+				</div><div style="clear:both;"></div>
 			</nav>
 			<div class="right_of_nav">{{/**<!--{{dock "rightOfNav" .Header }}-->**/}}
 {{/** TODO: Make this a separate template and load it via the theme docks, here for now so we can rapidly prototype the Nox theme **/}}

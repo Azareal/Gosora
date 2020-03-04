@@ -237,10 +237,11 @@ type MeSite struct {
 // TODO: Decouple site settings into a different API? I'd like to avoid having too many requests, if possible, maybe we can use a different name for this?
 func APIMe(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	// TODO: Don't make this too JSON dependent so that we can swap in newer more efficient formats
-	w.Header().Set("Content-Type", "application/json")
+	h := w.Header()
+	h.Set("Content-Type", "application/json")
 	// We don't want an intermediary accidentally caching this
 	// TODO: Use this header anywhere with a user check?
-	w.Header().Set("Cache-Control", "private")
+	h.Set("Cache-Control", "private")
 
 	me := JsonMe{(&user).Me(), MeSite{c.Site.MaxRequestSize}}
 	jsonBytes, err := json.Marshal(me)
