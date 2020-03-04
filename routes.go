@@ -151,6 +151,7 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError 
 
 		var ok bool
 		var sb strings.Builder
+		sb.Grow(c.AlertsGrowHint + (len(alerts) * c.AlertsGrowHint2))
 		sb.WriteString(`{"msgs":[`)
 		for i, alert := range alerts {
 			if i != 0 {

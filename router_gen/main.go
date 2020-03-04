@@ -825,7 +825,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if prefix != "/ws" && strings.Contains(req.Header.Get("Accept-Encoding"), "gzip") {
 		h := w.Header()
 		h.Set("Content-Encoding", "gzip")
-		h.Set("Content-Type", "text/html; charset=utf-8")
+		h.Set("Content-Type", "text/html;charset=utf-8")
 		gzw := c.GzipResponseWriter{Writer: gzip.NewWriter(w), ResponseWriter: w}
 		defer func() {
 			if h.Get("Content-Encoding") == "gzip" && h.Get("X-I") == "" {
@@ -892,7 +892,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					}
 					req.URL.Path = "/s/favicon.ico"
 					routes.StaticFile(w,req)
-					co.RouteViewCounter.Bump({{index .AllRouteMap "routes.Favicon"}})
+					co.RouteViewCounter.Bump3({{index .AllRouteMap "routes.Favicon"}}, cn)
 					return nil
 				case "opensearch.xml":
 					co.RouteViewCounter.Bump({{index .AllRouteMap "routes.OpenSearchXml"}})

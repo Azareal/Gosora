@@ -276,7 +276,7 @@ func (a *MysqlAdapter) AddKey(name, table, cols string, key DBTableKey) (string,
 	}
 
 	var colstr string
-	for _, col := range strings.Split(cols,",") {
+	for _, col := range strings.Split(cols, ",") {
 		colstr += "`" + col + "`,"
 	}
 	if len(colstr) > 1 {
@@ -651,41 +651,66 @@ func (a *MysqlAdapter) buildWhere(where string, sb *strings.Builder) error {
 }
 
 // The new version of buildWhere() currently only used in ComplexSelect for complex OO builder queries
+const FlexiHint1 = len(`  < UTC_TIMESTAMP() - interval ?  `)
+
 func (a *MysqlAdapter) buildFlexiWhere(where string, dateCutoff *dateCutoff) (q string, err error) {
 	if len(where) == 0 && dateCutoff == nil {
 		return "", nil
 	}
-	q = " WHERE"
+
+	var sb strings.Builder
+	sb.WriteString(" WHERE")
 	if dateCutoff != nil {
+		sb.Grow(6 + FlexiHint1)
+		sb.WriteRune(' ')
+		sb.WriteString(dateCutoff.Column)
 		switch dateCutoff.Type {
 		case 0:
-			q += " " + dateCutoff.Column + " BETWEEN (UTC_TIMESTAMP() - interval " + strconv.Itoa(dateCutoff.Quantity) + " " + dateCutoff.Unit + ") AND UTC_TIMESTAMP() AND"
+			sb.WriteString(" BETWEEN (UTC_TIMESTAMP() - interval ")
+			q += strconv.Itoa(dateCutoff.Quantity) + " " + dateCutoff.Unit + ") AND UTC_TIMESTAMP()"
 		case 11:
-			q += " " + dateCutoff.Column + " < UTC_TIMESTAMP() - interval ? " + dateCutoff.Unit + " AND"
+			sb.WriteString(" < UTC_TIMESTAMP() - interval ? ")
+			sb.WriteString(dateCutoff.Unit)
 		default:
-			q += " " + dateCutoff.Column + " < UTC_TIMESTAMP() - interval " + strconv.Itoa(dateCutoff.Quantity) + " " + dateCutoff.Unit + " AND"
+			sb.WriteString(" < UTC_TIMESTAMP() - interval ")
+			sb.WriteString(strconv.Itoa(dateCutoff.Quantity))
+			sb.WriteRune(' ')
+			sb.WriteString(dateCutoff.Unit)
 		}
+	}
+
+	if dateCutoff != nil && len(where) != 0 {
+		sb.WriteString(" AND")
 	}
 
 	if len(where) != 0 {
-		for _, loc := range processWhere(where) {
+		wh := processWhere(where)
+		sb.Grow((len(wh) * 8) - 5)
+		for i, loc := range wh {
+			if i != 0 {
+				sb.WriteString(" AND ")
+			}
 			for _, token := range loc.Expr {
 				switch token.Type {
 				case TokenFunc, TokenOp, TokenNumber, TokenSub, TokenOr, TokenNot, TokenLike:
-					q += " " + token.Contents
+					sb.WriteString(" ")
+					sb.WriteString(token.Contents)
 				case TokenColumn:
-					q += " `" + token.Contents + "`"
+					sb.WriteString(" `")
+					sb.WriteString(token.Contents)
+					sb.WriteString("`")
 				case TokenString:
-					q += " '" + token.Contents + "'"
+					sb.WriteString(" '")
+					sb.WriteString(token.Contents)
+					sb.WriteString("'")
 				default:
-					return q, errors.New("This token doesn't exist o_o")
+					return sb.String(), errors.New("This token doesn't exist o_o")
 				}
 			}
-			q += " AND"
 		}
 	}
 
-	return q[0 : len(q)-4], nil
+	return sb.String(), nil
 }
 
 func (a *MysqlAdapter) buildOrderby(orderby string) (q string) {
