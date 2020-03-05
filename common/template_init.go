@@ -627,7 +627,7 @@ func getTemplateList(c *tmpl.CTemplateSet, wg *sync.WaitGroup, prefix string) st
 		if !ok {
 			bodyMap[frag.Body] = front
 			var bits string
-			DebugLog("encoding frag.Body")
+			DebugLog("encoding f.Body")
 			for _, char := range []byte(frag.Body) {
 				if char == '\'' {
 					bits += "'\\" + string(char) + "',"

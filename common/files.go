@@ -208,14 +208,14 @@ func (list SFileList) JSTmplInit() error {
 	});
 }`, "\n\t];")
 		data = replace(data, `=
-}`, "= []")
+}`, "=[]")
 
 		fragset := tmpl.GetFrag(shortName)
 		if fragset != nil {
 			sfrags := []byte("let " + shortName + "_frags = [\n")
 			for _, frags := range fragset {
 				//sfrags = append(sfrags, []byte(shortName+"_frags.push(`"+string(frags)+"`);\n")...)
-				sfrags = append(sfrags, []byte("\t`"+string(frags)+"`,\n")...)
+				sfrags = append(sfrags, []byte("`"+string(frags)+"`,\n")...)
 			}
 			sfrags = append(sfrags, []byte("];\n")...)
 			data = append(sfrags, data...)

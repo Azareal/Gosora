@@ -465,6 +465,7 @@ func (c *CTemplateSet) compile(name, content, expects string, expectsInt interfa
 	} else if !c.config.SkipInitBlock {
 		if len(c.langIndexToName) > 0 {
 			fout += "var " + fname + "_tmpl_phrase_id int\n\n"
+			fout += "var " + fname + "_phrase_arr [" + strconv.Itoa(len(c.langIndexToName)) + "][]byte\n\n"
 		}
 		fout += "// nolint\nfunc init() {\n"
 
@@ -484,6 +485,11 @@ func (c *CTemplateSet) compile(name, content, expects string, expectsInt interfa
 				fout += "\t\t" + `"` + name + `"` + ",\n"
 			}
 			fout += "\t})\n"
+
+			fout += `	phrases.AddTmplIndexCallback(func(phraseSet [][]byte) {
+		copy(` + fname + `_phrase_arr[:], phraseSet)
+	})
+`
 		}
 		fout += "}\n\n"
 	}
@@ -513,7 +519,9 @@ if !ok {
 	}
 
 	if len(c.langIndexToName) > 0 {
-		fout += "var plist = phrases.GetTmplPhrasesBytes(" + fname + "_tmpl_phrase_id)\n"
+		//fout += "var plist = phrases.GetTmplPhrasesBytes(" + fname + "_tmpl_phrase_id)\n"
+		//fout += "if len(plist) > 0 {\n_ = plist[len(plist)-1]\n}\n"
+		//fout += "var plist = " + fname + "_phrase_arr\n"
 	}
 	fout += varString
 
@@ -526,43 +534,44 @@ if !ok {
 	}
 
 	for fid := 0; len(outBuf) > fid; fid++ {
-		frame := outBuf[fid]
-		c.detail(frame.Type + " frame")
-		if frame.Type == "text" {
-			c.detail(frame)
+		fr := outBuf[fid]
+		c.detail(fr.Type + " frame")
+		if fr.Type == "text" {
+			c.detail(fr)
 			oid := fid
 			c.detail("oid:", oid)
-			skipBlock, ok := skipped[frame.TemplateName]
+			skipBlock, ok := skipped[fr.TemplateName]
 			if !ok {
 				skipBlock = &SkipBlock{make(map[int]int), 0, 0}
-				skipped[frame.TemplateName] = skipBlock
+				skipped[fr.TemplateName] = skipBlock
 			}
 			skip := skipBlock.LastCount
 			c.detailf("skipblock %+v\n", skipBlock)
 			//var count int
-			for len(outBuf) > fid+1 && outBuf[fid+1].Type == "text" && outBuf[fid+1].TemplateName == frame.TemplateName {
+			for len(outBuf) > fid+1 && outBuf[fid+1].Type == "text" && outBuf[fid+1].TemplateName == fr.TemplateName {
 				c.detail("pre fid:", fid)
 				//count++
 				next := outBuf[fid+1]
 				c.detail("next frame:", next)
-				c.detail("frame frag:", c.fragBuf[frame.Extra2.(int)])
+				c.detail("frame frag:", c.fragBuf[fr.Extra2.(int)])
 				c.detail("next frag:", c.fragBuf[next.Extra2.(int)])
-				c.fragBuf[frame.Extra2.(int)].Body += c.fragBuf[next.Extra2.(int)].Body
+				c.fragBuf[fr.Extra2.(int)].Body += c.fragBuf[next.Extra2.(int)].Body
 				c.fragBuf[next.Extra2.(int)].Seen = true
 				fid++
 				skipBlock.LastCount++
-				skipBlock.Frags[frame.Extra.(int)] = skipBlock.LastCount
+				skipBlock.Frags[fr.Extra.(int)] = skipBlock.LastCount
 				c.detail("post fid:", fid)
 			}
-			writeTextFrame(frame.TemplateName, frame.Extra.(int)-skip)
-		} else if frame.Type == "varsub" || frame.Type == "cvarsub" {
-			fout += "w.Write(" + frame.Body + ")\n"
-		} else if frame.Type == "identifier" {
-			fout += frame.Body
-		} else if frame.Type == "lang" {
-			fout += "w.Write(plist[" + strconv.Itoa(frame.Extra.(int)) + "])\n"
+			writeTextFrame(fr.TemplateName, fr.Extra.(int)-skip)
+		} else if fr.Type == "varsub" || fr.Type == "cvarsub" {
+			fout += "w.Write(" + fr.Body + ")\n"
+		} else if fr.Type == "identifier" {
+			fout += fr.Body
+		} else if fr.Type == "lang" {
+			//fout += "w.Write(plist[" + strconv.Itoa(fr.Extra.(int)) + "])\n"
+			fout += "w.Write(" + fname + "_phrase_arr[" + strconv.Itoa(fr.Extra.(int)) + "])\n"
 		} else {
-			fout += frame.Body
+			fout += fr.Body
 		}
 	}
 	fout += "return nil\n}\n"

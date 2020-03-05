@@ -136,6 +136,7 @@ func InitPhrases(lang string) error {
 				phraseSet[index] = []byte(phrase)
 			}
 			langPack.TmplIndicesToPhrases[tmplID] = phraseSet
+			TmplIndexCallback(tmplID, phraseSet)
 		}
 
 		log.Print("Adding the '" + langPack.Name + "' language pack")
@@ -311,7 +312,7 @@ func getPlaceholderBytes(prefix, suffix string) []byte {
 	return []byte("{lang." + prefix + "[" + suffix + "]}")
 }
 
-// Please don't mutate *LanguagePack
+// ! Please don't mutate *LanguagePack
 func GetCurrentLangPack() *LanguagePack {
 	return currentLangPack.Load().(*LanguagePack)
 }
@@ -360,4 +361,16 @@ func RegisterTmplPhraseNames(phraseNames []string) (tmplID int) {
 
 func GetTmplPhrasesBytes(tmplID int) [][]byte {
 	return currentLangPack.Load().(*LanguagePack).TmplIndicesToPhrases[tmplID]
+}
+
+// New
+
+var indexCallbacks []func([][]byte)
+
+func TmplIndexCallback(tmplID int, phraseSet [][]byte) {
+	indexCallbacks[tmplID](phraseSet)
+}
+
+func AddTmplIndexCallback(h func([][]byte)) {
+	indexCallbacks = append(indexCallbacks, h)
 }
