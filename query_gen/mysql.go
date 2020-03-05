@@ -715,12 +715,22 @@ func (a *MysqlAdapter) buildFlexiWhere(where string, dateCutoff *dateCutoff) (q 
 
 func (a *MysqlAdapter) buildOrderby(orderby string) (q string) {
 	if len(orderby) != 0 {
-		q = " ORDER BY "
-		for _, column := range processOrderby(orderby) {
+		var sb strings.Builder
+		ord := processOrderby(orderby)
+		sb.Grow(10 + (len(ord) * 8) - 1)
+		sb.WriteString(" ORDER BY ")
+		for i, col := range ord {
 			// TODO: We might want to escape this column
-			q += "`" + strings.Replace(column.Column, ".", "`.`", -1) + "` " + strings.ToUpper(column.Order) + ","
+			if i != 0 {
+				sb.WriteString(",`")
+			} else {
+				sb.WriteString("`")
+			}
+			sb.WriteString(strings.Replace(col.Column, ".", "`.`", -1))
+			sb.WriteString("` ")
+			sb.WriteString(strings.ToUpper(col.Order))
 		}
-		q = q[0 : len(q)-1]
+		q = sb.String()
 	}
 	return q
 }
