@@ -4,6 +4,8 @@ package qgen
 import (
 	"database/sql"
 	"errors"
+
+	//"fmt"
 	"os"
 	"runtime"
 	"strconv"
@@ -667,7 +669,10 @@ func (a *MysqlAdapter) buildFlexiWhere(where string, dateCutoff *dateCutoff) (q 
 		switch dateCutoff.Type {
 		case 0:
 			sb.WriteString(" BETWEEN (UTC_TIMESTAMP() - interval ")
-			q += strconv.Itoa(dateCutoff.Quantity) + " " + dateCutoff.Unit + ") AND UTC_TIMESTAMP()"
+			sb.WriteString(strconv.Itoa(dateCutoff.Quantity))
+			sb.WriteString(" ")
+			sb.WriteString(dateCutoff.Unit)
+			sb.WriteString(") AND UTC_TIMESTAMP()")
 		case 11:
 			sb.WriteString(" < UTC_TIMESTAMP() - interval ? ")
 			sb.WriteString(dateCutoff.Unit)
@@ -709,7 +714,6 @@ func (a *MysqlAdapter) buildFlexiWhere(where string, dateCutoff *dateCutoff) (q 
 			}
 		}
 	}
-
 	return sb.String(), nil
 }
 
