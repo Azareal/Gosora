@@ -1,15 +1,15 @@
 'use strict';
 
-var me = {};
-var phraseBox = {};
-if(tmplInits===undefined) var tmplInits = {};
-var tmplPhrases = []; // [key] array of phrases indexed by order of use
-var hooks = { // Shorten this list by binding the hooks just in time?
-	"pre_iffe": [],
-	"pre_init": [],
-	"start_init": [],
-	"almost_end_init": [],
-	"end_init": [],
+var me={};
+var phraseBox={};
+if(tmplInits===undefined) var tmplInits={};
+var tmplPhrases=[]; // [key] array of phrases indexed by order of use
+var hooks={ // Shorten this list by binding the hooks just in time?
+	"pre_iffe":[],
+	"pre_init":[],
+	"start_init":[],
+	"almost_end_init":[],
+	"end_init":[],
 	"after_phrases":[],
 	"after_add_alert":[],
 	"after_update_alert_list":[],
@@ -18,7 +18,7 @@ var hooks = { // Shorten this list by binding the hooks just in time?
 	"edit_item_pre_bind":[],
 	"analytics_loaded":[],
 };
-var ranInitHooks = {}
+var ranInitHooks={}
 
 function runHook(name, ...args) {
 	if(!(name in hooks)) {
@@ -33,9 +33,9 @@ function runHook(name, ...args) {
 	return ret;
 }
 
-function addHook(name, callback) {
+function addHook(name, h) {
 	if(hooks[name]===undefined) hooks[name] = [];
-	hooks[name].push(callback);
+	hooks[name].push(h);
 }
 
 // InitHooks are slightly special, as if they are run, then any adds after the initial run will run immediately, this is to deal with the async nature of script loads
@@ -45,22 +45,22 @@ function runInitHook(name, ...args) {
 	return ret;
 }
 
-function addInitHook(name, callback) {
-	addHook(name, callback);
-	if(name in ranInitHooks) callback();
+function addInitHook(name, h) {
+	addHook(name, h);
+	if(name in ranInitHooks) h();
 }
 
 // Temporary hack for templates
-function len(item) {
+function len(it) {
 	return item.length;
 }
 
-function asyncGetScript(source) {
-	return new Promise((resolve, reject) => {
+function asyncGetScript(src) {
+	return new Promise((resolve,reject) => {
 		let script = document.createElement('script');
 		script.async = true;
 
-		const onloadHandler = (e, isAbort) => {
+		const onloadHandler = (e,isAbort) => {
 			if (isAbort || !script.readyState || /loaded|complete/.test(script.readyState)) {
 				script.onload = null;
 				script.onreadystatechange = null;
@@ -75,17 +75,17 @@ function asyncGetScript(source) {
 		};
 		script.onload = onloadHandler;
 		script.onreadystatechange = onloadHandler;
-		script.src = source;
+		script.src = src;
 
 		const prior = document.getElementsByTagName('script')[0];
 		prior.parentNode.insertBefore(script, prior);
 	});
 }
 
-function notifyOnScript(source) {
-	source = "/s/"+source;
+function notifyOnScript(src) {
+	src = "/s/"+src;
 	return new Promise((resolve, reject) => {
-		let ss = source.replace("/s/","");
+		let ss = src.replace("/s/","");
 		try {
 			let ssp = ss.charAt(0).toUpperCase() + ss.slice(1)
 			console.log("ssp:",ssp)
@@ -95,8 +95,8 @@ function notifyOnScript(source) {
 			}
 		} catch(e) {}
 		
-		console.log("source:",source)
-		let script = document.querySelectorAll('[src^="'+source+'"]')[0];
+		console.log("src:",src)
+		let script = document.querySelectorAll('[src^="'+src+'"]')[0];
 		console.log("script:",script);
 		if(script===undefined) {
 			reject("no script found");
@@ -117,7 +117,7 @@ function notifyOnScript(source) {
 	});
 }
 
-function notifyOnScriptW(name, complete, success) {
+function notifyOnScriptW(name,complete,success) {
 	notifyOnScript(name)
 		.then(() => {
 			console.log("Loaded " +name+".js");
@@ -132,7 +132,7 @@ function notifyOnScriptW(name, complete, success) {
 }
 
 // TODO: Send data at load time so we don't have to rely on a fallback template here
-function loadScript(name, callback,fail) {
+function loadScript(name,callback,fail) {
 	let fname = name;
 	let value = "; " + document.cookie;
  	let parts = value.split("; current_theme=");
@@ -142,18 +142,18 @@ function loadScript(name, callback,fail) {
 	let iurl = "/s/"+name+".js"
 	asyncGetScript(url)
 		.then(callback)
-		.catch((e) => {
+		.catch(e => {
 			console.log("Unable to get script '"+url+"'");
 			if(fname!=name) {
 				asyncGetScript(iurl)
 					.then(callback)
 					.catch((e) => {
 						console.log("Unable to get script '"+iurl+"'");
-						console.log("e: ", e);
+						console.log("e:", e);
 						console.trace();
 					});
 			}
-			console.log("e: ", e);
+			console.log("e:", e);
 			console.trace();
 			fail(e);
 		});
@@ -166,8 +166,8 @@ function loadTmpl(name,callback) {
 }
 */
 
-function DoNothingButPassBack(item) {
-	return item;
+function DoNothingButPassBack(it) {
+	return it;
 }
 
 function RelativeTime(date) {
@@ -243,8 +243,8 @@ function fetchPhrases(plist) {
 
 	if(loggedIn) {
 		fetch("/api/me/")
-		.then((resp) => resp.json())
-		.then((data) => {
+		.then(resp => resp.json())
+		.then(data => {
 			console.log("loaded me endpoint data");
 			console.log("data:",data);
 			me = data;
@@ -254,4 +254,4 @@ function fetchPhrases(plist) {
 		me = {User:{ID:0,S:""},Site:{"MaxRequestSize":0}};
 		runInitHook("pre_init");
 	}
-})();
+})()

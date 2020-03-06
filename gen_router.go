@@ -840,6 +840,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 	
 	// Redirect www. and local IP requests to the right place
+	if strings.HasPrefix(shost, "www.") || c.Site.LocalHost {
 	if shost == "www." + c.Site.Host || (c.Site.LocalHost && shost != c.Site.Host && isLocalHost(shost)) {
 		// TODO: Abstract the redirect logic?
 		w.Header().Set("Connection", "close")
@@ -857,6 +858,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		}
 		http.Redirect(w, req, dest, http.StatusMovedPermanently)
 		return
+	}
 	}
 
 	// Deflect malformed requests

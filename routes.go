@@ -131,10 +131,21 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError 
 					topCreatedAt = uCreatedAt
 				}
 			}
-			err = rows.Err()
-			if err != nil {
+			if err = rows.Err(); err != nil {
 				return c.InternalErrorJS(err, w, r)
 			}
+		}
+
+		if count == 0 || len(alerts) == 0 || (rCreatedAt != 0 && rCreatedAt >= topCreatedAt && count == rCount) {
+			gzw, ok := w.(c.GzipResponseWriter)
+			if ok {
+				w = gzw.ResponseWriter
+				h := w.Header()
+				h.Del("Content-Type")
+				h.Del("Content-Encoding")
+			}
+			_, _ = io.WriteString(w, `{}`)
+			return nil
 		}
 
 		// Might not want to error here, if the account was deleted properly, we might want to figure out how we should handle deletions in general
@@ -142,11 +153,6 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError 
 		if err != nil {
 			log.Print("actors:", actors)
 			return c.InternalErrorJS(err, w, r)
-		}
-
-		if count == 0 || len(alerts) == 0 || (rCreatedAt != 0 && rCreatedAt >= topCreatedAt && count == rCount) {
-			_, _ = io.WriteString(w, `{}`)
-			return nil
 		}
 
 		var ok bool

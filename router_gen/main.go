@@ -84,7 +84,7 @@ func main() {
 			vcpy := route.Vars
 			route.Vars = []string{"h"}
 			route.Vars = append(route.Vars, vcpy...)
-		}/* else if route.Name != "common.RouteWebsockets" {
+		} /* else if route.Name != "common.RouteWebsockets" {
 			//out += "\n\t\t\tsa := time.Now()"
 			//out += "\n\t\t\tcn := uutils.Nanotime()"
 		}*/
@@ -167,8 +167,8 @@ func main() {
 			/*if !route.Action && !route.NoHead && !group.NoHead {
 				out += "\n\t\t\t\t\tco.RouteViewCounter.Bump2(" + strconv.Itoa(allRouteMap[route.Name]) + ", h.StartedAt)"
 			} else {*/
-				//out += "\n\t\t\t\t\tco.RouteViewCounter.Bump(" + strconv.Itoa(allRouteMap[route.Name]) + ")"
-				out += "\n\t\t\t\t\tco.RouteViewCounter.Bump3(" + strconv.Itoa(allRouteMap[route.Name]) + ", cn)"
+			//out += "\n\t\t\t\t\tco.RouteViewCounter.Bump(" + strconv.Itoa(allRouteMap[route.Name]) + ")"
+			out += "\n\t\t\t\t\tco.RouteViewCounter.Bump3(" + strconv.Itoa(allRouteMap[route.Name]) + ", cn)"
 			//}
 		}
 
@@ -193,8 +193,8 @@ func main() {
 			/*if !defaultRoute.Action && !defaultRoute.NoHead && !group.NoHead {
 				out += "\n\t\t\t\t\tco.RouteViewCounter.Bump2(" + strconv.Itoa(allRouteMap[defaultRoute.Name]) + ", h.StartedAt)"
 			} else {*/
-				//out += "\n\t\t\t\t\tco.RouteViewCounter.Bump(" + strconv.Itoa(allRouteMap[defaultRoute.Name]) + ")"
-				out += "\n\t\t\tco.RouteViewCounter.Bump3(" + strconv.Itoa(allRouteMap[defaultRoute.Name]) + ", cn)"
+			//out += "\n\t\t\t\t\tco.RouteViewCounter.Bump(" + strconv.Itoa(allRouteMap[defaultRoute.Name]) + ")"
+			out += "\n\t\t\tco.RouteViewCounter.Bump3(" + strconv.Itoa(allRouteMap[defaultRoute.Name]) + ", cn)"
 			//}
 		}
 		out += `
@@ -559,6 +559,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 	
 	// Redirect www. and local IP requests to the right place
+	if strings.HasPrefix(shost, "www.") || c.Site.LocalHost {
 	if shost == "www." + c.Site.Host || (c.Site.LocalHost && shost != c.Site.Host && isLocalHost(shost)) {
 		// TODO: Abstract the redirect logic?
 		w.Header().Set("Connection", "close")
@@ -576,6 +577,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		}
 		http.Redirect(w, req, dest, http.StatusMovedPermanently)
 		return
+	}
 	}
 
 	// Deflect malformed requests
