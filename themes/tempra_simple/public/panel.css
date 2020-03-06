@@ -173,6 +173,13 @@
 	background-color: white;
 	border: 1px solid hsl(0,0%,85%);
 }
+.ct-label {
+	fill: rgba(0,0,0,.6) !important;
+	color: rgba(0,0,0,.6) !important;
+}
+.ct-grid {
+	stroke: rgba(0,0,0,.3) !important;
+}
 .ct-legend {
 	margin-top: 0px;
 	margin-bottom: 0px;

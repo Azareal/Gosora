@@ -314,6 +314,13 @@
 .colstack_graph_holder.scrolly .ct_chart {
 	width: 1000px;
 }
+.ct-label {
+	fill: rgba(0,0,0,.6) !important;
+	color: rgba(0,0,0,.6) !important;
+}
+.ct-grid {
+	stroke: rgba(0,0,0,.3) !important;
+}
 .ct-series-a .ct-bar, .ct-series-a .ct-line, .ct-series-a .ct-point, .ct-series-a .ct-slice-donut {
     stroke: hsl(359,98%,53%) !important;
 }
