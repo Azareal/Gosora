@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
 	//"fmt"
 
 	c "github.com/Azareal/Gosora/common"
@@ -27,6 +28,30 @@ func StaticFile(w http.ResponseWriter, r *http.Request) {
 	}
 	h := w.Header()
 
+	if file.Length > 300 {
+		rangeHead := h.Get("Range")
+		if rangeHead != "" {
+			if file.GzipLength > 300 && strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
+				if len(file.Sha256) != 0 {
+					h.Set("Cache-Control", cacheControlMaxAgeWeek)
+				} else {
+					h.Set("Cache-Control", cacheControlMaxAge) //Cache-Control: max-age=31536000
+				}
+				h.Set("Content-Encoding", "gzip")
+				h.Set("Content-Length", file.StrGzipLength)
+				http.ServeContent(w, r, r.URL.Path, file.Info.ModTime(), bytes.NewReader(file.GzipData))
+			} else if file.GzipLength == 0 {
+				if len(file.Sha256) != 0 {
+					h.Set("Cache-Control", cacheControlMaxAgeWeek)
+				} else {
+					h.Set("Cache-Control", cacheControlMaxAge) //Cache-Control: max-age=31536000
+				}
+				h.Set("Content-Length", file.StrLength)
+				http.ServeContent(w, r, r.URL.Path, file.Info.ModTime(), bytes.NewReader(file.Data))
+			}
+		}
+	}
+
 	// Surely, there's a more efficient way of doing this?
 	t, err := time.Parse(http.TimeFormat, r.Header.Get("If-Modified-Since"))
 	if err == nil && file.Info.ModTime().Before(t.Add(1*time.Second)) {
@@ -42,12 +67,12 @@ func StaticFile(w http.ResponseWriter, r *http.Request) {
 	}
 	h.Set("Vary", "Accept-Encoding")
 
-	if strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") && file.GzipLength > 0 {
+	if file.GzipLength > 0 && strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
 		h.Set("Content-Encoding", "gzip")
 		h.Set("Content-Length", file.StrGzipLength)
 		io.Copy(w, bytes.NewReader(file.GzipData)) // Use w.Write instead?
 	} else {
-		h.Set("Content-Length", strconv.FormatInt(file.Length, 10)) // Avoid doing a type conversion every time?
+		h.Set("Content-Length", file.StrLength)
 		io.Copy(w, bytes.NewReader(file.Data))
 	}
 	// Other options instead of io.Copy: io.CopyN(), w.Write(), http.ServeContent()

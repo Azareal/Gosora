@@ -519,7 +519,7 @@ if !ok {
 	}
 
 	if len(c.langIndexToName) > 0 {
-		//fout += "var plist = phrases.GetTmplPhrasesBytes(" + fname + "_tmpl_phrase_id)\n"
+		fout += "//var plist = phrases.GetTmplPhrasesBytes(" + fname + "_tmpl_phrase_id)\n"
 		//fout += "if len(plist) > 0 {\n_ = plist[len(plist)-1]\n}\n"
 		//fout += "var plist = " + fname + "_phrase_arr\n"
 	}

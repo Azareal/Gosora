@@ -31,6 +31,7 @@ type SFile struct {
 	OName            string
 	Pos              int64
 	Length           int64
+	StrLength        string
 	GzipLength       int64
 	StrGzipLength    string
 	Mimetype         string
@@ -184,7 +185,8 @@ func (list SFileList) JSTmplInit() error {
 		data = replace(data, "	c.", "")
 		data = replace(data, "phrases.", "")
 		data = replace(data, ", 10;", "")
-		data = replace(data, "var plist = GetTmplPhrasesBytes("+shortName+"_tmpl_phrase_id)", "const plist = tmplPhrases[\""+tmplName+"\"];")
+		//data = replace(data, "var plist = GetTmplPhrasesBytes("+shortName+"_tmpl_phrase_id)", "const plist = tmplPhrases[\""+tmplName+"\"];")
+		data = replace(data, "//var plist = GetTmplPhrasesBytes("+shortName+"_tmpl_phrase_id)", "const "+shortName+"_phrase_arr = tmplPhrases[\""+tmplName+"\"];")
 		data = replace(data, "var cached_var_", "let cached_var_")
 		data = replace(data, `tmpl_vars, ok := tmpl_i.`, `/*`)
 		data = replace(data, "[]byte(", "")
@@ -242,7 +244,7 @@ func (list SFileList) JSTmplInit() error {
 		hasher.Write(data)
 		checksum := hex.EncodeToString(hasher.Sum(nil))
 
-		list.Set("/s/"+path, SFile{data, gzipData, checksum, path + "?h=" + checksum, 0, int64(len(data)), int64(len(gzipData)), strconv.Itoa(len(gzipData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)})
+		list.Set("/s/"+path, SFile{data, gzipData, checksum, path + "?h=" + checksum, 0, int64(len(data)), strconv.Itoa(len(data)), int64(len(gzipData)), strconv.Itoa(len(gzipData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)})
 
 		DebugLogf("Added the '%s' static file.", path)
 		return nil
@@ -287,7 +289,7 @@ func (list SFileList) Init() error {
 			}
 		}
 
-		list.Set("/s/"+path, SFile{data, gzipData, checksum, path + "?h=" + checksum, 0, int64(len(data)), int64(len(gzipData)), strconv.Itoa(len(gzipData)), mimetype, f, f.ModTime().UTC().Format(http.TimeFormat)})
+		list.Set("/s/"+path, SFile{data, gzipData, checksum, path + "?h=" + checksum, 0, int64(len(data)), strconv.Itoa(len(data)), int64(len(gzipData)), strconv.Itoa(len(gzipData)), mimetype, f, f.ModTime().UTC().Format(http.TimeFormat)})
 
 		DebugLogf("Added the '%s' static file.", path)
 		return nil
@@ -320,7 +322,7 @@ func (list SFileList) Add(path, prefix string) error {
 	hasher.Write(data)
 	checksum := hex.EncodeToString(hasher.Sum(nil))
 
-	list.Set("/s"+path, SFile{data, gzipData, checksum, path + "?h=" + checksum, 0, int64(len(data)), int64(len(gzipData)), strconv.Itoa(len(gzipData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)})
+	list.Set("/s"+path, SFile{data, gzipData, checksum, path + "?h=" + checksum, 0, int64(len(data)), strconv.Itoa(len(data)), int64(len(gzipData)), strconv.Itoa(len(gzipData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)})
 
 	DebugLogf("Added the '%s' static file", path)
 	return nil
