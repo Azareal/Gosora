@@ -10,6 +10,7 @@ var attachItemCallback = function(){}
 var quoteItemCallback = function(){}
 var baseTitle = document.title;
 var wsBackoff = 0;
+var noAlerts = false;
 
 // Topic move
 var forumToMoveTo = 0;
@@ -32,18 +33,18 @@ function ajaxError(xhr,status,errstr) {
 	console.trace();
 }
 
-function postLink(event) {
-	event.preventDefault();
-	let formAction = $(event.target).closest('a').attr("href");
+function postLink(ev) {
+	ev.preventDefault();
+	let formAction = $(ev.target).closest('a').attr("href");
 	$.ajax({ url: formAction, type: "POST", dataType: "json", error: ajaxError, data: {js: 1} });
 }
 
 function bindToAlerts() {
 	console.log("bindToAlerts");
 	$(".alertItem.withAvatar a").unbind("click");
-	$(".alertItem.withAvatar a").click(function(event) {
-		event.stopPropagation();
-		event.preventDefault();
+	$(".alertItem.withAvatar a").click(function(ev) {
+		ev.stopPropagation();
+		ev.preventDefault();
 		$.ajax({
 			url: "/api/?action=set&module=dismiss-alert",
 			type: "POST",
@@ -149,14 +150,14 @@ function loadAlerts(menuAlerts, eTc = false) {
 			if(eTc && lastTc != 0) {
 				for(var i in data.msgs) wsAlertEvent(data.msgs[i]);
 			} else {*/
+				console.log("data:",data.count);
 				for(var i in data.msgs) addAlert(data.msgs[i]);
-				console.log("data.count:",data.count);
 				alertCount = data.count;
 				updateAlertList(menuAlerts);
 			//}
 			lastTc = data.tc;
 		},
-		error: (magic,theStatus,error) => {
+		error: (magic,theStatus,err) => {
 			let errtxt = "Unable to get the alerts";
 			try {
 				var data = JSON.parse(magic.responseText);
@@ -165,7 +166,7 @@ function loadAlerts(menuAlerts, eTc = false) {
 				console.log(magic.responseText);
 				console.log(err);
 			}
-			console.log("error", error);
+			console.log("err", err);
 			setAlertError(menuAlerts,errtxt);
 		}
 	});
@@ -175,18 +176,18 @@ function SplitN(data,ch,n) {
 	var out = [];
 	if(data.length === 0) return out;
 
-	var lastIndex = 0;
+	var lastI = 0;
 	var j = 0;
 	var lastN = 1;
 	for(let i = 0; i < data.length; i++) {
 		if(data[i] === ch) {
-			out[j++] = data.substring(lastIndex,i);
-			lastIndex = i;
+			out[j++] = data.substring(lastI,i);
+			lastI = i;
 			if(lastN === n) break;
 			lastN++;
 		}
 	}
-	if(data.length > lastIndex) out[out.length - 1] += data.substring(lastIndex);
+	if(data.length > lastI) out[out.length - 1] += data.substring(lastI);
 	return out;
 }
 
@@ -234,8 +235,10 @@ function runWebSockets(resume = false) {
 		wsBackoff++;
 
 		setTimeout(() => {
-			var alertMenuList = document.getElementsByClassName("menu_alerts");
-			for(var i = 0; i < alertMenuList.length; i++) loadAlerts(alertMenuList[i]);
+			if(!noAlerts) {
+				var alertMenuList = document.getElementsByClassName("menu_alerts");
+				for(var i=0; i < alertMenuList.length; i++) loadAlerts(alertMenuList[i]);
+			}
 			runWebSockets(true);
 		}, backoff * 60 * 1000);
 
@@ -247,7 +250,7 @@ function runWebSockets(resume = false) {
 	}
 
 	conn.onmessage = (event) => {
-		if(event.data[0] == "{") {
+		if(!noAlerts && event.data[0] == "{") {
 			console.log("json message");
 			let data = "";
 			try {
@@ -264,7 +267,7 @@ function runWebSockets(resume = false) {
 						if(key!=data.id) return;
 						alertCount--;
 						let index = -1;
-						for(var i = 0; i < alertList.length; i++) {
+						for(var i=0; i < alertList.length; i++) {
 							if(alertList[i]==key) {
 								alertList[i] = 0;
 								index = i;
@@ -286,7 +289,7 @@ function runWebSockets(resume = false) {
 				}
 			} else if("Topics" in data) {
 				console.log("topic in data");
-				console.log("data:", data);
+				console.log("data", data);
 				let topic = data.Topics[0];
 				if(topic === undefined){
 					console.log("empty topic list");
@@ -303,7 +306,7 @@ function runWebSockets(resume = false) {
 				moreTopicCount++;
 
 				let moreTopicBlocks = document.getElementsByClassName("more_topic_block_initial");
-				for(let i = 0; i < moreTopicBlocks.length; i++) {
+				for(let i=0; i < moreTopicBlocks.length; i++) {
 					let moreTopicBlock = moreTopicBlocks[i];
 					moreTopicBlock.classList.remove("more_topic_block_initial");
 					moreTopicBlock.classList.add("more_topic_block_active");
@@ -319,7 +322,7 @@ function runWebSockets(resume = false) {
 		}
 
 		var messages = event.data.split('\r');
-		for(var i = 0; i < messages.length; i++) {
+		for(var i=0; i < messages.length; i++) {
 			let message = messages[i];
 			//console.log("Message: ",message);
 			let msgblocks = SplitN(message," ",3);
@@ -342,6 +345,7 @@ function runWebSockets(resume = false) {
 	addInitHook("pre_init", () => {
 		console.log("before notify on alert")
 		// We can only get away with this because template_alert has no phrases, otherwise it too would have to be part of the "dance", I miss Go concurrency :(
+		if(!noAlerts) {
 		notifyOnScriptW("template_alert", (e) => {
 			if(e!=undefined) console.log("failed alert? why?", e)
 		}, () => {
@@ -356,6 +360,13 @@ function runWebSockets(resume = false) {
 				});
 			});
 		});
+		} else {
+			addInitHook("after_phrases", () => {
+				$(document).ready(() => {
+					if(window["WebSocket"]) runWebSockets();
+				});
+			});
+		}
 
 		$(document).ready(mainInit);
 	});
@@ -397,8 +408,8 @@ function Paginate(currentPage, lastPage, maxPages) {
 function mainInit(){
 	runInitHook("start_init");
 
-	$(".more_topics").click((event) => {
-		event.preventDefault();
+	$(".more_topics").click((ev) => {
+		ev.preventDefault();
 		let moreTopicBlocks = document.getElementsByClassName("more_topic_block_active");
 		for(let i = 0; i < moreTopicBlocks.length; i++) {
 			let block = moreTopicBlocks[i];
@@ -416,7 +427,7 @@ function mainInit(){
 		event.preventDefault();
 		//$(this).unbind("click");
 		let target = this.closest("a").getAttribute("href");
-		console.log("target:", target);
+		console.log("target", target);
 
 		let controls = this.closest(".controls");
 		let hadLikes = controls.classList.contains("has_likes");
@@ -833,23 +844,23 @@ function mainInit(){
 			$("#back").removeClass("alertActive");
 		}
 	});
-	$(".menu_alerts").click(function(event) {
-		event.stopPropagation();
+	$(".menu_alerts").click(function(ev) {
+		ev.stopPropagation();
 		if($(this).hasClass("selectedAlert")) return;
 		if(!conn) loadAlerts(this);
 		this.className += " selectedAlert";
 		document.getElementById("back").className += " alertActive"
 	});
-	$(".link_select").click(event => event.stopPropagation());
+	$(".link_select").click(ev => ev.stopPropagation());
 
-	$("input,textarea,select,option").keyup(event => event.stopPropagation())
+	$("input,textarea,select,option").keyup(ev => ev.stopPropagation())
 
-	$(".create_topic_link").click((event) => {
-		event.preventDefault();
+	$(".create_topic_link").click(ev => {
+		ev.preventDefault();
 		$(".topic_create_form").removeClass("auto_hide");
 	});
-	$(".topic_create_form .close_form").click((event) => {
-		event.preventDefault();
+	$(".topic_create_form .close_form").click(ev => {
+		ev.preventDefault();
 		$(".topic_create_form").addClass("auto_hide");
 	});
 
@@ -861,7 +872,7 @@ function mainInit(){
 			dataType: "json",
 			data: { "theme": this.options[this.selectedIndex].getAttribute("value"), js: 1 },
 			error: ajaxError,
-			success: function (data, status, xhr) {
+			success: function (data,status,xhr) {
 				console.log("Theme successfully switched");
 				console.log("data", data);
 				console.log("status", status);
@@ -909,16 +920,16 @@ function mainInit(){
 	});
 
 	$("spoiler").addClass("hide_spoil");
-	$(".hide_spoil").click(function(event) {
-		event.stopPropagation();
-		event.preventDefault();
+	$(".hide_spoil").click(function(ev) {
+		ev.stopPropagation();
+		ev.preventDefault();
 		$(this).removeClass("hide_spoil");
 		$(this).unbind("click");
 	});
 
-	this.onkeyup = function(event) {
-		if(event.which == 37) this.querySelectorAll("#prevFloat a")[0].click();
-		if(event.which == 39) this.querySelectorAll("#nextFloat a")[0].click();
+	this.onkeyup = function(ev) {
+		if(ev.which == 37) this.querySelectorAll("#prevFloat a")[0].click();
+		if(ev.which == 39) this.querySelectorAll("#nextFloat a")[0].click();
 	};
 
 	//id="poll_results_{{.Poll.ID}}" class="poll_results auto_hide"
@@ -935,15 +946,15 @@ function mainInit(){
 				if(data[i] != "0") allZero = false;
 			}
 			if(allZero) {
-				$("#poll_results_" + pollID + " .poll_no_results").removeClass("auto_hide");
+				$("#poll_results_"+pollID+" .poll_no_results").removeClass("auto_hide");
 				console.log("all zero")
 				return;
 			}
 
-			$("#poll_results_" + pollID + " .user_content").html("<div id='poll_results_chart_"+pollID+"'></div>");
+			$("#poll_results_"+pollID+" .user_content").html("<div id='poll_results_chart_"+pollID+"'></div>");
 			console.log("rawData: ", rawData);
 			console.log("series: ", data);
-			Chartist.Pie('#poll_results_chart_' + pollID, {
+			Chartist.Pie('#poll_results_chart_'+pollID, {
  				series: data,
 			}, {
 				height: '120px',

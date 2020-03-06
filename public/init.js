@@ -176,7 +176,7 @@ function RelativeTime(date) {
 
 function initPhrases(loggedIn, panel = false) {
 	console.log("in initPhrases")
-	console.log("tmlInits:",tmplInits)
+	console.log("tmlInits",tmplInits)
 	let e = "";
 	if(loggedIn && !panel) e = ",status,topic_list,topic";
 	else if(panel) e = ",analytics,panel"; // TODO: Request phrases for just one section of the control panel?

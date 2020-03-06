@@ -30,6 +30,10 @@ function noxMenuBind() {
 }
 
 (() => {
+	if(window.location.pathname.startsWith("/panel/")) {
+		addInitHook("pre_init", () => noAlerts = true);
+	}
+	
 	function moveAlerts() {
 		// Move the alerts above the first header
 		let colSel = $(".colstack_right .colstack_head:first");
@@ -43,7 +47,7 @@ function noxMenuBind() {
 	
 	addInitHook("after_update_alert_list", (alertCount) => {
 		console.log("misc.js");
-		console.log("alertCount:",alertCount);
+		console.log("alertCount",alertCount);
 		if(alertCount==0) {
 			$(".alerts").html(phraseBox["alerts"]["alerts.no_alerts_short"]);
 			$(".user_box").removeClass("has_alerts");
@@ -53,12 +57,13 @@ function noxMenuBind() {
 			$(".user_box").addClass("has_alerts");
 		}
 	});
-	addHook("open_edit", () => $('.topic_block').addClass("edithead"));
-	addHook("close_edit", () => $('.topic_block').removeClass("edithead"));
+	let tb=$('.topic_block');
+	addHook("open_edit", () => tb.addClass("edithead"));
+	addHook("close_edit", () => tb.removeClass("edithead"));
 
 	addInitHook("end_init", () => {
-		$(".alerts").click((event) => {
-			event.stopPropagation();
+		$(".alerts").click(ev => {
+			ev.stopPropagation();
 			var alerts = $(".menu_alerts")[0];
 			if($(alerts).hasClass("selectedAlert")) return;
 			if(!conn) loadAlerts(alerts);

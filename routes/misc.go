@@ -29,8 +29,7 @@ func StaticFile(w http.ResponseWriter, r *http.Request) {
 	h := w.Header()
 
 	if file.Length > 300 {
-		rangeHead := h.Get("Range")
-		if rangeHead != "" {
+		if h.Get("Range") != "" {
 			if file.GzipLength > 300 && strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
 				if len(file.Sha256) != 0 {
 					h.Set("Cache-Control", cacheControlMaxAgeWeek)
