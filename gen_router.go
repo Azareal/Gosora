@@ -603,7 +603,8 @@ var agentMapEnum = map[string]int{
 	"suspicious": 29,
 	"semrush": 30,
 	"dotbot": 31,
-	"zgrab": 32,
+	"aspiegel": 32,
+	"zgrab": 33,
 }
 var reverseAgentMapEnum = map[int]string{ 
 	0: "unknown",
@@ -638,7 +639,8 @@ var reverseAgentMapEnum = map[int]string{
 	29: "suspicious",
 	30: "semrush",
 	31: "dotbot",
-	32: "zgrab",
+	32: "aspiegel",
+	33: "zgrab",
 }
 var markToAgent = map[string]string{ 
 	"OPR": "opera",

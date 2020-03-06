@@ -215,7 +215,8 @@
 		
 		"semrush":"SemrushBot",
 		"dotbot":"DotBot",
-		"zgrab":"Zgrab Application Scanner",
+		"aspiegel":"AspiegelBot",
+		"zgrab":"Zgrab App Scanner",
 		"suspicious":"Suspicious",
 		"unknown":"Unknown",
 		"blank":"Blank",
