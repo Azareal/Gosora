@@ -52,7 +52,7 @@ function addInitHook(name, h) {
 
 // Temporary hack for templates
 function len(it) {
-	return item.length;
+	return it.length;
 }
 
 function asyncGetScript(src) {
