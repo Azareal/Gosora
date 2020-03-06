@@ -40,6 +40,7 @@ func StaticFile(w http.ResponseWriter, r *http.Request) {
 				h.Set("Content-Encoding", "gzip")
 				h.Set("Content-Length", file.StrGzipLength)
 				http.ServeContent(w, r, r.URL.Path, file.Info.ModTime(), bytes.NewReader(file.GzipData))
+				return
 			} else if file.GzipLength == 0 {
 				if len(file.Sha256) != 0 {
 					h.Set("Cache-Control", cacheControlMaxAgeWeek)
@@ -48,6 +49,7 @@ func StaticFile(w http.ResponseWriter, r *http.Request) {
 				}
 				h.Set("Content-Length", file.StrLength)
 				http.ServeContent(w, r, r.URL.Path, file.Info.ModTime(), bytes.NewReader(file.Data))
+				return
 			}
 		}
 	}
