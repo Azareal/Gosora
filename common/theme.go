@@ -167,7 +167,7 @@ func (t *Theme) AddThemeStaticFiles() error {
 		hasher.Write(data)
 		checksum := hex.EncodeToString(hasher.Sum(nil))
 
-		StaticFiles.Set("/s/"+t.Name+path, SFile{data, gzipData, checksum, t.Name + path + "?h=" + checksum, 0, int64(len(data)), int64(len(gzipData)), strconv.Itoa(len(gzipData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)})
+		StaticFiles.Set("/s/"+t.Name+path, SFile{data, gzipData, checksum, t.Name + path + "?h=" + checksum, 0, int64(len(data)), strconv.Itoa(len(data)), int64(len(gzipData)), strconv.Itoa(len(gzipData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)})
 
 		DebugLog("Added the '/" + t.Name + path + "' static file for theme " + t.Name + ".")
 		return nil
