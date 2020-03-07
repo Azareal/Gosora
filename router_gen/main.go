@@ -245,7 +245,10 @@ func main() {
 		"googlebot",
 		"yandex",
 		"bing",
+		"slurp",
+		"exabot",
 		"baidu",
+		"sogou",
 		"duckduckgo",
 		"seznambot",
 		"discord",
@@ -256,6 +259,7 @@ func main() {
 		"slackbot",
 		"apple",
 		"discourse",
+		"alexa",
 		"lynx",
 		"blank",
 		"malformed",
@@ -287,8 +291,11 @@ func main() {
 		"yandex",
 		"DuckDuckBot",
 		"Baiduspider",
+		"Sogou",
 		"bingbot",
 		"BingPreview",
+		"Slurp",
+		"Exabot",
 		"SeznamBot",
 		"CloudFlare",
 		"Uptimebot",
@@ -299,9 +306,11 @@ func main() {
 		"Facebot",
 		"Applebot",
 		"Discourse",
+		"ia_archiver",
 
 		"SemrushBot",
 		"DotBot",
+		"AspiegelBot",
 		"zgrab",
 	}
 
@@ -321,8 +330,11 @@ func main() {
 		"yandex":              "yandex", // from the URL
 		"DuckDuckBot":         "duckduckgo",
 		"Baiduspider":         "baidu",
+		"Sogou":               "sogou",
 		"bingbot":             "bing",
 		"BingPreview":         "bing",
+		"Slurp":               "slurp",
+		"Exabot":              "exabot",
 		"SeznamBot":           "seznambot",
 		"CloudFlare":          "cloudflare", // Track alwayson specifically in case there are other bots?
 		"Uptimebot":           "uptimebot",
@@ -333,6 +345,7 @@ func main() {
 		"Facebot":             "facebook",
 		"Applebot":            "apple",
 		"Discourse":           "discourse",
+		"ia_archiver":         "alexa",
 
 		"SemrushBot":  "semrush",
 		"DotBot":      "dotbot",

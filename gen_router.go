@@ -586,25 +586,29 @@ var agentMapEnum = map[string]int{
 	"googlebot": 12,
 	"yandex": 13,
 	"bing": 14,
-	"baidu": 15,
-	"duckduckgo": 16,
-	"seznambot": 17,
-	"discord": 18,
-	"twitter": 19,
-	"facebook": 20,
-	"cloudflare": 21,
-	"uptimebot": 22,
-	"slackbot": 23,
-	"apple": 24,
-	"discourse": 25,
-	"lynx": 26,
-	"blank": 27,
-	"malformed": 28,
-	"suspicious": 29,
-	"semrush": 30,
-	"dotbot": 31,
-	"aspiegel": 32,
-	"zgrab": 33,
+	"slurp": 15,
+	"exabot": 16,
+	"baidu": 17,
+	"sogou": 18,
+	"duckduckgo": 19,
+	"seznambot": 20,
+	"discord": 21,
+	"twitter": 22,
+	"facebook": 23,
+	"cloudflare": 24,
+	"uptimebot": 25,
+	"slackbot": 26,
+	"apple": 27,
+	"discourse": 28,
+	"alexa": 29,
+	"lynx": 30,
+	"blank": 31,
+	"malformed": 32,
+	"suspicious": 33,
+	"semrush": 34,
+	"dotbot": 35,
+	"aspiegel": 36,
+	"zgrab": 37,
 }
 var reverseAgentMapEnum = map[int]string{ 
 	0: "unknown",
@@ -622,25 +626,29 @@ var reverseAgentMapEnum = map[int]string{
 	12: "googlebot",
 	13: "yandex",
 	14: "bing",
-	15: "baidu",
-	16: "duckduckgo",
-	17: "seznambot",
-	18: "discord",
-	19: "twitter",
-	20: "facebook",
-	21: "cloudflare",
-	22: "uptimebot",
-	23: "slackbot",
-	24: "apple",
-	25: "discourse",
-	26: "lynx",
-	27: "blank",
-	28: "malformed",
-	29: "suspicious",
-	30: "semrush",
-	31: "dotbot",
-	32: "aspiegel",
-	33: "zgrab",
+	15: "slurp",
+	16: "exabot",
+	17: "baidu",
+	18: "sogou",
+	19: "duckduckgo",
+	20: "seznambot",
+	21: "discord",
+	22: "twitter",
+	23: "facebook",
+	24: "cloudflare",
+	25: "uptimebot",
+	26: "slackbot",
+	27: "apple",
+	28: "discourse",
+	29: "alexa",
+	30: "lynx",
+	31: "blank",
+	32: "malformed",
+	33: "suspicious",
+	34: "semrush",
+	35: "dotbot",
+	36: "aspiegel",
+	37: "zgrab",
 }
 var markToAgent = map[string]string{ 
 	"OPR": "opera",
@@ -657,8 +665,11 @@ var markToAgent = map[string]string{
 	"yandex": "yandex",
 	"DuckDuckBot": "duckduckgo",
 	"Baiduspider": "baidu",
+	"Sogou": "sogou",
 	"bingbot": "bing",
 	"BingPreview": "bing",
+	"Slurp": "slurp",
+	"Exabot": "exabot",
 	"SeznamBot": "seznambot",
 	"CloudFlare": "cloudflare",
 	"Uptimebot": "uptimebot",
@@ -669,8 +680,10 @@ var markToAgent = map[string]string{
 	"Facebot": "facebook",
 	"Applebot": "apple",
 	"Discourse": "discourse",
+	"ia_archiver": "alexa",
 	"SemrushBot": "semrush",
 	"DotBot": "dotbot",
+	"AspiegelBot": "aspiegel",
 	"zgrab": "zgrab",
 }
 /*var agentRank = map[string]int{
@@ -796,7 +809,7 @@ func (r *GenRouter) SuspiciousRequest(req *http.Request, prepend string) {
 		prepend += "\n"
 	}
 	r.DumpRequest(req,prepend+"Suspicious Request")
-	co.AgentViewCounter.Bump(29)
+	co.AgentViewCounter.Bump(33)
 }
 
 func isLocalHost(h string) bool {
@@ -811,7 +824,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(200) // 400
 		w.Write([]byte(""))
 		r.DumpRequest(req,"Malformed Request T"+strconv.Itoa(typ))
-		co.AgentViewCounter.Bump(28)
+		co.AgentViewCounter.Bump(32)
 	}
 	
 	// Split the Host and Port string
@@ -953,7 +966,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	
 	ua := strings.TrimSpace(strings.Replace(strings.TrimPrefix(req.UserAgent(),"Mozilla/5.0 ")," Safari/537.36","",-1)) // Noise, no one's going to be running this and it would require some sort of agent ranking system to determine which identifier should be prioritised over another
 	if ua == "" {
-		co.AgentViewCounter.Bump(27)
+		co.AgentViewCounter.Bump(31)
 		if c.Dev.DebugMode {
 			var prepend string
 			for _, char := range req.UserAgent() {

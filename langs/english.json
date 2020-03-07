@@ -200,6 +200,9 @@
 		"googlebot":"Googlebot",
 		"yandex":"Yandex",
 		"bing":"Bing",
+		"slurp":"Yahoo! Slurp",
+		"exabot":"Exabot",
+		"sogou":"Sogou",
 		"baidu":"Baidu",
 		"duckduckgo":"DuckDuckBot",
 		"seznambot":"SeznamBot",
@@ -211,6 +214,7 @@
 		"facebook":"FacebookBot",
 		"apple":"AppleBot",
 		"discourse":"Discourse Forum Onebox",
+		"alexa":"Alexa",
 		"lynx":"Lynx",
 		
 		"semrush":"SemrushBot",
