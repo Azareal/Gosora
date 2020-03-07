@@ -596,19 +596,20 @@ var agentMapEnum = map[string]int{
 	"twitter": 22,
 	"facebook": 23,
 	"cloudflare": 24,
-	"uptimebot": 25,
-	"slackbot": 26,
-	"apple": 27,
-	"discourse": 28,
-	"alexa": 29,
-	"lynx": 30,
-	"blank": 31,
-	"malformed": 32,
-	"suspicious": 33,
-	"semrush": 34,
-	"dotbot": 35,
-	"aspiegel": 36,
-	"zgrab": 37,
+	"archive_org": 25,
+	"uptimebot": 26,
+	"slackbot": 27,
+	"apple": 28,
+	"discourse": 29,
+	"alexa": 30,
+	"lynx": 31,
+	"blank": 32,
+	"malformed": 33,
+	"suspicious": 34,
+	"semrush": 35,
+	"dotbot": 36,
+	"aspiegel": 37,
+	"zgrab": 38,
 }
 var reverseAgentMapEnum = map[int]string{ 
 	0: "unknown",
@@ -636,19 +637,20 @@ var reverseAgentMapEnum = map[int]string{
 	22: "twitter",
 	23: "facebook",
 	24: "cloudflare",
-	25: "uptimebot",
-	26: "slackbot",
-	27: "apple",
-	28: "discourse",
-	29: "alexa",
-	30: "lynx",
-	31: "blank",
-	32: "malformed",
-	33: "suspicious",
-	34: "semrush",
-	35: "dotbot",
-	36: "aspiegel",
-	37: "zgrab",
+	25: "archive_org",
+	26: "uptimebot",
+	27: "slackbot",
+	28: "apple",
+	29: "discourse",
+	30: "alexa",
+	31: "lynx",
+	32: "blank",
+	33: "malformed",
+	34: "suspicious",
+	35: "semrush",
+	36: "dotbot",
+	37: "aspiegel",
+	38: "zgrab",
 }
 var markToAgent = map[string]string{ 
 	"OPR": "opera",
@@ -672,6 +674,7 @@ var markToAgent = map[string]string{
 	"Exabot": "exabot",
 	"SeznamBot": "seznambot",
 	"CloudFlare": "cloudflare",
+	"archive.org_bot": "archive_org",
 	"Uptimebot": "uptimebot",
 	"Slackbot": "slackbot",
 	"Discordbot": "discord",
@@ -809,7 +812,7 @@ func (r *GenRouter) SuspiciousRequest(req *http.Request, prepend string) {
 		prepend += "\n"
 	}
 	r.DumpRequest(req,prepend+"Suspicious Request")
-	co.AgentViewCounter.Bump(33)
+	co.AgentViewCounter.Bump(34)
 }
 
 func isLocalHost(h string) bool {
@@ -824,7 +827,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(200) // 400
 		w.Write([]byte(""))
 		r.DumpRequest(req,"Malformed Request T"+strconv.Itoa(typ))
-		co.AgentViewCounter.Bump(32)
+		co.AgentViewCounter.Bump(33)
 	}
 	
 	// Split the Host and Port string
@@ -966,7 +969,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	
 	ua := strings.TrimSpace(strings.Replace(strings.TrimPrefix(req.UserAgent(),"Mozilla/5.0 ")," Safari/537.36","",-1)) // Noise, no one's going to be running this and it would require some sort of agent ranking system to determine which identifier should be prioritised over another
 	if ua == "" {
-		co.AgentViewCounter.Bump(31)
+		co.AgentViewCounter.Bump(32)
 		if c.Dev.DebugMode {
 			var prepend string
 			for _, char := range req.UserAgent() {

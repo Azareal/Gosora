@@ -255,6 +255,7 @@ func main() {
 		"twitter",
 		"facebook",
 		"cloudflare",
+		"archive_org",
 		"uptimebot",
 		"slackbot",
 		"apple",
@@ -298,6 +299,7 @@ func main() {
 		"Exabot",
 		"SeznamBot",
 		"CloudFlare",
+		"archive.org_bot",
 		"Uptimebot",
 		"Slackbot",
 		"Discordbot",
@@ -337,6 +339,7 @@ func main() {
 		"Exabot":              "exabot",
 		"SeznamBot":           "seznambot",
 		"CloudFlare":          "cloudflare", // Track alwayson specifically in case there are other bots?
+		"archive.org_bot":     "archive_org",
 		"Uptimebot":           "uptimebot",
 		"Slackbot":            "slackbot",
 		"Discordbot":          "discord",
