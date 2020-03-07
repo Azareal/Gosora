@@ -249,6 +249,7 @@ func main() {
 		"exabot",
 		"baidu",
 		"sogou",
+		"toutiao",
 		"duckduckgo",
 		"seznambot",
 		"discord",
@@ -293,6 +294,7 @@ func main() {
 		"DuckDuckBot",
 		"Baiduspider",
 		"Sogou",
+		"ToutiaoSpider",
 		"bingbot",
 		"BingPreview",
 		"Slurp",
@@ -302,6 +304,7 @@ func main() {
 		"archive.org_bot",
 		"Uptimebot",
 		"Slackbot",
+		"Slack",
 		"Discordbot",
 		"Twitterbot",
 		"facebookexternalhit",
@@ -333,6 +336,7 @@ func main() {
 		"DuckDuckBot":         "duckduckgo",
 		"Baiduspider":         "baidu",
 		"Sogou":               "sogou",
+		"ToutiaoSpider":       "toutiao",
 		"bingbot":             "bing",
 		"BingPreview":         "bing",
 		"Slurp":               "slurp",
@@ -342,6 +346,7 @@ func main() {
 		"archive.org_bot":     "archive_org",
 		"Uptimebot":           "uptimebot",
 		"Slackbot":            "slackbot",
+		"Slack":               "slackbot",
 		"Discordbot":          "discord",
 		"Twitterbot":          "twitter",
 		"facebookexternalhit": "facebook",
@@ -522,8 +527,8 @@ func (r *GenRouter) DumpRequest(req *http.Request, prepend string) {
 		"Host: " + c.SanitiseSingleLine(req.Host) + "\n" + 
 		"URL.Path: " + c.SanitiseSingleLine(req.URL.Path) + "\n" + 
 		"URL.RawQuery: " + c.SanitiseSingleLine(req.URL.RawQuery) + "\n" + 
-		"Referer: " + c.SanitiseSingleLine(req.Referer()) + "\n" + 
-		"RemoteAddr: " + req.RemoteAddr + "\n")
+		"Ref: " + c.SanitiseSingleLine(req.Referer()) + "\n" + 
+		"IP: " + req.RemoteAddr + "\n")
 }
 
 func (r *GenRouter) SuspiciousRequest(req *http.Request, prepend string) {
@@ -749,8 +754,6 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		}
 		if c.Dev.SuperDebug {
 			r.requestLogger.Print("parsed agent: ", agent)
-		}
-		if c.Dev.SuperDebug {
 			r.requestLogger.Print("os: ", os)
 			r.requestLogger.Printf("items: %+v\n",items)
 		}
@@ -882,7 +885,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 			err = sitemapSwitch(w,req)*/
 		case "/uploads":
 			if extraData == "" {
-				co.RouteViewCounter.Bump({{index .AllRouteMap "routes.UploadedFile"}})
+				co.RouteViewCounter.Bump3({{index .AllRouteMap "routes.UploadedFile"}}, cn)
 				return c.NotFound(w,req,nil)
 			}
 			gzw, ok := w.(c.GzipResponseWriter)
@@ -895,14 +898,14 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 			req.URL.Path += extraData
 			// TODO: Find a way to propagate errors up from this?
 			r.UploadHandler(w,req) // TODO: Count these views
-			co.RouteViewCounter.Bump({{index .AllRouteMap "routes.UploadedFile"}})
+			co.RouteViewCounter.Bump3({{index .AllRouteMap "routes.UploadedFile"}}, cn)
 			return nil
 		case "":
 			// Stop the favicons, robots.txt file, etc. resolving to the topics list
 			// TODO: Add support for favicons and robots.txt files
 			switch(extraData) {
 				case "robots.txt":
-					co.RouteViewCounter.Bump({{index .AllRouteMap "routes.RobotsTxt"}})
+					co.RouteViewCounter.Bump3({{index .AllRouteMap "routes.RobotsTxt"}}, cn)
 					return routes.RobotsTxt(w,req)
 				case "favicon.ico":
 					gzw, ok := w.(c.GzipResponseWriter)
@@ -917,10 +920,10 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					co.RouteViewCounter.Bump3({{index .AllRouteMap "routes.Favicon"}}, cn)
 					return nil
 				case "opensearch.xml":
-					co.RouteViewCounter.Bump({{index .AllRouteMap "routes.OpenSearchXml"}})
+					co.RouteViewCounter.Bump3({{index .AllRouteMap "routes.OpenSearchXml"}}, cn)
 					return routes.OpenSearchXml(w,req)
 				/*case "sitemap.xml":
-					co.RouteViewCounter.Bump({{index .AllRouteMap "routes.SitemapXml"}})
+					co.RouteViewCounter.Bump3({{index .AllRouteMap "routes.SitemapXml"}}, cn)
 					return routes.SitemapXml(w,req)*/
 			}
 			co.RouteViewCounter.Bump({{index .AllRouteMap "routes.Error"}})

@@ -590,26 +590,27 @@ var agentMapEnum = map[string]int{
 	"exabot": 16,
 	"baidu": 17,
 	"sogou": 18,
-	"duckduckgo": 19,
-	"seznambot": 20,
-	"discord": 21,
-	"twitter": 22,
-	"facebook": 23,
-	"cloudflare": 24,
-	"archive_org": 25,
-	"uptimebot": 26,
-	"slackbot": 27,
-	"apple": 28,
-	"discourse": 29,
-	"alexa": 30,
-	"lynx": 31,
-	"blank": 32,
-	"malformed": 33,
-	"suspicious": 34,
-	"semrush": 35,
-	"dotbot": 36,
-	"aspiegel": 37,
-	"zgrab": 38,
+	"toutiao": 19,
+	"duckduckgo": 20,
+	"seznambot": 21,
+	"discord": 22,
+	"twitter": 23,
+	"facebook": 24,
+	"cloudflare": 25,
+	"archive_org": 26,
+	"uptimebot": 27,
+	"slackbot": 28,
+	"apple": 29,
+	"discourse": 30,
+	"alexa": 31,
+	"lynx": 32,
+	"blank": 33,
+	"malformed": 34,
+	"suspicious": 35,
+	"semrush": 36,
+	"dotbot": 37,
+	"aspiegel": 38,
+	"zgrab": 39,
 }
 var reverseAgentMapEnum = map[int]string{ 
 	0: "unknown",
@@ -631,26 +632,27 @@ var reverseAgentMapEnum = map[int]string{
 	16: "exabot",
 	17: "baidu",
 	18: "sogou",
-	19: "duckduckgo",
-	20: "seznambot",
-	21: "discord",
-	22: "twitter",
-	23: "facebook",
-	24: "cloudflare",
-	25: "archive_org",
-	26: "uptimebot",
-	27: "slackbot",
-	28: "apple",
-	29: "discourse",
-	30: "alexa",
-	31: "lynx",
-	32: "blank",
-	33: "malformed",
-	34: "suspicious",
-	35: "semrush",
-	36: "dotbot",
-	37: "aspiegel",
-	38: "zgrab",
+	19: "toutiao",
+	20: "duckduckgo",
+	21: "seznambot",
+	22: "discord",
+	23: "twitter",
+	24: "facebook",
+	25: "cloudflare",
+	26: "archive_org",
+	27: "uptimebot",
+	28: "slackbot",
+	29: "apple",
+	30: "discourse",
+	31: "alexa",
+	32: "lynx",
+	33: "blank",
+	34: "malformed",
+	35: "suspicious",
+	36: "semrush",
+	37: "dotbot",
+	38: "aspiegel",
+	39: "zgrab",
 }
 var markToAgent = map[string]string{ 
 	"OPR": "opera",
@@ -668,6 +670,7 @@ var markToAgent = map[string]string{
 	"DuckDuckBot": "duckduckgo",
 	"Baiduspider": "baidu",
 	"Sogou": "sogou",
+	"ToutiaoSpider": "toutiao",
 	"bingbot": "bing",
 	"BingPreview": "bing",
 	"Slurp": "slurp",
@@ -677,6 +680,7 @@ var markToAgent = map[string]string{
 	"archive.org_bot": "archive_org",
 	"Uptimebot": "uptimebot",
 	"Slackbot": "slackbot",
+	"Slack": "slackbot",
 	"Discordbot": "discord",
 	"Twitterbot": "twitter",
 	"facebookexternalhit": "facebook",
@@ -803,8 +807,8 @@ func (r *GenRouter) DumpRequest(req *http.Request, prepend string) {
 		"Host: " + c.SanitiseSingleLine(req.Host) + "\n" + 
 		"URL.Path: " + c.SanitiseSingleLine(req.URL.Path) + "\n" + 
 		"URL.RawQuery: " + c.SanitiseSingleLine(req.URL.RawQuery) + "\n" + 
-		"Referer: " + c.SanitiseSingleLine(req.Referer()) + "\n" + 
-		"RemoteAddr: " + req.RemoteAddr + "\n")
+		"Ref: " + c.SanitiseSingleLine(req.Referer()) + "\n" + 
+		"IP: " + req.RemoteAddr + "\n")
 }
 
 func (r *GenRouter) SuspiciousRequest(req *http.Request, prepend string) {
@@ -812,7 +816,7 @@ func (r *GenRouter) SuspiciousRequest(req *http.Request, prepend string) {
 		prepend += "\n"
 	}
 	r.DumpRequest(req,prepend+"Suspicious Request")
-	co.AgentViewCounter.Bump(34)
+	co.AgentViewCounter.Bump(35)
 }
 
 func isLocalHost(h string) bool {
@@ -827,7 +831,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(200) // 400
 		w.Write([]byte(""))
 		r.DumpRequest(req,"Malformed Request T"+strconv.Itoa(typ))
-		co.AgentViewCounter.Bump(33)
+		co.AgentViewCounter.Bump(34)
 	}
 	
 	// Split the Host and Port string
@@ -969,7 +973,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	
 	ua := strings.TrimSpace(strings.Replace(strings.TrimPrefix(req.UserAgent(),"Mozilla/5.0 ")," Safari/537.36","",-1)) // Noise, no one's going to be running this and it would require some sort of agent ranking system to determine which identifier should be prioritised over another
 	if ua == "" {
-		co.AgentViewCounter.Bump(32)
+		co.AgentViewCounter.Bump(33)
 		if c.Dev.DebugMode {
 			var prepend string
 			for _, char := range req.UserAgent() {
@@ -1030,8 +1034,6 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		}
 		if c.Dev.SuperDebug {
 			r.requestLogger.Print("parsed agent: ", agent)
-		}
-		if c.Dev.SuperDebug {
 			r.requestLogger.Print("os: ", os)
 			r.requestLogger.Printf("items: %+v\n",items)
 		}
@@ -2655,7 +2657,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 			err = sitemapSwitch(w,req)*/
 		case "/uploads":
 			if extraData == "" {
-				co.RouteViewCounter.Bump(166)
+				co.RouteViewCounter.Bump3(166, cn)
 				return c.NotFound(w,req,nil)
 			}
 			gzw, ok := w.(c.GzipResponseWriter)
@@ -2668,14 +2670,14 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 			req.URL.Path += extraData
 			// TODO: Find a way to propagate errors up from this?
 			r.UploadHandler(w,req) // TODO: Count these views
-			co.RouteViewCounter.Bump(166)
+			co.RouteViewCounter.Bump3(166, cn)
 			return nil
 		case "":
 			// Stop the favicons, robots.txt file, etc. resolving to the topics list
 			// TODO: Add support for favicons and robots.txt files
 			switch(extraData) {
 				case "robots.txt":
-					co.RouteViewCounter.Bump(168)
+					co.RouteViewCounter.Bump3(168, cn)
 					return routes.RobotsTxt(w,req)
 				case "favicon.ico":
 					gzw, ok := w.(c.GzipResponseWriter)
@@ -2690,10 +2692,10 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					co.RouteViewCounter.Bump3(171, cn)
 					return nil
 				case "opensearch.xml":
-					co.RouteViewCounter.Bump(170)
+					co.RouteViewCounter.Bump3(170, cn)
 					return routes.OpenSearchXml(w,req)
 				/*case "sitemap.xml":
-					co.RouteViewCounter.Bump(169)
+					co.RouteViewCounter.Bump3(169, cn)
 					return routes.SitemapXml(w,req)*/
 			}
 			co.RouteViewCounter.Bump(0)
