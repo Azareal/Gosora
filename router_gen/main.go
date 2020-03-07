@@ -782,6 +782,8 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 					prepend += strconv.Itoa(int(char)) + " "
 				}
 				r.DumpRequest(req,"Blank UA: " + prepend)
+			} else {
+				r.requestLogger.Print("unknown ua: ", c.SanitiseSingleLine(ua))
 			}
 		} else {
 			co.AgentViewCounter.Bump(agentMapEnum[agent])
