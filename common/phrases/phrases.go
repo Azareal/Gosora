@@ -18,6 +18,7 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
+	"time"
 )
 
 // TODO: Add a phrase store?
@@ -39,6 +40,7 @@ type LevelPhrases struct {
 type LanguagePack struct {
 	Name    string
 	IsoCode string
+	ModTime time.Time
 	//LastUpdated string
 
 	// Should we use a sync map or a struct for these? It would be nice, if we could keep all the phrases consistent.
@@ -90,6 +92,7 @@ func InitPhrases(lang string) error {
 		if err != nil {
 			return err
 		}
+		langPack.ModTime = f.ModTime()
 
 		langPack.ErrorsBytes = make(map[string][]byte)
 		for name, phrase := range langPack.Errors {

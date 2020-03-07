@@ -57,6 +57,9 @@ func afterDBInit() (err error) {
 	}
 	log.Print("Exitted storeInit")
 
+	c.GzipStartEtag = "\"" + strconv.FormatInt(c.StartTime.Unix(), 10) + "-ng\""
+	c.StartEtag = "\"" + strconv.FormatInt(c.StartTime.Unix(), 10) + "-n\""
+
 	var uids []int
 	tc := c.Topics.GetCache()
 	if tc != nil {

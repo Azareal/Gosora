@@ -14,8 +14,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	qgen "github.com/Azareal/Gosora/query_gen"
 	meta "github.com/Azareal/Gosora/common/meta"
+	qgen "github.com/Azareal/Gosora/query_gen"
 )
 
 var SoftwareVersion = Version{Major: 0, Minor: 3, Patch: 0, Tag: "dev"}
@@ -35,6 +35,8 @@ const Terabyte int = Gigabyte * 1024
 const Petabyte int = Terabyte * 1024
 
 var StartTime time.Time
+var GzipStartEtag string
+var StartEtag string
 var TmplPtrMap = make(map[string]interface{})
 
 // Anti-spam token with rotated key

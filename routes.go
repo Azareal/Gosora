@@ -75,9 +75,9 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError 
 			var etag string
 			_, ok := w.(c.GzipResponseWriter)
 			if ok {
-				etag = "\"" + strconv.FormatInt(c.StartTime.Unix(), 10) + "-ng\""
+				etag = c.GzipStartEtag
 			} else {
-				etag = "\"" + strconv.FormatInt(c.StartTime.Unix(), 10) + "-n\""
+				etag = c.StartEtag
 			}
 			w.Header().Set("ETag", etag)
 			if match := r.Header.Get("If-None-Match"); match != "" {
@@ -219,15 +219,15 @@ func routeAPIPhrases(w http.ResponseWriter, r *http.Request, user c.User) c.Rout
 		queryBit = strings.TrimSpace(queryBit)
 		if queryBit[0] == '!' && len(queryBit) > 1 {
 			queryBit = strings.TrimPrefix(queryBit, "!")
-			for _, char := range queryBit {
-				if !unicode.IsLetter(char) && char != '-' && char != '_' {
+			for _, ch := range queryBit {
+				if !unicode.IsLetter(ch) && ch != '-' && ch != '_' {
 					return c.PreErrorJS("No symbols allowed, only - and _", w, r)
 				}
 			}
 			negations = append(negations, queryBit)
 		} else {
-			for _, char := range queryBit {
-				if !unicode.IsLetter(char) && char != '-' && char != '_' {
+			for _, ch := range queryBit {
+				if !unicode.IsLetter(ch) && ch != '-' && ch != '_' {
 					return c.PreErrorJS("No symbols allowed, only - and _", w, r)
 				}
 			}
@@ -242,14 +242,14 @@ func routeAPIPhrases(w http.ResponseWriter, r *http.Request, user c.User) c.Rout
 	var etag string
 	_, ok := w.(c.GzipResponseWriter)
 	if ok {
-		etag = "\"" + strconv.FormatInt(c.StartTime.Unix(), 10) + "-g\""
+		etag = "\"" + strconv.FormatInt(phrases.GetCurrentLangPack().ModTime.Unix(), 10) + "-ng\""
 	} else {
-		etag = "\"" + strconv.FormatInt(c.StartTime.Unix(), 10) + "\""
+		etag = "\"" + strconv.FormatInt(phrases.GetCurrentLangPack().ModTime.Unix(), 10) + "-n\""
 	}
 
 	var plist map[string]string
 	var notModified, private bool
-	var posLoop = func(positive string) c.RouteError {
+	posLoop := func(positive string) c.RouteError {
 		// ! Constrain it to a subset of phrases for now
 		for _, item := range phraseWhitelist {
 			if strings.HasPrefix(positive, item) {

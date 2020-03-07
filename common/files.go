@@ -263,7 +263,7 @@ func (list SFileList) Init() error {
 			return err
 		}
 		path = strings.TrimPrefix(path, "public/")
-		var ext = filepath.Ext("/public/" + path)
+		ext := filepath.Ext("/public/" + path)
 		mimetype := mime.TypeByExtension(ext)
 
 		// Get a checksum for CSPs and cache busting
