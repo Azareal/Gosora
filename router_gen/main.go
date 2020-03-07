@@ -268,6 +268,7 @@ func main() {
 		"suspicious",
 		"semrush",
 		"dotbot",
+		"ahrefs",
 		"majestic",
 		"aspiegel",
 		"zgrab",
@@ -316,6 +317,7 @@ func main() {
 
 		"SemrushBot",
 		"DotBot",
+		"AhrefsBot",
 		"MJ12bot",
 		"AspiegelBot",
 		"zgrab",
@@ -359,7 +361,8 @@ func main() {
 
 		"SemrushBot":  "semrush",
 		"DotBot":      "dotbot",
-		"MJ12bot":"majestic",
+		"AhrefsBot":   "ahrefs",
+		"MJ12bot":     "majestic",
 		"AspiegelBot": "aspiegel",
 		"zgrab":       "zgrab",
 	}
