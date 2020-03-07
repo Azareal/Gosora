@@ -203,6 +203,7 @@
 		"slurp":"Yahoo! Slurp",
 		"exabot":"Exabot",
 		"sogou":"Sogou",
+		"toutiao":"Toutiao",
 		"baidu":"Baidu",
 		"duckduckgo":"DuckDuckBot",
 		"seznambot":"SeznamBot",
@@ -220,6 +221,7 @@
 		
 		"semrush":"SemrushBot",
 		"dotbot":"DotBot",
+		"majestic":"MJ12bot",
 		"aspiegel":"AspiegelBot",
 		"zgrab":"Zgrab App Scanner",
 		"suspicious":"Suspicious",

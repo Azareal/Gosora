@@ -609,8 +609,9 @@ var agentMapEnum = map[string]int{
 	"suspicious": 35,
 	"semrush": 36,
 	"dotbot": 37,
-	"aspiegel": 38,
-	"zgrab": 39,
+	"majestic": 38,
+	"aspiegel": 39,
+	"zgrab": 40,
 }
 var reverseAgentMapEnum = map[int]string{ 
 	0: "unknown",
@@ -651,8 +652,9 @@ var reverseAgentMapEnum = map[int]string{
 	35: "suspicious",
 	36: "semrush",
 	37: "dotbot",
-	38: "aspiegel",
-	39: "zgrab",
+	38: "majestic",
+	39: "aspiegel",
+	40: "zgrab",
 }
 var markToAgent = map[string]string{ 
 	"OPR": "opera",
@@ -690,6 +692,7 @@ var markToAgent = map[string]string{
 	"ia_archiver": "alexa",
 	"SemrushBot": "semrush",
 	"DotBot": "dotbot",
+	"MJ12bot": "majestic",
 	"AspiegelBot": "aspiegel",
 	"zgrab": "zgrab",
 }
