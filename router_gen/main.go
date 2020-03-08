@@ -287,6 +287,7 @@ func main() {
 		"OPR",
 		"Chrome",
 		"Firefox",
+		"Safari",
 		"MSIE",
 		"Trident",
 		"Edge",
@@ -334,6 +335,7 @@ func main() {
 		"OPR":            "opera",
 		"Chrome":         "chrome",
 		"Firefox":        "firefox",
+		"Safari":         "safari",
 		"MSIE":           "internetexplorer",
 		"Trident":        "trident", // Hack to support IE11
 		"Edge":           "edge",
