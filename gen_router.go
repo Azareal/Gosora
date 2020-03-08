@@ -708,6 +708,50 @@ var markToAgent = map[string]string{
 	"RU_Bot": "mail_ru",
 	"zgrab": "zgrab",
 }
+var markToID = map[string]int{ 
+	"OPR": 3,
+	"Chrome": 2,
+	"Firefox": 1,
+	"MSIE": 6,
+	"Trident": 7,
+	"Edge": 5,
+	"Lynx": 33,
+	"SamsungBrowser": 10,
+	"UCBrowser": 11,
+	"Google": 12,
+	"Googlebot": 12,
+	"yandex": 13,
+	"DuckDuckBot": 21,
+	"Baiduspider": 17,
+	"Sogou": 18,
+	"ToutiaoSpider": 19,
+	"360Spider": 20,
+	"bingbot": 14,
+	"BingPreview": 14,
+	"Slurp": 15,
+	"Exabot": 16,
+	"SeznamBot": 22,
+	"CloudFlare": 26,
+	"archive": 27,
+	"Uptimebot": 28,
+	"Slackbot": 29,
+	"Slack": 29,
+	"Discordbot": 23,
+	"Twitterbot": 24,
+	"facebookexternalhit": 25,
+	"Facebot": 25,
+	"Applebot": 30,
+	"Discourse": 31,
+	"ia_archiver": 32,
+	"SemrushBot": 37,
+	"DotBot": 38,
+	"AhrefsBot": 39,
+	"proximic": 40,
+	"MJ12bot": 41,
+	"AspiegelBot": 42,
+	"RU_Bot": 43,
+	"zgrab": 44,
+}
 /*var agentRank = map[string]int{
 	"opera":9,
 	"chrome":8,
@@ -723,6 +767,8 @@ func init() {
 	co.SetReverseAgentMapEnum(reverseAgentMapEnum)
 	co.SetOSMapEnum(osMapEnum)
 	co.SetReverseOSMapEnum(reverseOSMapEnum)
+	c.Chrome = agentMapEnum["chrome"]
+	c.Firefox = agentMapEnum["firefox"]
 }
 
 type WriterIntercept struct {
@@ -808,7 +854,8 @@ func (r *GenRouter) RemoveFunc(pattern string) error {
 	return nil
 }
 
-func (r *GenRouter) DumpRequest(req *http.Request, prepend string) {
+// TODO: Use strings builder?
+func (r *GenRouter) DumpRequest(req *http.Request, pre string) {
 	var heads string
 	for key, value := range req.Header {
 		for _, vvalue := range value {
@@ -816,7 +863,7 @@ func (r *GenRouter) DumpRequest(req *http.Request, prepend string) {
 		}
 	}
 
-	r.requestLogger.Print(prepend + 
+	r.requestLogger.Print(pre + 
 		"\nUA: " + c.SanitiseSingleLine(req.UserAgent()) + "\n" +
 		"Method: " + c.SanitiseSingleLine(req.Method) + "\n" + heads + 
 		"Host: " + c.SanitiseSingleLine(req.Host) + "\n" + 
@@ -826,11 +873,11 @@ func (r *GenRouter) DumpRequest(req *http.Request, prepend string) {
 		"IP: " + req.RemoteAddr + "\n")
 }
 
-func (r *GenRouter) SuspiciousRequest(req *http.Request, prepend string) {
-	if prepend != "" {
-		prepend += "\n"
+func (r *GenRouter) SuspiciousRequest(req *http.Request, pre string) {
+	if pre != "" {
+		pre += "\n"
 	}
-	r.DumpRequest(req,prepend+"Suspicious Request")
+	r.DumpRequest(req,pre+"Suspicious Request")
 	co.AgentViewCounter.Bump(36)
 }
 
@@ -983,18 +1030,19 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	// Track the user agents. Unfortunately, everyone pretends to be Mozilla, so this'll be a little less efficient than I would like.
 	// TODO: Add a setting to disable this?
 	// TODO: Use a more efficient detector instead of smashing every possible combination in
-	var agent string
+	//var agent string
+	var agent int
 	if !c.Config.DisableAnalytics {
 	
 	ua := strings.TrimSpace(strings.Replace(strings.TrimPrefix(req.UserAgent(),"Mozilla/5.0 ")," Safari/537.36","",-1)) // Noise, no one's going to be running this and it would require some sort of agent ranking system to determine which identifier should be prioritised over another
 	if ua == "" {
 		co.AgentViewCounter.Bump(34)
 		if c.Dev.DebugMode {
-			var prepend string
+			var pre string
 			for _, char := range req.UserAgent() {
-				prepend += strconv.Itoa(int(char)) + " "
+				pre += strconv.Itoa(int(char)) + " "
 			}
-			r.DumpRequest(req,"Blank UA: " + prepend)
+			r.DumpRequest(req,"Blank UA: " + pre)
 		}
 	} else {		
 		// WIP UA Parser
@@ -1039,10 +1087,11 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 		// Iterate over this in reverse as the real UA tends to be on the right side
 		for i := len(items) - 1; i >= 0; i-- {
-			fAgent, ok := markToAgent[items[i]]
+			//fAgent, ok := markToAgent[items[i]]
+			fAgent, ok := markToID[items[i]]
 			if ok {
 				agent = fAgent
-				if agent != "safari" {
+				if agent != 4 {
 					break
 				}
 			}
@@ -1055,42 +1104,43 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		
 		// Special handling
 		switch(agent) {
-		case "chrome":
+		case 2:
 			if os == 4 {
-				agent = "androidchrome"
+				agent = 8
 			}
-		case "safari":
+		case 4:
 			if os == 5 {
-				agent = "mobilesafari"
+				agent = 9
 			}
-		case "trident":
+		case 7:
 			// Hack to support IE11, change this after we start logging versions
 			if strings.Contains(ua,"rv:11") {
-				agent = "internetexplorer"
+				agent = 6
 			}
-		case "zgrab":
+		case 44:
 			r.SuspiciousRequest(req,"Vulnerability Scanner")
 		}
 		
-		if agent == "" {
+		if agent == 0 {
 			co.AgentViewCounter.Bump(0)
 			if c.Dev.DebugMode {
-				var prepend string
+				var pre string
 				for _, char := range req.UserAgent() {
-					prepend += strconv.Itoa(int(char)) + " "
+					pre += strconv.Itoa(int(char)) + " "
 				}
-				r.DumpRequest(req,"Blank UA: " + prepend)
+				r.DumpRequest(req,"Blank UA: " + pre)
 			} else {
 				r.requestLogger.Print("unknown ua: ", c.SanitiseSingleLine(ua))
 			}
 		} else {
-			co.AgentViewCounter.Bump(agentMapEnum[agent])
+			//co.AgentViewCounter.Bump(agentMapEnum[agent])
+			co.AgentViewCounter.Bump(agent)
 		}
-		//co.OSViewCounter.Bump(osMapEnum[os])
 		co.OSViewCounter.Bump(os)
 	}
 
 	// TODO: Do we want to track missing language headers too? Maybe as it's own type, e.g. "noheader"?
+	// TODO: Default to anything other than en, if anything else is present, to avoid over-representing it for multi-linguals?
 	lang := req.Header.Get("Accept-Language")
 	if lang != "" {
 		lLang := strings.Split(strings.TrimSpace(lang),"-")
@@ -1105,12 +1155,11 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			break
 		}
 		c.DebugDetail("llLang:", llLang)
-		validCode := co.LangViewCounter.Bump(llLang)
-		if !validCode {
+		if !co.LangViewCounter.Bump(llLang) {
 			r.DumpRequest(req,"Invalid ISO Code")
 		}
 	} else {
-		co.LangViewCounter.Bump("")
+		co.LangViewCounter.Bump2(0)
 	}
 
 	if !c.Config.RefNoTrack {

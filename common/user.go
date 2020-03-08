@@ -58,7 +58,7 @@ type User struct {
 	Liked     int
 	CreatedAt time.Time
 	LastIP    string // ! This part of the UserCache data might fall out of date
-	LastAgent string // ! Temporary hack, don't use
+	LastAgent int    // ! Temporary hack for http push, don't use
 	TempGroup int
 
 	ParseSettings *ParseSettings

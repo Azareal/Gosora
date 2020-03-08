@@ -157,11 +157,20 @@ func (co *DefaultLangViewCounter) Bump(langCode string) (validCode bool) {
 	}
 
 	// TODO: Test this check
-	c.DebugDetail("buckets[", id, "]: ", co.buckets[id])
+	c.DebugDetail("buckets ", id, ": ", co.buckets[id])
 	if len(co.buckets) <= id || id < 0 {
 		return validCode
 	}
 	atomic.AddInt64(&co.buckets[id], 1)
 
 	return validCode
+}
+
+func (co *DefaultLangViewCounter) Bump2(id int) {
+	// TODO: Test this check
+	c.DebugDetail("bucket ", id, ": ", co.buckets[id])
+	if len(co.buckets) <= id || id < 0 {
+		return
+	}
+	atomic.AddInt64(&co.buckets[id], 1)
 }

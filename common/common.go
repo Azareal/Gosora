@@ -49,12 +49,14 @@ var IsDBDown int32 = 0                   // 0 = false, 1 = true. this is value w
 var ErrNoRows = sql.ErrNoRows
 
 // ? - Make this more customisable?
-var ExternalSites = map[string]string{
+/*var ExternalSites = map[string]string{
 	"YT": "https://www.youtube.com/",
-}
+}*/
 
 // TODO: Make this more customisable
-var SpammyDomainBits = []string{"porn", "sex", "lesbian", "acup", "nude", "milf", "tits", "vape", "busty", "kink", "lingerie", "problog", "fet", "xblog", "blogin", "blognetwork"}
+var SpammyDomainBits = []string{"porn", "sex", "lesbian", "acup", "nude", "milf", "tits", "vape", "busty", "kink", "lingerie", "strapon", "problog", "fet", "xblog", "blogin", "blognetwork", "relayblog"}
+
+var Chrome, Firefox int // ! Temporary Hack for http push
 
 type StringList []string
 

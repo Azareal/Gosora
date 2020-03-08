@@ -111,7 +111,7 @@ func FootHeaders(w http.ResponseWriter, header *c.Header) {
 	// Server pushes can backfire on certain browsers, so we want to make sure it's only triggered for ones where it'll help
 	lastAgent := header.CurrentUser.LastAgent
 	//fmt.Println("lastAgent:", lastAgent)
-	if lastAgent == "chrome" || lastAgent == "firefox" {
+	if lastAgent == c.Chrome || lastAgent == c.Firefox {
 		doPush(w, header)
 	}
 }
