@@ -250,6 +250,7 @@ func main() {
 		"baidu",
 		"sogou",
 		"toutiao",
+		"haosou",
 		"duckduckgo",
 		"seznambot",
 		"discord",
@@ -269,8 +270,10 @@ func main() {
 		"semrush",
 		"dotbot",
 		"ahrefs",
+		"proximic",
 		"majestic",
 		"aspiegel",
+		"mail_ru",
 		"zgrab",
 	}
 
@@ -297,13 +300,14 @@ func main() {
 		"Baiduspider",
 		"Sogou",
 		"ToutiaoSpider",
+		"360Spider",
 		"bingbot",
 		"BingPreview",
 		"Slurp",
 		"Exabot",
 		"SeznamBot",
 		"CloudFlare",
-		"archive.org_bot",
+		"archive", //archive.org_bot
 		"Uptimebot",
 		"Slackbot",
 		"Slack",
@@ -318,8 +322,10 @@ func main() {
 		"SemrushBot",
 		"DotBot",
 		"AhrefsBot",
+		"proximic",
 		"MJ12bot",
 		"AspiegelBot",
+		"RU_Bot", // Mail.RU_Bot
 		"zgrab",
 	}
 
@@ -341,13 +347,14 @@ func main() {
 		"Baiduspider":         "baidu",
 		"Sogou":               "sogou",
 		"ToutiaoSpider":       "toutiao",
+		"360Spider":           "haosou",
 		"bingbot":             "bing",
 		"BingPreview":         "bing",
 		"Slurp":               "slurp",
 		"Exabot":              "exabot",
 		"SeznamBot":           "seznambot",
-		"CloudFlare":          "cloudflare", // Track alwayson specifically in case there are other bots?
-		"archive.org_bot":     "archive_org",
+		"CloudFlare":          "cloudflare",  // Track alwayson specifically in case there are other bots?
+		"archive":             "archive_org", //archive.org_bot
 		"Uptimebot":           "uptimebot",
 		"Slackbot":            "slackbot",
 		"Slack":               "slackbot",
@@ -362,8 +369,10 @@ func main() {
 		"SemrushBot":  "semrush",
 		"DotBot":      "dotbot",
 		"AhrefsBot":   "ahrefs",
+		"proximic":    "proximic",
 		"MJ12bot":     "majestic",
 		"AspiegelBot": "aspiegel",
+		"RU_Bot":      "mail_ru", // Mail.RU_Bot
 		"zgrab":       "zgrab",
 	}
 
@@ -715,7 +724,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		for _, it := range uutils.StringToBytes(ua) {
 			if (it > 64 && it < 91) || (it > 96 && it < 123) {
 				buffer = append(buffer, it)
-			} else if it == ' ' || it == '(' || it == ')' || it == '-' || (it > 47 && it < 58) || it == '_' || it == ';' || it == ':' || it == '.' || it == '+' || it == '~' || it == '@' || (it == ':' && bytes.Equal(buffer,[]byte("http"))) || it == ',' || it == '/' {
+			} else if it == ' ' || it == '(' || it == ')' || it == '-' || (it > 47 && it < 58) || it == ';' || it == ':' || it == '.' || it == '+' || it == '~' || it == '@' || (it == ':' && bytes.Equal(buffer,[]byte("http"))) || it == ',' || it == '/' {
 				if len(buffer) != 0 {
 					if len(buffer) > 2 {
 						// Use an unsafe zero copy conversion here just to use the switch, it's not safe for this string to escape from here, as it will get mutated, so do a regular string conversion in append

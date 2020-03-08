@@ -31,7 +31,7 @@ function noxMenuBind() {
 
 (() => {
 	if(window.location.pathname.startsWith("/panel/")) {
-		addInitHook("pre_init", () => noAlerts = true);
+		addInitHook("pre_global", () => noAlerts = true);
 	}
 	
 	function moveAlerts() {

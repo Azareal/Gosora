@@ -343,6 +343,7 @@ function runWebSockets(resume = false) {
 
 (() => {
 	addInitHook("pre_init", () => {
+		runInitHook("pre_global");
 		console.log("before notify on alert")
 		// We can only get away with this because template_alert has no phrases, otherwise it too would have to be part of the "dance", I miss Go concurrency :(
 		if(!noAlerts) {

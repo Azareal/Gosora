@@ -591,28 +591,31 @@ var agentMapEnum = map[string]int{
 	"baidu": 17,
 	"sogou": 18,
 	"toutiao": 19,
-	"duckduckgo": 20,
-	"seznambot": 21,
-	"discord": 22,
-	"twitter": 23,
-	"facebook": 24,
-	"cloudflare": 25,
-	"archive_org": 26,
-	"uptimebot": 27,
-	"slackbot": 28,
-	"apple": 29,
-	"discourse": 30,
-	"alexa": 31,
-	"lynx": 32,
-	"blank": 33,
-	"malformed": 34,
-	"suspicious": 35,
-	"semrush": 36,
-	"dotbot": 37,
-	"ahrefs": 38,
-	"majestic": 39,
-	"aspiegel": 40,
-	"zgrab": 41,
+	"haosou": 20,
+	"duckduckgo": 21,
+	"seznambot": 22,
+	"discord": 23,
+	"twitter": 24,
+	"facebook": 25,
+	"cloudflare": 26,
+	"archive_org": 27,
+	"uptimebot": 28,
+	"slackbot": 29,
+	"apple": 30,
+	"discourse": 31,
+	"alexa": 32,
+	"lynx": 33,
+	"blank": 34,
+	"malformed": 35,
+	"suspicious": 36,
+	"semrush": 37,
+	"dotbot": 38,
+	"ahrefs": 39,
+	"proximic": 40,
+	"majestic": 41,
+	"aspiegel": 42,
+	"mail_ru": 43,
+	"zgrab": 44,
 }
 var reverseAgentMapEnum = map[int]string{ 
 	0: "unknown",
@@ -635,28 +638,31 @@ var reverseAgentMapEnum = map[int]string{
 	17: "baidu",
 	18: "sogou",
 	19: "toutiao",
-	20: "duckduckgo",
-	21: "seznambot",
-	22: "discord",
-	23: "twitter",
-	24: "facebook",
-	25: "cloudflare",
-	26: "archive_org",
-	27: "uptimebot",
-	28: "slackbot",
-	29: "apple",
-	30: "discourse",
-	31: "alexa",
-	32: "lynx",
-	33: "blank",
-	34: "malformed",
-	35: "suspicious",
-	36: "semrush",
-	37: "dotbot",
-	38: "ahrefs",
-	39: "majestic",
-	40: "aspiegel",
-	41: "zgrab",
+	20: "haosou",
+	21: "duckduckgo",
+	22: "seznambot",
+	23: "discord",
+	24: "twitter",
+	25: "facebook",
+	26: "cloudflare",
+	27: "archive_org",
+	28: "uptimebot",
+	29: "slackbot",
+	30: "apple",
+	31: "discourse",
+	32: "alexa",
+	33: "lynx",
+	34: "blank",
+	35: "malformed",
+	36: "suspicious",
+	37: "semrush",
+	38: "dotbot",
+	39: "ahrefs",
+	40: "proximic",
+	41: "majestic",
+	42: "aspiegel",
+	43: "mail_ru",
+	44: "zgrab",
 }
 var markToAgent = map[string]string{ 
 	"OPR": "opera",
@@ -675,13 +681,14 @@ var markToAgent = map[string]string{
 	"Baiduspider": "baidu",
 	"Sogou": "sogou",
 	"ToutiaoSpider": "toutiao",
+	"360Spider": "haosou",
 	"bingbot": "bing",
 	"BingPreview": "bing",
 	"Slurp": "slurp",
 	"Exabot": "exabot",
 	"SeznamBot": "seznambot",
 	"CloudFlare": "cloudflare",
-	"archive.org_bot": "archive_org",
+	"archive": "archive_org",
 	"Uptimebot": "uptimebot",
 	"Slackbot": "slackbot",
 	"Slack": "slackbot",
@@ -695,8 +702,10 @@ var markToAgent = map[string]string{
 	"SemrushBot": "semrush",
 	"DotBot": "dotbot",
 	"AhrefsBot": "ahrefs",
+	"proximic": "proximic",
 	"MJ12bot": "majestic",
 	"AspiegelBot": "aspiegel",
+	"RU_Bot": "mail_ru",
 	"zgrab": "zgrab",
 }
 /*var agentRank = map[string]int{
@@ -822,7 +831,7 @@ func (r *GenRouter) SuspiciousRequest(req *http.Request, prepend string) {
 		prepend += "\n"
 	}
 	r.DumpRequest(req,prepend+"Suspicious Request")
-	co.AgentViewCounter.Bump(35)
+	co.AgentViewCounter.Bump(36)
 }
 
 func isLocalHost(h string) bool {
@@ -837,7 +846,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(200) // 400
 		w.Write([]byte(""))
 		r.DumpRequest(req,"Malformed Request T"+strconv.Itoa(typ))
-		co.AgentViewCounter.Bump(34)
+		co.AgentViewCounter.Bump(35)
 	}
 	
 	// Split the Host and Port string
@@ -979,7 +988,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	
 	ua := strings.TrimSpace(strings.Replace(strings.TrimPrefix(req.UserAgent(),"Mozilla/5.0 ")," Safari/537.36","",-1)) // Noise, no one's going to be running this and it would require some sort of agent ranking system to determine which identifier should be prioritised over another
 	if ua == "" {
-		co.AgentViewCounter.Bump(33)
+		co.AgentViewCounter.Bump(34)
 		if c.Dev.DebugMode {
 			var prepend string
 			for _, char := range req.UserAgent() {
@@ -995,7 +1004,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		for _, it := range uutils.StringToBytes(ua) {
 			if (it > 64 && it < 91) || (it > 96 && it < 123) {
 				buffer = append(buffer, it)
-			} else if it == ' ' || it == '(' || it == ')' || it == '-' || (it > 47 && it < 58) || it == '_' || it == ';' || it == ':' || it == '.' || it == '+' || it == '~' || it == '@' || (it == ':' && bytes.Equal(buffer,[]byte("http"))) || it == ',' || it == '/' {
+			} else if it == ' ' || it == '(' || it == ')' || it == '-' || (it > 47 && it < 58) || it == ';' || it == ':' || it == '.' || it == '+' || it == '~' || it == '@' || (it == ':' && bytes.Equal(buffer,[]byte("http"))) || it == ',' || it == '/' {
 				if len(buffer) != 0 {
 					if len(buffer) > 2 {
 						// Use an unsafe zero copy conversion here just to use the switch, it's not safe for this string to escape from here, as it will get mutated, so do a regular string conversion in append
