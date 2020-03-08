@@ -1052,7 +1052,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		var buffer []byte
 		var os int
 		for _, it := range uutils.StringToBytes(ua) {
-			if (it > 64 && it < 91) || (it > 96 && it < 123) {
+			if (it > 64 && it < 91) || (it > 96 && it < 123) || it == '_' {
 				buffer = append(buffer, it)
 			} else if it == ' ' || it == '(' || it == ')' || it == '-' || (it > 47 && it < 58) || it == ';' || it == ':' || it == '.' || it == '+' || it == '~' || it == '@' || (it == ':' && bytes.Equal(buffer,[]byte("http"))) || it == ',' || it == '/' {
 				if len(buffer) != 0 {

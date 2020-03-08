@@ -62,5 +62,5 @@ func (t *DefaultThaw) Thawed() bool {
 }
 
 func (t *DefaultThaw) Thaw() {
-	atomic.StoreInt64(&t.thawed, 5)
+	atomic.StoreInt64(&t.thawed, 4)
 }

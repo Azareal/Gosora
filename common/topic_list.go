@@ -22,11 +22,16 @@ type TopicListHolder struct {
 	Paginator Paginator
 }
 
+type ForumTopicListHolder struct {
+	List      []*TopicsRow
+	Paginator Paginator
+}
+
 type TopicListInt interface {
-	GetListByCanSee(canSee []int, page int, orderby int, filterIDs []int) (topicList []*TopicsRow, forumList []Forum, paginator Paginator, err error)
-	GetListByGroup(group *Group, page int, orderby int, filterIDs []int) (topicList []*TopicsRow, forumList []Forum, paginator Paginator, err error)
-	GetListByForum(f *Forum, page int, orderby int) (topicList []*TopicsRow, paginator Paginator, err error)
-	GetList(page int, orderby int, filterIDs []int) (topicList []*TopicsRow, forumList []Forum, paginator Paginator, err error)
+	GetListByCanSee(canSee []int, page, orderby int, filterIDs []int) (topicList []*TopicsRow, forumList []Forum, pagi Paginator, err error)
+	GetListByGroup(g *Group, page, orderby int, filterIDs []int) (topicList []*TopicsRow, forumList []Forum, pagi Paginator, err error)
+	GetListByForum(f *Forum, page, orderby int) (topicList []*TopicsRow, pagi Paginator, err error)
+	GetList(page, orderby int, filterIDs []int) (topicList []*TopicsRow, forumList []Forum, pagi Paginator, err error)
 }
 
 type DefaultTopicList struct {
@@ -36,10 +41,14 @@ type DefaultTopicList struct {
 	oddLock    sync.RWMutex
 	evenLock   sync.RWMutex
 
+	forums    map[int]*ForumTopicListHolder
+	forumLock sync.RWMutex
+
 	//permTree atomic.Value // [string(canSee)]canSee
 	//permTree map[string][]int // [string(canSee)]canSee
 
 	getTopicsByForum *sql.Stmt
+	//getTidsByForum *sql.Stmt
 }
 
 // We've removed the topic list cache cap as admins really shouldn't be abusing groups like this with plugin_guilds around and it was extremely fiddly.
@@ -49,7 +58,9 @@ func NewDefaultTopicList(acc *qgen.Accumulator) (*DefaultTopicList, error) {
 	tList := &DefaultTopicList{
 		oddGroups:        make(map[int]*TopicListHolder),
 		evenGroups:       make(map[int]*TopicListHolder),
-		getTopicsByForum: acc.Select("topics").Columns("tid, title, content, createdBy, is_closed, sticky, createdAt, lastReplyAt, lastReplyBy, lastReplyID, views, postCount, likeCount").Where("parentID=?").Orderby("sticky DESC, lastReplyAt DESC, createdBy DESC").Limit("?,?").Prepare(),
+		forums:           make(map[int]*ForumTopicListHolder),
+		getTopicsByForum: acc.Select("topics").Columns("tid, title, content, createdBy, is_closed, sticky, createdAt, lastReplyAt, lastReplyBy, lastReplyID, views, postCount, likeCount").Where("parentID=?").Orderby("sticky DESC,lastReplyAt DESC,createdBy DESC").Limit("?,?").Prepare(),
+		//getTidsByForum: acc.Select("topics").Columns("tid").Where("parentID=?").Orderby("sticky DESC,lastReplyAt DESC,createdBy DESC").Limit("?,?").Prepare(),
 	}
 	if err := acc.FirstError(); err != nil {
 		return nil, err
@@ -74,11 +85,11 @@ func (tList *DefaultTopicList) Tick() error {
 
 	oddLists := make(map[int]*TopicListHolder)
 	evenLists := make(map[int]*TopicListHolder)
-	addList := func(gid int, hold *TopicListHolder) {
+	addList := func(gid int, h *TopicListHolder) {
 		if gid%2 == 0 {
-			evenLists[gid] = hold
+			evenLists[gid] = h
 		} else {
-			oddLists[gid] = hold
+			oddLists[gid] = h
 		}
 	}
 
@@ -89,31 +100,31 @@ func (tList *DefaultTopicList) Tick() error {
 
 	gidToCanSee := make(map[int]string)
 	permTree := make(map[string][]int) // [string(canSee)]canSee
-	for _, group := range allGroups {
+	for _, g := range allGroups {
 		// ? - Move the user count check to instance initialisation? Might require more book-keeping, particularly when a user moves into a zero user group
-		if group.UserCount == 0 && group.ID != GuestUser.Group {
+		if g.UserCount == 0 && g.ID != GuestUser.Group {
 			continue
 		}
 
-		canSee := make([]byte, len(group.CanSee))
-		for i, item := range group.CanSee {
+		canSee := make([]byte, len(g.CanSee))
+		for i, item := range g.CanSee {
 			canSee[i] = byte(item)
 		}
 
 		canSeeInt := make([]int, len(canSee))
-		copy(canSeeInt, group.CanSee)
+		copy(canSeeInt, g.CanSee)
 		sCanSee := string(canSee)
 		permTree[sCanSee] = canSeeInt
-		gidToCanSee[group.ID] = sCanSee
+		gidToCanSee[g.ID] = sCanSee
 	}
 
 	canSeeHolders := make(map[string]*TopicListHolder)
 	for name, canSee := range permTree {
-		topicList, forumList, paginator, err := tList.GetListByCanSee(canSee, 1, 0, nil)
+		topicList, forumList, pagi, err := tList.GetListByCanSee(canSee, 1, 0, nil)
 		if err != nil {
 			return err
 		}
-		canSeeHolders[name] = &TopicListHolder{topicList, forumList, paginator}
+		canSeeHolders[name] = &TopicListHolder{topicList, forumList, pagi}
 	}
 	for gid, canSee := range gidToCanSee {
 		addList(gid, canSeeHolders[canSee])
@@ -127,6 +138,63 @@ func (tList *DefaultTopicList) Tick() error {
 	tList.evenGroups = evenLists
 	tList.evenLock.Unlock()
 
+	forums, err := Forums.GetAll()
+	if err != nil {
+		return err
+	}
+
+	top5 := []*Forum{nil, nil, nil, nil, nil}
+	z := true
+	addScore2 := func(f *Forum) {
+		for i, top := range top5 {
+			if top.TopicCount < f.TopicCount {
+				top5[i] = f
+				return
+			}
+		}
+	}
+	addScore := func(f *Forum) {
+		if z {
+			for i, top := range top5 {
+				if top == nil {
+					top5[i] = f
+					return
+				}
+			}
+			z = false
+			addScore2(f)
+		}
+		addScore2(f)
+	}
+
+	var fshort []*Forum
+	for _, f := range forums {
+		if f.Name == "" || !f.Active || (f.ParentType != "" && f.ParentType != "forum") {
+			continue
+		}
+		if f.TopicCount == 0 {
+			fshort = append(fshort, f)
+			continue
+		}
+		addScore(f)
+	}
+	for _, f := range top5 {
+		fshort = append(fshort, f)
+	}
+
+	fList := make(map[int]*ForumTopicListHolder)
+	for _, f := range fshort {
+		topicList, pagi, err := tList.GetListByForum(f, 1, 0)
+		if err != nil {
+			return err
+		}
+		fList[f.ID] = &ForumTopicListHolder{topicList, pagi}
+	}
+
+	tList.forumLock.Lock()
+	tList.forums = fList
+	tList.forumLock.Unlock()
+
 	hTbl := GetHookTable()
 	_, _ = hTbl.VhookSkippable("tasks_tick_topic_list", tList)
 
@@ -135,7 +203,21 @@ func (tList *DefaultTopicList) Tick() error {
 
 // TODO: Add Topics() method to *Forum?
 // TODO: Implement orderby
-func (tList *DefaultTopicList) GetListByForum(f *Forum, page int, orderby int) (topicList []*TopicsRow, paginator Paginator, err error) {
+func (tList *DefaultTopicList) GetListByForum(f *Forum, page, orderby int) (topicList []*TopicsRow, pagi Paginator, err error) {
+	if page == 0 {
+		page = 1
+	}
+	if page == 1 && orderby == 0 {
+		var h *ForumTopicListHolder
+		var ok bool
+		tList.forumLock.RLock()
+		h, ok = tList.forums[f.ID]
+		tList.forumLock.RUnlock()
+		if ok {
+			return h.List, h.Paginator, nil
+		}
+	}
+
 	// TODO: Does forum.TopicCount take the deleted items into consideration for guests? We don't have soft-delete yet, only hard-delete
 	offset, page, lastPage := PageOffset(f.TopicCount, page, Config.ItemsPerPage)
 
@@ -194,34 +276,34 @@ func (tList *DefaultTopicList) GetListByForum(f *Forum, page int, orderby int) (
 	return topicList, Paginator{pageList, page, lastPage}, nil
 }
 
-func (tList *DefaultTopicList) GetListByGroup(group *Group, page int, orderby int, filterIDs []int) (topicList []*TopicsRow, forumList []Forum, paginator Paginator, err error) {
+func (tList *DefaultTopicList) GetListByGroup(g *Group, page, orderby int, filterIDs []int) (topicList []*TopicsRow, forumList []Forum, pagi Paginator, err error) {
 	if page == 0 {
 		page = 1
 	}
 	// TODO: Cache the first three pages not just the first along with all the topics on this beaten track
 	if page == 1 && orderby == 0 && len(filterIDs) == 0 {
-		var hold *TopicListHolder
+		var h *TopicListHolder
 		var ok bool
-		if group.ID%2 == 0 {
+		if g.ID%2 == 0 {
 			tList.evenLock.RLock()
-			hold, ok = tList.evenGroups[group.ID]
+			h, ok = tList.evenGroups[g.ID]
 			tList.evenLock.RUnlock()
 		} else {
 			tList.oddLock.RLock()
-			hold, ok = tList.oddGroups[group.ID]
+			h, ok = tList.oddGroups[g.ID]
 			tList.oddLock.RUnlock()
 		}
 		if ok {
-			return hold.List, hold.ForumList, hold.Paginator, nil
+			return h.List, h.ForumList, h.Paginator, nil
 		}
 	}
 
 	// TODO: Make CanSee a method on *Group with a canSee field? Have a CanSee method on *User to cover the case of superadmins?
-	//log.Printf("deoptimising for %d on page %d\n", group.ID, page)
-	return tList.GetListByCanSee(group.CanSee, page, orderby, filterIDs)
+	//log.Printf("deoptimising for %d on page %d\n", g.ID, page)
+	return tList.GetListByCanSee(g.CanSee, page, orderby, filterIDs)
 }
 
-func (tList *DefaultTopicList) GetListByCanSee(canSee []int, page int, orderby int, filterIDs []int) (topicList []*TopicsRow, forumList []Forum, pagi Paginator, err error) {
+func (tList *DefaultTopicList) GetListByCanSee(canSee []int, page, orderby int, filterIDs []int) (topicList []*TopicsRow, forumList []Forum, pagi Paginator, err error) {
 	// TODO: Optimise this by filtering canSee and then fetching the forums?
 	// We need a list of the visible forums for Quick Topic
 	// ? - Would it be useful, if we could post in social groups from /topics/?

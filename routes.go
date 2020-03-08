@@ -73,11 +73,17 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError 
 	case "alerts": // A feed of events tailored for a specific user
 		if !user.Loggedin {
 			var etag string
-			_, ok := w.(c.GzipResponseWriter)
+			/*_, ok := w.(c.GzipResponseWriter)
 			if ok {
 				etag = c.GzipStartEtag
 			} else {
 				etag = c.StartEtag
+			}*/
+			_, ok := w.(c.GzipResponseWriter)
+			if ok {
+				etag = "\"1583653869-ng\""
+			} else {
+				etag = "\"1583653869-n\""
 			}
 			w.Header().Set("ETag", etag)
 			if match := r.Header.Get("If-None-Match"); match != "" {
