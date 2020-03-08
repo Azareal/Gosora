@@ -179,7 +179,9 @@ func (tList *DefaultTopicList) Tick() error {
 		addScore(f)
 	}
 	for _, f := range top5 {
-		fshort = append(fshort, f)
+		if f != nil {
+			fshort = append(fshort, f)
+		}
 	}
 
 	fList := make(map[int]*ForumTopicListHolder)
