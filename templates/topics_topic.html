@@ -1,17 +1,17 @@
 <div class="topic_row{{if .Sticky}} topic_sticky{{else if .IsClosed}} topic_closed{{end}}" data-tid="{{.ID}}">
 	<div class="rowitem topic_left passive datarow">
 		<span class="selector"></span>
-		<a href="{{.Creator.Link}}"><img src="{{.Creator.MicroAvatar}}" height=64 alt="Avatar" title="{{.Creator.Name}}'s Avatar" aria-hidden="true" /></a>
+		<a href="{{.Creator.Link}}"><img src="{{.Creator.MicroAvatar}}" height=64 alt="Avatar" title="{{.Creator.Name}}'s Avatar" aria-hidden="true"/></a>
 		<span class="topic_inner_left">
 			<a class="rowtopic" href="{{.Link}}" itemprop="itemListElement" title="{{.Title}}"><span>{{.Title}}</span></a> {{if .ForumName}}<a class="rowsmall parent_forum" href="{{.ForumLink}}" title="{{.ForumName}}">{{.ForumName}}</a>{{end}}
-			<br /><a class="rowsmall starter" href="{{.Creator.Link}}" title="{{.Creator.Name}}">{{.Creator.Name}}</a>
+			<br><a class="rowsmall starter" href="{{.Creator.Link}}" title="{{.Creator.Name}}">{{.Creator.Name}}</a>
 			{{/** TODO: Avoid the double '|' when both .IsClosed and .Sticky are set to true. We could probably do this with CSS **/}}
 			{{if .IsClosed}}<span class="rowsmall topic_status_e topic_status_closed" title="{{lang "status.closed_tooltip"}}"> | &#x1F512;&#xFE0E</span>{{end}}
 			{{if .Sticky}}<span class="rowsmall topic_status_e topic_status_sticky" title="{{lang "status.pinned_tooltip"}}"> | &#x1F4CD;&#xFE0E</span>{{end}}
 		</span>
 		{{/** TODO: Phase this out of Cosora and remove it **/}}
 		<div class="topic_inner_right rowsmall">
-			<span class="replyCount">{{.PostCount}}</span><br />
+			<span class="replyCount">{{.PostCount}}</span><br>
 			<span class="likeCount">{{.LikeCount}}</span>
 		</div>
 	</div>
@@ -24,7 +24,7 @@
 	</div>
 	<div class="rowitem topic_right passive datarow">
 		<div class="topic_right_inside">
-			<a href="{{.LastUser.Link}}"><img src="{{.LastUser.MicroAvatar}}" height=64 alt="Avatar" title="{{.LastUser.Name}}'s Avatar" aria-hidden="true" /></a>
+			<a href="{{.LastUser.Link}}"><img src="{{.LastUser.MicroAvatar}}" height=64 alt="Avatar" title="{{.LastUser.Name}}'s Avatar" aria-hidden="true"/></a>
 			<span>
 				<a href="{{.LastUser.Link}}" class="lastName" title="{{.LastUser.Name}}">{{.LastUser.Name}}</a><br>
 				<a href="{{.Link}}?page={{.LastPage}}{{if .LastReplyID}}#post-{{.LastReplyID}}{{end}}" class="rowsmall lastReplyAt" title="{{abstime .LastReplyAt}}">{{reltime .LastReplyAt}}</a>

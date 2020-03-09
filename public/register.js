@@ -4,11 +4,11 @@
 	.then(resp => {
 		if(resp.status!==200) {
 			console.log("error");
-			console.log("response:", resp);
+			console.log("resp:", resp);
 			return;
 		}
 		resp.text().then(data => eval(data));
 	})
-	.catch(err => console.log("err:", err));
+	.catch(err => console.log("err", err));
 	});
-})();
+})()

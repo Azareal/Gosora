@@ -119,7 +119,7 @@ function updateAlertList(menuAlerts) {
 	}
 
 	bindToAlerts();
-	console.log("alertCount:",alertCount)
+	console.log("alertCount",alertCount)
 	runInitHook("after_update_alert_list", alertCount);
 }
 
@@ -192,7 +192,7 @@ function SplitN(data,ch,n) {
 }
 
 function wsAlertEvent(data) {
-	console.log("wsAlertEvent:",data)
+	console.log("wsAlertEvent",data)
 	addAlert(data, true);
 	alertCount++;
 
@@ -409,7 +409,7 @@ function Paginate(currentPage, lastPage, maxPages) {
 function mainInit(){
 	runInitHook("start_init");
 
-	$(".more_topics").click((ev) => {
+	$(".more_topics").click(ev => {
 		ev.preventDefault();
 		let moreTopicBlocks = document.getElementsByClassName("more_topic_block_active");
 		for(let i = 0; i < moreTopicBlocks.length; i++) {
@@ -456,7 +456,7 @@ function mainInit(){
 			dataType: "json",
 			data: { js: 1 },
 			error: ajaxError,
-			success: function (data, status, xhr) {
+			success: function (data,status,xhr) {
 				if("success" in data && data["success"] == "1") return;
 				// addNotice("Failed to add a like: {err}")
 				//likeCountNode.innerHTML = parseInt(likeCountNode.innerHTML)-1;
@@ -505,10 +505,10 @@ function mainInit(){
 
 			// TODO: Try to de-duplicate some of these fetch calls
 			fetch(url+q+"&js=1", {credentials: "same-origin"})
-				.then((resp) => {
+				.then(resp => {
 					if(!resp.ok) throw(url+q+"&js=1 failed to load");
 					return resp.json();
-				}).then((data) => {
+				}).then(data => {
 					if(!"Topics" in data) throw("no Topics in data");
 					let topics = data["Topics"];
 					console.log("ajax navigated to different page");
@@ -522,29 +522,29 @@ function mainInit(){
 					history.pushState(obj, obj.Title, obj.Url);
 					rebuildPaginator(data.LastPage);
 					rebindPaginator();
-				}).catch((ex) => {
+				}).catch(ex => {
 					console.log("Unable to get script '"+url+q+"&js=1"+"'");
-					console.log("ex: ", ex);
+					console.log("ex", ex);
 					console.trace();
 				});
 		});
 	}
 
 	// TODO: Render a headless topics.html instead of the individual topic rows and a bit of JS glue
-	$(".filter_item").click(function(event) {
+	$(".filter_item").click(function(ev) {
 		if(!window.location.pathname.startsWith("/topics/")) return
-		event.preventDefault();
+		ev.preventDefault();
 		let that = this;
 		let fid = this.getAttribute("data-fid");
 		// TODO: Take mostviewed into account
 		let url = "//"+window.location.host+"/topics/?fids="+fid;
 
 		fetch(url+"&js=1", {credentials: "same-origin"})
-		.then((resp) => {
+		.then(resp => {
 			if(!resp.ok) throw(url+"&js=1 failed to load");
 			return resp.json();
-		}).then((data) => {
-			console.log("data:",data);
+		}).then(data => {
+			console.log("data",data);
 			if(!"Topics" in data) throw("no Topics in data");
 			let topics = data["Topics"];
 			console.log("ajax navigated to "+that.innerText);
@@ -568,9 +568,9 @@ function mainInit(){
 			});
 			that.classList.add("filter_selected");
 			$(".topic_list_title h1").text(that.innerText);
-		}).catch((ex) => {
+		}).catch(ex => {
 			console.log("Unable to get script '"+url+"&js=1"+"'");
-			console.log("ex: ", ex);
+			console.log("ex", ex);
 			console.trace();
 		});
 	});
@@ -592,10 +592,10 @@ function mainInit(){
 
 		// TODO: Try to de-duplicate some of these fetch calls
 		fetch(url+q+"&js=1", {credentials: "same-origin"})
-			.then((resp) => {
+			.then(resp => {
 				if(!resp.ok) throw(url+q+"&js=1 failed to load");
 				return resp.json();
-			}).then((data) => {
+			}).then(data => {
 				if(!"Topics" in data) throw("no Topics in data");
 				let topics = data["Topics"];
 				console.log("ajax navigated to search page");
@@ -613,22 +613,22 @@ function mainInit(){
 				history.pushState(obj, obj.Title, obj.Url);
 				rebuildPaginator(data.LastPage);
 				rebindPaginator();
-		}).catch((ex) => {
+		}).catch(ex => {
 			console.log("Unable to get script '"+url+q+"&js=1"+"'");
-			console.log("ex: ", ex);
+			console.log("ex", ex);
 			console.trace();
 		});
 	});
 
-	$(".open_edit").click((event) => {
-		event.preventDefault();
+	$(".open_edit").click(ev => {
+		ev.preventDefault();
 		$('.hide_on_edit').addClass("edit_opened");
 		$('.show_on_edit').addClass("edit_opened");
 		runHook("open_edit");
 	});
 
-	$(".topic_item .submit_edit").click(function(event){
-		event.preventDefault();
+	$(".topic_item .submit_edit").click(function(ev){
+		ev.preventDefault();
 		let topicNameInput = $(".topic_name_input").val();
 		$(".topic_name").html(topicNameInput);
 		$(".topic_name").attr(topicNameInput);
@@ -658,53 +658,53 @@ function mainInit(){
 		});
 	});
 
-	$(".delete_item").click(function(event) {
-		postLink(event);
+	$(".delete_item").click(function(ev) {
+		postLink(ev);
 		$(this).closest('.deletable_block').remove();
 	});
 
 	// Miniature implementation of the parser to avoid sending as much data back and forth
-	function quickParse(msg) {
-		msg = msg.replace(":)", "😀")
-		msg = msg.replace(":(", "😞")
-		msg = msg.replace(":D", "😃")
-		msg = msg.replace(":P", "😛")
-		msg = msg.replace(":O", "😲")
-		msg = msg.replace(":p", "😛")
-		msg = msg.replace(":o", "😲")
-		msg = msg.replace(";)", "😉")
-		msg = msg.replace("\n","<br>")
-		return msg
+	function quickParse(m) {
+		m = m.replace(":)", "😀")
+		m = m.replace(":(", "😞")
+		m = m.replace(":D", "😃")
+		m = m.replace(":P", "😛")
+		m = m.replace(":O", "😲")
+		m = m.replace(":p", "😛")
+		m = m.replace(":o", "😲")
+		m = m.replace(";)", "😉")
+		m = m.replace("\n","<br>")
+		return m
 	}
 
-	$(".edit_item").click(function(event){
-		event.preventDefault();
+	$(".edit_item").click(function(ev){
+		ev.preventDefault();
 
-		let blockParent = this.closest('.editable_parent');
-		$(blockParent).find('.hide_on_edit').addClass("edit_opened");
-		$(blockParent).find('.show_on_edit').addClass("edit_opened");
-		$(blockParent).find('.hide_on_block_edit').addClass("edit_opened");
-		$(blockParent).find('.show_on_block_edit').addClass("edit_opened");
-		let srcNode = blockParent.querySelector(".edit_source");
-		let block = blockParent.querySelector('.editable_block');
+		let bp = this.closest('.editable_parent');
+		$(bp).find('.hide_on_edit').addClass("edit_opened");
+		$(bp).find('.show_on_edit').addClass("edit_opened");
+		$(bp).find('.hide_on_block_edit').addClass("edit_opened");
+		$(bp).find('.show_on_block_edit').addClass("edit_opened");
+		let srcNode = bp.querySelector(".edit_source");
+		let block = bp.querySelector('.editable_block');
 		block.classList.add("in_edit");
 
 		let source = "";
 		if(srcNode!=null) source = srcNode.innerText;
 		else source = block.innerHTML;
 		block.innerHTML = Template_topic_c_edit_post({
-			ID: blockParent.getAttribute("id").slice("post-".length),
+			ID: bp.getAttribute("id").slice("post-".length),
 			Source: source,
 			Ref: this.closest('a').getAttribute("href")
 		})
 		runHook("edit_item_pre_bind");
 
-		$(".submit_edit").click(function(event){
-			event.preventDefault();
-			$(blockParent).find('.hide_on_edit').removeClass("edit_opened");
-			$(blockParent).find('.show_on_edit').removeClass("edit_opened");
-			$(blockParent).find('.hide_on_block_edit').removeClass("edit_opened");
-			$(blockParent).find('.show_on_block_edit').removeClass("edit_opened");
+		$(".submit_edit").click(function(ev){
+			ev.preventDefault();
+			$(bp).find('.hide_on_edit').removeClass("edit_opened");
+			$(bp).find('.show_on_edit').removeClass("edit_opened");
+			$(bp).find('.hide_on_block_edit').removeClass("edit_opened");
+			$(bp).find('.show_on_block_edit').removeClass("edit_opened");
 			block.classList.remove("in_edit");
 			let content = block.querySelector('textarea').value;
 			block.innerHTML = quickParse(content);
@@ -725,16 +725,16 @@ function mainInit(){
 		});
 	});
 
-	$(".edit_field").click(function(event) {
-		event.preventDefault();
-		let blockParent = $(this).closest('.editable_parent');
-		let block = blockParent.find('.editable_block').eq(0);
+	$(".edit_field").click(function(ev) {
+		ev.preventDefault();
+		let bp = $(this).closest('.editable_parent');
+		let block = bp.find('.editable_block').eq(0);
 		block.html("<input name='edit_field' value='" + block.text() + "' type='text'/><a href='" + $(this).closest('a').attr("href") + "'><button class='submit_edit' type='submit'>Update</button></a>");
 
-		$(".submit_edit").click(function(event) {
-			event.preventDefault();
-			let blockParent = $(this).closest('.editable_parent');
-			let block = blockParent.find('.editable_block').eq(0);
+		$(".submit_edit").click(function(ev) {
+			ev.preventDefault();
+			let bp = $(this).closest('.editable_parent');
+			let block = bp.find('.editable_block').eq(0);
 			let content = block.find('input').eq(0).val();
 			block.html(content);
 
@@ -749,8 +749,8 @@ function mainInit(){
 		});
 	});
 
-	$(".edit_fields").click(function(event) {
-		event.preventDefault();
+	$(".edit_fields").click(function(ev) {
+		ev.preventDefault();
 		if($(this).find("input").length !== 0) return;
 		//console.log("clicked .edit_fields");
 		var blockParent = $(this).closest('.editable_parent');
@@ -784,11 +784,11 @@ function mainInit(){
 		// Remove any handlers already attached to the submitter
 		$(".submit_edit").unbind("click");
 
-		$(".submit_edit").click(function(event) {
-			event.preventDefault();
+		$(".submit_edit").click(function(ev) {
+			ev.preventDefault();
 			var outData = {js: 1}
-			var blockParent = $(this).closest('.editable_parent');
-			blockParent.find('.editable_block').each(function() {
+			var bp = $(this).closest('.editable_parent');
+			bp.find('.editable_block').each(function() {
 				var fieldName = this.getAttribute("data-field");
 				var fieldType = this.getAttribute("data-type");
 				if(fieldType=="list") {
@@ -806,11 +806,11 @@ function mainInit(){
 			});
 
 			var formAction = $(this).closest('a').attr("href");
-			//console.log("Form Action:", formAction);
+			//console.log("Form Action", formAction);
 			//console.log(outData);
 			$.ajax({ url: formAction + "?s=" + me.User.S, type:"POST", dataType:"json", data: outData, error: ajaxError });
-			blockParent.find('.hide_on_edit').removeClass("edit_opened");
-			blockParent.find('.show_on_edit').removeClass("edit_opened");
+			bp.find('.hide_on_edit').removeClass("edit_opened");
+			bp.find('.show_on_edit').removeClass("edit_opened");
 		});
 	});
 
@@ -939,7 +939,7 @@ function mainInit(){
 		$("#poll_results_" + pollID).removeClass("auto_hide");
 		fetch("/poll/results/" + pollID, {
 			credentials: 'same-origin'
-		}).then(resp => resp.text()).catch(err => console.error("err:",err)).then((rawData) => {
+		}).then(resp => resp.text()).catch(err => console.error("err",err)).then(rawData => {
 			// TODO: Make sure the received data is actually a list of integers
 			let data = JSON.parse(rawData);
 			let allZero = true;
@@ -953,8 +953,8 @@ function mainInit(){
 			}
 
 			$("#poll_results_"+pollID+" .user_content").html("<div id='poll_results_chart_"+pollID+"'></div>");
-			console.log("rawData: ", rawData);
-			console.log("series: ", data);
+			console.log("rawData", rawData);
+			console.log("series", data);
 			Chartist.Pie('#poll_results_chart_'+pollID, {
  				series: data,
 			}, {
@@ -965,4 +965,4 @@ function mainInit(){
 
 	runInitHook("almost_end_init");
 	runInitHook("end_init");
-};
+}

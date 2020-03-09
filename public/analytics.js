@@ -1,6 +1,5 @@
 function memStuff(window, document, Chartist) {
 	'use strict';
-
 	Chartist.plugins = Chartist.plugins || {};
 	Chartist.plugins.byteUnits = function(options) {
 	options = Chartist.extend({}, {}, options);
@@ -17,7 +16,7 @@ function memStuff(window, document, Chartist) {
 			for(let i = 0; i < vbits.length; i++) {
 				tbits[i] = vbits[i].innerHTML;
 			}
-			console.log("tbits:",tbits);
+			console.log("tbits",tbits);
 			
 			const calc = (places) => {
 				if(places==3) return;
@@ -40,7 +39,6 @@ function memStuff(window, document, Chartist) {
 
 function perfStuff(window, document, Chartist) {
 	'use strict';
-
 	Chartist.plugins = Chartist.plugins || {};
 	Chartist.plugins.perfUnits = function(options) {
 	options = Chartist.extend({}, {}, options);
@@ -85,18 +83,18 @@ const Terabyte = Gigabyte * 1024;
 const Petabyte = Terabyte * 1024;
 
 function convertByteUnit(bytes, places = 0) {
-	let out;
-	if(bytes >= Petabyte) out = [bytes / Petabyte, "PB"];
-	else if(bytes >= Terabyte) out = [bytes / Terabyte, "TB"];
-	else if(bytes >= Gigabyte) out = [bytes / Gigabyte, "GB"];
-	else if(bytes >= Megabyte) out = [bytes / Megabyte, "MB"];
-	else if(bytes >= Kilobyte) out = [bytes / Kilobyte, "KB"];
-	else out = [bytes,"b"];
+	let o;
+	if(bytes >= Petabyte) o = [bytes / Petabyte, "PB"];
+	else if(bytes >= Terabyte) o = [bytes / Terabyte, "TB"];
+	else if(bytes >= Gigabyte) o = [bytes / Gigabyte, "GB"];
+	else if(bytes >= Megabyte) o = [bytes / Megabyte, "MB"];
+	else if(bytes >= Kilobyte) o = [bytes / Kilobyte, "KB"];
+	else o = [bytes,"b"];
 
-	if(places==0) return Math.ceil(out[0]) + out[1];
+	if(places==0) return Math.ceil(o[0]) + o[1];
 	else {
 		let ex = Math.pow(10, places);
-		return (Math.round(out[0], ex) / ex) + out[1];
+		return (Math.round(o[0], ex) / ex) + o[1];
 	}
 }
 
@@ -106,18 +104,18 @@ let min = sec * 60;
 let hour = min * 60;
 let day = hour * 24;
 function convertPerfUnit(quan, places = 0) {
-	let out;
-	if(quan >= day) out = [quan / day, "d"];
-	else if(quan >= hour) out = [quan / hour, "h"];
-	else if(quan >= min) out = [quan / min, "m"];
-	else if(quan >= sec) out = [quan / sec, "s"];
-	else if(quan >= ms) out = [quan / ms, "ms"];
-	else out = [quan,"μs"];
+	let o;
+	if(quan >= day) o = [quan / day, "d"];
+	else if(quan >= hour) o = [quan / hour, "h"];
+	else if(quan >= min) o = [quan / min, "m"];
+	else if(quan >= sec) o = [quan / sec, "s"];
+	else if(quan >= ms) o = [quan / ms, "ms"];
+	else o = [quan,"μs"];
 
-	if(places==0) return Math.ceil(out[0]) + out[1];
+	if(places==0) return Math.ceil(o[0]) + o[1];
 	else {
 		let ex = Math.pow(10, places);
-		return (Math.round(out[0], ex) / ex) + out[1];
+		return (Math.round(o[0], ex) / ex) + o[1];
 	}
 }
 
@@ -125,7 +123,7 @@ function convertPerfUnit(quan, places = 0) {
 // TODO: Load rawLabels and seriesData dynamically rather than potentially fiddling with nonces for the CSP?
 function buildStatsChart(rawLabels, seriesData, timeRange, legendNames, typ=0) {
 	console.log("buildStatsChart");
-	console.log("seriesData:",seriesData);
+	console.log("seriesData",seriesData);
 	let labels = [];
 	let aphrases = phraseBox["analytics"];
 	if(timeRange=="one-year") {
@@ -158,19 +156,19 @@ function buildStatsChart(rawLabels, seriesData, timeRange, legendNames, typ=0) {
 				continue;
 			}
 			let date = new Date(rawLabels[i]*1000);
-			console.log("date:", date);
+			console.log("date", date);
 			let minutes = "0" + date.getMinutes();
 			let label = date.getHours() + ":" + minutes.substr(-2);
-			console.log("label:", label);
+			console.log("label", label);
 			labels.push(label);
 		}
 	} else {
 		for(const i in rawLabels) {
 			let date = new Date(rawLabels[i]*1000);
-			console.log("date:", date);
+			console.log("date", date);
 			let minutes = "0" + date.getMinutes();
 			let label = date.getHours() + ":" + minutes.substr(-2);
-			console.log("label:", label);
+			console.log("label", label);
 			labels.push(label);
 		}
 	}
