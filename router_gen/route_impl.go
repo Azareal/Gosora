@@ -140,13 +140,13 @@ func UploadAction(fname, path string, args ...string) *uploadAction {
 	return &uploadAction{route}
 }
 
-func (action *uploadAction) MaxSizeVar(varName string) *RouteImpl {
-	action.Route.LitBeforeMultiline(`err = c.HandleUploadRoute(w,req,user,` + varName + `)
+func (a *uploadAction) MaxSizeVar(varName string) *RouteImpl {
+	a.Route.LitBeforeMultiline(`err = c.HandleUploadRoute(w,req,user,` + varName + `)
 			if err != nil {
 				return err
 			}`)
-	action.Route.Before("NoUploadSessionMismatch")
-	return action.Route
+	a.Route.Before("NoUploadSessionMismatch")
+	return a.Route
 }
 
 type RouteSet struct {

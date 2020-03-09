@@ -15,7 +15,7 @@
 				<select id="themeSelectorSelect" name="theme" aria-label="{{lang "footer_theme_selector_aria"}}">{{range .Header.Themes}}{{if not .HideFromThemes}}
 					<option value="{{.Name}}"{{if eq $.Header.Theme.Name .Name}} selected{{end}}>{{.FriendlyName}}</option>
 				{{end}}{{end}}</select>
-				<noscript><input type="submit" /></noscript>
+				<noscript><input type="submit"/></noscript>
 			</div>
 		</form>
 	</div>

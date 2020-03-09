@@ -41,7 +41,7 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError 
 		return c.PreErrorJS("Bad Form", w, r)
 	}
 
-	action := r.FormValue("action")
+	action := r.FormValue("a")
 	if action == "" {
 		action = "get"
 	}
@@ -49,7 +49,7 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError 
 		return c.PreErrorJS("Invalid Action", w, r)
 	}
 
-	switch r.FormValue("module") {
+	switch r.FormValue("m") {
 	// TODO: Split this into it's own function
 	case "dismiss-alert":
 		id, err := strconv.Atoi(r.FormValue("id"))
@@ -104,12 +104,24 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError 
 			return c.InternalErrorJS(err, w, r)
 		}
 
+		if count == 0 {
+			gzw, ok := w.(c.GzipResponseWriter)
+			if ok {
+				w = gzw.ResponseWriter
+				h := w.Header()
+				h.Del("Content-Type")
+				h.Del("Content-Encoding")
+			}
+			_, _ = io.WriteString(w, `{}`)
+			return nil
+		}
+
 		rCreatedAt, _ := strconv.ParseInt(r.FormValue("t"), 10, 64)
 		rCount, _ := strconv.Atoi(r.FormValue("c"))
 		//log.Print("rCreatedAt:", rCreatedAt)
 		//log.Print("rCount:", rCount)
 		var actors []int
-		var alerts []c.Alert
+		var alerts []*c.Alert
 		var createdAt time.Time
 		var topCreatedAt int64
 
@@ -121,7 +133,7 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError 
 			defer rows.Close()
 
 			for rows.Next() {
-				var al c.Alert
+				al := &c.Alert{}
 				err = rows.Scan(&al.ASID, &al.ActorID, &al.TargetUserID, &al.Event, &al.ElementType, &al.ElementID, &createdAt)
 				if err != nil {
 					return c.InternalErrorJS(err, w, r)
@@ -142,7 +154,7 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError 
 			}
 		}
 
-		if count == 0 || len(alerts) == 0 || (rCreatedAt != 0 && rCreatedAt >= topCreatedAt && count == rCount) {
+		if len(alerts) == 0 || (rCreatedAt != 0 && rCreatedAt >= topCreatedAt && count == rCount) {
 			gzw, ok := w.(c.GzipResponseWriter)
 			if ok {
 				w = gzw.ResponseWriter

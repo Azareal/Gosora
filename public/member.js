@@ -102,7 +102,7 @@ var imageExts = ["png", "jpg", "jpe","jpeg","jif","jfi","jfif", "svg", "bmp", "g
 			});
 		} catch(e) {
 			// TODO: Use a notice instead
-			console.log("e:",e);
+			console.log("e",e);
 			alert(e);
 		}
 	}
@@ -125,7 +125,7 @@ var imageExts = ["png", "jpg", "jpe","jpeg","jif","jfi","jfif", "svg", "bmp", "g
 				if(isImage) fileItem.style.backgroundImage = "url("+e.target.result+")";
 
 				fileDock.appendChild(fileItem);
-			},(e,hash, filename) => {
+			},(e,hash,filename) => {
 				console.log("hash",hash);
 				let ext = getExt(filename)
 				let content = document.getElementById("input_content")
@@ -142,7 +142,7 @@ var imageExts = ["png", "jpg", "jpe","jpeg","jif","jfi","jfif", "svg", "bmp", "g
 			});
 		} catch(e) {
 			// TODO: Use a notice instead
-			console.log("e:",e);
+			console.log("e",e);
 			alert(e);
 		}
 	}
@@ -248,8 +248,8 @@ var imageExts = ["png", "jpg", "jpe","jpeg","jif","jfi","jfif", "svg", "bmp", "g
 				}
 			});
 		};
-		$(".mod_floater_submit").click(function(event){
-			event.preventDefault();
+		$(".mod_floater_submit").click(function(ev){
+			ev.preventDefault();
 			let selectNode = this.form.querySelector(".mod_floater_options");
 			let optionNode = selectNode.options[selectNode.selectedIndex];
 			let action = optionNode.getAttribute("value");
@@ -265,12 +265,12 @@ var imageExts = ["png", "jpg", "jpe","jpeg","jif","jfi","jfif", "svg", "bmp", "g
 						let fid = this.getAttribute("data-fid");
 						if (fid == null) return;
 						this.classList.add("pane_selected");
-						console.log("fid:" + fid);
+						console.log("fid", fid);
 						forumToMoveTo = fid;
 	
 						$("#mover_submit").unbind("click");
-						$("#mover_submit").click(function(event){
-							event.preventDefault();
+						$("#mover_submit").click(ev => {
+							ev.preventDefault();
 							bulkActionSender("move",selectedTopics,forumToMoveTo);
 						});
 					});
@@ -284,7 +284,7 @@ var imageExts = ["png", "jpg", "jpe","jpeg","jif","jfi","jfif", "svg", "bmp", "g
 	function addPollInput() {
 		console.log("clicked on pollinputinput");
 		let dataPollInput = $(this).parent().attr("data-pollinput");
-		console.log("dataPollInput:", dataPollInput);
+		console.log("dataPollInput", dataPollInput);
 		if(dataPollInput == undefined) return;
 		if(dataPollInput != (pollInputIndex-1)) return;
 		$(".poll_content_row .formitem").append(Template_topic_c_poll_input({
@@ -292,13 +292,13 @@ var imageExts = ["png", "jpg", "jpe","jpeg","jif","jfi","jfif", "svg", "bmp", "g
 			Place: phraseBox["topic"]["topic.reply_add_poll_option"].replace("%d",pollInputIndex),
 		}));
 		pollInputIndex++;
-		console.log("new pollInputIndex: ", pollInputIndex);
+		console.log("new pollInputIndex", pollInputIndex);
 		$(".pollinputinput").off("click");
 		$(".pollinputinput").click(addPollInput);
 	}
 	
 	var pollInputIndex = 1;
-	$("#add_poll_button").click((ev) => {
+	$("#add_poll_button").click(ev => {
 		ev.preventDefault();
 		$(".poll_content_row").removeClass("auto_hide");
 		$("#has_poll_input").val("1");

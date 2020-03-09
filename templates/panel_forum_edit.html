@@ -5,11 +5,11 @@
 	<form action="/panel/forums/edit/submit/{{.ID}}?s={{.CurrentUser.Session}}" method="post">
 	<div class="formrow">
 		<div class="formitem formlabel"><a>{{lang "panel_forum_name"}}</a></div>
-		<div class="formitem"><input name="forum_name" type="text" value="{{.Name}}" placeholder="{{lang "panel_forum_name_placeholder"}}" /></div>
+		<div class="formitem"><input name="forum_name" type="text" value="{{.Name}}" placeholder="{{lang "panel_forum_name_placeholder"}}"/></div>
 	</div>
 	<div class="formrow">
 		<div class="formitem formlabel"><a>{{lang "panel_forum_description"}}</a></div>
-		<div class="formitem"><input name="forum_desc" type="text" value="{{.Desc}}" placeholder="{{lang "panel_forum_description_placeholder"}}" /></div>
+		<div class="formitem"><input name="forum_desc" type="text" value="{{.Desc}}" placeholder="{{lang "panel_forum_description_placeholder"}}"/></div>
 	</div>
 	<div class="formrow">
 		<div class="formitem formlabel"><a>{{lang "panel_forum_active"}}</a></div>
@@ -47,7 +47,7 @@
 	<div class="formrow">
 		<div class="formitem editable_parent">
 			<a>{{.Group.Name}}</a>
-			<input name="gid" value="{{.Group.ID}}" type="hidden" class="editable_block" data-field="gid" data-type="hidden" data-value="{{.Group.ID}}" />
+			<input name="gid" value="{{.Group.ID}}" type="hidden" class="editable_block" data-field="gid" data-type="hidden" data-value="{{.Group.ID}}"/>
 			<span class="edit_fields hide_on_edit rowsmall">{{lang "panel_forum_edit_button"}}</span>
 			<div class="panel_floater">
 				<span data-field="perm_preset" data-type="list" data-value="{{.Preset}}" class="editable_block perm_preset perm_preset_{{.Preset}}"></span>

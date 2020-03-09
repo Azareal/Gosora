@@ -192,7 +192,7 @@ func buildAlertSb(sb *strings.Builder, msg string, sub []string, path, avatar st
 	sb.WriteRune('}')
 }
 
-func BuildAlertSb(sb *strings.Builder, a Alert, user User /* The current user */) (err error) {
+func BuildAlertSb(sb *strings.Builder, a *Alert, user User /* The current user */) (err error) {
 	var targetUser *User
 	if a.Actor == nil {
 		a.Actor, err = Users.Get(a.ActorID)

@@ -46,7 +46,7 @@ function bindToAlerts() {
 		ev.stopPropagation();
 		ev.preventDefault();
 		$.ajax({
-			url: "/api/?action=set&module=dismiss-alert",
+			url: "/api/?a=set&m=dismiss-alert",
 			type: "POST",
 			dataType: "json",
 			data: { id: $(this).attr("data-asid") },
@@ -137,7 +137,7 @@ function loadAlerts(menuAlerts, eTc = false) {
 	$.ajax({
 		type: 'get',
 		dataType: 'json',
-		url:'/api/?module=alerts' + tc,
+		url:'/api/?m=alerts' + tc,
 		success: (data) => {
 			if("errmsg" in data) {
 				setAlertError(menuAlerts,data.errmsg)
@@ -150,7 +150,7 @@ function loadAlerts(menuAlerts, eTc = false) {
 			if(eTc && lastTc != 0) {
 				for(var i in data.msgs) wsAlertEvent(data.msgs[i]);
 			} else {*/
-				console.log("data:",data.count);
+				console.log("data",data);
 				for(var i in data.msgs) addAlert(data.msgs[i]);
 				alertCount = data.count;
 				updateAlertList(menuAlerts);
@@ -311,7 +311,7 @@ function runWebSockets(resume = false) {
 					moreTopicBlock.classList.remove("more_topic_block_initial");
 					moreTopicBlock.classList.add("more_topic_block_active");
 
-					console.log("phraseBox:",phraseBox);
+					console.log("phraseBox",phraseBox);
 					let msgBox = moreTopicBlock.getElementsByClassName("more_topics")[0];
 					msgBox.innerText = phraseBox["topic_list"]["topic_list.changed_topics"].replace("%d",moreTopicCount);
 				}
@@ -347,7 +347,7 @@ function runWebSockets(resume = false) {
 		console.log("before notify on alert")
 		// We can only get away with this because template_alert has no phrases, otherwise it too would have to be part of the "dance", I miss Go concurrency :(
 		if(!noAlerts) {
-		notifyOnScriptW("template_alert", (e) => {
+		notifyOnScriptW("template_alert", e => {
 			if(e!=undefined) console.log("failed alert? why?", e)
 		}, () => {
 			if(!Template_alert) throw("template function not found");
@@ -424,8 +424,8 @@ function mainInit(){
 		moreTopicCount = 0;
 	})
 
-	$(".add_like,.remove_like").click(function(event) {
-		event.preventDefault();
+	$(".add_like,.remove_like").click(function(ev) {
+		ev.preventDefault();
 		//$(this).unbind("click");
 		let target = this.closest("a").getAttribute("href");
 		console.log("target", target);
@@ -459,7 +459,7 @@ function mainInit(){
 			success: function (data, status, xhr) {
 				if("success" in data && data["success"] == "1") return;
 				// addNotice("Failed to add a like: {err}")
-				//likeCountNode.innerHTML = parseInt(likeCountNode.innerHTML) - 1;
+				//likeCountNode.innerHTML = parseInt(likeCountNode.innerHTML)-1;
 				console.log("data", data);
 				console.log("status", status);
 				console.log("xhr", xhr);
@@ -467,11 +467,11 @@ function mainInit(){
 		});
 	});
 
-	$(".link_label").click(function(event) {
-		event.preventDefault();
+	$(".link_label").click(function(ev) {
+		ev.preventDefault();
 		let linkSelect = $('#'+$(this).attr("data-for"));
 		if(!linkSelect.hasClass("link_opened")) {
-			event.stopPropagation();
+			ev.stopPropagation();
 			linkSelect.addClass("link_opened");
 		}
 	});
@@ -902,10 +902,10 @@ function mainInit(){
 	$(".unix_to_24_hour_time").each(function(){
 		let unixTime = this.innerText;
 		let date = new Date(unixTime*1000);
-		console.log("date: ", date);
+		console.log("date", date);
 		let minutes = "0" + date.getMinutes();
 		let formattedTime = date.getHours() + ":" + minutes.substr(-2);
-		console.log("formattedTime:", formattedTime);
+		console.log("formattedTime", formattedTime);
 		this.innerText = formattedTime;
 	});
 
@@ -913,10 +913,10 @@ function mainInit(){
 		// TODO: Localise this
 		let monthList = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 		let date = new Date(this.innerText * 1000);
-		console.log("date: ", date);
+		console.log("date", date);
 		let day = "0" + date.getDate();
 		let formattedTime = monthList[date.getMonth()] + " " + day.substr(-2) + " " + date.getFullYear();
-		console.log("formattedTime:", formattedTime);
+		console.log("formattedTime", formattedTime);
 		this.innerText = formattedTime;
 	});
 
@@ -939,7 +939,7 @@ function mainInit(){
 		$("#poll_results_" + pollID).removeClass("auto_hide");
 		fetch("/poll/results/" + pollID, {
 			credentials: 'same-origin'
-		}).then((response) => response.text()).catch((error) => console.error("Error:",error)).then((rawData) => {
+		}).then(resp => resp.text()).catch(err => console.error("err:",err)).then((rawData) => {
 			// TODO: Make sure the received data is actually a list of integers
 			let data = JSON.parse(rawData);
 			let allZero = true;

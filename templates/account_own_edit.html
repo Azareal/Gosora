@@ -5,13 +5,13 @@
 			<span id="dash_username">
 				<form id="dash_username_form" action="/user/edit/username/submit/?s={{.CurrentUser.Session}}" method="post"></form>
 				<form id="revoke_avatar_form" action="/user/edit/avatar/revoke/submit/?s={{.CurrentUser.Session}}" method="post"></form>
-				<input form="dash_username_form" name="account-new-username" value="{{.CurrentUser.Name}}" />
+				<input form="dash_username_form" name="account-new-username" value="{{.CurrentUser.Name}}"/>
 				<button form="dash_username_form" class="formbutton">{{lang "account_username_save"}}</button>
 			</span>
 			<img src="{{.CurrentUser.Avatar}}" height="128px" />
 			<span id="dash_avatar_buttons">
 				{{if .CurrentUser.Perms.UploadAvatars}}
-				<input form="avatar_form" id="select_avatar" name="account-avatar" type="file" required class="auto_hide" />
+				<input form="avatar_form" id="select_avatar" name="account-avatar" type="file" required class="auto_hide"/>
 				<label for="select_avatar" class="formbutton">{{lang "account_avatar_select"}}</label>
 				<button form="avatar_form" name="account-button" class="formbutton">{{lang "account_avatar_update_button"}}</button>
 				{{else if .CurrentUser.RawAvatar}}<button form="revoke_avatar_form" id="revoke_avatars" name="revoke-button" class="formbutton">{{lang "account_avatar_revoke_button"}}</button>{{end}}
