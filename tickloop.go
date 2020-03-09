@@ -189,7 +189,7 @@ func dailies() {
 
 	if c.Config.DisablePostIP {
 		f := func(tbl string) {
-			_, err := qgen.NewAcc().Update(tbl).Set("ip='0'").Where("ip!='0'").Exec()
+			_, err := qgen.NewAcc().Update(tbl).Set("ip=''").Where("ip!=''").Exec()
 			if err != nil {
 				c.LogError(err)
 			}
@@ -200,7 +200,7 @@ func dailies() {
 	} else if c.Config.PostIPCutoff > -1 {
 		// TODO: Use unixtime to remove this MySQLesque logic?
 		f := func(tbl string) {
-			_, err := qgen.NewAcc().Update(tbl).Set("ip='0'").DateOlderThan("createdAt", c.Config.PostIPCutoff, "day").Where("ip!='0'").Exec()
+			_, err := qgen.NewAcc().Update(tbl).Set("ip=''").DateOlderThan("createdAt", c.Config.PostIPCutoff, "day").Where("ip!=''").Exec()
 			if err != nil {
 				c.LogError(err)
 			}
@@ -211,13 +211,13 @@ func dailies() {
 	}
 
 	if c.Config.DisablePollIP {
-		_, err := qgen.NewAcc().Update("polls_votes").Set("ip='0'").Where("ip!='0'").Exec()
+		_, err := qgen.NewAcc().Update("polls_votes").Set("ip=''").Where("ip!=''").Exec()
 		if err != nil {
 			c.LogError(err)
 		}
 	} else if c.Config.PollIPCutoff > -1 {
 		// TODO: Use unixtime to remove this MySQLesque logic?
-		_, err := qgen.NewAcc().Update("polls_votes").Set("ip='0'").DateOlderThan("castAt", c.Config.PollIPCutoff, "day").Where("ip!='0'").Exec()
+		_, err := qgen.NewAcc().Update("polls_votes").Set("ip=''").DateOlderThan("castAt", c.Config.PollIPCutoff, "day").Where("ip!=''").Exec()
 		if err != nil {
 			c.LogError(err)
 		}
@@ -227,7 +227,7 @@ func dailies() {
 
 	// TODO: lastActiveAt isn't currently set, so we can't rely on this to purge last_ips of users who haven't been on in a while
 	if c.Config.DisableLastIP {
-		_, err := qgen.NewAcc().Update("users").Set("last_ip=0").Where("last_ip!=0").Exec()
+		_, err := qgen.NewAcc().Update("users").Set("last_ip=''").Where("last_ip!=''").Exec()
 		if err != nil {
 			c.LogError(err)
 		}
@@ -237,7 +237,7 @@ func dailies() {
 			c.LogError(err)
 		}*/
 		mon := time.Now().Month()
-		_, err := qgen.NewAcc().Update("users").Set("last_ip=0").Where("last_ip!='0' AND last_ip NOT LIKE '" + strconv.Itoa(int(mon)) + "-%'").Exec()
+		_, err := qgen.NewAcc().Update("users").Set("last_ip=''").Where("last_ip!='' AND last_ip NOT LIKE '" + strconv.Itoa(int(mon)) + "-%'").Exec()
 		if err != nil {
 			c.LogError(err)
 		}

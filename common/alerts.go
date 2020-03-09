@@ -271,8 +271,7 @@ func BuildAlertSb(sb *strings.Builder, a *Alert, user User /* The current user *
 		return errors.New(phrases.GetErrorPhrase("alerts_invalid_elementtype"))
 	}
 
-	sb.WriteString(`{"msg":"`)
-	sb.WriteRune('.')
+	sb.WriteString(`{"msg":".`)
 	sb.WriteString(a.ElementType)
 	if own {
 		sb.WriteString("_own_")
@@ -298,6 +297,8 @@ func BuildAlertSb(sb *strings.Builder, a *Alert, user User /* The current user *
 
 	return nil
 }
+
+//var AlertsGrowHint3 = len(`{"msg":"._","sub":["",""],"path":"","avatar":"","id":}`) + 3 + 2 + 2 + 2 + 2 + 1
 
 func AddActivityAndNotifyAll(a Alert) error {
 	id, err := Activity.Add(a)

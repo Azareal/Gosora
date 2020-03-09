@@ -219,7 +219,7 @@ func init() {
 			getRids:             acc.Select("replies").Columns("rid").Where("tid=?").Orderby("rid ASC").Limit("?,?").Prepare(),
 			getReplies:          acc.SimpleLeftJoin("replies AS r", "users AS u", "r.rid, r.content, r.createdBy, r.createdAt, r.lastEdit, r.lastEditBy, u.avatar, u.name, u.group, u.level, r.ip, r.likeCount, r.attachCount, r.actionType", "r.createdBy = u.uid", "r.tid = ?", "r.rid ASC", "?,?"),
 			addReplies:          acc.Update(t).Set("postCount=postCount+?, lastReplyBy=?, lastReplyAt=UTC_TIMESTAMP()").Where("tid=?").Prepare(),
-			updateLastReply:     acc.Update(t).Set("lastReplyID=?").Where("lastReplyID > ? AND tid = ?").Prepare(),
+			updateLastReply:     acc.Update(t).Set("lastReplyID=?").Where("lastReplyID > ? AND tid=?").Prepare(),
 			lock:                acc.Update(t).Set("is_closed=1").Where("tid=?").Prepare(),
 			unlock:              acc.Update(t).Set("is_closed=0").Where("tid=?").Prepare(),
 			moveTo:              acc.Update(t).Set("parentID=?").Where("tid=?").Prepare(),
@@ -670,12 +670,12 @@ func (t *TopicUser) Replies(offset, pFrag int, user *User) (rlist []*ReplyUser, 
 		}
 
 		// TODO: This doesn't work properly so pick the first one instead?
-		if r.ID == pFrag {
+		/*if r.ID == pFrag {
 			ogdesc = r.Content
 			if len(ogdesc) > 200 {
 				ogdesc = ogdesc[:197] + "..."
 			}
-		}
+		}*/
 
 		if r.LikeCount > 0 && user.Liked > 0 {
 			likedMap[r.ID] = len(rlist)
@@ -722,8 +722,7 @@ func (t *TopicUser) Replies(offset, pFrag int, user *User) (rlist []*ReplyUser, 
 				return nil, "", err
 			}
 		}
-		err = rows.Err()
-		if err != nil {
+		if err = rows.Err(); err != nil {
 			return nil, "", err
 		}
 	}

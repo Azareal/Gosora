@@ -69,16 +69,16 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user c.User, header *c.He
 	header.Title = topic.Title
 	header.Path = c.BuildTopicURL(c.NameToSlug(topic.Title), topic.ID)
 
+	postGroup, err := c.Groups.Get(topic.Group)
+	if err != nil {
+		return c.InternalError(err, w, r)
+	}
+
 	topic.ContentLines = strings.Count(topic.Content, "\n")
 	if len(topic.Content) > 200 {
 		header.OGDesc = topic.Content[:197] + "..."
 	} else {
 		header.OGDesc = topic.Content
-	}
-
-	postGroup, err := c.Groups.Get(topic.Group)
-	if err != nil {
-		return c.InternalError(err, w, r)
 	}
 
 	var parseSettings *c.ParseSettings
