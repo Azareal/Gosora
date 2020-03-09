@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 	"testing"
@@ -363,10 +364,32 @@ func TestParser(t *testing.T) {
 		}
 		c.WriteURL(sb, c.BuildTopicURL("", tid), "#longidnameneedtooverflowhack-"+strconv.Itoa(tid))
 	})
-	res = c.ParseMessage("#longidnameneedtooverflowhack-1", 1, "forums", nil,nil)
+	res = c.ParseMessage("#longidnameneedtooverflowhack-1", 1, "forums", nil, nil)
 	expect = "<a href='/topic/1'>#longidnameneedtooverflowhack-1</a>"
 	if res != expect {
 		t.Error("Bad output:", "'"+res+"'")
 		t.Error("Expected:", "'"+expect+"'")
 	}
+}
+
+func TestPaginate(t *testing.T) {
+	var plist []int
+	f := func(i, want int) {
+		expect(t, plist[i] == want, fmt.Sprintf("plist[%d] should be %d not %d", i, want, plist[i]))
+	}
+
+	plist = c.Paginate(1, 1, 5)
+	expect(t, len(plist) == 1, fmt.Sprintf("len of plist should be 1 not %d", len(plist)))
+	f(0, 1)
+
+	plist = c.Paginate(1, 5, 5)
+	expect(t, len(plist) == 5, fmt.Sprintf("len of plist should be 5 not %d", len(plist)))
+	f(0, 1)
+	f(1, 2)
+	f(2, 3)
+	f(3, 4)
+	f(4, 5)
+
+	// TODO: More Paginate() tests
+	// TODO: Tests for other paginator functions
 }
