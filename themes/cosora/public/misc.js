@@ -1,6 +1,12 @@
 "use strict";
 
 (() => {
+	function newElement(etype, eclass) {
+		let element = document.createElement(etype);
+		element.className = eclass;
+		return element;
+	}
+	
 	function moveAlerts() {
 		// Move the alerts under the first header
 		let colSel = $(".colstack_right .colstack_head:first");
@@ -15,7 +21,7 @@
 	//console.log("bf")
 	addInitHook("end_init", () => {
 		//console.log("af")
-		let loggedIn = document.head.querySelector("[property='x-loggedin']").content == "true";
+		let loggedIn = document.head.querySelector("[property='x-loggedin']").content=="true";
 		if(loggedIn) {
 			if(navigator.userAgent.indexOf("Firefox") != -1) $.trumbowyg.svgPath = "/s/trumbowyg/ui/icons.svg";
 			
@@ -29,7 +35,7 @@
 				$('#input_content').trumbowyg('html', currentContent);
 			}
 			
-			$(".topic_name_row").click(function(){
+			$(".topic_name_row").click(() => {
 				$(".topic_create_form").addClass("selectedInput");
 			});
 
@@ -99,11 +105,11 @@
 
 			// Fill in the placeholder grid nodes
 			let rowCount = 4;
-			console.log("rowCount: ",rowCount);
-			console.log("gridElementCount: ",gridElementCount);
+			console.log("rowCount",rowCount);
+			console.log("gridElementCount",gridElementCount);
 			if(gridElementCount%rowCount != 0) {
 				let fillerNodes = (rowCount - (gridElementCount%rowCount));
-				console.log("fillerNodes: ",fillerNodes);
+				console.log("fillerNodes",fillerNodes);
 				for(let i = 0; i < fillerNodes;i++ ) {
 					console.log("added a gridFiller");
 					buttonGrid.appendChild(newElement("div","gridFiller"));
@@ -118,10 +124,4 @@
 	});
 
 	addInitHook("after_notice", moveAlerts);
-})();
-
-function newElement(etype, eclass) {
-	let element = document.createElement(etype);
-	element.className = eclass;
-	return element;
-}
+})()

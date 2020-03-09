@@ -6,4 +6,4 @@ addInitHook("end_init", () => {
 		$("#dash_username button").show();
 	});
 });
-})();
+})()

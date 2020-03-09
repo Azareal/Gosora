@@ -78,7 +78,7 @@ var imageExts = ["png", "jpg", "jpe","jpeg","jif","jfi","jfif", "svg", "bmp", "g
 				let req = new XMLHttpRequest();
 				req.addEventListener("load", () => {
 					let data = JSON.parse(req.responseText);
-					//console.log("rdata:",data);
+					//console.log("rdata",data);
 					let fileItem = document.createElement("div");
 					let ext = getExt(filename);
 					// TODO: Push ImageFileExts to the client from the server in some sort of gen.js?
@@ -217,8 +217,8 @@ var imageExts = ["png", "jpg", "jpe","jpeg","jif","jfi","jfif", "svg", "bmp", "g
 		bindAttachManager();
 	});
 		
-	$(".moderate_link").click((event) => {
-		event.preventDefault();
+	$(".moderate_link").click(ev => {
+		ev.preventDefault();
 		$(".pre_opt").removeClass("auto_hide");
 		$(".moderate_link").addClass("moderate_open");
 		$(".topic_row").each(function(){

@@ -1,26 +1,12 @@
 'use strict';
-
 var me={};
 var phraseBox={};
 if(tmplInits===undefined) var tmplInits={};
 var tmplPhrases=[]; // [key] array of phrases indexed by order of use
-var hooks={ // Shorten this list by binding the hooks just in time?
-	"pre_iffe":[],
-	"pre_init":[],
-	"start_init":[],
-	"almost_end_init":[],
-	"end_init":[],
-	"after_phrases":[],
-	"after_add_alert":[],
-	"after_update_alert_list":[],
-	"open_edit":[],
-	"close_edit":[],
-	"edit_item_pre_bind":[],
-	"analytics_loaded":[],
-};
+var hooks={};
 var ranInitHooks={}
 
-function runHook(name, ...args) {
+function runHook(name,...args) {
 	if(!(name in hooks)) {
 		console.log("Couldn't find hook '" + name + "'");
 		return;
@@ -33,19 +19,19 @@ function runHook(name, ...args) {
 	return ret;
 }
 
-function addHook(name, h) {
-	if(hooks[name]===undefined) hooks[name] = [];
+function addHook(name,h) {
+	if(hooks[name]===undefined) hooks[name]=[];
 	hooks[name].push(h);
 }
 
 // InitHooks are slightly special, as if they are run, then any adds after the initial run will run immediately, this is to deal with the async nature of script loads
-function runInitHook(name, ...args) {
+function runInitHook(name,...args) {
 	let ret = runHook(name,...args);
 	ranInitHooks[name] = true;
 	return ret;
 }
 
-function addInitHook(name, h) {
+function addInitHook(name,h) {
 	addHook(name, h);
 	if(name in ranInitHooks) h();
 }
@@ -78,26 +64,26 @@ function asyncGetScript(src) {
 		script.src = src;
 
 		const prior = document.getElementsByTagName('script')[0];
-		prior.parentNode.insertBefore(script, prior);
+		prior.parentNode.insertBefore(script,prior);
 	});
 }
 
 function notifyOnScript(src) {
 	src = "/s/"+src;
-	return new Promise((resolve, reject) => {
+	return new Promise((resolve,reject) => {
 		let ss = src.replace("/s/","");
 		try {
 			let ssp = ss.charAt(0).toUpperCase() + ss.slice(1)
-			console.log("ssp:",ssp)
+			console.log("ssp",ssp)
 			if(window[ssp]) {
 				resolve();
 				return;
 			}
 		} catch(e) {}
 		
-		console.log("src:",src)
+		console.log("src",src)
 		let script = document.querySelectorAll('[src^="'+src+'"]')[0];
-		console.log("script:",script);
+		console.log("script",script);
 		if(script===undefined) {
 			reject("no script found");
 			return;
@@ -108,7 +94,6 @@ function notifyOnScript(src) {
 			script.onreadystatechange = null;
 			resolve();
 		}
-
 		script.onerror = (e) => {
 			reject(e);
 		};
@@ -123,9 +108,9 @@ function notifyOnScriptW(name,complete,success) {
 			console.log("Loaded " +name+".js");
 			complete();
 			if(success!==undefined) success();
-		}).catch((e) => {
+		}).catch(e => {
 			console.log("Unable to get script name '"+name+"'");
-			console.log("e: ", e);
+			console.log("e", e);
 			console.trace();
 			complete(e);
 		});
@@ -147,29 +132,26 @@ function loadScript(name,callback,fail) {
 			if(fname!=name) {
 				asyncGetScript(iurl)
 					.then(callback)
-					.catch((e) => {
+					.catch(e => {
 						console.log("Unable to get script '"+iurl+"'");
-						console.log("e:", e);
+						console.log("e", e);
 						console.trace();
 					});
 			}
-			console.log("e:", e);
+			console.log("e", e);
 			console.trace();
 			fail(e);
 		});
 }
 
-/*
-function loadTmpl(name,callback) {
+/*function loadTmpl(name,callback) {
 	let url = "/s/"+name
 	let worker = new Worker(url);
-}
-*/
+}*/
 
 function DoNothingButPassBack(it) {
 	return it;
 }
-
 function RelativeTime(date) {
 	return date;
 }
@@ -186,27 +168,27 @@ function initPhrases(loggedIn, panel = false) {
 
 function fetchPhrases(plist) {
 	fetch("/api/phrases/?q="+plist, {cache: "no-cache"})
-		.then((resp) => resp.json())
-		.then((data) => {
+		.then(resp => resp.json())
+		.then(data => {
 			console.log("loaded phrase endpoint data");
-			console.log("data:",data);
-			Object.keys(tmplInits).forEach((key) => {
+			console.log("data",data);
+			Object.keys(tmplInits).forEach(key => {
 				let phrases = [];
 				let tmplInit = tmplInits[key];
 				for(let phraseName of tmplInit) phrases.push(data[phraseName]);
 				console.log("Adding phrases");
-				console.log("key:",key);
-				console.log("phrases:",phrases);
+				console.log("key",key);
+				console.log("phrases",phrases);
 				tmplPhrases[key] = phrases;
 			});
 
 			let prefixes = {};
-			Object.keys(data).forEach((key) => {
+			Object.keys(data).forEach(key => {
 				let prefix = key.split(".")[0];
 				if(prefixes[prefix]===undefined) prefixes[prefix] = {};
 				prefixes[prefix][key] = data[key];
 			});
-			Object.keys(prefixes).forEach((prefix) => {
+			Object.keys(prefixes).forEach(prefix => {
 				console.log("adding phrase prefix '"+prefix+"' to box");
 				phraseBox[prefix] = prefixes[prefix];
 			});
@@ -217,7 +199,7 @@ function fetchPhrases(plist) {
 
 (() => {
 	runInitHook("pre_iife");
-	let loggedIn = document.head.querySelector("[property='x-loggedin']").content == "true";
+	let loggedIn = document.head.querySelector("[property='x-loggedin']").content=="true";
 	let panel = window.location.pathname.startsWith("/panel/");
 
 	let toLoad = 1;
@@ -246,7 +228,7 @@ function fetchPhrases(plist) {
 		.then(resp => resp.json())
 		.then(data => {
 			console.log("loaded me endpoint data");
-			console.log("data:",data);
+			console.log("data",data);
 			me = data;
 			runInitHook("pre_init");
 		});

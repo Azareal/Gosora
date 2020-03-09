@@ -9,7 +9,7 @@
 		<div id="poweredBy">
 			<a id="poweredByName" href="https://github.com/Azareal/Gosora">{{lang "footer_powered_by"}}</a><span id="poweredByDash"> - </span><span id="poweredByMaker">{{lang "footer_made_with_love"}}</span>
 		</div>
-		{{if .CurrentUser.IsAdmin}}<div title="start to before tmpl" class="elapsed">{{.Header.Elapsed1}}</div><div title="start to footer" class="elapsed">{{elapsed .Header.StartedAt}}</div>{{end}}
+		{{if .CurrentUser.IsAdmin}}<div title="start to before tmpl"class="elapsed">{{.Header.Elapsed1}}</div><div title="start to footer"class="elapsed">{{elapsed .Header.StartedAt}}</div>{{end}}
 		<form action="/theme/" method="post">
 			<div id="themeSelector">
 				<select id="themeSelectorSelect" name="theme" aria-label="{{lang "footer_theme_selector_aria"}}">{{range .Header.Themes}}{{if not .HideFromThemes}}
