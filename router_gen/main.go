@@ -299,6 +299,7 @@ func main() {
 		"Googlebot",
 		"yandex",
 		"DuckDuckBot",
+		"DuckDuckGo",
 		"Baiduspider",
 		"Sogou",
 		"ToutiaoSpider",
@@ -347,6 +348,7 @@ func main() {
 		"Googlebot":           "googlebot",
 		"yandex":              "yandex", // from the URL
 		"DuckDuckBot":         "duckduckgo",
+		"DuckDuckGo":"duckduckgo",
 		"Baiduspider":         "baidu",
 		"Sogou":               "sogou",
 		"ToutiaoSpider":       "toutiao",
