@@ -28,6 +28,7 @@ var ErrNoDeleteReports = errors.New("You cannot delete the Reports forum")
 // ForumStore is an interface for accessing the forums and the metadata stored on them
 type ForumStore interface {
 	LoadForums() error
+	Each(h func(*Forum) error) error
 	DirtyGet(id int) *Forum
 	Get(id int) (*Forum, error)
 	BypassGet(id int) (*Forum, error)
@@ -35,10 +36,10 @@ type ForumStore interface {
 	Reload(id int) error // ? - Should we move this to ForumCache? It might require us to do some unnecessary casting though
 	//Update(Forum) error
 	Delete(id int) error
-	AddTopic(tid int, uid int, fid int) error
+	AddTopic(tid, uid, fid int) error
 	RemoveTopic(fid int) error
 	RemoveTopics(fid, count int) error
-	UpdateLastTopic(tid int, uid int, fid int) error
+	UpdateLastTopic(tid, uid, fid int) error
 	Exists(id int) bool
 	GetAll() ([]*Forum, error)
 	GetAllIDs() ([]int, error)
@@ -46,7 +47,7 @@ type ForumStore interface {
 	GetAllVisibleIDs() ([]int, error)
 	//GetChildren(parentID int, parentType string) ([]*Forum,error)
 	//GetFirstChild(parentID int, parentType string) (*Forum,error)
-	Create(name string, desc string, active bool, preset string) (int, error)
+	Create(name, desc string, active bool, preset string) (int, error)
 	UpdateOrder(updateMap map[int]int) error
 
 	Count() int
@@ -82,16 +83,16 @@ func NewMemoryForumStore() (*MemoryForumStore, error) {
 	f := "forums"
 	// TODO: Do a proper delete
 	return &MemoryForumStore{
-		get:          acc.Select(f).Columns("name, desc, tmpl, active, order, preset, parentID, parentType, topicCount, lastTopicID, lastReplyerID").Where("fid = ?").Prepare(),
+		get:          acc.Select(f).Columns("name, desc, tmpl, active, order, preset, parentID, parentType, topicCount, lastTopicID, lastReplyerID").Where("fid=?").Prepare(),
 		getAll:       acc.Select(f).Columns("fid, name, desc, tmpl, active, order, preset, parentID, parentType, topicCount, lastTopicID, lastReplyerID").Orderby("order ASC, fid ASC").Prepare(),
-		delete:       acc.Update(f).Set("name='',active=0").Where("fid = ?").Prepare(),
+		delete:       acc.Update(f).Set("name='',active=0").Where("fid=?").Prepare(),
 		create:       acc.Insert(f).Columns("name, desc, tmpl, active, preset").Fields("?,?,'',?,?").Prepare(),
 		count:        acc.Count(f).Where("name != ''").Prepare(),
-		updateCache:  acc.Update(f).Set("lastTopicID = ?, lastReplyerID = ?").Where("fid = ?").Prepare(),
-		addTopics:    acc.Update(f).Set("topicCount=topicCount+?").Where("fid = ?").Prepare(),
-		removeTopics: acc.Update(f).Set("topicCount=topicCount-?").Where("fid = ?").Prepare(),
-		lastTopic:    acc.Select("topics").Columns("tid").Where("parentID = ?").Orderby("lastReplyAt DESC, createdAt DESC").Limit("1").Prepare(),
-		updateOrder:  acc.Update(f).Set("order = ?").Where("fid = ?").Prepare(),
+		updateCache:  acc.Update(f).Set("lastTopicID=?, lastReplyerID=?").Where("fid=?").Prepare(),
+		addTopics:    acc.Update(f).Set("topicCount=topicCount+?").Where("fid=?").Prepare(),
+		removeTopics: acc.Update(f).Set("topicCount=topicCount-?").Where("fid=?").Prepare(),
+		lastTopic:    acc.Select("topics").Columns("tid").Where("parentID=?").Orderby("lastReplyAt DESC, createdAt DESC").Limit("1").Prepare(),
+		updateOrder:  acc.Update(f).Set("order=?").Where("fid=?").Prepare(),
 	}, acc.FirstError()
 }
 
@@ -99,10 +100,10 @@ func NewMemoryForumStore() (*MemoryForumStore, error) {
 // TODO: Add support for subforums
 func (s *MemoryForumStore) LoadForums() error {
 	var forumView []*Forum
-	addForum := func(forum *Forum) {
-		s.forums.Store(forum.ID, forum)
-		if forum.Active && forum.Name != "" && forum.ParentType == "" {
-			forumView = append(forumView, forum)
+	addForum := func(f *Forum) {
+		s.forums.Store(f.ID, f)
+		if f.Active && f.Name != "" && f.ParentType == "" {
+			forumView = append(forumView, f)
 		}
 	}
 
@@ -140,17 +141,28 @@ func (s *MemoryForumStore) LoadForums() error {
 // ? - Will this be hit a lot by plugin_guilds?
 func (s *MemoryForumStore) rebuildView() {
 	var forumView []*Forum
-	s.forums.Range(func(_ interface{}, value interface{}) bool {
-		forum := value.(*Forum)
+	s.forums.Range(func(_, val interface{}) bool {
+		f := val.(*Forum)
 		// ? - ParentType blank means that it doesn't have a parent
-		if forum.Active && forum.Name != "" && forum.ParentType == "" {
-			forumView = append(forumView, forum)
+		if f.Active && f.Name != "" && f.ParentType == "" {
+			forumView = append(forumView, f)
 		}
 		return true
 	})
 	sort.Sort(SortForum(forumView))
 	s.forumView.Store(forumView)
 	TopicListThaw.Thaw()
+}
+
+func (s *MemoryForumStore) Each(h func(*Forum) error) (err error) {
+	s.forums.Range(func(_, val interface{}) bool {
+		err = h(val.(*Forum))
+		if err != nil {
+			return false
+		}
+		return true
+	})
+	return err
 }
 
 func (s *MemoryForumStore) DirtyGet(id int) *Forum {
@@ -208,11 +220,11 @@ func (s *MemoryForumStore) BypassGet(id int) (*Forum, error) {
 func (s *MemoryForumStore) BulkGetCopy(ids []int) (forums []Forum, err error) {
 	forums = make([]Forum, len(ids))
 	for i, id := range ids {
-		forum, err := s.Get(id)
+		f, err := s.Get(id)
 		if err != nil {
 			return nil, err
 		}
-		forums[i] = forum.Copy()
+		forums[i] = f.Copy()
 	}
 	return forums, nil
 }
@@ -226,16 +238,16 @@ func (s *MemoryForumStore) Reload(id int) error {
 	return nil
 }
 
-func (s *MemoryForumStore) CacheSet(forum *Forum) error {
-	s.forums.Store(forum.ID, forum)
+func (s *MemoryForumStore) CacheSet(f *Forum) error {
+	s.forums.Store(f.ID, f)
 	s.rebuildView()
 	return nil
 }
 
 // ! Has a randomised order
 func (s *MemoryForumStore) GetAll() (forumView []*Forum, err error) {
-	s.forums.Range(func(_ interface{}, value interface{}) bool {
-		forumView = append(forumView, value.(*Forum))
+	s.forums.Range(func(_, val interface{}) bool {
+		forumView = append(forumView, val.(*Forum))
 		return true
 	})
 	sort.Sort(SortForum(forumView))
@@ -244,8 +256,8 @@ func (s *MemoryForumStore) GetAll() (forumView []*Forum, err error) {
 
 // ? - Can we optimise the sorting?
 func (s *MemoryForumStore) GetAllIDs() (ids []int, err error) {
-	s.forums.Range(func(_ interface{}, value interface{}) bool {
-		ids = append(ids, value.(*Forum).ID)
+	s.forums.Range(func(_, val interface{}) bool {
+		ids = append(ids, val.(*Forum).ID)
 		return true
 	})
 	sort.Ints(ids)
@@ -299,7 +311,7 @@ func (s *MemoryForumStore) Delete(id int) error {
 	return err
 }
 
-func (s *MemoryForumStore) AddTopic(tid int, uid int, fid int) error {
+func (s *MemoryForumStore) AddTopic(tid, uid, fid int) error {
 	_, err := s.updateCache.Exec(tid, uid, fid)
 	if err != nil {
 		return err
@@ -351,7 +363,7 @@ func (s *MemoryForumStore) RemoveTopic(fid int) error {
 	}
 	return s.RefreshTopic(fid)
 }
-func (s *MemoryForumStore) RemoveTopics(fid int, count int) error {
+func (s *MemoryForumStore) RemoveTopics(fid, count int) error {
 	_, err := s.removeTopics.Exec(count, fid)
 	if err != nil {
 		return err
@@ -361,7 +373,7 @@ func (s *MemoryForumStore) RemoveTopics(fid int, count int) error {
 
 // DEPRECATED. forum.Update() will be the way to do this in the future, once it's completed
 // TODO: Have a pointer to the last topic rather than storing it on the forum itself
-func (s *MemoryForumStore) UpdateLastTopic(tid int, uid int, fid int) error {
+func (s *MemoryForumStore) UpdateLastTopic(tid, uid, fid int) error {
 	_, err := s.updateCache.Exec(tid, uid, fid)
 	if err != nil {
 		return err
@@ -370,7 +382,7 @@ func (s *MemoryForumStore) UpdateLastTopic(tid int, uid int, fid int) error {
 	return s.Reload(fid)
 }
 
-func (s *MemoryForumStore) Create(name string, desc string, active bool, preset string) (int, error) {
+func (s *MemoryForumStore) Create(name, desc string, active bool, preset string) (int, error) {
 	if name == "" {
 		return 0, ErrBlankName
 	}
@@ -410,12 +422,12 @@ func (s *MemoryForumStore) UpdateOrder(updateMap map[int]int) error {
 
 // ! Might be slightly inaccurate, if the sync.Map is constantly shifting and churning, but it'll stabilise eventually. Also, slow. Don't use this on every request x.x
 // Length returns the number of forums in the memory cache
-func (s *MemoryForumStore) Length() (length int) {
-	s.forums.Range(func(_ interface{}, value interface{}) bool {
-		length++
+func (s *MemoryForumStore) Length() (len int) {
+	s.forums.Range(func(_, _ interface{}) bool {
+		len++
 		return true
 	})
-	return length
+	return len
 }
 
 // TODO: Get the total count of forums in the forum store rather than doing a heavy query for this?

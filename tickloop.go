@@ -267,6 +267,12 @@ func sched() error {
 		}
 		log.Printf("Deleted %d orphaned replies.", count)
 
+		count, err = c.Recalc.Forums()
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		log.Printf("Recalculated %d forum topic counts.", count)
+
 		count, err = c.Recalc.Subscriptions()
 		if err != nil {
 			return errors.WithStack(err)

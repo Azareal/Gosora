@@ -12,6 +12,7 @@ var Recalc RecalcInt
 
 type RecalcInt interface {
 	Replies() (count int, err error)
+	Forums() (count int, err error)
 	Subscriptions() (count int, err error)
 	ActivityStream() (count int, err error)
 	Users() error
@@ -22,6 +23,8 @@ type DefaultRecalc struct {
 	getActivitySubscriptions *sql.Stmt
 	getActivityStream        *sql.Stmt
 	getAttachments           *sql.Stmt
+	getTopicCount            *sql.Stmt
+	resetTopicCount          *sql.Stmt
 }
 
 func NewDefaultRecalc(acc *qgen.Accumulator) (*DefaultRecalc, error) {
@@ -29,6 +32,10 @@ func NewDefaultRecalc(acc *qgen.Accumulator) (*DefaultRecalc, error) {
 		getActivitySubscriptions: acc.Select("activity_subscriptions").Columns("targetID,targetType").Prepare(),
 		getActivityStream:        acc.Select("activity_stream").Columns("asid,event,elementID,elementType,extra").Prepare(),
 		getAttachments:           acc.Select("attachments").Columns("attachID,originID,originTable").Prepare(),
+		getTopicCount:            acc.Count("topics").Where("parentID=?").Prepare(),
+		//resetTopicCount:          acc.SimpleUpdateSelect("forums", "topicCount = tc", "topics", "count(*) as tc", "parentID=?", "", ""),
+		// TODO: Avoid using RawPrepare
+		resetTopicCount: acc.RawPrepare("UPDATE forums, (SELECT COUNT(*) as tc FROM topics WHERE parentID=?) AS src SET forums.topicCount=src.tc WHERE forums.fid=?"),
 	}, acc.FirstError()
 }
 
@@ -45,6 +52,18 @@ func (s *DefaultRecalc) Replies() (count int, err error) {
 			}
 			count++
 		}
+		return nil
+	})
+	return count, err
+}
+
+func (s *DefaultRecalc) Forums() (count int, err error) {
+	err = Forums.Each(func(f *Forum) error {
+		_, err := s.resetTopicCount.Exec(f.ID, f.ID)
+		if err != nil {
+			return err
+		}
+		count++
 		return nil
 	})
 	return count, err

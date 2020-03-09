@@ -44,6 +44,11 @@ type DefaultTopicList struct {
 	forums    map[int]*ForumTopicListHolder
 	forumLock sync.RWMutex
 
+	qcounts  map[int]*sql.Stmt
+	qcounts2 map[int]*sql.Stmt
+	qLock    sync.RWMutex
+	qLock2   sync.RWMutex
+
 	//permTree atomic.Value // [string(canSee)]canSee
 	//permTree map[string][]int // [string(canSee)]canSee
 
@@ -59,6 +64,8 @@ func NewDefaultTopicList(acc *qgen.Accumulator) (*DefaultTopicList, error) {
 		oddGroups:        make(map[int]*TopicListHolder),
 		evenGroups:       make(map[int]*TopicListHolder),
 		forums:           make(map[int]*ForumTopicListHolder),
+		qcounts:          make(map[int]*sql.Stmt),
+		qcounts2:         make(map[int]*sql.Stmt),
 		getTopicsByForum: acc.Select("topics").Columns("tid, title, content, createdBy, is_closed, sticky, createdAt, lastReplyAt, lastReplyBy, lastReplyID, views, postCount, likeCount").Where("parentID=?").Orderby("sticky DESC,lastReplyAt DESC,createdBy DESC").Limit("?,?").Prepare(),
 		//getTidsByForum: acc.Select("topics").Columns("tid").Where("parentID=?").Orderby("sticky DESC,lastReplyAt DESC,createdBy DESC").Limit("?,?").Prepare(),
 	}
@@ -119,12 +126,16 @@ func (tList *DefaultTopicList) Tick() error {
 	}
 
 	canSeeHolders := make(map[string]*TopicListHolder)
+	forumCounts := make(map[int]int)
 	for name, canSee := range permTree {
 		topicList, forumList, pagi, err := tList.GetListByCanSee(canSee, 1, 0, nil)
 		if err != nil {
 			return err
 		}
 		canSeeHolders[name] = &TopicListHolder{topicList, forumList, pagi}
+		if len(canSee) > 1 {
+			forumCounts[len(canSee)] += 1
+		}
 	}
 	for gid, canSee := range gidToCanSee {
 		addList(gid, canSeeHolders[canSee])
@@ -138,26 +149,80 @@ func (tList *DefaultTopicList) Tick() error {
 	tList.evenGroups = evenLists
 	tList.evenLock.Unlock()
 
+	topc := []int{0, 0, 0, 0, 0, 0}
+	addC := func(c int) {
+		lowI, low := 0, topc[0]
+		for i, top := range topc {
+			if top < low {
+				lowI = i
+				low = top
+			}
+		}
+		if c > low {
+			topc[lowI] = c
+		}
+	}
+	for forumCount := range forumCounts {
+		addC(forumCount)
+	}
+
+	qcounts := make(map[int]*sql.Stmt)
+	qcounts2 := make(map[int]*sql.Stmt)
+	for _, top := range topc {
+		if top == 0 {
+			continue
+		}
+
+		var qlist string
+		for i := 0; i < top; i++ {
+			if i != 0 {
+				qlist += ","
+			}
+			qlist += "?"
+		}
+		cols := "tid,title,content,createdBy,is_closed,sticky,createdAt,lastReplyAt,lastReplyBy,lastReplyID,parentID,views,postCount,likeCount,attachCount,poll,data"
+
+		stmt, err := qgen.Builder.SimpleSelect("topics", cols, "parentID IN("+qlist+")", "views DESC,lastReplyAt DESC,createdBy DESC", "?,?")
+		if err != nil {
+			return err
+		}
+		qcounts[top] = stmt
+
+		stmt, err = qgen.Builder.SimpleSelect("topics", cols, "parentID IN("+qlist+")", "sticky DESC,lastReplyAt DESC,createdBy DESC", "?,?")
+		if err != nil {
+			return err
+		}
+		qcounts2[top] = stmt
+	}
+
+	tList.qLock.Lock()
+	tList.qcounts = qcounts
+	tList.qLock.Unlock()
+
+	tList.qLock2.Lock()
+	tList.qcounts2 = qcounts2
+	tList.qLock2.Unlock()
+
 	forums, err := Forums.GetAll()
 	if err != nil {
 		return err
 	}
 
-	top5 := []*Forum{nil, nil, nil, nil, nil}
+	top8 := []*Forum{nil, nil, nil, nil, nil, nil, nil, nil}
 	z := true
 	addScore2 := func(f *Forum) {
-		for i, top := range top5 {
+		for i, top := range top8 {
 			if top.TopicCount < f.TopicCount {
-				top5[i] = f
+				top8[i] = f
 				return
 			}
 		}
 	}
 	addScore := func(f *Forum) {
 		if z {
-			for i, top := range top5 {
+			for i, top := range top8 {
 				if top == nil {
-					top5[i] = f
+					top8[i] = f
 					return
 				}
 			}
@@ -178,7 +243,7 @@ func (tList *DefaultTopicList) Tick() error {
 		}
 		addScore(f)
 	}
-	for _, f := range top5 {
+	for _, f := range top8 {
 		if f != nil {
 			fshort = append(fshort, f)
 		}
@@ -208,6 +273,11 @@ func (tList *DefaultTopicList) Tick() error {
 func (tList *DefaultTopicList) GetListByForum(f *Forum, page, orderby int) (topicList []*TopicsRow, pagi Paginator, err error) {
 	if page == 0 {
 		page = 1
+	}
+	if f.TopicCount == 0 {
+		_, page, lastPage := PageOffset(f.TopicCount, page, Config.ItemsPerPage)
+		pageList := Paginate(page, lastPage, 5)
+		return topicList, Paginator{pageList, page, lastPage}, nil
 	}
 	if page == 1 && orderby == 0 {
 		var h *ForumTopicListHolder
@@ -419,21 +489,33 @@ func (tList *DefaultTopicList) GetList(page, orderby int, filterIDs []int) (topi
 func (tList *DefaultTopicList) getList(page, orderby, topicCount int, argList []interface{}, qlist string) (topicList []*TopicsRow, paginator Paginator, err error) {
 	//log.Printf("argList: %+v\n",argList)
 	//log.Printf("qlist: %+v\n",qlist)
-
 	var orderq string
+	var stmt *sql.Stmt
 	if orderby == TopicListMostViewed {
-		orderq = "views DESC,lastReplyAt DESC,createdBy DESC"
+		tList.qLock.RLock()
+		stmt = tList.qcounts[len(argList)-2]
+		tList.qLock.RUnlock()
+		if stmt == nil {
+			orderq = "views DESC,lastReplyAt DESC,createdBy DESC"
+		}
 	} else {
-		orderq = "sticky DESC,lastReplyAt DESC,createdBy DESC"
+		tList.qLock2.RLock()
+		stmt = tList.qcounts2[len(argList)-2]
+		tList.qLock2.RUnlock()
+		if stmt == nil {
+			orderq = "sticky DESC,lastReplyAt DESC,createdBy DESC"
+		}
 	}
 	offset, page, lastPage := PageOffset(topicCount, page, Config.ItemsPerPage)
 
 	// TODO: Prepare common qlist lengths to speed this up in common cases, prepared statements are prepared lazily anyway, so it probably doesn't matter if we do ten or so
-	stmt, err := qgen.Builder.SimpleSelect("topics", "tid,title,content,createdBy,is_closed,sticky,createdAt,lastReplyAt,lastReplyBy,lastReplyID,parentID,views,postCount,likeCount,attachCount,poll,data", "parentID IN("+qlist+")", orderq, "?,?")
-	if err != nil {
-		return nil, Paginator{nil, 1, 1}, err
+	if stmt == nil {
+		stmt, err = qgen.Builder.SimpleSelect("topics", "tid,title,content,createdBy,is_closed,sticky,createdAt,lastReplyAt,lastReplyBy,lastReplyID,parentID,views,postCount,likeCount,attachCount,poll,data", "parentID IN("+qlist+")", orderq, "?,?")
+		if err != nil {
+			return nil, Paginator{nil, 1, 1}, err
+		}
+		defer stmt.Close()
 	}
-	defer stmt.Close()
 
 	argList = append(argList, offset)
 	argList = append(argList, Config.ItemsPerPage)
