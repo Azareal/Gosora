@@ -2787,7 +2787,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 			} else {
 				r.DumpRequest(req,"Bad Route")
 			}
-			co.RouteViewCounter.Bump(172)
+			co.RouteViewCounter.Bump3(172, cn)
 			return c.NotFound(w,req,nil)
 	}
 	return err

@@ -1,0 +1,120 @@
+<main id="topicPage">
+
+{{if gt .Page 1}}<link rel="prev"href="{{.Topic.Link}}?page={{subtract .Page 1}}"/>{{end}}
+{{if ne .LastPage .Page}}<link rel="prerender next"href="{{.Topic.Link}}?page={{add .Page 1}}"/>{{end}}
+<link rel="canonical" href="//{{.Site.URL}}{{.Topic.Link}}{{if gt .Page 1}}?page={{.Page}}{{end}}"/>
+
+<div {{scope "topic_title_block"}} class="rowblock rowhead topic_block" aria-label="{{lang "topic.topic_info_aria"}}">
+	<div class="rowitem topic_item{{if .Topic.Sticky}} topic_sticky_head{{else if .Topic.IsClosed}} topic_closed_head{{end}}">
+		<h1 class='topic_name hide_on_edit' title='{{.Topic.Title}}'>{{.Topic.Title}}</h1>
+		<span class="topic_name_forum_sep hide_on_edit"> - </span>
+		<a href="{{.Forum.Link}}" class="topic_forum hide_on_edit">{{.Forum.Name}}</a>
+		{{/** TODO: Does this need to be guarded by a permission? It's only visible in edit mode anyway, which can't be triggered, if they don't have the permission **/}}
+		{{if .CurrentUser.Loggedin}}
+		{{if not .Topic.IsClosed or .CurrentUser.Perms.CloseTopic}}
+		{{if .CurrentUser.Perms.EditTopic}}
+		<form id="edit_topic_form" action='/topic/edit/submit/{{.Topic.ID}}?s={{.CurrentUser.Session}}' method="post"></form>
+		<input form="edit_topic_form" class='show_on_edit topic_name_input' name="topic_name" value='{{.Topic.Title}}' type="text" aria-label="{{lang "topic.title_input_aria"}}"/>
+		<button form="edit_topic_form" name="topic-button" class="formbutton show_on_edit submit_edit">{{lang "topic.update_button"}}</button>
+		{{end}}
+		{{end}}
+		{{end}}
+		<span class="topic_view_count hide_on_edit">{{.Topic.ViewCount}}</span>
+		{{/** TODO: Inline this CSS **/}}
+		{{if .Topic.IsClosed}}<span class='username hide_on_micro topic_status_e topic_status_closed hide_on_edit' title='{{lang "status.closed_tooltip"}}' aria-label='{{lang "topic.status_closed_aria"}}'>&#x1F512;&#xFE0E</span>{{end}}
+	</div>
+</div>
+
+<div class="rowblock post_container">
+	{{if .Poll.ID}}<form id="poll_{{.Poll.ID}}_form" action="/poll/vote/{{.Poll.ID}}?s={{.CurrentUser.Session}}" method="post"></form>
+	<article class="rowitem passive deletable_block editable_parent post_item poll_item top_post hide_on_edit">
+		{{/**{{template "topic_alt_userinfo.html" .Topic }}**/}}
+		<div id="poll_voter_{{.Poll.ID}}" class="content_container poll_voter">
+			<div class="topic_content user_content">
+				{{range .Poll.QuickOptions}}
+				<div class="poll_option">
+					<input form="poll_{{$.Poll.ID}}_form" id="poll_option_{{.ID}}" name="poll_option_input" type="checkbox" value="{{.ID}}"/>
+					<label class="poll_option_label" for="poll_option_{{.ID}}"><div class="sel"></div></label>
+					<span id="poll_option_text_{{.ID}}" class="poll_option_text">{{.Value}}</span>
+				</div>
+				{{end}}
+				<div class="poll_buttons">
+					<button form="poll_{{.Poll.ID}}_form" class="poll_vote_button">{{lang "topic.poll_vote"}}</button>
+					<button class="poll_results_button" data-poll-id="{{.Poll.ID}}">{{lang "topic.poll_results"}}</button>
+					<a href="#"><button class="poll_cancel_button">{{lang "topic.poll_cancel"}}</button></a>
+				</div>
+			</div>
+		</div>
+		<div id="poll_results_{{.Poll.ID}}" class="content_container poll_results auto_hide">
+			<div class="topic_content user_content">
+				<div class="auto_hide poll_no_results">{{lang "topic.poll_no_results"}}</div>
+			</div>
+		</div>
+	</article>
+	{{end}}
+	<article {{scope "opening_post"}} itemscope itemtype="http://schema.org/CreativeWork" class="rowitem passive deletable_block editable_parent post_item top_post{{if .Topic.Attachments}} has_attachs{{end}}" aria-label="{{lang "topic.opening_post_aria"}}">
+		{{template "topic_alt_userinfo.html" .Topic }}
+		<div class="content_container">
+			<div class="hide_on_edit topic_content user_content" itemprop="text">{{.Topic.ContentHTML}}</div>
+			{{if .CurrentUser.Loggedin}}<textarea name="topic_content" class="show_on_edit topic_content_input edit_source">{{.Topic.Content}}</textarea>
+
+			{{if .CurrentUser.Perms.EditTopic}}
+			<div class="show_on_edit attach_edit_bay" type="topic" id="{{.Topic.ID}}">
+				{{range .Topic.Attachments}}
+				<div class="attach_item attach_item_item{{if .Image}} attach_image_holder{{end}}">
+					{{if .Image}}<img src="//{{$.Header.Site.URL}}/attachs/{{.Path}}?sid={{.SectionID}}&amp;stype=forums" height=24 width=24/>{{end}}
+					<span class="attach_item_path" aid="{{.ID}}" fullPath="//{{$.Header.Site.URL}}/attachs/{{.Path}}">{{.Path}}</span>
+					<button class="attach_item_select">{{lang "topic.select_button_text"}}</button>
+					<button class="attach_item_copy">{{lang "topic.copy_button_text"}}</button>
+				</div>
+				{{end}}
+				<div class="attach_item attach_item_buttons">
+					{{if .CurrentUser.Perms.UploadFiles}}
+					<input name="upload_files" id="upload_files_op" multiple type="file" class="auto_hide" />
+					<label for="upload_files_op" class="formbutton add_file_button">{{lang "topic.upload_button_text"}}</label>{{end}}
+					<button class="attach_item_delete formbutton">{{lang "topic.delete_button_text"}}</button>
+				</div>
+			</div>
+
+			{{end}}{{end}}
+			<div class="controls button_container{{if .Topic.LikeCount}} has_likes{{end}}">
+				<div class="action_button_left">
+				{{if .CurrentUser.Loggedin}}
+					{{if .CurrentUser.Perms.LikeItem}}{{if ne .CurrentUser.ID .Topic.CreatedBy}}
+					{{if .Topic.Liked}}<a href="/topic/unlike/submit/{{.Topic.ID}}?s={{.CurrentUser.Session}}" class="action_button like_item remove_like" aria-label="{{lang "topic.unlike_aria"}}" data-action="unlike"></a>{{else}}<a href="/topic/like/submit/{{.Topic.ID}}?s={{.CurrentUser.Session}}" class="action_button like_item add_like" aria-label="{{lang "topic.like_aria"}}" data-action="like"></a>{{end}}
+					{{end}}{{end}}
+					<a href="" class="action_button quote_item" aria-label="{{lang "topic.quote_aria"}}" data-action="quote"></a>
+					{{if not .Topic.IsClosed or .CurrentUser.Perms.CloseTopic}}
+					{{if .CurrentUser.Perms.EditTopic}}<a href="/topic/edit/{{.Topic.ID}}" class="action_button open_edit" aria-label="{{lang "topic.edit_aria"}}" data-action="edit"></a>{{end}}
+					{{end}}
+					{{if .Topic.Deletable}}<a href="/topic/delete/submit/{{.Topic.ID}}?s={{.CurrentUser.Session}}" class="action_button delete_item" aria-label="{{lang "topic.delete_aria"}}" data-action="delete"></a>{{end}}
+					{{if .CurrentUser.Perms.CloseTopic}}
+					{{if .Topic.IsClosed}}<a href='/topic/unlock/submit/{{.Topic.ID}}?s={{.CurrentUser.Session}}' class="action_button unlock_item" data-action="unlock" aria-label="{{lang "topic.unlock_aria"}}"></a>{{else}}<a href='/topic/lock/submit/{{.Topic.ID}}?s={{.CurrentUser.Session}}' class="action_button lock_item" data-action="lock" aria-label="{{lang "topic.lock_aria"}}"></a>{{end}}{{end}}
+					{{if .CurrentUser.Perms.PinTopic}}
+					{{if .Topic.Sticky}}<a href='/topic/unstick/submit/{{.Topic.ID}}?s={{.CurrentUser.Session}}' class="action_button unpin_item" data-action="unpin" aria-label="{{lang "topic.unpin_aria"}}"></a>{{else}}<a href='/topic/stick/submit/{{.Topic.ID}}?s={{.CurrentUser.Session}}' class="action_button pin_item" data-action="pin" aria-label="{{lang "topic.pin_aria"}}"></a>{{end}}{{end}}
+					{{if .CurrentUser.Perms.ViewIPs}}<a href="/users/ips/?ip={{.Topic.IP}}" title="{{lang "topic.ip_full_tooltip"}}" class="action_button ip_item_button hide_on_big" aria-label="{{lang "topic.ip_full_aria"}}" data-action="ip"></a>{{end}}
+					<a href="/report/submit/{{.Topic.ID}}?s={{.CurrentUser.Session}}&type=topic" class="action_button report_item" aria-label="{{lang "topic.report_aria"}}" data-action="report"></a>
+					<a href="#" class="action_button button_menu"></a>
+				{{end}}
+				</div>
+				<div class="action_button_right">
+					<a class="action_button like_count hide_on_micro" aria-label="{{lang "topic.like_count_aria"}}">{{.Topic.LikeCount}}</a>
+					<a class="action_button created_at hide_on_mobile" title="{{abstime .Topic.CreatedAt}}">{{reltime .Topic.CreatedAt}}</a>
+					{{if .CurrentUser.Perms.ViewIPs}}<a href="/users/ips/?ip={{.Topic.IP}}" title="{{lang "topic.ip_full_tooltip"}}" class="action_button ip_item hide_on_mobile" aria-hidden="true">{{.Topic.IP}}</a>{{end}}
+				</div>
+			</div>
+		</div><div style="clear:both;"></div>
+	</article>
+	{{template "topic_alt_posts.html" . }}
+</div>
+{{template "paginator.html" . }}
+
+{{if .CurrentUser.Loggedin}}
+{{if .CurrentUser.Perms.CreateReply}}
+{{if not .Topic.IsClosed or .CurrentUser.Perms.CloseTopic}}
+{{template "topic_alt_quick_reply.html" . }}
+{{end}}
+{{end}}
+{{end}}
+
+</main>

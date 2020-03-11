@@ -2,10 +2,9 @@
 	{{if js}}js{{/**{{ptmpl "topic_alt_userinfo" .}}**/}}{{else}}{{template "topic_alt_userinfo.html" . }}{{end}}
 	<div class="content_container">
 		{{if .ActionType}}
-			<span class="action_icon" aria-hidden="true">{{.ActionIcon}}</span>
-			<span itemprop="text">{{.ActionType}}</span>
+			<span class="action_icon" aria-hidden="true">{{.ActionIcon}}</span><span itemprop="text">{{.ActionType}}</span>
 		{{else}}
-		<div class="editable_block user_content" itemprop="text">{{.ContentHtml}}</div>
+		<div class="editable_block user_content"itemprop="text">{{.ContentHtml}}</div>
 		{{if $.CurrentUser.Loggedin}}
 		<div class="edit_source auto_hide">{{.Content}}</div>
 
@@ -48,7 +47,7 @@
 			<div class="action_button_right">
 				<a class="action_button like_count hide_on_micro" aria-label="{{lang "topic.post_like_count_tooltip"}}">{{.LikeCount}}</a>
 				<a class="action_button created_at hide_on_mobile" title="{{abstime .CreatedAt}}">{{reltime .CreatedAt}}</a>
-				{{if $.CurrentUser.Loggedin}}{{if $.CurrentUser.Perms.ViewIPs}}<a href="/users/ips/?ip={{.IP}}" title="IP Address" class="action_button ip_item hide_on_mobile" aria-hidden="true">{{.IP}}</a>{{end}}{{end}}
+				{{if $.CurrentUser.Loggedin}}{{if $.CurrentUser.Perms.ViewIPs}}<a href="/users/ips/?ip={{.IP}}"title="IP Address" class="action_button ip_item hide_on_mobile" aria-hidden="true">{{.IP}}</a>{{end}}{{end}}
 			</div>
 		</div>
 		{{end}}

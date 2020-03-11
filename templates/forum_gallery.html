@@ -1,8 +1,7 @@
 {{template "header.html" . }}
-
+<main id="forumItemList" itemscope itemtype="http://schema.org/ItemList">
 <link rel="canonical" href="//{{.Site.URL}}{{.Forum.Link}}{{if gt .Page 1}}?page={{.Page}}{{end}}"/>
 
-<main id="forumItemList" itemscope itemtype="http://schema.org/ItemList">
 	<div id="forum_head_block" class="rowblock rowhead topic_list_title_block{{if .CurrentUser.Loggedin}} has_opt{{end}}">
 		<div class="rowitem forum_title">
 			<h1 itemprop="name">{{.Title}}</h1>
@@ -18,8 +17,7 @@
 				<a class="moderate_link" href="#" aria-label="{{lang "topic_list.moderate_aria"}}"></a>
 			</div>
 			{{else}}<div class="opt locked_opt" title="{{lang "forum_locked_tooltip"}}" aria-label="{{lang "forum_locked_aria"}}"><a></a></div>{{end}}
-		</div>
-		<div style="clear:both;"></div>
+		</div><div style="clear:both;"></div>
 		{{end}}
 	</div>
 	{{if .CurrentUser.Loggedin}}
@@ -47,7 +45,7 @@
 		{{range .ItemList}}<div class="rowitem" data-tid="{{.ID}}">
 		<div>
 			<a class="rowtopic" href="{{.Link}}" itemprop="itemListElement"><img src="{{.Content}}" style="width:100%;height:160px;"/></a>
-			<br /><a class="rowsmall starter" href="{{.Link}}">{{.Title}}</a>
+			<br><a class="rowsmall starter" href="{{.Link}}">{{.Title}}</a>
 		</div>
 		<!--<div class="topic_left passive datarow">
 			<a href="{{.Creator.Link}}"><img src="{{.Creator.MicroAvatar}}" height=64 alt="Avatar" title="{{.Creator.Name}}'s Avatar" aria-hidden="true"/></a>

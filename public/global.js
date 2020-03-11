@@ -28,7 +28,7 @@ function ajaxError(xhr,status,errstr) {
 	console.log("The AJAX request failed");
 	console.log("xhr", xhr);
 	console.log("status", status);
-	console.log("errstr", errstr);
+	console.log("err", errstr);
 	if(status=="parsererror") console.log("The server didn't respond with a valid JSON response");
 	console.trace();
 }
@@ -135,8 +135,8 @@ function loadAlerts(menuAlerts, eTc = false) {
 	let tc = "";
 	if(eTc && lastTc != 0) tc = "&t=" + lastTc + "&c=" + alertCount;
 	$.ajax({
-		type: 'get',
-		dataType: 'json',
+		type:'get',
+		dataType:'json',
 		url:'/api/?m=alerts' + tc,
 		success: (data) => {
 			if("errmsg" in data) {
@@ -460,9 +460,9 @@ function mainInit(){
 				if("success" in data && data["success"] == "1") return;
 				// addNotice("Failed to add a like: {err}")
 				//likeCountNode.innerHTML = parseInt(likeCountNode.innerHTML)-1;
-				console.log("data", data);
-				console.log("status", status);
-				console.log("xhr", xhr);
+				console.log("data",data);
+				console.log("status",status);
+				console.log("xhr",xhr);
 			}
 		});
 	});
@@ -620,110 +620,7 @@ function mainInit(){
 		});
 	});
 
-	$(".open_edit").click(ev => {
-		ev.preventDefault();
-		$('.hide_on_edit').addClass("edit_opened");
-		$('.show_on_edit').addClass("edit_opened");
-		runHook("open_edit");
-	});
-
-	$(".topic_item .submit_edit").click(function(ev){
-		ev.preventDefault();
-		let topicNameInput = $(".topic_name_input").val();
-		$(".topic_name").html(topicNameInput);
-		$(".topic_name").attr(topicNameInput);
-		let topicContentInput = $('.topic_content_input').val();
-		$(".topic_content").html(quickParse(topicContentInput));
-		let topicStatusInput = $('.topic_status_input').val();
-		$(".topic_status_e:not(.open_edit)").html(topicStatusInput);
-
-		$('.hide_on_edit').removeClass("edit_opened");
-		$('.show_on_edit').removeClass("edit_opened");
-		runHook("close_edit");
-
-		$.ajax({
-			url: this.form.getAttribute("action"),
-			type: "POST",
-			dataType: "json",
-			data: {
-				topic_name: topicNameInput,
-				topic_status: topicStatusInput,
-				topic_content: topicContentInput,
-				js: 1
-			},
-			error: ajaxError,
-			success: (data,status,xhr) => {
-				if("Content" in data) $(".topic_content").html(data["Content"]);
-			}
-		});
-	});
-
-	$(".delete_item").click(function(ev) {
-		postLink(ev);
-		$(this).closest('.deletable_block').remove();
-	});
-
-	// Miniature implementation of the parser to avoid sending as much data back and forth
-	function quickParse(m) {
-		m = m.replace(":)", "😀")
-		m = m.replace(":(", "😞")
-		m = m.replace(":D", "😃")
-		m = m.replace(":P", "😛")
-		m = m.replace(":O", "😲")
-		m = m.replace(":p", "😛")
-		m = m.replace(":o", "😲")
-		m = m.replace(";)", "😉")
-		m = m.replace("\n","<br>")
-		return m
-	}
-
-	$(".edit_item").click(function(ev){
-		ev.preventDefault();
-
-		let bp = this.closest('.editable_parent');
-		$(bp).find('.hide_on_edit').addClass("edit_opened");
-		$(bp).find('.show_on_edit').addClass("edit_opened");
-		$(bp).find('.hide_on_block_edit').addClass("edit_opened");
-		$(bp).find('.show_on_block_edit').addClass("edit_opened");
-		let srcNode = bp.querySelector(".edit_source");
-		let block = bp.querySelector('.editable_block');
-		block.classList.add("in_edit");
-
-		let source = "";
-		if(srcNode!=null) source = srcNode.innerText;
-		else source = block.innerHTML;
-		block.innerHTML = Template_topic_c_edit_post({
-			ID: bp.getAttribute("id").slice("post-".length),
-			Source: source,
-			Ref: this.closest('a').getAttribute("href")
-		})
-		runHook("edit_item_pre_bind");
-
-		$(".submit_edit").click(function(ev){
-			ev.preventDefault();
-			$(bp).find('.hide_on_edit').removeClass("edit_opened");
-			$(bp).find('.show_on_edit').removeClass("edit_opened");
-			$(bp).find('.hide_on_block_edit').removeClass("edit_opened");
-			$(bp).find('.show_on_block_edit').removeClass("edit_opened");
-			block.classList.remove("in_edit");
-			let content = block.querySelector('textarea').value;
-			block.innerHTML = quickParse(content);
-			if(srcNode!=null) srcNode.innerText = content;
-
-			let formAction = this.closest('a').getAttribute("href");
-			// TODO: Bounce the parsed post back and set innerHTML to it?
-			$.ajax({
-				url: formAction,
-				type: "POST",
-				dataType: "json",
-				data: { js: 1, edit_item: content },
-				error: ajaxError,
-				success: (data,status,xhr) => {
-					if("Content" in data) block.innerHTML = data["Content"];
-				}
-			});
-		});
-	});
+	bindTopic();
 
 	$(".edit_field").click(function(ev) {
 		ev.preventDefault();
@@ -963,6 +860,149 @@ function mainInit(){
 		})
 	});
 
+	$(".rowtopic a, a.rowtopic").click(function(ev) {
+		let base = this.getAttribute("href");
+		let href = base + "?i=1";
+		fetch(href, {credentials:"same-origin"})
+			.then(resp => {
+				if(!resp.ok) throw(href+" failed to load");
+				return resp.text();
+			}).then(data => {
+				let el = document.createElement("div");
+				el.innerHTML = data;
+				console.log("el",el);
+				document.querySelector("main").outerHTML = el.children[0].innerHTML;
+				//$(".sidebar").html(el.children[1]);
+				document.querySelector(".sidebar").outerHTML = el.children[1].outerHTML;
+				unbindTopic();
+				bindTopic();
+				let obj = {Title: document.title, Url: base};
+				history.pushState(obj, obj.Title, obj.Url);
+			}).catch(ex => {
+				console.log("Unable to get script '"+href+""+"'");
+				console.log("ex",ex);
+				console.trace();
+			});
+		
+		ev.stopPropagation();
+		ev.preventDefault();
+	})
+
 	runInitHook("almost_end_init");
 	runInitHook("end_init");
+}
+
+function bindTopic() {
+	$(".open_edit").click(ev => {
+		ev.preventDefault();
+		$('.hide_on_edit').addClass("edit_opened");
+		$('.show_on_edit').addClass("edit_opened");
+		runHook("open_edit");
+	});
+	
+	$(".topic_item .submit_edit").click(function(ev){
+		ev.preventDefault();
+		let nameInput = $(".topic_name_input").val();
+		$(".topic_name").html(nameInput);
+		$(".topic_name").attr(nameInput);
+		let contentInput = $('.topic_content_input').val();
+		$(".topic_content").html(quickParse(contentInput));
+		let statusInput = $('.topic_status_input').val();
+		$(".topic_status_e:not(.open_edit)").html(statusInput);
+
+		$('.hide_on_edit').removeClass("edit_opened");
+		$('.show_on_edit').removeClass("edit_opened");
+		runHook("close_edit");
+
+		$.ajax({
+			url: this.form.getAttribute("action"),
+			type: "POST",
+			dataType: "json",
+			data: {
+				name: nameInput,
+				status: statusInput,
+				content: contentInput,
+				js: 1
+			},
+			error: ajaxError,
+			success: (data,status,xhr) => {
+				if("Content" in data) $(".topic_content").html(data["Content"]);
+			}
+		});
+	});
+	
+	$(".delete_item").click(function(ev) {
+		postLink(ev);
+		$(this).closest('.deletable_block').remove();
+	});
+
+	// Miniature implementation of the parser to avoid sending as much data back and forth
+	function quickParse(m) {
+		m = m.replace(":)", "😀")
+		m = m.replace(":(", "😞")
+		m = m.replace(":D", "😃")
+		m = m.replace(":P", "😛")
+		m = m.replace(":O", "😲")
+		m = m.replace(":p", "😛")
+		m = m.replace(":o", "😲")
+		m = m.replace(";)", "😉")
+		m = m.replace("\n","<br>")
+		return m
+	}
+
+	$(".edit_item").click(function(ev){
+		ev.preventDefault();
+
+		let bp = this.closest('.editable_parent');
+		$(bp).find('.hide_on_edit').addClass("edit_opened");
+		$(bp).find('.show_on_edit').addClass("edit_opened");
+		$(bp).find('.hide_on_block_edit').addClass("edit_opened");
+		$(bp).find('.show_on_block_edit').addClass("edit_opened");
+		let srcNode = bp.querySelector(".edit_source");
+		let block = bp.querySelector('.editable_block');
+		block.classList.add("in_edit");
+
+		let src = "";
+		if(srcNode!=null) src = srcNode.innerText;
+		else src = block.innerHTML;
+		block.innerHTML = Template_topic_c_edit_post({
+			ID: bp.getAttribute("id").slice("post-".length),
+			Source: src,
+			Ref: this.closest('a').getAttribute("href")
+		})
+		runHook("edit_item_pre_bind");
+
+		$(".submit_edit").click(function(ev){
+			ev.preventDefault();
+			$(bp).find('.hide_on_edit').removeClass("edit_opened");
+			$(bp).find('.show_on_edit').removeClass("edit_opened");
+			$(bp).find('.hide_on_block_edit').removeClass("edit_opened");
+			$(bp).find('.show_on_block_edit').removeClass("edit_opened");
+			block.classList.remove("in_edit");
+			let content = block.querySelector('textarea').value;
+			block.innerHTML = quickParse(content);
+			if(srcNode!=null) srcNode.innerText = content;
+
+			let formAction = this.closest('a').getAttribute("href");
+			// TODO: Bounce the parsed post back and set innerHTML to it?
+			$.ajax({
+				url: formAction,
+				type:"POST",
+				dataType:"json",
+				data: { js: 1, edit_item: content },
+				error: ajaxError,
+				success: (data,status,xhr) => {
+					if("Content" in data) block.innerHTML = data["Content"];
+				}
+			});
+		});
+	});
+}
+
+function unbindTopic() {
+	$(".open_edit").unbind("click");
+	$(".topic_item .submit_edit").unbind("click");
+	$(".delete_item").unbind("click");
+	$(".edit_item").unbind("click");
+	$(".submit_edit").unbind("click");
 }

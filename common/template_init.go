@@ -249,7 +249,9 @@ func compileCommons(c *tmpl.CTemplateSet, head, head2 *Header, forumList []Forum
 	tpage := TopicPage{htitle("Topic Name"), replyList, topic, &Forum{ID: 1, Name: "Hahaha"}, poll, Paginator{[]int{1}, 1, 1}}
 	tpage.Forum.Link = BuildForumURL(NameToSlug(tpage.Forum.Name), tpage.Forum.ID)
 	o.Add("topic", "c.TopicPage", tpage)
+	o.Add("topic_mini", "c.TopicPage", tpage)
 	o.Add("topic_alt", "c.TopicPage", tpage)
+	o.Add("topic_alt_mini", "c.TopicPage", tpage)
 	return nil
 }
 

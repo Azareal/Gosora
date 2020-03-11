@@ -1,10 +1,11 @@
 {{template "header.html" . }}
 
+<main id="forumItemList" itemscope itemtype="http://schema.org/ItemList">
+
 {{if gt .Page 1}}<div id="prevFloat" class="prev_button"><a class="prev_link" aria-label="{{lang "paginator.prev_page_aria"}}" rel="prev" href="{{.Forum.Link}}?page={{subtract .Page 1}}">{{lang "paginator.less_than"}}</a></div>{{end}}
 {{if ne .LastPage .Page}}<div id="nextFloat" class="next_button"><a class="next_link" aria-label="{{lang "paginator.next_page_aria"}}" rel="next" href="{{.Forum.Link}}?page={{add .Page 1}}">{{lang "paginator.greater_than"}}</a></div>{{end}}
 <link rel="canonical" href="//{{.Site.URL}}{{.Forum.Link}}{{if gt .Page 1}}?page={{.Page}}{{end}}"/>
 
-<main id="forumItemList" itemscope itemtype="http://schema.org/ItemList">
 	<div id="forum_head_block" class="rowblock rowhead topic_list_title_block{{if .CurrentUser.Loggedin}} has_opt{{end}}">
 		<div class="rowitem forum_title">
 			<h1 itemprop="name">{{.Title}}</h1>
@@ -59,7 +60,7 @@
 			</span>
 			{{/** TODO: Phase this out of Cosora and remove it **/}}
 			<div class="topic_inner_right rowsmall">
-				<span class="replyCount">{{.PostCount}}</span><br />
+				<span class="replyCount">{{.PostCount}}</span><br>
 				<span class="likeCount">{{.LikeCount}}</span>
 			</div>
 		</div>
@@ -72,7 +73,7 @@
 		</div>
 		<div class="rowitem topic_right passive datarow">
 			<div class="topic_right_inside">
-				<a href="{{.LastUser.Link}}"><img src="{{.LastUser.MicroAvatar}}" height=64 alt="Avatar" title="{{.LastUser.Name}}'s Avatar" aria-hidden="true"/></a>
+				<a href="{{.LastUser.Link}}"><img src="{{.LastUser.MicroAvatar}}" height=64 alt="Avatar"title="{{.LastUser.Name}}'s Avatar"aria-hidden="true"/></a>
 				<span>
 					<a href="{{.LastUser.Link}}" class="lastName" title="{{.LastUser.Name}}">{{.LastUser.Name}}</a><br>
 					<a href="{{.Link}}?page={{.LastPage}}{{if .LastReplyID}}#post-{{.LastReplyID}}{{end}}" class="rowsmall lastReplyAt" title="{{abstime .LastReplyAt}}">{{reltime .LastReplyAt}}</a>

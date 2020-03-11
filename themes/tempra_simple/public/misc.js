@@ -4,12 +4,10 @@ addInitHook("end_init", () => {
 	$(".topic_list img").each(function(){
 		let aspectRatio = this.naturalHeight / this.naturalWidth;
 		console.log("aspectRatio",aspectRatio);
-		console.log("this.height",this.naturalHeight);
-		console.log("this.width",this.naturalWidth);
+		console.log("height",this.naturalHeight);
+		console.log("width",this.naturalWidth);
 
-		$(this).css({
-			height: aspectRatio * this.width
-		});
+		$(this).css({ height: aspectRatio * this.width });
 	});
 });
 })()

@@ -6,7 +6,7 @@
 	"URL": "github.com/Azareal/Gosora",
 	"Tag": "WIP",
 	"Docks":["topMenu","rightSidebar","footer"],
-	"GridLists":true,
+	"GridLists": true,
 	"MapTmplToDock": {
 		"rightOfNav": {
 			"File": "./templates/userDock.html"
@@ -16,13 +16,17 @@
 		{
 			"Name": "topic",
 			"Source": "topic_alt"
+		},
+		{
+			"Name": "topic_mini",
+			"Source": "topic_alt_mini"
 		}
 	],
 	"Resources": [
 		{
 			"Name":"trumbowyg/trumbowyg.min.js",
 			"Location":"global",
-			"Loggedin": true
+			"Loggedin":true
 		},
 		{
 			"Name":"trumbowyg/ui/trumbowyg.custom.css",

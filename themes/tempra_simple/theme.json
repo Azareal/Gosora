@@ -10,8 +10,12 @@
 	"Docks":["topMenu","rightSidebar"],
 	"Templates": [
 		{
-			"Name": "topic",
-			"Source": "topic"
+			"Name":"topic",
+			"Source":"topic"
+		},
+		{
+			"Name":"topic_mini",
+			"Source":"topic_mini"
 		}
 	],
 	"Resources": [

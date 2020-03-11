@@ -6,8 +6,8 @@
 			<a class="rowtopic" href="{{.Link}}" itemprop="itemListElement" title="{{.Title}}"><span>{{.Title}}</span></a> {{if .ForumName}}<a class="rowsmall parent_forum" href="{{.ForumLink}}" title="{{.ForumName}}">{{.ForumName}}</a>{{end}}
 			<br><a class="rowsmall starter" href="{{.Creator.Link}}" title="{{.Creator.Name}}">{{.Creator.Name}}</a>
 			{{/** TODO: Avoid the double '|' when both .IsClosed and .Sticky are set to true. We could probably do this with CSS **/}}
-			{{if .IsClosed}}<span class="rowsmall topic_status_e topic_status_closed" title="{{lang "status.closed_tooltip"}}"> | &#x1F512;&#xFE0E</span>{{end}}
-			{{if .Sticky}}<span class="rowsmall topic_status_e topic_status_sticky" title="{{lang "status.pinned_tooltip"}}"> | &#x1F4CD;&#xFE0E</span>{{end}}
+			{{if .IsClosed}}<span class="rowsmall topic_status_e topic_status_closed"title="{{lang "status.closed_tooltip"}}"> | &#x1F512;&#xFE0E</span>{{end}}
+			{{if .Sticky}}<span class="rowsmall topic_status_e topic_status_sticky"title="{{lang "status.pinned_tooltip"}}"> | &#x1F4CD;&#xFE0E</span>{{end}}
 		</span>
 		{{/** TODO: Phase this out of Cosora and remove it **/}}
 		<div class="topic_inner_right rowsmall">

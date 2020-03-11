@@ -348,7 +348,7 @@ func main() {
 		"Googlebot":           "googlebot",
 		"yandex":              "yandex", // from the URL
 		"DuckDuckBot":         "duckduckgo",
-		"DuckDuckGo":"duckduckgo",
+		"DuckDuckGo":          "duckduckgo",
 		"Baiduspider":         "baidu",
 		"Sogou":               "sogou",
 		"ToutiaoSpider":       "toutiao",
@@ -980,7 +980,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 			} else {
 				r.DumpRequest(req,"Bad Route")
 			}
-			co.RouteViewCounter.Bump({{index .AllRouteMap "routes.BadRoute"}})
+			co.RouteViewCounter.Bump3({{index .AllRouteMap "routes.BadRoute"}}, cn)
 			return c.NotFound(w,req,nil)
 	}
 	return err

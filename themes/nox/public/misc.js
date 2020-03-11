@@ -45,7 +45,7 @@ function noxMenuBind() {
 		else $('.alert').insertAfter(".rowhead:first");
 	}
 	
-	addInitHook("after_update_alert_list", (alertCount) => {
+	addInitHook("after_update_alert_list", alertCount => {
 		console.log("misc.js");
 		console.log("alertCount",alertCount);
 		if(alertCount==0) {
@@ -57,9 +57,8 @@ function noxMenuBind() {
 			$(".user_box").addClass("has_alerts");
 		}
 	});
-	let tb=$('.topic_block');
-	addHook("open_edit", () => tb.addClass("edithead"));
-	addHook("close_edit", () => tb.removeClass("edithead"));
+	addHook("open_edit", () => $('.topic_block').addClass("edithead"));
+	addHook("close_edit", () => $('.topic_block').removeClass("edithead"));
 
 	addInitHook("end_init", () => {
 		$(".alerts").click(ev => {
@@ -77,7 +76,6 @@ function noxMenuBind() {
 
 		$(".menu_hamburger").click(function() {
 			event.stopPropagation();
-			console.log("hi")
 			let mm = document.getElementsByClassName("more_menu")[0];
 			mm.classList.add("more_menu_selected");
 			let calc = $(this).offset().left - (mm.offsetWidth / 4);

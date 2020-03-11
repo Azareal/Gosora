@@ -165,13 +165,25 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user c.User, header *c.He
 
 	var rerr c.RouteError
 	tmpl := forum.Tmpl
-	if tmpl == "" {
-		rerr = renderTemplate("topic", w, r, header, tpage)
+	if r.FormValue("i") == "1" {
+		if tmpl == "" {
+			rerr = renderTemplate("topic_mini", w, r, header, tpage)
+		} else {
+			tmpl = "topic_mini" + tmpl
+			err = renderTemplate3(tmpl, tmpl, w, r, header, tpage)
+			if err != nil {
+				rerr = renderTemplate("topic_mini", w, r, header, tpage)
+			}
+		}
 	} else {
-		tmpl = "topic_" + tmpl
-		err = renderTemplate3(tmpl, tmpl, w, r, header, tpage)
-		if err != nil {
+		if tmpl == "" {
 			rerr = renderTemplate("topic", w, r, header, tpage)
+		} else {
+			tmpl = "topic_" + tmpl
+			err = renderTemplate3(tmpl, tmpl, w, r, header, tpage)
+			if err != nil {
+				rerr = renderTemplate("topic", w, r, header, tpage)
+			}
 		}
 	}
 	counters.TopicViewCounter.Bump(topic.ID) // TODO: Move this into the router?
@@ -576,7 +588,7 @@ func EditTopicSubmit(w http.ResponseWriter, r *http.Request, user c.User, stid s
 		return c.NoPermissionsJSQ(w, r, user, js)
 	}
 
-	err = topic.Update(r.PostFormValue("topic_name"), r.PostFormValue("topic_content"))
+	err = topic.Update(r.PostFormValue("name"), r.PostFormValue("content"))
 	// TODO: Avoid duplicating this across this route and the topic creation route
 	if err != nil {
 		switch err {
