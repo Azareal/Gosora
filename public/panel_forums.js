@@ -13,14 +13,14 @@ console.log("forums",forums);
 Sortable.create(document.getElementById("panel_forums"), {
 	sort: true,
 	onEnd: (evt) => {
-		console.log("pre forums", forums)
-		console.log("evt", evt)
+		console.log("pre forums",forums)
+		console.log("evt",evt)
 		let oldFid = forums[evt.newIndex];
 		forums[evt.oldIndex] = oldFid;
 		let newFid = evt.item.getAttribute("data-fid");
-		console.log("newFid", newFid);
+		console.log("newFid",newFid);
 		forums[evt.newIndex] = newFid;
-		console.log("post forums", forums);
+		console.log("post forums",forums);
 	}
 });
 

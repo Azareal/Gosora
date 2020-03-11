@@ -2,13 +2,12 @@
 var imageExts = ["png", "jpg", "jpe","jpeg","jif","jfi","jfif", "svg", "bmp", "gif", "tiff","tif", "webp"];
 
 (() => {
-	addInitHook("almost_end_init", () => {
 	function copyToClipboard(str) {
-		const el = document.createElement('textarea');
-		el.value = str;
-		el.setAttribute('readonly', '');
-		el.style.position = 'absolute';
-		el.style.left = '-9999px';
+		const el=document.createElement('textarea');
+		el.value=str;
+		el.setAttribute('readonly','');
+		el.style.position='absolute';
+		el.style.left='-9999px';
 		document.body.appendChild(el);
 		el.select();
 		document.execCommand('copy');
@@ -16,11 +15,11 @@ var imageExts = ["png", "jpg", "jpe","jpeg","jif","jfi","jfif", "svg", "bmp", "g
 	}
 
 	// TODO: Surely, there's a prettier and more elegant way of doing this?
-	function getExt(filename) {
-		if(!filename.indexOf('.' > -1)) throw("This file doesn't have an extension");
-		return filename.split('.').pop();
+	function getExt(name) {
+		if(!name.indexOf('.' > -1)) throw("This file doesn't have an extension");
+		return name.split('.').pop();
 	}
-		
+
 	function uploadFileHandler(fileList, maxFiles = 5, step1 = () => {}, step2 = () => {}) {
 		let files = [];
 		for(var i = 0; i < fileList.length && i < 5; i++) files[i] = fileList[i];
@@ -30,9 +29,7 @@ var imageExts = ["png", "jpg", "jpe","jpeg","jif","jfi","jfif", "svg", "bmp", "g
 			console.log("files[" + i + "]",files[i]);
 			totalSize += files[i]["size"];
 		}
-		if(totalSize > me.Site.MaxRequestSize) {
-			throw("You can't upload this much at once, max: " + me.Site.MaxRequestSize);
-		}
+		if(totalSize > me.Site.MaxRequestSize) throw("You can't upload this much at once, max: " + me.Site.MaxRequestSize);
 	
 		for(let i = 0; i < files.length; i++) {
 			let filename = files[i]["name"];
@@ -67,9 +64,8 @@ var imageExts = ["png", "jpg", "jpe","jpeg","jif","jfi","jfif", "svg", "bmp", "g
 		let fileDock = this.closest(".attach_edit_bay");
 		try {
 			uploadFileHandler(this.files, 5, () => {},
-			(e, hash, filename) => {
+			(e,hash,filename) => {
 				console.log("hash",hash);
-
 				let formData = new FormData();
 				formData.append("s",me.User.S);
 				for(let i = 0; i < this.files.length; i++) formData.append("upload_files",this.files[i]);
@@ -132,7 +128,7 @@ var imageExts = ["png", "jpg", "jpe","jpeg","jif","jfi","jfif", "svg", "bmp", "g
 				console.log("content.value", content.value);
 				
 				let attachItem;
-				if(content.value == "") attachItem = "//" + window.location.host + "/attachs/" + hash + "." + ext;
+				if(content.value=="") attachItem = "//" + window.location.host + "/attachs/" + hash + "." + ext;
 				else attachItem = "\r\n//" + window.location.host + "/attachs/" + hash + "." + ext;
 				content.value = content.value + attachItem;
 				console.log("content.value", content.value);
@@ -147,24 +143,29 @@ var imageExts = ["png", "jpg", "jpe","jpeg","jif","jfi","jfif", "svg", "bmp", "g
 		}
 	}
 
-	let uploadFiles = document.getElementById("upload_files");
-	if(uploadFiles != null) {
-		uploadFiles.addEventListener("change", uploadAttachHandler, false);
-	}
-	let uploadFilesOp = document.getElementById("upload_files_op");
-	if(uploadFilesOp != null) {
-		uploadFilesOp.addEventListener("change", uploadAttachHandler2, false);
-	}
-		
 	function bindAttachManager() {
 		let uploadFiles = document.getElementsByClassName("upload_files_post");
-		if(uploadFiles == null) return;
+		if(uploadFiles==null) return;
 		for(let i = 0; i < uploadFiles.length; i++) {
 			let uploader = uploadFiles[i];
 			uploader.value = "";
 			uploader.removeEventListener("change", uploadAttachHandler2, false);
 			uploader.addEventListener("change", uploadAttachHandler2, false);
 		}
+	}
+	
+	addInitHook("start_init", () => {
+	addHook("end_bind_topic", () => {
+
+	let uploadFiles = document.getElementById("upload_files");
+	if(uploadFiles!=null) {
+		uploadFiles.removeEventListener("change", uploadAttachHandler, false);
+		uploadFiles.addEventListener("change", uploadAttachHandler, false);
+	}
+	let uploadFilesOp = document.getElementById("upload_files_op");
+	if(uploadFilesOp!=null) {
+		uploadFilesOp.removeEventListener("change", uploadAttachHandler2, false);
+		uploadFilesOp.addEventListener("change", uploadAttachHandler2, false);
 	}
 	bindAttachManager();
 		
@@ -183,7 +184,8 @@ var imageExts = ["png", "jpg", "jpe","jpeg","jif","jfi","jfif", "svg", "bmp", "g
 		});
 	}
 	bindAttachItems();
-		
+	
+	$(".attach_item_delete").unbind("click");
 	$(".attach_item_delete").click(function(){
 		let formData = new URLSearchParams();
 		formData.append("s",me.User.S);
@@ -191,7 +193,7 @@ var imageExts = ["png", "jpg", "jpe","jpeg","jif","jfi","jfif", "svg", "bmp", "g
 		let post = this.closest(".post_item");
 		let aidList = "";
 		let elems = post.getElementsByClassName("attach_item_selected");
-		if(elems == null) return;
+		if(elems==null) return;
 			
 		for(let i = 0; i < elems.length; i++) {
 			let pathNode = elems[i].querySelector(".attach_item_path");
@@ -217,6 +219,8 @@ var imageExts = ["png", "jpg", "jpe","jpeg","jif","jfi","jfif", "svg", "bmp", "g
 		bindAttachManager();
 	});
 		
+	$(".moderate_link").unbind("click");
+	$(".mod_floater_submit").unbind("click");
 	$(".moderate_link").click(ev => {
 		ev.preventDefault();
 		$(".pre_opt").removeClass("auto_hide");
@@ -235,7 +239,7 @@ var imageExts = ["png", "jpg", "jpe","jpeg","jif","jfi","jfif", "svg", "bmp", "g
 			});
 		});
 	
-		let bulkActionSender = function(action, selectedTopics, fragBit) {
+		let bulkActionSender = function(action,selectedTopics,fragBit) {
 			let url = "/topic/"+action+"/submit/"+fragBit+"?s="+me.User.S;
 			$.ajax({
 				url: url,
@@ -248,6 +252,7 @@ var imageExts = ["png", "jpg", "jpe","jpeg","jif","jfi","jfif", "svg", "bmp", "g
 				}
 			});
 		};
+		// TODO: Should we unbind this here to avoid binding multiple listeners to this accidentally?
 		$(".mod_floater_submit").click(function(ev){
 			ev.preventDefault();
 			let selectNode = this.form.querySelector(".mod_floater_options");
@@ -263,9 +268,9 @@ var imageExts = ["png", "jpg", "jpe","jpeg","jif","jfi","jfif", "svg", "bmp", "g
 					$("#mod_topic_mover .pane_row").click(function(){
 						modTopicMover.find(".pane_row").removeClass("pane_selected");
 						let fid = this.getAttribute("data-fid");
-						if (fid == null) return;
+						if (fid==null) return;
 						this.classList.add("pane_selected");
-						console.log("fid", fid);
+						console.log("fid",fid);
 						forumToMoveTo = fid;
 	
 						$("#mover_submit").unbind("click");
@@ -285,8 +290,8 @@ var imageExts = ["png", "jpg", "jpe","jpeg","jif","jfi","jfif", "svg", "bmp", "g
 		console.log("clicked on pollinputinput");
 		let dataPollInput = $(this).parent().attr("data-pollinput");
 		console.log("dataPollInput", dataPollInput);
-		if(dataPollInput == undefined) return;
-		if(dataPollInput != (pollInputIndex-1)) return;
+		if(dataPollInput==undefined) return;
+		if(dataPollInput!=(pollInputIndex-1)) return;
 		$(".poll_content_row .formitem").append(Template_topic_c_poll_input({
 			Index: pollInputIndex,
 			Place: phraseBox["topic"]["topic.reply_add_poll_option"].replace("%d",pollInputIndex),
@@ -297,7 +302,8 @@ var imageExts = ["png", "jpg", "jpe","jpeg","jif","jfi","jfif", "svg", "bmp", "g
 		$(".pollinputinput").click(addPollInput);
 	}
 	
-	var pollInputIndex = 1;
+	let pollInputIndex = 1;
+	$("#add_poll_button").unbind("click");
 	$("#add_poll_button").click(ev => {
 		ev.preventDefault();
 		$(".poll_content_row").removeClass("auto_hide");
@@ -305,4 +311,5 @@ var imageExts = ["png", "jpg", "jpe","jpeg","jif","jfi","jfif", "svg", "bmp", "g
 		$(".pollinputinput").click(addPollInput);
 	});
 	});
-})();
+	});
+})()

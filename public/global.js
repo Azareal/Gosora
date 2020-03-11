@@ -1001,6 +1001,8 @@ function bindTopic() {
 		// For custom / third party text editors
 		quoteItemCallback(src.innerHTML,item);
 	});
+
+	runHook("end_bind_topic");
 }
 
 function unbindTopic() {
@@ -1010,4 +1012,5 @@ function unbindTopic() {
 	$(".edit_item").unbind("click");
 	$(".submit_edit").unbind("click");
 	$(".quote_item").unbind("click");
+	runHook("end_unbind_topic");
 }
