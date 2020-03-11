@@ -248,6 +248,7 @@ func main() {
 		"bing",
 		"slurp",
 		"exabot",
+		"mojeek",
 		"baidu",
 		"sogou",
 		"toutiao",
@@ -308,6 +309,7 @@ func main() {
 		"BingPreview",
 		"Slurp",
 		"Exabot",
+		"MojeekBot",
 		"SeznamBot",
 		"CloudFlare",
 		"archive", //archive.org_bot
@@ -357,6 +359,7 @@ func main() {
 		"BingPreview":         "bing",
 		"Slurp":               "slurp",
 		"Exabot":              "exabot",
+		"MojeekBot":           "mojeek",
 		"SeznamBot":           "seznambot",
 		"CloudFlare":          "cloudflare",  // Track alwayson specifically in case there are other bots?
 		"archive":             "archive_org", //archive.org_bot
