@@ -11,7 +11,7 @@
 		<span id="panel_forums_left_box">
 			{{/** TODO: Make sure the forum_active_name class is set and unset when the activity status of this forum is changed **/}}
 			<a data-field="forum_name" data-type="text" class="editable_block forum_name{{if not .Active}} forum_active_name{{end}}">{{.Name}}</a>
-			<br /><span data-field="forum_desc" data-type="text" class="editable_block forum_desc rowsmall">{{.Desc}}</span>
+			<br><span data-field="forum_desc" data-type="text" class="editable_block forum_desc rowsmall">{{.Desc}}</span>
 		</span>
 		<span class="panel_floater">
 			<span data-field="forum_active" data-type="list" class="panel_tag editable_block forum_active forum_active_{{if .Active}}Show" data-value="1{{else}}Hide" data-value="0{{end}}" title="{{lang "panel.forums_hidden"}}"></span>

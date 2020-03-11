@@ -8,7 +8,7 @@
 	{{range .ItemList}}<div id="forum_{{.ID}}" class="rowitem{{if (.Desc) or (.LastTopic.Title)}} datarow{{end}}" itemprop="itemListElement" itemscope
       itemtype="http://schema.org/ListItem">
 		<span class="forum_left shift_left">
-			<a href="{{.Link}}" itemprop="item">{{.Name}}</a><br />
+			<a href="{{.Link}}"itemprop="item">{{.Name}}</a><br>
 		{{if .Desc}}
 			<span class="rowsmall" itemprop="description">{{.Desc}}</span>
 		{{else}}
@@ -16,13 +16,12 @@
 		{{end}}
 		</span>
 		<span class="forum_right shift_right">
-			{{if .LastReplyer.MicroAvatar}}<img class="extra_little_row_avatar" src="{{.LastReplyer.MicroAvatar}}" height=64 width=64 alt="Avatar" title="{{.LastReplyer.Name}}'s Avatar" aria-hidden="true" />{{end}}
+			{{if .LastReplyer.MicroAvatar}}<img class="extra_little_row_avatar" src="{{.LastReplyer.MicroAvatar}}" height=64 width=64 alt="Avatar" title="{{.LastReplyer.Name}}'s Avatar" aria-hidden="true"/>{{end}}
 			<span>
 				<a {{if .LastTopic.Link}}href="{{.LastTopic.Link}}"{{else}}class="forum_no_poster"{{end}}>{{if .LastTopic.Title}}{{.LastTopic.Title}}{{else}}{{lang "forums_none"}}{{end}}</a>
-				{{if .LastTopicTime}}<br /><span class="rowsmall" title="{{abstime .LastTopic.LastReplyAt}}">{{.LastTopicTime}}</span>{{end}}
+				{{if .LastTopicTime}}<br><span class="rowsmall" title="{{abstime .LastTopic.LastReplyAt}}">{{.LastTopicTime}}</span>{{end}}
 			</span>
-		</span>
-		<div style="clear:both;"></div>
+		</span><div style="clear:both;"></div>
 	</div>
 	{{else}}<div class="rowitem passive rowmsg">{{lang "forums_no_forums"}}</div>{{end}}
 </div>

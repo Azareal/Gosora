@@ -428,7 +428,7 @@ function mainInit(){
 		ev.preventDefault();
 		//$(this).unbind("click");
 		let target = this.closest("a").getAttribute("href");
-		console.log("target", target);
+		console.log("target",target);
 
 		let controls = this.closest(".controls");
 		let hadLikes = controls.classList.contains("has_likes");
@@ -570,7 +570,7 @@ function mainInit(){
 			$(".topic_list_title h1").text(that.innerText);
 		}).catch(ex => {
 			console.log("Unable to get script '"+url+"&js=1"+"'");
-			console.log("ex", ex);
+			console.log("ex",ex);
 			console.trace();
 		});
 	});
@@ -580,7 +580,7 @@ function mainInit(){
 
 	// TODO: Show a search button when JS is disabled?
 	$(".widget_search_input").keypress(function(e) {
-		if (e.keyCode != '13') return;
+		if(e.keyCode!='13') return;
 		event.preventDefault();
 		// TODO: Take mostviewed into account
 		let url = "//"+window.location.host+window.location.pathname;
@@ -615,7 +615,7 @@ function mainInit(){
 				rebindPaginator();
 		}).catch(ex => {
 			console.log("Unable to get script '"+url+q+"&js=1"+"'");
-			console.log("ex", ex);
+			console.log("ex",ex);
 			console.trace();
 		});
 	});
@@ -648,7 +648,7 @@ function mainInit(){
 
 	$(".edit_fields").click(function(ev) {
 		ev.preventDefault();
-		if($(this).find("input").length !== 0) return;
+		if($(this).find("input").length!==0) return;
 		//console.log("clicked .edit_fields");
 		var blockParent = $(this).closest('.editable_parent');
 		blockParent.find('.hide_on_edit').addClass("edit_opened");
@@ -796,7 +796,7 @@ function mainInit(){
 		console.log("date", date);
 		let day = "0" + date.getDate();
 		let formattedTime = monthList[date.getMonth()] + " " + day.substr(-2) + " " + date.getFullYear();
-		console.log("formattedTime", formattedTime);
+		console.log("formattedTime",formattedTime);
 		this.innerText = formattedTime;
 	});
 
@@ -833,8 +833,8 @@ function mainInit(){
 			}
 
 			$("#poll_results_"+pollID+" .user_content").html("<div id='poll_results_chart_"+pollID+"'></div>");
-			console.log("rawData", rawData);
-			console.log("series", data);
+			console.log("rawData",rawData);
+			console.log("series",data);
 			Chartist.Pie('#poll_results_chart_'+pollID, {
  				series: data,
 			}, {
@@ -903,8 +903,8 @@ function bindTopic() {
 
 		$.ajax({
 			url: this.form.getAttribute("action"),
-			type: "POST",
-			dataType: "json",
+			type:"POST",
+			dataType:"json",
 			data: {
 				name: nameInput,
 				status: statusInput,
@@ -993,7 +993,7 @@ function bindTopic() {
 		console.log("content.value", content.value);
 
 		let item;
-		if(content.value == "") item = "<blockquote>" + src.innerHTML + "</blockquote>"
+		if(content.value=="") item = "<blockquote>" + src.innerHTML + "</blockquote>"
 		else item = "\r\n<blockquote>" + src.innerHTML + "</blockquote>";
 		content.value = content.value + item;
 		console.log("content.value", content.value);

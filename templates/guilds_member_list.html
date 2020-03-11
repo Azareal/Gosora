@@ -21,13 +21,13 @@
 <main id="socialgroups_member_list" class="rowblock member_list" style="position:relative;z-index:50;">
 	{{range .ItemList}}<div class="rowitem passive datarow" style="background-image:url({{.User.Avatar}});background-position:left;background-repeat:no-repeat;background-size:64px;padding-left:78px;{{if .Offline}}background-color:#eaeaea;{{else if gt .Rank 0}}background-color:#e6f3ff;{{end}}">
 		<span style="float:right;">
-			<span class="rank" style="font-size:15px;">{{.RankString}}</span><br />
+			<span class="rank" style="font-size:15px;">{{.RankString}}</span><br>
 			<span class="joinedAt rowsmall">{{.JoinedAt}}</span>
 		</span>
 		<span>
 			<a class="rowtopic" href="{{.Link}}">{{.User.Name}}</a>
       {{/** Use this for badges instead of rank? Both? Guild Titles? **/}}
-			<br /><span class="rowsmall postCount">{{.PostCount}} posts</span>
+			<br><span class="rowsmall postCount">{{.PostCount}} posts</span>
 		</span>
 	</div>
   {{end}}
