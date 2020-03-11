@@ -1,2 +1,7 @@
+<div id="back" class="zone_{{.Header.Zone}}{{if hasWidgets "rightSidebar" .Header }} shrink_main{{end}}">
+<div id="main">
+<div class="alertbox initial_alertbox">{{range .Header.NoticeList}}{{template "notice.html" . }}{{end}}</div>
 {{template "topic_alt_inner.html" . }}
+</div>
 <aside class="midRight sidebar">{{dock "rightSidebar" .Header}}</aside>
+</div>

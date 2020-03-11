@@ -14,15 +14,15 @@
 		{{range .Header.Scripts}}
 		<script src="/s/{{.}}"></script>{{end}}
 		<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
-		{{if .Header.MetaDesc}}<meta name="description" content="{{.Header.MetaDesc}}"/>{{end}}
+		{{if .Header.MetaDesc}}<meta name="description"content="{{.Header.MetaDesc}}"/>{{end}}
 		{{/** TODO: Have page / forum / topic level tags and descriptions below as-well **/}}
-		<meta property="og:type" content="website"/>
-		<meta property="og:site_name" content="{{.Header.Site.Name}}">
-		<meta property="og:title" content="{{.Title}} | {{.Header.Site.Name}}">
-		<meta name="twitter:title" content="{{.Title}} | {{.Header.Site.Name}}"/>
-		{{if .OGDesc}}<meta property="og:description" content="{{.OGDesc}}"/>
-		<meta property="twitter:description" content="{{.OGDesc}}"/>{{end}}
-		{{if .GoogSiteVerify}}<meta name="google-site-verification" content="{{.GoogSiteVerify}}"/>{{end}}
+		<meta property="og:type"content="website"/>
+		<meta property="og:site_name"content="{{.Header.Site.Name}}">
+		<meta property="og:title"content="{{.Title}} | {{.Header.Site.Name}}">
+		<meta name="twitter:title"content="{{.Title}} | {{.Header.Site.Name}}"/>
+		{{if .OGDesc}}<meta property="og:description"content="{{.OGDesc}}"/>
+		<meta property="twitter:description"content="{{.OGDesc}}"/>{{end}}
+		{{if .GoogSiteVerify}}<meta name="google-site-verification"content="{{.GoogSiteVerify}}"/>{{end}}
 		<link rel="search" type="application/opensearchdescription+xml" title="{{.Header.Site.Name}}" href="/opensearch.xml">
 	</head>
 	<body>
@@ -47,7 +47,7 @@
 <div class="user_box">
 	<img src="{{.CurrentUser.MicroAvatar}}"/>
 	<div class="option_box">
-		<a href="{{.CurrentUser.Link}}" class="username">{{.CurrentUser.Name}}</a>
+		<a href="{{.CurrentUser.Link}}"class="username">{{.CurrentUser.Name}}</a>
 		<span class="alerts">{{lang "alerts.no_alerts_short"}}</span>
 	</div>
 </div>

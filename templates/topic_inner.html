@@ -1,11 +1,11 @@
 <main id="topicPage">
 
 {{if gt .Page 1}}<link rel="prev" href="{{.Topic.Link}}?page={{subtract .Page 1}}"/>
-<div id="prevFloat" class="prev_button"><a class="prev_link" aria-label="{{lang "paginator.prev_page_aria"}}" rel="prev" href="{{.Topic.Link}}?page={{subtract .Page 1}}">{{lang "paginator.less_than"}}</a></div>{{end}}
+<div id="prevFloat" class="prev_button"><a class="prev_link" aria-label="{{lang "paginator.prev_page_aria"}}" rel="prev"href="{{.Topic.Link}}?page={{subtract .Page 1}}">{{lang "paginator.less_than"}}</a></div>{{end}}
 
 {{if ne .LastPage .Page}}<link rel="prerender next" href="{{.Topic.Link}}?page={{add .Page 1}}"/>
 <div id="nextFloat" class="next_button">
-	<a class="next_link" aria-label="{{lang "paginator.next_page_aria"}}" rel="next" href="{{.Topic.Link}}?page={{add .Page 1}}">{{lang "paginator.greater_than"}}</a>
+	<a class="next_link" aria-label="{{lang "paginator.next_page_aria"}}" rel="next"href="{{.Topic.Link}}?page={{add .Page 1}}">{{lang "paginator.greater_than"}}</a>
 </div>{{end}}
 <link rel="canonical" href="//{{.Site.URL}}{{.Topic.Link}}{{if gt .Page 1}}?page={{.Page}}{{end}}"/>
 

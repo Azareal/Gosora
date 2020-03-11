@@ -620,7 +620,7 @@ function mainInit(){
 		});
 	});
 
-	bindTopic();
+	bindPage();
 
 	$(".edit_field").click(function(ev) {
 		ev.preventDefault();
@@ -711,23 +711,6 @@ function mainInit(){
 		});
 	});
 
-	$(".quote_item").click(function(){
-		event.preventDefault();
-		event.stopPropagation();
-		let source = this.closest(".post_item").getElementsByClassName("edit_source")[0];
-		let content = document.getElementById("input_content")
-		console.log("content.value", content.value);
-
-		let item;
-		if(content.value == "") item = "<blockquote>" + source.innerHTML + "</blockquote>"
-		else item = "\r\n<blockquote>" + source.innerHTML + "</blockquote>";
-		content.value = content.value + item;
-		console.log("content.value", content.value);
-
-		// For custom / third party text editors
-		quoteItemCallback(source.innerHTML,item);
-	});
-
 	$(this).click(() => {
 		$(".selectedAlert").removeClass("selectedAlert");
 		$("#back").removeClass("alertActive");
@@ -772,9 +755,9 @@ function mainInit(){
 			error: ajaxError,
 			success: function (data,status,xhr) {
 				console.log("Theme successfully switched");
-				console.log("data", data);
-				console.log("status", status);
-				console.log("xhr", xhr);
+				console.log("data",data);
+				console.log("status",status);
+				console.log("xhr",xhr);
 				window.location.reload();
 			}
 		});
@@ -868,14 +851,10 @@ function mainInit(){
 				if(!resp.ok) throw(href+" failed to load");
 				return resp.text();
 			}).then(data => {
-				let el = document.createElement("div");
-				el.innerHTML = data;
-				console.log("el",el);
-				document.querySelector("main").outerHTML = el.children[0].innerHTML;
-				//$(".sidebar").html(el.children[1]);
-				document.querySelector(".sidebar").outerHTML = el.children[1].outerHTML;
+				document.querySelector("#back").outerHTML = data;
 				unbindTopic();
 				bindTopic();
+				$(".elapsed").remove();
 				let obj = {Title: document.title, Url: base};
 				history.pushState(obj, obj.Title, obj.Url);
 			}).catch(ex => {
@@ -890,6 +869,14 @@ function mainInit(){
 
 	runInitHook("almost_end_init");
 	runInitHook("end_init");
+}
+
+function bindPage() {
+	bindTopic();
+}
+
+function unbindPage() {
+	unbindTopic();
 }
 
 function bindTopic() {
@@ -997,6 +984,23 @@ function bindTopic() {
 			});
 		});
 	});
+
+	$(".quote_item").click(function(ev){
+		ev.preventDefault();
+		ev.stopPropagation();
+		let src = this.closest(".post_item").getElementsByClassName("edit_source")[0];
+		let content = document.getElementById("input_content")
+		console.log("content.value", content.value);
+
+		let item;
+		if(content.value == "") item = "<blockquote>" + src.innerHTML + "</blockquote>"
+		else item = "\r\n<blockquote>" + src.innerHTML + "</blockquote>";
+		content.value = content.value + item;
+		console.log("content.value", content.value);
+
+		// For custom / third party text editors
+		quoteItemCallback(src.innerHTML,item);
+	});
 }
 
 function unbindTopic() {
@@ -1005,4 +1009,5 @@ function unbindTopic() {
 	$(".delete_item").unbind("click");
 	$(".edit_item").unbind("click");
 	$(".submit_edit").unbind("click");
+	$(".quote_item").unbind("click");
 }
