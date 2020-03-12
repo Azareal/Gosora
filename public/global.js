@@ -58,7 +58,7 @@ function bindToAlerts() {
 	});
 }
 
-function addAlert(msg, notice = false) {
+function addAlert(msg, notice=false) {
 	var mmsg = msg.msg;
 	if(mmsg[0]==".") mmsg = phraseBox["alerts"]["alerts"+mmsg];
 	if("sub" in msg) {
@@ -68,7 +68,7 @@ function addAlert(msg, notice = false) {
 	let aItem = Template_alert({
 		ASID: msg.id,
 		Path: msg.path,
-		Avatar: msg.avatar || "",
+		Avatar: msg.img || "",
 		Message: mmsg
 	})
 	//alertMapping[msg.id] = aItem;
@@ -83,7 +83,7 @@ function addAlert(msg, notice = false) {
 		if(Notification.permission === "granted") {
 			var n = new Notification("Something Happened",{
 				body: mmsg,
-				icon: msg.avatar,
+				icon: msg.img,
 			});
 			setTimeout(n.close.bind(n), 8000);
 		}
@@ -130,7 +130,7 @@ function setAlertError(menuAlerts,msg) {
 
 var alertsInitted = false;
 var lastTc = 0;
-function loadAlerts(menuAlerts, eTc = false) {
+function loadAlerts(menuAlerts, eTc=false) {
 	if(!alertsInitted) return;
 	let tc = "";
 	if(eTc && lastTc != 0) tc = "&t=" + lastTc + "&c=" + alertCount;
@@ -138,7 +138,7 @@ function loadAlerts(menuAlerts, eTc = false) {
 		type:'get',
 		dataType:'json',
 		url:'/api/?m=alerts' + tc,
-		success: (data) => {
+		success: data => {
 			if("errmsg" in data) {
 				setAlertError(menuAlerts,data.errmsg)
 				return;
@@ -207,7 +207,7 @@ function wsAlertEvent(data) {
 	updateAlertList(generalAlerts/*, alist*/);
 }
 
-function runWebSockets(resume = false) {
+function runWebSockets(resume=false) {
 	let s = "";
 	if(window.location.protocol == "https:") s = "s";
 	conn = new WebSocket("ws"+s+"://" + document.location.host + "/ws/");

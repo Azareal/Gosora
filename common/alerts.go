@@ -167,7 +167,7 @@ func buildAlertString(msg string, sub []string, path, avatar string, asid int) s
 	return sb.String()
 }
 
-const AlertsGrowHint2 = len(`{"msg":"","sub":[],"path":"","avatar":"","id":}`) + 5 + 3 + 1 + 1 + 1
+const AlertsGrowHint2 = len(`{"msg":"","sub":[],"path":"","img":"","id":}`) + 5 + 3 + 1 + 1 + 1
 
 // TODO: Use a string builder?
 func buildAlertSb(sb *strings.Builder, msg string, sub []string, path, avatar string, asid int) {
@@ -185,7 +185,7 @@ func buildAlertSb(sb *strings.Builder, msg string, sub []string, path, avatar st
 	}
 	sb.WriteString(`],"path":"`)
 	sb.WriteString(escapeTextInJson(path))
-	sb.WriteString(`","avatar":"`)
+	sb.WriteString(`","img":"`)
 	sb.WriteString(escapeTextInJson(avatar))
 	sb.WriteString(`","id":`)
 	sb.WriteString(strconv.Itoa(asid))
@@ -289,7 +289,7 @@ func BuildAlertSb(sb *strings.Builder, a *Alert, user User /* The current user *
 	sb.WriteString(escapeTextInJson(area))
 	sb.WriteString(`"],"path":"`)
 	sb.WriteString(escapeTextInJson(url))
-	sb.WriteString(`","avatar":"`)
+	sb.WriteString(`","img":"`)
 	sb.WriteString(escapeTextInJson(a.Actor.Avatar))
 	sb.WriteString(`","id":`)
 	sb.WriteString(strconv.Itoa(a.ASID))
@@ -298,7 +298,7 @@ func BuildAlertSb(sb *strings.Builder, a *Alert, user User /* The current user *
 	return nil
 }
 
-//var AlertsGrowHint3 = len(`{"msg":"._","sub":["",""],"path":"","avatar":"","id":}`) + 3 + 2 + 2 + 2 + 2 + 1
+//var AlertsGrowHint3 = len(`{"msg":"._","sub":["",""],"path":"","img":"","id":}`) + 3 + 2 + 2 + 2 + 2 + 1
 
 func AddActivityAndNotifyAll(a Alert) error {
 	id, err := Activity.Add(a)
