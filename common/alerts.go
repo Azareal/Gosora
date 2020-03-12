@@ -56,7 +56,7 @@ func init() {
 	})
 }
 
-const AlertsGrowHint = len(`{"msgs":[],"count":,"tc":}`) + 1 + 7
+const AlertsGrowHint = len(`{"msgs":[],"count":,"tc":}`) + 1 + 10
 
 // TODO: See if we can json.Marshal instead?
 func escapeTextInJson(in string) string {
@@ -167,7 +167,7 @@ func buildAlertString(msg string, sub []string, path, avatar string, asid int) s
 	return sb.String()
 }
 
-const AlertsGrowHint2 = len(`{"msg":"","sub":[],"path":"","avatar":"","id":}`) + 3 + 3 + 1 + 1 + 1
+const AlertsGrowHint2 = len(`{"msg":"","sub":[],"path":"","avatar":"","id":}`) + 5 + 3 + 1 + 1 + 1
 
 // TODO: Use a string builder?
 func buildAlertSb(sb *strings.Builder, msg string, sub []string, path, avatar string, asid int) {

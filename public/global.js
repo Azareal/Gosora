@@ -236,7 +236,7 @@ function runWebSockets(resume = false) {
 
 		setTimeout(() => {
 			if(!noAlerts) {
-				var alertMenuList = document.getElementsByClassName("menu_alerts");
+				let alertMenuList = document.getElementsByClassName("menu_alerts");
 				for(var i=0; i < alertMenuList.length; i++) loadAlerts(alertMenuList[i]);
 			}
 			runWebSockets(true);
@@ -282,14 +282,14 @@ function runWebSockets(resume = false) {
 						delete alertMapping[key];
 
 						// TODO: Add support for other alert feeds like PM Alerts
-						var generalAlerts = document.getElementById("general_alerts");
+						let generalAlerts = document.getElementById("general_alerts");
 						if(alertList.length < 8) loadAlerts(generalAlerts);
 						else updateAlertList(generalAlerts);
 					});
 				}
 			} else if("Topics" in data) {
 				console.log("topic in data");
-				console.log("data", data);
+				console.log("data",data);
 				let topic = data.Topics[0];
 				if(topic === undefined){
 					console.log("empty topic list");
@@ -321,10 +321,10 @@ function runWebSockets(resume = false) {
 			}
 		}
 
-		var messages = event.data.split('\r');
+		let messages = event.data.split('\r');
 		for(var i=0; i < messages.length; i++) {
 			let message = messages[i];
-			//console.log("Message: ",message);
+			//console.log("message",message);
 			let msgblocks = SplitN(message," ",3);
 			if(msgblocks.length < 3) continue;
 			if(message.startsWith("set ")) {
@@ -348,7 +348,7 @@ function runWebSockets(resume = false) {
 		// We can only get away with this because template_alert has no phrases, otherwise it too would have to be part of the "dance", I miss Go concurrency :(
 		if(!noAlerts) {
 		notifyOnScriptW("template_alert", e => {
-			if(e!=undefined) console.log("failed alert? why?", e)
+			if(e!=undefined) console.log("failed alert? why?",e)
 		}, () => {
 			if(!Template_alert) throw("template function not found");
 			addInitHook("after_phrases", () => {
