@@ -72,20 +72,15 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError 
 	// TODO: Split this into it's own function
 	case "alerts": // A feed of events tailored for a specific user
 		if !user.Loggedin {
-			var etag string
-			/*_, ok := w.(c.GzipResponseWriter)
+			h := w.Header()
+			gzw, ok := w.(c.GzipResponseWriter)
 			if ok {
-				etag = c.GzipStartEtag
-			} else {
-				etag = c.StartEtag
-			}*/
-			_, ok := w.(c.GzipResponseWriter)
-			if ok {
-				etag = "\"1583653869-ng\""
-			} else {
-				etag = "\"1583653869-n\""
+				w = gzw.ResponseWriter
+				h.Del("Content-Encoding")
 			}
-			w.Header().Set("ETag", etag)
+			etag := "\"1583653869-n\""
+			//etag = c.StartEtag
+			h.Set("ETag", etag)
 			if match := r.Header.Get("If-None-Match"); match != "" {
 				if strings.Contains(match, etag) {
 					w.WriteHeader(http.StatusNotModified)
@@ -108,9 +103,7 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError 
 			gzw, ok := w.(c.GzipResponseWriter)
 			if ok {
 				w = gzw.ResponseWriter
-				h := w.Header()
-				h.Del("Content-Type")
-				h.Del("Content-Encoding")
+				w.Header().Del("Content-Encoding")
 			}
 			_, _ = io.WriteString(w, `{}`)
 			return nil
@@ -158,9 +151,7 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError 
 			gzw, ok := w.(c.GzipResponseWriter)
 			if ok {
 				w = gzw.ResponseWriter
-				h := w.Header()
-				h.Del("Content-Type")
-				h.Del("Content-Encoding")
+				w.Header().Del("Content-Encoding")
 			}
 			_, _ = io.WriteString(w, `{}`)
 			return nil
@@ -193,6 +184,7 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError 
 		sb.WriteString(`],"count":`)
 		sb.WriteString(strconv.Itoa(count))
 		sb.WriteString(`,"tc":`)
+		//rCreatedAt
 		sb.WriteString(strconv.Itoa(int(topCreatedAt)))
 		sb.WriteRune('}')
 

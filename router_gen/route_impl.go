@@ -63,9 +63,7 @@ func (r *RouteImpl) NoGzip() *RouteImpl {
 	return r.LitBeforeMultiline(`gzw, ok := w.(c.GzipResponseWriter)
 	if ok {
 		w = gzw.ResponseWriter
-		h := w.Header()
-		h.Del("Content-Type")
-		h.Del("Content-Encoding")
+		w.Header().Del("Content-Encoding")
 	}`)
 }
 

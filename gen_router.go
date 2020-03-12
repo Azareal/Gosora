@@ -788,13 +788,13 @@ func NewWriterIntercept(w http.ResponseWriter) *WriterIntercept {
 }
 
 var wiMaxAge = "max-age=" + strconv.Itoa(int(c.Day))
-func (writ *WriterIntercept) WriteHeader(code int) {
+func (wi *WriterIntercept) WriteHeader(code int) {
 	if code == 200 {
-		h := writ.ResponseWriter.Header()
+		h := wi.ResponseWriter.Header()
 		h.Set("Cache-Control", wiMaxAge)
 		h.Set("Vary", "Accept-Encoding")
 	}
-	writ.ResponseWriter.WriteHeader(code)
+	wi.ResponseWriter.WriteHeader(code)
 }
 
 // HTTPSRedirect is a connection handler which redirects all HTTP requests to HTTPS
@@ -1202,7 +1202,6 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if prefix != "/ws" && strings.Contains(req.Header.Get("Accept-Encoding"), "gzip") {
 		h := w.Header()
 		h.Set("Content-Encoding", "gzip")
-		h.Set("Content-Type", "text/html;charset=utf-8")
 		gzw := c.GzipResponseWriter{Writer: gzip.NewWriter(w), ResponseWriter: w}
 		defer func() {
 			if h.Get("Content-Encoding") == "gzip" && h.Get("X-I") == "" {
@@ -1277,9 +1276,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					gzw, ok := w.(c.GzipResponseWriter)
 					if ok {
 					w = gzw.ResponseWriter
-					h := w.Header()
-					h.Del("Content-Type")
-					h.Del("Content-Encoding")
+					w.Header().Del("Content-Encoding")
 					}
 			err = routes.ShowAttachment(w,req,user,extraData)
 			co.RouteViewCounter.Bump3(6, cn)
@@ -1845,9 +1842,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					gzw, ok := w.(c.GzipResponseWriter)
 					if ok {
 					w = gzw.ResponseWriter
-					h := w.Header()
-					h.Del("Content-Type")
-					h.Del("Content-Encoding")
+					w.Header().Del("Content-Encoding")
 					}
 					err = panel.Backups(w,req,user,extraData)
 					co.RouteViewCounter.Bump3(89, cn)
@@ -2736,7 +2731,6 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 			if ok {
 				w = gzw.ResponseWriter
 				h := w.Header()
-				h.Del("Content-Type")
 				h.Del("Content-Encoding")
 			}
 			req.URL.Path += extraData
@@ -2756,7 +2750,6 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 					if ok {
 						w = gzw.ResponseWriter
 						h := w.Header()
-						h.Del("Content-Type")
 						h.Del("Content-Encoding")
 					}
 					req.URL.Path = "/s/favicon.ico"

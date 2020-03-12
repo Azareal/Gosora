@@ -307,6 +307,7 @@ func (t *Theme) RunTmpl(template string, pi interface{}, w io.Writer) error {
 	gzw, ok := w.(GzipResponseWriter)
 	if ok {
 		w = gzw.Writer
+		gzw.Header().Set("Content-Type", "text/html;charset=utf-8")
 	}
 
 	getTmpl := t.GetTmpl(template)
