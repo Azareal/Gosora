@@ -161,6 +161,15 @@ func (t *Theme) AddThemeStaticFiles() error {
 		if err != nil {
 			return err
 		}
+		// Don't use Gzip if we get meagre gains from it as it takes longer to process the responses
+		if len(gzipData) >= (len(data) + 150) {
+			gzipData = nil
+		} else {
+			diff := len(data) - len(gzipData)
+			if diff <= len(data)/100 {
+				gzipData = nil
+			}
+		}
 
 		// Get a checksum for CSPs and cache busting
 		hasher := sha256.New()

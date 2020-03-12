@@ -238,6 +238,15 @@ func (list SFileList) JSTmplInit() error {
 		if err != nil {
 			return err
 		}
+		// Don't use Gzip if we get meagre gains from it as it takes longer to process the responses
+		if len(gzipData) >= (len(data) + 150) {
+			gzipData = nil
+		} else {
+			diff := len(data) - len(gzipData)
+			if diff <= len(data)/100 {
+				gzipData = nil
+			}
+		}
 
 		// Get a checksum for CSPs and cache busting
 		hasher := sha256.New()
@@ -279,7 +288,7 @@ func (list SFileList) Init() error {
 				return err
 			}
 			// Don't use Gzip if we get meagre gains from it as it takes longer to process the responses
-			if len(gzipData) >= (len(data) + 100) {
+			if len(gzipData) >= (len(data) + 150) {
 				gzipData = nil
 			} else {
 				diff := len(data) - len(gzipData)
@@ -315,6 +324,15 @@ func (list SFileList) Add(path, prefix string) error {
 	gzipData, err := CompressBytesGzip(data)
 	if err != nil {
 		return err
+	}
+	// Don't use Gzip if we get meagre gains from it as it takes longer to process the responses
+	if len(gzipData) >= (len(data) + 150) {
+		gzipData = nil
+	} else {
+		diff := len(data) - len(gzipData)
+		if diff <= len(data)/100 {
+			gzipData = nil
+		}
 	}
 
 	// Get a checksum for CSPs and cache busting
