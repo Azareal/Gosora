@@ -341,6 +341,12 @@ function runWebSockets(resume=false) {
 	}
 }
 
+// TODO: Surely, there's a prettier and more elegant way of doing this?
+function getExt(name) {
+	if(!name.indexOf('.' > -1)) throw("This file doesn't have an extension");
+	return name.split('.').pop();
+}
+
 (() => {
 	addInitHook("pre_init", () => {
 		runInitHook("pre_global");
@@ -813,42 +819,57 @@ function mainInit(){
 		if(ev.which == 39) this.querySelectorAll("#nextFloat a")[0].click();
 	};
 
-	//id="poll_results_{{.Poll.ID}}" class="poll_results auto_hide"
-	$(".poll_results_button").click(function(){
-		let pollID = $(this).attr("data-poll-id");
-		$("#poll_results_" + pollID).removeClass("auto_hide");
-		fetch("/poll/results/" + pollID, {
-			credentials: 'same-origin'
-		}).then(resp => resp.text()).catch(err => console.error("err",err)).then(rawData => {
-			// TODO: Make sure the received data is actually a list of integers
-			let data = JSON.parse(rawData);
-			let allZero = true;
-			for(let i = 0; i < data.length; i++) {
-				if(data[i] != "0") allZero = false;
+	function asyncGetSheet(src) {
+		return new Promise((resolve,reject) => {
+			let res = document.createElement('link');
+			res.async = true;
+	
+			const onloadHandler = (e,isAbort) => {
+				if (isAbort || !res.readyState || /loaded|complete/.test(res.readyState)) {
+					res.onload = null;
+					res.onreadystatechange = null;
+					res = undefined;
+	
+					isAbort ? reject(e) : resolve();
+				}
 			}
-			if(allZero) {
-				$("#poll_results_"+pollID+" .poll_no_results").removeClass("auto_hide");
-				console.log("all zero")
-				return;
-			}
+	
+			res.onerror = (e) => {
+				reject(e);
+			};
+			res.onload = onloadHandler;
+			res.onreadystatechange = onloadHandler;
+			res.href = src;
+			res.rel = "stylesheet";
+			res.type = "text/css";
+	
+			const prior = document.getElementsByTagName('link')[0];
+			prior.parentNode.insertBefore(res,prior);
+		});
+	}
 
-			$("#poll_results_"+pollID+" .user_content").html("<div id='poll_results_chart_"+pollID+"'></div>");
-			console.log("rawData",rawData);
-			console.log("series",data);
-			Chartist.Pie('#poll_results_chart_'+pollID, {
- 				series: data,
-			}, {
-				height: '120px',
-			});
-		})
-	});
+	function stripQ(name) {
+		return name.split('?')[0];
+	}
 
-	$(".rowtopic a, a.rowtopic").click(function(ev) {
+	$(".rowtopic a,a.rowtopic").click(function(ev) {
 		let base = this.getAttribute("href");
 		let href = base + "?i=1";
 		fetch(href, {credentials:"same-origin"})
 			.then(resp => {
 				if(!resp.ok) throw(href+" failed to load");
+				let xRes = resp.headers.get("x-res")
+				for(let res of xRes.split(",")) {
+					let pro;
+					if(stripQ(getExt(res)) == "css") pro = asyncGetSheet("/s/"+res)
+					else pro = asyncGetScript("/s/"+res)
+						pro.then(() => console.log("Loaded " + res))
+						.catch(e => {
+							console.log("Unable to get res '"+res+"'");
+							console.log("e",e);
+							console.trace();
+						});
+				}
 				return resp.text();
 			}).then(data => {
 				document.querySelector("#back").outerHTML = data;
@@ -1002,6 +1023,36 @@ function bindTopic() {
 		quoteItemCallback(src.innerHTML,item);
 	});
 
+	//id="poll_results_{{.Poll.ID}}" class="poll_results auto_hide"
+	$(".poll_results_button").click(function(){
+		let pollID = $(this).attr("data-poll-id");
+		$("#poll_results_" + pollID).removeClass("auto_hide");
+		fetch("/poll/results/" + pollID, {
+			credentials: 'same-origin'
+		}).then(resp => resp.text()).catch(err => console.error("err",err)).then(rawData => {
+			// TODO: Make sure the received data is actually a list of integers
+			let data = JSON.parse(rawData);
+			let allZero = true;
+			for(let i = 0; i < data.length; i++) {
+				if(data[i] != "0") allZero = false;
+			}
+			if(allZero) {
+				$("#poll_results_"+pollID+" .poll_no_results").removeClass("auto_hide");
+				console.log("all zero")
+				return;
+			}
+
+			$("#poll_results_"+pollID+" .user_content").html("<div id='poll_results_chart_"+pollID+"'></div>");
+			console.log("rawData",rawData);
+			console.log("series",data);
+			Chartist.Pie('#poll_results_chart_'+pollID, {
+ 				series: data,
+			}, {
+				height: '120px',
+			});
+		})
+	});
+
 	runHook("end_bind_topic");
 }
 
@@ -1012,5 +1063,6 @@ function unbindTopic() {
 	$(".edit_item").unbind("click");
 	$(".submit_edit").unbind("click");
 	$(".quote_item").unbind("click");
+	$(".poll_results_button").unbind("click");
 	runHook("end_unbind_topic");
 }

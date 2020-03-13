@@ -46,9 +46,9 @@ type Header struct {
 	LooseCSP       bool
 	//StartedAt      time.Time
 	StartedAt int64
-	Elapsed1       string
-	Writer         http.ResponseWriter
-	ExtData        ExtData
+	Elapsed1  string
+	Writer    http.ResponseWriter
+	ExtData   ExtData
 }
 
 func (h *Header) AddScript(name string) {
@@ -99,6 +99,26 @@ func (h *Header) AddSheet(name string) {
 		}
 	}
 	h.Stylesheets = append(h.Stylesheets, name)
+}
+
+// ! Experimental
+func (h *Header) AddXRes(names ...string) {
+	var o string
+	for i, name := range names {
+		if name[0] == '/' && name[1] == '/' {
+		} else {
+			file, ok := StaticFiles.Get("/s/" + name)
+			if ok {
+				name = file.OName
+			}
+		}
+		if i != 0 {
+			o += "," + name
+		} else {
+			o += name
+		}
+	}
+	h.Writer.Header().Set("X-Res", o)
 }
 
 func (h *Header) AddNotice(name string) {
@@ -356,12 +376,12 @@ type PanelAnalyticsActiveMemory struct {
 	MemType   int
 }
 type PanelAnalyticsPerf struct {
-	Graph PanelTimeGraph
+	Graph     PanelTimeGraph
 	ViewItems []PanelAnalyticsItemUnit
 	TimeRange string
-	Unit string
-	TimeType string
-	PerfType int
+	Unit      string
+	TimeType  string
+	PerfType  int
 }
 
 type PanelStats struct {
@@ -476,7 +496,7 @@ type PanelAnalyticsRoutesPage struct {
 type PanelAnalyticsRoutesPerfItem struct {
 	Route string
 	Count int
-	Unit string
+	Unit  string
 }
 
 type PanelAnalyticsRoutesPerfPage struct {
@@ -677,11 +697,11 @@ type PanelRegLogsPage struct {
 }
 
 type DebugPageTasks struct {
-	HalfSecond int
-	Second int
+	HalfSecond    int
+	Second        int
 	FifteenMinute int
-	Hour int
-	Shutdown int
+	Hour          int
+	Shutdown      int
 }
 
 type DebugPageCache struct {
@@ -742,8 +762,8 @@ type PanelDebugPage struct {
 	Goroutines int
 	CPUs       int
 
-	Tasks DebugPageTasks
-	MemStats   runtime.MemStats
+	Tasks    DebugPageTasks
+	MemStats runtime.MemStats
 	Cache    DebugPageCache
 	Database DebugPageDatabase
 	Disk     DebugPageDisk

@@ -3,10 +3,10 @@
 	<head>
 		<title>{{.Title}} | {{.Header.Site.Name}}</title>
 		{{range .Header.Stylesheets}}
-		<link href="/s/{{.}}" rel="stylesheet" type="text/css">{{end}}
+		<link href="/s/{{.}}"rel="stylesheet"type="text/css">{{end}}
 		{{range .Header.PreScriptsAsync}}
 		<script async src="/s/{{.}}"></script>{{end}}
-		<meta property="x-loggedin" content="{{.CurrentUser.Loggedin}}"/>
+		<meta property="x-loggedin"content="{{.CurrentUser.Loggedin}}">
 		<script src="/s/init.js?i=10"></script>
 		{{range .Header.ScriptsAsync}}
 		<script async src="/s/{{.}}"></script>{{end}}

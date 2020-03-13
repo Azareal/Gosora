@@ -110,7 +110,7 @@ function notifyOnScriptW(name,complete,success) {
 			if(success!==undefined) success();
 		}).catch(e => {
 			console.log("Unable to get script name '"+name+"'");
-			console.log("e", e);
+			console.log("e",e);
 			console.trace();
 			complete(e);
 		});
@@ -134,11 +134,11 @@ function loadScript(name,callback,fail) {
 					.then(callback)
 					.catch(e => {
 						console.log("Unable to get script '"+iurl+"'");
-						console.log("e", e);
+						console.log("e",e);
 						console.trace();
 					});
 			}
-			console.log("e", e);
+			console.log("e",e);
 			console.trace();
 			fail(e);
 		});
@@ -156,7 +156,7 @@ function RelativeTime(date) {
 	return date;
 }
 
-function initPhrases(loggedIn, panel = false) {
+function initPhrases(loggedIn, panel=false) {
 	console.log("in initPhrases")
 	console.log("tmlInits",tmplInits)
 	let e = "";
@@ -167,7 +167,7 @@ function initPhrases(loggedIn, panel = false) {
 }
 
 function fetchPhrases(plist) {
-	fetch("/api/phrases/?q="+plist, {cache: "no-cache"})
+	fetch("/api/phrases/?q="+plist, {cache:"no-cache"})
 		.then(resp => resp.json())
 		.then(data => {
 			console.log("loaded phrase endpoint data");

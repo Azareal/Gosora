@@ -115,8 +115,6 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user c.User, header *c.He
 			return c.InternalError(err, w, r)
 		}
 		poll = pPoll.Copy()
-		header.AddSheet("chartist/chartist.min.css")
-		header.AddScript("chartist/chartist.min.js")
 	}
 
 	if topic.LikeCount > 0 && user.Liked > 0 {
@@ -166,6 +164,9 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user c.User, header *c.He
 	var rerr c.RouteError
 	tmpl := forum.Tmpl
 	if r.FormValue("i") == "1" {
+		if tpage.Poll.ID != 0 {
+			header.AddXRes("chartist/chartist.min.css", "chartist/chartist.min.js")
+		}
 		if tmpl == "" {
 			rerr = renderTemplate("topic_mini", w, r, header, tpage)
 		} else {
@@ -176,6 +177,10 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user c.User, header *c.He
 			}
 		}
 	} else {
+		if tpage.Poll.ID != 0 {
+			header.AddSheet("chartist/chartist.min.css")
+			header.AddScript("chartist/chartist.min.js")
+		}
 		if tmpl == "" {
 			rerr = renderTemplate("topic", w, r, header, tpage)
 		} else {

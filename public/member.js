@@ -14,12 +14,6 @@ var imageExts = ["png", "jpg", "jpe","jpeg","jif","jfi","jfif", "svg", "bmp", "g
 		document.body.removeChild(el);
 	}
 
-	// TODO: Surely, there's a prettier and more elegant way of doing this?
-	function getExt(name) {
-		if(!name.indexOf('.' > -1)) throw("This file doesn't have an extension");
-		return name.split('.').pop();
-	}
-
 	function uploadFileHandler(fileList, maxFiles = 5, step1 = () => {}, step2 = () => {}) {
 		let files = [];
 		for(var i = 0; i < fileList.length && i < 5; i++) files[i] = fileList[i];
@@ -289,7 +283,7 @@ var imageExts = ["png", "jpg", "jpe","jpeg","jif","jfi","jfif", "svg", "bmp", "g
 	function addPollInput() {
 		console.log("clicked on pollinputinput");
 		let dataPollInput = $(this).parent().attr("data-pollinput");
-		console.log("dataPollInput", dataPollInput);
+		console.log("dataPollInput",dataPollInput);
 		if(dataPollInput==undefined) return;
 		if(dataPollInput!=(pollInputIndex-1)) return;
 		$(".poll_content_row .formitem").append(Template_topic_c_poll_input({
@@ -297,7 +291,7 @@ var imageExts = ["png", "jpg", "jpe","jpeg","jif","jfi","jfif", "svg", "bmp", "g
 			Place: phraseBox["topic"]["topic.reply_add_poll_option"].replace("%d",pollInputIndex),
 		}));
 		pollInputIndex++;
-		console.log("new pollInputIndex", pollInputIndex);
+		console.log("new pollInputIndex",pollInputIndex);
 		$(".pollinputinput").off("click");
 		$(".pollinputinput").click(addPollInput);
 	}

@@ -119,7 +119,9 @@ func FootHeaders(w http.ResponseWriter, header *c.Header) {
 func renderTemplate3(tmplName, hookName string, w http.ResponseWriter, r *http.Request, h *c.Header, pi interface{}) error {
 	s := h.Stylesheets
 	h.Stylesheets = nil
-	c.PrepResources(&h.CurrentUser, h, h.Theme)
+	if r.FormValue("i") != "1" {
+		c.PrepResources(&h.CurrentUser, h, h.Theme)
+	}
 	for _, ss := range s {
 		h.Stylesheets = append(h.Stylesheets, ss)
 	}
