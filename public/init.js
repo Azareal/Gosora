@@ -8,7 +8,7 @@ var ranInitHooks={}
 
 function runHook(name,...args) {
 	if(!(name in hooks)) {
-		console.log("Couldn't find hook '" + name + "'");
+		console.log("Couldn't find hook '"+name+"'");
 		return;
 	}
 	console.log("Running hook '"+name+"'");
@@ -37,9 +37,7 @@ function addInitHook(name,h) {
 }
 
 // Temporary hack for templates
-function len(it) {
-	return it.length;
-}
+function len(it) {return it.length;}
 
 function asyncGetScript(src) {
 	return new Promise((resolve,reject) => {
@@ -105,12 +103,11 @@ function notifyOnScript(src) {
 function notifyOnScriptW(name,complete,success) {
 	notifyOnScript(name)
 		.then(() => {
-			console.log("Loaded " +name+".js");
+			console.log("Loaded "+name+".js");
 			complete();
 			if(success!==undefined) success();
 		}).catch(e => {
-			console.log("Unable to get script name '"+name+"'");
-			console.log("e",e);
+			console.log("Unable to get script name '"+name+"'",e);
 			console.trace();
 			complete(e);
 		});
@@ -119,9 +116,9 @@ function notifyOnScriptW(name,complete,success) {
 // TODO: Send data at load time so we don't have to rely on a fallback template here
 function loadScript(name,callback,fail) {
 	let fname = name;
-	let value = "; " + document.cookie;
- 	let parts = value.split("; current_theme=");
- 	if (parts.length == 2) fname += "_"+ parts.pop().split(";").shift();
+	let value = "; "+document.cookie;
+	let parts = value.split("; current_theme=");
+	if(parts.length==2) fname += "_"+parts.pop().split(";").shift();
 	
 	let url = "/s/"+fname+".js"
 	let iurl = "/s/"+name+".js"
@@ -133,8 +130,7 @@ function loadScript(name,callback,fail) {
 				asyncGetScript(iurl)
 					.then(callback)
 					.catch(e => {
-						console.log("Unable to get script '"+iurl+"'");
-						console.log("e",e);
+						console.log("Unable to get script '"+iurl+"'",e);
 						console.trace();
 					});
 			}
@@ -144,17 +140,7 @@ function loadScript(name,callback,fail) {
 		});
 }
 
-/*function loadTmpl(name,callback) {
-	let url = "/s/"+name
-	let worker = new Worker(url);
-}*/
-
-function DoNothingButPassBack(it) {
-	return it;
-}
-function RelativeTime(date) {
-	return date;
-}
+function RelativeTime(date) {return date;}
 
 function initPhrases(loggedIn, panel=false) {
 	console.log("in initPhrases")
@@ -173,7 +159,7 @@ function fetchPhrases(plist) {
 			console.log("loaded phrase endpoint data");
 			console.log("data",data);
 			Object.keys(tmplInits).forEach(key => {
-				let phrases = [];
+				let phrases=[];
 				let tmplInit = tmplInits[key];
 				for(let phraseName of tmplInit) phrases.push(data[phraseName]);
 				console.log("Adding phrases");

@@ -128,6 +128,7 @@ func renderTemplate3(tmplName, hookName string, w http.ResponseWriter, r *http.R
 		if h.CurrentUser.Loggedin {
 			h.AddScriptAsync("member.js")
 		}
+		h.CurrentUser.LastAgent = 0
 	}
 
 	if h.CurrentUser.Loggedin {
