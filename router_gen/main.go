@@ -249,6 +249,7 @@ func main() {
 		"slurp",
 		"exabot",
 		"mojeek",
+		"cliqz",
 		"baidu",
 		"sogou",
 		"toutiao",
@@ -274,9 +275,11 @@ func main() {
 		"ahrefs",
 		"proximic",
 		"majestic",
+		"blexbot",
 		"aspiegel",
 		"mail_ru",
 		"zgrab",
+		"curl",
 	}
 
 	tmplVars.AllAgentMap = make(map[string]int)
@@ -310,6 +313,7 @@ func main() {
 		"Slurp",
 		"Exabot",
 		"MojeekBot",
+		"Cliqzbot",
 		"SeznamBot",
 		"CloudFlare",
 		"archive", //archive.org_bot
@@ -329,9 +333,11 @@ func main() {
 		"AhrefsBot",
 		"proximic",
 		"MJ12bot",
+		"BLEXBot",
 		"AspiegelBot",
 		"RU_Bot", // Mail.RU_Bot
 		"zgrab",
+		"curl",
 	}
 
 	tmplVars.AllAgentMarks = map[string]string{
@@ -360,6 +366,7 @@ func main() {
 		"Slurp":               "slurp",
 		"Exabot":              "exabot",
 		"MojeekBot":           "mojeek",
+		"Cliqzbot":            "cliqz",
 		"SeznamBot":           "seznambot",
 		"CloudFlare":          "cloudflare",  // Track alwayson specifically in case there are other bots?
 		"archive":             "archive_org", //archive.org_bot
@@ -379,9 +386,11 @@ func main() {
 		"AhrefsBot":   "ahrefs",
 		"proximic":    "proximic",
 		"MJ12bot":     "majestic",
+		"BLEXBot":     "blexbot",
 		"AspiegelBot": "aspiegel",
 		"RU_Bot":      "mail_ru", // Mail.RU_Bot
 		"zgrab":       "zgrab",
+		"curl":        "curl",
 	}
 
 	tmplVars.AllAgentMarkIDs = make(map[string]int)
@@ -918,6 +927,10 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 		/*case "/sitemaps": // TODO: Count these views
 			req.URL.Path += extraData
 			err = sitemapSwitch(w,req)*/
+		// ! Temporary fix for certain bots
+		case "/static":
+			w.Header().Set("Connection", "close")
+			http.Redirect(w, req, "/s/"+extraData, http.StatusTemporaryRedirect)
 		case "/uploads":
 			if extraData == "" {
 				co.RouteViewCounter.Bump3({{index .AllRouteMap "routes.UploadedFile"}}, cn)

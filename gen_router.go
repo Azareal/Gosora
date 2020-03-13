@@ -589,34 +589,37 @@ var agentMapEnum = map[string]int{
 	"slurp": 15,
 	"exabot": 16,
 	"mojeek": 17,
-	"baidu": 18,
-	"sogou": 19,
-	"toutiao": 20,
-	"haosou": 21,
-	"duckduckgo": 22,
-	"seznambot": 23,
-	"discord": 24,
-	"twitter": 25,
-	"facebook": 26,
-	"cloudflare": 27,
-	"archive_org": 28,
-	"uptimebot": 29,
-	"slackbot": 30,
-	"apple": 31,
-	"discourse": 32,
-	"alexa": 33,
-	"lynx": 34,
-	"blank": 35,
-	"malformed": 36,
-	"suspicious": 37,
-	"semrush": 38,
-	"dotbot": 39,
-	"ahrefs": 40,
-	"proximic": 41,
-	"majestic": 42,
-	"aspiegel": 43,
-	"mail_ru": 44,
-	"zgrab": 45,
+	"cliqz": 18,
+	"baidu": 19,
+	"sogou": 20,
+	"toutiao": 21,
+	"haosou": 22,
+	"duckduckgo": 23,
+	"seznambot": 24,
+	"discord": 25,
+	"twitter": 26,
+	"facebook": 27,
+	"cloudflare": 28,
+	"archive_org": 29,
+	"uptimebot": 30,
+	"slackbot": 31,
+	"apple": 32,
+	"discourse": 33,
+	"alexa": 34,
+	"lynx": 35,
+	"blank": 36,
+	"malformed": 37,
+	"suspicious": 38,
+	"semrush": 39,
+	"dotbot": 40,
+	"ahrefs": 41,
+	"proximic": 42,
+	"majestic": 43,
+	"blexbot": 44,
+	"aspiegel": 45,
+	"mail_ru": 46,
+	"zgrab": 47,
+	"curl": 48,
 }
 var reverseAgentMapEnum = map[int]string{ 
 	0: "unknown",
@@ -637,34 +640,37 @@ var reverseAgentMapEnum = map[int]string{
 	15: "slurp",
 	16: "exabot",
 	17: "mojeek",
-	18: "baidu",
-	19: "sogou",
-	20: "toutiao",
-	21: "haosou",
-	22: "duckduckgo",
-	23: "seznambot",
-	24: "discord",
-	25: "twitter",
-	26: "facebook",
-	27: "cloudflare",
-	28: "archive_org",
-	29: "uptimebot",
-	30: "slackbot",
-	31: "apple",
-	32: "discourse",
-	33: "alexa",
-	34: "lynx",
-	35: "blank",
-	36: "malformed",
-	37: "suspicious",
-	38: "semrush",
-	39: "dotbot",
-	40: "ahrefs",
-	41: "proximic",
-	42: "majestic",
-	43: "aspiegel",
-	44: "mail_ru",
-	45: "zgrab",
+	18: "cliqz",
+	19: "baidu",
+	20: "sogou",
+	21: "toutiao",
+	22: "haosou",
+	23: "duckduckgo",
+	24: "seznambot",
+	25: "discord",
+	26: "twitter",
+	27: "facebook",
+	28: "cloudflare",
+	29: "archive_org",
+	30: "uptimebot",
+	31: "slackbot",
+	32: "apple",
+	33: "discourse",
+	34: "alexa",
+	35: "lynx",
+	36: "blank",
+	37: "malformed",
+	38: "suspicious",
+	39: "semrush",
+	40: "dotbot",
+	41: "ahrefs",
+	42: "proximic",
+	43: "majestic",
+	44: "blexbot",
+	45: "aspiegel",
+	46: "mail_ru",
+	47: "zgrab",
+	48: "curl",
 }
 var markToAgent = map[string]string{ 
 	"OPR": "opera",
@@ -691,6 +697,7 @@ var markToAgent = map[string]string{
 	"Slurp": "slurp",
 	"Exabot": "exabot",
 	"MojeekBot": "mojeek",
+	"Cliqzbot": "cliqz",
 	"SeznamBot": "seznambot",
 	"CloudFlare": "cloudflare",
 	"archive": "archive_org",
@@ -709,9 +716,11 @@ var markToAgent = map[string]string{
 	"AhrefsBot": "ahrefs",
 	"proximic": "proximic",
 	"MJ12bot": "majestic",
+	"BLEXBot": "blexbot",
 	"AspiegelBot": "aspiegel",
 	"RU_Bot": "mail_ru",
 	"zgrab": "zgrab",
+	"curl": "curl",
 }
 var markToID = map[string]int{ 
 	"OPR": 3,
@@ -721,44 +730,47 @@ var markToID = map[string]int{
 	"MSIE": 6,
 	"Trident": 7,
 	"Edge": 5,
-	"Lynx": 34,
+	"Lynx": 35,
 	"SamsungBrowser": 10,
 	"UCBrowser": 11,
 	"Google": 12,
 	"Googlebot": 12,
 	"yandex": 13,
-	"DuckDuckBot": 22,
-	"DuckDuckGo": 22,
-	"Baiduspider": 18,
-	"Sogou": 19,
-	"ToutiaoSpider": 20,
-	"360Spider": 21,
+	"DuckDuckBot": 23,
+	"DuckDuckGo": 23,
+	"Baiduspider": 19,
+	"Sogou": 20,
+	"ToutiaoSpider": 21,
+	"360Spider": 22,
 	"bingbot": 14,
 	"BingPreview": 14,
 	"Slurp": 15,
 	"Exabot": 16,
 	"MojeekBot": 17,
-	"SeznamBot": 23,
-	"CloudFlare": 27,
-	"archive": 28,
-	"Uptimebot": 29,
-	"Slackbot": 30,
-	"Slack": 30,
-	"Discordbot": 24,
-	"Twitterbot": 25,
-	"facebookexternalhit": 26,
-	"Facebot": 26,
-	"Applebot": 31,
-	"Discourse": 32,
-	"ia_archiver": 33,
-	"SemrushBot": 38,
-	"DotBot": 39,
-	"AhrefsBot": 40,
-	"proximic": 41,
-	"MJ12bot": 42,
-	"AspiegelBot": 43,
-	"RU_Bot": 44,
-	"zgrab": 45,
+	"Cliqzbot": 18,
+	"SeznamBot": 24,
+	"CloudFlare": 28,
+	"archive": 29,
+	"Uptimebot": 30,
+	"Slackbot": 31,
+	"Slack": 31,
+	"Discordbot": 25,
+	"Twitterbot": 26,
+	"facebookexternalhit": 27,
+	"Facebot": 27,
+	"Applebot": 32,
+	"Discourse": 33,
+	"ia_archiver": 34,
+	"SemrushBot": 39,
+	"DotBot": 40,
+	"AhrefsBot": 41,
+	"proximic": 42,
+	"MJ12bot": 43,
+	"BLEXBot": 44,
+	"AspiegelBot": 45,
+	"RU_Bot": 46,
+	"zgrab": 47,
+	"curl": 48,
 }
 /*var agentRank = map[string]int{
 	"opera":9,
@@ -886,7 +898,7 @@ func (r *GenRouter) SuspiciousRequest(req *http.Request, pre string) {
 		pre += "\n"
 	}
 	r.DumpRequest(req,pre+"Suspicious Request")
-	co.AgentViewCounter.Bump(37)
+	co.AgentViewCounter.Bump(38)
 }
 
 func isLocalHost(h string) bool {
@@ -901,7 +913,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(200) // 400
 		w.Write([]byte(""))
 		r.DumpRequest(req,"Malformed Request T"+strconv.Itoa(typ))
-		co.AgentViewCounter.Bump(36)
+		co.AgentViewCounter.Bump(37)
 	}
 	
 	// Split the Host and Port string
@@ -1044,7 +1056,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	
 	ua := strings.TrimSpace(strings.Replace(strings.TrimPrefix(req.UserAgent(),"Mozilla/5.0 ")," Safari/537.36","",-1)) // Noise, no one's going to be running this and it would require some sort of agent ranking system to determine which identifier should be prioritised over another
 	if ua == "" {
-		co.AgentViewCounter.Bump(35)
+		co.AgentViewCounter.Bump(36)
 		if c.Dev.DebugMode {
 			var pre string
 			for _, char := range req.UserAgent() {
@@ -1125,7 +1137,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			if strings.Contains(ua,"rv:11") {
 				agent = 6
 			}
-		case 45:
+		case 47:
 			r.SuspiciousRequest(req,"Vulnerability Scanner")
 		}
 		
@@ -2722,6 +2734,10 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c
 		/*case "/sitemaps": // TODO: Count these views
 			req.URL.Path += extraData
 			err = sitemapSwitch(w,req)*/
+		// ! Temporary fix for certain bots
+		case "/static":
+			w.Header().Set("Connection", "close")
+			http.Redirect(w, req, "/s/"+extraData, http.StatusTemporaryRedirect)
 		case "/uploads":
 			if extraData == "" {
 				co.RouteViewCounter.Bump3(166, cn)

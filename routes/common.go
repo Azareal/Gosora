@@ -121,9 +121,13 @@ func renderTemplate3(tmplName, hookName string, w http.ResponseWriter, r *http.R
 	h.Stylesheets = nil
 	if r.FormValue("i") != "1" {
 		c.PrepResources(&h.CurrentUser, h, h.Theme)
-	}
-	for _, ss := range s {
-		h.Stylesheets = append(h.Stylesheets, ss)
+		for _, ss := range s {
+			h.Stylesheets = append(h.Stylesheets, ss)
+		}
+		h.AddScript("global.js")
+		if h.CurrentUser.Loggedin {
+			h.AddScriptAsync("member.js")
+		}
 	}
 
 	if h.CurrentUser.Loggedin {
@@ -131,10 +135,6 @@ func renderTemplate3(tmplName, hookName string, w http.ResponseWriter, r *http.R
 		h.OGDesc = ""
 	} else if h.MetaDesc != "" && h.OGDesc == "" {
 		h.OGDesc = h.MetaDesc
-	}
-	h.AddScript("global.js")
-	if h.CurrentUser.Loggedin {
-		h.AddScriptAsync("member.js")
 	}
 
 	FootHeaders(w, h)
