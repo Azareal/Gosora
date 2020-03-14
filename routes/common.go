@@ -119,7 +119,7 @@ func FootHeaders(w http.ResponseWriter, header *c.Header) {
 func renderTemplate3(tmplName, hookName string, w http.ResponseWriter, r *http.Request, h *c.Header, pi interface{}) error {
 	s := h.Stylesheets
 	h.Stylesheets = nil
-	if r.FormValue("i") != "1" {
+	if r.FormValue("i") != "1" && h.CurrentUser.LastAgent != c.Semrush {
 		c.PrepResources(&h.CurrentUser, h, h.Theme)
 		for _, ss := range s {
 			h.Stylesheets = append(h.Stylesheets, ss)
@@ -131,7 +131,7 @@ func renderTemplate3(tmplName, hookName string, w http.ResponseWriter, r *http.R
 		h.CurrentUser.LastAgent = 0
 	}
 
-	if h.CurrentUser.Loggedin {
+	if h.CurrentUser.Loggedin || h.CurrentUser.LastAgent == c.Semrush {
 		h.MetaDesc = ""
 		h.OGDesc = ""
 	} else if h.MetaDesc != "" && h.OGDesc == "" {

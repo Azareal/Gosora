@@ -789,6 +789,7 @@ func init() {
 	co.SetReverseOSMapEnum(reverseOSMapEnum)
 	c.Chrome = agentMapEnum["chrome"]
 	c.Firefox = agentMapEnum["firefox"]
+	c.Semrush = agentMapEnum["semrush"]
 }
 
 type WriterIntercept struct {
