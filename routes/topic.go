@@ -75,10 +75,12 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user c.User, header *c.He
 	}
 
 	topic.ContentLines = strings.Count(topic.Content, "\n")
-	if len(topic.Content) > 200 {
-		header.OGDesc = topic.Content[:197] + "..."
-	} else {
-		header.OGDesc = topic.Content
+	if !user.Loggedin && user.LastAgent != c.Semrush {
+		if len(topic.Content) > 200 {
+			header.OGDesc = topic.Content[:197] + "..."
+		} else {
+			header.OGDesc = topic.Content
+		}
 	}
 
 	var parseSettings *c.ParseSettings
