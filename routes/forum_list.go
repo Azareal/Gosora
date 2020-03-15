@@ -8,8 +8,8 @@ import (
 	"github.com/Azareal/Gosora/common/phrases"
 )
 
-func ForumList(w http.ResponseWriter, r *http.Request, user *c.User, h *c.Header) c.RouteError {
-	skip, rerr := h.Hooks.VhookSkippable("route_forum_list_start", w, r, user, h)
+func ForumList(w http.ResponseWriter, r *http.Request, user c.User, h *c.Header) c.RouteError {
+	skip, rerr := h.Hooks.VhookSkippable("route_forum_list_start", w, r, &user, h)
 	if skip || rerr != nil {
 		return rerr
 	}

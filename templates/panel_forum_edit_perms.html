@@ -8,7 +8,7 @@
 			<div class="formitem">
 				<a>{{.LangStr}}</a>
 				<div class="to_right">
-					<select name="perm-{{.Name}}">
+					<select name="forum-perm-{{.Name}}">
 						<option{{if .Toggle}} selected{{end}} value=1>{{lang "option_yes"}}</option>
 						<option{{if not .Toggle}} selected{{end}} value=0>{{lang "option_no"}}</option>
 					</select>

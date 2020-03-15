@@ -822,7 +822,7 @@ func (red *HTTPSRedirect) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 type GenRouter struct {
 	UploadHandler func(http.ResponseWriter, *http.Request)
-	extraRoutes map[string]func(http.ResponseWriter, *http.Request, *c.User) c.RouteError
+	extraRoutes map[string]func(http.ResponseWriter, *http.Request, c.User) c.RouteError
 	requestLogger *log.Logger
 	
 	sync.RWMutex
@@ -839,12 +839,12 @@ func NewGenRouter(uploads http.Handler) (*GenRouter, error) {
 			writ := NewWriterIntercept(w)
 			http.StripPrefix("/uploads/",uploads).ServeHTTP(writ,req)
 		},
-		extraRoutes: make(map[string]func(http.ResponseWriter, *http.Request, *c.User) c.RouteError),
+		extraRoutes: make(map[string]func(http.ResponseWriter, *http.Request, c.User) c.RouteError),
 		requestLogger: log.New(f, "", log.LstdFlags),
 	}, nil
 }
 
-func (r *GenRouter) handleError(err c.RouteError, w http.ResponseWriter, req *http.Request, user *c.User) {
+func (r *GenRouter) handleError(err c.RouteError, w http.ResponseWriter, req *http.Request, user c.User) {
 	if err.Handled() {
 		return
 	}
@@ -858,7 +858,7 @@ func (r *GenRouter) handleError(err c.RouteError, w http.ResponseWriter, req *ht
 func (r *GenRouter) Handle(_ string, _ http.Handler) {
 }
 
-func (r *GenRouter) HandleFunc(pattern string, h func(http.ResponseWriter, *http.Request, *c.User) c.RouteError) {
+func (r *GenRouter) HandleFunc(pattern string, h func(http.ResponseWriter, *http.Request, c.User) c.RouteError) {
 	r.Lock()
 	defer r.Unlock()
 	r.extraRoutes[pattern] = h
@@ -1200,11 +1200,10 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 	
 	// Deal with the session stuff, etc.
-	ucpy, ok := c.PreRoute(w, req)
+	user, ok := c.PreRoute(w, req)
 	if !ok {
 		return
 	}
-	user := &ucpy
 	user.LastAgent = agent
 	if c.Dev.SuperDebug {
 		r.requestLogger.Print(
@@ -1241,33 +1240,33 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	//c.StoppedServer("Profile end")
 }
 	
-func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *c.User, prefix, extraData string) /*(id int, orerr */c.RouteError/*)*/ {
+func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c.User, prefix, extraData string) /*(id int, orerr */c.RouteError/*)*/ {
 	var err c.RouteError
 	cn := uutils.Nanotime()
 	switch(prefix) {
 		case "/overview":
-			h, err := c.UserCheckNano(w,req,user,cn)
+			h, err := c.UserCheckNano(w,req,&user,cn)
 			if err != nil {
 				return err
 			}
 			err = routes.Overview(w,req,user,h)
 			co.RouteViewCounter.Bump3(1, cn)
 		case "/pages":
-			h, err := c.UserCheckNano(w,req,user,cn)
+			h, err := c.UserCheckNano(w,req,&user,cn)
 			if err != nil {
 				return err
 			}
 			err = routes.CustomPage(w,req,user,h,extraData)
 			co.RouteViewCounter.Bump3(2, cn)
 		case "/forums":
-			h, err := c.UserCheckNano(w,req,user,cn)
+			h, err := c.UserCheckNano(w,req,&user,cn)
 			if err != nil {
 				return err
 			}
 			err = routes.ForumList(w,req,user,h)
 			co.RouteViewCounter.Bump3(3, cn)
 		case "/forum":
-			h, err := c.UserCheckNano(w,req,user,cn)
+			h, err := c.UserCheckNano(w,req,&user,cn)
 			if err != nil {
 				return err
 			}
@@ -1336,7 +1335,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 		case "/topics":
 			switch(req.URL.Path) {
 				case "/topics/most-viewed/":
-				h, err := c.UserCheckNano(w,req,user,cn)
+				h, err := c.UserCheckNano(w,req,&user,cn)
 				if err != nil {
 					return err
 				}
@@ -1348,14 +1347,14 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 						return err
 					}
 					
-				h, err := c.UserCheckNano(w,req,user,cn)
+				h, err := c.UserCheckNano(w,req,&user,cn)
 				if err != nil {
 					return err
 				}
 					err = routes.CreateTopic(w,req,user,h,extraData)
 					co.RouteViewCounter.Bump3(14, cn)
 				default:
-					h, err := c.UserCheckNano(w,req,user,cn)
+					h, err := c.UserCheckNano(w,req,&user,cn)
 					if err != nil {
 						return err
 					}
@@ -1889,7 +1888,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 						return err
 					}
 					
-				h, err := c.UserCheckNano(w,req,user,cn)
+				h, err := c.UserCheckNano(w,req,&user,cn)
 				if err != nil {
 					return err
 				}
@@ -1901,7 +1900,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 						return err
 					}
 					
-				h, err := c.UserCheckNano(w,req,user,cn)
+				h, err := c.UserCheckNano(w,req,&user,cn)
 				if err != nil {
 					return err
 				}
@@ -1969,7 +1968,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 						return err
 					}
 					
-				h, err := c.UserCheckNano(w,req,user,cn)
+				h, err := c.UserCheckNano(w,req,&user,cn)
 				if err != nil {
 					return err
 				}
@@ -1994,7 +1993,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 						return err
 					}
 					
-				h, err := c.UserCheckNano(w,req,user,cn)
+				h, err := c.UserCheckNano(w,req,&user,cn)
 				if err != nil {
 					return err
 				}
@@ -2006,7 +2005,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 						return err
 					}
 					
-				h, err := c.UserCheckNano(w,req,user,cn)
+				h, err := c.UserCheckNano(w,req,&user,cn)
 				if err != nil {
 					return err
 				}
@@ -2044,7 +2043,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 						return err
 					}
 					
-				h, err := c.UserCheckNano(w,req,user,cn)
+				h, err := c.UserCheckNano(w,req,&user,cn)
 				if err != nil {
 					return err
 				}
@@ -2059,7 +2058,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 						return err
 					}
 					
-				h, err := c.UserCheckNano(w,req,user,cn)
+				h, err := c.UserCheckNano(w,req,&user,cn)
 				if err != nil {
 					return err
 				}
@@ -2071,7 +2070,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 						return err
 					}
 					
-				h, err := c.UserCheckNano(w,req,user,cn)
+				h, err := c.UserCheckNano(w,req,&user,cn)
 				if err != nil {
 					return err
 				}
@@ -2083,7 +2082,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 						return err
 					}
 					
-				h, err := c.UserCheckNano(w,req,user,cn)
+				h, err := c.UserCheckNano(w,req,&user,cn)
 				if err != nil {
 					return err
 				}
@@ -2095,7 +2094,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 						return err
 					}
 					
-				h, err := c.UserCheckNano(w,req,user,cn)
+				h, err := c.UserCheckNano(w,req,&user,cn)
 				if err != nil {
 					return err
 				}
@@ -2107,7 +2106,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 						return err
 					}
 					
-				h, err := c.UserCheckNano(w,req,user,cn)
+				h, err := c.UserCheckNano(w,req,&user,cn)
 				if err != nil {
 					return err
 				}
@@ -2119,7 +2118,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 						return err
 					}
 					
-				h, err := c.UserCheckNano(w,req,user,cn)
+				h, err := c.UserCheckNano(w,req,&user,cn)
 				if err != nil {
 					return err
 				}
@@ -2183,7 +2182,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 						return err
 					}
 					
-				h, err := c.UserCheckNano(w,req,user,cn)
+				h, err := c.UserCheckNano(w,req,&user,cn)
 				if err != nil {
 					return err
 				}
@@ -2208,7 +2207,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 						return err
 					}
 					
-				h, err := c.UserCheckNano(w,req,user,cn)
+				h, err := c.UserCheckNano(w,req,&user,cn)
 				if err != nil {
 					return err
 				}
@@ -2229,7 +2228,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 					co.RouteViewCounter.Bump3(122, cn)
 				default:
 					req.URL.Path += extraData
-					h, err := c.UserCheckNano(w,req,user,cn)
+					h, err := c.UserCheckNano(w,req,&user,cn)
 					if err != nil {
 						return err
 					}
@@ -2283,7 +2282,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 						return err
 					}
 					
-				h, err := c.UserCheckNano(w,req,user,cn)
+				h, err := c.UserCheckNano(w,req,&user,cn)
 				if err != nil {
 					return err
 				}
@@ -2472,7 +2471,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 					err = routes.RemoveAttachFromTopicSubmit(w,req,user,extraData)
 					co.RouteViewCounter.Bump3(140, cn)
 				default:
-					h, err := c.UserCheckNano(w,req,user,cn)
+					h, err := c.UserCheckNano(w,req,&user,cn)
 					if err != nil {
 						return err
 					}
@@ -2645,14 +2644,14 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 		case "/accounts":
 			switch(req.URL.Path) {
 				case "/accounts/login/":
-				h, err := c.UserCheckNano(w,req,user,cn)
+				h, err := c.UserCheckNano(w,req,&user,cn)
 				if err != nil {
 					return err
 				}
 					err = routes.AccountLogin(w,req,user,h)
 					co.RouteViewCounter.Bump3(154, cn)
 				case "/accounts/create/":
-				h, err := c.UserCheckNano(w,req,user,cn)
+				h, err := c.UserCheckNano(w,req,&user,cn)
 				if err != nil {
 					return err
 				}
@@ -2680,7 +2679,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 					err = routes.AccountLoginSubmit(w,req,user)
 					co.RouteViewCounter.Bump3(157, cn)
 				case "/accounts/mfa_verify/":
-				h, err := c.UserCheckNano(w,req,user,cn)
+				h, err := c.UserCheckNano(w,req,&user,cn)
 				if err != nil {
 					return err
 				}
@@ -2703,7 +2702,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 					err = routes.AccountRegisterSubmit(w,req,user)
 					co.RouteViewCounter.Bump3(160, cn)
 				case "/accounts/password-reset/":
-				h, err := c.UserCheckNano(w,req,user,cn)
+				h, err := c.UserCheckNano(w,req,&user,cn)
 				if err != nil {
 					return err
 				}
@@ -2718,7 +2717,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 					err = routes.AccountPasswordResetSubmit(w,req,user)
 					co.RouteViewCounter.Bump3(162, cn)
 				case "/accounts/password-reset/token/":
-				h, err := c.UserCheckNano(w,req,user,cn)
+				h, err := c.UserCheckNano(w,req,&user,cn)
 				if err != nil {
 					return err
 				}

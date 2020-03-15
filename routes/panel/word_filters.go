@@ -10,8 +10,8 @@ import (
 	c "github.com/Azareal/Gosora/common"
 )
 
-func WordFilters(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
-	basePage, ferr := buildBasePage(w, r, user, "word_filters", "word-filters")
+func WordFilters(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
+	basePage, ferr := buildBasePage(w, r, &user, "word_filters", "word-filters")
 	if ferr != nil {
 		return ferr
 	}
@@ -29,8 +29,8 @@ func WordFilters(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteEr
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "", "", "panel_word_filters", &pi})
 }
 
-func WordFiltersCreateSubmit(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
-	_, ferr := c.SimplePanelUserCheck(w, r, user)
+func WordFiltersCreateSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
+	_, ferr := c.SimplePanelUserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
@@ -61,8 +61,8 @@ func WordFiltersCreateSubmit(w http.ResponseWriter, r *http.Request, user *c.Use
 }
 
 // TODO: Implement this as a non-JS fallback
-func WordFiltersEdit(w http.ResponseWriter, r *http.Request, user *c.User, wfid string) c.RouteError {
-	basePage, ferr := buildBasePage(w, r, user, "edit_word_filter", "word-filters")
+func WordFiltersEdit(w http.ResponseWriter, r *http.Request, user c.User, wfid string) c.RouteError {
+	basePage, ferr := buildBasePage(w, r, &user, "edit_word_filter", "word-filters")
 	if ferr != nil {
 		return ferr
 	}
@@ -75,8 +75,8 @@ func WordFiltersEdit(w http.ResponseWriter, r *http.Request, user *c.User, wfid 
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "", "", "panel_word_filters_edit", &pi})
 }
 
-func WordFiltersEditSubmit(w http.ResponseWriter, r *http.Request, user *c.User, swfid string) c.RouteError {
-	_, ferr := c.SimplePanelUserCheck(w, r, user)
+func WordFiltersEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, swfid string) c.RouteError {
+	_, ferr := c.SimplePanelUserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
@@ -120,8 +120,8 @@ func WordFiltersEditSubmit(w http.ResponseWriter, r *http.Request, user *c.User,
 	return nil
 }
 
-func WordFiltersDeleteSubmit(w http.ResponseWriter, r *http.Request, user *c.User, swfid string) c.RouteError {
-	_, ferr := c.SimplePanelUserCheck(w, r, user)
+func WordFiltersDeleteSubmit(w http.ResponseWriter, r *http.Request, user c.User, swfid string) c.RouteError {
+	_, ferr := c.SimplePanelUserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}

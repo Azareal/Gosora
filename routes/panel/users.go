@@ -8,8 +8,8 @@ import (
 	c "github.com/Azareal/Gosora/common"
 )
 
-func Users(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
-	basePage, ferr := buildBasePage(w, r, user, "users", "users")
+func Users(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
+	basePage, ferr := buildBasePage(w, r, &user, "users", "users")
 	if ferr != nil {
 		return ferr
 	}
@@ -27,8 +27,8 @@ func Users(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "", "", "panel_users", &pi})
 }
 
-func UsersEdit(w http.ResponseWriter, r *http.Request, user *c.User, suid string) c.RouteError {
-	basePage, ferr := buildBasePage(w, r, user, "edit_user", "users")
+func UsersEdit(w http.ResponseWriter, r *http.Request, user c.User, suid string) c.RouteError {
+	basePage, ferr := buildBasePage(w, r, &user, "edit_user", "users")
 	if ferr != nil {
 		return ferr
 	}
@@ -76,8 +76,8 @@ func UsersEdit(w http.ResponseWriter, r *http.Request, user *c.User, suid string
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "", "", "panel_user_edit", &pi})
 }
 
-func UsersEditSubmit(w http.ResponseWriter, r *http.Request, user *c.User, suid string) c.RouteError {
-	_, ferr := c.SimplePanelUserCheck(w, r, user)
+func UsersEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, suid string) c.RouteError {
+	_, ferr := c.SimplePanelUserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
@@ -183,8 +183,8 @@ func UsersEditSubmit(w http.ResponseWriter, r *http.Request, user *c.User, suid 
 	return nil
 }
 
-func UsersAvatarSubmit(w http.ResponseWriter, r *http.Request, user *c.User, suid string) c.RouteError {
-	_, ferr := c.SimplePanelUserCheck(w, r, user)
+func UsersAvatarSubmit(w http.ResponseWriter, r *http.Request, user c.User, suid string) c.RouteError {
+	_, ferr := c.SimplePanelUserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
@@ -211,7 +211,7 @@ func UsersAvatarSubmit(w http.ResponseWriter, r *http.Request, user *c.User, sui
 	if ferr != nil {
 		return ferr
 	}
-	ferr = c.ChangeAvatar("."+ext, w, r, targetUser)
+	ferr = c.ChangeAvatar("."+ext, w, r, *targetUser)
 	if ferr != nil {
 		return ferr
 	}
@@ -234,8 +234,8 @@ func UsersAvatarSubmit(w http.ResponseWriter, r *http.Request, user *c.User, sui
 	return nil
 }
 
-func UsersAvatarRemoveSubmit(w http.ResponseWriter, r *http.Request, user *c.User, suid string) c.RouteError {
-	_, ferr := c.SimplePanelUserCheck(w, r, user)
+func UsersAvatarRemoveSubmit(w http.ResponseWriter, r *http.Request, user c.User, suid string) c.RouteError {
+	_, ferr := c.SimplePanelUserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
@@ -256,7 +256,7 @@ func UsersAvatarRemoveSubmit(w http.ResponseWriter, r *http.Request, user *c.Use
 	if targetUser.IsAdmin && !user.IsAdmin {
 		return c.LocalError("Only administrators can edit the account of other administrators.", w, r, user)
 	}
-	ferr = c.ChangeAvatar("", w, r, targetUser)
+	ferr = c.ChangeAvatar("", w, r, *targetUser)
 	if ferr != nil {
 		return ferr
 	}

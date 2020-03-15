@@ -194,7 +194,7 @@ func BuildWidget(dock string, h *Header) (sbody string) {
 		// 1 = id for the default menu
 		mhold, err := Menus.Get(1)
 		if err == nil {
-			err := mhold.Build(h.Writer, h.CurrentUser, h.Path)
+			err := mhold.Build(h.Writer, &h.CurrentUser, h.Path)
 			if err != nil {
 				LogError(err)
 			}
@@ -259,7 +259,7 @@ func InitWidgets() (fi error) {
 		}
 		setDock(name, dock)
 	}
-
+	
 	f("leftOfNav")
 	f("rightOfNav")
 	f("leftSidebar")

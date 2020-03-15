@@ -7,11 +7,11 @@ import (
 	"time"
 
 	c "github.com/Azareal/Gosora/common"
-	qgen "github.com/Azareal/Gosora/query_gen"
+	"github.com/Azareal/Gosora/query_gen"
 )
 
-func Debug(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
-	basePage, ferr := buildBasePage(w, r, user, "debug", "debug")
+func Debug(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
+	basePage, ferr := buildBasePage(w, r, &user, "debug", "debug")
 	if ferr != nil {
 		return ferr
 	}
@@ -45,7 +45,7 @@ func Debug(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
 	goroutines := runtime.NumGoroutine()
 	cpus := runtime.NumCPU()
 
-	debugTasks := c.DebugPageTasks{c.ScheduledHalfSecondTaskCount(), c.ScheduledSecondTaskCount(), c.ScheduledFifteenMinuteTaskCount(), c.ScheduledHourTaskCount(), c.ShutdownTaskCount()}
+	debugTasks := c.DebugPageTasks{c.ScheduledHalfSecondTaskCount(),c.ScheduledSecondTaskCount(),c.ScheduledFifteenMinuteTaskCount(),c.ScheduledHourTaskCount(),c.ShutdownTaskCount()}
 	var memStats runtime.MemStats
 	runtime.ReadMemStats(&memStats)
 
@@ -89,7 +89,7 @@ func Debug(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
 	regLogs := count("registration_logs")
 	modLogs := count("moderation_logs")
 	adminLogs := count("administration_logs")
-
+	
 	views := count("viewchunks")
 	viewsAgents := count("viewchunks_agents")
 	viewsForums := count("viewchunks_forums")
@@ -99,10 +99,10 @@ func Debug(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
 	postChunks := count("postchunks")
 	topicChunks := count("topicchunks")
 	if fErr != nil {
-		return c.InternalError(fErr, w, r)
+		return c.InternalError(fErr,w,r)
 	}
 
-	debugDatabase := c.DebugPageDatabase{c.Topics.Count(), c.Users.Count(), c.Rstore.Count(), c.Prstore.Count(), c.Activity.Count(), c.Likes.Count(), attachs, polls, loginLogs, regLogs, modLogs, adminLogs, views, viewsAgents, viewsForums, viewsLangs, viewsReferrers, viewsSystems, postChunks, topicChunks}
+	debugDatabase := c.DebugPageDatabase{c.Topics.Count(),c.Users.Count(),c.Rstore.Count(),c.Prstore.Count(),c.Activity.Count(),c.Likes.Count(),attachs,polls,loginLogs,regLogs,modLogs,adminLogs,views,viewsAgents,viewsForums,viewsLangs,viewsReferrers,viewsSystems,postChunks,topicChunks}
 
 	dirSize := func(path string) int {
 		if fErr != nil {
@@ -119,13 +119,13 @@ func Debug(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
 	logsSize := dirSize("./logs/")
 	backupsSize := dirSize("./backups/")
 	if fErr != nil {
-		return c.InternalError(fErr, w, r)
+		return c.InternalError(fErr,w,r)
 	}
 	//gitSize, _ := c.DirSize("./.git")
 	gitSize := 0
 
-	debugDisk := c.DebugPageDisk{staticSize, attachSize, uploadsSize, logsSize, backupsSize, gitSize}
+	debugDisk := c.DebugPageDisk{staticSize,attachSize,uploadsSize,logsSize,backupsSize,gitSize}
 
-	pi := c.PanelDebugPage{basePage, goVersion, dbVersion, uptime, openConnCount, qgen.Builder.GetAdapter().GetName(), goroutines, cpus, debugTasks, memStats, debugCache, debugDatabase, debugDisk}
+	pi := c.PanelDebugPage{basePage, goVersion, dbVersion, uptime, openConnCount, qgen.Builder.GetAdapter().GetName(), goroutines, cpus,debugTasks, memStats, debugCache, debugDatabase, debugDisk}
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_dashboard_right", "debug_page", "panel_debug", pi})
 }

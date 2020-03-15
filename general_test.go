@@ -17,7 +17,7 @@ import (
 	c "github.com/Azareal/Gosora/common"
 	e "github.com/Azareal/Gosora/extend"
 	"github.com/Azareal/Gosora/install"
-	qgen "github.com/Azareal/Gosora/query_gen"
+	"github.com/Azareal/Gosora/query_gen"
 	"github.com/Azareal/Gosora/routes"
 )
 
@@ -151,7 +151,7 @@ func BenchmarkTopicAdminRouteParallel(b *testing.B) {
 				b.Fatal(err)
 			}
 			//w.Body.Reset()
-			routes.ViewTopic(w, reqAdmin, &user, head, "1")
+			routes.ViewTopic(w, reqAdmin, user, head, "1")
 			if w.Code != 200 {
 				b.Log(w.Body)
 				b.Fatal("HTTP Error!")
@@ -287,7 +287,7 @@ func BenchmarkTopicGuestRouteParallel(b *testing.B) {
 				b.Fatal(err)
 			}
 			//w.Body.Reset()
-			routes.ViewTopic(w, req, &user, head, "1")
+			routes.ViewTopic(w, req, user, head, "1")
 			if w.Code != 200 {
 				b.Log(w.Body)
 				b.Fatal("HTTP Error!")
@@ -314,7 +314,7 @@ func BenchmarkTopicGuestRouteParallelDebugMode(b *testing.B) {
 				b.Fatal(err)
 			}
 			//w.Body.Reset()
-			routes.ViewTopic(w, req, &user, head, "1")
+			routes.ViewTopic(w, req, user, head, "1")
 			if w.Code != 200 {
 				b.Log(w.Body)
 				b.Fatal("HTTP Error!")
@@ -940,12 +940,12 @@ func BenchmarkParserSerial(b *testing.B) {
 			}
 		}
 	}
-	f("empty_post", "")
-	f("short_post", "Hey everyone, how's it going?")
-	f("one_smily", "Hey everyone, how's it going? :)")
-	f("five_smilies", "Hey everyone, how's it going? :):):):):)")
-	f("ten_smilies", "Hey everyone, how's it going? :):):):):):):):):):)")
-	f("twenty_smilies", "Hey everyone, how's it going? :):):):):):):):):):):):):):):):):):):):)")
+	f("empty_post","")
+	f("short_post","Hey everyone, how's it going?")
+	f("one_smily","Hey everyone, how's it going? :)")
+	f("five_smilies","Hey everyone, how's it going? :):):):):)")
+	f("ten_smilies","Hey everyone, how's it going? :):):):):):):):):):)")
+	f("twenty_smilies","Hey everyone, how's it going? :):):):):):):):):):):):):):):):):):):):)")
 }
 
 func BenchmarkBBCodePluginWithRegexpSerial(b *testing.B) {
@@ -957,15 +957,15 @@ func BenchmarkBBCodePluginWithRegexpSerial(b *testing.B) {
 			}
 		})
 	}
-	f("empty_post", "")
-	f("short_post", "Hey everyone, how's it going?")
-	f("one_smily", "Hey everyone, how's it going? :)")
-	f("five_smilies", "Hey everyone, how's it going? :):):):):)")
-	f("ten_smilies", "Hey everyone, how's it going? :):):):):):):):):):)")
-	f("twenty_smilies", "Hey everyone, how's it going? :):):):):):):):):):):):):):):):):):):):)")
-	f("one_bold", "[b]H[/b]ey everyone, how's it going?")
-	f("five_bold", "[b]H[/b][b]e[/b][b]y[/b] [b]e[/b][b]v[/b]eryone, how's it going?")
-	f("ten_bold", "[b]H[/b][b]e[/b][b]y[/b] [b]e[/b][b]v[/b][b]e[/b][b]r[/b][b]y[/b][b]o[/b][b]n[/b]e, how's it going?")
+	f("empty_post","")
+	f("short_post","Hey everyone, how's it going?")
+	f("one_smily","Hey everyone, how's it going? :)")
+	f("five_smilies","Hey everyone, how's it going? :):):):):)")
+	f("ten_smilies","Hey everyone, how's it going? :):):):):):):):):):)")
+	f("twenty_smilies","Hey everyone, how's it going? :):):):):):):):):):):):):):):):):):):):)")
+	f("one_bold","[b]H[/b]ey everyone, how's it going?")
+	f("five_bold","[b]H[/b][b]e[/b][b]y[/b] [b]e[/b][b]v[/b]eryone, how's it going?")
+	f("ten_bold","[b]H[/b][b]e[/b][b]y[/b] [b]e[/b][b]v[/b][b]e[/b][b]r[/b][b]y[/b][b]o[/b][b]n[/b]e, how's it going?")
 }
 
 func BenchmarkBBCodePluginWithoutCodeTagSerial(b *testing.B) {
@@ -977,15 +977,15 @@ func BenchmarkBBCodePluginWithoutCodeTagSerial(b *testing.B) {
 			}
 		})
 	}
-	f("empty_post", "")
-	f("short_post", "Hey everyone, how's it going?")
-	f("one_smily", "Hey everyone, how's it going? :)")
-	f("five_smilies", "Hey everyone, how's it going? :):):):):)")
-	f("ten_smilies", "Hey everyone, how's it going? :):):):):):):):):):)")
-	f("twenty_smilies", "Hey everyone, how's it going? :):):):):):):):):):):):):):):):):):):):)")
-	f("one_bold", "[b]H[/b]ey everyone, how's it going?")
-	f("five_bold", "[b]H[/b][b]e[/b][b]y[/b] [b]e[/b][b]v[/b]eryone, how's it going?")
-	f("ten_bold", "[b]H[/b][b]e[/b][b]y[/b] [b]e[/b][b]v[/b][b]e[/b][b]r[/b][b]y[/b][b]o[/b][b]n[/b]e, how's it going?")
+	f("empty_post","")
+	f("short_post","Hey everyone, how's it going?")
+	f("one_smily","Hey everyone, how's it going? :)")
+	f("five_smilies","Hey everyone, how's it going? :):):):):)")
+	f("ten_smilies","Hey everyone, how's it going? :):):):):):):):):):)")
+	f("twenty_smilies","Hey everyone, how's it going? :):):):):):):):):):):):):):):):):):):):)")
+	f("one_bold","[b]H[/b]ey everyone, how's it going?")
+	f("five_bold","[b]H[/b][b]e[/b][b]y[/b] [b]e[/b][b]v[/b]eryone, how's it going?")
+	f("ten_bold","[b]H[/b][b]e[/b][b]y[/b] [b]e[/b][b]v[/b][b]e[/b][b]r[/b][b]y[/b][b]o[/b][b]n[/b]e, how's it going?")
 }
 
 func BenchmarkBBCodePluginWithFullParserSerial(b *testing.B) {
@@ -997,15 +997,15 @@ func BenchmarkBBCodePluginWithFullParserSerial(b *testing.B) {
 			}
 		})
 	}
-	f("empty_post", "")
-	f("short_post", "Hey everyone, how's it going?")
-	f("one_smily", "Hey everyone, how's it going? :)")
-	f("five_smilies", "Hey everyone, how's it going? :):):):):)")
-	f("ten_smilies", "Hey everyone, how's it going? :):):):):):):):):):)")
-	f("twenty_smilies", "Hey everyone, how's it going? :):):):):):):):):):):):):):):):):):):):)")
-	f("one_bold", "[b]H[/b]ey everyone, how's it going?")
-	f("five_bold", "[b]H[/b][b]e[/b][b]y[/b] [b]e[/b][b]v[/b]eryone, how's it going?")
-	f("ten_bold", "[b]H[/b][b]e[/b][b]y[/b] [b]e[/b][b]v[/b][b]e[/b][b]r[/b][b]y[/b][b]o[/b][b]n[/b]e, how's it going?")
+	f("empty_post","")
+	f("short_post","Hey everyone, how's it going?")
+	f("one_smily","Hey everyone, how's it going? :)")
+	f("five_smilies","Hey everyone, how's it going? :):):):):)")
+	f("ten_smilies","Hey everyone, how's it going? :):):):):):):):):):)")
+	f("twenty_smilies","Hey everyone, how's it going? :):):):):):):):):):):):):):):):):):):):)")
+	f("one_bold","[b]H[/b]ey everyone, how's it going?")
+	f("five_bold","[b]H[/b][b]e[/b][b]y[/b] [b]e[/b][b]v[/b]eryone, how's it going?")
+	f("ten_bold","[b]H[/b][b]e[/b][b]y[/b] [b]e[/b][b]v[/b][b]e[/b][b]r[/b][b]y[/b][b]o[/b][b]n[/b]e, how's it going?")
 }
 
 func TestLevels(t *testing.T) {

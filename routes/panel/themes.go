@@ -12,8 +12,8 @@ import (
 	p "github.com/Azareal/Gosora/common/phrases"
 )
 
-func Themes(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
-	basePage, ferr := buildBasePage(w, r, user, "themes", "themes")
+func Themes(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
+	basePage, ferr := buildBasePage(w, r, &user, "themes", "themes")
 	if ferr != nil {
 		return ferr
 	}
@@ -37,8 +37,8 @@ func Themes(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_themes", "", "panel_themes", &pi})
 }
 
-func ThemesSetDefault(w http.ResponseWriter, r *http.Request, user *c.User, uname string) c.RouteError {
-	_, ferr := c.SimplePanelUserCheck(w, r, user)
+func ThemesSetDefault(w http.ResponseWriter, r *http.Request, user c.User, uname string) c.RouteError {
+	_, ferr := c.SimplePanelUserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
@@ -67,8 +67,8 @@ func ThemesSetDefault(w http.ResponseWriter, r *http.Request, user *c.User, unam
 	return nil
 }
 
-func ThemesMenus(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
-	basePage, ferr := buildBasePage(w, r, user, "themes_menus", "themes")
+func ThemesMenus(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
+	basePage, ferr := buildBasePage(w, r, &user, "themes_menus", "themes")
 	if ferr != nil {
 		return ferr
 	}
@@ -92,9 +92,9 @@ func ThemesMenus(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteEr
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "", "", "panel_themes_menus", &c.PanelMenuListPage{basePage, menuList}})
 }
 
-func ThemesMenusEdit(w http.ResponseWriter, r *http.Request, user *c.User, smid string) c.RouteError {
+func ThemesMenusEdit(w http.ResponseWriter, r *http.Request, user c.User, smid string) c.RouteError {
 	// TODO: Something like Menu #1 for the title?
-	basePage, ferr := buildBasePage(w, r, user, "themes_menus_edit", "themes")
+	basePage, ferr := buildBasePage(w, r, &user, "themes_menus_edit", "themes")
 	if ferr != nil {
 		return ferr
 	}
@@ -138,9 +138,9 @@ func ThemesMenusEdit(w http.ResponseWriter, r *http.Request, user *c.User, smid 
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "", "", "panel_themes_menus_items", &c.PanelMenuPage{basePage, mid, menuList}})
 }
 
-func ThemesMenuItemEdit(w http.ResponseWriter, r *http.Request, user *c.User, sitemID string) c.RouteError {
+func ThemesMenuItemEdit(w http.ResponseWriter, r *http.Request, user c.User, sitemID string) c.RouteError {
 	// TODO: Something like Menu #1 for the title?
-	basePage, ferr := buildBasePage(w, r, user, "themes_menus_edit", "themes")
+	basePage, ferr := buildBasePage(w, r, &user, "themes_menus_edit", "themes")
 	if ferr != nil {
 		return ferr
 	}
@@ -205,8 +205,8 @@ func themesMenuItemSetters(r *http.Request, i c.MenuItem) c.MenuItem {
 	return i
 }
 
-func ThemesMenuItemEditSubmit(w http.ResponseWriter, r *http.Request, user *c.User, sitemID string) c.RouteError {
-	_, ferr := c.SimplePanelUserCheck(w, r, user)
+func ThemesMenuItemEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, sitemID string) c.RouteError {
+	_, ferr := c.SimplePanelUserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
@@ -219,6 +219,7 @@ func ThemesMenuItemEditSubmit(w http.ResponseWriter, r *http.Request, user *c.Us
 	if err != nil {
 		return c.LocalErrorJSQ(p.GetErrorPhrase("id_must_be_integer"), w, r, user, js)
 	}
+
 	menuItem, err := c.Menus.ItemStore().Get(itemID)
 	if err == sql.ErrNoRows {
 		return c.LocalErrorJSQ("This item doesn't exist.", w, r, user, js)
@@ -240,8 +241,8 @@ func ThemesMenuItemEditSubmit(w http.ResponseWriter, r *http.Request, user *c.Us
 	return successRedirect("/panel/themes/menus/item/edit/"+strconv.Itoa(itemID), w, r, js)
 }
 
-func ThemesMenuItemCreateSubmit(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
-	_, ferr := c.SimplePanelUserCheck(w, r, user)
+func ThemesMenuItemCreateSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
+	_, ferr := c.SimplePanelUserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
@@ -273,8 +274,8 @@ func ThemesMenuItemCreateSubmit(w http.ResponseWriter, r *http.Request, user *c.
 	return successRedirect("/panel/themes/menus/item/edit/"+strconv.Itoa(itemID), w, r, js)
 }
 
-func ThemesMenuItemDeleteSubmit(w http.ResponseWriter, r *http.Request, user *c.User, sitemID string) c.RouteError {
-	_, ferr := c.SimplePanelUserCheck(w, r, user)
+func ThemesMenuItemDeleteSubmit(w http.ResponseWriter, r *http.Request, user c.User, sitemID string) c.RouteError {
+	_, ferr := c.SimplePanelUserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
@@ -307,8 +308,8 @@ func ThemesMenuItemDeleteSubmit(w http.ResponseWriter, r *http.Request, user *c.
 	return successRedirect("/panel/themes/menus/", w, r, js)
 }
 
-func ThemesMenuItemOrderSubmit(w http.ResponseWriter, r *http.Request, user *c.User, smid string) c.RouteError {
-	_, ferr := c.SimplePanelUserCheck(w, r, user)
+func ThemesMenuItemOrderSubmit(w http.ResponseWriter, r *http.Request, user c.User, smid string) c.RouteError {
+	_, ferr := c.SimplePanelUserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
@@ -349,8 +350,8 @@ func ThemesMenuItemOrderSubmit(w http.ResponseWriter, r *http.Request, user *c.U
 	return successRedirect("/panel/themes/menus/edit/"+strconv.Itoa(mid), w, r, js)
 }
 
-func ThemesWidgets(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
-	basePage, ferr := buildBasePage(w, r, user, "themes_widgets", "themes")
+func ThemesWidgets(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
+	basePage, ferr := buildBasePage(w, r, &user, "themes_widgets", "themes")
 	if ferr != nil {
 		return ferr
 	}
@@ -414,9 +415,9 @@ func widgetsParseInputs(r *http.Request, widget *c.Widget) (*c.WidgetEdit, error
 }
 
 // ThemesWidgetsEditSubmit is an action which is triggered when someone sends an update request for a widget
-func ThemesWidgetsEditSubmit(w http.ResponseWriter, r *http.Request, user *c.User, swid string) c.RouteError {
+func ThemesWidgetsEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, swid string) c.RouteError {
 	//fmt.Println("in ThemesWidgetsEditSubmit")
-	_, ferr := c.SimplePanelUserCheck(w, r, user)
+	_, ferr := c.SimplePanelUserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
@@ -454,9 +455,9 @@ func ThemesWidgetsEditSubmit(w http.ResponseWriter, r *http.Request, user *c.Use
 }
 
 // ThemesWidgetsCreateSubmit is an action which is triggered when someone sends a create request for a widget
-func ThemesWidgetsCreateSubmit(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
+func ThemesWidgetsCreateSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	js := r.PostFormValue("js") == "1"
-	_, ferr := c.SimplePanelUserCheck(w, r, user)
+	_, ferr := c.SimplePanelUserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
@@ -468,6 +469,7 @@ func ThemesWidgetsCreateSubmit(w http.ResponseWriter, r *http.Request, user *c.U
 	if err != nil {
 		return c.LocalErrorJSQ(err.Error(), w, r, user, js)
 	}
+
 	wid, err := ewidget.Create()
 	if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
@@ -480,8 +482,8 @@ func ThemesWidgetsCreateSubmit(w http.ResponseWriter, r *http.Request, user *c.U
 	return successRedirect("/panel/themes/widgets/", w, r, js)
 }
 
-func ThemesWidgetsDeleteSubmit(w http.ResponseWriter, r *http.Request, user *c.User, swid string) c.RouteError {
-	_, ferr := c.SimplePanelUserCheck(w, r, user)
+func ThemesWidgetsDeleteSubmit(w http.ResponseWriter, r *http.Request, user c.User, swid string) c.RouteError {
+	_, ferr := c.SimplePanelUserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
@@ -500,6 +502,7 @@ func ThemesWidgetsDeleteSubmit(w http.ResponseWriter, r *http.Request, user *c.U
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
+
 	err = widget.Delete()
 	if err != nil {
 		return c.InternalError(err, w, r)

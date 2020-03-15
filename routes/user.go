@@ -9,7 +9,7 @@ import (
 	c "github.com/Azareal/Gosora/common"
 )
 
-func BanUserSubmit(w http.ResponseWriter, r *http.Request, user *c.User, suid string) c.RouteError {
+func BanUserSubmit(w http.ResponseWriter, r *http.Request, user c.User, suid string) c.RouteError {
 	if !user.Perms.BanUsers {
 		return c.NoPermissions(w, r, user)
 	}
@@ -93,7 +93,7 @@ func BanUserSubmit(w http.ResponseWriter, r *http.Request, user *c.User, suid st
 
 	// TODO: Trickle the hookTable down from the router
 	hTbl := c.GetHookTable()
-	skip, rerr := hTbl.VhookSkippable("action_end_ban_user", targetUser.ID, user)
+	skip, rerr := hTbl.VhookSkippable("action_end_ban_user", targetUser.ID, &user)
 	if skip || rerr != nil {
 		return rerr
 	}
@@ -102,7 +102,7 @@ func BanUserSubmit(w http.ResponseWriter, r *http.Request, user *c.User, suid st
 	return nil
 }
 
-func UnbanUser(w http.ResponseWriter, r *http.Request, user *c.User, suid string) c.RouteError {
+func UnbanUser(w http.ResponseWriter, r *http.Request, user c.User, suid string) c.RouteError {
 	if !user.Perms.BanUsers {
 		return c.NoPermissions(w, r, user)
 	}
@@ -137,7 +137,7 @@ func UnbanUser(w http.ResponseWriter, r *http.Request, user *c.User, suid string
 
 	// TODO: Trickle the hookTable down from the router
 	hTbl := c.GetHookTable()
-	skip, rerr := hTbl.VhookSkippable("action_end_unban_user", targetUser.ID, user)
+	skip, rerr := hTbl.VhookSkippable("action_end_unban_user", targetUser.ID, &user)
 	if skip || rerr != nil {
 		return rerr
 	}
@@ -146,7 +146,7 @@ func UnbanUser(w http.ResponseWriter, r *http.Request, user *c.User, suid string
 	return nil
 }
 
-func ActivateUser(w http.ResponseWriter, r *http.Request, user *c.User, suid string) c.RouteError {
+func ActivateUser(w http.ResponseWriter, r *http.Request, user c.User, suid string) c.RouteError {
 	if !user.Perms.ActivateUsers {
 		return c.NoPermissions(w, r, user)
 	}
@@ -188,7 +188,7 @@ func ActivateUser(w http.ResponseWriter, r *http.Request, user *c.User, suid str
 
 	// TODO: Trickle the hookTable down from the router
 	hTbl := c.GetHookTable()
-	skip, rerr := hTbl.VhookSkippable("action_end_activate_user", targetUser.ID, user)
+	skip, rerr := hTbl.VhookSkippable("action_end_activate_user", targetUser.ID, &user)
 	if skip || rerr != nil {
 		return rerr
 	}
@@ -197,7 +197,7 @@ func ActivateUser(w http.ResponseWriter, r *http.Request, user *c.User, suid str
 	return nil
 }
 
-func DeletePostsSubmit(w http.ResponseWriter, r *http.Request, user *c.User, suid string) c.RouteError {
+func DeletePostsSubmit(w http.ResponseWriter, r *http.Request, user c.User, suid string) c.RouteError {
 	if !user.Perms.BanUsers {
 		return c.NoPermissions(w, r, user)
 	}
@@ -230,7 +230,7 @@ func DeletePostsSubmit(w http.ResponseWriter, r *http.Request, user *c.User, sui
 
 	// TODO: Trickle the hookTable down from the router
 	hTbl := c.GetHookTable()
-	skip, rerr := hTbl.VhookSkippable("action_end_delete_posts", targetUser.ID, user)
+	skip, rerr := hTbl.VhookSkippable("action_end_delete_posts", targetUser.ID, &user)
 	if skip || rerr != nil {
 		return rerr
 	}

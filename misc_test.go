@@ -391,30 +391,30 @@ func TestPermsMiddleware(t *testing.T) {
 	dummyRequest := httptest.NewRequest("", "/forum/1", bytesBuffer)
 	user := c.BlankUser()
 
-	ferr := c.SuperModOnly(dummyResponseRecorder, dummyRequest, user)
+	ferr := c.SuperModOnly(dummyResponseRecorder, dummyRequest, *user)
 	expect(t, ferr != nil, "Blank users shouldn't be supermods")
 
 	user.IsSuperMod = false
-	ferr = c.SuperModOnly(dummyResponseRecorder, dummyRequest, user)
+	ferr = c.SuperModOnly(dummyResponseRecorder, dummyRequest, *user)
 	expect(t, ferr != nil, "Non-supermods shouldn't be allowed through supermod gates")
 
 	user.IsSuperMod = true
-	ferr = c.SuperModOnly(dummyResponseRecorder, dummyRequest, user)
+	ferr = c.SuperModOnly(dummyResponseRecorder, dummyRequest, *user)
 	expect(t, ferr == nil, "Supermods should be allowed through supermod gates")
 
 	// TODO: Loop over the Control Panel routes and make sure only supermods can get in
 
 	user = c.BlankUser()
 
-	ferr = c.MemberOnly(dummyResponseRecorder, dummyRequest, user)
+	ferr = c.MemberOnly(dummyResponseRecorder, dummyRequest, *user)
 	expect(t, ferr != nil, "Blank users shouldn't be considered loggedin")
 
 	user.Loggedin = false
-	ferr = c.MemberOnly(dummyResponseRecorder, dummyRequest, user)
+	ferr = c.MemberOnly(dummyResponseRecorder, dummyRequest, *user)
 	expect(t, ferr != nil, "Guests shouldn't be able to access member areas")
 
 	user.Loggedin = true
-	ferr = c.MemberOnly(dummyResponseRecorder, dummyRequest, user)
+	ferr = c.MemberOnly(dummyResponseRecorder, dummyRequest, *user)
 	expect(t, ferr == nil, "Logged in users should be able to access member areas")
 
 	// TODO: Loop over the /user/ routes and make sure only members can access the ones other than /user/username
@@ -423,15 +423,15 @@ func TestPermsMiddleware(t *testing.T) {
 
 	user = c.BlankUser()
 
-	ferr = c.SuperAdminOnly(dummyResponseRecorder, dummyRequest, user)
+	ferr = c.SuperAdminOnly(dummyResponseRecorder, dummyRequest, *user)
 	expect(t, ferr != nil, "Blank users shouldn't be considered super admins")
 
 	user.IsSuperAdmin = false
-	ferr = c.SuperAdminOnly(dummyResponseRecorder, dummyRequest, user)
+	ferr = c.SuperAdminOnly(dummyResponseRecorder, dummyRequest, *user)
 	expect(t, ferr != nil, "Non-super admins shouldn't be allowed through the super admin gate")
 
 	user.IsSuperAdmin = true
-	ferr = c.SuperAdminOnly(dummyResponseRecorder, dummyRequest, user)
+	ferr = c.SuperAdminOnly(dummyResponseRecorder, dummyRequest, *user)
 	expect(t, ferr == nil, "Super admins should be allowed through super admin gates")
 
 	// TODO: Make sure only super admins can access the backups route

@@ -161,7 +161,7 @@ func GuildWidgets(header *c.Header, guildItem *Guild) (success bool) {
 	Custom Pages
 */
 
-func RouteGuildList(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
+func RouteGuildList(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	h, ferr := c.UserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
@@ -192,7 +192,7 @@ func RouteGuildList(w http.ResponseWriter, r *http.Request, user *c.User) c.Rout
 	return routes.RenderTemplate("guilds_guild_list", w, r, h, pi)
 }
 
-func MiddleViewGuild(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
+func MiddleViewGuild(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	_, guildID, err := routes.ParseSEOURL(r.URL.Path[len("/guild/"):])
 	if err != nil {
 		return c.PreError("Not a valid guild ID", w, r)
@@ -215,7 +215,7 @@ func MiddleViewGuild(w http.ResponseWriter, r *http.Request, user *c.User) c.Rou
 	//return routeForum(w, r.WithContext(ctx), user, strconv.Itoa(guildItem.MainForumID))
 }
 
-func RouteCreateGuild(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
+func RouteCreateGuild(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	h, ferr := c.UserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
@@ -230,7 +230,7 @@ func RouteCreateGuild(w http.ResponseWriter, r *http.Request, user *c.User) c.Ro
 	return routes.RenderTemplate("guilds_create_guild", w, r, h, c.Page{h, tList, nil})
 }
 
-func RouteCreateGuildSubmit(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
+func RouteCreateGuildSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	// TODO: Add an approval queue mode for group creation
 	if !user.Loggedin || !user.PluginPerms["CreateGuild"] {
 		return c.NoPermissions(w, r, user)
@@ -279,7 +279,7 @@ func RouteCreateGuildSubmit(w http.ResponseWriter, r *http.Request, user *c.User
 	return nil
 }
 
-func RouteMemberList(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
+func RouteMemberList(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	header, ferr := c.UserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr

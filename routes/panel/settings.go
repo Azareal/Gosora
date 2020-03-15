@@ -10,8 +10,8 @@ import (
 	p "github.com/Azareal/Gosora/common/phrases"
 )
 
-func Settings(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
-	basePage, ferr := buildBasePage(w, r, user, "settings", "settings")
+func Settings(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
+	basePage, ferr := buildBasePage(w, r, &user, "settings", "settings")
 	if ferr != nil {
 		return ferr
 	}
@@ -54,8 +54,8 @@ func Settings(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "", "", "panel_settings", &pi})
 }
 
-func SettingEdit(w http.ResponseWriter, r *http.Request, user *c.User, sname string) c.RouteError {
-	basePage, ferr := buildBasePage(w, r, user, "edit_setting", "settings")
+func SettingEdit(w http.ResponseWriter, r *http.Request, user c.User, sname string) c.RouteError {
+	basePage, ferr := buildBasePage(w, r, &user, "edit_setting", "settings")
 	if ferr != nil {
 		return ferr
 	}
@@ -93,8 +93,8 @@ func SettingEdit(w http.ResponseWriter, r *http.Request, user *c.User, sname str
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "", "", "panel_setting", &pi})
 }
 
-func SettingEditSubmit(w http.ResponseWriter, r *http.Request, user *c.User, name string) c.RouteError {
-	headerLite, ferr := c.SimplePanelUserCheck(w, r, user)
+func SettingEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, name string) c.RouteError {
+	headerLite, ferr := c.SimplePanelUserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}

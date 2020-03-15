@@ -255,8 +255,8 @@ func PreAnalyticsDetail(w http.ResponseWriter, r *http.Request, user *c.User) (*
 	return bp, nil
 }
 
-func AnalyticsViews(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
-	basePage, ferr := PreAnalyticsDetail(w, r, user)
+func AnalyticsViews(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
+	basePage, ferr := PreAnalyticsDetail(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
@@ -295,8 +295,8 @@ func AnalyticsViews(w http.ResponseWriter, r *http.Request, user *c.User) c.Rout
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_analytics_right", "analytics", "panel_analytics_views", pi})
 }
 
-func AnalyticsRouteViews(w http.ResponseWriter, r *http.Request, user *c.User, route string) c.RouteError {
-	basePage, ferr := PreAnalyticsDetail(w, r, user)
+func AnalyticsRouteViews(w http.ResponseWriter, r *http.Request, user c.User, route string) c.RouteError {
+	basePage, ferr := PreAnalyticsDetail(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
@@ -330,8 +330,8 @@ func AnalyticsRouteViews(w http.ResponseWriter, r *http.Request, user *c.User, r
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_analytics_right", "analytics", "panel_analytics_route_views", pi})
 }
 
-func AnalyticsAgentViews(w http.ResponseWriter, r *http.Request, user *c.User, agent string) c.RouteError {
-	basePage, ferr := PreAnalyticsDetail(w, r, user)
+func AnalyticsAgentViews(w http.ResponseWriter, r *http.Request, user c.User, agent string) c.RouteError {
+	basePage, ferr := PreAnalyticsDetail(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
@@ -370,8 +370,8 @@ func AnalyticsAgentViews(w http.ResponseWriter, r *http.Request, user *c.User, a
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_analytics_right", "analytics", "panel_analytics_agent_views", pi})
 }
 
-func AnalyticsForumViews(w http.ResponseWriter, r *http.Request, user *c.User, sfid string) c.RouteError {
-	basePage, ferr := PreAnalyticsDetail(w, r, user)
+func AnalyticsForumViews(w http.ResponseWriter, r *http.Request, user c.User, sfid string) c.RouteError {
+	basePage, ferr := PreAnalyticsDetail(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
@@ -413,8 +413,8 @@ func AnalyticsForumViews(w http.ResponseWriter, r *http.Request, user *c.User, s
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_analytics_right", "analytics", "panel_analytics_forum_views", pi})
 }
 
-func AnalyticsSystemViews(w http.ResponseWriter, r *http.Request, user *c.User, system string) c.RouteError {
-	basePage, ferr := PreAnalyticsDetail(w, r, user)
+func AnalyticsSystemViews(w http.ResponseWriter, r *http.Request, user c.User, system string) c.RouteError {
+	basePage, ferr := PreAnalyticsDetail(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
@@ -452,8 +452,8 @@ func AnalyticsSystemViews(w http.ResponseWriter, r *http.Request, user *c.User, 
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_analytics_right", "analytics", "panel_analytics_system_views", pi})
 }
 
-func AnalyticsLanguageViews(w http.ResponseWriter, r *http.Request, user *c.User, lang string) c.RouteError {
-	basePage, ferr := PreAnalyticsDetail(w, r, user)
+func AnalyticsLanguageViews(w http.ResponseWriter, r *http.Request, user c.User, lang string) c.RouteError {
+	basePage, ferr := PreAnalyticsDetail(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
@@ -492,8 +492,8 @@ func AnalyticsLanguageViews(w http.ResponseWriter, r *http.Request, user *c.User
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_analytics_right", "analytics", "panel_analytics_lang_views", pi})
 }
 
-func AnalyticsReferrerViews(w http.ResponseWriter, r *http.Request, user *c.User, domain string) c.RouteError {
-	basePage, ferr := PreAnalyticsDetail(w, r, user)
+func AnalyticsReferrerViews(w http.ResponseWriter, r *http.Request, user c.User, domain string) c.RouteError {
+	basePage, ferr := PreAnalyticsDetail(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
@@ -524,8 +524,8 @@ func AnalyticsReferrerViews(w http.ResponseWriter, r *http.Request, user *c.User
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_analytics_right", "analytics", "panel_analytics_referrer_views", pi})
 }
 
-func AnalyticsTopics(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
-	basePage, ferr := PreAnalyticsDetail(w, r, user)
+func AnalyticsTopics(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
+	basePage, ferr := PreAnalyticsDetail(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
@@ -557,8 +557,8 @@ func AnalyticsTopics(w http.ResponseWriter, r *http.Request, user *c.User) c.Rou
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_analytics_right", "analytics", "panel_analytics_topics", pi})
 }
 
-func AnalyticsPosts(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
-	basePage, ferr := PreAnalyticsDetail(w, r, user)
+func AnalyticsPosts(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
+	basePage, ferr := PreAnalyticsDetail(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
@@ -590,8 +590,8 @@ func AnalyticsPosts(w http.ResponseWriter, r *http.Request, user *c.User) c.Rout
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_analytics_right", "analytics", "panel_analytics_posts", pi})
 }
 
-func AnalyticsMemory(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
-	basePage, ferr := PreAnalyticsDetail(w, r, user)
+func AnalyticsMemory(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
+	basePage, ferr := PreAnalyticsDetail(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
@@ -626,8 +626,8 @@ func AnalyticsMemory(w http.ResponseWriter, r *http.Request, user *c.User) c.Rou
 }
 
 // TODO: Show stack and heap memory separately on the chart
-func AnalyticsActiveMemory(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
-	basePage, ferr := PreAnalyticsDetail(w, r, user)
+func AnalyticsActiveMemory(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
+	basePage, ferr := PreAnalyticsDetail(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
@@ -671,8 +671,8 @@ func AnalyticsActiveMemory(w http.ResponseWriter, r *http.Request, user *c.User)
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_analytics_right", "analytics", "panel_analytics_active_memory", pi})
 }
 
-func AnalyticsPerf(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
-	basePage, ferr := PreAnalyticsDetail(w, r, user)
+func AnalyticsPerf(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
+	basePage, ferr := PreAnalyticsDetail(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
@@ -789,8 +789,8 @@ func analyticsAMapToOVList(aMap map[string]map[int64]int64) (ovList []OVItem) {
 	return sortOVList(ovList)
 }
 
-func AnalyticsRoutesPerf(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
-	basePage, ferr := PreAnalyticsDetail(w, r, user)
+func AnalyticsRoutesPerf(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
+	basePage, ferr := PreAnalyticsDetail(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
@@ -950,8 +950,8 @@ func analyticsVMapToOVList(vMap map[string]map[int64]int64) (ovList []OVItem) {
 	return sortOVList(ovList)
 }
 
-func AnalyticsForums(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
-	basePage, ferr := PreAnalyticsDetail(w, r, user)
+func AnalyticsForums(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
+	basePage, ferr := PreAnalyticsDetail(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
@@ -1034,8 +1034,8 @@ func AnalyticsForums(w http.ResponseWriter, r *http.Request, user *c.User) c.Rou
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_analytics_right", "analytics", "panel_analytics_forums", pi})
 }
 
-func AnalyticsRoutes(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
-	basePage, ferr := PreAnalyticsDetail(w, r, user)
+func AnalyticsRoutes(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
+	basePage, ferr := PreAnalyticsDetail(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
@@ -1110,8 +1110,8 @@ func AnalyticsRoutes(w http.ResponseWriter, r *http.Request, user *c.User) c.Rou
 }
 
 // Trialling multi-series charts
-func AnalyticsAgents(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
-	basePage, ferr := PreAnalyticsDetail(w, r, user)
+func AnalyticsAgents(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
+	basePage, ferr := PreAnalyticsDetail(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
@@ -1196,8 +1196,8 @@ func AnalyticsAgents(w http.ResponseWriter, r *http.Request, user *c.User) c.Rou
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_analytics_right", "analytics", "panel_analytics_agents", pi})
 }
 
-func AnalyticsSystems(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
-	basePage, ferr := PreAnalyticsDetail(w, r, user)
+func AnalyticsSystems(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
+	basePage, ferr := PreAnalyticsDetail(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
@@ -1260,8 +1260,8 @@ func AnalyticsSystems(w http.ResponseWriter, r *http.Request, user *c.User) c.Ro
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_analytics_right", "analytics", "panel_analytics_systems", pi})
 }
 
-func AnalyticsLanguages(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
-	basePage, ferr := PreAnalyticsDetail(w, r, user)
+func AnalyticsLanguages(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
+	basePage, ferr := PreAnalyticsDetail(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
@@ -1347,8 +1347,8 @@ func AnalyticsLanguages(w http.ResponseWriter, r *http.Request, user *c.User) c.
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_analytics_right", "analytics", "panel_analytics_langs", pi})
 }
 
-func AnalyticsReferrers(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
-	basePage, ferr := buildBasePage(w, r, user, "analytics", "analytics")
+func AnalyticsReferrers(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
+	basePage, ferr := buildBasePage(w, r, &user, "analytics", "analytics")
 	if ferr != nil {
 		return ferr
 	}

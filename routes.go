@@ -33,7 +33,7 @@ var phraseLoginAlerts = []byte(`{"msgs":[{"msg":"Login to see your alerts","path
 
 // TODO: Refactor this endpoint
 // TODO: Move this into the routes package
-func routeAPI(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
+func routeAPI(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	// TODO: Don't make this too JSON dependent so that we can swap in newer more efficient formats
 	w.Header().Set("Content-Type", "application/json")
 	err := r.ParseForm()
@@ -210,7 +210,7 @@ var phraseWhitelist = []string{
 	"panel", // We're going to handle this specially below as this is a security boundary
 }
 
-func routeAPIPhrases(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
+func routeAPIPhrases(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	// TODO: Don't make this too JSON dependent so that we can swap in newer more efficient formats
 	h := w.Header()
 	h.Set("Content-Type", "application/json")
@@ -343,14 +343,16 @@ func routeAPIPhrases(w http.ResponseWriter, r *http.Request, user *c.User) c.Rou
 
 // A dedicated function so we can shake things up every now and then to make the token harder to parse
 // TODO: Are we sure we want to do this by ID, just in case we reuse this and have multiple antispams on the page?
-func routeJSAntispam(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
+func routeJSAntispam(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	h := sha256.New()
 	h.Write([]byte(c.JSTokenBox.Load().(string)))
 	h.Write([]byte(user.GetIP()))
 	jsToken := hex.EncodeToString(h.Sum(nil))
 
-	innerCode := "`document.getElementByld('golden-watch').value='" + jsToken + "';`"
-	io.WriteString(w, `let hihi=`+innerCode+`;hihi=hihi.replace('ld','Id');eval(hihi);`)
+	innerCode := "`document.getElementByld('golden-watch').value = '" + jsToken + "';`"
+	io.WriteString(w, `let hihi = `+innerCode+`;
+hihi = hihi.replace('ld','Id');
+eval(hihi);`)
 
 	return nil
 }

@@ -22,8 +22,8 @@ func successRedirect(dest string, w http.ResponseWriter, r *http.Request, js boo
 }
 
 // TODO: Prerender needs to handle dyntmpl templates better...
-func renderTemplate(tmplName string, w http.ResponseWriter, r *http.Request, h *c.Header, pi interface{}) c.RouteError {
-	if !h.LooseCSP {
+func renderTemplate(tmplName string, w http.ResponseWriter, r *http.Request, header *c.Header, pi interface{}) c.RouteError {
+	if !header.LooseCSP {
 		if c.Config.SslSchema {
 			w.Header().Set("Content-Security-Policy", "default-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-eval' 'unsafe-inline'; img-src * data: 'unsafe-eval' 'unsafe-inline'; connect-src * 'unsafe-eval' 'unsafe-inline'; frame-src 'self';upgrade-insecure-requests")
 		} else {
@@ -31,12 +31,12 @@ func renderTemplate(tmplName string, w http.ResponseWriter, r *http.Request, h *
 		}
 	}
 
-	h.AddScript("global.js")
-	if c.RunPreRenderHook("pre_render_"+tmplName, w, r, h.CurrentUser, pi) {
+	header.AddScript("global.js")
+	if c.RunPreRenderHook("pre_render_"+tmplName, w, r, &header.CurrentUser, pi) {
 		return nil
 	}
 	// TODO: Prepend this with panel_?
-	err := h.Theme.RunTmpl(tmplName, pi, w)
+	err := header.Theme.RunTmpl(tmplName, pi, w)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}

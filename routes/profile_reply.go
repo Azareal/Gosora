@@ -9,7 +9,7 @@ import (
 	"github.com/Azareal/Gosora/common/counters"
 )
 
-func ProfileReplyCreateSubmit(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
+func ProfileReplyCreateSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	if !user.Perms.CreateProfileReply {
 		return c.NoPermissions(w, r, user)
 	}
@@ -44,8 +44,8 @@ func ProfileReplyCreateSubmit(w http.ResponseWriter, r *http.Request, user *c.Us
 		return c.InternalError(err, w, r)
 	}
 
-	// ! Be careful about leaking per-route permission state with user ptr
-	alert := c.Alert{ActorID: user.ID, TargetUserID: profileOwner.ID, Event: "reply", ElementType: "user", ElementID: profileOwner.ID, Actor: user, Extra: strconv.Itoa(prid)}
+	// ! Be careful about leaking per-route permission state with &user
+	alert := c.Alert{ActorID: user.ID, TargetUserID: profileOwner.ID, Event: "reply", ElementType: "user", ElementID: profileOwner.ID, Actor: &user, Extra: strconv.Itoa(prid)}
 	err = c.AddActivityAndNotifyTarget(alert)
 	if err != nil {
 		return c.InternalError(err, w, r)
@@ -56,7 +56,7 @@ func ProfileReplyCreateSubmit(w http.ResponseWriter, r *http.Request, user *c.Us
 	return nil
 }
 
-func ProfileReplyEditSubmit(w http.ResponseWriter, r *http.Request, user *c.User, srid string) c.RouteError {
+func ProfileReplyEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, srid string) c.RouteError {
 	js := r.PostFormValue("js") == "1"
 	rid, err := strconv.Atoi(srid)
 	if err != nil {
@@ -97,7 +97,7 @@ func ProfileReplyEditSubmit(w http.ResponseWriter, r *http.Request, user *c.User
 	return nil
 }
 
-func ProfileReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user *c.User, srid string) c.RouteError {
+func ProfileReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user c.User, srid string) c.RouteError {
 	js := r.PostFormValue("js") == "1"
 	rid, err := strconv.Atoi(srid)
 	if err != nil {

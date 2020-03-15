@@ -71,7 +71,7 @@ func forumUserCheck(header *Header, w http.ResponseWriter, r *http.Request, user
 		return InternalError(err, w, r)
 	}
 	cascadeForumPerms(fperms, user)
-	header.CurrentUser = user // TODO: Use a pointer instead for CurrentUser, so we don't have to do this
+	header.CurrentUser = *user // TODO: Use a pointer instead for CurrentUser, so we don't have to do this
 	return rerr
 }
 
@@ -107,7 +107,7 @@ func panelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (h *Head
 		Settings:    SettingBox.Load().(SettingMap),
 		Themes:      Themes,
 		Theme:       theme,
-		CurrentUser: user,
+		CurrentUser: *user,
 		Hooks:       GetHookTable(),
 		Zone:        "panel",
 		Writer:      w,
@@ -202,7 +202,7 @@ func GetThemeByReq(r *http.Request) *Theme {
 }
 
 func userCheck(w http.ResponseWriter, r *http.Request, user *User) (header *Header, rerr RouteError) {
-	return userCheck2(w, r, user, uutils.Nanotime())
+	return userCheck2(w,r,user,uutils.Nanotime())
 }
 
 // TODO: Add the ability for admins to restrict certain themes to certain groups?
@@ -214,12 +214,12 @@ func userCheck2(w http.ResponseWriter, r *http.Request, user *User, nano int64) 
 		Settings:    SettingBox.Load().(SettingMap),
 		Themes:      Themes,
 		Theme:       theme,
-		CurrentUser: user, // ! Some things rely on this being a pointer downstream from this function
+		CurrentUser: *user, // ! Some things rely on this being a pointer downstream from this function
 		Hooks:       GetHookTable(),
 		Zone:        "frontend",
 		Writer:      w,
 		IsoCode:     phrases.GetLangPack().IsoCode,
-		StartedAt:   nano,
+		StartedAt: nano,
 	}
 	// TODO: Optimise this by avoiding accessing a map string index
 	header.GoogSiteVerify = header.Settings["google_site_verify"].(string)
@@ -338,7 +338,7 @@ func preRoute(w http.ResponseWriter, r *http.Request) (User, bool) {
 	return *usercpy, true
 }
 
-func UploadAvatar(w http.ResponseWriter, r *http.Request, user *User, tuid int) (ext string, ferr RouteError) {
+func UploadAvatar(w http.ResponseWriter, r *http.Request, user User, tuid int) (ext string, ferr RouteError) {
 	// We don't want multiple files
 	// TODO: Are we doing this correctly?
 	filenameMap := make(map[string]bool)
@@ -404,7 +404,7 @@ func UploadAvatar(w http.ResponseWriter, r *http.Request, user *User, tuid int) 
 	return ext, nil
 }
 
-func ChangeAvatar(path string, w http.ResponseWriter, r *http.Request, user *User) RouteError {
+func ChangeAvatar(path string, w http.ResponseWriter, r *http.Request, user User) RouteError {
 	err := user.ChangeAvatar(path)
 	if err != nil {
 		return InternalError(err, w, r)
@@ -430,7 +430,7 @@ func ChangeAvatar(path string, w http.ResponseWriter, r *http.Request, user *Use
 }
 
 // SuperAdminOnly makes sure that only super admin can access certain critical panel routes
-func SuperAdminOnly(w http.ResponseWriter, r *http.Request, user *User) RouteError {
+func SuperAdminOnly(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	if !user.IsSuperAdmin {
 		return NoPermissions(w, r, user)
 	}
@@ -438,7 +438,7 @@ func SuperAdminOnly(w http.ResponseWriter, r *http.Request, user *User) RouteErr
 }
 
 // AdminOnly makes sure that only admins can access certain panel routes
-func AdminOnly(w http.ResponseWriter, r *http.Request, user *User) RouteError {
+func AdminOnly(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	if !user.IsAdmin {
 		return NoPermissions(w, r, user)
 	}
@@ -446,7 +446,7 @@ func AdminOnly(w http.ResponseWriter, r *http.Request, user *User) RouteError {
 }
 
 // SuperModeOnly makes sure that only super mods or higher can access the panel routes
-func SuperModOnly(w http.ResponseWriter, r *http.Request, user *User) RouteError {
+func SuperModOnly(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	if !user.IsSuperMod {
 		return NoPermissions(w, r, user)
 	}
@@ -454,7 +454,7 @@ func SuperModOnly(w http.ResponseWriter, r *http.Request, user *User) RouteError
 }
 
 // MemberOnly makes sure that only logged in users can access this route
-func MemberOnly(w http.ResponseWriter, r *http.Request, user *User) RouteError {
+func MemberOnly(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	if !user.Loggedin {
 		return LoginRequired(w, r, user)
 	}
@@ -462,21 +462,21 @@ func MemberOnly(w http.ResponseWriter, r *http.Request, user *User) RouteError {
 }
 
 // NoBanned stops any banned users from accessing this route
-func NoBanned(w http.ResponseWriter, r *http.Request, user *User) RouteError {
+func NoBanned(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	if user.IsBanned {
 		return Banned(w, r, user)
 	}
 	return nil
 }
 
-func ParseForm(w http.ResponseWriter, r *http.Request, user *User) RouteError {
+func ParseForm(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	if err := r.ParseForm(); err != nil {
 		return LocalError("Bad Form", w, r, user)
 	}
 	return nil
 }
 
-func NoSessionMismatch(w http.ResponseWriter, r *http.Request, user *User) RouteError {
+func NoSessionMismatch(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	if err := r.ParseForm(); err != nil {
 		return LocalError("Bad Form", w, r, user)
 	}
@@ -495,7 +495,7 @@ func ReqIsJson(r *http.Request) bool {
 	return r.Header.Get("Content-type") == "application/json"
 }
 
-func HandleUploadRoute(w http.ResponseWriter, r *http.Request, user *User, maxFileSize int) RouteError {
+func HandleUploadRoute(w http.ResponseWriter, r *http.Request, user User, maxFileSize int) RouteError {
 	// TODO: Reuse this code more
 	if r.ContentLength > int64(maxFileSize) {
 		size, unit := ConvertByteUnit(float64(maxFileSize))
@@ -510,7 +510,7 @@ func HandleUploadRoute(w http.ResponseWriter, r *http.Request, user *User, maxFi
 	return nil
 }
 
-func NoUploadSessionMismatch(w http.ResponseWriter, r *http.Request, user *User) RouteError {
+func NoUploadSessionMismatch(w http.ResponseWriter, r *http.Request, user User) RouteError {
 	// TODO: Try to eliminate some of these allocations
 	sess := []byte(user.Session)
 	if len(sess) == 0 {

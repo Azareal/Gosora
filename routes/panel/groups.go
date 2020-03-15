@@ -10,8 +10,8 @@ import (
 	p "github.com/Azareal/Gosora/common/phrases"
 )
 
-func Groups(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
-	bPage, ferr := buildBasePage(w, r, u, "groups", "groups")
+func Groups(w http.ResponseWriter, r *http.Request, u c.User) c.RouteError {
+	bPage, ferr := buildBasePage(w, r, &u, "groups", "groups")
 	if ferr != nil {
 		return ferr
 	}
@@ -61,8 +61,8 @@ func Groups(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
 	return renderTemplate("panel", w, r, bPage.Header, c.Panel{bPage, "", "", "panel_groups", &pi})
 }
 
-func GroupsEdit(w http.ResponseWriter, r *http.Request, user *c.User, sgid string) c.RouteError {
-	basePage, ferr := buildBasePage(w, r, user, "edit_group", "groups")
+func GroupsEdit(w http.ResponseWriter, r *http.Request, user c.User, sgid string) c.RouteError {
+	basePage, ferr := buildBasePage(w, r, &user, "edit_group", "groups")
 	if ferr != nil {
 		return ferr
 	}
@@ -103,8 +103,8 @@ func GroupsEdit(w http.ResponseWriter, r *http.Request, user *c.User, sgid strin
 	return renderTemplate("panel_group_edit", w, r, basePage.Header, pi)
 }
 
-func GroupsEditPromotions(w http.ResponseWriter, r *http.Request, user *c.User, sgid string) c.RouteError {
-	basePage, ferr := buildBasePage(w, r, user, "edit_group", "groups")
+func GroupsEditPromotions(w http.ResponseWriter, r *http.Request, user c.User, sgid string) c.RouteError {
+	basePage, ferr := buildBasePage(w, r, &user, "edit_group", "groups")
 	if ferr != nil {
 		return ferr
 	}
@@ -168,22 +168,22 @@ func GroupsEditPromotions(w http.ResponseWriter, r *http.Request, user *c.User, 
 	return renderTemplate("panel_group_edit_promotions", w, r, basePage.Header, pi)
 }
 
-func groupCheck(w http.ResponseWriter, r *http.Request, u *c.User, g *c.Group, err error) c.RouteError {
+func groupCheck(w http.ResponseWriter, r *http.Request, user c.User, g *c.Group, err error) c.RouteError {
 	if err == sql.ErrNoRows {
-		return c.LocalError("No such group.", w, r, u)
+		return c.LocalError("No such group.", w, r, user)
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
-	if g.IsAdmin && !u.Perms.EditGroupAdmin {
-		return c.LocalError(p.GetErrorPhrase("panel_groups_cannot_edit_admin"), w, r, u)
+	if g.IsAdmin && !user.Perms.EditGroupAdmin {
+		return c.LocalError(p.GetErrorPhrase("panel_groups_cannot_edit_admin"), w, r, user)
 	}
-	if g.IsMod && !u.Perms.EditGroupSuperMod {
-		return c.LocalError(p.GetErrorPhrase("panel_groups_cannot_edit_supermod"), w, r, u)
+	if g.IsMod && !user.Perms.EditGroupSuperMod {
+		return c.LocalError(p.GetErrorPhrase("panel_groups_cannot_edit_supermod"), w, r, user)
 	}
 	return nil
 }
 
-func GroupsPromotionsCreateSubmit(w http.ResponseWriter, r *http.Request, user *c.User, sgid string) c.RouteError {
+func GroupsPromotionsCreateSubmit(w http.ResponseWriter, r *http.Request, user c.User, sgid string) c.RouteError {
 	if !user.Perms.EditGroup {
 		return c.NoPermissions(w, r, user)
 	}
@@ -251,7 +251,7 @@ func GroupsPromotionsCreateSubmit(w http.ResponseWriter, r *http.Request, user *
 	return nil
 }
 
-func GroupsPromotionsDeleteSubmit(w http.ResponseWriter, r *http.Request, user *c.User, sspl string) c.RouteError {
+func GroupsPromotionsDeleteSubmit(w http.ResponseWriter, r *http.Request, user c.User, sspl string) c.RouteError {
 	if !user.Perms.EditGroup {
 		return c.NoPermissions(w, r, user)
 	}
@@ -298,8 +298,8 @@ func GroupsPromotionsDeleteSubmit(w http.ResponseWriter, r *http.Request, user *
 	return nil
 }
 
-func GroupsEditPerms(w http.ResponseWriter, r *http.Request, user *c.User, sgid string) c.RouteError {
-	basePage, ferr := buildBasePage(w, r, user, "edit_group", "groups")
+func GroupsEditPerms(w http.ResponseWriter, r *http.Request, user c.User, sgid string) c.RouteError {
+	basePage, ferr := buildBasePage(w, r, &user, "edit_group", "groups")
 	if ferr != nil {
 		return ferr
 	}
@@ -385,8 +385,8 @@ func GroupsEditPerms(w http.ResponseWriter, r *http.Request, user *c.User, sgid 
 	return renderTemplate("panel_group_edit_perms", w, r, basePage.Header, pi)
 }
 
-func GroupsEditSubmit(w http.ResponseWriter, r *http.Request, user *c.User, sgid string) c.RouteError {
-	_, ferr := c.SimplePanelUserCheck(w, r, user)
+func GroupsEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, sgid string) c.RouteError {
+	_, ferr := c.SimplePanelUserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
@@ -471,8 +471,8 @@ func GroupsEditSubmit(w http.ResponseWriter, r *http.Request, user *c.User, sgid
 	return nil
 }
 
-func GroupsEditPermsSubmit(w http.ResponseWriter, r *http.Request, user *c.User, sgid string) c.RouteError {
-	_, ferr := c.SimplePanelUserCheck(w, r, user)
+func GroupsEditPermsSubmit(w http.ResponseWriter, r *http.Request, user c.User, sgid string) c.RouteError {
+	_, ferr := c.SimplePanelUserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
@@ -520,8 +520,8 @@ func GroupsEditPermsSubmit(w http.ResponseWriter, r *http.Request, user *c.User,
 	return nil
 }
 
-func GroupsCreateSubmit(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
-	_, ferr := c.SimplePanelUserCheck(w, r, user)
+func GroupsCreateSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
+	_, ferr := c.SimplePanelUserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
@@ -529,32 +529,32 @@ func GroupsCreateSubmit(w http.ResponseWriter, r *http.Request, user *c.User) c.
 		return c.NoPermissions(w, r, user)
 	}
 
-	name := r.PostFormValue("name")
-	if name == "" {
+	groupName := r.PostFormValue("name")
+	if groupName == "" {
 		return c.LocalError(p.GetErrorPhrase("panel_groups_need_name"), w, r, user)
 	}
-	tag := r.PostFormValue("tag")
+	groupTag := r.PostFormValue("tag")
 
-	var admin, mod, banned bool
+	var isAdmin, isMod, isBanned bool
 	if user.Perms.EditGroupGlobalPerms {
 		switch r.PostFormValue("type") {
 		case "Admin":
 			if !user.Perms.EditGroupAdmin {
 				return c.LocalError(p.GetErrorPhrase("panel_groups_create_cannot_designate_admin"), w, r, user)
 			}
-			admin = true
-			mod = true
+			isAdmin = true
+			isMod = true
 		case "Mod":
 			if !user.Perms.EditGroupSuperMod {
 				return c.LocalError(p.GetErrorPhrase("panel_groups_create_cannot_designate_supermod"), w, r, user)
 			}
-			mod = true
+			isMod = true
 		case "Banned":
-			banned = true
+			isBanned = true
 		}
 	}
 
-	gid, err := c.Groups.Create(name, tag, admin, mod, banned)
+	gid, err := c.Groups.Create(groupName, groupTag, isAdmin, isMod, isBanned)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}

@@ -91,20 +91,20 @@ var Template_error_handle = genIntTmpl("error")
 var Template_ip_search_handle = genIntTmpl("ip_search")
 var Template_account_handle = genIntTmpl("account")
 
-func tmplInitUsers() (*User, *User, *User) {
+func tmplInitUsers() (User, User, User) {
 	avatar, microAvatar := BuildAvatar(62, "")
-	u := User{62, BuildProfileURL("fake-user", 62), "Fake User", "compiler@localhost", 0, false, false, false, false, false, false, GuestPerms, make(map[string]bool), "", false, "", avatar, microAvatar, "", "", 0, 0, 0, 0, StartTime, "0.0.0.0.0", 0, 0, nil}
+	user := User{62, BuildProfileURL("fake-user", 62), "Fake User", "compiler@localhost", 0, false, false, false, false, false, false, GuestPerms, make(map[string]bool), "", false, "", avatar, microAvatar, "", "", 0, 0, 0, 0, StartTime, "0.0.0.0.0", 0, 0, nil}
 
 	// TODO: Do a more accurate level calculation for this?
 	avatar, microAvatar = BuildAvatar(1, "")
-	u2 := User{1, BuildProfileURL("admin-alice", 1), "Admin Alice", "alice@localhost", 1, true, true, true, true, false, false, AllPerms, make(map[string]bool), "", true, "", avatar, microAvatar, "", "", 58, 1000, 0, 1000, StartTime, "127.0.0.1", 0, 0, nil}
+	user2 := User{1, BuildProfileURL("admin-alice", 1), "Admin Alice", "alice@localhost", 1, true, true, true, true, false, false, AllPerms, make(map[string]bool), "", true, "", avatar, microAvatar, "", "", 58, 1000, 0, 1000, StartTime, "127.0.0.1", 0, 0, nil}
 
 	avatar, microAvatar = BuildAvatar(2, "")
-	u3 := User{2, BuildProfileURL("admin-fred", 62), "Admin Fred", "fred@localhost", 1, true, true, true, true, false, false, AllPerms, make(map[string]bool), "", true, "", avatar, microAvatar, "", "", 42, 900, 0, 900, StartTime, "::1", 0, 0, nil}
-	return &u, &u2, &u3
+	user3 := User{2, BuildProfileURL("admin-fred", 62), "Admin Fred", "fred@localhost", 1, true, true, true, true, false, false, AllPerms, make(map[string]bool), "", true, "", avatar, microAvatar, "", "", 42, 900, 0, 900, StartTime, "::1", 0, 0, nil}
+	return user, user2, user3
 }
 
-func tmplInitHeaders(user, user2, user3 *User) (*Header, *Header, *Header) {
+func tmplInitHeaders(user, user2, user3 User) (*Header, *Header, *Header) {
 	header := &Header{
 		Site:            Site,
 		Settings:        SettingBox.Load().(SettingMap),
@@ -121,7 +121,7 @@ func tmplInitHeaders(user, user2, user3 *User) (*Header, *Header, *Header) {
 		},
 	}
 
-	buildHeader := func(user *User) *Header {
+	buildHeader := func(user User) *Header {
 		head := &Header{Site: Site}
 		*head = *header
 		head.CurrentUser = user
@@ -224,7 +224,7 @@ func compileCommons(c *tmpl.CTemplateSet, head, head2 *Header, forumList []Forum
 	}*/
 
 	var topicsList []*TopicsRow
-	topicsList = append(topicsList, &TopicsRow{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, now, now, user3.ID, 1, 1, "", "127.0.0.1", 1, 0, 1, 1, 0, "classname", 0, "", user2, "", 0, user3, "General", "/forum/general.2", nil})
+	topicsList = append(topicsList, &TopicsRow{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, now, now, user3.ID, 1, 1, "", "127.0.0.1", 1, 0, 1, 1, 0, "classname", 0, "", &user2, "", 0, &user3, "General", "/forum/general.2", nil})
 	topicListPage := TopicListPage{htitle("Topic List"), topicsList, forumList, Config.DefaultForum, TopicListSort{"lastupdated", false}, Paginator{[]int{1}, 1, 1}}
 	o.Add("topics", "c.TopicListPage", topicListPage)
 
@@ -298,11 +298,11 @@ func compileTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName string
 		return err
 	}
 
-	ppage := ProfilePage{htitle("User 526"), replyList, *user, 0, 0, false, false, false} // TODO: Use the score from user to generate the currentScore and nextScore
+	ppage := ProfilePage{htitle("User 526"), replyList, user, 0, 0, false, false, false} // TODO: Use the score from user to generate the currentScore and nextScore
 	t.Add("profile", "c.ProfilePage", ppage)
 
 	var topicsList []*TopicsRow
-	topicsList = append(topicsList, &TopicsRow{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, now, now, user3.ID, 1, 1, "", "127.0.0.1", 1, 0, 1, 1, 0, "classname", 0, "", user2, "", 0, user3, "General", "/forum/general.2", nil})
+	topicsList = append(topicsList, &TopicsRow{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, now, now, user3.ID, 1, 1, "", "127.0.0.1", 1, 0, 1, 1, 0, "classname", 0, "", &user2, "", 0, &user3, "General", "/forum/general.2", nil})
 	topicListPage := TopicListPage{htitle("Topic List"), topicsList, forumList, Config.DefaultForum, TopicListSort{"lastupdated", false}, Paginator{[]int{1}, 1, 1}}
 
 	forumItem := BlankForum(1, "general-forum.1", "General Forum", "Where the general stuff happens", true, "all", 0, "", 0)
@@ -344,20 +344,20 @@ func compileTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName string
 	t.AddStd("register", "c.Page", Page{htitle("Registration Page"), tList, false})
 	t.AddStd("error", "c.ErrorPage", ErrorPage{htitle("Error"), "A problem has occurred in the system."})
 
-	ipSearchPage := IPSearchPage{htitle("IP Search"), map[int]*User{1: user2}, "::1"}
+	ipSearchPage := IPSearchPage{htitle("IP Search"), map[int]*User{1: &user2}, "::1"}
 	t.AddStd("ip_search", "c.IPSearchPage", ipSearchPage)
 
 	var inter nobreak
 	accountPage := Account{header, "dashboard", "account_own_edit", inter}
 	t.AddStd("account", "c.Account", accountPage)
 
-	parti := []*User{user}
+	parti := []*User{&user}
 	convo := &Conversation{1, BuildConvoURL(1), user.ID, time.Now(), 0, time.Now()}
-	convoItems := []ConvoViewRow{ConvoViewRow{&ConversationPost{1, 1, "hey", "", user.ID}, user, "", 4, true}}
+	convoItems := []ConvoViewRow{ConvoViewRow{&ConversationPost{1, 1, "hey", "", user.ID}, &user, "", 4, true}}
 	convoPage := ConvoViewPage{header, convo, convoItems, parti, true, Paginator{[]int{1}, 1, 1}}
 	t.AddStd("convo", "c.ConvoViewPage", convoPage)
 
-	convos := []*ConversationExtra{&ConversationExtra{&Conversation{}, []*User{user}}}
+	convos := []*ConversationExtra{&ConversationExtra{&Conversation{}, []*User{&user}}}
 	var cRows []ConvoListRow
 	for _, convo := range convos {
 		cRows = append(cRows, ConvoListRow{convo, convo.Users, false})
@@ -417,7 +417,7 @@ func compileTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName string
 	config.SkipHandles = true
 	c.SetConfig(config)
 	for _, tmplfunc := range PrebuildTmplList {
-		tmplItem := tmplfunc(*user, header)
+		tmplItem := tmplfunc(user, header)
 		varList := make(map[string]tmpl.VarItem)
 		compiledTmpl, err := c.Compile(tmplItem.Filename, tmplItem.Path, tmplItem.StructName, tmplItem.Data, varList, tmplItem.Imports...)
 		if err != nil {
@@ -529,7 +529,7 @@ func compileJSTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName stri
 
 	t := TItemHold(make(map[string]TItem))
 
-	topicsRow := &TopicsRow{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, now, now, user3.ID, 1, 1, "", "::1", 1, 0, 1, 0, 1, "classname", 0, "", user2, "", 0, user3, "General", "/forum/general.2", nil}
+	topicsRow := &TopicsRow{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, now, now, user3.ID, 1, 1, "", "::1", 1, 0, 1, 0, 1, "classname", 0, "", &user2, "", 0, &user3, "General", "/forum/general.2", nil}
 	t.AddStd("topics_topic", "c.TopicsRow", topicsRow)
 
 	poll := Poll{ID: 1, Type: 0, Options: map[int]string{0: "Nothing", 1: "Something"}, Results: map[int]int{0: 5, 1: 2}, QuickOptions: []PollOption{
@@ -563,9 +563,9 @@ func compileJSTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName stri
 	t.AddStd("topic_c_attach_item", "c.TopicCAttachItem", TopicCAttachItem{ID: 1, ImgSrc: "", Path: "", FullPath: ""})
 	t.AddStd("topic_c_poll_input", "c.TopicCPollInput", TopicCPollInput{Index: 0})
 
-	parti := []*User{user}
+	parti := []*User{&user}
 	convo := &Conversation{1, BuildConvoURL(1), user.ID, time.Now(), 0, time.Now()}
-	convoItems := []ConvoViewRow{ConvoViewRow{&ConversationPost{1, 1, "hey", "", user.ID}, user, "", 4, true}}
+	convoItems := []ConvoViewRow{ConvoViewRow{&ConversationPost{1, 1, "hey", "", user.ID}, &user, "", 4, true}}
 	convoPage := ConvoViewPage{header, convo, convoItems, parti, true, Paginator{[]int{1}, 1, 1}}
 	t.AddStd("convo", "c.ConvoViewPage", convoPage)
 

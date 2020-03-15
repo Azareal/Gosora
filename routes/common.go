@@ -120,7 +120,7 @@ func renderTemplate3(tmplName, hookName string, w http.ResponseWriter, r *http.R
 	s := h.Stylesheets
 	h.Stylesheets = nil
 	if r.FormValue("i") != "1" && h.CurrentUser.LastAgent != c.Semrush {
-		c.PrepResources(h.CurrentUser, h, h.Theme)
+		c.PrepResources(&h.CurrentUser, h, h.Theme)
 		for _, ss := range s {
 			h.Stylesheets = append(h.Stylesheets, ss)
 		}
@@ -146,7 +146,7 @@ func renderTemplate3(tmplName, hookName string, w http.ResponseWriter, r *http.R
 		}
 		co.PerfCounter.Push(since /*, false*/)
 	}
-	if c.RunPreRenderHook("pre_render_"+hookName, w, r, h.CurrentUser, pi) {
+	if c.RunPreRenderHook("pre_render_"+hookName, w, r, &h.CurrentUser, pi) {
 		return nil
 	}
 	err := h.Theme.RunTmpl(tmplName, pi, w)

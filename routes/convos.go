@@ -14,8 +14,8 @@ import (
 	p "github.com/Azareal/Gosora/common/phrases"
 )
 
-func Convos(w http.ResponseWriter, r *http.Request, user *c.User, h *c.Header) c.RouteError {
-	accountEditHead("convos", w, r, user, h)
+func Convos(w http.ResponseWriter, r *http.Request, user c.User, h *c.Header) c.RouteError {
+	accountEditHead("convos", w, r, &user, h)
 	h.AddScript("convo.js")
 	h.AddSheet(h.Theme.Name + "/convo.css")
 	h.AddNotice("convo_dev")
@@ -51,8 +51,8 @@ func Convos(w http.ResponseWriter, r *http.Request, user *c.User, h *c.Header) c
 	return renderTemplate("account", w, r, h, pi)
 }
 
-func Convo(w http.ResponseWriter, r *http.Request, user *c.User, header *c.Header, scid string) c.RouteError {
-	accountEditHead("convo", w, r, user, header)
+func Convo(w http.ResponseWriter, r *http.Request, user c.User, header *c.Header, scid string) c.RouteError {
+	accountEditHead("convo", w, r, &user, header)
 	header.AddSheet(header.Theme.Name + "/convo.css")
 	header.AddNotice("convo_dev")
 	cid, err := strconv.Atoi(scid)
@@ -127,8 +127,8 @@ func Convo(w http.ResponseWriter, r *http.Request, user *c.User, header *c.Heade
 	return renderTemplate("account", w, r, header, pi)
 }
 
-func ConvosCreate(w http.ResponseWriter, r *http.Request, user *c.User, h *c.Header) c.RouteError {
-	accountEditHead("create_convo", w, r, user, h)
+func ConvosCreate(w http.ResponseWriter, r *http.Request, user c.User, h *c.Header) c.RouteError {
+	accountEditHead("create_convo", w, r, &user, h)
 	if !user.Perms.UseConvos && !user.Perms.UseConvosOnlyWithMod {
 		return c.NoPermissions(w, r, user)
 	}
@@ -146,8 +146,8 @@ func ConvosCreate(w http.ResponseWriter, r *http.Request, user *c.User, h *c.Hea
 	return renderTemplate("account", w, r, h, pi)
 }
 
-func ConvosCreateSubmit(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
-	_, ferr := c.SimpleUserCheck(w, r, user)
+func ConvosCreateSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
+	_, ferr := c.SimpleUserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
@@ -225,7 +225,7 @@ func ConvosCreateSubmit(w http.ResponseWriter, r *http.Request, user *c.User) c.
 		return c.InternalError(err, w, r)
 	}
 
-	err = c.AddActivityAndNotifyAll(c.Alert{ActorID: user.ID, Event: "create", ElementType: "convo", ElementID: cid, Actor: user})
+	err = c.AddActivityAndNotifyAll(c.Alert{ActorID: user.ID, Event: "create", ElementType: "convo", ElementID: cid, Actor: &user})
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -234,8 +234,8 @@ func ConvosCreateSubmit(w http.ResponseWriter, r *http.Request, user *c.User) c.
 	return nil
 }
 
-/*func ConvosDeleteSubmit(w http.ResponseWriter, r *http.Request, user *c.User, scid string) c.RouteError {
-	_, ferr := c.SimpleUserCheck(w, r, user)
+/*func ConvosDeleteSubmit(w http.ResponseWriter, r *http.Request, user c.User, scid string) c.RouteError {
+	_, ferr := c.SimpleUserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
@@ -250,8 +250,8 @@ func ConvosCreateSubmit(w http.ResponseWriter, r *http.Request, user *c.User) c.
 	return nil
 }*/
 
-func ConvosCreateReplySubmit(w http.ResponseWriter, r *http.Request, user *c.User, scid string) c.RouteError {
-	_, ferr := c.SimpleUserCheck(w, r, user)
+func ConvosCreateReplySubmit(w http.ResponseWriter, r *http.Request, user c.User, scid string) c.RouteError {
+	_, ferr := c.SimpleUserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
@@ -293,7 +293,7 @@ func ConvosCreateReplySubmit(w http.ResponseWriter, r *http.Request, user *c.Use
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
-	err = c.AddActivityAndNotifyAll(c.Alert{ActorID: user.ID, Event: "reply", ElementType: "convo", ElementID: cid, Actor: user, Extra: strconv.Itoa(pid)})
+	err = c.AddActivityAndNotifyAll(c.Alert{ActorID: user.ID, Event: "reply", ElementType: "convo", ElementID: cid, Actor: &user, Extra: strconv.Itoa(pid)})
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -302,8 +302,8 @@ func ConvosCreateReplySubmit(w http.ResponseWriter, r *http.Request, user *c.Use
 	return nil
 }
 
-func ConvosDeleteReplySubmit(w http.ResponseWriter, r *http.Request, user *c.User, scpid string) c.RouteError {
-	_, ferr := c.SimpleUserCheck(w, r, user)
+func ConvosDeleteReplySubmit(w http.ResponseWriter, r *http.Request, user c.User, scpid string) c.RouteError {
+	_, ferr := c.SimpleUserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
@@ -355,8 +355,8 @@ func ConvosDeleteReplySubmit(w http.ResponseWriter, r *http.Request, user *c.Use
 	return nil
 }
 
-func ConvosEditReplySubmit(w http.ResponseWriter, r *http.Request, user *c.User, scpid string) c.RouteError {
-	_, ferr := c.SimpleUserCheck(w, r, user)
+func ConvosEditReplySubmit(w http.ResponseWriter, r *http.Request, user c.User, scpid string) c.RouteError {
+	_, ferr := c.SimpleUserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
@@ -408,7 +408,7 @@ func ConvosEditReplySubmit(w http.ResponseWriter, r *http.Request, user *c.User,
 	return nil
 }
 
-func RelationsBlockCreate(w http.ResponseWriter, r *http.Request, user *c.User, h *c.Header, spid string) c.RouteError {
+func RelationsBlockCreate(w http.ResponseWriter, r *http.Request, user c.User, h *c.Header, spid string) c.RouteError {
 	h.Title = p.GetTitlePhrase("create_block")
 	pid, err := strconv.Atoi(spid)
 	if err != nil {
@@ -425,7 +425,7 @@ func RelationsBlockCreate(w http.ResponseWriter, r *http.Request, user *c.User, 
 	return renderTemplate("are_you_sure", w, r, h, pi)
 }
 
-func RelationsBlockCreateSubmit(w http.ResponseWriter, r *http.Request, user *c.User, spid string) c.RouteError {
+func RelationsBlockCreateSubmit(w http.ResponseWriter, r *http.Request, user c.User, spid string) c.RouteError {
 	pid, err := strconv.Atoi(spid)
 	if err != nil {
 		return c.LocalError(p.GetErrorPhrase("id_must_be_integer"), w, r, user)
@@ -449,7 +449,7 @@ func RelationsBlockCreateSubmit(w http.ResponseWriter, r *http.Request, user *c.
 	return nil
 }
 
-func RelationsBlockRemove(w http.ResponseWriter, r *http.Request, user *c.User, h *c.Header, spid string) c.RouteError {
+func RelationsBlockRemove(w http.ResponseWriter, r *http.Request, user c.User, h *c.Header, spid string) c.RouteError {
 	h.Title = p.GetTitlePhrase("remove_block")
 	pid, err := strconv.Atoi(spid)
 	if err != nil {
@@ -466,7 +466,7 @@ func RelationsBlockRemove(w http.ResponseWriter, r *http.Request, user *c.User, 
 	return renderTemplate("are_you_sure", w, r, h, pi)
 }
 
-func RelationsBlockRemoveSubmit(w http.ResponseWriter, r *http.Request, user *c.User, spid string) c.RouteError {
+func RelationsBlockRemoveSubmit(w http.ResponseWriter, r *http.Request, user c.User, spid string) c.RouteError {
 	pid, err := strconv.Atoi(spid)
 	if err != nil {
 		return c.LocalError(p.GetErrorPhrase("id_must_be_integer"), w, r, user)

@@ -12,8 +12,8 @@ import (
 )
 
 // TODO: Link the usernames for successful registrations to the profiles
-func LogsRegs(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
-	basePage, ferr := buildBasePage(w, r, user, "registration_logs", "logs")
+func LogsRegs(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
+	basePage, ferr := buildBasePage(w, r, &user, "registration_logs", "logs")
 	if ferr != nil {
 		return ferr
 	}
@@ -168,8 +168,8 @@ func adminlogsElementType(action, elementType string, elementID int, actor *c.Us
 	return out
 }
 
-func LogsMod(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
-	basePage, ferr := buildBasePage(w, r, user, "mod_logs", "logs")
+func LogsMod(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
+	basePage, ferr := buildBasePage(w, r, &user, "mod_logs", "logs")
 	if ferr != nil {
 		return ferr
 	}
@@ -193,8 +193,8 @@ func LogsMod(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError 
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "", "", "panel_modlogs", pi})
 }
 
-func LogsAdmin(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
-	basePage, ferr := buildBasePage(w, r, user, "admin_logs", "logs")
+func LogsAdmin(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
+	basePage, ferr := buildBasePage(w, r, &user, "admin_logs", "logs")
 	if ferr != nil {
 		return ferr
 	}

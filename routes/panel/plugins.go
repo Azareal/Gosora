@@ -8,8 +8,8 @@ import (
 	c "github.com/Azareal/Gosora/common"
 )
 
-func Plugins(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
-	basePage, ferr := buildBasePage(w, r, user, "plugins", "plugins")
+func Plugins(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
+	basePage, ferr := buildBasePage(w, r, &user, "plugins", "plugins")
 	if ferr != nil {
 		return ferr
 	}
@@ -26,8 +26,8 @@ func Plugins(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError 
 }
 
 // TODO: Abstract more of the plugin activation / installation / deactivation logic, so we can test all that more reliably and easily
-func PluginsActivate(w http.ResponseWriter, r *http.Request, user *c.User, uname string) c.RouteError {
-	_, ferr := c.SimplePanelUserCheck(w, r, user)
+func PluginsActivate(w http.ResponseWriter, r *http.Request, user c.User, uname string) c.RouteError {
+	_, ferr := c.SimplePanelUserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
@@ -82,8 +82,8 @@ func PluginsActivate(w http.ResponseWriter, r *http.Request, user *c.User, uname
 	return nil
 }
 
-func PluginsDeactivate(w http.ResponseWriter, r *http.Request, user *c.User, uname string) c.RouteError {
-	_, ferr := c.SimplePanelUserCheck(w, r, user)
+func PluginsDeactivate(w http.ResponseWriter, r *http.Request, user c.User, uname string) c.RouteError {
+	_, ferr := c.SimplePanelUserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}
@@ -120,8 +120,8 @@ func PluginsDeactivate(w http.ResponseWriter, r *http.Request, user *c.User, una
 	return nil
 }
 
-func PluginsInstall(w http.ResponseWriter, r *http.Request, user *c.User, uname string) c.RouteError {
-	_, ferr := c.SimplePanelUserCheck(w, r, user)
+func PluginsInstall(w http.ResponseWriter, r *http.Request, user c.User, uname string) c.RouteError {
+	_, ferr := c.SimplePanelUserCheck(w, r, &user)
 	if ferr != nil {
 		return ferr
 	}

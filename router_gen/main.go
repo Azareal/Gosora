@@ -79,8 +79,8 @@ func main() {
 		//out += "\n\t\t\tid = " + strconv.Itoa(allRouteMap[route.Name])
 		out += runBefore(route.RunBefore, 4)
 		if !route.Action && !route.NoHead {
-			//out += "\n\t\t\th, err := c.UserCheck(w,req,user)"
-			out += "\n\t\t\th, err := c.UserCheckNano(w,req,user,cn)"
+			//out += "\n\t\t\th, err := c.UserCheck(w,req,&user)"
+			out += "\n\t\t\th, err := c.UserCheckNano(w,req,&user,cn)"
 			out += "\n\t\t\tif err != nil {\n\t\t\t\treturn err\n\t\t\t}"
 			vcpy := route.Vars
 			route.Vars = []string{"h"}
@@ -151,8 +151,8 @@ func main() {
 				}
 			}
 			if !route.Action && !route.NoHead && !group.NoHead {
-				//out += "\n\t\t\t\th, err := c.UserCheck(w,req,user)"
-				out += "\n\t\t\t\th, err := c.UserCheckNano(w,req,user,cn)"
+				//out += "\n\t\t\t\th, err := c.UserCheck(w,req,&user)"
+				out += "\n\t\t\t\th, err := c.UserCheckNano(w,req,&user,cn)"
 				out += "\n\t\t\t\tif err != nil {\n\t\t\t\t\treturn err\n\t\t\t\t}"
 				vcpy := route.Vars
 				route.Vars = []string{"h"}
@@ -179,8 +179,8 @@ func main() {
 			//out += "\n\t\t\t\t\tid = " + strconv.Itoa(allRouteMap[defaultRoute.Name])
 			out += runBefore(defaultRoute.RunBefore, 4)
 			if !defaultRoute.Action && !defaultRoute.NoHead && !group.NoHead {
-				//out += "\n\t\t\t\t\th, err := c.UserCheck(w,req,user)"
-				out += "\n\t\t\t\t\th, err := c.UserCheckNano(w,req,user,cn)"
+				//out += "\n\t\t\t\t\th, err := c.UserCheck(w,req,&user)"
+				out += "\n\t\t\t\t\th, err := c.UserCheckNano(w,req,&user,cn)"
 				out += "\n\t\t\t\t\tif err != nil {\n\t\t\t\t\t\treturn err\n\t\t\t\t\t}"
 				vcpy := defaultRoute.Vars
 				defaultRoute.Vars = []string{"h"}
@@ -503,7 +503,7 @@ func (red *HTTPSRedirect) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 type GenRouter struct {
 	UploadHandler func(http.ResponseWriter, *http.Request)
-	extraRoutes map[string]func(http.ResponseWriter, *http.Request, *c.User) c.RouteError
+	extraRoutes map[string]func(http.ResponseWriter, *http.Request, c.User) c.RouteError
 	requestLogger *log.Logger
 	
 	sync.RWMutex
@@ -520,12 +520,12 @@ func NewGenRouter(uploads http.Handler) (*GenRouter, error) {
 			writ := NewWriterIntercept(w)
 			http.StripPrefix("/uploads/",uploads).ServeHTTP(writ,req)
 		},
-		extraRoutes: make(map[string]func(http.ResponseWriter, *http.Request, *c.User) c.RouteError),
+		extraRoutes: make(map[string]func(http.ResponseWriter, *http.Request, c.User) c.RouteError),
 		requestLogger: log.New(f, "", log.LstdFlags),
 	}, nil
 }
 
-func (r *GenRouter) handleError(err c.RouteError, w http.ResponseWriter, req *http.Request, user *c.User) {
+func (r *GenRouter) handleError(err c.RouteError, w http.ResponseWriter, req *http.Request, user c.User) {
 	if err.Handled() {
 		return
 	}
@@ -539,7 +539,7 @@ func (r *GenRouter) handleError(err c.RouteError, w http.ResponseWriter, req *ht
 func (r *GenRouter) Handle(_ string, _ http.Handler) {
 }
 
-func (r *GenRouter) HandleFunc(pattern string, h func(http.ResponseWriter, *http.Request, *c.User) c.RouteError) {
+func (r *GenRouter) HandleFunc(pattern string, h func(http.ResponseWriter, *http.Request, c.User) c.RouteError) {
 	r.Lock()
 	defer r.Unlock()
 	r.extraRoutes[pattern] = h
@@ -881,11 +881,10 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 	
 	// Deal with the session stuff, etc.
-	ucpy, ok := c.PreRoute(w, req)
+	user, ok := c.PreRoute(w, req)
 	if !ok {
 		return
 	}
-	user := &ucpy
 	user.LastAgent = agent
 	if c.Dev.SuperDebug {
 		r.requestLogger.Print(
@@ -922,7 +921,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	//c.StoppedServer("Profile end")
 }
 	
-func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *c.User, prefix, extraData string) /*(id int, orerr */c.RouteError/*)*/ {
+func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user c.User, prefix, extraData string) /*(id int, orerr */c.RouteError/*)*/ {
 	var err c.RouteError
 	cn := uutils.Nanotime()
 	switch(prefix) {` + out + `
