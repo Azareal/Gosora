@@ -79,13 +79,13 @@ func StaticFile(w http.ResponseWriter, r *http.Request) {
 	// Other options instead of io.Copy: io.CopyN(), w.Write(), http.ServeContent()
 }
 
-func Overview(w http.ResponseWriter, r *http.Request, user c.User, h *c.Header) c.RouteError {
+func Overview(w http.ResponseWriter, r *http.Request, user *c.User, h *c.Header) c.RouteError {
 	h.Title = phrases.GetTitlePhrase("overview")
 	h.Zone = "overview"
 	return renderTemplate("overview", w, r, h, c.Page{h, tList, nil})
 }
 
-func CustomPage(w http.ResponseWriter, r *http.Request, user c.User, h *c.Header, name string) c.RouteError {
+func CustomPage(w http.ResponseWriter, r *http.Request, user *c.User, h *c.Header, name string) c.RouteError {
 	h.Zone = "custom_page"
 	name = c.SanitiseSingleLine(name)
 	page, err := c.Pages.GetByName(name)
@@ -108,8 +108,8 @@ func CustomPage(w http.ResponseWriter, r *http.Request, user c.User, h *c.Header
 }
 
 // TODO: Set the cookie domain
-func ChangeTheme(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
-	//headerLite, _ := SimpleUserCheck(w, r, &user)
+func ChangeTheme(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
+	//headerLite, _ := SimpleUserCheck(w, r, u)
 	// TODO: Rename js to something else, just in case we rewrite the JS side in WebAssembly?
 	js := r.PostFormValue("js") == "1"
 	newTheme := c.SanitiseSingleLine(r.PostFormValue("theme"))
@@ -117,7 +117,7 @@ func ChangeTheme(w http.ResponseWriter, r *http.Request, user c.User) c.RouteErr
 
 	theme, ok := c.Themes[newTheme]
 	if !ok || theme.HideFromThemes {
-		return c.LocalErrorJSQ("That theme doesn't exist", w, r, user, js)
+		return c.LocalErrorJSQ("That theme doesn't exist", w, r, u, js)
 	}
 
 	cookie := http.Cookie{Name: "current_theme", Value: newTheme, Path: "/", MaxAge: int(c.Year)}

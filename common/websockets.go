@@ -46,7 +46,7 @@ type WsTopicList struct {
 
 // TODO: How should we handle errors for this?
 // TODO: Move this out of common?
-func RouteWebsockets(w http.ResponseWriter, r *http.Request, user User) RouteError {
+func RouteWebsockets(w http.ResponseWriter, r *http.Request, user *User) RouteError {
 	// TODO: Spit out a 500 instead of nil?
 	conn, err := wsUpgrader.Upgrade(w, r, nil)
 	if err != nil {

@@ -10,7 +10,7 @@ import (
 	qgen "github.com/Azareal/Gosora/query_gen"
 )
 
-func PollVote(w http.ResponseWriter, r *http.Request, user c.User, sPollID string) c.RouteError {
+func PollVote(w http.ResponseWriter, r *http.Request, user *c.User, sPollID string) c.RouteError {
 	pollID, err := strconv.Atoi(sPollID)
 	if err != nil {
 		return c.PreError("The provided PollID is not a valid number.", w, r)
@@ -44,7 +44,7 @@ func PollVote(w http.ResponseWriter, r *http.Request, user c.User, sPollID strin
 	}
 
 	// TODO: Add hooks to make use of headerLite
-	_, ferr := c.SimpleForumUserCheck(w, r, &user, topic.ParentID)
+	_, ferr := c.SimpleForumUserCheck(w, r, user, topic.ParentID)
 	if ferr != nil {
 		return ferr
 	}
@@ -65,7 +65,7 @@ func PollVote(w http.ResponseWriter, r *http.Request, user c.User, sPollID strin
 	return nil
 }
 
-func PollResults(w http.ResponseWriter, r *http.Request, user c.User, sPollID string) c.RouteError {
+func PollResults(w http.ResponseWriter, r *http.Request, user *c.User, sPollID string) c.RouteError {
 	//log.Print("in PollResults")
 	pollID, err := strconv.Atoi(sPollID)
 	if err != nil {

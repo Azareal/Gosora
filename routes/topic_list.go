@@ -19,20 +19,20 @@ func wsTopicList(topicList []*c.TopicsRow, lastPage int) *c.WsTopicList {
 	return &c.WsTopicList{wsTopicList, lastPage, 0}
 }
 
-func TopicList(w http.ResponseWriter, r *http.Request, user c.User, h *c.Header) c.RouteError {
-	skip, rerr := h.Hooks.VhookSkippable("route_topic_list_start", w, r, &user, h)
+func TopicList(w http.ResponseWriter, r *http.Request, user *c.User, h *c.Header) c.RouteError {
+	skip, rerr := h.Hooks.VhookSkippable("route_topic_list_start", w, r, user, h)
 	if skip || rerr != nil {
 		return rerr
 	}
 	return TopicListCommon(w, r, user, h, "lastupdated", 0)
 }
 
-func TopicListMostViewed(w http.ResponseWriter, r *http.Request, user c.User, h *c.Header) c.RouteError {
+func TopicListMostViewed(w http.ResponseWriter, r *http.Request, user *c.User, h *c.Header) c.RouteError {
 	return TopicListCommon(w, r, user, h, "mostviewed", c.TopicListMostViewed)
 }
 
 // TODO: Implement search
-func TopicListCommon(w http.ResponseWriter, r *http.Request, user c.User, h *c.Header, torder string, tsorder int) c.RouteError {
+func TopicListCommon(w http.ResponseWriter, r *http.Request, user *c.User, h *c.Header, torder string, tsorder int) c.RouteError {
 	h.Title = phrases.GetTitlePhrase("topics")
 	h.Zone = "topics"
 	h.Path = "/topics/"

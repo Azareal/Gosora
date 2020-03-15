@@ -11,14 +11,14 @@ import (
 )
 
 // TODO: Retire this in favour of an alias for /topics/?
-func ViewForum(w http.ResponseWriter, r *http.Request, user c.User, header *c.Header, sfid string) c.RouteError {
+func ViewForum(w http.ResponseWriter, r *http.Request, user *c.User, header *c.Header, sfid string) c.RouteError {
 	page, _ := strconv.Atoi(r.FormValue("page"))
 	_, fid, err := ParseSEOURL(sfid)
 	if err != nil {
 		return c.SimpleError(p.GetErrorPhrase("url_id_must_be_integer"), w, r, header)
 	}
 
-	ferr := c.ForumUserCheck(header, w, r, &user, fid)
+	ferr := c.ForumUserCheck(header, w, r, user, fid)
 	if ferr != nil {
 		return ferr
 	}

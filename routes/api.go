@@ -235,7 +235,7 @@ type MeSite struct {
 // APIMe returns information about the current logged-in user
 // TODO: Find some way to stop intermediaries from doing compression to avoid the BREACH attack
 // TODO: Decouple site settings into a different API? I'd like to avoid having too many requests, if possible, maybe we can use a different name for this?
-func APIMe(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
+func APIMe(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
 	// TODO: Don't make this too JSON dependent so that we can swap in newer more efficient formats
 	h := w.Header()
 	h.Set("Content-Type", "application/json")
@@ -243,7 +243,7 @@ func APIMe(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	// TODO: Use this header anywhere with a user check?
 	h.Set("Cache-Control", "private")
 
-	me := JsonMe{(&user).Me(), MeSite{c.Site.MaxRequestSize}}
+	me := JsonMe{u.Me(), MeSite{c.Site.MaxRequestSize}}
 	jsonBytes, err := json.Marshal(me)
 	if err != nil {
 		return c.InternalErrorJS(err, w, r)
