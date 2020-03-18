@@ -7,7 +7,7 @@ import (
 	"github.com/Azareal/Gosora/common/phrases"
 )
 
-func IPSearch(w http.ResponseWriter, r *http.Request, user c.User, h *c.Header) c.RouteError {
+func IPSearch(w http.ResponseWriter, r *http.Request, user *c.User, h *c.Header) c.RouteError {
 	h.Title = phrases.GetTitlePhrase("ip_search")
 	// TODO: How should we handle the permissions if we extend this into an alt detector of sorts?
 	if !user.Perms.ViewIPs {

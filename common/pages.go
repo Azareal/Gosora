@@ -32,7 +32,7 @@ type Header struct {
 	Themes      map[string]*Theme // TODO: Use a slice containing every theme instead of the main map for speed?
 	Theme       *Theme
 	//TemplateName string // TODO: Use this to move template calls to the router rather than duplicating them over and over and over?
-	CurrentUser User // TODO: Deprecate CurrentUser on the page structs and use a pointer here
+	CurrentUser *User // TODO: Deprecate CurrentUser on the page structs and use a pointer here
 	Hooks       *HookTable
 	Zone        string
 	ZoneID      int
@@ -780,9 +780,9 @@ type AreYouSure struct {
 }
 
 // TODO: Write a test for this
-func DefaultHeader(w http.ResponseWriter, user User) *Header {
+func DefaultHeader(w http.ResponseWriter, user *User) *Header {
 	return &Header{Site: Site, Theme: Themes[fallbackTheme], CurrentUser: user, Writer: w}
 }
 func SimpleDefaultHeader(w http.ResponseWriter) *Header {
-	return &Header{Site: Site, Theme: Themes[fallbackTheme], CurrentUser: GuestUser, Writer: w}
+	return &Header{Site: Site, Theme: Themes[fallbackTheme], CurrentUser: &GuestUser, Writer: w}
 }

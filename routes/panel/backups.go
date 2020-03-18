@@ -10,8 +10,8 @@ import (
 	c "github.com/Azareal/Gosora/common"
 )
 
-func Backups(w http.ResponseWriter, r *http.Request, user c.User, backupURL string) c.RouteError {
-	basePage, ferr := buildBasePage(w, r, &user, "backups", "backups")
+func Backups(w http.ResponseWriter, r *http.Request, user *c.User, backupURL string) c.RouteError {
+	basePage, ferr := buildBasePage(w, r, user, "backups", "backups")
 	if ferr != nil {
 		return ferr
 	}

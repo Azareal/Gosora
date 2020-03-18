@@ -29,7 +29,7 @@ func init() {
 
 var maxAgeYear = "max-age=" + strconv.Itoa(int(c.Year))
 
-func ShowAttachment(w http.ResponseWriter, r *http.Request, user c.User, filename string) c.RouteError {
+func ShowAttachment(w http.ResponseWriter, r *http.Request, user *c.User, filename string) c.RouteError {
 	filename = c.Stripslashes(filename)
 	ext := filepath.Ext("./attachs/" + filename)
 	if !c.AllowedFileExts.Contains(strings.TrimPrefix(ext, ".")) {
@@ -52,7 +52,7 @@ func ShowAttachment(w http.ResponseWriter, r *http.Request, user c.User, filenam
 	}
 
 	if sectionTable == "forums" {
-		_, ferr := c.SimpleForumUserCheck(w, r, &user, sid)
+		_, ferr := c.SimpleForumUserCheck(w, r, user, sid)
 		if ferr != nil {
 			return ferr
 		}
@@ -88,7 +88,7 @@ func ShowAttachment(w http.ResponseWriter, r *http.Request, user c.User, filenam
 	return nil
 }
 
-func deleteAttachment(w http.ResponseWriter, r *http.Request, user c.User, aid int, js bool) c.RouteError {
+func deleteAttachment(w http.ResponseWriter, r *http.Request, user *c.User, aid int, js bool) c.RouteError {
 	err := c.DeleteAttachment(aid)
 	if err == sql.ErrNoRows {
 		return c.NotFoundJSQ(w, r, nil, js)
@@ -101,7 +101,7 @@ func deleteAttachment(w http.ResponseWriter, r *http.Request, user c.User, aid i
 // TODO: Stop duplicating this code
 // TODO: Use a transaction here
 // TODO: Move this function to neutral ground
-func uploadAttachment(w http.ResponseWriter, r *http.Request, user c.User, sid int, stable string, oid int, otable, extra string) (pathMap map[string]string, rerr c.RouteError) {
+func uploadAttachment(w http.ResponseWriter, r *http.Request, user *c.User, sid int, stable string, oid int, otable, extra string) (pathMap map[string]string, rerr c.RouteError) {
 	pathMap = make(map[string]string)
 	files, rerr := uploadFilesWithHash(w, r, user, "./attachs/")
 	if rerr != nil {

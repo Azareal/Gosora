@@ -11,8 +11,8 @@ import (
 	p "github.com/Azareal/Gosora/common/phrases"
 )
 
-func Forums(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
-	basePage, ferr := buildBasePage(w, r, &user, "forums", "forums")
+func Forums(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
+	basePage, ferr := buildBasePage(w, r, user, "forums", "forums")
 	if ferr != nil {
 		return ferr
 	}
@@ -52,8 +52,8 @@ func Forums(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "", "", "panel_forums", &pi})
 }
 
-func ForumsCreateSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
-	_, ferr := c.SimplePanelUserCheck(w, r, &user)
+func ForumsCreateSubmit(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
+	_, ferr := c.SimplePanelUserCheck(w, r, user)
 	if ferr != nil {
 		return ferr
 	}
@@ -81,8 +81,8 @@ func ForumsCreateSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.R
 }
 
 // TODO: Revamp this
-func ForumsDelete(w http.ResponseWriter, r *http.Request, user c.User, sfid string) c.RouteError {
-	basePage, ferr := buildBasePage(w, r, &user, "delete_forum", "forums")
+func ForumsDelete(w http.ResponseWriter, r *http.Request, user *c.User, sfid string) c.RouteError {
+	basePage, ferr := buildBasePage(w, r, user, "delete_forum", "forums")
 	if ferr != nil {
 		return ferr
 	}
@@ -102,17 +102,17 @@ func ForumsDelete(w http.ResponseWriter, r *http.Request, user c.User, sfid stri
 	}
 
 	confirmMsg := p.GetTmplPhrasef("panel_forum_delete_are_you_sure", forum.Name)
-	yousure := c.AreYouSure{"/panel/forums/delete/submit/" + strconv.Itoa(fid), confirmMsg}
+	youSure := c.AreYouSure{"/panel/forums/delete/submit/" + strconv.Itoa(fid), confirmMsg}
 
-	pi := c.PanelPage{basePage, tList, yousure}
-	if c.RunPreRenderHook("pre_render_panel_delete_forum", w, r, &user, &pi) {
+	pi := c.PanelPage{basePage, tList, youSure}
+	if c.RunPreRenderHook("pre_render_panel_delete_forum", w, r, user, &pi) {
 		return nil
 	}
 	return renderTemplate("panel_are_you_sure", w, r, basePage.Header, &pi)
 }
 
-func ForumsDeleteSubmit(w http.ResponseWriter, r *http.Request, user c.User, sfid string) c.RouteError {
-	_, ferr := c.SimplePanelUserCheck(w, r, &user)
+func ForumsDeleteSubmit(w http.ResponseWriter, r *http.Request, user *c.User, sfid string) c.RouteError {
+	_, ferr := c.SimplePanelUserCheck(w, r, user)
 	if ferr != nil {
 		return ferr
 	}
@@ -139,8 +139,8 @@ func ForumsDeleteSubmit(w http.ResponseWriter, r *http.Request, user c.User, sfi
 	return nil
 }
 
-func ForumsOrderSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
-	_, ferr := c.SimplePanelUserCheck(w, r, &user)
+func ForumsOrderSubmit(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
+	_, ferr := c.SimplePanelUserCheck(w, r, user)
 	if ferr != nil {
 		return ferr
 	}
@@ -169,8 +169,8 @@ func ForumsOrderSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.Ro
 	return successRedirect("/panel/forums/", w, r, js)
 }
 
-func ForumsEdit(w http.ResponseWriter, r *http.Request, user c.User, sfid string) c.RouteError {
-	basePage, ferr := buildBasePage(w, r, &user, "edit_forum", "forums")
+func ForumsEdit(w http.ResponseWriter, r *http.Request, user *c.User, sfid string) c.RouteError {
+	basePage, ferr := buildBasePage(w, r, user, "edit_forum", "forums")
 	if ferr != nil {
 		return ferr
 	}
@@ -222,8 +222,8 @@ func ForumsEdit(w http.ResponseWriter, r *http.Request, user c.User, sfid string
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "", "", "panel_forum_edit", &pi})
 }
 
-func ForumsEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, sfid string) c.RouteError {
-	_, ferr := c.SimplePanelUserCheck(w, r, &user)
+func ForumsEditSubmit(w http.ResponseWriter, r *http.Request, user *c.User, sfid string) c.RouteError {
+	_, ferr := c.SimplePanelUserCheck(w, r, user)
 	if ferr != nil {
 		return ferr
 	}
@@ -268,8 +268,8 @@ func ForumsEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, sfid 
 	return successRedirect("/panel/forums/", w, r, js)
 }
 
-func ForumsEditPermsSubmit(w http.ResponseWriter, r *http.Request, user c.User, sfid string) c.RouteError {
-	_, ferr := c.SimplePanelUserCheck(w, r, &user)
+func ForumsEditPermsSubmit(w http.ResponseWriter, r *http.Request, user *c.User, sfid string) c.RouteError {
+	_, ferr := c.SimplePanelUserCheck(w, r, user)
 	if ferr != nil {
 		return ferr
 	}
@@ -328,8 +328,8 @@ func forumPermsExtractDash(paramList string) (fid int, gid int, err error) {
 	return fid, gid, err
 }
 
-func ForumsEditPermsAdvance(w http.ResponseWriter, r *http.Request, user c.User, paramList string) c.RouteError {
-	basePage, ferr := buildBasePage(w, r, &user, "edit_forum", "forums")
+func ForumsEditPermsAdvance(w http.ResponseWriter, r *http.Request, user *c.User, paramList string) c.RouteError {
+	basePage, ferr := buildBasePage(w, r, user, "edit_forum", "forums")
 	if ferr != nil {
 		return ferr
 	}
@@ -342,14 +342,14 @@ func ForumsEditPermsAdvance(w http.ResponseWriter, r *http.Request, user c.User,
 		return c.LocalError(err.Error(), w, r, user)
 	}
 
-	forum, err := c.Forums.Get(fid)
+	f, err := c.Forums.Get(fid)
 	if err == sql.ErrNoRows {
 		return c.LocalError("The forum you're trying to edit doesn't exist.", w, r, user)
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
-	if forum.Preset == "" {
-		forum.Preset = "custom"
+	if f.Preset == "" {
+		f.Preset = "custom"
 	}
 
 	fp, err := c.FPStore.Get(fid, gid)
@@ -382,12 +382,12 @@ func ForumsEditPermsAdvance(w http.ResponseWriter, r *http.Request, user c.User,
 		basePage.AddNotice("panel_forum_perms_updated")
 	}
 
-	pi := c.PanelEditForumGroupPage{basePage, forum.ID, gid, forum.Name, forum.Desc, forum.Active, forum.Preset, formattedPermList}
+	pi := c.PanelEditForumGroupPage{basePage, f.ID, gid, f.Name, f.Desc, f.Active, f.Preset, formattedPermList}
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "", "", "panel_forum_edit_perms", &pi})
 }
 
-func ForumsEditPermsAdvanceSubmit(w http.ResponseWriter, r *http.Request, user c.User, paramList string) c.RouteError {
-	_, ferr := c.SimplePanelUserCheck(w, r, &user)
+func ForumsEditPermsAdvanceSubmit(w http.ResponseWriter, r *http.Request, user *c.User, paramList string) c.RouteError {
+	_, ferr := c.SimplePanelUserCheck(w, r, user)
 	if ferr != nil {
 		return ferr
 	}
@@ -416,7 +416,7 @@ func ForumsEditPermsAdvanceSubmit(w http.ResponseWriter, r *http.Request, user c
 	}
 
 	extractPerm := func(name string) bool {
-		pvalue := r.PostFormValue("forum-perm-" + name)
+		pvalue := r.PostFormValue("perm-" + name)
 		return (pvalue == "1")
 	}
 

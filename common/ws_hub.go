@@ -329,11 +329,11 @@ func (h *WsHubImpl) removeUser(uid int) {
 	}
 }
 
-func (h *WsHubImpl) AddConn(user User, conn *websocket.Conn) (*WSUser, error) {
+func (h *WsHubImpl) AddConn(user *User, conn *websocket.Conn) (*WSUser, error) {
 	if user.ID == 0 {
 		wsUser := new(WSUser)
 		wsUser.User = new(User)
-		*wsUser.User = user
+		*wsUser.User = *user
 		wsUser.AddSocket(conn, "")
 		WsHub.GuestLock.Lock()
 		WsHub.OnlineGuests[wsUser] = true

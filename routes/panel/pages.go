@@ -8,12 +8,11 @@ import (
 	c "github.com/Azareal/Gosora/common"
 )
 
-func Pages(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
-	basePage, ferr := buildBasePage(w, r, &user, "pages", "pages")
+func Pages(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
+	basePage, ferr := buildBasePage(w, r, user, "pages", "pages")
 	if ferr != nil {
 		return ferr
 	}
-
 	if r.FormValue("created") == "1" {
 		basePage.AddNotice("panel_page_created")
 	} else if r.FormValue("deleted") == "1" {
@@ -36,8 +35,8 @@ func Pages(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_page_list", "", "panel_pages", &pi})
 }
 
-func PagesCreateSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.RouteError {
-	_, ferr := c.SimplePanelUserCheck(w, r, &user)
+func PagesCreateSubmit(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
+	_, ferr := c.SimplePanelUserCheck(w, r, user)
 	if ferr != nil {
 		return ferr
 	}
@@ -72,8 +71,8 @@ func PagesCreateSubmit(w http.ResponseWriter, r *http.Request, user c.User) c.Ro
 	return nil
 }
 
-func PagesEdit(w http.ResponseWriter, r *http.Request, user c.User, spid string) c.RouteError {
-	basePage, ferr := buildBasePage(w, r, &user, "pages_edit", "pages")
+func PagesEdit(w http.ResponseWriter, r *http.Request, user *c.User, spid string) c.RouteError {
+	basePage, ferr := buildBasePage(w, r, user, "pages_edit", "pages")
 	if ferr != nil {
 		return ferr
 	}
@@ -96,8 +95,8 @@ func PagesEdit(w http.ResponseWriter, r *http.Request, user c.User, spid string)
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_page_edit", "", "panel_pages_edit", &pi})
 }
 
-func PagesEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, spid string) c.RouteError {
-	_, ferr := c.SimplePanelUserCheck(w, r, &user)
+func PagesEditSubmit(w http.ResponseWriter, r *http.Request, user *c.User, spid string) c.RouteError {
+	_, ferr := c.SimplePanelUserCheck(w, r, user)
 	if ferr != nil {
 		return ferr
 	}
@@ -139,8 +138,8 @@ func PagesEditSubmit(w http.ResponseWriter, r *http.Request, user c.User, spid s
 	return nil
 }
 
-func PagesDeleteSubmit(w http.ResponseWriter, r *http.Request, user c.User, spid string) c.RouteError {
-	_, ferr := c.SimplePanelUserCheck(w, r, &user)
+func PagesDeleteSubmit(w http.ResponseWriter, r *http.Request, user *c.User, spid string) c.RouteError {
+	_, ferr := c.SimplePanelUserCheck(w, r, user)
 	if ferr != nil {
 		return ferr
 	}

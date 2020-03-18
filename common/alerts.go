@@ -192,7 +192,7 @@ func buildAlertSb(sb *strings.Builder, msg string, sub []string, path, avatar st
 	sb.WriteRune('}')
 }
 
-func BuildAlertSb(sb *strings.Builder, a *Alert, user User /* The current user */) (err error) {
+func BuildAlertSb(sb *strings.Builder, a *Alert, u *User /* The current user */) (err error) {
 	var targetUser *User
 	if a.Actor == nil {
 		a.Actor, err = Users.Get(a.ActorID)
@@ -248,7 +248,7 @@ func BuildAlertSb(sb *strings.Builder, a *Alert, user User /* The current user *
 		}
 		url = topic.Link
 		area = topic.Title
-		own = a.TargetUserID == user.ID
+		own = a.TargetUserID == u.ID
 	case "user":
 		targetUser, err = Users.Get(a.ElementID)
 		if err != nil {
@@ -257,16 +257,16 @@ func BuildAlertSb(sb *strings.Builder, a *Alert, user User /* The current user *
 		}
 		area = targetUser.Name
 		url = targetUser.Link
-		own = a.TargetUserID == user.ID
+		own = a.TargetUserID == u.ID
 	case "post":
-		topic, err := TopicByReplyID(a.ElementID)
+		t, err := TopicByReplyID(a.ElementID)
 		if err != nil {
 			DebugLogf("Unable to find linked topic by reply ID %d", a.ElementID)
 			return errors.New(phrases.GetErrorPhrase("alerts_no_linked_topic_by_reply"))
 		}
-		url = topic.Link
-		area = topic.Title
-		own = a.TargetUserID == user.ID
+		url = t.Link
+		area = t.Title
+		own = a.TargetUserID == u.ID
 	default:
 		return errors.New(phrases.GetErrorPhrase("alerts_invalid_elementtype"))
 	}

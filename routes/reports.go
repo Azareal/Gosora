@@ -9,8 +9,8 @@ import (
 	"github.com/Azareal/Gosora/common/counters"
 )
 
-func ReportSubmit(w http.ResponseWriter, r *http.Request, user c.User, sItemID string) c.RouteError {
-	headerLite, ferr := c.SimpleUserCheck(w, r, &user)
+func ReportSubmit(w http.ResponseWriter, r *http.Request, user *c.User, sItemID string) c.RouteError {
+	headerLite, ferr := c.SimpleUserCheck(w, r, user)
 	if ferr != nil {
 		return ferr
 	}
@@ -85,7 +85,7 @@ func ReportSubmit(w http.ResponseWriter, r *http.Request, user c.User, sItemID s
 			return c.InternalError(err, w, r)
 		}
 
-		title = "Convo Post: " + user.Name
+		title = "Convo: " + user.Name
 		content = post.Body + "\n\nOriginal Post: #cpid-" + strconv.Itoa(itemID)
 	default:
 		_, hasHook := headerLite.Hooks.VhookNeedHook("report_preassign", &itemID, &itemType)
@@ -98,7 +98,7 @@ func ReportSubmit(w http.ResponseWriter, r *http.Request, user c.User, sItemID s
 	}
 
 	// TODO: Repost attachments in the reports forum, so that the mods can see them
-	_, err = c.Reports.Create(title, content, &user, itemType, itemID)
+	_, err = c.Reports.Create(title, content, user, itemType, itemID)
 	if err == c.ErrAlreadyReported {
 		return c.LocalError("Someone has already reported this!", w, r, user)
 	}

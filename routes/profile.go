@@ -27,7 +27,7 @@ func init() {
 }
 
 // TODO: Remove the View part of the name?
-func ViewProfile(w http.ResponseWriter, r *http.Request, user c.User, header *c.Header) c.RouteError {
+func ViewProfile(w http.ResponseWriter, r *http.Request, user *c.User, header *c.Header) c.RouteError {
 	var reCreatedAt time.Time
 	var reContent, reCreatedByName, reAvatar string
 	var rid, reCreatedBy, reLastEdit, reLastEditBy, reGroup int
@@ -48,7 +48,7 @@ func ViewProfile(w http.ResponseWriter, r *http.Request, user c.User, header *c.
 	var puser *c.User
 	if pid == user.ID {
 		user.IsMod = true
-		puser = &user
+		puser = user
 	} else {
 		// Fetch the user data
 		// TODO: Add a shared function for checking for ErrNoRows and internal erroring if it's not that case?
@@ -77,7 +77,7 @@ func ViewProfile(w http.ResponseWriter, r *http.Request, user c.User, header *c.
 
 		reLiked := false
 		reLikeCount := 0
-		ru := &c.ReplyUser{Reply: c.Reply{rid, puser.ID, reContent, reCreatedBy, reGroup, reCreatedAt, reLastEdit, reLastEditBy, 0, "", reLiked, reLikeCount, 0, ""}, ContentHtml: c.ParseMessage(reContent, 0, "", user.ParseSettings, &user), CreatedByName: reCreatedByName, Avatar: reAvatar, Level: 0}
+		ru := &c.ReplyUser{Reply: c.Reply{rid, puser.ID, reContent, reCreatedBy, reGroup, reCreatedAt, reLastEdit, reLastEditBy, 0, "", reLiked, reLikeCount, 0, ""}, ContentHtml: c.ParseMessage(reContent, 0, "", user.ParseSettings, user), CreatedByName: reCreatedByName, Avatar: reAvatar, Level: 0}
 		_, err = ru.Init()
 		if err != nil {
 			return c.InternalError(err, w, r)
