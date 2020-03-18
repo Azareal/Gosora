@@ -694,6 +694,7 @@ var markToAgent = map[string]string{
 	"360Spider": "haosou",
 	"bingbot": "bing",
 	"BingPreview": "bing",
+	"msnbot": "bing",
 	"Slurp": "slurp",
 	"Exabot": "exabot",
 	"MojeekBot": "mojeek",
@@ -744,6 +745,7 @@ var markToID = map[string]int{
 	"360Spider": 22,
 	"bingbot": 14,
 	"BingPreview": 14,
+	"msnbot": 14,
 	"Slurp": 15,
 	"Exabot": 16,
 	"MojeekBot": 17,
@@ -790,6 +792,7 @@ func init() {
 	c.Chrome = agentMapEnum["chrome"]
 	c.Firefox = agentMapEnum["firefox"]
 	c.Semrush = agentMapEnum["semrush"]
+	c.Ahrefs = agentMapEnum["ahrefs"]
 }
 
 type WriterIntercept struct {

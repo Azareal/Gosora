@@ -310,6 +310,7 @@ func main() {
 		"360Spider",
 		"bingbot",
 		"BingPreview",
+		"msnbot",
 		"Slurp",
 		"Exabot",
 		"MojeekBot",
@@ -363,6 +364,7 @@ func main() {
 		"360Spider":           "haosou",
 		"bingbot":             "bing",
 		"BingPreview":         "bing",
+		"msnbot":"bing",
 		"Slurp":               "slurp",
 		"Exabot":              "exabot",
 		"MojeekBot":           "mojeek",
@@ -471,6 +473,7 @@ func init() {
 	c.Chrome = agentMapEnum["chrome"]
 	c.Firefox = agentMapEnum["firefox"]
 	c.Semrush = agentMapEnum["semrush"]
+	c.Ahrefs = agentMapEnum["ahrefs"]
 }
 
 type WriterIntercept struct {

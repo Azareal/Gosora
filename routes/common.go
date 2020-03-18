@@ -119,8 +119,8 @@ func FootHeaders(w http.ResponseWriter, h *c.Header) {
 func renderTemplate3(tmplName, hookName string, w http.ResponseWriter, r *http.Request, h *c.Header, pi interface{}) error {
 	s := h.Stylesheets
 	h.Stylesheets = nil
-	jsEnable := h.CurrentUser.LastAgent != c.Semrush
-	if r.FormValue("i") != "1" && h.CurrentUser.LastAgent != c.Semrush {
+	simpleBot := h.CurrentUser.LastAgent == c.Semrush || h.CurrentUser.LastAgent == c.Ahrefs
+	if r.FormValue("i") != "1" && !simpleBot {
 		c.PrepResources(h.CurrentUser, h, h.Theme)
 		for _, ss := range s {
 			h.Stylesheets = append(h.Stylesheets, ss)
@@ -132,14 +132,14 @@ func renderTemplate3(tmplName, hookName string, w http.ResponseWriter, r *http.R
 		h.CurrentUser.LastAgent = 0
 	}
 
-	if h.CurrentUser.Loggedin || h.CurrentUser.LastAgent == c.Semrush {
+	if h.CurrentUser.Loggedin || simpleBot {
 		h.MetaDesc = ""
 		h.OGDesc = ""
 	} else if h.MetaDesc != "" && h.OGDesc == "" {
 		h.OGDesc = h.MetaDesc
 	}
 
-	if jsEnable {
+	if !simpleBot {
 		FootHeaders(w, h)
 	}
 	if h.Zone != "error" {
