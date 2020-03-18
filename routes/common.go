@@ -120,7 +120,8 @@ func renderTemplate3(tmplName, hookName string, w http.ResponseWriter, r *http.R
 	s := h.Stylesheets
 	h.Stylesheets = nil
 	simpleBot := h.CurrentUser.LastAgent == c.Semrush || h.CurrentUser.LastAgent == c.Ahrefs
-	if r.FormValue("i") != "1" && !simpleBot {
+	inner := r.FormValue("i") == "1"
+	if !inner && !simpleBot {
 		c.PrepResources(h.CurrentUser, h, h.Theme)
 		for _, ss := range s {
 			h.Stylesheets = append(h.Stylesheets, ss)
@@ -129,10 +130,11 @@ func renderTemplate3(tmplName, hookName string, w http.ResponseWriter, r *http.R
 		if h.CurrentUser.Loggedin {
 			h.AddScriptAsync("member.js")
 		}
+	} else {
 		h.CurrentUser.LastAgent = 0
 	}
 
-	if h.CurrentUser.Loggedin || simpleBot {
+	if h.CurrentUser.Loggedin || inner || simpleBot {
 		h.MetaDesc = ""
 		h.OGDesc = ""
 	} else if h.MetaDesc != "" && h.OGDesc == "" {
