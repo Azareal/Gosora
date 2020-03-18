@@ -99,8 +99,8 @@ func renderTemplate2(tmplName, hookName string, w http.ResponseWriter, r *http.R
 	return nil
 }
 
-func FootHeaders(w http.ResponseWriter, header *c.Header) {
-	if !header.LooseCSP {
+func FootHeaders(w http.ResponseWriter, h *c.Header) {
+	if !h.LooseCSP {
 		if c.Config.SslSchema {
 			w.Header().Set("Content-Security-Policy", "default-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-eval' 'unsafe-inline'; img-src * data: 'unsafe-eval' 'unsafe-inline'; connect-src * 'unsafe-eval' 'unsafe-inline'; frame-src 'self' www.youtube-nocookie.com;upgrade-insecure-requests")
 		} else {
@@ -109,16 +109,17 @@ func FootHeaders(w http.ResponseWriter, header *c.Header) {
 	}
 
 	// Server pushes can backfire on certain browsers, so we want to make sure it's only triggered for ones where it'll help
-	lastAgent := header.CurrentUser.LastAgent
+	lastAgent := h.CurrentUser.LastAgent
 	//fmt.Println("lastAgent:", lastAgent)
 	if lastAgent == c.Chrome || lastAgent == c.Firefox {
-		doPush(w, header)
+		doPush(w, h)
 	}
 }
 
 func renderTemplate3(tmplName, hookName string, w http.ResponseWriter, r *http.Request, h *c.Header, pi interface{}) error {
 	s := h.Stylesheets
 	h.Stylesheets = nil
+	jsEnable := h.CurrentUser.LastAgent != c.Semrush
 	if r.FormValue("i") != "1" && h.CurrentUser.LastAgent != c.Semrush {
 		c.PrepResources(h.CurrentUser, h, h.Theme)
 		for _, ss := range s {
@@ -138,7 +139,9 @@ func renderTemplate3(tmplName, hookName string, w http.ResponseWriter, r *http.R
 		h.OGDesc = h.MetaDesc
 	}
 
-	FootHeaders(w, h)
+	if jsEnable {
+		FootHeaders(w, h)
+	}
 	if h.Zone != "error" {
 		since := time.Duration(uutils.Nanotime() - h.StartedAt)
 		if h.CurrentUser.IsAdmin {
