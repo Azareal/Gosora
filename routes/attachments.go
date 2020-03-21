@@ -88,7 +88,7 @@ func ShowAttachment(w http.ResponseWriter, r *http.Request, user *c.User, filena
 	return nil
 }
 
-func deleteAttachment(w http.ResponseWriter, r *http.Request, user *c.User, aid int, js bool) c.RouteError {
+func deleteAttachment(w http.ResponseWriter, r *http.Request, u *c.User, aid int, js bool) c.RouteError {
 	err := c.DeleteAttachment(aid)
 	if err == sql.ErrNoRows {
 		return c.NotFoundJSQ(w, r, nil, js)
@@ -101,15 +101,15 @@ func deleteAttachment(w http.ResponseWriter, r *http.Request, user *c.User, aid 
 // TODO: Stop duplicating this code
 // TODO: Use a transaction here
 // TODO: Move this function to neutral ground
-func uploadAttachment(w http.ResponseWriter, r *http.Request, user *c.User, sid int, stable string, oid int, otable, extra string) (pathMap map[string]string, rerr c.RouteError) {
+func uploadAttachment(w http.ResponseWriter, r *http.Request, u *c.User, sid int, stable string, oid int, otable, extra string) (pathMap map[string]string, rerr c.RouteError) {
 	pathMap = make(map[string]string)
-	files, rerr := uploadFilesWithHash(w, r, user, "./attachs/")
+	files, rerr := uploadFilesWithHash(w, r, u, "./attachs/")
 	if rerr != nil {
 		return nil, rerr
 	}
 
 	for _, filename := range files {
-		aid, err := c.Attachments.Add(sid, stable, oid, otable, user.ID, filename, extra)
+		aid, err := c.Attachments.Add(sid, stable, oid, otable, u.ID, filename, extra)
 		if err != nil {
 			return nil, c.InternalError(err, w, r)
 		}

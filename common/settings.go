@@ -16,7 +16,7 @@ var SettingBox atomic.Value // An atomic value pointing to a SettingBox
 type SettingMap map[string]interface{}
 
 type SettingStore interface {
-	ParseSetting(sname, scontent, stype, sconstraint string) string
+	ParseSetting(name, content, typ, constraint string) string
 	BypassGet(name string) (*Setting, error)
 	BypassGetAll(name string) ([]*Setting, error)
 }
@@ -55,10 +55,10 @@ func init() {
 	})
 }
 
-func (s *Setting) Copy() (out *Setting) {
-	out = &Setting{Name: ""}
-	*out = *s
-	return out
+func (s *Setting) Copy() (o *Setting) {
+	o = &Setting{Name: ""}
+	*o = *s
+	return o
 }
 
 func LoadSettings() error {
@@ -80,18 +80,18 @@ func LoadSettings() error {
 }
 
 // TODO: Add better support for HTML attributes (html-attribute). E.g. Meta descriptions.
-func (sBox SettingMap) ParseSetting(sname, scontent, stype, constraint string) (err error) {
+func (sBox SettingMap) ParseSetting(name, content, typ, constraint string) (err error) {
 	ssBox := map[string]interface{}(sBox)
-	switch stype {
+	switch typ {
 	case "bool":
-		ssBox[sname] = (scontent == "1")
+		ssBox[name] = (content == "1")
 	case "int":
-		ssBox[sname], err = strconv.Atoi(scontent)
+		ssBox[name], err = strconv.Atoi(content)
 		if err != nil {
 			return errors.New("You were supposed to enter an integer x.x")
 		}
 	case "int64":
-		ssBox[sname], err = strconv.ParseInt(scontent, 10, 64)
+		ssBox[name], err = strconv.ParseInt(content, 10, 64)
 		if err != nil {
 			return errors.New("You were supposed to enter an integer x.x")
 		}
@@ -107,17 +107,17 @@ func (sBox SettingMap) ParseSetting(sname, scontent, stype, constraint string) (
 			return errors.New("Invalid contraint! The constraint field wasn't an integer!")
 		}
 
-		value, err := strconv.Atoi(scontent)
+		val, err := strconv.Atoi(content)
 		if err != nil {
 			return errors.New("Only integers are allowed in this setting x.x")
 		}
 
-		if value < con1 || value > con2 {
+		if val < con1 || val > con2 {
 			return errors.New("Only integers between a certain range are allowed in this setting")
 		}
-		ssBox[sname] = value
+		ssBox[name] = val
 	default:
-		ssBox[sname] = scontent
+		ssBox[name] = content
 	}
 	return nil
 }

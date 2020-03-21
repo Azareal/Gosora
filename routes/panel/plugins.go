@@ -8,13 +8,13 @@ import (
 	c "github.com/Azareal/Gosora/common"
 )
 
-func Plugins(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
-	basePage, ferr := buildBasePage(w, r, user, "plugins", "plugins")
+func Plugins(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
+	basePage, ferr := buildBasePage(w, r, u, "plugins", "plugins")
 	if ferr != nil {
 		return ferr
 	}
-	if !user.Perms.ManagePlugins {
-		return c.NoPermissions(w, r, user)
+	if !u.Perms.ManagePlugins {
+		return c.NoPermissions(w, r, u)
 	}
 
 	var pluginList []interface{}

@@ -309,7 +309,7 @@ func ForumsEditPermsSubmit(w http.ResponseWriter, r *http.Request, user *c.User,
 }
 
 // A helper function for the Advanced portion of the Forum Perms Editor
-func forumPermsExtractDash(paramList string) (fid int, gid int, err error) {
+func forumPermsExtractDash(paramList string) (fid, gid int, err error) {
 	params := strings.Split(paramList, "-")
 	if len(params) != 2 {
 		return fid, gid, errors.New("Parameter count mismatch")

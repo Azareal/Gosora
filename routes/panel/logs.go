@@ -12,8 +12,8 @@ import (
 )
 
 // TODO: Link the usernames for successful registrations to the profiles
-func LogsRegs(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
-	basePage, ferr := buildBasePage(w, r, user, "registration_logs", "logs")
+func LogsRegs(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
+	basePage, ferr := buildBasePage(w, r, u, "registration_logs", "logs")
 	if ferr != nil {
 		return ferr
 	}
@@ -115,8 +115,8 @@ func adminlogsElementType(action, elementType string, elementID int, actor *c.Us
 	switch elementType {
 	// TODO: Record more detail for this, e.g. which field/s was changed
 	case "user":
-		targetUser := handleUnknownUser(c.Users.Get(elementID))
-		out = p.GetTmplPhrasef("panel_logs_admin_action_user_"+action, targetUser.Link, targetUser.Name, actor.Link, actor.Name)
+		tu := handleUnknownUser(c.Users.Get(elementID))
+		out = p.GetTmplPhrasef("panel_logs_admin_action_user_"+action, tu.Link, tu.Name, actor.Link, actor.Name)
 	case "group":
 		g, err := c.Groups.Get(elementID)
 		if err != nil {
@@ -168,8 +168,8 @@ func adminlogsElementType(action, elementType string, elementID int, actor *c.Us
 	return out
 }
 
-func LogsMod(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
-	basePage, ferr := buildBasePage(w, r, user, "mod_logs", "logs")
+func LogsMod(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
+	basePage, ferr := buildBasePage(w, r, u, "mod_logs", "logs")
 	if ferr != nil {
 		return ferr
 	}
@@ -193,8 +193,8 @@ func LogsMod(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError 
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "", "", "panel_modlogs", pi})
 }
 
-func LogsAdmin(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
-	basePage, ferr := buildBasePage(w, r, user, "admin_logs", "logs")
+func LogsAdmin(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
+	basePage, ferr := buildBasePage(w, r, u, "admin_logs", "logs")
 	if ferr != nil {
 		return ferr
 	}

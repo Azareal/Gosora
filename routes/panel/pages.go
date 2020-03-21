@@ -8,8 +8,8 @@ import (
 	c "github.com/Azareal/Gosora/common"
 )
 
-func Pages(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
-	basePage, ferr := buildBasePage(w, r, user, "pages", "pages")
+func Pages(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
+	basePage, ferr := buildBasePage(w, r, u, "pages", "pages")
 	if ferr != nil {
 		return ferr
 	}
@@ -71,8 +71,8 @@ func PagesCreateSubmit(w http.ResponseWriter, r *http.Request, user *c.User) c.R
 	return nil
 }
 
-func PagesEdit(w http.ResponseWriter, r *http.Request, user *c.User, spid string) c.RouteError {
-	basePage, ferr := buildBasePage(w, r, user, "pages_edit", "pages")
+func PagesEdit(w http.ResponseWriter, r *http.Request, u *c.User, spid string) c.RouteError {
+	basePage, ferr := buildBasePage(w, r, u, "pages_edit", "pages")
 	if ferr != nil {
 		return ferr
 	}
@@ -82,7 +82,7 @@ func PagesEdit(w http.ResponseWriter, r *http.Request, user *c.User, spid string
 
 	pid, err := strconv.Atoi(spid)
 	if err != nil {
-		return c.LocalError("Page ID needs to be an integer", w, r, user)
+		return c.LocalError("Page ID needs to be an integer", w, r, u)
 	}
 	page, err := c.Pages.Get(pid)
 	if err == sql.ErrNoRows {
@@ -138,21 +138,21 @@ func PagesEditSubmit(w http.ResponseWriter, r *http.Request, user *c.User, spid 
 	return nil
 }
 
-func PagesDeleteSubmit(w http.ResponseWriter, r *http.Request, user *c.User, spid string) c.RouteError {
-	_, ferr := c.SimplePanelUserCheck(w, r, user)
+func PagesDeleteSubmit(w http.ResponseWriter, r *http.Request, u *c.User, spid string) c.RouteError {
+	_, ferr := c.SimplePanelUserCheck(w, r, u)
 	if ferr != nil {
 		return ferr
 	}
 
 	pid, err := strconv.Atoi(spid)
 	if err != nil {
-		return c.LocalError("Page ID needs to be an integer", w, r, user)
+		return c.LocalError("Page ID needs to be an integer", w, r, u)
 	}
 	err = c.Pages.Delete(pid)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
-	err = c.AdminLogs.Create("delete", pid, "page", user.GetIP(), user.ID)
+	err = c.AdminLogs.Create("delete", pid, "page", u.GetIP(), u.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}

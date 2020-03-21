@@ -30,26 +30,23 @@ func StaticFile(w http.ResponseWriter, r *http.Request) {
 
 	if file.Length > 300 {
 		if h.Get("Range") != "" {
+			h.Set("Vary", "Accept-Encoding")
+			if len(file.Sha256) != 0 {
+				h.Set("Cache-Control", cacheControlMaxAgeWeek)
+			} else {
+				h.Set("Cache-Control", cacheControlMaxAge) //Cache-Control: max-age=31536000
+			}
+			
 			if file.GzipLength > 300 && strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
-				if len(file.Sha256) != 0 {
-					h.Set("Cache-Control", cacheControlMaxAgeWeek)
-				} else {
-					h.Set("Cache-Control", cacheControlMaxAge) //Cache-Control: max-age=31536000
-				}
 				h.Set("Content-Encoding", "gzip")
 				h.Set("Content-Length", file.StrGzipLength)
 				http.ServeContent(w, r, r.URL.Path, file.Info.ModTime(), bytes.NewReader(file.GzipData))
 				return
-			} else if file.GzipLength == 0 {
-				if len(file.Sha256) != 0 {
-					h.Set("Cache-Control", cacheControlMaxAgeWeek)
-				} else {
-					h.Set("Cache-Control", cacheControlMaxAge) //Cache-Control: max-age=31536000
-				}
-				h.Set("Content-Length", file.StrLength)
-				http.ServeContent(w, r, r.URL.Path, file.Info.ModTime(), bytes.NewReader(file.Data))
-				return
 			}
+
+			h.Set("Content-Length", file.StrLength)
+			http.ServeContent(w, r, r.URL.Path, file.Info.ModTime(), bytes.NewReader(file.Data))
+			return
 		}
 	}
 
@@ -79,13 +76,13 @@ func StaticFile(w http.ResponseWriter, r *http.Request) {
 	// Other options instead of io.Copy: io.CopyN(), w.Write(), http.ServeContent()
 }
 
-func Overview(w http.ResponseWriter, r *http.Request, user *c.User, h *c.Header) c.RouteError {
+func Overview(w http.ResponseWriter, r *http.Request, u *c.User, h *c.Header) c.RouteError {
 	h.Title = phrases.GetTitlePhrase("overview")
 	h.Zone = "overview"
 	return renderTemplate("overview", w, r, h, c.Page{h, tList, nil})
 }
 
-func CustomPage(w http.ResponseWriter, r *http.Request, user *c.User, h *c.Header, name string) c.RouteError {
+func CustomPage(w http.ResponseWriter, r *http.Request, u *c.User, h *c.Header, name string) c.RouteError {
 	h.Zone = "custom_page"
 	name = c.SanitiseSingleLine(name)
 	page, err := c.Pages.GetByName(name)
