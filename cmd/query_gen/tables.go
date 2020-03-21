@@ -9,12 +9,19 @@ type tblColumn = qgen.DBTableColumn
 type tC = tblColumn
 type tblKey = qgen.DBTableKey
 
-func createTables(adapter qgen.Adapter) (err error) {
-	createTable := func(table string, charset string, collation string, columns []tC, keys []tblKey) {
+func createTables(a qgen.Adapter) error {
+	f := func(table, charset, collation string, cols []tC, keys []tblKey) error {
+		return qgen.Install.CreateTable(table, charset, collation, cols, keys)
+	}
+	return createTables2(a, f)
+}
+
+func createTables2(a qgen.Adapter, f func(table, charset, collation string, columns []tC, keys []tblKey) error) (err error) {
+	createTable := func(table, charset, collation string, cols []tC, keys []tblKey) {
 		if err != nil {
 			return
 		}
-		err = qgen.Install.CreateTable(table, charset, collation, columns, keys)
+		err = f(table, charset, collation, cols, keys)
 	}
 	createTable("users", mysqlPre, mysqlCol,
 		[]tC{
@@ -761,6 +768,16 @@ func createTables(adapter qgen.Adapter) (err error) {
 			tC{"value", "varchar", 200, false, false, ""},
 		}, nil,
 	)
+
+	/*createTable("tables", mysqlPre, mysqlCol,
+		[]tC{
+			tC{"id", "int", 0, false, true, ""},
+			tC{"name", "varchar", 200, false, false, ""},
+		},
+		[]tblKey{
+			tblKey{"id", "primary", "", false},
+		},
+	)*/
 
 	return err
 }

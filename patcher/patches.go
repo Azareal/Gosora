@@ -63,19 +63,19 @@ func patch0(scanner *bufio.Scanner) (err error) {
 		return err
 	}
 
-	err = execStmt(qgen.Builder.CreateTable("menus", "", "",
+	err = createTable("menus", "", "",
 		[]tC{
 			tC{"mid", "int", 0, false, true, ""},
 		},
 		[]tK{
 			tK{"mid", "primary", "", false},
 		},
-	))
+	)
 	if err != nil {
 		return err
 	}
 
-	err = execStmt(qgen.Builder.CreateTable("menu_items", "", "",
+	err = createTable("menu_items", "", "",
 		[]tC{
 			tC{"miid", "int", 0, false, true, ""},
 			tC{"mid", "int", 0, false, false, ""},
@@ -97,7 +97,7 @@ func patch0(scanner *bufio.Scanner) (err error) {
 		[]tK{
 			tK{"miid", "primary", "", false},
 		},
-	))
+	)
 	if err != nil {
 		return err
 	}
@@ -191,7 +191,7 @@ func patch2(scanner *bufio.Scanner) error {
 }
 
 func patch3(scanner *bufio.Scanner) error {
-	return execStmt(qgen.Builder.CreateTable("registration_logs", "", "",
+	return createTable("registration_logs", "", "",
 		[]tC{
 			tC{"rlid", "int", 0, false, true, ""},
 			tC{"username", "varchar", 100, false, false, ""},
@@ -204,7 +204,7 @@ func patch3(scanner *bufio.Scanner) error {
 		[]tK{
 			tK{"rlid", "primary", "", false},
 		},
-	))
+	)
 }
 
 func patch4(scanner *bufio.Scanner) error {
@@ -255,7 +255,7 @@ func patch4(scanner *bufio.Scanner) error {
 		return err
 	}
 
-	err = execStmt(qgen.Builder.CreateTable("pages", "utf8mb4", "utf8mb4_general_ci",
+	err = createTable("pages", "utf8mb4", "utf8mb4_general_ci",
 		[]tC{
 			tC{"pid", "int", 0, false, true, ""},
 			tC{"name", "varchar", 200, false, false, ""},
@@ -267,7 +267,7 @@ func patch4(scanner *bufio.Scanner) error {
 		[]tK{
 			tK{"pid", "primary", "", false},
 		},
-	))
+	)
 	if err != nil {
 		return err
 	}
@@ -293,7 +293,7 @@ func patch5(scanner *bufio.Scanner) error {
 		return err
 	}
 
-	err = execStmt(qgen.Builder.CreateTable("users_2fa_keys", "utf8mb4", "utf8mb4_general_ci",
+	err = createTable("users_2fa_keys", "utf8mb4", "utf8mb4_general_ci",
 		[]tC{
 			tC{"uid", "int", 0, false, false, ""},
 			tC{"secret", "varchar", 100, false, false, ""},
@@ -310,7 +310,7 @@ func patch5(scanner *bufio.Scanner) error {
 		[]tK{
 			tK{"uid", "primary", "", false},
 		},
-	))
+	)
 	if err != nil {
 		return err
 	}
@@ -323,14 +323,14 @@ func patch6(scanner *bufio.Scanner) error {
 }
 
 func patch7(scanner *bufio.Scanner) error {
-	return execStmt(qgen.Builder.CreateTable("users_avatar_queue", "", "",
+	return createTable("users_avatar_queue", "", "",
 		[]tC{
 			tC{"uid", "int", 0, false, false, ""}, // TODO: Make this a foreign key
 		},
 		[]tK{
 			tK{"uid", "primary", "", false},
 		},
-	))
+	)
 }
 
 func renameRoutes(routes map[string]string) error {
@@ -386,11 +386,11 @@ func patch8(scanner *bufio.Scanner) error {
 	if err != nil {
 		return err
 	}
-	return execStmt(qgen.Builder.CreateTable("updates", "", "",
+	return createTable("updates", "", "",
 		[]tC{
 			tC{"dbVersion", "int", 0, false, false, "0"},
 		}, nil,
-	))
+	)
 }
 
 func patch9(scanner *bufio.Scanner) error {
@@ -400,7 +400,7 @@ func patch9(scanner *bufio.Scanner) error {
 		return err
 	}
 
-	return execStmt(qgen.Builder.CreateTable("login_logs", "", "",
+	return createTable("login_logs", "", "",
 		[]tC{
 			tC{"lid", "int", 0, false, true, ""},
 			tC{"uid", "int", 0, false, false, ""},
@@ -411,7 +411,7 @@ func patch9(scanner *bufio.Scanner) error {
 		[]tK{
 			tK{"lid", "primary", "", false},
 		},
-	))
+	)
 }
 
 var acc = qgen.NewAcc
@@ -475,7 +475,7 @@ func patch11(scanner *bufio.Scanner) error {
 		if err != nil {
 			return err
 		}
-		_, err = acc().Update("topics").Set("attachCount = ?").Where("tid = " + stid).Exec(count)
+		_, err = acc().Update("topics").Set("attachCount=?").Where("tid=" + stid).Exec(count)
 		return err
 	})
 
@@ -552,7 +552,7 @@ func patch15(scanner *bufio.Scanner) error {
 }
 
 func patch16(scanner *bufio.Scanner) error {
-	return execStmt(qgen.Builder.CreateTable("password_resets", "", "",
+	return createTable("password_resets", "", "",
 		[]tC{
 			tC{"email", "varchar", 200, false, false, ""},
 			tC{"uid", "int", 0, false, false, ""},             // TODO: Make this a foreign key
@@ -560,7 +560,7 @@ func patch16(scanner *bufio.Scanner) error {
 			tC{"token", "varchar", 200, false, false, ""},
 			tC{"createdAt", "createdAt", 0, false, false, ""},
 		}, nil,
-	))
+	)
 }
 
 func patch17(scanner *bufio.Scanner) error {
@@ -569,30 +569,30 @@ func patch17(scanner *bufio.Scanner) error {
 		return err
 	}
 
-	err = acc().Select("topics").Cols("tid, parentID").Where("attachCount > 0").Each(func(rows *sql.Rows) error {
+	err = acc().Select("topics").Cols("tid,parentID").Where("attachCount > 0").Each(func(rows *sql.Rows) error {
 		var tid, parentID int
 		err := rows.Scan(&tid, &parentID)
 		if err != nil {
 			return err
 		}
-		_, err = acc().Update("attachments").Set("sectionID = ?").Where("originTable = 'topics' AND originID = ?").Exec(parentID, tid)
+		_, err = acc().Update("attachments").Set("sectionID=?").Where("originTable = 'topics' AND originID = ?").Exec(parentID, tid)
 		return err
 	})
 	if err != nil {
 		return err
 	}
 
-	return acc().Select("replies").Cols("rid, tid").Where("attachCount > 0").Each(func(rows *sql.Rows) error {
+	return acc().Select("replies").Cols("rid,tid").Where("attachCount > 0").Each(func(rows *sql.Rows) error {
 		var rid, tid, sectionID int
 		err := rows.Scan(&rid, &tid)
 		if err != nil {
 			return err
 		}
-		err = acc().Select("topics").Cols("parentID").Where("tid = ?").QueryRow(tid).Scan(&sectionID)
+		err = acc().Select("topics").Cols("parentID").Where("tid=?").QueryRow(tid).Scan(&sectionID)
 		if err != nil {
 			return err
 		}
-		_, err = acc().Update("attachments").Set("sectionID = ?, extra = ?").Where("originTable = 'replies' AND originID = ?").Exec(sectionID, tid, rid)
+		_, err = acc().Update("attachments").Set("sectionID=?, extra=?").Where("originTable = 'replies' AND originID = ?").Exec(sectionID, tid, rid)
 		return err
 	})
 }
@@ -602,12 +602,12 @@ func patch18(scanner *bufio.Scanner) error {
 }
 
 func patch19(scanner *bufio.Scanner) error {
-	return execStmt(qgen.Builder.CreateTable("memchunks", "", "",
+	return createTable("memchunks", "", "",
 		[]tC{
 			tC{"count", "int", 0, false, false, "0"},
 			tC{"createdAt", "datetime", 0, false, false, ""},
 		}, nil,
-	))
+	)
 }
 
 func patch20(scanner *bufio.Scanner) error {
@@ -642,12 +642,12 @@ func patch21(scanner *bufio.Scanner) error {
 		return err
 	}
 
-	err = execStmt(qgen.Builder.CreateTable("meta", "", "",
+	err = createTable("meta", "", "",
 		[]tC{
 			tC{"name", "varchar", 200, false, false, ""},
 			tC{"value", "varchar", 200, false, false, ""},
 		}, nil,
-	))
+	)
 	if err != nil {
 		return err
 	}
@@ -664,7 +664,7 @@ func patch23(scanner *bufio.Scanner) error {
 	if err != nil {
 		return err
 	}
-	err = execStmt(qgen.Builder.CreateTable("conversations", "", "",
+	err = createTable("conversations", "", "",
 		[]tC{
 			tC{"cid", "int", 0, false, true, ""},
 			tC{"createdBy", "int", 0, false, false, ""}, // TODO: Make this a foreign key
@@ -675,7 +675,7 @@ func patch23(scanner *bufio.Scanner) error {
 		[]tK{
 			tK{"cid", "primary", "", false},
 		},
-	))
+	)
 	if err != nil {
 		return err
 	}
@@ -684,7 +684,7 @@ func patch23(scanner *bufio.Scanner) error {
 	if err != nil {
 		return err
 	}
-	err = execStmt(qgen.Builder.CreateTable("conversations_posts", "", "",
+	err = createTable("conversations_posts", "", "",
 		[]tC{
 			tC{"pid", "int", 0, false, true, ""},
 			tC{"cid", "int", 0, false, false, ""},
@@ -695,7 +695,7 @@ func patch23(scanner *bufio.Scanner) error {
 		[]tK{
 			tK{"pid", "primary", "", false},
 		},
-	))
+	)
 	if err != nil {
 		return err
 	}
@@ -704,12 +704,12 @@ func patch23(scanner *bufio.Scanner) error {
 	if err != nil {
 		return err
 	}
-	return execStmt(qgen.Builder.CreateTable("conversations_participants", "", "",
+	return createTable("conversations_participants", "", "",
 		[]tC{
 			tC{"uid", "int", 0, false, false, ""},
 			tC{"cid", "int", 0, false, false, ""},
 		}, nil,
-	))
+	)
 }
 
 func patch24(scanner *bufio.Scanner) error {
@@ -717,7 +717,7 @@ func patch24(scanner *bufio.Scanner) error {
 	if err != nil {
 		return err
 	}
-	return execStmt(qgen.Builder.CreateTable("users_groups_promotions", "", "",
+	return createTable("users_groups_promotions", "", "",
 		[]tC{
 			tC{"pid", "int", 0, false, true, ""},
 			tC{"from_gid", "int", 0, false, false, ""},
@@ -731,7 +731,7 @@ func patch24(scanner *bufio.Scanner) error {
 		[]tK{
 			tK{"pid", "primary", "", false},
 		},
-	))
+	)
 }
 
 func patch25(scanner *bufio.Scanner) error {
@@ -739,12 +739,12 @@ func patch25(scanner *bufio.Scanner) error {
 }
 
 func patch26(scanner *bufio.Scanner) error {
-	return execStmt(qgen.Builder.CreateTable("users_blocks", "", "",
+	return createTable("users_blocks", "", "",
 		[]tC{
 			tC{"blocker", "int", 0, false, false, ""},
 			tC{"blockedUser", "int", 0, false, false, ""},
 		}, nil,
-	))
+	)
 }
 
 func patch27(scanner *bufio.Scanner) error {
@@ -895,15 +895,19 @@ func patch31(scanner *bufio.Scanner) error {
 	return nil
 }
 
+func createTable(table, charset, collation string, cols []tC, keys []tK) error {
+	return execStmt(qgen.Builder.CreateTable(table, charset, collation, cols, keys))
+}
+
 func patch32(scanner *bufio.Scanner) error {
-	return execStmt(qgen.Builder.CreateTable("perfchunks", "", "",
+	return createTable("perfchunks", "", "",
 		[]tC{
 			tC{"low", "int", 0, false, false, "0"},
 			tC{"high", "int", 0, false, false, "0"},
 			tC{"avg", "int", 0, false, false, "0"},
 			tC{"createdAt", "datetime", 0, false, false, ""},
 		}, nil,
-	))
+	)
 }
 
 func patch33(scanner *bufio.Scanner) error {
