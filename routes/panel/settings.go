@@ -29,7 +29,8 @@ func Settings(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError
 	var settingList []*c.PanelSetting
 	for _, settingPtr := range settings {
 		s := settingPtr.Copy()
-		if s.Type == "list" {
+		switch s.Type {
+		case "list":
 			llist := settingPhrases[s.Name+"_label"]
 			labels := strings.Split(llist, ",")
 			conv, err := strconv.Atoi(s.Content)
@@ -38,13 +39,15 @@ func Settings(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError
 			}
 			s.Content = labels[conv-1]
 			// TODO: Localise this
-		} else if s.Type == "bool" {
+		case "bool":
 			if s.Content == "1" {
-				s.Content = "Yes"
+				//s.Content = "Yes"
+				s.Content = p.GetTmplPhrase("option_yes")
 			} else {
-				s.Content = "No"
+				//s.Content = "No"
+				s.Content = p.GetTmplPhrase("option_no")
 			}
-		} else if s.Type == "html-attribute" {
+		case "html-attribute":
 			s.Type = "textarea"
 		}
 		settingList = append(settingList, &c.PanelSetting{s, p.GetSettingPhrase(s.Name)})
@@ -54,28 +57,28 @@ func Settings(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "", "", "panel_settings", &pi})
 }
 
-func SettingEdit(w http.ResponseWriter, r *http.Request, user *c.User, sname string) c.RouteError {
-	basePage, ferr := buildBasePage(w, r, user, "edit_setting", "settings")
+func SettingEdit(w http.ResponseWriter, r *http.Request, u *c.User, sname string) c.RouteError {
+	basePage, ferr := buildBasePage(w, r, u, "edit_setting", "settings")
 	if ferr != nil {
 		return ferr
 	}
-	if !user.Perms.EditSettings {
-		return c.NoPermissions(w, r, user)
+	if !u.Perms.EditSettings {
+		return c.NoPermissions(w, r, u)
 	}
 
-	setting, err := basePage.Settings.BypassGet(sname)
+	s, err := basePage.Settings.BypassGet(sname)
 	if err == sql.ErrNoRows {
-		return c.LocalError("The setting you want to edit doesn't exist.", w, r, user)
+		return c.LocalError("The setting you want to edit doesn't exist.", w, r, u)
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
 
 	var itemList []c.OptionLabel
-	if setting.Type == "list" {
-		llist := p.GetSettingPhrase(setting.Name + "_label")
-		conv, err := strconv.Atoi(setting.Content)
+	if s.Type == "list" {
+		llist := p.GetSettingPhrase(s.Name + "_label")
+		conv, err := strconv.Atoi(s.Content)
 		if err != nil {
-			return c.LocalError("The value of this setting couldn't be converted to an integer", w, r, user)
+			return c.LocalError("The value of this setting couldn't be converted to an integer", w, r, u)
 		}
 		for index, label := range strings.Split(llist, ",") {
 			itemList = append(itemList, c.OptionLabel{
@@ -84,22 +87,22 @@ func SettingEdit(w http.ResponseWriter, r *http.Request, user *c.User, sname str
 				Selected: conv == (index + 1),
 			})
 		}
-	} else if setting.Type == "html-attribute" {
-		setting.Type = "textarea"
+	} else if s.Type == "html-attribute" {
+		s.Type = "textarea"
 	}
 
-	pSetting := &c.PanelSetting{setting, p.GetSettingPhrase(setting.Name)}
+	pSetting := &c.PanelSetting{s, p.GetSettingPhrase(s.Name)}
 	pi := c.PanelSettingPage{basePage, itemList, pSetting}
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "", "", "panel_setting", &pi})
 }
 
-func SettingEditSubmit(w http.ResponseWriter, r *http.Request, user *c.User, name string) c.RouteError {
-	headerLite, ferr := c.SimplePanelUserCheck(w, r, user)
+func SettingEditSubmit(w http.ResponseWriter, r *http.Request, u *c.User, name string) c.RouteError {
+	headerLite, ferr := c.SimplePanelUserCheck(w, r, u)
 	if ferr != nil {
 		return ferr
 	}
-	if !user.Perms.EditSettings {
-		return c.NoPermissions(w, r, user)
+	if !u.Perms.EditSettings {
+		return c.NoPermissions(w, r, u)
 	}
 
 	name = c.SanitiseSingleLine(name)
@@ -109,7 +112,7 @@ func SettingEditSubmit(w http.ResponseWriter, r *http.Request, user *c.User, nam
 		return rerr
 	}
 	// TODO: Avoid this hack
-	err := c.AdminLogs.Create(name, 0, "setting", user.GetIP(), user.ID)
+	err := c.AdminLogs.Create(name, 0, "setting", u.GetIP(), u.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
