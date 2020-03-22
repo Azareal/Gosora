@@ -481,12 +481,13 @@ func init() {
 	co.SetReverseOSMapEnum(reverseOSMapEnum)
 	c.Chrome = agentMapEnum["chrome"]
 	c.Firefox = agentMapEnum["firefox"]
+	ame := agentMapEnum
 	c.SimpleBots = []int{
-		agentMapEnum["semrush"],
-		agentMapEnum["ahrefs"],
-		agentMapEnum["python"],
-		agentMapEnum["go"],
-		agentMapEnum["curl"],
+		ame["semrush"],
+		ame["ahrefs"],
+		ame["python"],
+		ame["go"],
+		ame["curl"],
 	}
 }
 
@@ -691,17 +692,11 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		req.URL.Path = c.Config.DefaultPath
 	}
 	//log.Print("URL.Path: ", req.URL.Path)
-	
-	var prefix, extraData string
-	prefix = req.URL.Path[0:strings.IndexByte(req.URL.Path[1:],'/') + 1]
-	if req.URL.Path[len(req.URL.Path) - 1] != '/' {
-		extraData = req.URL.Path[strings.LastIndexByte(req.URL.Path,'/') + 1:]
-		req.URL.Path = req.URL.Path[:strings.LastIndexByte(req.URL.Path,'/') + 1]
-	}
+	prefix := req.URL.Path[0:strings.IndexByte(req.URL.Path[1:],'/') + 1]
 
 	// TODO: Use the same hook table as downstream
 	hTbl := c.GetHookTable()
-	skip, ferr := hTbl.VhookSkippable("router_after_filters", w, req, prefix, extraData)
+	skip, ferr := hTbl.VhookSkippable("router_after_filters", w, req, prefix)
 	if skip || ferr != nil {
 		return
 	}
@@ -730,7 +725,6 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		if !c.Config.DisableAnalytics {
 			co.RouteViewCounter.Bump({{index .AllRouteMap "routes.StaticFile"}})
 		}
-		req.URL.Path += extraData
 		routes.StaticFile(w, req)
 		return
 	}
@@ -740,6 +734,12 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 	if c.Dev.SuperDebug {
 		r.requestLogger.Print("before PreRoute")
+	}
+
+	var extraData string
+	if req.URL.Path[len(req.URL.Path) - 1] != '/' {
+		extraData = req.URL.Path[strings.LastIndexByte(req.URL.Path,'/') + 1:]
+		req.URL.Path = req.URL.Path[:strings.LastIndexByte(req.URL.Path,'/') + 1]
 	}
 
 	/*if c.Dev.QuicPort != 0 {
