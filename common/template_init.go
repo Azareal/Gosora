@@ -16,6 +16,7 @@ import (
 	p "github.com/Azareal/Gosora/common/phrases"
 	tmpl "github.com/Azareal/Gosora/common/templates"
 	qgen "github.com/Azareal/Gosora/query_gen"
+	"github.com/Azareal/Gosora/uutils"
 )
 
 var Ctemplates []string // TODO: Use this to filter out top level templates we don't need
@@ -743,7 +744,8 @@ func initDefaultTmplFuncMap() {
 	}
 
 	fmap["elapsed"] = func(startedAtInt interface{}) interface{} {
-		return time.Since(startedAtInt.(time.Time)).String()
+		//return time.Since(startedAtInt.(time.Time)).String()
+		return time.Duration(uutils.Nanotime() - startedAtInt.(int64)).String()
 	}
 
 	fmap["lang"] = func(phraseNameInt interface{}) interface{} {
