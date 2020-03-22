@@ -2,7 +2,7 @@
 
 {{if gt .Page 1}}<link rel="prev"href="{{.Topic.Link}}?page={{subtract .Page 1}}"/>{{end}}
 {{if ne .LastPage .Page}}<link rel="prerender next"href="{{.Topic.Link}}?page={{add .Page 1}}"/>{{end}}
-<link rel="canonical" href="//{{.Site.URL}}{{.Topic.Link}}{{if gt .Page 1}}?page={{.Page}}{{end}}"/>
+{{if not .CurrentUser.Loggedin}}<link rel="canonical" href="//{{.Site.URL}}{{.Topic.Link}}{{if gt .Page 1}}?page={{.Page}}{{end}}"/>{{end}}
 
 <div {{scope "topic_title_block"}} class="rowblock rowhead topic_block" aria-label="{{lang "topic.topic_info_aria"}}">
 	<div class="rowitem topic_item{{if .Topic.Sticky}} topic_sticky_head{{else if .Topic.IsClosed}} topic_closed_head{{end}}">

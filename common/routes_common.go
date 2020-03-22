@@ -207,9 +207,9 @@ func userCheck(w http.ResponseWriter, r *http.Request, user *User) (header *Head
 
 // TODO: Add the ability for admins to restrict certain themes to certain groups?
 // ! Be careful about firing errors off here as CustomError uses this
-func userCheck2(w http.ResponseWriter, r *http.Request, user *User, nano int64) (header *Header, rerr RouteError) {
+func userCheck2(w http.ResponseWriter, r *http.Request, user *User, nano int64) (h *Header, rerr RouteError) {
 	theme := GetThemeByReq(r)
-	header = &Header{
+	h = &Header{
 		Site:        Site,
 		Settings:    SettingBox.Load().(SettingMap),
 		Themes:      Themes,
@@ -222,32 +222,34 @@ func userCheck2(w http.ResponseWriter, r *http.Request, user *User, nano int64) 
 		StartedAt:   nano,
 	}
 	// TODO: Optimise this by avoiding accessing a map string index
-	header.GoogSiteVerify = header.Settings["google_site_verify"].(string)
+	if !user.Loggedin {
+		h.GoogSiteVerify = h.Settings["google_site_verify"].(string)
+	}
 
 	if user.IsBanned {
-		header.AddNotice("account_banned")
+		h.AddNotice("account_banned")
 	}
 	if user.Loggedin && !user.Active {
-		header.AddNotice("account_inactive")
+		h.AddNotice("account_inactive")
 	}
 
 	// An optimisation so we don't populate StartedAt for users who shouldn't see the stat anyway
 	// ? - Should we only show this in debug mode? It might be useful for detecting issues in production, if we show it there as-well
 	//if user.IsAdmin {
-	//header.StartedAt = time.Now()
+	//h.StartedAt = time.Now()
 	//}
 
-	//PrepResources(user,header,theme)
-	return header, nil
+	//PrepResources(user,h,theme)
+	return h, nil
 }
 
-func PrepResources(user *User, h *Header, theme *Theme) {
+func PrepResources(u *User, h *Header, theme *Theme) {
 	h.AddSheet(theme.Name + "/main.css")
 
 	if len(theme.Resources) > 0 {
 		rlist := theme.Resources
 		for _, res := range rlist {
-			if res.Loggedin && !user.Loggedin {
+			if res.Loggedin && !u.Loggedin {
 				continue
 			}
 			if res.Location == "global" || res.Location == "frontend" {
@@ -284,7 +286,7 @@ func PrepResources(user *User, h *Header, theme *Theme) {
 	addPreScript("paginator")
 	addPreScript("alert")
 	addPreScript("notice")
-	if user.Loggedin {
+	if u.Loggedin {
 		addPreScript("topic_c_edit_post")
 		addPreScript("topic_c_attach_item")
 		addPreScript("topic_c_poll_input")

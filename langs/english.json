@@ -233,6 +233,8 @@
 		"mail_ru":"Mail.ru bot",
 		"zgrab":"Zgrab App Scanner",
 		"curl":"curl",
+		"python":"Python Bot",
+		"go":"Go Bot",
 		"suspicious":"Suspicious",
 		"unknown":"Unknown",
 		"blank":"Blank",

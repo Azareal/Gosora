@@ -621,6 +621,8 @@ var agentMapEnum = map[string]int{
 	"mail_ru": 47,
 	"zgrab": 48,
 	"curl": 49,
+	"python": 50,
+	"go": 51,
 }
 var reverseAgentMapEnum = map[int]string{ 
 	0: "unknown",
@@ -673,6 +675,8 @@ var reverseAgentMapEnum = map[int]string{
 	47: "mail_ru",
 	48: "zgrab",
 	49: "curl",
+	50: "python",
+	51: "go",
 }
 var markToAgent = map[string]string{ 
 	"OPR": "opera",
@@ -725,6 +729,8 @@ var markToAgent = map[string]string{
 	"RU_Bot": "mail_ru",
 	"zgrab": "zgrab",
 	"curl": "curl",
+	"python": "python",
+	"Go": "go",
 }
 var markToID = map[string]int{ 
 	"OPR": 3,
@@ -777,6 +783,8 @@ var markToID = map[string]int{
 	"RU_Bot": 47,
 	"zgrab": 48,
 	"curl": 49,
+	"python": 50,
+	"Go": 51,
 }
 /*var agentRank = map[string]int{
 	"opera":9,
@@ -795,8 +803,13 @@ func init() {
 	co.SetReverseOSMapEnum(reverseOSMapEnum)
 	c.Chrome = agentMapEnum["chrome"]
 	c.Firefox = agentMapEnum["firefox"]
-	c.Semrush = agentMapEnum["semrush"]
-	c.Ahrefs = agentMapEnum["ahrefs"]
+	c.SimpleBots = []int{
+		agentMapEnum["semrush"],
+		agentMapEnum["ahrefs"],
+		agentMapEnum["python"],
+		agentMapEnum["go"],
+		agentMapEnum["curl"],
+	}
 }
 
 type WriterIntercept struct {
@@ -851,7 +864,7 @@ func NewGenRouter(uploads http.Handler) (*GenRouter, error) {
 	}, nil
 }
 
-func (r *GenRouter) handleError(err c.RouteError, w http.ResponseWriter, req *http.Request, user *c.User) {
+func (r *GenRouter) handleError(err c.RouteError, w http.ResponseWriter, req *http.Request, u *c.User) {
 	if err.Handled() {
 		return
 	}
@@ -859,7 +872,7 @@ func (r *GenRouter) handleError(err c.RouteError, w http.ResponseWriter, req *ht
 		c.InternalErrorJSQ(err, w, req, err.JSON())
 		return
 	}
-	c.LocalErrorJSQ(err.Error(), w, req, user, err.JSON())
+	c.LocalErrorJSQ(err.Error(), w, req, u, err.JSON())
 }
 
 func (r *GenRouter) Handle(_ string, _ http.Handler) {

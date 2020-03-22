@@ -119,7 +119,13 @@ func FootHeaders(w http.ResponseWriter, h *c.Header) {
 func renderTemplate3(tmplName, hookName string, w http.ResponseWriter, r *http.Request, h *c.Header, pi interface{}) error {
 	s := h.Stylesheets
 	h.Stylesheets = nil
-	simpleBot := h.CurrentUser.LastAgent == c.Semrush || h.CurrentUser.LastAgent == c.Ahrefs
+	noDescSimpleBot := h.CurrentUser.LastAgent == c.SimpleBots[0] || h.CurrentUser.LastAgent == c.SimpleBots[1]
+	var simpleBot bool
+	for _, agent := range c.SimpleBots {
+		if h.CurrentUser.LastAgent == agent {
+			simpleBot = true
+		}
+	}
 	inner := r.FormValue("i") == "1"
 	if !inner && !simpleBot {
 		c.PrepResources(h.CurrentUser, h, h.Theme)
@@ -134,7 +140,7 @@ func renderTemplate3(tmplName, hookName string, w http.ResponseWriter, r *http.R
 		h.CurrentUser.LastAgent = 0
 	}
 
-	if h.CurrentUser.Loggedin || inner || simpleBot {
+	if h.CurrentUser.Loggedin || inner || noDescSimpleBot {
 		h.MetaDesc = ""
 		h.OGDesc = ""
 	} else if h.MetaDesc != "" && h.OGDesc == "" {
@@ -143,6 +149,8 @@ func renderTemplate3(tmplName, hookName string, w http.ResponseWriter, r *http.R
 
 	if !simpleBot {
 		FootHeaders(w, h)
+	} else {
+		h.GoogSiteVerify = ""
 	}
 	if h.Zone != "error" {
 		since := time.Duration(uutils.Nanotime() - h.StartedAt)

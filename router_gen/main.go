@@ -281,6 +281,8 @@ func main() {
 		"mail_ru",
 		"zgrab",
 		"curl",
+		"python",
+		"go",
 	}
 
 	tmplVars.AllAgentMap = make(map[string]int)
@@ -341,6 +343,8 @@ func main() {
 		"RU_Bot", // Mail.RU_Bot
 		"zgrab",
 		"curl",
+		"python",
+		"Go",
 	}
 
 	tmplVars.AllAgentMarks = map[string]string{
@@ -366,12 +370,12 @@ func main() {
 		"360Spider":           "haosou",
 		"bingbot":             "bing",
 		"BingPreview":         "bing",
-		"msnbot":"bing",
+		"msnbot":              "bing",
 		"Slurp":               "slurp",
 		"Exabot":              "exabot",
 		"MojeekBot":           "mojeek",
 		"Cliqzbot":            "cliqz",
-		"netEstate":"datenbank",
+		"netEstate":           "datenbank",
 		"SeznamBot":           "seznambot",
 		"CloudFlare":          "cloudflare",  // Track alwayson specifically in case there are other bots?
 		"archive":             "archive_org", //archive.org_bot
@@ -396,6 +400,8 @@ func main() {
 		"RU_Bot":      "mail_ru", // Mail.RU_Bot
 		"zgrab":       "zgrab",
 		"curl":        "curl",
+		"python":      "python",
+		"Go":          "go",
 	}
 
 	tmplVars.AllAgentMarkIDs = make(map[string]int)
@@ -475,8 +481,13 @@ func init() {
 	co.SetReverseOSMapEnum(reverseOSMapEnum)
 	c.Chrome = agentMapEnum["chrome"]
 	c.Firefox = agentMapEnum["firefox"]
-	c.Semrush = agentMapEnum["semrush"]
-	c.Ahrefs = agentMapEnum["ahrefs"]
+	c.SimpleBots = []int{
+		agentMapEnum["semrush"],
+		agentMapEnum["ahrefs"],
+		agentMapEnum["python"],
+		agentMapEnum["go"],
+		agentMapEnum["curl"],
+	}
 }
 
 type WriterIntercept struct {
@@ -531,7 +542,7 @@ func NewGenRouter(uploads http.Handler) (*GenRouter, error) {
 	}, nil
 }
 
-func (r *GenRouter) handleError(err c.RouteError, w http.ResponseWriter, req *http.Request, user *c.User) {
+func (r *GenRouter) handleError(err c.RouteError, w http.ResponseWriter, req *http.Request, u *c.User) {
 	if err.Handled() {
 		return
 	}
@@ -539,7 +550,7 @@ func (r *GenRouter) handleError(err c.RouteError, w http.ResponseWriter, req *ht
 		c.InternalErrorJSQ(err, w, req, err.JSON())
 		return
 	}
-	c.LocalErrorJSQ(err.Error(), w, req, user, err.JSON())
+	c.LocalErrorJSQ(err.Error(), w, req, u, err.JSON())
 }
 
 func (r *GenRouter) Handle(_ string, _ http.Handler) {

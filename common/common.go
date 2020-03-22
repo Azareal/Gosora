@@ -56,7 +56,8 @@ var ErrNoRows = sql.ErrNoRows
 // TODO: Make this more customisable
 var SpammyDomainBits = []string{"porn", "sex", "lesbian", "acup", "nude", "milf", "tits", "vape", "busty", "kink", "lingerie", "strapon", "problog", "fet", "xblog", "blogin", "blognetwork", "relayblog"}
 
-var Chrome, Firefox, Semrush, Ahrefs int // ! Temporary Hack for http push and stopping semrush from wasting resources
+var Chrome, Firefox int // ! Temporary Hack for http push
+var SimpleBots []int    // ! Temporary hack to stop semrush, ahrefs, python bots and other from wasting resources
 
 type StringList []string
 

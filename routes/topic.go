@@ -75,7 +75,7 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user *c.User, header *c.H
 	}
 
 	topic.ContentLines = strings.Count(topic.Content, "\n")
-	if !user.Loggedin && user.LastAgent != c.Semrush {
+	if !user.Loggedin && user.LastAgent != c.SimpleBots[0] && user.LastAgent != c.SimpleBots[1] {
 		if len(topic.Content) > 200 {
 			header.OGDesc = topic.Content[:197] + "..."
 		} else {
