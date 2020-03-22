@@ -416,7 +416,7 @@ package main
 import (
 	"log"
 	"strings"
-	"bytes"
+	//"bytes"
 	"strconv"
 	"compress/gzip"
 	"sync"
@@ -736,12 +736,6 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		r.requestLogger.Print("before PreRoute")
 	}
 
-	var extraData string
-	if req.URL.Path[len(req.URL.Path) - 1] != '/' {
-		extraData = req.URL.Path[strings.LastIndexByte(req.URL.Path,'/') + 1:]
-		req.URL.Path = req.URL.Path[:strings.LastIndexByte(req.URL.Path,'/') + 1]
-	}
-
 	/*if c.Dev.QuicPort != 0 {
 		w.Header().Set("Alt-Svc", "quic=\":"+strconv.Itoa(c.Dev.QuicPort)+"\"; ma=2592000; v=\"44,43,39\", h3-23=\":"+strconv.Itoa(c.Dev.QuicPort)+"\"; ma=3600, h3-24=\":"+strconv.Itoa(c.Dev.QuicPort)+"\"; ma=3600, h2=\":443\"; ma=3600")
 	}*/
@@ -771,7 +765,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		for _, it := range uutils.StringToBytes(ua) {
 			if (it > 64 && it < 91) || (it > 96 && it < 123) || it == '_' {
 				buffer = append(buffer, it)
-			} else if it == ' ' || it == '(' || it == ')' || it == '-' || (it > 47 && it < 58) || it == ';' || it == ':' || it == '.' || it == '+' || it == '~' || it == '@' || (it == ':' && bytes.Equal(buffer,[]byte("http"))) || it == ',' || it == '/' {
+			} else if it == ' ' || it == '(' || it == ')' || it == '-' || (it > 47 && it < 58) || it == ';' || it == ':' || it == '.' || it == '+' || it == '~' || it == '@' /*|| (it == ':' && bytes.Equal(buffer,[]byte("http")))*/ || it == ',' || it == '/' {
 				if len(buffer) != 0 {
 					if len(buffer) > 2 {
 						// Use an unsafe zero copy conversion here just to use the switch, it's not safe for this string to escape from here, as it will get mutated, so do a regular string conversion in append
@@ -798,8 +792,8 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				// TODO: Test this
 				items = items[:0]
 				r.SuspiciousRequest(req,"Illegal char "+strconv.Itoa(int(it))+" in UA")
-				r.requestLogger.Print("UA Buffer: ", buffer)
-				r.requestLogger.Print("UA Buffer String: ", string(buffer))
+				r.requestLogger.Print("UA Buf: ", buffer)
+				r.requestLogger.Print("UA Buf String: ", string(buffer))
 				break
 			}
 		}
@@ -921,6 +915,12 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			}
 		}()
 		w = gzw
+	}
+
+	var extraData string
+	if req.URL.Path[len(req.URL.Path) - 1] != '/' {
+		extraData = req.URL.Path[strings.LastIndexByte(req.URL.Path,'/') + 1:]
+		req.URL.Path = req.URL.Path[:strings.LastIndexByte(req.URL.Path,'/') + 1]
 	}
 
 	skip, ferr = hTbl.VhookSkippable("router_pre_route", w, req, user, prefix, extraData)

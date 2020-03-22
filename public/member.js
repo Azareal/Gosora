@@ -76,7 +76,7 @@ var imageExts = ["png", "jpg", "jpe","jpeg","jif","jfi","jfif", "svg", "bmp", "g
 					let c = "";
 					if(isImage) c = " attach_image_holder"
 					fileItem.className = "attach_item attach_item_item" + c;
-					fileItem.innerHTML = Template_topic_c_attach_item({
+					fileItem.innerHTML = Tmpl_topic_c_attach_item({
 						ID: data.elems[hash+"."+ext],
 						ImgSrc: isImage ? e.target.result : "",
 						Path: hash+"."+ext,
@@ -286,7 +286,7 @@ var imageExts = ["png", "jpg", "jpe","jpeg","jif","jfi","jfif", "svg", "bmp", "g
 		console.log("dataPollInput",dataPollInput);
 		if(dataPollInput==undefined) return;
 		if(dataPollInput!=(pollInputIndex-1)) return;
-		$(".poll_content_row .formitem").append(Template_topic_c_poll_input({
+		$(".poll_content_row .formitem").append(Tmpl_topic_c_poll_input({
 			Index: pollInputIndex,
 			Place: phraseBox["topic"]["topic.reply_add_poll_option"].replace("%d",pollInputIndex),
 		}));

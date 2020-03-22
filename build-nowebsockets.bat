@@ -1,8 +1,10 @@
 @echo off
 rem TODO: Make these deletes a little less noisy
 del "template_*.go"
+del "tmpl_*.go"
 del "gen_*.go"
-del "tmpl_client/template_*.go"
+del "tmpl_client/template_*"
+del "tmpl_client/tmpl_*"
 del "gosora.exe"
 
 echo Generating the dynamic code

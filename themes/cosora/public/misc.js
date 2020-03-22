@@ -18,12 +18,10 @@
 		else $('.alert').insertAfter(".rowhead:first");
 	}
 	
-	//console.log("bf")
 	addInitHook("end_init", () => {
-		//console.log("af")
-		let loggedIn = document.head.querySelector("[property='x-loggedin']").content=="true";
+		let loggedIn = document.head.querySelector("[property='x-mem']")!=null;
 		if(loggedIn) {
-			if(navigator.userAgent.indexOf("Firefox") != -1) $.trumbowyg.svgPath = "/s/trumbowyg/ui/icons.svg";
+			if(navigator.userAgent.indexOf("Firefox")!=-1) $.trumbowyg.svgPath = "/s/trumbowyg/ui/icons.svg";
 			
 			// Is there we way we can append instead? Maybe, an editor plugin?
 			attachItemCallback = function(attachItem) {

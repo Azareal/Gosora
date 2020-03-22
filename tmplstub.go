@@ -31,7 +31,6 @@ func StringToBytes(s string) (bytes []byte) {
 	runtime.KeepAlive(&s)
 	return bytes
 }
-
 func BytesToString(bytes []byte) (s string) {
 	slice := (*reflect.SliceHeader)(unsafe.Pointer(&bytes))
 	str := (*reflect.StringHeader)(unsafe.Pointer(&s))
@@ -40,11 +39,9 @@ func BytesToString(bytes []byte) (s string) {
 	runtime.KeepAlive(&bytes)
 	return s
 }
-
 //go:noescape
 //go:linkname nanotime runtime.nanotime
 func nanotime() int64
-
 func Nanotime() int64 {
 	return nanotime()
 }*/

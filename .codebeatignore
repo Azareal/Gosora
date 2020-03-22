@@ -7,13 +7,13 @@
 /public/EQCSS.js
 /schema/**
 
-template_list.go
-template_forum.go
-template_forums.go
-template_topic.go
-template_topic_alt.go
-template_topics.go
-template_profile.go
+tmpl_list.go
+tmpl_forum.go
+tmpl_forums.go
+tmpl_topic.go
+tmpl_topic_alt.go
+tmpl_topics.go
+tmpl_profile.go
 
 gen_mysql.go
 gen_mssql.go

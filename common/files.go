@@ -46,7 +46,7 @@ type CSSData struct {
 func (list SFileList) JSTmplInit() error {
 	DebugLog("Initialising the client side templates")
 	return filepath.Walk("./tmpl_client", func(path string, f os.FileInfo, err error) error {
-		if f.IsDir() || strings.HasSuffix(path, "template_list.go") || strings.HasSuffix(path, "stub.go") {
+		if f.IsDir() || strings.HasSuffix(path, "tmpl_list.go") || strings.HasSuffix(path, "stub.go") {
 			return nil
 		}
 		path = strings.Replace(path, "\\", "/", -1)
@@ -58,7 +58,7 @@ func (list SFileList) JSTmplInit() error {
 
 		path = strings.TrimPrefix(path, "tmpl_client/")
 		tmplName := strings.TrimSuffix(path, ".jgo")
-		shortName := strings.TrimPrefix(tmplName, "template_")
+		shortName := strings.TrimPrefix(tmplName, "tmpl_")
 
 		replace := func(data []byte, replaceThis, withThis string) []byte {
 			return bytes.Replace(data, []byte(replaceThis), []byte(withThis), -1)
@@ -73,9 +73,10 @@ func (list SFileList) JSTmplInit() error {
 		}
 		data = data[startIndex-len([]byte("if(tmplInits===undefined)")):]
 		rep("// nolint", "")
+		//rep("func ", "function ")
 		rep("func ", "function ")
-		rep(" error {\n", " {\nlet o = \"\"\n")
-		funcIndex, hasFunc := skipAllUntilCharsExist(data, 0, []byte("function Template_"))
+		rep(" error {\n", " {\nlet o=\"\"\n")
+		funcIndex, hasFunc := skipAllUntilCharsExist(data, 0, []byte("function Tmpl_"))
 		if !hasFunc {
 			return errors.New("no template function found")
 		}
@@ -193,13 +194,13 @@ func (list SFileList) JSTmplInit() error {
 		//rep("//var plist = GetTmplPhrasesBytes("+shortName+"_tmpl_phrase_id)", "const "+shortName+"_phrase_arr = tmplPhrases[\""+tmplName+"\"];")
 		rep("//var plist = GetTmplPhrasesBytes("+shortName+"_tmpl_phrase_id)", "const pl=tmplPhrases[\""+tmplName+"\"];")
 		rep(shortName+"_phrase_arr", "pl")
-		rep("tmpl_"+shortName+"_vars", "t_vars")
+		rep("tmpl_"+shortName+"_vars", "t_v")
 
 		rep("var c_v_", "let c_v_")
 		rep(`t_vars, ok := tmpl_i.`, `/*`)
 		rep("[]byte(", "")
 		rep("StringToBytes(", "")
-		rep("RelativeTime(t_vars.", "t_vars.Relative")
+		rep("RelativeTime(t_v.", "t_v.Relative")
 		// TODO: Format dates properly on the client side
 		rep(".Format(\"2006-01-02 15:04:05\"", "")
 		rep(", 10", "")
@@ -211,7 +212,6 @@ func (list SFileList) JSTmplInit() error {
 		rep("{;", "{")
 		rep("};", "}")
 		rep("[;", "[")
-		rep(";;", ";")
 		rep(",;", ",")
 		rep("=;", "=")
 		rep(`,
@@ -220,22 +220,33 @@ func (list SFileList) JSTmplInit() error {
 		rep(`=
 }`, "=[]")
 		rep("o += ", "o+=")
+		rep(shortName+"_frags[", "fr[")
+		rep("function Tmpl_"+shortName+"(t_v) {","var Tmpl_"+shortName+"=(t_v)=>{")
 
 		fragset := tmpl.GetFrag(shortName)
 		if fragset != nil {
-			sfrags := []byte("let " + shortName + "_frags=[\n")
-			for _, frags := range fragset {
+			//sfrags := []byte("let " + shortName + "_frags=[\n")
+			sfrags := []byte("{const fr=[")
+			for i, frags := range fragset {
 				//sfrags = append(sfrags, []byte(shortName+"_frags.push(`"+string(frags)+"`);\n")...)
-				sfrags = append(sfrags, []byte("`"+string(frags)+"`,\n")...)
+				//sfrags = append(sfrags, []byte("`"+string(frags)+"`,\n")...)
+				if i == 0 {
+					sfrags = append(sfrags, []byte("`"+string(frags)+"`")...)
+				} else {
+					sfrags = append(sfrags, []byte(",`"+string(frags)+"`")...)
+				}
 			}
-			sfrags = append(sfrags, []byte("];\n")...)
+			//sfrags = append(sfrags, []byte("];\n")...)
+			sfrags = append(sfrags, []byte("];")...)
 			data = append(sfrags, data...)
 		}
 		rep("\n;", "\n")
+		rep(";;", ";")
 
+		data = append(data, '}')
 		for name, _ := range Themes {
 			if strings.HasSuffix(shortName, "_"+name) {
-				data = append(data, "\nvar Template_"+strings.TrimSuffix(shortName, "_"+name)+"=Template_"+shortName+";"...)
+				data = append(data, "var Tmpl_"+strings.TrimSuffix(shortName, "_"+name)+"=Tmpl_"+shortName+";"...)
 				break
 			}
 		}

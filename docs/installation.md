@@ -133,11 +133,11 @@ easyjson -pkg common
 
 go get
 
-rm -f template_*.go
+rm -f tmpl_*.go
 
 rm -f gen_*.go
 
-rm -f tmpl_client/template_*.go
+rm -f tmpl_client/tmpl_*.go
 
 rm -f ./Gosora
 

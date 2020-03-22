@@ -185,7 +185,7 @@ function fetchPhrases(plist) {
 
 (() => {
 	runInitHook("pre_iife");
-	let loggedIn = document.head.querySelector("[property='x-loggedin']").content=="true";
+	let loggedIn = document.head.querySelector("[property='x-mem']")!=null;
 	let panel = window.location.pathname.startsWith("/panel/");
 
 	let toLoad = 1;
@@ -200,21 +200,20 @@ function fetchPhrases(plist) {
 		toLoad += 2;
 		if(loggedIn) {
 			toLoad += 3;
-			notifyOnScriptW("template_topic_c_edit_post", () => q(!Template_topic_c_edit_post));
-			notifyOnScriptW("template_topic_c_attach_item", () => q(!Template_topic_c_attach_item));
-			notifyOnScriptW("template_topic_c_poll_input", () => q(!Template_topic_c_poll_input));
+			notifyOnScriptW("tmpl_topic_c_edit_post", () => q(!Tmpl_topic_c_edit_post));
+			notifyOnScriptW("tmpl_topic_c_attach_item", () => q(!Tmpl_topic_c_attach_item));
+			notifyOnScriptW("tmpl_topic_c_poll_input", () => q(!Tmpl_topic_c_poll_input));
 		}
-		notifyOnScriptW("template_topics_topic", () => q(!Template_topics_topic));
-		notifyOnScriptW("template_paginator", () => q(!Template_paginator));
+		notifyOnScriptW("tmpl_topics_topic", () => q(!Tmpl_topics_topic));
+		notifyOnScriptW("tmpl_paginator", () => q(!Tmpl_paginator));
 	}
-	notifyOnScriptW("template_notice", () => q(!Template_notice));
+	notifyOnScriptW("tmpl_notice", () => q(!Tmpl_notice));
 
 	if(loggedIn) {
 		fetch("/api/me/")
 		.then(resp => resp.json())
 		.then(data => {
-			console.log("loaded me endpoint data");
-			console.log("data",data);
+			console.log("loaded me endpoint data",data);
 			me = data;
 			runInitHook("pre_init");
 		});

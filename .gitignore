@@ -30,5 +30,5 @@ RouterGen
 Patcher
 Gosora
 Installer
-template_*.go
-template_*.jgo
+tmpl_*.go
+tmpl_*.jgo

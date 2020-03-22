@@ -18,7 +18,7 @@ var forumToMoveTo = 0;
 function pushNotice(msg) {
 	let aBox = document.getElementsByClassName("alertbox")[0];
 	let div = document.createElement('div');
-	div.innerHTML = Template_notice(msg).trim();
+	div.innerHTML = Tmpl_notice(msg).trim();
 	aBox.appendChild(div);
 	runInitHook("after_notice");
 }
@@ -26,9 +26,9 @@ function pushNotice(msg) {
 // TODO: Write a friendlier error handler which uses a .notice or something, we could have a specialised one for alerts
 function ajaxError(xhr,status,errstr) {
 	console.log("The AJAX request failed");
-	console.log("xhr", xhr);
-	console.log("status", status);
-	console.log("err", errstr);
+	console.log("xhr",xhr);
+	console.log("status",status);
+	console.log("err",errstr);
 	if(status=="parsererror") console.log("The server didn't respond with a valid JSON response");
 	console.trace();
 }
@@ -65,7 +65,7 @@ function addAlert(msg, notice=false) {
 		for(var i = 0; i < msg.sub.length; i++) mmsg = mmsg.replace("\{"+i+"\}", msg.sub[i]);
 	}
 
-	let aItem = Template_alert({
+	let aItem = Tmpl_alert({
 		ASID: msg.id,
 		Path: msg.path,
 		Avatar: msg.img || "",
@@ -291,12 +291,12 @@ function runWebSockets(resume=false) {
 				console.log("topic in data");
 				console.log("data",data);
 				let topic = data.Topics[0];
-				if(topic === undefined){
+				if(topic===undefined){
 					console.log("empty topic list");
 					return;
 				}
 				// TODO: Fix the data race where the function hasn't been loaded yet
-				let renTopic = Template_topics_topic(topic);
+				let renTopic = Tmpl_topics_topic(topic);
 				$(".topic_row[data-tid='"+topic.ID+"']").addClass("ajax_topic_dupe");
 
 				let node = $(renTopic);
@@ -316,8 +316,7 @@ function runWebSockets(resume=false) {
 					msgBox.innerText = phraseBox["topic_list"]["topic_list.changed_topics"].replace("%d",moreTopicCount);
 				}
 			} else {
-				console.log("unknown message");
-				console.log(data);
+				console.log("unknown message", data);
 			}
 		}
 
@@ -353,10 +352,10 @@ function getExt(name) {
 		console.log("before notify on alert")
 		// We can only get away with this because template_alert has no phrases, otherwise it too would have to be part of the "dance", I miss Go concurrency :(
 		if(!noAlerts) {
-		notifyOnScriptW("template_alert", e => {
+		notifyOnScriptW("tmpl_alert", e => {
 			if(e!=undefined) console.log("failed alert? why?",e)
 		}, () => {
-			if(!Template_alert) throw("template function not found");
+			if(!Tmpl_alert) throw("template function not found");
 			addInitHook("after_phrases", () => {
 				// TODO: The load part of loadAlerts could be done asynchronously while the update of the DOM could be deferred
 				$(document).ready(() => {
@@ -381,7 +380,7 @@ function getExt(name) {
 
 // TODO: Use these in .filter_item and pass back an item count from the backend to work with here
 // Ported from common/parser.go
-function PageOffset(count, page, perPage) {
+function PageOffset(count,page,perPage) {
 	let offset = 0;
 	let lastPage = LastPage(count, perPage)
 	if(page > 1) offset = (perPage * page) - perPage;
@@ -394,10 +393,10 @@ function PageOffset(count, page, perPage) {
 	//if(offset >= (count - 1)) offset = 0;
 	return {Offset:offset, Page:page, LastPage:lastPage};
 }
-function LastPage(count, perPage) {
+function LastPage(count,perPage) {
 	return (count / perPage) + 1
 }
-function Paginate(currentPage, lastPage, maxPages) {
+function Paginate(currentPage,lastPage,maxPages) {
 	let diff = lastPage - currentPage;
 	let pre = 3;
 	if(diff < 3) pre = maxPages - diff;
@@ -488,13 +487,13 @@ function mainInit(){
 		if(page=="") page = 1;
 
 		let pageList = Paginate(page,lastPage,5)
-		//$(".pageset").html(Template_paginator({PageList: pageList, Page: page, LastPage: lastPage}));
+		//$(".pageset").html(Tmpl_paginator({PageList: pageList, Page: page, LastPage: lastPage}));
 		let ok = false;
 		$(".pageset").each(function(){
-			this.outerHTML = Template_paginator({PageList: pageList, Page: page, LastPage: lastPage});
+			this.outerHTML = Tmpl_paginator({PageList: pageList, Page: page, LastPage: lastPage});
 			ok = true;
 		});
-		if(!ok) $(Template_paginator({PageList: pageList, Page: page, LastPage: lastPage})).insertAfter("#topic_list");
+		if(!ok) $(Tmpl_paginator({PageList: pageList, Page: page, LastPage: lastPage})).insertAfter("#topic_list");
 	}
 
 	function rebindPaginator() {
@@ -521,7 +520,7 @@ function mainInit(){
 
 					// TODO: Fix the data race where the function hasn't been loaded yet
 					let out = "";
-					for(let i = 0; i < topics.length;i++) out += Template_topics_topic(topics[i]);
+					for(let i = 0; i < topics.length;i++) out += Tmpl_topics_topic(topics[i]);
 					$(".topic_list").html(out);
 
 					let obj = {Title: document.title, Url: url+q};
@@ -530,7 +529,7 @@ function mainInit(){
 					rebindPaginator();
 				}).catch(ex => {
 					console.log("Unable to get script '"+url+q+"&js=1"+"'");
-					console.log("ex", ex);
+					console.log("ex",ex);
 					console.trace();
 				});
 		});
@@ -557,7 +556,7 @@ function mainInit(){
 			
 			// TODO: Fix the data race where the function hasn't been loaded yet
 			let out = "";
-			for(let i = 0; i < topics.length;i++) out += Template_topics_topic(topics[i]);
+			for(let i = 0; i < topics.length;i++) out += Tmpl_topics_topic(topics[i]);
 			$(".topic_list").html(out);
 			//$(".topic_list").addClass("single_forum");
 
@@ -608,7 +607,7 @@ function mainInit(){
 
 				// TODO: Fix the data race where the function hasn't been loaded yet
 				let out = "";
-				for(let i = 0; i < topics.length;i++) out += Template_topics_topic(topics[i]);
+				for(let i = 0; i < topics.length;i++) out += Tmpl_topics_topic(topics[i]);
 				$(".topic_list").html(out);
 
 				baseTitle = phraseBox["topic_list"]["topic_list.search_head"];
@@ -791,7 +790,7 @@ function mainInit(){
 		console.log("date", date);
 		let minutes = "0" + date.getMinutes();
 		let formattedTime = date.getHours() + ":" + minutes.substr(-2);
-		console.log("formattedTime", formattedTime);
+		console.log("formattedTime",formattedTime);
 		this.innerText = formattedTime;
 	});
 
@@ -799,7 +798,7 @@ function mainInit(){
 		// TODO: Localise this
 		let monthList = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 		let date = new Date(this.innerText * 1000);
-		console.log("date", date);
+		console.log("date",date);
 		let day = "0" + date.getDate();
 		let formattedTime = monthList[date.getMonth()] + " " + day.substr(-2) + " " + date.getFullYear();
 		console.log("formattedTime",formattedTime);
@@ -976,7 +975,7 @@ function bindTopic() {
 		let src = "";
 		if(srcNode!=null) src = srcNode.innerText;
 		else src = block.innerHTML;
-		block.innerHTML = Template_topic_c_edit_post({
+		block.innerHTML = Tmpl_topic_c_edit_post({
 			ID: bp.getAttribute("id").slice("post-".length),
 			Source: src,
 			Ref: this.closest('a').getAttribute("href")
@@ -1014,13 +1013,13 @@ function bindTopic() {
 		ev.stopPropagation();
 		let src = this.closest(".post_item").getElementsByClassName("edit_source")[0];
 		let content = document.getElementById("input_content")
-		console.log("content.value", content.value);
+		console.log("content.value",content.value);
 
 		let item;
 		if(content.value=="") item = "<blockquote>" + src.innerHTML + "</blockquote>"
 		else item = "\r\n<blockquote>" + src.innerHTML + "</blockquote>";
 		content.value = content.value + item;
-		console.log("content.value", content.value);
+		console.log("content.value",content.value);
 
 		// For custom / third party text editors
 		quoteItemCallback(src.innerHTML,item);

@@ -6,8 +6,8 @@
 		<link href="/s/{{.}}"rel="stylesheet"type="text/css">{{end}}
 		{{range .Header.PreScriptsAsync}}
 		<script async src="/s/{{.}}"></script>{{end}}
-		<meta property="x-loggedin"content="{{.CurrentUser.Loggedin}}">
-		<script src="/s/init.js?i=10"></script>
+		{{if .CurrentUser.Loggedin}}<meta property="x-mem"content="1">{{end}}
+		<script src="/s/init.js?i=11"></script>
 		{{range .Header.ScriptsAsync}}
 		<script async src="/s/{{.}}"></script>{{end}}
 		<script src="/s/jquery-3.1.1.min.js"></script>

@@ -389,7 +389,7 @@ func compileTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName string
 			if content == "" {
 				return //log.Fatal("No content body for " + name)
 			}
-			err := writeFile("./template_"+name+".go", content)
+			err := writeFile("./tmpl_"+name+".go", content)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -584,7 +584,7 @@ func compileJSTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName stri
 			if tname != "" {
 				tname = "_" + tname
 			}
-			err := writeFile(dirPrefix+"template_"+name+tname+".jgo", content)
+			err := writeFile(dirPrefix+"tmpl_"+name+tname+".jgo", content)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -676,7 +676,7 @@ func writeTemplateList(c *tmpl.CTemplateSet, wg *sync.WaitGroup, prefix string) 
 	log.Print("Writing template list")
 	wg.Add(1)
 	go func() {
-		err := writeFile(prefix+"template_list.go", getTemplateList(c, wg, prefix))
+		err := writeFile(prefix+"tmpl_list.go", getTemplateList(c, wg, prefix))
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -685,24 +685,24 @@ func writeTemplateList(c *tmpl.CTemplateSet, wg *sync.WaitGroup, prefix string) 
 	wg.Wait()
 }
 
-func arithToInt64(in interface{}) (out int64) {
+func arithToInt64(in interface{}) (o int64) {
 	switch in := in.(type) {
 	case int64:
-		out = in
+		o = in
 	case int32:
-		out = int64(in)
+		o = int64(in)
 	case int:
-		out = int64(in)
+		o = int64(in)
 	case uint32:
-		out = int64(in)
+		o = int64(in)
 	case uint16:
-		out = int64(in)
+		o = int64(in)
 	case uint8:
-		out = int64(in)
+		o = int64(in)
 	case uint:
-		out = int64(in)
+		o = int64(in)
 	}
-	return out
+	return o
 }
 
 func arithDuoToInt64(left, right interface{}) (leftInt, rightInt int64) {

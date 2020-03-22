@@ -1,9 +1,11 @@
 @echo off
 rem TODO: Make these deletes a little less noisy
 del "template_*.go"
+del "tmpl_*.go"
 del "gen_*.go"
 cd tmpl_client
-del "template_*.go"
+del "template_*"
+del "tmpl_*"
 cd ..
 del "gosora.exe"
 

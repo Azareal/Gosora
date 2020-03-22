@@ -1,9 +1,11 @@
 @echo off
 rem TODO: Make these deletes a little less noisy
 del "template_*.go"
+del "tmpl_*.go"
 del "gen_*.go"
 cd tmpl_client
-del "template_*.go"
+del "template_*"
+del "tmpl_*"
 cd ..
 del "gosora.exe"
 
@@ -58,7 +60,7 @@ if %errorlevel% neq 0 (
 )
 
 echo Building the executable... again
-go build -ldflags="-s -w" -o gosora.exe
+go build -ldflags="-s -w" -gcflags="-d=ssa/check_bce/debug=1" -o gosora.exe
 if %errorlevel% neq 0 (
 	pause
 	exit /b %errorlevel%

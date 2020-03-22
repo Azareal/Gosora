@@ -221,11 +221,11 @@ import "errors"
 	if !c.config.SkipInitBlock {
 		stub += "// nolint\nfunc init() {\n"
 		if !c.config.SkipHandles && c.themeName == "" {
-			stub += "\tc.Template_" + fname + "_handle = Template_" + fname + "\n"
+			stub += "\tc.Tmpl_" + fname + "_handle = Tmpl_" + fname + "\n"
 			stub += "\tc.Ctemplates = append(c.Ctemplates,\"" + fname + "\")\n"
 		}
 		if !c.config.SkipTmplPtrMap {
-			stub += "tmpl := Template_" + fname + "\n"
+			stub += "tmpl := Tmpl_" + fname + "\n"
 			stub += "\tc.TmplPtrMap[\"" + fname + "\"] = &tmpl\n"
 			stub += "\tc.TmplPtrMap[\"o_" + fname + "\"] = tmpl\n"
 		}
@@ -235,15 +235,15 @@ import "errors"
 	// TODO: Try to remove this redundant interface cast
 	stub += `
 // nolint
-func Template_` + fname + `(tmpl_i interface{}, w io.Writer) error {
+func Tmpl_` + fname + `(tmpl_i interface{}, w io.Writer) error {
 	tmpl_vars, ok := tmpl_i.(` + expects + `)
 	if !ok {
 		return errors.New("invalid page struct value")
 	}
 	if tmpl_vars.CurrentUser.Loggedin {
-		return Template_` + fname + `_member(tmpl_i, w)
+		return Tmpl_` + fname + `_member(tmpl_i, w)
 	}
-	return Template_` + fname + `_guest(tmpl_i, w)
+	return Tmpl_` + fname + `_guest(tmpl_i, w)
 }`
 
 	c.fileDir = fileDir
@@ -453,15 +453,20 @@ func (c *CTemplateSet) compile(name, content, expects string, expectsInt interfa
 	if c.lang == "js" {
 		var l string
 		if len(c.langIndexToName) > 0 {
-			for _, name := range c.langIndexToName {
-				l += "\t" + `"` + name + `"` + ",\n"
+			for i, name := range c.langIndexToName {
+				//l += `"` + name + `"` + ",\n"
+				if i == 0{
+					l += `"` + name + `"`
+				} else {
+					l += `,"` + name + `"`
+				}
 			}
 		}
-		if len(l) > 0 {
+		/*if len(l) > 0 {
 			l = "\n" + l
-		}
-		fout += "if(tmplInits===undefined) var tmplInits = {}\n"
-		fout += "tmplInits[\"template_" + fname + "\"] = [" + l + "]\n"
+		}*/
+		fout += "if(tmplInits===undefined) var tmplInits={}\n"
+		fout += "tmplInits[\"tmpl_" + fname + "\"]=[" + l + "]"
 	} else if !c.config.SkipInitBlock {
 		if len(c.langIndexToName) > 0 {
 			fout += "var " + fname + "_tmpl_phrase_id int\n\n"
@@ -470,12 +475,12 @@ func (c *CTemplateSet) compile(name, content, expects string, expectsInt interfa
 		fout += "// nolint\nfunc init() {\n"
 
 		if !c.config.SkipHandles && c.themeName == "" {
-			fout += "\tc.Template_" + fname + "_handle = Template_" + fname + "\n"
+			fout += "\tc.Tmpl_" + fname + "_handle = Tmpl_" + fname + "\n"
 			fout += "\tc.Ctemplates = append(c.Ctemplates,\"" + fname + "\")\n"
 		}
 
 		if !c.config.SkipTmplPtrMap {
-			fout += "tmpl := Template_" + fname + "\n"
+			fout += "tmpl := Tmpl_" + fname + "\n"
 			fout += "\tc.TmplPtrMap[\"" + fname + "\"] = &tmpl\n"
 			fout += "\tc.TmplPtrMap[\"o_" + fname + "\"] = tmpl\n"
 		}
@@ -495,7 +500,7 @@ func (c *CTemplateSet) compile(name, content, expects string, expectsInt interfa
 	}
 
 	if c.lang == "normal" {
-		fout += "// nolint\nfunc Template_" + fname + "(tmpl_i interface{}, w io.Writer) error {\n"
+		fout += "// nolint\nfunc Tmpl_" + fname + "(tmpl_i interface{}, w io.Writer) error {\n"
 		fout += `tmpl_` + fname + `_vars, ok := tmpl_i.(` + expects + `)
 if !ok {
 	return errors.New("invalid page struct value")
@@ -514,8 +519,8 @@ if !ok {
 	_ = iw
 `
 	} else {
-		fout += "// nolint\nfunc Template_" + fname + "(tmpl_" + fname + "_vars interface{}, w io.Writer) error {\n"
-		//fout += "// nolint\nfunc Template_" + fname + "(tmpl_vars interface{}, w io.Writer) error {\n"
+		fout += "// nolint\nfunc Tmpl_" + fname + "(tmpl_" + fname + "_vars interface{}, w io.Writer) error {\n"
+		//fout += "// nolint\nfunc Tmpl_" + fname + "(tmpl_vars interface{}, w io.Writer) error {\n"
 	}
 
 	if len(c.langIndexToName) > 0 {

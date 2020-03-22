@@ -1,7 +1,9 @@
 echo "Deleting artifacts from previous builds"
 rm -f template_*.go
+rm -f tmpl_*.go
 rm -f gen_*.go
-rm -f tmpl_client/template_*.go
+rm -f tmpl_client/template_*
+rm -f tmpl_client/tmpl_*
 rm -f ./Gosora
 
 echo "Building the router generator"

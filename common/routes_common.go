@@ -23,14 +23,14 @@ var PreRoute func(http.ResponseWriter, *http.Request) (User, bool) = preRoute
 // nolint We need these types so people can tell what they are without scrolling to the bottom of the file
 var PanelUserCheck func(http.ResponseWriter, *http.Request, *User) (*Header, PanelStats, RouteError) = panelUserCheck
 var SimplePanelUserCheck func(http.ResponseWriter, *http.Request, *User) (*HeaderLite, RouteError) = simplePanelUserCheck
-var SimpleForumUserCheck func(w http.ResponseWriter, r *http.Request, user *User, fid int) (headerLite *HeaderLite, err RouteError) = simpleForumUserCheck
-var ForumUserCheck func(header *Header, w http.ResponseWriter, r *http.Request, user *User, fid int) (err RouteError) = forumUserCheck
-var SimpleUserCheck func(w http.ResponseWriter, r *http.Request, user *User) (headerLite *HeaderLite, err RouteError) = simpleUserCheck
-var UserCheck func(w http.ResponseWriter, r *http.Request, user *User) (header *Header, err RouteError) = userCheck
-var UserCheckNano func(w http.ResponseWriter, r *http.Request, user *User, nano int64) (header *Header, err RouteError) = userCheck2
+var SimpleForumUserCheck func(w http.ResponseWriter, r *http.Request, u *User, fid int) (headerLite *HeaderLite, err RouteError) = simpleForumUserCheck
+var ForumUserCheck func(header *Header, w http.ResponseWriter, r *http.Request, u *User, fid int) (err RouteError) = forumUserCheck
+var SimpleUserCheck func(w http.ResponseWriter, r *http.Request, u *User) (headerLite *HeaderLite, err RouteError) = simpleUserCheck
+var UserCheck func(w http.ResponseWriter, r *http.Request, u *User) (h *Header, err RouteError) = userCheck
+var UserCheckNano func(w http.ResponseWriter, r *http.Request, u *User, nano int64) (h *Header, err RouteError) = userCheck2
 
-func simpleForumUserCheck(w http.ResponseWriter, r *http.Request, user *User, fid int) (header *HeaderLite, rerr RouteError) {
-	header, rerr = SimpleUserCheck(w, r, user)
+func simpleForumUserCheck(w http.ResponseWriter, r *http.Request, u *User, fid int) (header *HeaderLite, rerr RouteError) {
+	header, rerr = SimpleUserCheck(w, r, u)
 	if rerr != nil {
 		return header, rerr
 	}
@@ -39,39 +39,39 @@ func simpleForumUserCheck(w http.ResponseWriter, r *http.Request, user *User, fi
 	}
 
 	// Is there a better way of doing the skip AND the success flag on this hook like multiple returns?
-	skip, rerr := header.Hooks.VhookSkippable("simple_forum_check_pre_perms", w, r, user, &fid, &header)
+	skip, rerr := header.Hooks.VhookSkippable("simple_forum_check_pre_perms", w, r, u, &fid, &header)
 	if skip || rerr != nil {
 		return header, rerr
 	}
 
-	fperms, err := FPStore.Get(fid, user.Group)
+	fperms, err := FPStore.Get(fid, u.Group)
 	if err == ErrNoRows {
 		fperms = BlankForumPerms()
 	} else if err != nil {
 		return header, InternalError(err, w, r)
 	}
-	cascadeForumPerms(fperms, user)
+	cascadeForumPerms(fperms, u)
 	return header, nil
 }
 
-func forumUserCheck(header *Header, w http.ResponseWriter, r *http.Request, user *User, fid int) (rerr RouteError) {
+func forumUserCheck(h *Header, w http.ResponseWriter, r *http.Request, u *User, fid int) (rerr RouteError) {
 	if !Forums.Exists(fid) {
-		return NotFound(w, r, header)
+		return NotFound(w, r, h)
 	}
 
-	skip, rerr := header.Hooks.VhookSkippable("forum_check_pre_perms", w, r, user, &fid, &header)
+	skip, rerr := h.Hooks.VhookSkippable("forum_check_pre_perms", w, r, u, &fid, &h)
 	if skip || rerr != nil {
 		return rerr
 	}
 
-	fperms, err := FPStore.Get(fid, user.Group)
+	fperms, err := FPStore.Get(fid, u.Group)
 	if err == ErrNoRows {
 		fperms = BlankForumPerms()
 	} else if err != nil {
 		return InternalError(err, w, r)
 	}
-	cascadeForumPerms(fperms, user)
-	header.CurrentUser = user // TODO: Use a pointer instead for CurrentUser, so we don't have to do this
+	cascadeForumPerms(fperms, u)
+	h.CurrentUser = u // TODO: Use a pointer instead for CurrentUser, so we don't have to do this
 	return rerr
 }
 
@@ -100,14 +100,14 @@ func cascadeForumPerms(fp *ForumPerms, u *User) {
 
 // Even if they have the right permissions, the control panel is only open to supermods+. There are many areas without subpermissions which assume that the current user is a supermod+ and admins are extremely unlikely to give these permissions to someone who isn't at-least a supermod to begin with
 // TODO: Do a panel specific theme?
-func panelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (h *Header, stats PanelStats, rerr RouteError) {
+func panelUserCheck(w http.ResponseWriter, r *http.Request, u *User) (h *Header, stats PanelStats, rerr RouteError) {
 	theme := GetThemeByReq(r)
 	h = &Header{
 		Site:        Site,
 		Settings:    SettingBox.Load().(SettingMap),
 		Themes:      Themes,
 		Theme:       theme,
-		CurrentUser: user,
+		CurrentUser: u,
 		Hooks:       GetHookTable(),
 		Zone:        "panel",
 		Writer:      w,
@@ -164,7 +164,7 @@ func panelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (h *Head
 				tname = "_" + theme.Name
 			}
 		}
-		h.AddPreScriptAsync("template_" + name + tname + ".js")
+		h.AddPreScriptAsync("tmpl_" + name + tname + ".js")
 	}
 	addPreScript("alert")
 	addPreScript("notice")
@@ -172,12 +172,12 @@ func panelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (h *Head
 	return h, stats, nil
 }
 
-func simplePanelUserCheck(w http.ResponseWriter, r *http.Request, user *User) (headerLite *HeaderLite, rerr RouteError) {
-	return SimpleUserCheck(w, r, user)
+func simplePanelUserCheck(w http.ResponseWriter, r *http.Request, u *User) (lite *HeaderLite, rerr RouteError) {
+	return SimpleUserCheck(w, r, u)
 }
 
 // SimpleUserCheck is back from the grave, yay :D
-func simpleUserCheck(w http.ResponseWriter, r *http.Request, user *User) (headerLite *HeaderLite, rerr RouteError) {
+func simpleUserCheck(w http.ResponseWriter, r *http.Request, u *User) (lite *HeaderLite, rerr RouteError) {
 	return &HeaderLite{
 		Site:     Site,
 		Settings: SettingBox.Load().(SettingMap),
@@ -201,20 +201,20 @@ func GetThemeByReq(r *http.Request) *Theme {
 	return theme
 }
 
-func userCheck(w http.ResponseWriter, r *http.Request, user *User) (header *Header, rerr RouteError) {
-	return userCheck2(w, r, user, uutils.Nanotime())
+func userCheck(w http.ResponseWriter, r *http.Request, u *User) (h *Header, rerr RouteError) {
+	return userCheck2(w, r, u, uutils.Nanotime())
 }
 
 // TODO: Add the ability for admins to restrict certain themes to certain groups?
 // ! Be careful about firing errors off here as CustomError uses this
-func userCheck2(w http.ResponseWriter, r *http.Request, user *User, nano int64) (h *Header, rerr RouteError) {
+func userCheck2(w http.ResponseWriter, r *http.Request, u *User, nano int64) (h *Header, rerr RouteError) {
 	theme := GetThemeByReq(r)
 	h = &Header{
 		Site:        Site,
 		Settings:    SettingBox.Load().(SettingMap),
 		Themes:      Themes,
 		Theme:       theme,
-		CurrentUser: user, // ! Some things rely on this being a pointer downstream from this function
+		CurrentUser: u, // ! Some things rely on this being a pointer downstream from this function
 		Hooks:       GetHookTable(),
 		Zone:        "frontend",
 		Writer:      w,
@@ -222,24 +222,24 @@ func userCheck2(w http.ResponseWriter, r *http.Request, user *User, nano int64) 
 		StartedAt:   nano,
 	}
 	// TODO: Optimise this by avoiding accessing a map string index
-	if !user.Loggedin {
+	if !u.Loggedin {
 		h.GoogSiteVerify = h.Settings["google_site_verify"].(string)
 	}
 
-	if user.IsBanned {
+	if u.IsBanned {
 		h.AddNotice("account_banned")
 	}
-	if user.Loggedin && !user.Active {
+	if u.Loggedin && !u.Active {
 		h.AddNotice("account_inactive")
 	}
 
 	// An optimisation so we don't populate StartedAt for users who shouldn't see the stat anyway
 	// ? - Should we only show this in debug mode? It might be useful for detecting issues in production, if we show it there as-well
-	//if user.IsAdmin {
+	//if u.IsAdmin {
 	//h.StartedAt = time.Now()
 	//}
 
-	//PrepResources(user,h,theme)
+	//PrepResources(u,h,theme)
 	return h, nil
 }
 
@@ -280,7 +280,7 @@ func PrepResources(u *User, h *Header, theme *Theme) {
 			}
 		}
 		//fmt.Printf("tname %+v\n", tname)
-		h.AddPreScriptAsync("template_" + name + tname + ".js")
+		h.AddPreScriptAsync("tmpl_" + name + tname + ".js")
 	}
 	addPreScript("topics_topic")
 	addPreScript("paginator")
@@ -432,63 +432,63 @@ func ChangeAvatar(path string, w http.ResponseWriter, r *http.Request, user *Use
 }
 
 // SuperAdminOnly makes sure that only super admin can access certain critical panel routes
-func SuperAdminOnly(w http.ResponseWriter, r *http.Request, user *User) RouteError {
-	if !user.IsSuperAdmin {
-		return NoPermissions(w, r, user)
+func SuperAdminOnly(w http.ResponseWriter, r *http.Request, u *User) RouteError {
+	if !u.IsSuperAdmin {
+		return NoPermissions(w, r, u)
 	}
 	return nil
 }
 
 // AdminOnly makes sure that only admins can access certain panel routes
-func AdminOnly(w http.ResponseWriter, r *http.Request, user *User) RouteError {
-	if !user.IsAdmin {
-		return NoPermissions(w, r, user)
+func AdminOnly(w http.ResponseWriter, r *http.Request, u *User) RouteError {
+	if !u.IsAdmin {
+		return NoPermissions(w, r, u)
 	}
 	return nil
 }
 
 // SuperModeOnly makes sure that only super mods or higher can access the panel routes
-func SuperModOnly(w http.ResponseWriter, r *http.Request, user *User) RouteError {
-	if !user.IsSuperMod {
-		return NoPermissions(w, r, user)
+func SuperModOnly(w http.ResponseWriter, r *http.Request, u *User) RouteError {
+	if !u.IsSuperMod {
+		return NoPermissions(w, r, u)
 	}
 	return nil
 }
 
 // MemberOnly makes sure that only logged in users can access this route
-func MemberOnly(w http.ResponseWriter, r *http.Request, user *User) RouteError {
-	if !user.Loggedin {
-		return LoginRequired(w, r, user)
+func MemberOnly(w http.ResponseWriter, r *http.Request, u *User) RouteError {
+	if !u.Loggedin {
+		return LoginRequired(w, r, u)
 	}
 	return nil
 }
 
 // NoBanned stops any banned users from accessing this route
-func NoBanned(w http.ResponseWriter, r *http.Request, user *User) RouteError {
-	if user.IsBanned {
-		return Banned(w, r, user)
+func NoBanned(w http.ResponseWriter, r *http.Request, u *User) RouteError {
+	if u.IsBanned {
+		return Banned(w, r, u)
 	}
 	return nil
 }
 
-func ParseForm(w http.ResponseWriter, r *http.Request, user *User) RouteError {
-	if err := r.ParseForm(); err != nil {
-		return LocalError("Bad Form", w, r, user)
+func ParseForm(w http.ResponseWriter, r *http.Request, u *User) RouteError {
+	if e := r.ParseForm(); e != nil {
+		return LocalError("Bad Form", w, r, u)
 	}
 	return nil
 }
 
-func NoSessionMismatch(w http.ResponseWriter, r *http.Request, user *User) RouteError {
-	if err := r.ParseForm(); err != nil {
-		return LocalError("Bad Form", w, r, user)
+func NoSessionMismatch(w http.ResponseWriter, r *http.Request, u *User) RouteError {
+	if e := r.ParseForm(); e != nil {
+		return LocalError("Bad Form", w, r, u)
 	}
 	// TODO: Try to eliminate some of these allocations
-	sess := []byte(user.Session)
+	sess := []byte(u.Session)
 	if len(sess) == 0 {
-		return SecurityError(w, r, user)
+		return SecurityError(w, r, u)
 	}
 	if subtle.ConstantTimeCompare([]byte(r.FormValue("session")), sess) != 1 && subtle.ConstantTimeCompare([]byte(r.FormValue("s")), sess) != 1 {
-		return SecurityError(w, r, user)
+		return SecurityError(w, r, u)
 	}
 	return nil
 }
@@ -497,29 +497,29 @@ func ReqIsJson(r *http.Request) bool {
 	return r.Header.Get("Content-type") == "application/json"
 }
 
-func HandleUploadRoute(w http.ResponseWriter, r *http.Request, user *User, maxFileSize int) RouteError {
+func HandleUploadRoute(w http.ResponseWriter, r *http.Request, u *User, maxFileSize int) RouteError {
 	// TODO: Reuse this code more
 	if r.ContentLength > int64(maxFileSize) {
 		size, unit := ConvertByteUnit(float64(maxFileSize))
-		return CustomError("Your upload is too big. Your files need to be smaller than "+strconv.Itoa(int(size))+unit+".", http.StatusExpectationFailed, "Error", w, r, nil, user)
+		return CustomError("Your upload is too big. Your files need to be smaller than "+strconv.Itoa(int(size))+unit+".", http.StatusExpectationFailed, "Error", w, r, nil, u)
 	}
 	r.Body = http.MaxBytesReader(w, r.Body, r.ContentLength)
 
 	err := r.ParseMultipartForm(int64(Megabyte))
 	if err != nil {
-		return LocalError("Bad Form", w, r, user)
+		return LocalError("Bad Form", w, r, u)
 	}
 	return nil
 }
 
-func NoUploadSessionMismatch(w http.ResponseWriter, r *http.Request, user *User) RouteError {
+func NoUploadSessionMismatch(w http.ResponseWriter, r *http.Request, u *User) RouteError {
 	// TODO: Try to eliminate some of these allocations
-	sess := []byte(user.Session)
+	sess := []byte(u.Session)
 	if len(sess) == 0 {
-		return SecurityError(w, r, user)
+		return SecurityError(w, r, u)
 	}
 	if subtle.ConstantTimeCompare([]byte(r.FormValue("session")), sess) != 1 && subtle.ConstantTimeCompare([]byte(r.FormValue("s")), sess) != 1 {
-		return SecurityError(w, r, user)
+		return SecurityError(w, r, u)
 	}
 	return nil
 }
