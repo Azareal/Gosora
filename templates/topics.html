@@ -1,6 +1,6 @@
 {{template "header.html" . }}
 <main id="topicsItemList" itemscope itemtype="http://schema.org/ItemList">
-<link rel="canonical" href="//{{.Site.URL}}/topics/{{if eq .Sort.SortBy "mostviewed"}}most-viewed/{{end}}{{if gt .Page 1}}?page={{.Page}}{{end}}"/>
+<link rel="canonical"href="//{{.Site.URL}}/topics/{{if eq .Sort.SortBy "mostviewed"}}most-viewed/{{end}}{{if gt .Page 1}}?page={{.Page}}{{end}}"/>
 
 <div class="rowblock rowhead topic_list_title_block{{if .CurrentUser.Loggedin}} has_opt{{end}}">
 	<div class="rowitem topic_list_title"><h1 itemprop="name">{{.Title}}</h1></div>
@@ -26,8 +26,7 @@
 				<a class="moderate_link" href="#" aria-label="{{lang "topic_list.moderate_aria"}}"></a>
 			</div>
 		{{else}}<div class="opt locked_opt" title="{{lang "topics_locked_tooltip"}}" aria-label="{{lang "topics_locked_aria"}}"><a></a></div>{{end}}
-		</div>
-		<div style="clear:both;"></div>
+		</div><div style="clear:both;"></div>
 	{{end}}
 </div>
 
@@ -39,7 +38,7 @@
 {{/** TODO: Add ARIA attributes for this **/}}
 <div id="mod_topic_mover" class="modal_pane auto_hide">
 	<form action="/topic/move/submit/?s={{.CurrentUser.Session}}" method="post">
-		<input id="mover_fid" name="fid" value=0 type="hidden"/>
+		<input id="mover_fid"name="fid" value=0 type="hidden"/>
 		<div class="pane_header">
 			<h3>{{lang "topic_list.move_head"}}</h3>
 		</div>
@@ -54,7 +53,7 @@
 	</form>
 </div>
 <div class="rowblock topic_create_form quick_create_form auto_hide" aria-label="{{lang "quick_topic.aria"}}">
-	<form name="topic_create_form_form" id="quick_post_form" enctype="multipart/form-data" action="/topic/create/submit/?s={{.CurrentUser.Session}}" method="post"></form>
+	<form name="topic_create_form_form"id="quick_post_form" enctype="multipart/form-data"action="/topic/create/submit/?s={{.CurrentUser.Session}}" method="post"></form>
 	<img class="little_row_avatar" src="{{.CurrentUser.MicroAvatar}}" height=64 alt="{{lang "quick_topic.avatar_alt"}}" title="{{lang "quick_topic.avatar_tooltip"}}"/>
 	<div class="main_form">
 		<div class="topic_meta">

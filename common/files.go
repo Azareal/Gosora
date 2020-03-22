@@ -185,13 +185,18 @@ func (list SFileList) JSTmplInit() error {
 		data = replace(data, "	c.", "")
 		data = replace(data, "phrases.", "")
 		data = replace(data, ", 10;", "")
+
 		//data = replace(data, "var plist = GetTmplPhrasesBytes("+shortName+"_tmpl_phrase_id)", "const plist = tmplPhrases[\""+tmplName+"\"];")
-		data = replace(data, "//var plist = GetTmplPhrasesBytes("+shortName+"_tmpl_phrase_id)", "const "+shortName+"_phrase_arr = tmplPhrases[\""+tmplName+"\"];")
-		data = replace(data, "var cached_var_", "let cached_var_")
-		data = replace(data, `tmpl_vars, ok := tmpl_i.`, `/*`)
+		//data = replace(data, "//var plist = GetTmplPhrasesBytes("+shortName+"_tmpl_phrase_id)", "const "+shortName+"_phrase_arr = tmplPhrases[\""+tmplName+"\"];")
+		data = replace(data, "//var plist = GetTmplPhrasesBytes("+shortName+"_tmpl_phrase_id)", "const pl=tmplPhrases[\""+tmplName+"\"];")
+		data = replace(data, shortName+"_phrase_arr", "pl")
+		data = replace(data, "tmpl_"+shortName+"_vars", "t_vars")
+
+		data = replace(data, "var c_var_", "let c_var_")
+		data = replace(data, `t_vars, ok := tmpl_i.`, `/*`)
 		data = replace(data, "[]byte(", "")
 		data = replace(data, "StringToBytes(", "")
-		data = replace(data, "RelativeTime(tmpl_"+shortName+"_vars.", "tmpl_"+shortName+"_vars.Relative")
+		data = replace(data, "RelativeTime(t_vars.", "t_vars.Relative")
 		// TODO: Format dates properly on the client side
 		data = replace(data, ".Format(\"2006-01-02 15:04:05\"", "")
 		data = replace(data, ", 10", "")
@@ -239,7 +244,7 @@ func (list SFileList) JSTmplInit() error {
 			return err
 		}
 		// Don't use Gzip if we get meagre gains from it as it takes longer to process the responses
-		if len(gzipData) >= (len(data) + 150) {
+		if len(gzipData) >= (len(data) + 120) {
 			gzipData = nil
 		} else {
 			diff := len(data) - len(gzipData)
