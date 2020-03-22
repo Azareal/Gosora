@@ -1,8 +1,7 @@
-<div class="userinfo" aria-label="{{lang "topic.userinfo_aria"}}">
-	<!--<div class="avatar_item" style="background-image:url({{.Avatar}}),url(/s/white-dot.jpg);">&nbsp;</div>-->
+<div class="userinfo"aria-label="{{lang "topic.userinfo_aria"}}">
 	<img class="aitem"src="{{.Avatar}}"alt="Avatar">
 	<div class="user_meta">
-		<a href="{{.UserLink}}" class="the_name" rel="author">{{.CreatedByName}}</a>
+		<a href="{{.UserLink}}"class="the_name"rel="author">{{.CreatedByName}}</a>
 		<div class="tag_block">
 			<div class="tag_pre"></div>
 			{{if .Tag}}<div class="post_tag">{{.Tag}}</div>{{else}}<div class="post_tag post_level">{{level .Level}}</div>{{end}}

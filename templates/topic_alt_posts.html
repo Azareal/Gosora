@@ -9,10 +9,10 @@
 		<div class="edit_source auto_hide">{{.Content}}</div>
 
 		{{if $.CurrentUser.Perms.EditReply}}
-		<div class="show_on_block_edit attach_edit_bay" type="reply" id="{{.ID}}">
+		<div class="show_on_block_edit attach_edit_bay"type="reply"id="{{.ID}}">
 			{{range .Attachments}}
 			<div class="attach_item attach_item_item{{if .Image}} attach_image_holder{{end}}">
-				{{if .Image}}<img src="//{{$.Header.Site.URL}}/attachs/{{.Path}}?sid={{.SectionID}}&amp;stype=forums" height=24 width=24 />{{end}}
+				{{if .Image}}<img src="//{{$.Header.Site.URL}}/attachs/{{.Path}}?sid={{.SectionID}}&amp;stype=forums"height=24 width=24>{{end}}
 				<span class="attach_item_path" aid={{.ID}} fullPath="//{{$.Header.Site.URL}}/attachs/{{.Path}}">{{.Path}}</span>
 				<button class="attach_item_select">{{lang "topic.select_button_text"}}</button>
 				<button class="attach_item_copy">{{lang "topic.copy_button_text"}}</button>

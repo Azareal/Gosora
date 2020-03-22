@@ -946,15 +946,18 @@ function bindTopic() {
 
 	// Miniature implementation of the parser to avoid sending as much data back and forth
 	function quickParse(m) {
-		m = m.replace(":)", "😀")
-		m = m.replace(":(", "😞")
-		m = m.replace(":D", "😃")
-		m = m.replace(":P", "😛")
-		m = m.replace(":O", "😲")
-		m = m.replace(":p", "😛")
-		m = m.replace(":o", "😲")
-		m = m.replace(";)", "😉")
-		m = m.replace("\n","<br>")
+		const r = (o,n) => {
+			m = m.replace(o,n)
+		}
+		r(":)", "😀")
+		r(":(", "😞")
+		r(":D", "😃")
+		r(":P", "😛")
+		r(":O", "😲")
+		r(":p", "😛")
+		r(":o", "😲")
+		r(";)", "😉")
+		r("\n","<br>")
 		return m
 	}
 

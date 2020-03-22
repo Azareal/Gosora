@@ -63,15 +63,18 @@ func (list SFileList) JSTmplInit() error {
 		replace := func(data []byte, replaceThis, withThis string) []byte {
 			return bytes.Replace(data, []byte(replaceThis), []byte(withThis), -1)
 		}
+		rep := func(replaceThis, withThis string) {
+			data = replace(data, replaceThis, withThis)
+		}
 
 		startIndex, hasFunc := skipAllUntilCharsExist(data, 0, []byte("if(tmplInits===undefined)"))
 		if !hasFunc {
 			return errors.New("no init map found")
 		}
 		data = data[startIndex-len([]byte("if(tmplInits===undefined)")):]
-		data = replace(data, "// nolint", "")
-		data = replace(data, "func ", "function ")
-		data = replace(data, " error {\n", " {\nlet o = \"\"\n")
+		rep("// nolint", "")
+		rep("func ", "function ")
+		rep(" error {\n", " {\nlet o = \"\"\n")
 		funcIndex, hasFunc := skipAllUntilCharsExist(data, 0, []byte("function Template_"))
 		if !hasFunc {
 			return errors.New("no template function found")
@@ -89,8 +92,8 @@ func (list SFileList) JSTmplInit() error {
 		fmt.Println("string(data[spaceIndex:endBrace]): ", string(data[spaceIndex:endBrace]))
 
 		preLen := len(data)
-		data = replace(data, string(data[spaceIndex:endBrace]), "")
-		data = replace(data, "))\n", "  \n")
+		rep(string(data[spaceIndex:endBrace]), "")
+		rep("))\n", "  \n")
 		endBrace -= preLen - len(data) // Offset it as we've deleted portions
 		fmt.Println("new endBrace: ", endBrace)
 		fmt.Println("data: ", string(data))
@@ -175,51 +178,52 @@ func (list SFileList) JSTmplInit() error {
 				data[braceAt-1] = ')' // Drop a brace here to satisfy JS
 			}
 		})
-		data = replace(data, "for _, item := range ", "for(item of ")
-		data = replace(data, "w.Write([]byte(", "o += ")
-		data = replace(data, "w.Write(StringToBytes(", "o += ")
-		data = replace(data, "w.Write(", "o += ")
-		data = replace(data, "+= c.", "+= ")
-		data = replace(data, "strconv.Itoa(", "")
-		data = replace(data, "strconv.FormatInt(", "")
-		data = replace(data, "	c.", "")
-		data = replace(data, "phrases.", "")
-		data = replace(data, ", 10;", "")
+		rep("for _, item := range ", "for(item of ")
+		rep("w.Write([]byte(", "o += ")
+		rep("w.Write(StringToBytes(", "o += ")
+		rep("w.Write(", "o += ")
+		rep("+= c.", "+= ")
+		rep("strconv.Itoa(", "")
+		rep("strconv.FormatInt(", "")
+		rep("	c.", "")
+		rep("phrases.", "")
+		rep(", 10;", "")
 
-		//data = replace(data, "var plist = GetTmplPhrasesBytes("+shortName+"_tmpl_phrase_id)", "const plist = tmplPhrases[\""+tmplName+"\"];")
-		//data = replace(data, "//var plist = GetTmplPhrasesBytes("+shortName+"_tmpl_phrase_id)", "const "+shortName+"_phrase_arr = tmplPhrases[\""+tmplName+"\"];")
-		data = replace(data, "//var plist = GetTmplPhrasesBytes("+shortName+"_tmpl_phrase_id)", "const pl=tmplPhrases[\""+tmplName+"\"];")
-		data = replace(data, shortName+"_phrase_arr", "pl")
-		data = replace(data, "tmpl_"+shortName+"_vars", "t_vars")
+		//rep("var plist = GetTmplPhrasesBytes("+shortName+"_tmpl_phrase_id)", "const plist = tmplPhrases[\""+tmplName+"\"];")
+		//rep("//var plist = GetTmplPhrasesBytes("+shortName+"_tmpl_phrase_id)", "const "+shortName+"_phrase_arr = tmplPhrases[\""+tmplName+"\"];")
+		rep("//var plist = GetTmplPhrasesBytes("+shortName+"_tmpl_phrase_id)", "const pl=tmplPhrases[\""+tmplName+"\"];")
+		rep(shortName+"_phrase_arr", "pl")
+		rep("tmpl_"+shortName+"_vars", "t_vars")
 
-		data = replace(data, "var c_var_", "let c_var_")
-		data = replace(data, `t_vars, ok := tmpl_i.`, `/*`)
-		data = replace(data, "[]byte(", "")
-		data = replace(data, "StringToBytes(", "")
-		data = replace(data, "RelativeTime(t_vars.", "t_vars.Relative")
+		rep("var c_v_", "let c_v_")
+		rep(`t_vars, ok := tmpl_i.`, `/*`)
+		rep("[]byte(", "")
+		rep("StringToBytes(", "")
+		rep("RelativeTime(t_vars.", "t_vars.Relative")
 		// TODO: Format dates properly on the client side
-		data = replace(data, ".Format(\"2006-01-02 15:04:05\"", "")
-		data = replace(data, ", 10", "")
-		data = replace(data, "if ", "if(")
-		data = replace(data, "return nil", "return o")
-		data = replace(data, " )", ")")
-		data = replace(data, " \n", "\n")
-		data = replace(data, "\n", ";\n")
-		data = replace(data, "{;", "{")
-		data = replace(data, "};", "}")
-		data = replace(data, "[;", "[")
-		data = replace(data, ";;", ";")
-		data = replace(data, ",;", ",")
-		data = replace(data, "=;", "=")
-		data = replace(data, `,
+		rep(".Format(\"2006-01-02 15:04:05\"", "")
+		rep(", 10", "")
+		rep("if ", "if(")
+		rep("return nil", "return o")
+		rep(" )", ")")
+		rep(" \n", "\n")
+		rep("\n", ";\n")
+		rep("{;", "{")
+		rep("};", "}")
+		rep("[;", "[")
+		rep(";;", ";")
+		rep(",;", ",")
+		rep("=;", "=")
+		rep(`,
 	});
 }`, "\n\t];")
-		data = replace(data, `=
+		rep(`=
 }`, "=[]")
+		rep("o += ", "o+=")
 
 		fragset := tmpl.GetFrag(shortName)
 		if fragset != nil {
-			sfrags := []byte("let " + shortName + "_frags = [\n")
+			sfrags := []byte("let " + shortName + "_frags=[\n")
 			for _, frags := range fragset {
 				//sfrags = append(sfrags, []byte(shortName+"_frags.push(`"+string(frags)+"`);\n")...)
 				sfrags = append(sfrags, []byte("`"+string(frags)+"`,\n")...)
@@ -227,11 +231,11 @@ func (list SFileList) JSTmplInit() error {
 			sfrags = append(sfrags, []byte("];\n")...)
 			data = append(sfrags, data...)
 		}
-		data = replace(data, "\n;", "\n")
+		rep("\n;", "\n")
 
 		for name, _ := range Themes {
 			if strings.HasSuffix(shortName, "_"+name) {
-				data = append(data, "\nvar Template_"+strings.TrimSuffix(shortName, "_"+name)+" = Template_"+shortName+";"...)
+				data = append(data, "\nvar Template_"+strings.TrimSuffix(shortName, "_"+name)+"=Template_"+shortName+";"...)
 				break
 			}
 		}

@@ -1959,7 +1959,7 @@ func (c *CTemplateSet) afterTemplate(con CContext, startIndex int) {
 	varmap := make(map[string]int)
 	for name, count := range varcounts {
 		if count > 1 {
-			varstr += "var c_var_" + strconv.Itoa(i) + "=" + name + "\n"
+			varstr += "var c_v_" + strconv.Itoa(i) + "=" + name + "\n"
 			varmap[name] = i
 			i++
 		}
@@ -1979,7 +1979,7 @@ func (c *CTemplateSet) afterTemplate(con CContext, startIndex int) {
 		} else if item.Type == "varsub" && loopDepth == 0 {
 			index, ok := varmap[item.Body]
 			if ok {
-				item.Body = "c_var_" + strconv.Itoa(index)
+				item.Body = "c_v_" + strconv.Itoa(index)
 				item.Type = "cvarsub"
 				outBuf[i] = item
 			}

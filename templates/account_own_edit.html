@@ -8,7 +8,7 @@
 				<input form="dash_username_form" name="account-new-username" value="{{.CurrentUser.Name}}"/>
 				<button form="dash_username_form" class="formbutton">{{lang "account_username_save"}}</button>
 			</span>
-			<img src="{{.CurrentUser.Avatar}}" height="128px" />
+			<img src="{{.CurrentUser.Avatar}}" height="128px">
 			<span id="dash_avatar_buttons">
 				{{if .CurrentUser.Perms.UploadAvatars}}
 				<input form="avatar_form" id="select_avatar" name="account-avatar" type="file" required class="auto_hide"/>

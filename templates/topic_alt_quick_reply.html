@@ -1,6 +1,6 @@
 <div class="rowblock topic_reply_container">
 	<div class="userinfo" aria-label="{{lang "topic.your_information"}}">
-		<img class="aitem" src="{{.CurrentUser.Avatar}}" alt="Avatar">
+		<img class="aitem"src="{{.CurrentUser.Avatar}}"alt="Avatar">
 		<div class="user_meta">
 			<a href="{{.CurrentUser.Link}}" class="the_name" rel="author">{{.CurrentUser.Name}}</a>
 			<div class="tag_block">
@@ -12,8 +12,8 @@
 	</div>
 	<div class="rowblock topic_reply_form quick_create_form"  aria-label="{{lang "topic.reply_aria"}}">
 		<form id="quick_post_form" enctype="multipart/form-data" action="/reply/create/?s={{.CurrentUser.Session}}" method="post"></form>
-		<input form="quick_post_form" name="tid" value='{{.Topic.ID}}' type="hidden" />
-		<input form="quick_post_form" id="has_poll_input" name="has_poll" value=0 type="hidden" />
+		<input form="quick_post_form" name="tid" value='{{.Topic.ID}}' type="hidden"/>
+		<input form="quick_post_form" id="has_poll_input" name="has_poll" value=0 type="hidden"/>
 		<div class="formrow real_first_child">
 			<div class="formitem">
 				<textarea id="input_content" form="quick_post_form" name="content" placeholder="{{lang "topic.reply_content_alt"}}" required></textarea>
@@ -22,9 +22,9 @@
 		<div class="formrow poll_content_row auto_hide">
 			<div class="formitem">
 				<div class="pollinput" data-pollinput=0>
-					<input type="checkbox" disabled />
+					<input type="checkbox" disabled/>
 					<label class="pollinputlabel"></label>
-					<input form="quick_post_form" name="pollinputitem[0]" class="pollinputinput" type="text" placeholder="{{lang "topic.reply_add_poll_option_first"}}" />
+					<input form="quick_post_form" name="pollinputitem[0]" class="pollinputinput" type="text" placeholder="{{lang "topic.reply_add_poll_option_first"}}"/>
 				</div>
 			</div>
 		</div>
@@ -33,7 +33,7 @@
 				<button form="quick_post_form" name="reply-button" class="formbutton">{{lang "topic.reply_button"}}</button>
 				<button form="quick_post_form" class="formbutton" id="add_poll_button">{{lang "topic.reply_add_poll_button"}}</button>
 				{{if .CurrentUser.Perms.UploadFiles}}
-				<input name="upload_files" form="quick_post_form" id="upload_files" multiple type="file" class="auto_hide" />
+				<input name="upload_files" form="quick_post_form" id="upload_files" multiple type="file" class="auto_hide"/>
 				<label for="upload_files" class="formbutton add_file_button">{{lang "topic.reply_add_file_button"}}</label>
 				<div id="upload_file_dock"></div>{{end}}
 			</div>

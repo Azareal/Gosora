@@ -5,7 +5,7 @@
 	{{range .ItemList}}
 	<div class="rowitem" style="background-image:url('{{.Avatar}}');">
 		<a class="rowAvatar"{{if $.CurrentUser.Perms.EditUser}} href="/panel/users/edit/{{.ID}}"{{end}}>
-			<img class="bgsub" src="{{.Avatar}}" alt="Avatar" aria-hidden="true" />
+			<img class="bgsub"src="{{.Avatar}}"alt="Avatar"aria-hidden="true">
 		</a>
 		<a class="rowTitle"{{if $.CurrentUser.Perms.EditUser}} href="/panel/users/edit/{{.ID}}"{{end}}>{{.Name}}</a>
 		<span class="panel_floater">
