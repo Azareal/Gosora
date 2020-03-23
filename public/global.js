@@ -858,16 +858,18 @@ function mainInit(){
 			.then(resp => {
 				if(!resp.ok) throw(href+" failed to load");
 				let xRes = resp.headers.get("x-res")
-				for(let res of xRes.split(",")) {
-					let pro;
-					if(stripQ(getExt(res)) == "css") pro = asyncGetSheet("/s/"+res)
-					else pro = asyncGetScript("/s/"+res)
-						pro.then(() => console.log("Loaded " + res))
-						.catch(e => {
-							console.log("Unable to get res '"+res+"'");
-							console.log("e",e);
-							console.trace();
-						});
+				if(xRes!=null) {
+					for(let res of xRes.split(",")) {
+						let pro;
+						if(stripQ(getExt(res))=="css") pro = asyncGetSheet("/s/"+res)
+						else pro = asyncGetScript("/s/"+res)
+							pro.then(() => console.log("Loaded "+res))
+							.catch(e => {
+								console.log("Unable to get '"+res+"'");
+								console.log("e",e);
+								console.trace();
+							});
+					}
 				}
 				return resp.text();
 			}).then(data => {
