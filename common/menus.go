@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/Azareal/Gosora/common/phrases"
+	tmpl "github.com/Azareal/Gosora/common/templates"
 	qgen "github.com/Azareal/Gosora/query_gen"
 )
 
@@ -98,12 +99,12 @@ func (i MenuItem) Delete() error {
 	return err
 }
 
-func (h *MenuListHolder) LoadTmpl(name string) (menuTmpl MenuTmpl, err error) {
+func (h *MenuListHolder) LoadTmpl(name string) (t MenuTmpl, err error) {
 	data, err := ioutil.ReadFile("./templates/" + name + ".html")
 	if err != nil {
-		return menuTmpl, err
+		return t, err
 	}
-	return h.Parse(name, data), nil
+	return h.Parse(name, []byte(tmpl.Minify(string(data)))), nil
 }
 
 // TODO: Make this atomic, maybe with a transaction or store the order on the menu itself?
@@ -120,7 +121,7 @@ func (h *MenuListHolder) UpdateOrder(updateMap map[int]int) error {
 
 func (h *MenuListHolder) LoadTmpls() (tmpls map[string]MenuTmpl, err error) {
 	tmpls = make(map[string]MenuTmpl)
-	loadTmpl := func(name string) error {
+	load := func(name string) error {
 		menuTmpl, err := h.LoadTmpl(name)
 		if err != nil {
 			return err
@@ -128,11 +129,11 @@ func (h *MenuListHolder) LoadTmpls() (tmpls map[string]MenuTmpl, err error) {
 		tmpls[name] = menuTmpl
 		return nil
 	}
-	err = loadTmpl("menu_item")
+	err = load("menu_item")
 	if err != nil {
 		return tmpls, err
 	}
-	err = loadTmpl("menu_alerts")
+	err = load("menu_alerts")
 	return tmpls, err
 }
 
@@ -326,13 +327,13 @@ func (h *MenuListHolder) Parse(name string, tmplData []byte) (menuTmpl MenuTmpl)
 	return MenuTmpl{name, textBuffer, variableBuffer, renderList}
 }
 
-func (h *MenuListHolder) Scan(menuTmpls map[string]MenuTmpl, showItem func(i MenuItem) bool) (renderBuffer [][]byte, variableIndices []int, pathList []menuPath) {
+func (h *MenuListHolder) Scan(tmpls map[string]MenuTmpl, showItem func(i MenuItem) bool) (renderBuffer [][]byte, variableIndices []int, pathList []menuPath) {
 	for _, mitem := range h.List {
 		// Do we want this item in this variation of the menu?
 		if !showItem(mitem) {
 			continue
 		}
-		renderBuffer, variableIndices = h.ScanItem(menuTmpls, mitem, renderBuffer, variableIndices)
+		renderBuffer, variableIndices = h.ScanItem(tmpls, mitem, renderBuffer, variableIndices)
 		pathList = append(pathList, menuPath{mitem.Path, len(renderBuffer) - 1})
 	}
 
@@ -341,10 +342,10 @@ func (h *MenuListHolder) Scan(menuTmpls map[string]MenuTmpl, showItem func(i Men
 }
 
 // Note: This doesn't do a visibility check like hold.Scan() does
-func (h *MenuListHolder) ScanItem(menuTmpls map[string]MenuTmpl, mitem MenuItem, renderBuffer [][]byte, variableIndices []int) ([][]byte, []int) {
-	menuTmpl, ok := menuTmpls[mitem.TmplName]
+func (h *MenuListHolder) ScanItem(tmpls map[string]MenuTmpl, mitem MenuItem, renderBuffer [][]byte, variableIndices []int) ([][]byte, []int) {
+	menuTmpl, ok := tmpls[mitem.TmplName]
 	if !ok {
-		menuTmpl = menuTmpls["menu_item"]
+		menuTmpl = tmpls["menu_item"]
 	}
 
 	for _, renderItem := range menuTmpl.RenderList {

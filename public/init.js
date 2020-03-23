@@ -142,13 +142,13 @@ function loadScript(name,callback,fail) {
 
 function RelativeTime(date) {return date}
 
-function initPhrases(member, acp=false) {
+function initPhrases(member,acp=false) {
 	console.log("initPhrases")
 	console.log("tmlInits",tmplInits)
 	let e = "";
-	if(member && !acp) e = ",status,topic_list,topic";
-	else if(acp) e = ",analytics,panel"; // TODO: Request phrases for just one section of the cp?
-	else e = ",status,topic_list";
+	if(member && !acp) e=",status,topic_list,topic";
+	else if(acp) e=",analytics,panel"; // TODO: Request phrases for just one section of the acp?
+	else e=",status,topic_list";
 	fetchPhrases("alerts,paginator"+e) // TODO: Break this up?
 }
 
