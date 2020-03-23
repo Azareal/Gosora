@@ -107,7 +107,7 @@ function notifyOnScriptW(name,complete,success) {
 			complete();
 			if(success!==undefined) success();
 		}).catch(e => {
-			console.log("Unable to get script name '"+name+"'",e);
+			console.log("Unable to get '"+name+"'",e);
 			console.trace();
 			complete(e);
 		});
@@ -125,12 +125,12 @@ function loadScript(name,callback,fail) {
 	asyncGetScript(url)
 		.then(callback)
 		.catch(e => {
-			console.log("Unable to get script '"+url+"'");
+			console.log("Unable to get '"+url+"'");
 			if(fname!=name) {
 				asyncGetScript(iurl)
 					.then(callback)
 					.catch(e => {
-						console.log("Unable to get script '"+iurl+"'",e);
+						console.log("Unable to get '"+iurl+"'",e);
 						console.trace();
 					});
 			}
@@ -140,20 +140,20 @@ function loadScript(name,callback,fail) {
 		});
 }
 
-function RelativeTime(date) {return date;}
+function RelativeTime(date) {return date}
 
-function initPhrases(loggedIn, panel=false) {
-	console.log("in initPhrases")
+function initPhrases(member, acp=false) {
+	console.log("initPhrases")
 	console.log("tmlInits",tmplInits)
 	let e = "";
-	if(loggedIn && !panel) e = ",status,topic_list,topic";
-	else if(panel) e = ",analytics,panel"; // TODO: Request phrases for just one section of the control panel?
+	if(member && !acp) e = ",status,topic_list,topic";
+	else if(acp) e = ",analytics,panel"; // TODO: Request phrases for just one section of the cp?
 	else e = ",status,topic_list";
 	fetchPhrases("alerts,paginator"+e) // TODO: Break this up?
 }
 
 function fetchPhrases(plist) {
-	fetch("/api/phrases/?q="+plist, {cache:"no-cache"})
+	fetch("/api/phrases/?q="+plist,{cache:"no-cache"})
 		.then(resp => resp.json())
 		.then(data => {
 			console.log("loaded phrase endpoint data");
@@ -185,20 +185,20 @@ function fetchPhrases(plist) {
 
 (() => {
 	runInitHook("pre_iife");
-	let loggedIn = document.head.querySelector("[property='x-mem']")!=null;
-	let panel = window.location.pathname.startsWith("/panel/");
+	let member = document.head.querySelector("[property='x-mem']")!=null;
+	let acp = window.location.pathname.startsWith("/panel/");
 
 	let toLoad = 1;
-	// TODO: Shunt this into loggedIn if there aren't any search and filter widgets?
+	// TODO: Shunt this into member if there aren't any search and filter widgets?
 	let q = (f) => {
 		toLoad--;
-		if(toLoad===0) initPhrases(loggedIn,panel);
-		if(f) throw("template function not found");
+		if(toLoad===0) initPhrases(member,acp);
+		if(f) throw("tmpl func not found");
 	};
 
-	if(!panel) {
+	if(!acp) {
 		toLoad += 2;
-		if(loggedIn) {
+		if(member) {
 			toLoad += 3;
 			notifyOnScriptW("tmpl_topic_c_edit_post", () => q(!Tmpl_topic_c_edit_post));
 			notifyOnScriptW("tmpl_topic_c_attach_item", () => q(!Tmpl_topic_c_attach_item));
@@ -209,16 +209,16 @@ function fetchPhrases(plist) {
 	}
 	notifyOnScriptW("tmpl_notice", () => q(!Tmpl_notice));
 
-	if(loggedIn) {
+	if(member) {
 		fetch("/api/me/")
 		.then(resp => resp.json())
 		.then(data => {
-			console.log("loaded me endpoint data",data);
-			me = data;
+			console.log("me data",data);
+			me=data;
 			runInitHook("pre_init");
 		});
 	} else {
-		me = {User:{ID:0,S:""},Site:{"MaxRequestSize":0}};
+		me={User:{ID:0,S:""},Site:{"MaxRequestSize":0}};
 		runInitHook("pre_init");
 	}
 })()

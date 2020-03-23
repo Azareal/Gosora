@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"html/template"
 	"io"
+	"io/ioutil"
 	"log"
 	"path/filepath"
 	"runtime"
@@ -903,9 +904,31 @@ func loadTemplates(t *template.Template, themeName string) error {
 		}
 	}
 
-	template.Must(t.ParseFiles(tFiles...))
-	template.Must(t.ParseGlob("pages/*"))
-	return nil
+	// TODO: Minify these
+	/*err = t.ParseFiles(tFiles...)
+	if err != nil {
+		return err
+	}*/
+	for _, fname := range tFiles {
+		b, err := ioutil.ReadFile(fname)
+		if err != nil {
+			return err
+		}
+		s := tmpl.Minify(string(b))
+		name := filepath.Base(fname)
+		var tmpl *template.Template
+		if name == t.Name() {
+			tmpl = t
+		} else {
+			tmpl = t.New(name)
+		}
+		_, err = tmpl.Parse(s)
+		if err != nil {
+			return err
+		}
+	}
+	_, err = t.ParseGlob("pages/*")
+	return err
 }
 
 func InitTemplates() error {

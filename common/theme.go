@@ -118,6 +118,7 @@ func (t *Theme) LoadStaticFiles() error {
 		return out
 	}
 	t.ResourceTemplates.Funcs(fmap)
+	// TODO: Minify these
 	template.Must(t.ResourceTemplates.ParseGlob("./themes/" + t.Name + "/public/*.css"))
 
 	// It should be safe for us to load the files for all the themes in memory, as-long as the admin hasn't setup a ridiculous number of themes
