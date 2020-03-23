@@ -25,7 +25,7 @@ type Widget struct {
 		</div>
 		<div class="widget_edit show_on_block_edit">
 			<form action="/panel/themes/widgets/edit/submit/{{$widget.ID}}" method="post">
-			<input class="wside" name="wside" value="{{$name}}" type="hidden" />
+			<input class="wside" name="wside" value="{{$name}}" type="hidden">
 			{{template "panel_themes_widgets_widget.html" $widget }}
 			</form>
 		</div>
@@ -44,8 +44,8 @@ type Widget struct {
 		</div>
 		<div class="widget_edit show_on_block_edit">
 			<form action="/panel/themes/widgets/create/submit/" method="post">
-			<input name="s" value="{{.CurrentUser.Session}}" type="hidden" />
-			<input class="wside" name="wside" value="" type="hidden" />
+			<input name="s" value="{{.CurrentUser.Session}}" type="hidden">
+			<input class="wside" name="wside" value="" type="hidden">
 			{{template "panel_themes_widgets_widget.html" .BlankWidget }}
 			</form>
 		</div>

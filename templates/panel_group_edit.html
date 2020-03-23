@@ -10,7 +10,7 @@
 		<form action="/panel/groups/edit/submit/{{.ID}}?s={{.CurrentUser.Session}}" method="post">
 		<div class="formrow">
 			<div class="formitem formlabel"><a>{{lang "panel_group_name"}}</a></div>
-			<div class="formitem"><input name="name" type="text" value="{{.Name}}" placeholder="{{lang "panel_group_name_placeholder"}}" /></div>
+			<div class="formitem"><input name="name" type="text" value="{{.Name}}" placeholder="{{lang "panel_group_name_placeholder"}}"></div>
 		</div>
 		{{if .CurrentUser.Perms.EditGroup}}
 		<div class="formrow">
@@ -27,7 +27,7 @@
 		</div>{{end}}
 		<div class="formrow">
 			<div class="formitem formlabel"><a>{{lang "panel_group_tag"}}</a></div>
-			<div class="formitem"><input name="tag" type="text" value="{{.Tag}}" placeholder="{{lang "panel_group_tag_placeholder"}}" /></div>
+			<div class="formitem"><input name="tag" type="text" value="{{.Tag}}" placeholder="{{lang "panel_group_tag_placeholder"}}"></div>
 		</div>
 		<div class="formrow form_button_row">
 			<div class="formitem"><button name="panel-button" class="formbutton">{{lang "panel_group_update_button"}}</button></div>

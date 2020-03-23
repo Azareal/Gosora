@@ -631,7 +631,7 @@ function mainInit(){
 		ev.preventDefault();
 		let bp = $(this).closest('.editable_parent');
 		let block = bp.find('.editable_block').eq(0);
-		block.html("<input name='edit_field' value='" + block.text() + "' type='text'/><a href='" + $(this).closest('a').attr("href") + "'><button class='submit_edit' type='submit'>Update</button></a>");
+		block.html("<input name='edit_field'value='" + block.text() + "' type='text'><a href='" + $(this).closest('a').attr("href") + "'><button class='submit_edit'type='submit'>Update</button></a>");
 
 		$(".submit_edit").click(function(ev) {
 			ev.preventDefault();
@@ -680,7 +680,7 @@ function mainInit(){
 				this.innerHTML = "<select data-field='"+fieldName+"' name='"+fieldName+"'>"+out+"</select>";
 			}
 			else if(fieldType=="hidden") {}
-			else this.innerHTML = "<input name='"+fieldName+"' value='"+this.textContent+"' type='text'/>";
+			else this.innerHTML = "<input name='"+fieldName+"' value='"+this.textContent+"' type='text'>";
 		});
 
 		// Remove any handlers already attached to the submitter

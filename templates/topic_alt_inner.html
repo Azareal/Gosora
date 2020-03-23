@@ -14,7 +14,7 @@
 		{{if not .Topic.IsClosed or .CurrentUser.Perms.CloseTopic}}
 		{{if .CurrentUser.Perms.EditTopic}}
 		<form id="edit_topic_form" action='/topic/edit/submit/{{.Topic.ID}}?s={{.CurrentUser.Session}}' method="post"></form>
-		<input form="edit_topic_form" class='show_on_edit topic_name_input' name="topic_name" value='{{.Topic.Title}}' type="text" aria-label="{{lang "topic.title_input_aria"}}"/>
+		<input form="edit_topic_form" class='show_on_edit topic_name_input' name="topic_name" value='{{.Topic.Title}}' type="text" aria-label="{{lang "topic.title_input_aria"}}">
 		<button form="edit_topic_form" name="topic-button" class="formbutton show_on_edit submit_edit">{{lang "topic.update_button"}}</button>
 		{{end}}
 		{{end}}
@@ -33,7 +33,7 @@
 			<div class="topic_content user_content">
 				{{range .Poll.QuickOptions}}
 				<div class="poll_option">
-					<input form="poll_{{$.Poll.ID}}_form" id="poll_option_{{.ID}}" name="poll_option_input" type="checkbox" value="{{.ID}}"/>
+					<input form="poll_{{$.Poll.ID}}_form" id="poll_option_{{.ID}}" name="poll_option_input" type="checkbox" value="{{.ID}}">
 					<label class="poll_option_label" for="poll_option_{{.ID}}"><div class="sel"></div></label>
 					<span id="poll_option_text_{{.ID}}" class="poll_option_text">{{.Value}}</span>
 				</div>
@@ -70,7 +70,7 @@
 				{{end}}
 				<div class="attach_item attach_item_buttons">
 					{{if .CurrentUser.Perms.UploadFiles}}
-					<input name="upload_files" id="upload_files_op" multiple type="file" class="auto_hide"/>
+					<input name="upload_files" id="upload_files_op" multiple type="file" class="auto_hide">
 					<label for="upload_files_op" class="formbutton add_file_button">{{lang "topic.upload_button_text"}}</label>{{end}}
 					<button class="attach_item_delete formbutton">{{lang "topic.delete_button_text"}}</button>
 				</div>

@@ -7,7 +7,7 @@
 	<form action="/user/convos/create/submit/?s={{.CurrentUser.Session}}" method="post">
 		<div class="formrow real_first_child">
 			<div class="formitem formlabel"><a>{{lang "create_convo_recp"}}</a></div>
-			<div class="formitem"><input name="recp" type="text"{{if .RecpName}} value="{{.RecpName}}"{{end}}/></div>
+			<div class="formitem"><input name="recp"type="text"{{if .RecpName}}value="{{.RecpName}}"{{end}}></div>
 		</div>
 		<div class="formrow">
 			<div class="formitem"><textarea name="body"></textarea></div>

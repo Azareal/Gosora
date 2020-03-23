@@ -6,7 +6,7 @@
 			<option value="1"{{if eq .MemType 1}} selected{{end}}>{{lang "panel_stats_memory_type_stack"}}</option>
 			<option value="2"{{if eq .MemType 2}} selected{{end}}>{{lang "panel_stats_memory_type_heap"}}</option>
 		</select>
-		<noscript><input form="timeRangeForm" type="submit" /></noscript>
+		<noscript><input form="timeRangeForm" type="submit"></noscript>
 		{{template "panel_analytics_time_range_month.html" . }}
 	</div>
 </div>

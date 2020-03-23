@@ -5,7 +5,7 @@
 			<option value="0"{{if not .ShowSpam}} selected{{end}}>{{lang "panel_stats_spam_hide"}}</option>
 			<option value="1"{{if .ShowSpam}} selected{{end}}>{{lang "panel_stats_spam_show"}}</option>
 		</select>
-		<noscript><input form="timeRangeForm" type="submit" /></noscript>
+		<noscript><input form="timeRangeForm" type="submit"></noscript>
 		{{template "panel_analytics_time_range.html" . }}
 	</div>
 </div>

@@ -69,19 +69,19 @@
 			<div class="formrow real_first_child">
 				<div class="formitem formlabel"><a>{{lang "profile.ban_user_days"}}</a></div>
 				<div class="formitem">
-					<input name="dur-days" type="number" value=0 min=0/>
+					<input name="dur-days" type="number" value=0 min=0>
 				</div>
 			</div>
 			<div class="formrow">
 				<div class="formitem formlabel"><a>{{lang "profile.ban_user_weeks"}}</a></div>
 				<div class="formitem">
-					<input name="dur-weeks" type="number" value=0 min=0/>
+					<input name="dur-weeks" type="number" value=0 min=0>
 				</div>
 			</div>
 			<div class="formrow">
 				<div class="formitem formlabel"><a>{{lang "profile.ban_user_months"}}</a></div>
 				<div class="formitem">
-					<input name="dur-months" type="number" value=0 min=0/>
+					<input name="dur-months" type="number" value=0 min=0>
 				</div>
 			</div>
 			<div class="formrow">
@@ -126,7 +126,7 @@
 {{if .CurrentUser.Loggedin}}
 {{if .CanComment}}
 	<form id="profile_comments_form" class="hash_hide" action="/profile/reply/create/?s={{.CurrentUser.Session}}" method="post">
-		<input name="uid" value='{{.ProfileOwner.ID}}' type="hidden" />
+		<input name="uid"value='{{.ProfileOwner.ID}}'type="hidden">
 		<div class="colstack_item topic_reply_form" style="border-top:none;">
 			<div class="formrow">
 				<div class="formitem"><textarea class="input_content" name="content" placeholder="{{lang "profile.comments_form_content"}}"></textarea></div>

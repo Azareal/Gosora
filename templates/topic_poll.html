@@ -3,7 +3,7 @@
 		<div class="topic_content user_content">
 			{{range .Poll.QuickOptions}}
 			<div class="poll_option">
-				<input form="poll_{{$.Poll.ID}}_form" id="poll_option_{{.ID}}" name="poll_option_input" type="checkbox" value="{{.ID}}" />
+				<input form="poll_{{$.Poll.ID}}_form" id="poll_option_{{.ID}}" name="poll_option_input" type="checkbox" value="{{.ID}}">
 				<label class="poll_option_label" for="poll_option_{{.ID}}">
 					<div class="sel"></div>
 				</label>
