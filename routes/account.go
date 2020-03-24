@@ -20,9 +20,9 @@ import (
 // A blank list to fill out that parameter in Page for routes which don't use it
 var tList []interface{}
 
-func AccountLogin(w http.ResponseWriter, r *http.Request, user *c.User, h *c.Header) c.RouteError {
-	if user.Loggedin {
-		return c.LocalError("You're already logged in.", w, r, user)
+func AccountLogin(w http.ResponseWriter, r *http.Request, u *c.User, h *c.Header) c.RouteError {
+	if u.Loggedin {
+		return c.LocalError("You're already logged in.", w, r, u)
 	}
 	h.Title = p.GetTitlePhrase("login")
 	return renderTemplate("login", w, r, h, c.Page{h, tList, nil})
@@ -123,21 +123,25 @@ func mfaGetCookies(r *http.Request) (uid int, provSession, signedSession string,
 }
 
 func mfaVerifySession(provSession, signedSession string, uid int) bool {
+	bProvSession := []byte(provSession)
+	bSignedSession := []byte(signedSession)
+	bUid := []byte(strconv.Itoa(uid))
+
 	h := sha256.New()
 	h.Write([]byte(c.SessionSigningKeyBox.Load().(string)))
-	h.Write([]byte(provSession))
-	h.Write([]byte(strconv.Itoa(uid)))
+	h.Write(bProvSession)
+	h.Write(bUid)
 	expected := hex.EncodeToString(h.Sum(nil))
-	if subtle.ConstantTimeCompare([]byte(signedSession), []byte(expected)) == 1 {
+	if subtle.ConstantTimeCompare(bSignedSession, []byte(expected)) == 1 {
 		return true
 	}
 
 	h = sha256.New()
 	h.Write([]byte(c.OldSessionSigningKeyBox.Load().(string)))
-	h.Write([]byte(provSession))
-	h.Write([]byte(strconv.Itoa(uid)))
+	h.Write(bProvSession)
+	h.Write(bUid)
 	expected = hex.EncodeToString(h.Sum(nil))
-	return subtle.ConstantTimeCompare([]byte(signedSession), []byte(expected)) == 1
+	return subtle.ConstantTimeCompare(bSignedSession, []byte(expected)) == 1
 }
 
 func AccountLoginMFAVerify(w http.ResponseWriter, r *http.Request, u *c.User, h *c.Header) c.RouteError {
@@ -354,26 +358,26 @@ func AccountRegisterSubmit(w http.ResponseWriter, r *http.Request, user *c.User)
 }
 
 // TODO: Figure a way of making this into middleware?
-func accountEditHead(titlePhrase string, w http.ResponseWriter, r *http.Request, user *c.User, h *c.Header) {
+func accountEditHead(titlePhrase string, w http.ResponseWriter, r *http.Request, u *c.User, h *c.Header) {
 	h.Title = p.GetTitlePhrase(titlePhrase)
 	h.Path = "/user/edit/"
 	h.AddSheet(h.Theme.Name + "/account.css")
 	h.AddScriptAsync("account.js")
 }
 
-func AccountEdit(w http.ResponseWriter, r *http.Request, user *c.User, header *c.Header) c.RouteError {
-	accountEditHead("account", w, r, user, header)
+func AccountEdit(w http.ResponseWriter, r *http.Request, u *c.User, h *c.Header) c.RouteError {
+	accountEditHead("account", w, r, u, h)
 	if r.FormValue("avatar_updated") == "1" {
-		header.AddNotice("account_avatar_updated")
-	} else if r.FormValue("username_updated") == "1" {
-		header.AddNotice("account_username_updated")
+		h.AddNotice("account_avatar_updated")
+	} else if r.FormValue("name_updated") == "1" {
+		h.AddNotice("account_name_updated")
 	} else if r.FormValue("mfa_setup_success") == "1" {
-		header.AddNotice("account_mfa_setup_success")
+		h.AddNotice("account_mfa_setup_success")
 	}
 
 	// TODO: Find a more efficient way of doing this
 	mfaSetup := false
-	_, err := c.MFAstore.Get(user.ID)
+	_, err := c.MFAstore.Get(u.ID)
 	if err != sql.ErrNoRows && err != nil {
 		return c.InternalError(err, w, r)
 	} else if err != sql.ErrNoRows {
@@ -381,13 +385,13 @@ func AccountEdit(w http.ResponseWriter, r *http.Request, user *c.User, header *c
 	}
 
 	// Normalise the score so that the user sees their relative progress to the next level rather than showing them their total score
-	prevScore := c.GetLevelScore(user.Level)
-	currentScore := user.Score - prevScore
-	nextScore := c.GetLevelScore(user.Level+1) - prevScore
+	prevScore := c.GetLevelScore(u.Level)
+	currentScore := u.Score - prevScore
+	nextScore := c.GetLevelScore(u.Level+1) - prevScore
 	perc := int(math.Ceil((float64(nextScore) / float64(currentScore)) * 100))
 
-	pi := c.Account{header, "dashboard", "account_own_edit", c.AccountDashPage{header, mfaSetup, currentScore, nextScore, user.Level + 1, perc * 2}}
-	return renderTemplate("account", w, r, header, pi)
+	pi := c.Account{h, "dashboard", "account_own_edit", c.AccountDashPage{h, mfaSetup, currentScore, nextScore, u.Level + 1, perc * 2}}
+	return renderTemplate("account", w, r, h, pi)
 }
 
 //edit_password
@@ -481,16 +485,16 @@ func AccountEditUsernameSubmit(w http.ResponseWriter, r *http.Request, u *c.User
 		return ferr
 	}
 
-	newUsername := c.SanitiseSingleLine(r.PostFormValue("account-new-username"))
-	if newUsername == "" {
+	newName := c.SanitiseSingleLine(r.PostFormValue("new-name"))
+	if newName == "" {
 		return c.LocalError("You can't leave your username blank", w, r, u)
 	}
-	err := u.ChangeName(newUsername)
+	err := u.ChangeName(newName)
 	if err != nil {
-		return c.LocalError("Unable to change the username. Does someone else already have this name?", w, r, u)
+		return c.LocalError("Unable to change names. Does someone else already have this name?", w, r, u)
 	}
 
-	http.Redirect(w, r, "/user/edit/?username_updated=1", http.StatusSeeOther)
+	http.Redirect(w, r, "/user/edit/?name_updated=1", http.StatusSeeOther)
 	return nil
 }
 
@@ -568,18 +572,18 @@ func AccountEditMFASetupSubmit(w http.ResponseWriter, r *http.Request, user *c.U
 }
 
 // TODO: Implement this
-func AccountEditMFADisableSubmit(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
-	_, ferr := c.SimpleUserCheck(w, r, user)
+func AccountEditMFADisableSubmit(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
+	_, ferr := c.SimpleUserCheck(w, r, u)
 	if ferr != nil {
 		return ferr
 	}
 
 	// Flash an error if mfa is already setup
-	mfaItem, err := c.MFAstore.Get(user.ID)
+	mfaItem, err := c.MFAstore.Get(u.ID)
 	if err != sql.ErrNoRows && err != nil {
 		return c.InternalError(err, w, r)
 	} else if err == sql.ErrNoRows {
-		return c.LocalError("You don't have two-factor enabled on your account", w, r, user)
+		return c.LocalError("You don't have two-factor enabled on your account", w, r, u)
 	}
 
 	err = mfaItem.Delete()
@@ -603,16 +607,16 @@ func AccountEditPrivacy(w http.ResponseWriter, r *http.Request, u *c.User, h *c.
 	return renderTemplate("account", w, r, h, pi)
 }
 
-func AccountEditPrivacySubmit(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
-	//headerLite, _ := c.SimpleUserCheck(w, r, user)
+func AccountEditPrivacySubmit(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
+	//headerLite, _ := c.SimpleUserCheck(w, r, u)
 
 	sEnableEmbeds := r.FormValue("enable_embeds")
 	enableEmbeds, err := strconv.Atoi(sEnableEmbeds)
 	if err != nil {
-		return c.LocalError("enable_embeds must be 0 or 1", w, r, user)
+		return c.LocalError("enable_embeds must be 0 or 1", w, r, u)
 	}
 	if sEnableEmbeds != r.FormValue("o_enable_embeds") {
-		err = user.UpdatePrivacy(enableEmbeds)
+		err = u.UpdatePrivacy(enableEmbeds)
 		if err != nil {
 			return c.InternalError(err, w, r)
 		}
@@ -622,17 +626,17 @@ func AccountEditPrivacySubmit(w http.ResponseWriter, r *http.Request, user *c.Us
 	return nil
 }
 
-func AccountEditEmail(w http.ResponseWriter, r *http.Request, user *c.User, h *c.Header) c.RouteError {
-	accountEditHead("account_email", w, r, user, h)
-	emails, err := c.Emails.GetEmailsByUser(user)
+func AccountEditEmail(w http.ResponseWriter, r *http.Request, u *c.User, h *c.Header) c.RouteError {
+	accountEditHead("account_email", w, r, u, h)
+	emails, err := c.Emails.GetEmailsByUser(u)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
 
 	// Was this site migrated from another forum software? Most of them don't have multiple emails for a single user.
 	// This also applies when the admin switches site.EnableEmails on after having it off for a while.
-	if len(emails) == 0 && user.Email != "" {
-		emails = append(emails, c.Email{UserID: user.ID, Email: user.Email, Validated: false, Primary: true})
+	if len(emails) == 0 && u.Email != "" {
+		emails = append(emails, c.Email{UserID: u.ID, Email: u.Email, Validated: false, Primary: true})
 	}
 
 	if !c.Site.EnableEmails {
@@ -677,22 +681,22 @@ func AccountEditEmailAddSubmit(w http.ResponseWriter, r *http.Request, user *c.U
 	return nil
 }
 
-func AccountEditEmailRemoveSubmit(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
-	headerLite, _ := c.SimpleUserCheck(w, r, user)
+func AccountEditEmailRemoveSubmit(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
+	headerLite, _ := c.SimpleUserCheck(w, r, u)
 	email := r.PostFormValue("email")
 
 	// Quick and dirty check
-	_, err := c.Emails.Get(user, email)
+	_, err := c.Emails.Get(u, email)
 	if err == sql.ErrNoRows {
-		return c.LocalError("This email isn't set on this user.", w, r, user)
+		return c.LocalError("This email isn't set on this user.", w, r, u)
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
-	if headerLite.Settings["activation_type"] == 2 && user.Email == email {
-		return c.LocalError("You can't remove your primary email when mandatory email activation is enabled.", w, r, user)
+	if headerLite.Settings["activation_type"] == 2 && u.Email == email {
+		return c.LocalError("You can't remove your primary email when mandatory email activation is enabled.", w, r, u)
 	}
 
-	err = c.Emails.Delete(user.ID, email)
+	err = c.Emails.Delete(u.ID, email)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}

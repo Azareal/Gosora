@@ -25,7 +25,7 @@ func NewDefaultSubscriptionStore() (*DefaultSubscriptionStore, error) {
 	acc := qgen.NewAcc()
 	ast := "activity_subscriptions"
 	return &DefaultSubscriptionStore{
-		add:            acc.Insert(ast).Columns("user, targetID, targetType, level").Fields("?,?,?,2").Prepare(),
+		add:            acc.Insert(ast).Columns("user,targetID,targetType,level").Fields("?,?,?,2").Prepare(),
 		delete:         acc.Delete(ast).Where("user=? AND targetID=? AND targetType=?").Prepare(),
 		deleteResource: acc.Delete(ast).Where("targetID=? AND targetType=?").Prepare(),
 	}, acc.FirstError()

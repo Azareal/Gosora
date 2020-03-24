@@ -3,7 +3,7 @@ package install
 import (
 	"fmt"
 
-	"github.com/Azareal/Gosora/query_gen"
+	qgen "github.com/Azareal/Gosora/query_gen"
 )
 
 var adapters = make(map[string]InstallAdapter)
@@ -11,7 +11,7 @@ var adapters = make(map[string]InstallAdapter)
 type InstallAdapter interface {
 	Name() string
 	DefaultPort() string
-	SetConfig(dbHost string, dbUsername string, dbPassword string, dbName string, dbPort string)
+	SetConfig(dbHost, dbUsername, dbPassword, dbName, dbPort string)
 	InitDatabase() error
 	TableDefs() error
 	InitialData() error

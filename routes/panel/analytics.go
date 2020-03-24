@@ -1164,7 +1164,7 @@ func AnalyticsAgents(w http.ResponseWriter, r *http.Request, user *c.User) c.Rou
 		}
 		vList = append(vList, viewList)
 		legendList = append(legendList, lName)
-		if i >= 6 {
+		if i >= 7 {
 			break
 		}
 		i++

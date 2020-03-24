@@ -223,28 +223,43 @@ func seedTables(a qgen.Adapter) error {
 	order := 0
 	mOrder := "mid, name, htmlID, cssClass, position, path, aria, tooltip, guestOnly, memberOnly, staffOnly, adminOnly"
 	addMenuItem := func(data map[string]interface{}) {
+		if data["mid"] == nil {
+			data["mid"] = 1
+		}
+		if data["position"] == nil {
+			data["position"] = "left"
+		}
 		cols, values := qgen.InterfaceMapToInsertStrings(data, mOrder)
 		qgen.Install.SimpleInsert("menu_items", cols+", order", values+","+strconv.Itoa(order))
 		order++
 	}
 
-	addMenuItem(si{"mid": 1, "name": "{lang.menu_forums}", "htmlID": "menu_forums", "position": "left", "path": "/forums/", "aria": "{lang.menu_forums_aria}", "tooltip": "{lang.menu_forums_tooltip}"})
+	addMenuItem(si{"name": "{lang.menu_forums}", "htmlID": "menu_forums", "path": "/forums/", "aria": "{lang.menu_forums_aria}", "tooltip": "{lang.menu_forums_tooltip}"})
 
-	addMenuItem(si{"mid": 1, "name": "{lang.menu_topics}", "htmlID": "menu_topics", "cssClass": "menu_topics", "position": "left", "path": "/topics/", "aria": "{lang.menu_topics_aria}", "tooltip": "{lang.menu_topics_tooltip}"})
+	addMenuItem(si{"name": "{lang.menu_topics}", "htmlID": "menu_topics", "cssClass": "menu_topics", "path": "/topics/", "aria": "{lang.menu_topics_aria}", "tooltip": "{lang.menu_topics_tooltip}"})
 
-	addMenuItem(si{"mid": 1, "htmlID": "general_alerts", "cssClass": "menu_alerts", "position": "right", "tmplName": "menu_alerts"})
+	addMenuItem(si{"htmlID": "general_alerts", "cssClass": "menu_alerts", "position": "right", "tmplName": "menu_alerts"})
 
-	addMenuItem(si{"mid": 1, "name": "{lang.menu_account}", "cssClass": "menu_account", "position": "left", "path": "/user/edit/", "aria": "{lang.menu_account_aria}", "tooltip": "{lang.menu_account_tooltip}", "memberOnly": true})
+	addMenuItem(si{"name": "{lang.menu_account}", "cssClass": "menu_account", "path": "/user/edit/", "aria": "{lang.menu_account_aria}", "tooltip": "{lang.menu_account_tooltip}", "memberOnly": true})
 
-	addMenuItem(si{"mid": 1, "name": "{lang.menu_profile}", "cssClass": "menu_profile", "position": "left", "path": "{me.Link}", "aria": "{lang.menu_profile_aria}", "tooltip": "{lang.menu_profile_tooltip}", "memberOnly": true})
+	addMenuItem(si{"name": "{lang.menu_profile}", "cssClass": "menu_profile", "path": "{me.Link}", "aria": "{lang.menu_profile_aria}", "tooltip": "{lang.menu_profile_tooltip}", "memberOnly": true})
 
-	addMenuItem(si{"mid": 1, "name": "{lang.menu_panel}", "cssClass": "menu_panel menu_account", "position": "left", "path": "/panel/", "aria": "{lang.menu_panel_aria}", "tooltip": "{lang.menu_panel_tooltip}", "memberOnly": true, "staffOnly": true})
+	addMenuItem(si{"name": "{lang.menu_panel}", "cssClass": "menu_panel menu_account", "path": "/panel/", "aria": "{lang.menu_panel_aria}", "tooltip": "{lang.menu_panel_tooltip}", "memberOnly": true, "staffOnly": true})
 
-	addMenuItem(si{"mid": 1, "name": "{lang.menu_logout}", "cssClass": "menu_logout", "position": "left", "path": "/accounts/logout/?s={me.Session}", "aria": "{lang.menu_logout_aria}", "tooltip": "{lang.menu_logout_tooltip}", "memberOnly": true})
+	addMenuItem(si{"name": "{lang.menu_logout}", "cssClass": "menu_logout", "path": "/accounts/logout/?s={me.Session}", "aria": "{lang.menu_logout_aria}", "tooltip": "{lang.menu_logout_tooltip}", "memberOnly": true})
 
-	addMenuItem(si{"mid": 1, "name": "{lang.menu_register}", "cssClass": "menu_register", "position": "left", "path": "/accounts/create/", "aria": "{lang.menu_register_aria}", "tooltip": "{lang.menu_register_tooltip}", "guestOnly": true})
+	addMenuItem(si{"name": "{lang.menu_register}", "cssClass": "menu_register", "path": "/accounts/create/", "aria": "{lang.menu_register_aria}", "tooltip": "{lang.menu_register_tooltip}", "guestOnly": true})
 
-	addMenuItem(si{"mid": 1, "name": "{lang.menu_login}", "cssClass": "menu_login", "position": "left", "path": "/accounts/login/", "aria": "{lang.menu_login_aria}", "tooltip": "{lang.menu_login_tooltip}", "guestOnly": true})
+	addMenuItem(si{"name": "{lang.menu_login}", "cssClass": "menu_login", "path": "/accounts/login/", "aria": "{lang.menu_login_aria}", "tooltip": "{lang.menu_login_tooltip}", "guestOnly": true})
+
+	var fSet []string
+	for _, table := range tables {
+		fSet = append(fSet, "'"+table+"'")
+	}
+	qgen.Install.SimpleBulkInsert("tables", "name", fSet)
+	/*for _, table := range tables {
+		qgen.Install.SimpleInsert("tables", "name", "'"+table+"'")
+	}*/
 
 	return nil
 }
@@ -307,10 +322,10 @@ func writeUpdates(a qgen.Adapter) error {
 func writeDeletes(a qgen.Adapter) error {
 	b := a.Builder()
 
-	//b.Delete("deleteForumPermsByForum").Table("forums_permissions").Where("fid = ?").Parse()
+	//b.Delete("deleteForumPermsByForum").Table("forums_permissions").Where("fid=?").Parse()
 
 	b.Delete("deleteActivityStreamMatch").Table("activity_stream_matches").Where("watcher = ? AND asid = ?").Parse()
-	//b.Delete("deleteActivityStreamMatchesByWatcher").Table("activity_stream_matches").Where("watcher = ?").Parse()
+	//b.Delete("deleteActivityStreamMatchesByWatcher").Table("activity_stream_matches").Where("watcher=?").Parse()
 
 	return nil
 }
@@ -347,7 +362,7 @@ func writeInsertInnerJoins(a qgen.Adapter) error {
 	return nil
 }
 
-func writeFile(name string, content string) (err error) {
+func writeFile(name, content string) (err error) {
 	f, err := os.Create(name)
 	if err != nil {
 		return err

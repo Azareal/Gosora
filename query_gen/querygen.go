@@ -135,14 +135,14 @@ type Adapter interface {
 	// TODO: Some way to add indices and keys
 	// TODO: Test this
 	AddColumn(name, table string, col DBTableColumn, key *DBTableKey) (string, error)
-	DropColumn(name, table, colname string) (string, error)
+	DropColumn(name, table, colName string) (string, error)
 	RenameColumn(name, table, oldName, newName string) (string, error)
 	ChangeColumn(name, table, colName string, col DBTableColumn) (string, error)
 	SetDefaultColumn(name, table, colName, colType, defaultStr string) (string, error)
 	AddIndex(name, table, iname, colname string) (string, error)
 	AddKey(name, table, col string, key DBTableKey) (string, error)
 	RemoveIndex(name, table, col string) (string, error)
-	AddForeignKey(name, table, col, ftable, fcolumn string, cascade bool) (out string, e error)
+	AddForeignKey(name, table, col, ftable, fcol string, cascade bool) (out string, e error)
 	SimpleInsert(name, table, cols, fields string) (string, error)
 	SimpleBulkInsert(name, table, cols string, fieldSet []string) (string, error)
 	SimpleUpdate(b *updatePrebuilder) (string, error)
