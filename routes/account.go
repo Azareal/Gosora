@@ -41,9 +41,9 @@ func AccountLoginSubmit(w http.ResponseWriter, r *http.Request, user *c.User) c.
 	if err != nil {
 		// TODO: uid is currently set to 0 as authenticate fetches the user by username and password. Get the actual uid, so we can alert the user of attempted logins? What if someone takes advantage of the response times to deduce if an account exists?
 		logItem := &c.LoginLogItem{UID: uid, Success: false, IP: user.GetIP()}
-		_, err := logItem.Create()
-		if err != nil {
-			return c.InternalError(err, w, r)
+		_, ierr := logItem.Create()
+		if ierr != nil {
+			return c.InternalError(ierr, w, r)
 		}
 		return c.LocalError(err.Error(), w, r, user)
 	}
