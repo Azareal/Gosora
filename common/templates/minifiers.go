@@ -33,13 +33,13 @@ func minifyCSS(data string) string {
 // TODO: Convert this to three character hex strings whenever possible?
 // TODO: Write unit tests for this
 // nolint
-func rgbToHexstr(red int, green int, blue int) string {
+func rgbToHexstr(red, green, blue int) string {
 	return strconv.FormatInt(int64(red), 16) + strconv.FormatInt(int64(green), 16) + strconv.FormatInt(int64(blue), 16)
 }
 
 /*
 // TODO: Write unit tests for this
-func hexstrToRgb(hexstr string) (red int, blue int, green int, err error) {
+func hexstrToRgb(hexstr string) (red, blue, green int, err error) {
 	// Strip the # at the start
 	if hexstr[0] == '#' {
 		hexstr = strings.TrimPrefix(hexstr,"#")

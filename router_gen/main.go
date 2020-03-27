@@ -626,16 +626,18 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		}
 		shost = strings.TrimPrefix(spl[0],"[")
 		sport = strings.TrimPrefix(spl[1],":")
-	} else {
+	} else if strings.Contains(req.Host,":") {
 		spl := strings.Split(req.Host,":")
 		if len(spl) > 2 {
 			malformedRequest(1)
 			return
 		}
 		shost = spl[0]
-		if len(spl)==2 {
+		//if len(spl)==2 {
 			sport = spl[1]
-		}
+		//}
+	} else {
+		shost = req.Host
 	}
 	// TODO: Reject requests from non-local IPs, if the site host is set to localhost or a localhost IP
 	if !c.Config.LoosePort && c.Site.PortInt != 80 && c.Site.PortInt != 443 && sport != c.Site.Port {
@@ -677,12 +679,13 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	// TODO: Cover more suspicious strings and at a lower layer than this
 	for _, ch := range req.URL.Path { //char
 		if ch != '&' && !(ch > 44 && ch < 58) && ch != '=' && ch != '?' && !(ch > 64 && ch < 91) && ch != '\\' && ch != '_' && !(ch > 96 && ch < 123) {
-			r.SuspiciousRequest(req,"Bad char in path")
+			r.SuspiciousRequest(req,"Bad char '"+string(ch)+"' in path")
 			break
 		}
 	}
 	lp := strings.ToLower(req.URL.Path)
 	// TODO: Flag any requests which has a dot with anything but a number after that
+	// TODO: Use HasSuffix to avoid over-scanning?
 	if strings.Contains(lp,"..")/* || strings.Contains(lp,"--")*/ || strings.Contains(lp,".php") || strings.Contains(lp,".asp") || strings.Contains(lp,".cgi") || strings.Contains(lp,".py") || strings.Contains(lp,".sql") || strings.Contains(lp,".action") {
 		r.SuspiciousRequest(req,"Bad snippet in path")
 	}
@@ -728,6 +731,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		routes.StaticFile(w, req)
 		return
 	}
+	// TODO: Handle JS routes
 	if atomic.LoadInt32(&c.IsDBDown) == 1 {
 		c.DatabaseError(w, req)
 		return
@@ -743,7 +747,6 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	// Track the user agents. Unfortunately, everyone pretends to be Mozilla, so this'll be a little less efficient than I would like.
 	// TODO: Add a setting to disable this?
 	// TODO: Use a more efficient detector instead of smashing every possible combination in
-	//var agent string
 	var agent int
 	if !c.Config.DisableAnalytics {
 	
@@ -764,6 +767,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		var os int
 		for _, it := range uutils.StringToBytes(ua) {
 			if (it > 64 && it < 91) || (it > 96 && it < 123) || it == '_' {
+				// TODO: Store an index and slice that instead?
 				buffer = append(buffer, it)
 			} else if it == ' ' || it == '(' || it == ')' || it == '-' || (it > 47 && it < 58) || it == ';' || it == ':' || it == '.' || it == '+' || it == '~' || it == '@' /*|| (it == ':' && bytes.Equal(buffer,[]byte("http")))*/ || it == ',' || it == '/' {
 				if len(buffer) != 0 {
@@ -856,6 +860,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	// TODO: Default to anything other than en, if anything else is present, to avoid over-representing it for multi-linguals?
 	lang := req.Header.Get("Accept-Language")
 	if lang != "" {
+		// TODO: Reduce allocs here
 		lLang := strings.Split(strings.TrimSpace(lang),"-")
 		tLang := strings.Split(strings.Split(lLang[0],";")[0],",")
 		c.DebugDetail("tLang:", tLang)
@@ -903,6 +908,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			"after PreRoute\n" +
 			"routeMapEnum: ", routeMapEnum)
 	}
+	//log.Println("req: ", req)
 
 	// Disable Gzip when SSL is disabled for security reasons?
 	if prefix != "/ws" && strings.Contains(req.Header.Get("Accept-Encoding"), "gzip") {
@@ -910,26 +916,29 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		h.Set("Content-Encoding", "gzip")
 		gzw := c.GzipResponseWriter{Writer: gzip.NewWriter(w), ResponseWriter: w}
 		defer func() {
+			//h := w.Header()
 			if h.Get("Content-Encoding") == "gzip" && h.Get("X-I") == "" {
+				//log.Print("push gzip close")
 				gzw.Writer.(*gzip.Writer).Close()
 			}
 		}()
 		w = gzw
 	}
 
+	skip, ferr = hTbl.VhookSkippable("router_pre_route", w, req, user, prefix)
+	if skip || ferr != nil {
+		r.handleError(ferr,w,req,user)
+		return
+	}
 	var extraData string
 	if req.URL.Path[len(req.URL.Path) - 1] != '/' {
 		extraData = req.URL.Path[strings.LastIndexByte(req.URL.Path,'/') + 1:]
 		req.URL.Path = req.URL.Path[:strings.LastIndexByte(req.URL.Path,'/') + 1]
 	}
-
-	skip, ferr = hTbl.VhookSkippable("router_pre_route", w, req, user, prefix, extraData)
-	if skip || ferr != nil {
-		r.handleError(ferr,w,req,user)
-	}
 	ferr = r.routeSwitch(w, req, user, prefix, extraData)
 	if ferr != nil {
 		r.handleError(ferr,w,req,user)
+		return
 	}
 	/*if !c.Config.DisableAnalytics {
 		co.RouteViewCounter.Bump(id)

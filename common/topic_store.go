@@ -30,11 +30,11 @@ type TopicStore interface {
 	BulkGetMap(ids []int) (list map[int]*Topic, err error)
 	Exists(id int) bool
 	Create(fid int, name, content string, uid int, ip string) (tid int, err error)
-	AddLastTopic(item *Topic, fid int) error // unimplemented
-	Reload(id int) error                     // Too much SQL logic to move into TopicCache
+	AddLastTopic(t *Topic, fid int) error // unimplemented
+	Reload(id int) error                  // Too much SQL logic to move into TopicCache
 	// TODO: Implement these two methods
 	//Replies(tid int) ([]*Reply, error)
-	//RepliesRange(tid int, lower int, higher int) ([]*Reply, error)
+	//RepliesRange(tid, lower, higher int) ([]*Reply, error)
 	Count() int
 	CountUser(uid int) int
 	CountMegaUser(uid int) int
