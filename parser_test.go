@@ -145,7 +145,7 @@ func TestParser(t *testing.T) {
 	l := &METriList{nil}
 
 	url := "github.com/Azareal/Gosora"
-	eurl := "<a rel='ugc' href='//" + url + "'>" + url + "</a>"
+	eurl := "<a rel='ugc'href='//" + url + "'>" + url + "</a>"
 	l.Add("", "")
 	l.Add("haha", "haha")
 	l.Add("<b>t</b>", "<b>t</b>")
@@ -194,18 +194,18 @@ func TestParser(t *testing.T) {
 	l.Add("ss", "ss")
 	l.Add("haha\nhaha\nhaha", "haha<br>haha<br>haha")
 	l.Add("//"+url, eurl)
-	l.Add("//a", "<a rel='ugc' href='//a'>a</a>")
-	l.Add(" //a", " <a rel='ugc' href='//a'>a</a>")
-	l.Add("//a ", "<a rel='ugc' href='//a'>a</a> ")
-	l.Add(" //a ", " <a rel='ugc' href='//a'>a</a> ")
-	l.Add("d //a ", "d <a rel='ugc' href='//a'>a</a> ")
-	l.Add("ddd ddd //a ", "ddd ddd <a rel='ugc' href='//a'>a</a> ")
-	l.Add("https://"+url, "<a rel='ugc' href='https://"+url+"'>"+url+"</a>")
-	l.Add("https://t", "<a rel='ugc' href='https://t'>t</a>")
-	l.Add("http://"+url, "<a rel='ugc' href='http://"+url+"'>"+url+"</a>")
+	l.Add("//a", "<a rel='ugc'href='//a'>a</a>")
+	l.Add(" //a", " <a rel='ugc'href='//a'>a</a>")
+	l.Add("//a ", "<a rel='ugc'href='//a'>a</a> ")
+	l.Add(" //a ", " <a rel='ugc'href='//a'>a</a> ")
+	l.Add("d //a ", "d <a rel='ugc'href='//a'>a</a> ")
+	l.Add("ddd ddd //a ", "ddd ddd <a rel='ugc'href='//a'>a</a> ")
+	l.Add("https://"+url, "<a rel='ugc'href='https://"+url+"'>"+url+"</a>")
+	l.Add("https://t", "<a rel='ugc'href='https://t'>t</a>")
+	l.Add("http://"+url, "<a rel='ugc'href='http://"+url+"'>"+url+"</a>")
 	l.Add("#http://"+url, "#http://"+url)
 	l.Add("@http://"+url, "<red>[Invalid Profile]</red>ttp://"+url)
-	l.Add("//"+url+"\n", "<a rel='ugc' href='//"+url+"'>"+url+"</a><br>")
+	l.Add("//"+url+"\n", "<a rel='ugc'href='//"+url+"'>"+url+"</a><br>")
 	l.Add("\n//"+url, "<br>"+eurl)
 	l.Add("\n//"+url+"\n", "<br>"+eurl+"<br>")
 	l.Add("\n//"+url+"\n\n", "<br>"+eurl+"<br><br>")
@@ -222,10 +222,24 @@ func TestParser(t *testing.T) {
 			fs = "https://" + c.Site.URL
 		}
 		l.Add("//"+u, "<a href='"+fs+"'>"+c.Site.URL+"</a>")
+
+		// TODO: Strip redundant slashes?
+		l.Add("//"+u+"/", "<a href='"+fs+"/'>"+c.Site.URL+"/</a>")
+		l.Add("//"+u+"//", "<a href='"+fs+"//'>"+c.Site.URL+"//</a>")
+
 		l.Add("//"+u+"\n", "<a href='"+fs+"'>"+c.Site.URL+"</a><br>")
 		l.Add("//"+u+"\n//"+u, "<a href='"+fs+"'>"+c.Site.URL+"</a><br><a href='"+fs+"'>"+c.Site.URL+"</a>")
 		l.Add("http://"+u, "<a href='"+fs+"'>"+c.Site.URL+"</a>")
 		l.Add("https://"+u, "<a href='"+fs+"'>"+c.Site.URL+"</a>")
+		l.Add("//"+u+"/attachs/sha256hash.png?sid=1&stype=forums", "<a href=\""+fs+"/attachs/sha256hash.png?sid=1&amp;stype=forums\"><img src='"+fs+"/attachs/sha256hash.png?sid=1&amp;stype=forums'class='postImage'></a>")
+		l.Add("//"+u+"/attachs/sha256hash?sid=1&stype=forums", "<red>[Invalid URL]</red>")
+		l.Add("//"+u+"/attachs/s?sid=1&stype=forums", "<red>[Invalid URL]</red>")
+		l.Add("//"+u+"/attachs/?sid=1&stype=forums", "<red>[Invalid URL]</red>")
+		l.Add("//"+u+"/attachs/sha256hash.?sid=1&stype=forums", "<red>[Invalid URL]</red>")
+		l.Add("//"+u+"/attachs?sid=1&stype=forums", "<red>[Invalid URL]</red>")
+		l.Add("//"+u+"/attachs/sha256hash.png", "<a href=\""+fs+"/attachs/sha256hash.png?sid=1&amp;stype=forums\"><img src='"+fs+"/attachs/sha256hash.png?sid=1&amp;stype=forums'class='postImage'></a>")
+		l.Add("//"+u+"/attachs/sha256hash.png?sid=1", "<a href=\""+fs+"/attachs/sha256hash.png?sid=1&amp;stype=forums\"><img src='"+fs+"/attachs/sha256hash.png?sid=1&amp;stype=forums'class='postImage'></a>")
+		l.Add("//"+u+"/attachs/sha256hash.png?stype=forums", "<a href=\""+fs+"/attachs/sha256hash.png?sid=1&amp;stype=forums\"><img src='"+fs+"/attachs/sha256hash.png?sid=1&amp;stype=forums'class='postImage'></a>")
 	}
 	local("localhost")
 	local("127.0.0.1")
@@ -259,9 +273,9 @@ func TestParser(t *testing.T) {
 	l.Add("@ #tid-@", "<red>[Invalid Profile]</red>#tid-@")
 	l.Add("#tid-1 #tid-1", "<a href='/topic/1'>#tid-1</a> <a href='/topic/1'>#tid-1</a>")
 	l.Add("#tid-0", "<red>[Invalid Topic]</red>")
-	l.Add("https://"+url+"/#tid-1", "<a rel='ugc' href='https://"+url+"/#tid-1'>"+url+"/#tid-1</a>")
-	l.Add("https://"+url+"/?hi=2", "<a rel='ugc' href='https://"+url+"/?hi=2'>"+url+"/?hi=2</a>")
-	l.Add("https://"+url+"/?hi=2#t=1", "<a rel='ugc' href='https://"+url+"/?hi=2#t=1'>"+url+"/?hi=2#t=1</a>")
+	l.Add("https://"+url+"/#tid-1", "<a rel='ugc'href='https://"+url+"/#tid-1'>"+url+"/#tid-1</a>")
+	l.Add("https://"+url+"/?hi=2", "<a rel='ugc'href='https://"+url+"/?hi=2'>"+url+"/?hi=2</a>")
+	l.Add("https://"+url+"/?hi=2#t=1", "<a rel='ugc'href='https://"+url+"/?hi=2#t=1'>"+url+"/?hi=2#t=1</a>")
 	l.Add("#fid-1", "<a href='/forum/1'>#fid-1</a>")
 	l.Add(" #fid-1", " <a href='/forum/1'>#fid-1</a>")
 	l.Add("#fid-0", "<red>[Invalid Forum]</red>")

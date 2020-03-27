@@ -254,6 +254,7 @@ func APIMe(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
 }
 
 func OpenSearchXml(w http.ResponseWriter, r *http.Request) c.RouteError {
+	w.Header().Set("Content-Type", "application/xml")
 	furl := "http"
 	if c.Config.SslSchema {
 		furl += "s"

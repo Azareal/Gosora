@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/url"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -24,7 +25,7 @@ var InvalidProfile = []byte("<red>[Invalid Profile]</red>")
 var InvalidForum = []byte("<red>[Invalid Forum]</red>")
 var unknownMedia = []byte("<red>[Unknown Media]</red>")
 var URLOpen = []byte("<a href='")
-var URLOpenUser = []byte("<a rel='ugc' href='")
+var URLOpenUser = []byte("<a rel='ugc'href='")
 var URLOpen2 = []byte("'>")
 var bytesSinglequote = []byte("'")
 var bytesGreaterthan = []byte(">")
@@ -32,8 +33,8 @@ var urlMention = []byte(" class='mention'")
 var URLClose = []byte("</a>")
 var imageOpen = []byte("<a href=\"")
 var imageOpen2 = []byte("\"><img src='")
-var imageClose = []byte("' class='postImage'/></a>")
-var attachOpen = []byte("<a download class='attach' href=\"")
+var imageClose = []byte("'class='postImage'></a>")
+var attachOpen = []byte("<a download class='attach'href=\"")
 var attachClose = []byte("\">Attachment</a>")
 var sidParam = []byte("?sid=")
 var stypeParam = []byte("&amp;stype=")
@@ -914,12 +915,11 @@ func parseMediaString(data string, settings *ParseSettings) (media MediaEmbed, o
 				sport = ":" + port
 			}
 			media.URL = scheme + "//" + host + sport + path
-			extarr := strings.Split(path, ".")
-			if len(extarr) == 0 {
+			ext := strings.TrimPrefix(filepath.Ext(path), ".")
+			if len(ext) == 0 {
 				// TODO: Write a unit test for this
 				return media, false
 			}
-			ext := extarr[len(extarr)-1]
 			if ImageFileExts.Contains(ext) {
 				media.Type = "attach"
 			} else {
