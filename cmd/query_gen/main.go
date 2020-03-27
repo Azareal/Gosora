@@ -252,11 +252,11 @@ func seedTables(a qgen.Adapter) error {
 
 	addMenuItem(si{"name": "{lang.menu_login}", "cssClass": "menu_login", "path": "/accounts/login/", "aria": "{lang.menu_login_aria}", "tooltip": "{lang.menu_login_tooltip}", "guestOnly": true})
 
-	var fSet []string
+	/*var fSet []string
 	for _, table := range tables {
 		fSet = append(fSet, "'"+table+"'")
 	}
-	qgen.Install.SimpleBulkInsert("tables", "name", fSet)
+	qgen.Install.SimpleBulkInsert("tables", "name", fSet)*/
 	/*for _, table := range tables {
 		qgen.Install.SimpleInsert("tables", "name", "'"+table+"'")
 	}*/
