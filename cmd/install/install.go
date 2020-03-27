@@ -37,8 +37,7 @@ var defaultServerPort = "80" // 8080's a good one, if you're testing and don't w
 func main() {
 	// Capture panics instead of closing the window at a superhuman speed before the user can read the message on Windows
 	defer func() {
-		r := recover()
-		if r != nil {
+		if r := recover(); r != nil {
 			fmt.Println(r)
 			debug.PrintStack()
 			pressAnyKey()

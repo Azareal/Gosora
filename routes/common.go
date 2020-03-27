@@ -23,8 +23,8 @@ func ParseSEOURL(urlBit string) (slug string, id int, err error) {
 	return halves[0], tid, err
 }
 
-var slen1 = len("</s/>; rel=preload; as=script,")
-var slen2 = len("</s/>; rel=preload; as=style,")
+var slen1 = len("</s/>;rel=preload;as=script,")
+var slen2 = len("</s/>;rel=preload;as=style,")
 
 func doPush(w http.ResponseWriter, header *c.Header) {
 	//fmt.Println("in doPush")
@@ -32,11 +32,11 @@ func doPush(w http.ResponseWriter, header *c.Header) {
 		// TODO: Cache these in a sync.Pool?
 		var sb strings.Builder
 		push := func(in []string) {
-			sb.Grow((slen1 + 5) * len(in))
+			sb.Grow((slen1 + 6) * len(in))
 			for _, path := range in {
 				sb.WriteString("</s/")
 				sb.WriteString(path)
-				sb.WriteString(">; rel=preload; as=script,")
+				sb.WriteString(">;rel=preload;as=script,")
 			}
 		}
 		push(header.Scripts)
@@ -44,11 +44,11 @@ func doPush(w http.ResponseWriter, header *c.Header) {
 		push(header.ScriptsAsync)
 
 		if len(header.Stylesheets) > 0 {
-			sb.Grow((slen2 + 6) * len(header.Stylesheets))
+			sb.Grow((slen2 + 7) * len(header.Stylesheets))
 			for _, path := range header.Stylesheets {
 				sb.WriteString("</s/")
 				sb.WriteString(path)
-				sb.WriteString(">; rel=preload; as=style,")
+				sb.WriteString(">;rel=preload;as=style,")
 			}
 		}
 		// TODO: Push avatars?
@@ -67,6 +67,7 @@ func doPush(w http.ResponseWriter, header *c.Header) {
 		if !ok {
 			return
 		}
+		//panic("has pusher")
 		//fmt.Println("has pusher")
 
 		push := func(in []string) {
@@ -162,11 +163,7 @@ func renderTemplate3(tmplName, hookName string, w http.ResponseWriter, r *http.R
 	if c.RunPreRenderHook("pre_render_"+hookName, w, r, h.CurrentUser, pi) {
 		return nil
 	}
-	err := h.Theme.RunTmpl(tmplName, pi, w)
-	if err != nil {
-		return err
-	}
-	return nil
+	return h.Theme.RunTmpl(tmplName, pi, w)
 }
 
 // TODO: Rename renderTemplate to RenderTemplate instead of using this hack to avoid breaking things

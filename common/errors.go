@@ -322,6 +322,7 @@ func SecurityError(w http.ResponseWriter, r *http.Request, user *User) RouteErro
 }
 
 func MicroNotFound(w http.ResponseWriter, r *http.Request) RouteError {
+	w.Header().Set("Content-Type", "text/html;charset=utf-8")
 	w.WriteHeader(404)
 	_, _ = w.Write([]byte("file not found"))
 	return HandledRouteError()

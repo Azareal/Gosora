@@ -1007,21 +1007,21 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 			r.RLock()
 			h, ok := r.extraRoutes[req.URL.Path]
 			r.RUnlock()
+			req.URL.Path += extraData
 			
 			if ok {
-				req.URL.Path += extraData
 				// TODO: Be more specific about *which* dynamic route it is
 				co.RouteViewCounter.Bump({{index .AllRouteMap "routes.DynamicRoute"}})
 				return h(w,req,user)
 			}
+			co.RouteViewCounter.Bump3({{index .AllRouteMap "routes.BadRoute"}}, cn)
 
 			lp := strings.ToLower(req.URL.Path)
 			if strings.Contains(lp,"admin") || strings.Contains(lp,"sql") || strings.Contains(lp,"manage") || strings.Contains(lp,"//") || strings.Contains(lp,"\\\\") || strings.Contains(lp,"wp") || strings.Contains(lp,"wordpress") || strings.Contains(lp,"config") || strings.Contains(lp,"setup") || strings.Contains(lp,"install") || strings.Contains(lp,"update") || strings.Contains(lp,"php") || strings.Contains(lp,"pl") || strings.Contains(lp,"wget") || strings.Contains(lp,"wp-") || strings.Contains(lp,"include") || strings.Contains(lp,"vendor") || strings.Contains(lp,"bin") || strings.Contains(lp,"system") || strings.Contains(lp,"eval") || strings.Contains(lp,"config") {
 				r.SuspiciousRequest(req,"Bad Route")
-			} else {
-				r.DumpRequest(req,"Bad Route")
+				return c.MicroNotFound(w,req)
 			}
-			co.RouteViewCounter.Bump3({{index .AllRouteMap "routes.BadRoute"}}, cn)
+			r.DumpRequest(req,"Bad Route")
 			return c.NotFound(w,req,nil)
 	}
 	return err
