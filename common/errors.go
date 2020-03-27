@@ -137,9 +137,8 @@ func errorHeader(w http.ResponseWriter, user *User, title string) *Header {
 // ? - Add a user parameter?
 // ! Do not call CustomError here or we might get an error loop
 func InternalError(err error, w http.ResponseWriter, r *http.Request) RouteError {
-	w.WriteHeader(500)
 	pi := ErrorPage{errorHeader(w, &GuestUser, phrases.GetErrorPhrase("internal_error_title")), phrases.GetErrorPhrase("internal_error_body")}
-	handleErrorTemplate(w, r, pi)
+	handleErrorTemplate(w, r, pi, 500)
 	LogError(err)
 	return HandledRouteError()
 }
@@ -164,9 +163,8 @@ func InternalErrorJS(err error, w http.ResponseWriter, r *http.Request) RouteErr
 
 // When the task system detects if the database is down, some database errors might slip by this
 func DatabaseError(w http.ResponseWriter, r *http.Request) RouteError {
-	w.WriteHeader(500)
 	pi := ErrorPage{errorHeader(w, &GuestUser, phrases.GetErrorPhrase("internal_error_title")), phrases.GetErrorPhrase("internal_error_body")}
-	handleErrorTemplate(w, r, pi)
+	handleErrorTemplate(w, r, pi, 500)
 	return HandledRouteError()
 }
 
@@ -191,9 +189,8 @@ func SilentInternalErrorXML(err error, w http.ResponseWriter, r *http.Request) R
 
 // ! Do not call CustomError here otherwise we might get an error loop
 func PreError(errmsg string, w http.ResponseWriter, r *http.Request) RouteError {
-	w.WriteHeader(500)
 	pi := ErrorPage{errorHeader(w, &GuestUser, phrases.GetErrorPhrase("error_title")), errmsg}
-	handleErrorTemplate(w, r, pi)
+	handleErrorTemplate(w, r, pi, 500)
 	return HandledRouteError()
 }
 
@@ -229,9 +226,8 @@ func SimpleError(errmsg string, w http.ResponseWriter, r *http.Request, h *Heade
 	} else {
 		h.Title = phrases.GetErrorPhrase("local_error_title")
 	}
-	w.WriteHeader(500)
 	pi := ErrorPage{h, errmsg}
-	handleErrorTemplate(w, r, pi)
+	handleErrorTemplate(w, r, pi, 500)
 	return HandledRouteError()
 }
 
@@ -250,10 +246,9 @@ func LocalErrorJS(errmsg string, w http.ResponseWriter, r *http.Request) RouteEr
 
 // TODO: We might want to centralise the error logic in the future and just return what the error handler needs to construct the response rather than handling it here
 // NoPermissions is an error shown to the end-user when they try to access an area which they aren't authorised to access
-func NoPermissions(w http.ResponseWriter, r *http.Request, user *User) RouteError {
-	w.WriteHeader(403)
-	pi := ErrorPage{errorHeader(w, user, phrases.GetErrorPhrase("no_permissions_title")), phrases.GetErrorPhrase("no_permissions_body")}
-	handleErrorTemplate(w, r, pi)
+func NoPermissions(w http.ResponseWriter, r *http.Request, u *User) RouteError {
+	pi := ErrorPage{errorHeader(w, u, phrases.GetErrorPhrase("no_permissions_title")), phrases.GetErrorPhrase("no_permissions_body")}
+	handleErrorTemplate(w, r, pi, 403)
 	return HandledRouteError()
 }
 
@@ -272,9 +267,8 @@ func NoPermissionsJS(w http.ResponseWriter, r *http.Request, user *User) RouteEr
 
 // ? - Is this actually used? Should it be used? A ban in Gosora should be more of a permission revocation to stop them posting rather than something which spits up an error page, right?
 func Banned(w http.ResponseWriter, r *http.Request, user *User) RouteError {
-	w.WriteHeader(403)
 	pi := ErrorPage{errorHeader(w, user, phrases.GetErrorPhrase("banned_title")), phrases.GetErrorPhrase("banned_body")}
-	handleErrorTemplate(w, r, pi)
+	handleErrorTemplate(w, r, pi, 403)
 	return HandledRouteError()
 }
 
@@ -317,8 +311,9 @@ func LoginRequiredJS(w http.ResponseWriter, r *http.Request, user *User) RouteEr
 // SecurityError is used whenever a session mismatch is found
 // ? - Should we add JS and JSQ versions of this?
 func SecurityError(w http.ResponseWriter, r *http.Request, user *User) RouteError {
-	w.WriteHeader(403)
 	pi := ErrorPage{errorHeader(w, user, phrases.GetErrorPhrase("security_error_title")), phrases.GetErrorPhrase("security_error_body")}
+	w.Header().Set("Content-Type", "text/html;charset=utf-8")
+	w.WriteHeader(403)
 	err := RenderTemplateAlias("error", "security_error", w, r, pi.Header, pi)
 	if err != nil {
 		LogError(err)
@@ -357,18 +352,17 @@ func NotFoundJSQ(w http.ResponseWriter, r *http.Request, h *Header, js bool) Rou
 }
 
 // CustomError lets us make custom error types which aren't covered by the generic functions above
-func CustomError(errmsg string, errcode int, errtitle string, w http.ResponseWriter, r *http.Request, h *Header, user *User) (rerr RouteError) {
+func CustomError(errmsg string, errcode int, errtitle string, w http.ResponseWriter, r *http.Request, h *Header, u *User) (rerr RouteError) {
 	if h == nil {
-		h, rerr = UserCheck(w, r, user)
+		h, rerr = UserCheck(w, r, u)
 		if rerr != nil {
-			h = errorHeader(w, user, errtitle)
+			h = errorHeader(w, u, errtitle)
 		}
 	}
 	h.Title = errtitle
 	h.Zone = "error"
-	w.WriteHeader(errcode)
 	pi := ErrorPage{h, errmsg}
-	handleErrorTemplate(w, r, pi)
+	handleErrorTemplate(w, r, pi, errcode)
 	return HandledRouteError()
 }
 
@@ -381,7 +375,7 @@ func CustomErrorJSQ(errmsg string, errcode int, errtitle string, w http.Response
 }
 
 // CustomErrorJS is the pure JSON version of CustomError
-func CustomErrorJS(errmsg string, errcode int, w http.ResponseWriter, r *http.Request, user *User) RouteError {
+func CustomErrorJS(errmsg string, errcode int, w http.ResponseWriter, r *http.Request, u *User) RouteError {
 	w.WriteHeader(errcode)
 	writeJsonError(errmsg, w)
 	return HandledRouteError()
@@ -392,7 +386,9 @@ func writeJsonError(errmsg string, w http.ResponseWriter) {
 	_, _ = w.Write([]byte(`{"errmsg":"` + strings.Replace(errmsg, "\"", "", -1) + `"}`))
 }
 
-func handleErrorTemplate(w http.ResponseWriter, r *http.Request, pi ErrorPage) {
+func handleErrorTemplate(w http.ResponseWriter, r *http.Request, pi ErrorPage, errcode int) {
+	w.Header().Set("Content-Type", "text/html;charset=utf-8")
+	w.WriteHeader(errcode)
 	err := RenderTemplateAlias("error", "error", w, r, pi.Header, pi)
 	if err != nil {
 		LogError(err)
