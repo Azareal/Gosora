@@ -6,6 +6,7 @@ import (
 
 	//"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	qgen "github.com/Azareal/Gosora/query_gen"
@@ -101,16 +102,14 @@ func (s *DefaultAttachmentStore) MiniGetList(originTable string, originID int) (
 		if err != nil {
 			return nil, err
 		}
-		extarr := strings.Split(a.Path, ".")
-		if len(extarr) < 2 {
+		a.Ext = strings.TrimPrefix(filepath.Ext(a.Path), ".")
+		if len(a.Ext) == 0 {
 			return nil, errors.New("corrupt attachment path")
 		}
-		a.Ext = extarr[len(extarr)-1]
 		a.Image = ImageFileExts.Contains(a.Ext)
 		alist = append(alist, a)
 	}
-	err = rows.Err()
-	if err != nil {
+	if err = rows.Err(); err != nil {
 		return nil, err
 	}
 	if len(alist) == 0 {
@@ -139,11 +138,10 @@ func (s *DefaultAttachmentStore) BulkMiniGetList(originTable string, ids []int) 
 		if err != nil {
 			return nil, err
 		}
-		extarr := strings.Split(a.Path, ".")
-		if len(extarr) < 2 {
+		a.Ext = strings.TrimPrefix(filepath.Ext(a.Path), ".")
+		if len(a.Ext) == 0 {
 			return nil, errors.New("corrupt attachment path")
 		}
-		a.Ext = extarr[len(extarr)-1]
 		a.Image = ImageFileExts.Contains(a.Ext)
 		if currentID == 0 {
 			currentID = a.OriginID
@@ -169,11 +167,10 @@ func (s *DefaultAttachmentStore) FGet(id int) (*Attachment, error) {
 	if err != nil {
 		return nil, err
 	}
-	extarr := strings.Split(a.Path, ".")
-	if len(extarr) < 2 {
+	a.Ext = strings.TrimPrefix(filepath.Ext(a.Path), ".")
+	if len(a.Ext) == 0 {
 		return nil, errors.New("corrupt attachment path")
 	}
-	a.Ext = extarr[len(extarr)-1]
 	a.Image = ImageFileExts.Contains(a.Ext)
 	return a, nil
 }
@@ -184,11 +181,10 @@ func (s *DefaultAttachmentStore) Get(id int) (*MiniAttachment, error) {
 	if err != nil {
 		return nil, err
 	}
-	extarr := strings.Split(a.Path, ".")
-	if len(extarr) < 2 {
+	a.Ext = strings.TrimPrefix(filepath.Ext(a.Path), ".")
+	if len(a.Ext) == 0 {
 		return nil, errors.New("corrupt attachment path")
 	}
-	a.Ext = extarr[len(extarr)-1]
 	a.Image = ImageFileExts.Contains(a.Ext)
 	return a, nil
 }

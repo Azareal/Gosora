@@ -75,9 +75,23 @@ type TemplateMapping struct {
 	//When string
 }
 
+const (
+	ResTypeUnknown = iota
+	ResTypeSheet
+	ResTypeScript
+)
+const (
+	LocUnknown = iota
+	LocGlobal
+	LocFront
+	LocPanel
+)
+
 type ThemeResource struct {
 	Name     string
+	Type     int // 0 = unknown, 1 = sheet, 2 = script
 	Location string
+	LocID    int
 	Loggedin bool // Only serve this resource to logged in users
 	Async    bool
 }

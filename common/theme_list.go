@@ -177,6 +177,23 @@ func NewThemeList() (themes ThemeList, err error) {
 			log.Print("no overrides for " + theme.Name)
 		}
 
+		for i, res := range theme.Resources {
+			ext := filepath.Ext(res.Name)
+			if ext == ".css" {
+				res.Type = ResTypeSheet
+			} else if ext == ".js" {
+				res.Type = ResTypeScript
+			}
+			if res.Location == "global" {
+				res.LocID = LocGlobal
+			} else if res.Location == "frontend" {
+				res.LocID = LocFront
+			} else if res.Location == "panel" {
+				res.LocID = LocPanel
+			}
+			theme.Resources[i] = res
+		}
+
 		// TODO: Bind the built template, or an interpreted one for any dock overrides this theme has
 
 		themes[theme.Name] = theme

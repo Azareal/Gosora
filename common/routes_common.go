@@ -126,12 +126,10 @@ func panelUserCheck(w http.ResponseWriter, r *http.Request, u *User) (h *Header,
 	if len(theme.Resources) > 0 {
 		rlist := theme.Resources
 		for _, res := range rlist {
-			if res.Location == "global" || res.Location == "panel" {
-				extarr := strings.Split(res.Name, ".")
-				ext := extarr[len(extarr)-1]
-				if ext == "css" {
+			if res.LocID == LocGlobal || res.LocID == LocPanel {
+				if res.Type == ResTypeSheet {
 					h.AddSheet(res.Name)
-				} else if ext == "js" {
+				} else if res.Type == ResTypeScript {
 					if res.Async {
 						h.AddScriptAsync(res.Name)
 					} else {
@@ -252,12 +250,10 @@ func PrepResources(u *User, h *Header, theme *Theme) {
 			if res.Loggedin && !u.Loggedin {
 				continue
 			}
-			if res.Location == "global" || res.Location == "frontend" {
-				extarr := strings.Split(res.Name, ".")
-				ext := extarr[len(extarr)-1]
-				if ext == "css" {
+			if res.LocID == LocGlobal || res.LocID == LocFront {
+				if res.Type == ResTypeSheet {
 					h.AddSheet(res.Name)
-				} else if ext == "js" {
+				} else if res.Type == ResTypeScript {
 					if res.Async {
 						h.AddScriptAsync(res.Name)
 					} else {
