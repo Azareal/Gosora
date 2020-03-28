@@ -606,23 +606,24 @@ var agentMapEnum = map[string]int{
 	"slackbot": 32,
 	"apple": 33,
 	"discourse": 34,
-	"alexa": 35,
-	"lynx": 36,
-	"blank": 37,
-	"malformed": 38,
-	"suspicious": 39,
-	"semrush": 40,
-	"dotbot": 41,
-	"ahrefs": 42,
-	"proximic": 43,
-	"majestic": 44,
-	"blexbot": 45,
-	"aspiegel": 46,
-	"mail_ru": 47,
-	"zgrab": 48,
-	"curl": 49,
-	"python": 50,
-	"go": 51,
+	"mattermost": 35,
+	"alexa": 36,
+	"lynx": 37,
+	"blank": 38,
+	"malformed": 39,
+	"suspicious": 40,
+	"semrush": 41,
+	"dotbot": 42,
+	"ahrefs": 43,
+	"proximic": 44,
+	"majestic": 45,
+	"blexbot": 46,
+	"aspiegel": 47,
+	"mail_ru": 48,
+	"zgrab": 49,
+	"curl": 50,
+	"python": 51,
+	"go": 52,
 }
 var reverseAgentMapEnum = map[int]string{ 
 	0: "unknown",
@@ -660,23 +661,24 @@ var reverseAgentMapEnum = map[int]string{
 	32: "slackbot",
 	33: "apple",
 	34: "discourse",
-	35: "alexa",
-	36: "lynx",
-	37: "blank",
-	38: "malformed",
-	39: "suspicious",
-	40: "semrush",
-	41: "dotbot",
-	42: "ahrefs",
-	43: "proximic",
-	44: "majestic",
-	45: "blexbot",
-	46: "aspiegel",
-	47: "mail_ru",
-	48: "zgrab",
-	49: "curl",
-	50: "python",
-	51: "go",
+	35: "mattermost",
+	36: "alexa",
+	37: "lynx",
+	38: "blank",
+	39: "malformed",
+	40: "suspicious",
+	41: "semrush",
+	42: "dotbot",
+	43: "ahrefs",
+	44: "proximic",
+	45: "majestic",
+	46: "blexbot",
+	47: "aspiegel",
+	48: "mail_ru",
+	49: "zgrab",
+	50: "curl",
+	51: "python",
+	52: "go",
 }
 var markToAgent = map[string]string{ 
 	"OPR": "opera",
@@ -718,6 +720,7 @@ var markToAgent = map[string]string{
 	"Facebot": "facebook",
 	"Applebot": "apple",
 	"Discourse": "discourse",
+	"mattermost": "mattermost",
 	"ia_archiver": "alexa",
 	"SemrushBot": "semrush",
 	"DotBot": "dotbot",
@@ -740,7 +743,7 @@ var markToID = map[string]int{
 	"MSIE": 6,
 	"Trident": 7,
 	"Edge": 5,
-	"Lynx": 36,
+	"Lynx": 37,
 	"SamsungBrowser": 10,
 	"UCBrowser": 11,
 	"Google": 12,
@@ -772,19 +775,20 @@ var markToID = map[string]int{
 	"Facebot": 28,
 	"Applebot": 33,
 	"Discourse": 34,
-	"ia_archiver": 35,
-	"SemrushBot": 40,
-	"DotBot": 41,
-	"AhrefsBot": 42,
-	"proximic": 43,
-	"MJ12bot": 44,
-	"BLEXBot": 45,
-	"AspiegelBot": 46,
-	"RU_Bot": 47,
-	"zgrab": 48,
-	"curl": 49,
-	"python": 50,
-	"Go": 51,
+	"mattermost": 35,
+	"ia_archiver": 36,
+	"SemrushBot": 41,
+	"DotBot": 42,
+	"AhrefsBot": 43,
+	"proximic": 44,
+	"MJ12bot": 45,
+	"BLEXBot": 46,
+	"AspiegelBot": 47,
+	"RU_Bot": 48,
+	"zgrab": 49,
+	"curl": 50,
+	"python": 51,
+	"Go": 52,
 }
 /*var agentRank = map[string]int{
 	"opera":9,
@@ -901,7 +905,7 @@ func (r *GenRouter) DumpRequest(req *http.Request, pre string) {
 	var heads string
 	for key, value := range req.Header {
 		for _, vvalue := range value {
-			heads += "Header '" + c.SanitiseSingleLine(key) + "': " + c.SanitiseSingleLine(vvalue) + "\n"
+			heads += "Head " + c.SanitiseSingleLine(key) + ": " + c.SanitiseSingleLine(vvalue) + "\n"
 		}
 	}
 
@@ -920,7 +924,7 @@ func (r *GenRouter) SuspiciousRequest(req *http.Request, pre string) {
 		pre += "\n"
 	}
 	r.DumpRequest(req,pre+"Suspicious Request")
-	co.AgentViewCounter.Bump(39)
+	co.AgentViewCounter.Bump(40)
 }
 
 func isLocalHost(h string) bool {
@@ -935,7 +939,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(200) // 400
 		w.Write([]byte(""))
 		r.DumpRequest(req,"Malformed Request T"+strconv.Itoa(typ))
-		co.AgentViewCounter.Bump(38)
+		co.AgentViewCounter.Bump(39)
 	}
 	
 	// Split the Host and Port string
@@ -1074,7 +1078,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	
 	ua := strings.TrimSpace(strings.Replace(strings.TrimPrefix(req.UserAgent(),"Mozilla/5.0 ")," Safari/537.36","",-1)) // Noise, no one's going to be running this and it would require some sort of agent ranking system to determine which identifier should be prioritised over another
 	if ua == "" {
-		co.AgentViewCounter.Bump(37)
+		co.AgentViewCounter.Bump(38)
 		if c.Dev.DebugMode {
 			var pre string
 			for _, char := range req.UserAgent() {
@@ -1156,7 +1160,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			if strings.Contains(ua,"rv:11") {
 				agent = 6
 			}
-		case 48:
+		case 49:
 			r.SuspiciousRequest(req,"Vulnerability Scanner")
 		}
 		

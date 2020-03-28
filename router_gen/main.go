@@ -266,6 +266,7 @@ func main() {
 		"slackbot",
 		"apple",
 		"discourse",
+		"mattermost",
 		"alexa",
 		"lynx",
 		"blank",
@@ -331,6 +332,7 @@ func main() {
 		"Facebot",
 		"Applebot",
 		"Discourse",
+		"mattermost",
 		"ia_archiver",
 
 		"SemrushBot",
@@ -388,6 +390,7 @@ func main() {
 		"Facebot":             "facebook",
 		"Applebot":            "apple",
 		"Discourse":           "discourse",
+		"mattermost":"mattermost",
 		"ia_archiver":         "alexa",
 
 		"SemrushBot":  "semrush",
@@ -579,7 +582,7 @@ func (r *GenRouter) DumpRequest(req *http.Request, pre string) {
 	var heads string
 	for key, value := range req.Header {
 		for _, vvalue := range value {
-			heads += "Header '" + c.SanitiseSingleLine(key) + "': " + c.SanitiseSingleLine(vvalue) + "\n"
+			heads += "Head " + c.SanitiseSingleLine(key) + ": " + c.SanitiseSingleLine(vvalue) + "\n"
 		}
 	}
 

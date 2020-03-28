@@ -220,6 +220,7 @@
 		"facebook":"Facebook",
 		"apple":"AppleBot",
 		"discourse":"Discourse Forum Onebox",
+		"mattermost":"Mattermost",
 		"alexa":"Alexa",
 		"lynx":"Lynx",
 		
@@ -960,10 +961,10 @@
 		"panel_group_promotions_two_way":"Two Way",
 		"panel_group_promotions_level":"Level",
 		"panel_group_promotions_posts":"Posts",
-		"panel_group_promotion_registered_for":"Registered For",
-		"panel_group_promotion_registered_months_suffix":" months",
-		"panel_group_promotion_registered_days_suffix":" days",
-		"panel_group_promotion_registered_hours_suffix":" hours",
+		"panel_group_promotion_reg_for":"Registered For",
+		"panel_group_promotion_reg_months_suffix":" months",
+		"panel_group_promotion_reg_days_suffix":" days",
+		"panel_group_promotion_reg_hours_suffix":" hours",
 		"panel_group_promotions_create_button":"Add Promotion",
 
 		"panel_word_filters_head":"Word Filters",
