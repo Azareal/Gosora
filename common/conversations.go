@@ -168,13 +168,13 @@ type DefaultConversationStore struct {
 func NewDefaultConversationStore(acc *qgen.Accumulator) (*DefaultConversationStore, error) {
 	co := "conversations"
 	return &DefaultConversationStore{
-		get:                acc.Select(co).Columns("createdBy, createdAt, lastReplyBy, lastReplyAt").Where("cid=?").Prepare(),
+		get:                acc.Select(co).Columns("createdBy,createdAt,lastReplyBy,lastReplyAt").Where("cid=?").Prepare(),
 		getUser:            acc.SimpleInnerJoin("conversations_participants AS cp", "conversations AS c", "cp.cid, c.createdBy, c.createdAt, c.lastReplyBy, c.lastReplyAt", "cp.cid=c.cid", "cp.uid=?", "c.lastReplyAt DESC, c.createdAt DESC, c.cid DESC", "?,?"),
 		getUserCount:       acc.Count("conversations_participants").Where("uid=?").Prepare(),
 		delete:             acc.Delete(co).Where("cid=?").Prepare(),
 		deletePosts:        acc.Delete("conversations_posts").Where("cid=?").Prepare(),
 		deleteParticipants: acc.Delete("conversations_participants").Where("cid=?").Prepare(),
-		create:             acc.Insert(co).Columns("createdBy, createdAt, lastReplyBy, lastReplyAt").Fields("?,UTC_TIMESTAMP(),?,UTC_TIMESTAMP()").Prepare(),
+		create:             acc.Insert(co).Columns("createdBy,createdAt,lastReplyBy,lastReplyAt").Fields("?,UTC_TIMESTAMP(),?,UTC_TIMESTAMP()").Prepare(),
 		addParticipant:     acc.Insert("conversations_participants").Columns("uid,cid").Fields("?,?").Prepare(),
 		count:              acc.Count(co).Prepare(),
 	}, acc.FirstError()
@@ -251,10 +251,13 @@ func (s *DefaultConversationStore) GetUserExtra(uid, offset int) (cos []*Convers
 	var q string
 	idList := make([]interface{}, len(raw))
 	for i, co := range raw {
+		if i == 0 {
+			q = "?"
+		} else {
+			q += ",?"
+		}
 		idList[i] = strconv.Itoa(co.ID)
-		q += "?,"
 	}
-	q = q[0 : len(q)-1]
 
 	rows, err := qgen.NewAcc().Select("conversations_participants").Columns("uid,cid").Where("cid IN(" + q + ")").Query(idList...)
 	if err != nil {

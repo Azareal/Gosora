@@ -29,7 +29,7 @@ var URLOpenUser = []byte("<a rel='ugc'href='")
 var URLOpen2 = []byte("'>")
 var bytesSinglequote = []byte("'")
 var bytesGreaterthan = []byte(">")
-var urlMention = []byte(" class='mention'")
+var urlMention = []byte("'class='mention'")
 var URLClose = []byte("</a>")
 var imageOpen = []byte("<a href=\"")
 var imageOpen2 = []byte("\"><img src='")
@@ -557,7 +557,6 @@ func ParseMessage(msg string, sectionID int, sectionType string, settings *Parse
 
 				sb.Write(URLOpen)
 				sb.WriteString(menUser.Link)
-				sb.Write(bytesSinglequote)
 				sb.Write(urlMention)
 				sb.Write(bytesGreaterthan)
 				sb.WriteByte('@')
@@ -937,15 +936,15 @@ func parseMediaString(data string, settings *ParseSettings) (media MediaEmbed, o
 			if ok && len(video) >= 1 && video[0] != "" {
 				media.Type = "raw"
 				// TODO: Filter the URL to make sure no nasties end up in there
-				media.Body = "<iframe class='postIframe' src='https://www.youtube-nocookie.com/embed/" + video[0] + "' frameborder=0 allowfullscreen></iframe>"
+				media.Body = "<iframe class='postIframe'src='https://www.youtube-nocookie.com/embed/" + video[0] + "'frameborder=0 allowfullscreen></iframe>"
 				return media, true
 			}
 		}
 
 		if lastFrag := pathFrags[len(pathFrags)-1]; lastFrag != "" {
 			// TODO: Write a function for getting the file extension of a string
-			if extarr := strings.Split(lastFrag, "."); len(extarr) >= 2 {
-				ext := extarr[len(extarr)-1]
+			ext := strings.TrimPrefix(filepath.Ext(lastFrag),".")
+			if len(ext) != 0 {
 				if ImageFileExts.Contains(ext) {
 					media.Type = "image"
 					var sport string
