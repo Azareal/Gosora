@@ -1,6 +1,6 @@
 // +build pgsql
 
-/* Copyright Azareal 2016 - 2019 */
+/* Copyright Azareal 2016 - 2020 */
 /* Super experimental and incomplete. DON'T USE IT YET! */
 package main
 

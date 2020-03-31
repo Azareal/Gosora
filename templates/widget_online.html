@@ -5,7 +5,7 @@
 	{{if lt .UserCount 30}}
 	{{range .Users}}<div class="rowitem"style="background-image:url('{{.Avatar}}');">
 		<img src="{{.Avatar}}"class="bgsub"alt="Avatar"aria-hidden="true">
-		<a class="rowTitle" href="{{.Link}}">{{.Name}}</a>
+		<a class="rowTitle"href="{{.Link}}">{{.Name}}</a>
 	</div>
 	{{else}}<div class="rowitem rowmsg">{{lang "widget.online_none_online"}}</div>{{end}}
 	{{else}}<div class="rowitem rowmsg">{{langf "widget.online_some_online" .UserCount}}</div>{{end}}

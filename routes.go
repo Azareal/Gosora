@@ -119,7 +119,7 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError
 		var topCreatedAt int64
 
 		if count != 0 {
-			rows, err := stmts.getActivityFeedByWatcher.Query(user.ID)
+			rows, err := stmts.getActivityFeedByWatcher.Query(user.ID, 12)
 			if err != nil {
 				return c.InternalErrorJS(err, w, r)
 			}

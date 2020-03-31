@@ -43,7 +43,7 @@ func NewSQLReplyStore(acc *qgen.Accumulator, cache ReplyCache) (*SQLReplyStore, 
 	return &SQLReplyStore{
 		cache:         cache,
 		get:           acc.Select(re).Columns("tid, content, createdBy, createdAt, lastEdit, lastEditBy, ip, likeCount, attachCount, actionType").Where("rid=?").Prepare(),
-		getAll:        acc.Select(re).Columns("rid,tid, content, createdBy, createdAt, lastEdit, lastEditBy, ip, likeCount, attachCount, actionType").Prepare(),
+		getAll:        acc.Select(re).Columns("rid,tid,content,createdBy,createdAt,lastEdit,lastEditBy,ip,likeCount,attachCount,actionType").Prepare(),
 		exists:        acc.Exists(re, "rid").Prepare(),
 		create:        acc.Insert(re).Columns("tid, content, parsed_content, createdAt, lastUpdated, ip, words, createdBy").Fields("?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,?").Prepare(),
 		count:         acc.Count(re).Prepare(),

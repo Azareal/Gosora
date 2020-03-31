@@ -124,13 +124,13 @@ function updateAlertList(menuAlerts) {
 }
 
 function setAlertError(menuAlerts,msg) {
-	let alertListNode = menuAlerts.getElementsByClassName("alertList")[0];
-	alertListNode.innerHTML = "<div class='alertItem'>"+msg+"</div>";
+	let n = menuAlerts.getElementsByClassName("alertList")[0];
+	n.innerHTML = "<div class='alertItem'>"+msg+"</div>";
 }
 
 var alertsInitted = false;
 var lastTc = 0;
-function loadAlerts(menuAlerts, eTc=false) {
+function loadAlerts(menuAlerts,eTc=false) {
 	if(!alertsInitted) return;
 	let tc = "";
 	if(eTc && lastTc != 0) tc = "&t=" + lastTc + "&c=" + alertCount;
@@ -787,7 +787,7 @@ function mainInit(){
 	$(".unix_to_24_hour_time").each(function(){
 		let unixTime = this.innerText;
 		let date = new Date(unixTime*1000);
-		console.log("date", date);
+		console.log("date",date);
 		let minutes = "0" + date.getMinutes();
 		let formattedTime = date.getHours() + ":" + minutes.substr(-2);
 		console.log("formattedTime",formattedTime);
@@ -814,8 +814,8 @@ function mainInit(){
 	});
 
 	this.onkeyup = function(ev) {
-		if(ev.which == 37) this.querySelectorAll("#prevFloat a")[0].click();
-		if(ev.which == 39) this.querySelectorAll("#nextFloat a")[0].click();
+		if(ev.which==37) this.querySelectorAll("#prevFloat a")[0].click();
+		if(ev.which==39) this.querySelectorAll("#nextFloat a")[0].click();
 	};
 
 	function asyncGetSheet(src) {

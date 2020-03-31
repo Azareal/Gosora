@@ -394,13 +394,13 @@ func peekMatch(cur int, phrase string, runes []rune) bool {
 }
 
 // ! Not concurrency safe
-func AddHashLinkType(prefix string, handler func(*strings.Builder, string, *int)) {
+func AddHashLinkType(prefix string, h func(*strings.Builder, string, *int)) {
 	// There can only be one hash link type starting with a specific character at the moment
 	hashType := hashLinkTypes[prefix[0]]
 	if hashType != "" {
 		return
 	}
-	hashLinkMap[prefix] = handler
+	hashLinkMap[prefix] = h
 	hashLinkTypes[prefix[0]] = prefix
 }
 
