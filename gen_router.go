@@ -620,10 +620,11 @@ var agentMapEnum = map[string]int{
 	"blexbot": 46,
 	"aspiegel": 47,
 	"mail_ru": 48,
-	"zgrab": 49,
-	"curl": 50,
-	"python": 51,
-	"go": 52,
+	"ccbot": 49,
+	"zgrab": 50,
+	"curl": 51,
+	"python": 52,
+	"go": 53,
 }
 var reverseAgentMapEnum = map[int]string{ 
 	0: "unknown",
@@ -675,10 +676,11 @@ var reverseAgentMapEnum = map[int]string{
 	46: "blexbot",
 	47: "aspiegel",
 	48: "mail_ru",
-	49: "zgrab",
-	50: "curl",
-	51: "python",
-	52: "go",
+	49: "ccbot",
+	50: "zgrab",
+	51: "curl",
+	52: "python",
+	53: "go",
 }
 var markToAgent = map[string]string{ 
 	"OPR": "opera",
@@ -730,6 +732,7 @@ var markToAgent = map[string]string{
 	"BLEXBot": "blexbot",
 	"AspiegelBot": "aspiegel",
 	"RU_Bot": "mail_ru",
+	"CCBot": "ccbot",
 	"zgrab": "zgrab",
 	"curl": "curl",
 	"python": "python",
@@ -785,10 +788,11 @@ var markToID = map[string]int{
 	"BLEXBot": 46,
 	"AspiegelBot": 47,
 	"RU_Bot": 48,
-	"zgrab": 49,
-	"curl": 50,
-	"python": 51,
-	"Go": 52,
+	"CCBot": 49,
+	"zgrab": 50,
+	"curl": 51,
+	"python": 52,
+	"Go": 53,
 }
 /*var agentRank = map[string]int{
 	"opera":9,
@@ -1160,7 +1164,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			if strings.Contains(ua,"rv:11") {
 				agent = 6
 			}
-		case 49:
+		case 50:
 			r.SuspiciousRequest(req,"Vulnerability Scanner")
 		}
 		

@@ -280,6 +280,7 @@ func main() {
 		"blexbot",
 		"aspiegel",
 		"mail_ru",
+		"ccbot",
 		"zgrab",
 		"curl",
 		"python",
@@ -343,6 +344,7 @@ func main() {
 		"BLEXBot",
 		"AspiegelBot",
 		"RU_Bot", // Mail.RU_Bot
+		"CCBot",
 		"zgrab",
 		"curl",
 		"python",
@@ -390,7 +392,7 @@ func main() {
 		"Facebot":             "facebook",
 		"Applebot":            "apple",
 		"Discourse":           "discourse",
-		"mattermost":"mattermost",
+		"mattermost":          "mattermost",
 		"ia_archiver":         "alexa",
 
 		"SemrushBot":  "semrush",
@@ -401,6 +403,7 @@ func main() {
 		"BLEXBot":     "blexbot",
 		"AspiegelBot": "aspiegel",
 		"RU_Bot":      "mail_ru", // Mail.RU_Bot
+		"CCBot":       "ccbot",
 		"zgrab":       "zgrab",
 		"curl":        "curl",
 		"python":      "python",

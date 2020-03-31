@@ -232,6 +232,7 @@
 		"blexbot":"BLEXBot",
 		"aspiegel":"Aspiegel",
 		"mail_ru":"Mail.ru bot",
+		"ccbot":"CCBot",
 		"zgrab":"Zgrab App Scanner",
 		"curl":"curl",
 		"python":"Python Bot",
