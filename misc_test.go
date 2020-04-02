@@ -1841,6 +1841,13 @@ func TestMFAStore(t *testing.T) {
 		it, err = c.MFAstore.Get(1)
 		test(i)
 	}
+	expectNilErr(t, it.Delete())
+	_, err = c.MFAstore.Get(-1)
+	recordMustNotExist(t, err, "mfa uid -1 should not exist")
+	_, err = c.MFAstore.Get(0)
+	recordMustNotExist(t, err, "mfa uid 0 should not exist")
+	_, err = c.MFAstore.Get(1)
+	recordMustNotExist(t, err, "mfa uid 1 should not exist")
 }
 
 // TODO: Expand upon the valid characters which can go in URLs?

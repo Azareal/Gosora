@@ -64,7 +64,7 @@ func NewDefaultTopicStore(cache TopicCache) (*DefaultTopicStore, error) {
 	t := "topics"
 	return &DefaultTopicStore{
 		cache:         cache,
-		get:           acc.Select(t).Columns("title, content, createdBy, createdAt, lastReplyBy, lastReplyAt, lastReplyID, is_closed, sticky, parentID, ip, views, postCount, likeCount, attachCount, poll, data").Where("tid=?").Prepare(),
+		get:           acc.Select(t).Columns("title,content,createdBy,createdAt,lastReplyBy,lastReplyAt,lastReplyID,is_closed,sticky,parentID,ip,views,postCount,likeCount,attachCount,poll,data").Where("tid=?").Prepare(),
 		exists:        acc.Exists(t, "tid").Prepare(),
 		count:         acc.Count(t).Prepare(),
 		countUser:     acc.Count(t).Where("createdBy=?").Prepare(),

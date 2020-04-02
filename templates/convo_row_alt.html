@@ -1,21 +1,21 @@
 {{range .Posts}}
-<div id="post-{{.ID}}" class="rowitem passive deletable_block editable_parent comment {{.ClassName}}">
+<div id="post-{{.ID}}"class="rowitem passive deletable_block editable_parent comment {{.ClassName}}">
 	<div class="topRow">
 		<div class="userbit">
-			<img src="{{.User.MicroAvatar}}" alt="Avatar" title="{{.User.Name}}'s Avatar" aria-hidden="true">
+			<img src="{{.User.MicroAvatar}}"alt="Avatar"title="{{.User.Name}}'s Avatar"aria-hidden="true">
 			<span class="nameAndTitle">
-				<a href="{{.User.Link}}" class="real_username username">{{.User.Name}}</a>
-				{{if .User.Tag}}<a class="username hide_on_mobile user_tag" style="float:right;">{{.User.Tag}}</a>{{end}}
+				<a href="{{.User.Link}}"class="real_username username">{{.User.Name}}</a>
+				{{if .User.Tag}}<a class="username hide_on_mobile user_tag"style="float:right;">{{.User.Tag}}</a>{{end}}
 			</span>
 		</div>
 		<span class="controls">
 			{{if .CanModify}}
-			<a href="/user/convo/edit/submit/{{.ID}}?s={{$.CurrentUser.Session}}" class="mod_button" title="{{lang "profile.comments_edit_tooltip"}}" aria-label="{{lang "profile.comments_edit_aria"}}"><button class="username edit_item edit_label"></button></a>
+			<a href="/user/convo/edit/submit/{{.ID}}?s={{$.CurrentUser.Session}}"class="mod_button"title="{{lang "profile.comments_edit_tooltip"}}" aria-label="{{lang "profile.comments_edit_aria"}}"><button class="username edit_item edit_label"></button></a>
 			
-			<a href="/user/convo/delete/submit/{{.ID}}?s={{$.CurrentUser.Session}}" class="mod_button" title="{{lang "profile.comments_delete_tooltip"}}" aria-label="{{lang "profile.comments_delete_aria"}}"><button class="username delete_item delete_label"></button></a>
+			<a href="/user/convo/delete/submit/{{.ID}}?s={{$.CurrentUser.Session}}"class="mod_button"title="{{lang "profile.comments_delete_tooltip"}}" aria-label="{{lang "profile.comments_delete_aria"}}"><button class="username delete_item delete_label"></button></a>
 			{{end}}
 
-			<a class="mod_button" href="/report/submit/{{.ID}}?s={{$.CurrentUser.Session}}&type=convo-reply"><button class="username report_item flag_label" title="{{lang "profile.comments_report_tooltip"}}" aria-label="{{lang "profile.comments_report_aria"}}"></button></a>
+			<a class="mod_button"href="/report/submit/{{.ID}}?s={{$.CurrentUser.Session}}&type=convo-reply"><button class="username report_item flag_label"title="{{lang "profile.comments_report_tooltip"}}" aria-label="{{lang "profile.comments_report_aria"}}"></button></a>
 		</span>
 	</div>
 	<div class="content_column">

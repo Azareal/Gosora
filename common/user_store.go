@@ -53,7 +53,7 @@ func NewDefaultUserStore(cache UserCache) (*DefaultUserStore, error) {
 		cache = NewNullUserCache()
 	}
 	u := "users"
-	allCols := "uid, name, group, active, is_super_admin, session, email, avatar, message, level, score, posts, liked, last_ip, temp_group, createdAt, enable_embeds"
+	allCols := "uid,name,group,active,is_super_admin,session,email,avatar,message,level,score,posts,liked,last_ip,temp_group,createdAt,enable_embeds"
 	// TODO: Add an admin version of registerStmt with more flexibility?
 	return &DefaultUserStore{
 		cache:      cache,

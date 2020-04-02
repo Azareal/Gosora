@@ -14,16 +14,16 @@ type searchAndFilter struct {
 
 func widgetSearchAndFilter(widget *Widget, hvars interface{}) (out string, err error) {
 	header := hvars.(*Header)
-	user := header.CurrentUser
+	u := header.CurrentUser
 	var forums []filterForum
 	var canSee []int
-	if user.IsSuperAdmin {
+	if u.IsSuperAdmin {
 		canSee, err = Forums.GetAllVisibleIDs()
 		if err != nil {
 			return "", err
 		}
 	} else {
-		group, err := Groups.Get(user.Group)
+		group, err := Groups.Get(u.Group)
 		if err != nil {
 			// TODO: Revisit this
 			return "", errors.New("Something weird happened")

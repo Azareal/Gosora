@@ -1,12 +1,12 @@
-<form id="avatar_form" action="/user/edit/avatar/submit/?s={{.CurrentUser.Session}}" method="post" enctype="multipart/form-data"></form>
+<form id="avatar_form"action="/user/edit/avatar/submit/?s={{.CurrentUser.Session}}"method="post"enctype="multipart/form-data"></form>
 <div class="coldyn_block">
 	<div id="dash_left" class="coldyn_item">
 		<div class="rowitem">
 			<span id="dash_username">
-				<form id="dash_username_form" action="/user/edit/username/submit/?s={{.CurrentUser.Session}}" method="post"></form>
-				<form id="revoke_avatar_form" action="/user/edit/avatar/revoke/submit/?s={{.CurrentUser.Session}}" method="post"></form>
-				<input form="dash_username_form" name="new-name" value="{{.CurrentUser.Name}}">
-				<button form="dash_username_form" class="formbutton">{{lang "account_username_save"}}</button>
+				<form id="dash_username_form"action="/user/edit/username/submit/?s={{.CurrentUser.Session}}"method="post"></form>
+				<form id="revoke_avatar_form"action="/user/edit/avatar/revoke/submit/?s={{.CurrentUser.Session}}"method="post"></form>
+				<input form="dash_username_form"name="new-name"value="{{.CurrentUser.Name}}">
+				<button form="dash_username_form"class="formbutton">{{lang "account_username_save"}}</button>
 			</span>
 			<img src="{{.CurrentUser.Avatar}}"height="128px">
 			<span id="dash_avatar_buttons">

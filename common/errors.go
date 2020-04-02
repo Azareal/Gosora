@@ -181,7 +181,7 @@ func InternalErrorXML(err error, w http.ResponseWriter, r *http.Request) RouteEr
 func SilentInternalErrorXML(err error, w http.ResponseWriter, r *http.Request) RouteError {
 	w.Header().Set("Content-Type", "application/xml")
 	w.WriteHeader(500)
-	w.Write([]byte(`<?xml version="1.0" encoding="UTF-8"?>
+	w.Write([]byte(`<?xml version="1.0"encoding="UTF-8"?>
 <error>` + phrases.GetErrorPhrase("internal_error_body") + `</error>`))
 	log.Print("InternalError: ", err)
 	return HandledRouteError()
