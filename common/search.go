@@ -32,12 +32,12 @@ func NewSQLSearcher(acc *qgen.Accumulator) (*SQLSearcher, error) {
 		return nil, errors.New("SQLSearcher only supports MySQL at this time")
 	}
 	return &SQLSearcher{
-		queryReplies: acc.RawPrepare("SELECT `tid` FROM `replies` WHERE MATCH(content) AGAINST (? IN BOOLEAN MODE)"),
-		queryTopics:  acc.RawPrepare("SELECT `tid` FROM `topics` WHERE MATCH(title) AGAINST (? IN BOOLEAN MODE) OR MATCH(content) AGAINST (? IN BOOLEAN MODE)"),
-		queryRepliesZone: acc.RawPrepare("SELECT `tid` FROM `replies` WHERE MATCH(content) AGAINST (? IN BOOLEAN MODE) AND tid=?"),
-		queryTopicsZone:  acc.RawPrepare("SELECT `tid` FROM `topics` WHERE (MATCH(title) AGAINST (? IN BOOLEAN MODE) OR MATCH(content) AGAINST (? IN BOOLEAN MODE)) AND parentID=?"),
-		//queryZone:    acc.RawPrepare("SELECT `topics`.`tid` FROM `topics` INNER JOIN `replies` ON `topics`.`tid` = `replies`.`tid` WHERE (`topics`.`title`=? OR (MATCH(`topics`.`title`) AGAINST (? IN BOOLEAN MODE) OR MATCH(`topics`.`content`) AGAINST (? IN BOOLEAN MODE) OR MATCH(`replies`.`content`) AGAINST (? IN BOOLEAN MODE)) OR `topics`.`content`=? OR `replies`.`content`=?) AND `topics`.`parentID`=?"),
-		fuzzyZone:    acc.RawPrepare("SELECT `topics`.`tid` FROM `topics` INNER JOIN `replies` ON `topics`.`tid` = `replies`.`tid` WHERE (`topics`.`title` LIKE ? OR `topics`.`content` LIKE ? OR `replies`.`content` LIKE ?) AND `topics`.`parentID`=?"),
+		queryReplies: acc.RawPrepare("SELECT tid FROM replies WHERE MATCH(content) AGAINST (? IN BOOLEAN MODE)"),
+		queryTopics:  acc.RawPrepare("SELECT tid FROM topics WHERE MATCH(title) AGAINST (? IN BOOLEAN MODE) OR MATCH(content) AGAINST (? IN BOOLEAN MODE)"),
+		queryRepliesZone: acc.RawPrepare("SELECT tid FROM replies WHERE MATCH(content) AGAINST (? IN BOOLEAN MODE) AND tid=?"),
+		queryTopicsZone:  acc.RawPrepare("SELECT tid FROM topics WHERE (MATCH(title) AGAINST (? IN BOOLEAN MODE) OR MATCH(content) AGAINST (? IN BOOLEAN MODE)) AND parentID=?"),
+		//queryZone:    acc.RawPrepare("SELECT topics.tid FROM topics INNER JOIN replies ON topics.tid = replies.tid WHERE (topics.title=? OR (MATCH(topics.title) AGAINST (? IN BOOLEAN MODE) OR MATCH(topics.content) AGAINST (? IN BOOLEAN MODE) OR MATCH(replies.content) AGAINST (? IN BOOLEAN MODE)) OR topics.content=? OR replies.content=?) AND topics.parentID=?"),
+		fuzzyZone:    acc.RawPrepare("SELECT topics.tid FROM topics INNER JOIN replies ON topics.tid = replies.tid WHERE (topics.title LIKE ? OR topics.content LIKE ? OR replies.content LIKE ?) AND topics.parentID=?"),
 	}, acc.FirstError()
 }
 
@@ -115,12 +115,12 @@ func (s *SQLSearcher) Query(q string, zones []int) (ids []int, err error) {
 		zList = zList[:len(zList)-1]
 
 		acc := qgen.NewAcc()
-		/*stmt := acc.RawPrepare("SELECT topics.tid FROM `topics` INNER JOIN `replies` ON topics.tid = `replies`.`tid` WHERE (MATCH(`topics`.`title`) AGAINST (? IN BOOLEAN MODE) OR MATCH(`topics`.`content`) AGAINST (? IN BOOLEAN MODE) OR MATCH(`replies`.`content`) AGAINST (? IN BOOLEAN MODE) OR `topics`.`title`=? OR `topics`.`content`=? OR `replies`.`content`=?) AND `topics`.`parentID` IN(" + zList + ")")
+		/*stmt := acc.RawPrepare("SELECT topics.tid FROM topics INNER JOIN replies ON topics.tid = replies.tid WHERE (MATCH(topics.`title`) AGAINST (? IN BOOLEAN MODE) OR MATCH(topics.`content`) AGAINST (? IN BOOLEAN MODE) OR MATCH(replies.`content`) AGAINST (? IN BOOLEAN MODE) OR topics.`title`=? OR topics.`content`=? OR replies.`content`=?) AND topics.parentID IN(" + zList + ")")
 		err = acc.FirstError()
 		if err != nil {
 			return nil, err
 		}*/
-		stmt := acc.RawPrepare("SELECT tid FROM topics WHERE (MATCH(`topics`.`title`) AGAINST (? IN BOOLEAN MODE) OR MATCH(`topics`.`content`) AGAINST (? IN BOOLEAN MODE)) AND parentID IN(" + zList + ")")
+		stmt := acc.RawPrepare("SELECT tid FROM topics WHERE (MATCH(topics.`title`) AGAINST (? IN BOOLEAN MODE) OR MATCH(topics.`content`) AGAINST (? IN BOOLEAN MODE)) AND parentID IN(" + zList + ")")
 		err = acc.FirstError()
 		if err != nil {
 			return nil, err
@@ -129,7 +129,7 @@ func (s *SQLSearcher) Query(q string, zones []int) (ids []int, err error) {
 		if err != nil {
 			return nil, err
 		}
-		stmt = acc.RawPrepare("SELECT tid FROM replies WHERE MATCH(`replies`.`content`) AGAINST (? IN BOOLEAN MODE) AND tid IN(" + zList + ")")
+		stmt = acc.RawPrepare("SELECT tid FROM replies WHERE MATCH(replies.`content`) AGAINST (? IN BOOLEAN MODE) AND tid IN(" + zList + ")")
 		err = acc.FirstError()
 		if err != nil {
 			return nil, err
