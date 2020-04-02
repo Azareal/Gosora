@@ -1803,6 +1803,46 @@ func TestWordFilters(t *testing.T) {
 	// TODO: Any more tests we could do?
 }
 
+func TestMFAStore(t *testing.T) {
+	_, err := c.MFAstore.Get(-1)
+	recordMustNotExist(t, err, "mfa uid -1 should not exist")
+	_, err = c.MFAstore.Get(0)
+	recordMustNotExist(t, err, "mfa uid 0 should not exist")
+	_, err = c.MFAstore.Get(1)
+	recordMustNotExist(t, err, "mfa uid 1 should not exist")
+
+	secret := "test"
+	expectNilErr(t, c.MFAstore.Create(secret, 1))
+	_, err = c.MFAstore.Get(0)
+	recordMustNotExist(t, err, "mfa uid 0 should not exist")
+	var scratches []string
+	it, err := c.MFAstore.Get(1)
+	test := func(j int) {
+		expectNilErr(t, err)
+		expect(t, it.UID == 1, fmt.Sprintf("UID should be 1 not %d", it.UID))
+		expect(t, it.Secret == secret, fmt.Sprintf("Secret should be '%s' not %s", secret, it.Secret))
+		expect(t, len(it.Scratch) == 8, fmt.Sprintf("Scratch should be 8 not %d", len(it.Scratch)))
+		for i, scratch := range it.Scratch {
+			expect(t, scratch != "", fmt.Sprintf("scratch %d should not be empty", i))
+			if scratches != nil {
+				if j == i {
+					expect(t, scratches[i] != scratch, fmt.Sprintf("scratches[%d] should not be %s", i, scratches[i]))
+				} else {
+					expect(t, scratches[i] == scratch, fmt.Sprintf("scratches[%d] should be %s not %s", i, scratches[i], scratch))
+				}
+			}
+		}
+		scratches = make([]string, 8)
+		copy(scratches, it.Scratch)
+	}
+	test(0)
+	for i := 0; i < len(scratches); i++ {
+		expectNilErr(t, it.BurnScratch(i))
+		it, err = c.MFAstore.Get(1)
+		test(i)
+	}
+}
+
 // TODO: Expand upon the valid characters which can go in URLs?
 func TestSlugs(t *testing.T) {
 	l := &MEPairList{nil}
