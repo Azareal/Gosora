@@ -115,12 +115,13 @@ func (s *SQLSearcher) Query(q string, zones []int) (ids []int, err error) {
 		zList = zList[:len(zList)-1]
 
 		acc := qgen.NewAcc()
-		/*stmt := acc.RawPrepare("SELECT topics.tid FROM topics INNER JOIN replies ON topics.tid = replies.tid WHERE (MATCH(topics.`title`) AGAINST (? IN BOOLEAN MODE) OR MATCH(topics.`content`) AGAINST (? IN BOOLEAN MODE) OR MATCH(replies.`content`) AGAINST (? IN BOOLEAN MODE) OR topics.`title`=? OR topics.`content`=? OR replies.`content`=?) AND topics.parentID IN(" + zList + ")")
+		/*stmt := acc.RawPrepare("SELECT topics.tid FROM topics INNER JOIN replies ON topics.tid = replies.tid WHERE (MATCH(topics.title) AGAINST (? IN BOOLEAN MODE) OR MATCH(topics.content) AGAINST (? IN BOOLEAN MODE) OR MATCH(replies.content) AGAINST (? IN BOOLEAN MODE) OR topics.title=? OR topics.content=? OR replies.content=?) AND topics.parentID IN(" + zList + ")")
 		err = acc.FirstError()
 		if err != nil {
 			return nil, err
 		}*/
-		stmt := acc.RawPrepare("SELECT tid FROM topics WHERE (MATCH(topics.`title`) AGAINST (? IN BOOLEAN MODE) OR MATCH(topics.`content`) AGAINST (? IN BOOLEAN MODE)) AND parentID IN(" + zList + ")")
+		// TODO: Cache common IN counts
+		stmt := acc.RawPrepare("SELECT tid FROM topics WHERE (MATCH(topics.title) AGAINST (? IN BOOLEAN MODE) OR MATCH(topics.content) AGAINST (? IN BOOLEAN MODE)) AND parentID IN(" + zList + ")")
 		err = acc.FirstError()
 		if err != nil {
 			return nil, err
@@ -129,7 +130,7 @@ func (s *SQLSearcher) Query(q string, zones []int) (ids []int, err error) {
 		if err != nil {
 			return nil, err
 		}
-		stmt = acc.RawPrepare("SELECT tid FROM replies WHERE MATCH(replies.`content`) AGAINST (? IN BOOLEAN MODE) AND tid IN(" + zList + ")")
+		stmt = acc.RawPrepare("SELECT tid FROM replies WHERE MATCH(replies.content) AGAINST (? IN BOOLEAN MODE) AND tid IN(" + zList + ")")
 		err = acc.FirstError()
 		if err != nil {
 			return nil, err
