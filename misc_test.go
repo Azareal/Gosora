@@ -14,6 +14,7 @@ import (
 
 	c "github.com/Azareal/Gosora/common"
 	"github.com/Azareal/Gosora/common/phrases"
+	"github.com/Azareal/Gosora/common/gauth"
 )
 
 func miscinit(t *testing.T) {
@@ -1811,7 +1812,8 @@ func TestMFAStore(t *testing.T) {
 	_, err = c.MFAstore.Get(1)
 	recordMustNotExist(t, err, "mfa uid 1 should not exist")
 
-	secret := "test"
+	secret, err := c.GenerateGAuthSecret()
+	expectNilErr(t,err)
 	expectNilErr(t, c.MFAstore.Create(secret, 1))
 	_, err = c.MFAstore.Get(0)
 	recordMustNotExist(t, err, "mfa uid 0 should not exist")
@@ -1841,6 +1843,9 @@ func TestMFAStore(t *testing.T) {
 		it, err = c.MFAstore.Get(1)
 		test(i)
 	}
+	token, err := gauth.GetTOTPToken(secret)
+	expectNilErr(t,err)
+	expectNilErr(t, c.Auth.ValidateMFAToken(token, 1))
 	expectNilErr(t, it.Delete())
 	_, err = c.MFAstore.Get(-1)
 	recordMustNotExist(t, err, "mfa uid -1 should not exist")
@@ -2001,6 +2006,7 @@ func TestAuth(t *testing.T) {
 
 	// TODO: Create a user with a unicode password and see if we can login as them
 	// TODO: Tests for SessionCheck, GetCookies, and ForceLogout
+	// TODO: Tests for MFA Verification
 }
 
 // TODO: Vary the salts? Keep in mind that some algorithms store the salt in the hash therefore the salt string may be blank
