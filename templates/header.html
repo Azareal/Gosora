@@ -13,7 +13,7 @@
 		<script src="/s/jquery-3.1.1.min.js"></script>
 		{{range .Header.Scripts}}
 		<script src="/s/{{.}}"></script>{{end}}
-		<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+		<meta name="viewport"content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
 		{{if .Header.MetaDesc}}<meta name="description"content="{{.Header.MetaDesc}}">{{end}}
 		{{/** TODO: Have page / forum / topic level tags and descriptions below as-well **/}}
 		<meta property="og:type"content="website">
@@ -23,20 +23,20 @@
 		{{if .OGDesc}}<meta property="og:description"content="{{.OGDesc}}">
 		<meta property="twitter:description"content="{{.OGDesc}}">{{end}}
 		{{if .GoogSiteVerify}}<meta name="google-site-verification"content="{{.GoogSiteVerify}}">{{end}}
-		<link rel="search" type="application/opensearchdescription+xml" title="{{.Header.Site.Name}}" href="/opensearch.xml">
+		<link rel="search"type="application/opensearchdescription+xml"title="{{.Header.Site.Name}}"href="/opensearch.xml">
 	</head>
 	<body>
 		{{/**{{if not .CurrentUser.IsSuperMod}}<style>.supermod_only { display: none !important; }</style>{{end}}**/}}{{flush}}
-		<div id="container" class="container">
+		<div id="container"class="container">
 		{{/**<!--<div class="navrow">-->**/}}
 			<div class="left_of_nav">{{dock "leftOfNav" .Header }}</div>
 			<nav class="nav">
 				<div class="move_left">
 				<div class="move_right">
-				<ul id="main_menu" class="zone_{{.Header.Zone}}">{{/** TODO: Have the theme control whether the long or short form of the name is used **/}}
-					<li id="menu_overview" class="menu_left"><a href="/" rel="home">{{if eq .Header.Theme.Name "nox"}}{{.Header.Site.Name}}{{else}}{{.Header.Site.ShortName}}{{end}}</a></li>
+				<ul id="main_menu"class="zone_{{.Header.Zone}}">{{/** TODO: Have the theme control whether the long or short form of the name is used **/}}
+					<li id="menu_overview"class="menu_left"><a href="/"rel="home">{{if eq .Header.Theme.Name "nox"}}{{.Header.Site.Name}}{{else}}{{.Header.Site.ShortName}}{{end}}</a></li>
 					{{dock "topMenu" .Header }}
-					<li class="menu_left menu_hamburger" title="{{lang "menu_hamburger_tooltip"}}"><a></a></li>
+					<li class="menu_left menu_hamburger"title="{{lang "menu_hamburger_tooltip"}}"><a></a></li>
 				</ul>
 				</div>
 				</div><div style="clear:both;"></div>
@@ -56,7 +56,7 @@
 		{{/**<!--</div>-->**/}}
 			<div class="midRow">
 				<div class="midLeft"></div>
-				<div id="back" class="zone_{{.Header.Zone}}{{if hasWidgets "rightSidebar" .Header }} shrink_main{{end}}">
+				<div id="back"class="zone_{{.Header.Zone}}{{if hasWidgets "rightSidebar" .Header }} shrink_main{{end}}">
 					<div id="main">
 						<div class="alertbox initial_alertbox">{{range .Header.NoticeList}}
 				{{template "notice.html" . }}{{end}}

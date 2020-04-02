@@ -5,7 +5,7 @@
 	{{range .ItemList}}
 	<div class="rowitem editable_parent">
 		<span class="panel_plugin_meta">
-			<a{{if .URL}} href="{{.URL}}" {{end}}class="editable_block" class="panel_upshift">{{.Name}}</a><br>
+			<a {{if .URL}}href="{{.URL}}"{{end}}class="editable_block"class="panel_upshift">{{.Name}}</a><br>
 			<small style="margin-left:2px;">{{lang "panel_plugins_author_prefix"}}{{.Author}}</small>
 		</span>
 		<span class="to_right">

@@ -49,17 +49,17 @@ func TestUserStore(t *testing.T) {
 	}
 
 	var err error
-	ucache := c.NewMemoryUserCache(c.Config.UserCacheCapacity)
-	c.Users, err = c.NewDefaultUserStore(ucache)
+	uc := c.NewMemoryUserCache(c.Config.UserCacheCapacity)
+	c.Users, err = c.NewDefaultUserStore(uc)
 	expectNilErr(t, err)
-	ucache.Flush()
+	uc.Flush()
 	userStoreTest(t, 2)
 	c.Users, err = c.NewDefaultUserStore(nil)
 	expectNilErr(t, err)
 	userStoreTest(t, 5)
 }
 func userStoreTest(t *testing.T, newUserID int) {
-	ucache := c.Users.GetCache()
+	uc := c.Users.GetCache()
 	// Go doesn't have short-circuiting, so this'll allow us to do one liner tests
 	isCacheLengthZero := func(uc c.UserCache) bool {
 		if uc == nil {
@@ -73,15 +73,15 @@ func userStoreTest(t *testing.T, newUserID int) {
 		}
 		return uc.Length()
 	}
-	expect(t, isCacheLengthZero(ucache), fmt.Sprintf("The initial ucache length should be zero, not %d", cacheLength(ucache)))
+	expect(t, isCacheLengthZero(uc), fmt.Sprintf("The initial ucache length should be zero, not %d", cacheLength(uc)))
 
 	_, err := c.Users.Get(-1)
 	recordMustNotExist(t, err, "UID #-1 shouldn't exist")
-	expect(t, isCacheLengthZero(ucache), fmt.Sprintf("We found %d items in the user cache and it's supposed to be empty", cacheLength(ucache)))
+	expect(t, isCacheLengthZero(uc), fmt.Sprintf("We found %d items in the user cache and it's supposed to be empty", cacheLength(uc)))
 
 	_, err = c.Users.Get(0)
 	recordMustNotExist(t, err, "UID #0 shouldn't exist")
-	expect(t, isCacheLengthZero(ucache), fmt.Sprintf("We found %d items in the user cache and it's supposed to be empty", cacheLength(ucache)))
+	expect(t, isCacheLengthZero(uc), fmt.Sprintf("We found %d items in the user cache and it's supposed to be empty", cacheLength(uc)))
 
 	user, err := c.Users.Get(1)
 	recordMustExist(t, err, "Couldn't find UID #1")
@@ -110,34 +110,34 @@ func userStoreTest(t *testing.T, newUserID int) {
 	_, err = c.Users.Get(newUserID)
 	recordMustNotExist(t, err, fmt.Sprintf("UID #%d shouldn't exist", newUserID))
 
-	if ucache != nil {
-		expectIntToBeX(t, ucache.Length(), 1, "User cache length should be 1, not %d")
-		_, err = ucache.Get(-1)
+	if uc != nil {
+		expectIntToBeX(t, uc.Length(), 1, "User cache length should be 1, not %d")
+		_, err = uc.Get(-1)
 		recordMustNotExist(t, err, "UID #-1 shouldn't exist, even in the cache")
-		_, err = ucache.Get(0)
+		_, err = uc.Get(0)
 		recordMustNotExist(t, err, "UID #0 shouldn't exist, even in the cache")
-		user, err = ucache.Get(1)
+		user, err = uc.Get(1)
 		recordMustExist(t, err, "Couldn't find UID #1 in the cache")
 
 		expect(t, user.ID == 1, fmt.Sprintf("user.ID does not match the requested UID. Got '%d' instead.", user.ID))
 		expect(t, user.Name == "Admin", fmt.Sprintf("user.Name should be 'Admin', not '%s'", user.Name))
 
-		_, err = ucache.Get(newUserID)
+		_, err = uc.Get(newUserID)
 		recordMustNotExist(t, err, "UID #%d shouldn't exist, even in the cache", newUserID)
 
-		ucache.Flush()
-		expectIntToBeX(t, ucache.Length(), 0, "User cache length should be 0, not %d")
+		uc.Flush()
+		expectIntToBeX(t, uc.Length(), 0, "User cache length should be 0, not %d")
 	}
 
 	// TODO: Lock onto the specific error type. Is this even possible without sacrificing the detailed information in the error message?
 	var userList map[int]*c.User
 	userList, _ = c.Users.BulkGetMap([]int{-1})
 	expect(t, len(userList) == 0, fmt.Sprintf("The userList length should be 0, not %d", len(userList)))
-	expect(t, isCacheLengthZero(ucache), fmt.Sprintf("User cache length should be 0, not %d", cacheLength(ucache)))
+	expect(t, isCacheLengthZero(uc), fmt.Sprintf("User cache length should be 0, not %d", cacheLength(uc)))
 
 	userList, _ = c.Users.BulkGetMap([]int{0})
 	expect(t, len(userList) == 0, fmt.Sprintf("The userList length should be 0, not %d", len(userList)))
-	expect(t, isCacheLengthZero(ucache), fmt.Sprintf("User cache length should be 0, not %d", cacheLength(ucache)))
+	expect(t, isCacheLengthZero(uc), fmt.Sprintf("User cache length should be 0, not %d", cacheLength(uc)))
 
 	userList, _ = c.Users.BulkGetMap([]int{1})
 	expect(t, len(userList) == 1, fmt.Sprintf("Returned map should have one result (UID #1), not %d", len(userList)))
@@ -150,13 +150,13 @@ func userStoreTest(t *testing.T, newUserID int) {
 	}
 	expect(t, user.ID == 1, fmt.Sprintf("user.ID does not match the requested UID. Got '%d' instead.", user.ID))
 
-	if ucache != nil {
-		expectIntToBeX(t, ucache.Length(), 1, "User cache length should be 1, not %d")
-		user, err = ucache.Get(1)
+	if uc != nil {
+		expectIntToBeX(t, uc.Length(), 1, "User cache length should be 1, not %d")
+		user, err = uc.Get(1)
 		recordMustExist(t, err, "Couldn't find UID #1 in the cache")
 
 		expect(t, user.ID == 1, fmt.Sprintf("user.ID does not match the requested UID. Got '%d' instead.", user.ID))
-		ucache.Flush()
+		uc.Flush()
 	}
 
 	expect(t, !c.Users.Exists(-1), "UID #-1 shouldn't exist")
@@ -164,7 +164,7 @@ func userStoreTest(t *testing.T, newUserID int) {
 	expect(t, c.Users.Exists(1), "UID #1 should exist")
 	expect(t, !c.Users.Exists(newUserID), fmt.Sprintf("UID #%d shouldn't exist", newUserID))
 
-	expect(t, isCacheLengthZero(ucache), fmt.Sprintf("User cache length should be 0, not %d", cacheLength(ucache)))
+	expect(t, isCacheLengthZero(uc), fmt.Sprintf("User cache length should be 0, not %d", cacheLength(uc)))
 	expectIntToBeX(t, c.Users.Count(), 1, "The number of users should be one, not %d")
 
 	awaitingActivation := 5
@@ -178,9 +178,9 @@ func userStoreTest(t *testing.T, newUserID int) {
 	recordMustExist(t, err, "Couldn't find UID #%d", newUserID)
 	expectUser(user, newUserID, "Sam", 5, false, false, false, false)
 
-	if ucache != nil {
-		expectIntToBeX(t, ucache.Length(), 1, "User cache length should be 1, not %d")
-		user, err = ucache.Get(newUserID)
+	if uc != nil {
+		expectIntToBeX(t, uc.Length(), 1, "User cache length should be 1, not %d")
+		user, err = uc.Get(newUserID)
 		recordMustExist(t, err, "Couldn't find UID #%d in the cache", newUserID)
 		expect(t, user.ID == newUserID, fmt.Sprintf("user.ID does not match the requested UID. Got '%d' instead.", user.ID))
 	}
@@ -188,24 +188,24 @@ func userStoreTest(t *testing.T, newUserID int) {
 	userList, _ = c.Users.BulkGetMap([]int{1, uid})
 	expect(t, len(userList) == 2, fmt.Sprintf("Returned map should have two results, not %d", len(userList)))
 
-	if ucache != nil {
-		expectIntToBeX(t, ucache.Length(), 2, "User cache length should be 2, not %d")
-		user, err = ucache.Get(1)
+	if uc != nil {
+		expectIntToBeX(t, uc.Length(), 2, "User cache length should be 2, not %d")
+		user, err = uc.Get(1)
 		recordMustExist(t, err, "Couldn't find UID #%d in the cache", 1)
 		expect(t, user.ID == 1, fmt.Sprintf("user.ID does not match the requested UID. Got '%d' instead.", user.ID))
-		user, err = ucache.Get(newUserID)
+		user, err = uc.Get(newUserID)
 		recordMustExist(t, err, "Couldn't find UID #%d in the cache", newUserID)
 		expect(t, user.ID == newUserID, fmt.Sprintf("user.ID does not match the requested UID. Got '%d' instead.", user.ID))
-		ucache.Flush()
+		uc.Flush()
 	}
 
 	user, err = c.Users.Get(newUserID)
 	recordMustExist(t, err, "Couldn't find UID #%d", newUserID)
 	expectUser(user, newUserID, "Sam", 5, false, false, false, false)
 
-	if ucache != nil {
-		expectIntToBeX(t, ucache.Length(), 1, "User cache length should be 1, not %d")
-		user, err = ucache.Get(newUserID)
+	if uc != nil {
+		expectIntToBeX(t, uc.Length(), 1, "User cache length should be 1, not %d")
+		user, err = uc.Get(newUserID)
 		recordMustExist(t, err, "Couldn't find UID #%d in the cache", newUserID)
 		expect(t, user.ID == newUserID, fmt.Sprintf("user.ID does not match the requested UID. Got '%d' instead.", user.ID))
 	}
@@ -216,9 +216,9 @@ func userStoreTest(t *testing.T, newUserID int) {
 
 	// ? - What if we change the caching mechanism so it isn't hard purged and reloaded? We'll deal with that when we come to it, but for now, this is a sign of a cache bug
 	afterUserFlush := func(uid int) {
-		if ucache != nil {
-			expectIntToBeX(t, ucache.Length(), 0, "User cache length should be 0, not %d")
-			_, err = ucache.Get(uid)
+		if uc != nil {
+			expectIntToBeX(t, uc.Length(), 0, "User cache length should be 0, not %d")
+			_, err = uc.Get(uid)
 			recordMustNotExist(t, err, "UID #%d shouldn't be in the cache", uid)
 		}
 	}

@@ -7,8 +7,8 @@
 			console.log("resp",resp);
 			return;
 		}
-		resp.text().then(data => eval(data));
+		resp.text().then(dat => eval(dat));
 	})
-	.catch(err => console.log("err", err));
+	.catch(e => console.log("e",e));
 	});
 })()
