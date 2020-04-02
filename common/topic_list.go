@@ -66,7 +66,7 @@ func NewDefaultTopicList(acc *qgen.Accumulator) (*DefaultTopicList, error) {
 		forums:           make(map[int]*ForumTopicListHolder),
 		qcounts:          make(map[int]*sql.Stmt),
 		qcounts2:         make(map[int]*sql.Stmt),
-		getTopicsByForum: acc.Select("topics").Columns("tid, title, content, createdBy, is_closed, sticky, createdAt, lastReplyAt, lastReplyBy, lastReplyID, views, postCount, likeCount").Where("parentID=?").Orderby("sticky DESC,lastReplyAt DESC,createdBy DESC").Limit("?,?").Prepare(),
+		getTopicsByForum: acc.Select("topics").Columns("tid,title,content,createdBy,is_closed,sticky,createdAt,lastReplyAt,lastReplyBy,lastReplyID,views,postCount,likeCount").Where("parentID=?").Orderby("sticky DESC,lastReplyAt DESC,createdBy DESC").Limit("?,?").Prepare(),
 		//getTidsByForum: acc.Select("topics").Columns("tid").Where("parentID=?").Orderby("sticky DESC,lastReplyAt DESC,createdBy DESC").Limit("?,?").Prepare(),
 	}
 	if err := acc.FirstError(); err != nil {

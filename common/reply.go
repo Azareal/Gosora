@@ -79,7 +79,7 @@ func init() {
 		re := "replies"
 		replyStmts = ReplyStmts{
 			isLiked:                acc.Select("likes").Columns("targetItem").Where("sentBy=? and targetItem=? and targetType='replies'").Prepare(),
-			createLike:             acc.Insert("likes").Columns("weight, targetItem, targetType, sentBy").Fields("?,?,?,?").Prepare(),
+			createLike:             acc.Insert("likes").Columns("weight,targetItem,targetType,sentBy").Fields("?,?,?,?").Prepare(),
 			edit:                   acc.Update(re).Set("content=?,parsed_content=?").Where("rid=? AND poll=0").Prepare(),
 			setPoll:                acc.Update(re).Set("poll=?").Where("rid=? AND poll=0").Prepare(),
 			delete:                 acc.Delete(re).Where("rid=?").Prepare(),
@@ -90,7 +90,7 @@ func init() {
 			deleteActivitySubs:     acc.Delete("activity_subscriptions").Where("targetID=? AND targetType='post'").Prepare(),
 
 			// TODO: Optimise this to avoid firing an update if it's not the last reply in a topic. We will need to set lastReplyID properly in other places and in the patcher first so we can use it here.
-			updateTopicReplies:  acc.RawPrepare("UPDATE topics t INNER JOIN replies r ON t.tid = r.tid SET t.lastReplyBy = r.createdBy, t.lastReplyAt = r.createdAt, t.lastReplyID = r.rid WHERE t.tid = ?"),
+			updateTopicReplies:  acc.RawPrepare("UPDATE topics t INNER JOIN replies r ON t.tid=r.tid SET t.lastReplyBy=r.createdBy, t.lastReplyAt=r.createdAt, t.lastReplyID=r.rid WHERE t.tid=?"),
 			updateTopicReplies2: acc.Update("topics").Set("lastReplyAt=createdAt,lastReplyBy=createdBy,lastReplyID=0").Where("postCount=1 AND tid=?").Prepare(),
 
 			getAidsOfReply: acc.Select("attachments").Columns("attachID").Where("originID=? AND originTable='replies'").Prepare(),

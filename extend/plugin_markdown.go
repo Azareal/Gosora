@@ -73,7 +73,7 @@ func _markdownParse(msg string, n int) string {
 	var outbytes []byte
 	var lastElement int
 	breaking := false
-	c.DebugLogf("Initial Message: %+v\n", strings.Replace(msg, "\r", "\\r", -1))
+	//c.DebugLogf("Initial Message: %+v\n", strings.Replace(msg, "\r", "\\r", -1))
 
 	for index := 0; index < len(msg); index++ {
 		simpleMatch := func(char byte, o []byte, c []byte) {

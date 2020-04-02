@@ -21,7 +21,7 @@ type MEPairList struct {
 	Items []MEPair
 }
 
-func (l *MEPairList) Add(msg string, expects string) {
+func (l *MEPairList) Add(msg, expects string) {
 	l.Items = append(l.Items, MEPair{msg, expects})
 }
 
