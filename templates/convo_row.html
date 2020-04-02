@@ -4,7 +4,7 @@
 <div id="post-{{.ID}}" class="rowitem passive deletable_block editable_parent simple {{.ClassName}}" style="background-image:url({{.User.Avatar}}),url(/s/post-avatar-bg.jpg);background-position:0px {{if le .ContentLines 5}}-1{{end}}0px;">
 	<span class="editable_block user_content simple">{{.Body}}</span>
 	<span class="controls">
-		<a href="{{.User.Link}}" class="real_username username">{{.User.Name}}</a>&nbsp;&nbsp;
+		<a href="{{.User.Link}}"class="real_username username">{{.User.Name}}</a>&nbsp;&nbsp;
 
 		{{if .CanModify}}<a href="/user/convo/edit/submit/{{.ID}}?s={{$.CurrentUser.Session}}" class="mod_button" title="{{lang "profile.comments_edit_tooltip"}}" aria-label="{{lang "profile.comments_edit_aria"}}"><button class="username edit_item edit_label"></button></a>
 
@@ -12,7 +12,7 @@
 
 		<a class="mod_button" href="/report/submit/{{.ID}}?s={{$.CurrentUser.Session}}&type=convo-reply"><button class="username report_item flag_label" title="{{lang "profile.comments_report_tooltip"}}" aria-label="{{lang "profile.comments_report_aria"}}"></button></a>
 
-		{{if .User.Tag}}<a class="username hide_on_mobile user_tag" style="float:right;">{{.User.Tag}}</a>{{end}}
+		{{if .User.Tag}}<a class="username hide_on_mobile user_tag"style="float:right;">{{.User.Tag}}</a>{{end}}
 	</span>
 </div>
 {{end}}

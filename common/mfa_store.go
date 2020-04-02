@@ -5,7 +5,7 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/Azareal/Gosora/query_gen"
+	qgen "github.com/Azareal/Gosora/query_gen"
 )
 
 var MFAstore MFAStore
@@ -21,8 +21,8 @@ var mfaItemStmts MFAItemStmts
 func init() {
 	DbInits.Add(func(acc *qgen.Accumulator) error {
 		mfaItemStmts = MFAItemStmts{
-			update: acc.Update("users_2fa_keys").Set("scratch1 = ?, scratch2, scratch3 = ?, scratch3 = ?, scratch4 = ?, scratch5 = ?, scratch6 = ?, scratch7 = ?, scratch8 = ?").Where("uid = ?").Prepare(),
-			delete: acc.Delete("users_2fa_keys").Where("uid = ?").Prepare(),
+			update: acc.Update("users_2fa_keys").Set("scratch1=?,scratch2=?,scratch3=?,scratch4=?,scratch5=?,scratch6=?,scratch7=?,scratch8=?").Where("uid=?").Prepare(),
+			delete: acc.Delete("users_2fa_keys").Where("uid=?").Prepare(),
 		}
 		return acc.FirstError()
 	})
@@ -70,8 +70,8 @@ type SQLMFAStore struct {
 
 func NewSQLMFAStore(acc *qgen.Accumulator) (*SQLMFAStore, error) {
 	return &SQLMFAStore{
-		get:    acc.Select("users_2fa_keys").Columns("secret, scratch1, scratch2, scratch3, scratch4, scratch5, scratch6, scratch7, scratch8").Where("uid = ?").Prepare(),
-		create: acc.Insert("users_2fa_keys").Columns("uid, secret, scratch1, scratch2, scratch3, scratch4, scratch5, scratch6, scratch7, scratch8, createdAt").Fields("?,?,?,?,?,?,?,?,?,?,UTC_TIMESTAMP()").Prepare(),
+		get:    acc.Select("users_2fa_keys").Columns("secret,scratch1,scratch2,scratch3,scratch4,scratch5,scratch6,scratch7,scratch8").Where("uid=?").Prepare(),
+		create: acc.Insert("users_2fa_keys").Columns("uid,secret,scratch1,scratch2,scratch3,scratch4,scratch5,scratch6,scratch7,scratch8,createdAt").Fields("?,?,?,?,?,?,?,?,?,?,UTC_TIMESTAMP()").Prepare(),
 	}, acc.FirstError()
 }
 
