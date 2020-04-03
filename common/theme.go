@@ -133,7 +133,60 @@ func (t *Theme) LoadStaticFiles() error {
 	}
 	t.ResourceTemplates.Funcs(fmap)
 	// TODO: Minify these
-	template.Must(t.ResourceTemplates.ParseGlob("./themes/" + t.Name + "/public/*.css"))
+	//template.Must(t.ResourceTemplates.ParseGlob("./themes/" + t.Name + "/public/*.css"))
+	fnames, err := filepath.Glob("./themes/" + t.Name + "/public/*.css")
+	if err != nil {
+		return err
+	}
+	for _, fname := range fnames {
+		b, err := ioutil.ReadFile(fname)
+		if err != nil {
+			return err
+		}
+		//b := []byte("trolololol")
+		//b = bytes.ReplaceAll(b, []byte{10}, []byte(""))
+		//b = bytes.Replace(b, []byte("\n\n"), []byte(""), -1)
+		//b = bytes.Replace(b, []byte("}\n."), []byte("}."), -1)
+		//b = bytes.Replace(b, []byte("}\n:"), []byte("}:"), -1)
+		s := func() string {
+			s := string(b)
+			rep := func(from, to string) {
+				s = strings.Replace(s, from, to, -1)
+			}
+			rep("\r", "")
+			rep("}\n", "}")
+			rep("\n{", "{")
+			rep("\n", "")
+			rep(`
+`, "")
+			rep(": {{", ":{{")
+			rep("display: ", "display:")
+			rep("float: ", "float:")
+			rep("-left: ", "-left:")
+			rep("-right: ", "-right:")
+			rep("-top: ", "-top:")
+			rep("-bottom: ", "-bottom:")
+			rep("border: ", "border:")
+			rep("radius: ", "radius:")
+			rep("content: ", "content:")
+			rep("width: ", "width:")
+			rep("padding: ", "padding:")
+			rep("-size: ", "-size:")
+			return s
+		}()
+		name := filepath.Base(fname)
+		t := t.ResourceTemplates
+		var tmpl *template.Template
+		/*if name == t.Name() {
+			tmpl = t
+		} else {*/
+		tmpl = t.New(name)
+		//}
+		_, err = tmpl.Parse(s)
+		if err != nil {
+			return err
+		}
+	}
 
 	// It should be safe for us to load the files for all the themes in memory, as-long as the admin hasn't setup a ridiculous number of themes
 	return t.AddThemeStaticFiles()
@@ -158,6 +211,9 @@ func (t *Theme) AddThemeStaticFiles() error {
 		}
 
 		ext := filepath.Ext(path)
+		if ext == ".js" {
+			data = bytes.Replace(data, []byte("\r"), []byte(""), -1)
+		}
 		if ext == ".css" && len(data) != 0 {
 			var b bytes.Buffer
 			pieces := strings.Split(path, "/")
@@ -169,6 +225,26 @@ func (t *Theme) AddThemeStaticFiles() error {
 				return err
 			}
 			data = b.Bytes()
+			rep := func(from, to string) {
+				data = bytes.Replace(data, []byte(from), []byte(to), -1)
+			}
+			rep("\t", "")
+			//rep("\n\n", "")
+			rep("\n", "")
+			rep("\n", "")
+			rep(`
+`, "")
+			rep("}\n.", "}.")
+			rep("}\n:", "}:")
+			rep(": #", ":#")
+			rep(" {", "{")
+			rep("{\n", "{")
+			rep(",\n", ",")
+			rep(";\n", ";")
+			rep(";\n}", ";}")
+			rep(": 0px;", ":0;")
+			rep("; }", ";}")
+			rep(", #", ",#")
 		}
 
 		path = strings.TrimPrefix(path, "themes/"+t.Name+"/public")

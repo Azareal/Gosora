@@ -221,7 +221,7 @@ func (list SFileList) JSTmplInit() error {
 }`, "=[]")
 		rep("o += ", "o+=")
 		rep(shortName+"_frags[", "fr[")
-		rep("function Tmpl_"+shortName+"(t_v) {","var Tmpl_"+shortName+"=(t_v)=>{")
+		rep("function Tmpl_"+shortName+"(t_v) {", "var Tmpl_"+shortName+"=(t_v)=>{")
 
 		fragset := tmpl.GetFrag(shortName)
 		if fragset != nil {
@@ -293,6 +293,9 @@ func (list SFileList) Init() error {
 		}
 		path = strings.TrimPrefix(path, "public/")
 		ext := filepath.Ext("/public/" + path)
+		if ext == ".js" {
+			data = bytes.Replace(data, []byte("\r"), []byte(""), -1)
+		}
 		mimetype := mime.TypeByExtension(ext)
 
 		// Get a checksum for CSPs and cache busting
