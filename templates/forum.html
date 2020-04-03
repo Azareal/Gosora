@@ -2,9 +2,9 @@
 
 <main id="forumItemList" itemscope itemtype="http://schema.org/ItemList">
 
-{{if gt .Page 1}}<div id="prevFloat" class="prev_button"><a class="prev_link" aria-label="{{lang "paginator.prev_page_aria"}}" rel="prev" href="{{.Forum.Link}}?page={{subtract .Page 1}}">{{lang "paginator.less_than"}}</a></div>{{end}}
-{{if ne .LastPage .Page}}<div id="nextFloat" class="next_button"><a class="next_link" aria-label="{{lang "paginator.next_page_aria"}}" rel="next" href="{{.Forum.Link}}?page={{add .Page 1}}">{{lang "paginator.greater_than"}}</a></div>{{end}}
-{{if not .CurrentUser.Loggedin}}<link rel="canonical" href="//{{.Site.URL}}{{.Forum.Link}}{{if gt .Page 1}}?page={{.Page}}{{end}}"/>{{end}}
+{{if gt .Page 1}}<div id="prevFloat"class="prev_button"><a class="prev_link"aria-label="{{lang "paginator.prev_page_aria"}}" rel="prev"href="{{.Forum.Link}}?page={{subtract .Page 1}}">{{lang "paginator.less_than"}}</a></div>{{end}}
+{{if ne .LastPage .Page}}<div id="nextFloat"class="next_button"><a class="next_link"aria-label="{{lang "paginator.next_page_aria"}}" rel="next"href="{{.Forum.Link}}?page={{add .Page 1}}">{{lang "paginator.greater_than"}}</a></div>{{end}}
+{{if not .CurrentUser.Loggedin}}<link rel="canonical"href="//{{.Site.URL}}{{.Forum.Link}}{{if gt .Page 1}}?page={{.Page}}{{end}}">{{end}}
 
 	<div id="forum_head_block" class="rowblock rowhead topic_list_title_block{{if .CurrentUser.Loggedin}} has_opt{{end}}">
 		<div class="rowitem forum_title">
@@ -15,12 +15,12 @@
 			{{if .CurrentUser.Perms.CreateTopic}}
 			<div class="opt dummy_opt"></div>
 			<div class="pre_opt auto_hide"></div>
-			<div class="opt create_topic_opt" title="{{lang "topic_list.create_topic_tooltip"}}" aria-label="{{lang "topic_list.create_topic_aria"}}"><a class="create_topic_link" href="/topics/create/{{.Forum.ID}}"></a></div>
+			<div class="opt create_topic_opt"title="{{lang "topic_list.create_topic_tooltip"}}" aria-label="{{lang "topic_list.create_topic_aria"}}"><a class="create_topic_link" href="/topics/create/{{.Forum.ID}}"></a></div>
 			{{/** TODO: Add a permissions check for this **/}}
-			<div class="opt mod_opt" title="{{lang "topic_list.moderate_tooltip"}}">
+			<div class="opt mod_opt"title="{{lang "topic_list.moderate_tooltip"}}">
 				<a class="moderate_link" href="#" aria-label="{{lang "topic_list.moderate_aria"}}"></a>
 			</div>
-			{{else}}<div class="opt locked_opt" title="{{lang "forum_locked_tooltip"}}" aria-label="{{lang "forum_locked_aria"}}"><a></a></div>{{end}}
+			{{else}}<div class="opt locked_opt"title="{{lang "forum_locked_tooltip"}}" aria-label="{{lang "forum_locked_aria"}}"><a></a></div>{{end}}
 		</div>
 		<div style="clear:both;"></div>
 	{{end}}
@@ -29,7 +29,7 @@
 	{{template "topics_mod_floater.html"}}
 	
 	{{if .CurrentUser.Perms.CreateTopic}}
-	<div id="forum_topic_create_form" class="rowblock topic_create_form quick_create_form auto_hide" aria-label="{{lang "quick_topic.aria"}}">
+	<div id="forum_topic_create_form"class="rowblock topic_create_form quick_create_form auto_hide"aria-label="{{lang "quick_topic.aria"}}">
 		<form id="quick_post_form" enctype="multipart/form-data" action="/topic/create/submit/?s={{.CurrentUser.Session}}" method="post"></form>
 		<img class="little_row_avatar" src="{{.CurrentUser.MicroAvatar}}" height=64 alt="{{lang "quick_topic.avatar_alt"}}" title="{{lang "quick_topic.avatar_tooltip"}}">
 		<input form="quick_post_form" id="topic_board_input" name="board" value="{{.Forum.ID}}" type="hidden">
@@ -52,11 +52,11 @@
 			<span class="selector"></span>
 			<a href="{{.Creator.Link}}"><img src="{{.Creator.MicroAvatar}}" height=64 alt="Avatar"title="{{.Creator.Name}}'s Avatar"aria-hidden="true"></a>
 			<span class="topic_inner_left">
-				<a class="rowtopic"href="{{.Link}}"itemprop="itemListElement" title="{{.Title}}"><span>{{.Title}}</span></a>
-				<br><a class="rowsmall starter" href="{{.Creator.Link}}" title="{{.Creator.Name}}">{{.Creator.Name}}</a>
+				<a class="rowtopic"href="{{.Link}}"itemprop="itemListElement"title="{{.Title}}"><span>{{.Title}}</span></a>
+				<br><a class="rowsmall starter"href="{{.Creator.Link}}"title="{{.Creator.Name}}">{{.Creator.Name}}</a>
 				{{/** TODO: Avoid the double '|' when both .IsClosed and .Sticky are set to true. We could probably do this with CSS **/}}
-				{{if .IsClosed}}<span class="rowsmall topic_status_e topic_status_closed" title="{{lang "status.closed_tooltip"}}"> | &#x1F512;&#xFE0E</span>{{end}}
-				{{if .Sticky}}<span class="rowsmall topic_status_e topic_status_sticky" title="{{lang "status.pinned_tooltip"}}"> | &#x1F4CD;&#xFE0E</span>{{end}}
+				{{if .IsClosed}}<span class="rowsmall topic_status_e topic_status_closed"title="{{lang "status.closed_tooltip"}}"> | &#x1F512;&#xFE0E</span>{{end}}
+				{{if .Sticky}}<span class="rowsmall topic_status_e topic_status_sticky"title="{{lang "status.pinned_tooltip"}}"> | &#x1F4CD;&#xFE0E</span>{{end}}
 			</span>
 			{{/** TODO: Phase this out of Cosora and remove it **/}}
 			<div class="topic_inner_right rowsmall">
@@ -75,8 +75,8 @@
 			<div class="topic_right_inside">
 				<a href="{{.LastUser.Link}}"><img src="{{.LastUser.MicroAvatar}}"height=64 alt="Avatar"title="{{.LastUser.Name}}'s Avatar"aria-hidden="true"></a>
 				<span>
-					<a href="{{.LastUser.Link}}" class="lastName" title="{{.LastUser.Name}}">{{.LastUser.Name}}</a><br>
-					<a href="{{.Link}}?page={{.LastPage}}{{if .LastReplyID}}#post-{{.LastReplyID}}{{end}}" class="rowsmall lastReplyAt" title="{{abstime .LastReplyAt}}">{{reltime .LastReplyAt}}</a>
+					<a href="{{.LastUser.Link}}"class="lastName"title="{{.LastUser.Name}}">{{.LastUser.Name}}</a><br>
+					<a href="{{.Link}}?page={{.LastPage}}{{if .LastReplyID}}#post-{{.LastReplyID}}{{end}}"class="rowsmall lastReplyAt"title="{{abstime .LastReplyAt}}">{{reltime .LastReplyAt}}</a>
 				</span>
 			</div>
 		</div>

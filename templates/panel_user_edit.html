@@ -2,48 +2,48 @@
 	<div class="rowitem"><h1>{{lang "panel_user_head"}}</h1></div>
 </div>
 <div id="panel_user" class="colstack_item the_form">
-	<form id="user_form" action="/panel/users/edit/submit/{{.User.ID}}?s={{.CurrentUser.Session}}" method="post"></form>
-	<form id="avatar_form" enctype="multipart/form-data" action="/panel/users/avatar/submit/{{.User.ID}}?s={{.CurrentUser.Session}}" method="post"></form>
-	<form id="remove_avatar_form" action="/panel/users/avatar/remove/submit/{{.User.ID}}?s={{.CurrentUser.Session}}" method="post"></form>
+	<form id="user_form"action="/panel/users/edit/submit/{{.User.ID}}?s={{.CurrentUser.Session}}"method="post"></form>
+	<form id="avatar_form"enctype="multipart/form-data"action="/panel/users/avatar/submit/{{.User.ID}}?s={{.CurrentUser.Session}}"method="post"></form>
+	<form id="remove_avatar_form"action="/panel/users/avatar/remove/submit/{{.User.ID}}?s={{.CurrentUser.Session}}"method="post"></form>
 	<div class="formrow">
 		<div class="formitem formlabel"><a>{{lang "panel_user_avatar"}}</a></div>
 		<div class="formitem avataritem">
 			{{if .User.RawAvatar}}<img src="{{.User.Avatar}}"height=56 width=56>{{end}}
 			<div class="avatarbuttons">
-				<input form="avatar_form" id="select_avatar" name="avatar_file" type="file" required class="auto_hide">
-				<label for="select_avatar" class="formbutton">{{lang "panel_user_avatar_select"}}</label>
-				<button form="avatar_form" name="avatar_action" value=0>{{lang "panel_user_avatar_upload"}}</button>
-				{{if .User.RawAvatar}}<button form="remove_avatar_form" name="avatar_action" value=1>{{lang "panel_user_avatar_remove"}}</button>{{end}}
+				<input form="avatar_form"id="select_avatar"name="avatar_file"type="file" required class="auto_hide">
+				<label for="select_avatar"class="formbutton">{{lang "panel_user_avatar_select"}}</label>
+				<button form="avatar_form"name="avatar_action"value=0>{{lang "panel_user_avatar_upload"}}</button>
+				{{if .User.RawAvatar}}<button form="remove_avatar_form"name="avatar_action"value=1>{{lang "panel_user_avatar_remove"}}</button>{{end}}
 			</div>
 		</div>
 	</div>
 	<div class="formrow">
 		<div class="formitem formlabel"><a>{{lang "panel_user_name"}}</a></div>
-		<div class="formitem"><input form="user_form" name="name" type="text" value="{{.User.Name}}" placeholder="{{lang "panel_user_name_placeholder"}}" autocomplete="off"></div>
+		<div class="formitem"><input form="user_form"name="name"type="text"value="{{.User.Name}}"placeholder="{{lang "panel_user_name_placeholder"}}" autocomplete="off"></div>
 	</div>
 	{{if .CurrentUser.Perms.EditUserPassword}}<div class="formrow">
 		<div class="formitem formlabel"><a>{{lang "panel_user_password"}}</a></div>
-		<div class="formitem"><input form="user_form" name="password" type="password" placeholder="*****" autocomplete="off"></div>
+		<div class="formitem"><input form="user_form"name="password"type="password"placeholder="*****"autocomplete="off"></div>
 	</div>{{end}}
 	{{if .CurrentUser.Perms.EditUserEmail}}<div class="formrow">
 		<div class="formitem formlabel"><a>{{lang "panel_user_email"}}</a></div>
 		<div class="formitem">
-			{{if .ShowEmail}}<input form="user_form" name="show-email" value=1 type="hidden">
-			<input form="user_form" name="email" type="email" value="{{.User.Email}}" placeholder="example@localhost">{{else}}<input form="user_form" name="email" value="-1" type="hidden"><a href="/panel/users/edit/{{.User.ID}}?show-email=1"><button>{{lang "panel_user_show_email"}}</button></a>{{end}}
+			{{if .ShowEmail}}<input form="user_form"name="show-email"value=1 type="hidden">
+			<input form="user_form"name="email"type="email"value="{{.User.Email}}"placeholder="example@localhost">{{else}}<input form="user_form"name="email"value="-1"type="hidden"><a href="/panel/users/edit/{{.User.ID}}?show-email=1"><button>{{lang "panel_user_show_email"}}</button></a>{{end}}
 		</div>
 	</div>{{end}}
 	{{if .CurrentUser.Perms.EditUserGroup}}
 	<div class="formrow">
 		<div class="formitem formlabel"><a>{{lang "panel_user_group"}}</a></div>
 		<div class="formitem">
-			<select form="user_form" name="group">
+			<select form="user_form"name="group">
 			{{range .Groups}}<option{{if eq .ID $.User.Group}} selected{{end}} value={{.ID}}>{{.Name}}</option>{{end}}
 			</select>
 		</div>
 	</div>{{end}}
 	<div class="formrow">
 		<div class="formitem">
-			<button form="user_form" name="panel-button" class="formbutton">{{lang "panel_user_update_button"}}</button>
+			<button form="user_form"name="panel-button" class="formbutton">{{lang "panel_user_update_button"}}</button>
 		</div>
 	</div>
 </div>
