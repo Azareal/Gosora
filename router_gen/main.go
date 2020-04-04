@@ -278,6 +278,7 @@ func main() {
 		"proximic",
 		"majestic",
 		"blexbot",
+		"burf",
 		"aspiegel",
 		"mail_ru",
 		"ccbot",
@@ -343,6 +344,7 @@ func main() {
 		"proximic",
 		"MJ12bot",
 		"BLEXBot",
+		"Burf",
 		"AspiegelBot",
 		"RU_Bot", // Mail.RU_Bot
 		"CCBot",
@@ -403,6 +405,7 @@ func main() {
 		"proximic":     "proximic",
 		"MJ12bot":      "majestic",
 		"BLEXBot":      "blexbot",
+		"Burf":         "burf",
 		"AspiegelBot":  "aspiegel",
 		"RU_Bot":       "mail_ru", // Mail.RU_Bot
 		"CCBot":        "ccbot",
