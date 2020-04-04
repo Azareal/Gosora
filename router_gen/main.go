@@ -282,6 +282,7 @@ func main() {
 		"mail_ru",
 		"ccbot",
 		"zgrab",
+		"cloudsystemnetworks",
 		"curl",
 		"python",
 		"go",
@@ -346,6 +347,7 @@ func main() {
 		"RU_Bot", // Mail.RU_Bot
 		"CCBot",
 		"zgrab",
+		"Nimbostratus",
 		"curl",
 		"python",
 		"Go",
@@ -395,19 +397,20 @@ func main() {
 		"mattermost":          "mattermost",
 		"ia_archiver":         "alexa",
 
-		"SemrushBot":  "semrush",
-		"DotBot":      "dotbot",
-		"AhrefsBot":   "ahrefs",
-		"proximic":    "proximic",
-		"MJ12bot":     "majestic",
-		"BLEXBot":     "blexbot",
-		"AspiegelBot": "aspiegel",
-		"RU_Bot":      "mail_ru", // Mail.RU_Bot
-		"CCBot":       "ccbot",
-		"zgrab":       "zgrab",
-		"curl":        "curl",
-		"python":      "python",
-		"Go":          "go",
+		"SemrushBot":   "semrush",
+		"DotBot":       "dotbot",
+		"AhrefsBot":    "ahrefs",
+		"proximic":     "proximic",
+		"MJ12bot":      "majestic",
+		"BLEXBot":      "blexbot",
+		"AspiegelBot":  "aspiegel",
+		"RU_Bot":       "mail_ru", // Mail.RU_Bot
+		"CCBot":        "ccbot",
+		"zgrab":        "zgrab",
+		"Nimbostratus": "cloudsystemnetworks",
+		"curl":         "curl",
+		"python":       "python",
+		"Go":           "go",
 	}
 
 	tmplVars.AllAgentMarkIDs = make(map[string]int)
