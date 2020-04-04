@@ -369,7 +369,9 @@ function getExt(name) {
 					let sAlertList = localStorage.getItem("alertList");
 					let sAlertMapping = localStorage.getItem("alertMapping");
 					let sAlertCount = localStorage.getItem("alertCount");
-					if(sAlertList!=""&&sAlertMapping!=""&&sAlertCount!="") {
+					if(sAlertList!=null && sAlertList!="" &&
+						sAlertMapping!=null && sAlertMapping!="" &&sAlertCount!=null && sAlertCount!=""
+					) {
 						console.log("sAlertList",sAlertList)
 						console.log("sAlertMapping",sAlertMapping)
 						console.log("sAlertCount",sAlertCount)
