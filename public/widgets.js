@@ -1,5 +1,4 @@
 "use strict";
-
 $(document).ready(() => {
 	let clickHandle = function(ev){
 		console.log("in clickHandle")
@@ -41,9 +40,9 @@ $(document).ready(() => {
 		let widgetList = this.closest(".panel_widgets");
 		let widgetNew = this.closest(".widget_new");
 		let widgetTmpl = document.getElementById("widgetTmpl").querySelector(".widget_item");
-		let node = widgetTmpl.cloneNode(true);
-		node.querySelector(".wside").value = this.getAttribute("data-dock");
-		widgetList.insertBefore(node,widgetNew);
+		let n = widgetTmpl.cloneNode(true);
+		n.querySelector(".wside").value = this.getAttribute("data-dock");
+		widgetList.insertBefore(n,widgetNew);
 		$(".widget_item a").unbind("click");
 		$(".widget_item a").click(clickHandle);
 		$(".wtype_sel").unbind("change");
@@ -55,11 +54,11 @@ $(document).ready(() => {
 		ev.preventDefault();
 		ev.stopPropagation();
 		let pform = this.closest("form");
-		let data = new URLSearchParams();
-		for (const pair of new FormData(pform)) data.append(pair[0], pair[1]);
-		data.append("s",me.User.S);
+		let dat = new URLSearchParams();
+		for (const pair of new FormData(pform)) dat.append(pair[0], pair[1]);
+		dat.append("s",me.User.S);
 		var req = new XMLHttpRequest();
-		req.open("POST", pform.getAttribute("action"));
-		req.send(data);
+		req.open("POST",pform.getAttribute("action"));
+		req.send(dat);
 	});
 });

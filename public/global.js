@@ -156,6 +156,13 @@ function loadAlerts(menuAlerts,eTc=false) {
 			for(var i in data.msgs) addAlert(data.msgs[i]);
 			alertCount = data.count;
 			updateAlertList(menuAlerts);
+			try {
+				localStorage.setItem("alertList",JSON.stringify(alertList));
+				localStorage.setItem("alertMapping",JSON.stringify(alertMapping));
+				localStorage.setItem("alertCount",alertCount);
+			} catch(e) {
+				localStorage.clear();
+			}
 			//}
 			lastTc = data.tc;
 		},
@@ -353,13 +360,21 @@ function getExt(name) {
 		notifyOnScriptW("tmpl_alert", e => {
 			if(e!=undefined) console.log("failed alert? why?",e)
 		}, () => {
-			if(!Tmpl_alert) throw("template function not found");
+			if(!Tmpl_alert) throw("tmpl func not found");
 			addInitHook("after_phrases", () => {
 				// TODO: The load part of loadAlerts could be done asynchronously while the update of the DOM could be deferred
 				$(document).ready(() => {
 					alertsInitted = true;
-					let alertMenuList = document.getElementsByClassName("menu_alerts");
-					for(var i=0; i<alertMenuList.length; i++) loadAlerts(alertMenuList[i]);
+					let al = document.getElementsByClassName("menu_alerts");
+					let sAlertList = localStorage.getItem("alertList");
+					let sAlertMapping = localStorage.getItem("alertMapping");
+					let sAlertCount = localStorage.getItem("alertCount");
+					if(sAlertList!=""&&sAlertMapping!=""&&sAlertCount!="") {
+						alertList = JSON.parse(sAlertList)
+						alertMapping = JSON.parse(sAlertMapping)
+						alertCount =  parseInt(sAlertCount)
+						for(var i=0; i<al.length; i++) loadAlerts(al[i],true);
+					} else for(var i=0; i<al.length; i++) loadAlerts(al[i]);
 					if(window["WebSocket"]) runWebSockets();
 				});
 			});
