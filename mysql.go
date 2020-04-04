@@ -12,7 +12,7 @@ import (
 	"log"
 
 	c "github.com/Azareal/Gosora/common"
-	"github.com/Azareal/Gosora/query_gen"
+	qgen "github.com/Azareal/Gosora/query_gen"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/pkg/errors"
 )
@@ -60,19 +60,19 @@ func initMySQL() (err error) {
 	}*/
 
 	log.Print("Preparing getActivityFeedByWatcher statement.")
-	stmts.getActivityFeedByWatcher, err = db.Prepare("SELECT activity_stream_matches.asid, activity_stream.actor, activity_stream.targetUser, activity_stream.event, activity_stream.elementType, activity_stream.elementID, activity_stream.createdAt FROM `activity_stream_matches` INNER JOIN `activity_stream` ON activity_stream_matches.asid = activity_stream.asid AND activity_stream_matches.watcher != activity_stream.actor WHERE `watcher` = ? ORDER BY activity_stream.asid DESC LIMIT ?")
+	stmts.getActivityFeedByWatcher, err = db.Prepare("SELECT activity_stream_matches.asid, activity_stream.actor, activity_stream.targetUser, activity_stream.event, activity_stream.elementType, activity_stream.elementID, activity_stream.createdAt FROM activity_stream_matches INNER JOIN activity_stream ON activity_stream_matches.asid = activity_stream.asid AND activity_stream_matches.watcher != activity_stream.actor WHERE watcher=? ORDER BY activity_stream.asid DESC LIMIT ?")
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
 	/*log.Print("Preparing getActivityFeedByWatcherAfter statement.")
-	stmts.getActivityFeedByWatcherAfter, err = db.Prepare("SELECT activity_stream_matches.asid, activity_stream.actor, activity_stream.targetUser, activity_stream.event, activity_stream.elementType, activity_stream.elementID, activity_stream.createdAt FROM `activity_stream_matches` INNER JOIN `activity_stream` ON activity_stream_matches.asid = activity_stream.asid AND activity_stream_matches.watcher != activity_stream.actor WHERE `watcher` = ? AND createdAt => ? ORDER BY activity_stream.asid DESC LIMIT ?")
+	stmts.getActivityFeedByWatcherAfter, err = db.Prepare("SELECT activity_stream_matches.asid, activity_stream.actor, activity_stream.targetUser, activity_stream.event, activity_stream.elementType, activity_stream.elementID, activity_stream.createdAt FROM activity_stream_matches INNER JOIN activity_stream ON activity_stream_matches.asid = activity_stream.asid AND activity_stream_matches.watcher != activity_stream.actor WHERE watcher=? AND asid => ? ORDER BY activity_stream.asid DESC LIMIT ?")
 	if err != nil {
 		return errors.WithStack(err)
 	}*/
 
 	log.Print("Preparing getActivityCountByWatcher statement.")
-	stmts.getActivityCountByWatcher, err = db.Prepare("SELECT count(*) FROM `activity_stream_matches` INNER JOIN `activity_stream` ON activity_stream_matches.asid = activity_stream.asid AND activity_stream_matches.watcher != activity_stream.actor WHERE `watcher` = ?")
+	stmts.getActivityCountByWatcher, err = db.Prepare("SELECT count(*) FROM activity_stream_matches INNER JOIN activity_stream ON activity_stream_matches.asid = activity_stream.asid AND activity_stream_matches.watcher != activity_stream.actor WHERE watcher=?")
 	if err != nil {
 		return errors.WithStack(err)
 	}

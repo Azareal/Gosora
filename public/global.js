@@ -1,34 +1,34 @@
 'use strict';
-var formVars = {};
-var alertMapping = {};
-var alertList = [];
-var alertCount = 0;
-var moreTopicCount = 0;
-var conn = false;
-var selectedTopics = [];
-var attachItemCallback = function(){}
-var quoteItemCallback = function(){}
-var baseTitle = document.title;
-var wsBackoff = 0;
-var noAlerts = false;
+var formVars={};
+var alertMapping={};
+var alertList=[];
+var alertCount=0;
+var moreTopicCount=0;
+var conn=false;
+var selectedTopics=[];
+var attachItemCallback=function(){}
+var quoteItemCallback=function(){}
+var baseTitle=document.title;
+var wsBackoff=0;
+var noAlerts=false;
 
 // Topic move
-var forumToMoveTo = 0;
+var forumToMoveTo=0;
 
 function pushNotice(msg) {
 	let aBox = document.getElementsByClassName("alertbox")[0];
-	let div = document.createElement('div');
-	div.innerHTML = Tmpl_notice(msg).trim();
-	aBox.appendChild(div);
+	let n = document.createElement('div');
+	n.innerHTML = Tmpl_notice(msg).trim();
+	aBox.appendChild(n);
 	runInitHook("after_notice");
 }
 
 // TODO: Write a friendlier error handler which uses a .notice or something, we could have a specialised one for alerts
-function ajaxError(xhr,status,errstr) {
+function ajaxError(xhr,status,er) {
 	console.log("The AJAX request failed");
 	console.log("xhr",xhr);
 	console.log("status",status);
-	console.log("err",errstr);
+	console.log("er",er);
 	if(status=="parsererror") console.log("The server didn't respond with a valid JSON response");
 	console.trace();
 }
@@ -58,11 +58,11 @@ function bindToAlerts() {
 	});
 }
 
-function addAlert(msg, notice=false) {
+function addAlert(msg,notice=false) {
 	var mmsg = msg.msg;
 	if(mmsg[0]==".") mmsg = phraseBox["alerts"]["alerts"+mmsg];
 	if("sub" in msg) {
-		for(var i = 0; i < msg.sub.length; i++) mmsg = mmsg.replace("\{"+i+"\}", msg.sub[i]);
+		for(var i=0; i<msg.sub.length; i++) mmsg = mmsg.replace("\{"+i+"\}", msg.sub[i]);
 	}
 
 	let aItem = Tmpl_alert({
@@ -80,12 +80,12 @@ function addAlert(msg, notice=false) {
 	if(notice) {
 		// TODO: Add some sort of notification queue to avoid flooding the end-user with notices?
 		// TODO: Use the site name instead of "Something Happened"
-		if(Notification.permission === "granted") {
+		if(Notification.permission==="granted") {
 			var n = new Notification("Something Happened",{
 				body: mmsg,
 				icon: msg.img,
 			});
-			setTimeout(n.close.bind(n), 8000);
+			setTimeout(n.close.bind(n),8000);
 		}
 	}
 
@@ -100,7 +100,7 @@ function updateAlertList(menuAlerts) {
 	alertListNode.innerHTML = "";
 	let any = false;
 	let j = 0;
-	for(var i = 0; i < alertList.length && j < 8; i++) {
+	for(var i=0; i<alertList.length && j<8; i++) {
 		any = true;
 		alertListNode.appendChild(alertMapping[alertList[i]]);
 		//outList += alertMapping[alertList[i]];
@@ -108,7 +108,7 @@ function updateAlertList(menuAlerts) {
 	}
 	if(!any) alertListNode.innerHTML = "<div class='alertItem'>"+phraseBox["alerts"]["alerts.no_alerts"]+"</div>";
 
-	if(alertCount != 0) {
+	if(alertCount!=0) {
 		alertCounterNode.textContent = alertCount;
 		menuAlerts.classList.add("has_alerts");
 		let nTitle = "("+alertCount+") "+baseTitle;
@@ -120,7 +120,7 @@ function updateAlertList(menuAlerts) {
 
 	bindToAlerts();
 	console.log("alertCount",alertCount)
-	runInitHook("after_update_alert_list", alertCount);
+	runInitHook("after_update_alert_list",alertCount);
 }
 
 function setAlertError(menuAlerts,msg) {
@@ -133,78 +133,80 @@ var lastTc = 0;
 function loadAlerts(menuAlerts,eTc=false) {
 	if(!alertsInitted) return;
 	let tc = "";
-	if(eTc && lastTc != 0) tc = "&t=" + lastTc + "&c=" + alertCount;
+	if(eTc && lastTc!=0) tc = "&t="+lastTc+"&c="+alertCount;
 	$.ajax({
 		type:'get',
 		dataType:'json',
-		url:'/api/?m=alerts' + tc,
+		url:'/api/?m=alerts'+tc,
 		success: data => {
 			if("errmsg" in data) {
 				setAlertError(menuAlerts,data.errmsg)
 				return;
 			}
-			alertList = [];
-			alertMapping = {};
+			if(!eTc) {
+				alertList=[];
+				alertMapping={};
+			}
 			if(!data.hasOwnProperty("msgs")) data = {"msgs":[],"count":alertCount,"tc":lastTc};
 			/*else if(data.count != (alertCount + data.msgs.length)) tc = false;
-			if(eTc && lastTc != 0) {
+			if(eTc && lastTc!=0) {
 				for(var i in data.msgs) wsAlertEvent(data.msgs[i]);
 			} else {*/
-				console.log("data",data);
-				for(var i in data.msgs) addAlert(data.msgs[i]);
-				alertCount = data.count;
-				updateAlertList(menuAlerts);
+			console.log("data",data);
+			for(var i in data.msgs) addAlert(data.msgs[i]);
+			alertCount = data.count;
+			updateAlertList(menuAlerts);
 			//}
 			lastTc = data.tc;
 		},
-		error: (magic,theStatus,err) => {
+		error: (magic,status,er) => {
 			let errtxt = "Unable to get the alerts";
 			try {
-				var data = JSON.parse(magic.responseText);
-				if("errmsg" in data) errtxt = data.errmsg;
-			} catch(err) {
+				let dat = JSON.parse(magic.responseText);
+				if("errmsg" in dat) errtxt = dat.errmsg;
+			} catch(e) {
 				console.log(magic.responseText);
-				console.log(err);
+				console.log(e);
 			}
-			console.log("err", err);
+			console.log("er",er);
 			setAlertError(menuAlerts,errtxt);
 		}
 	});
 }
 
 function SplitN(data,ch,n) {
-	var out = [];
-	if(data.length === 0) return out;
+	var o = [];
+	if(data.length===0) return o;
 
 	var lastI = 0;
 	var j = 0;
 	var lastN = 1;
-	for(let i = 0; i < data.length; i++) {
+	for(let i=0; i<data.length; i++) {
 		if(data[i] === ch) {
-			out[j++] = data.substring(lastI,i);
+			o[j++] = data.substring(lastI,i);
 			lastI = i;
 			if(lastN === n) break;
 			lastN++;
 		}
 	}
-	if(data.length > lastI) out[out.length - 1] += data.substring(lastI);
-	return out;
+	if(data.length > lastI) o[o.length - 1] += data.substring(lastI);
+	return o;
 }
 
-function wsAlertEvent(data) {
-	console.log("wsAlertEvent",data)
-	addAlert(data, true);
+function wsAlertEvent(dat) {
+	console.log("wsAlertEvent",dat)
+	addAlert(dat,true);
 	alertCount++;
 
 	let aTmp = alertList;
 	alertList = [alertList[alertList.length-1]];
 	aTmp = aTmp.slice(0,-1);
-	for(let i = 0; i < aTmp.length; i++) alertList.push(aTmp[i]);
+	for(let i=0; i<aTmp.length; i++) alertList.push(aTmp[i]);
 	// TODO: Add support for other alert feeds like PM Alerts
-	var generalAlerts = document.getElementById("general_alerts");
+	let n = document.getElementById("general_alerts");
 	// TODO: Make sure we update alertCount here
 	lastTc = 0;
-	updateAlertList(generalAlerts/*, alist*/);
+	updateAlertList(n/*,alist*/);
 }
 
 function runWebSockets(resume=false) {
@@ -212,7 +214,7 @@ function runWebSockets(resume=false) {
 	if(window.location.protocol == "https:") s = "s";
 	conn = new WebSocket("ws"+s+"://" + document.location.host + "/ws/");
 
-	conn.onerror = (err) => {
+	conn.onerror = err => {
 		console.log(err);
 	}
 
@@ -236,8 +238,8 @@ function runWebSockets(resume=false) {
 
 		setTimeout(() => {
 			if(!noAlerts) {
-				let alertMenuList = document.getElementsByClassName("menu_alerts");
-				for(var i=0; i < alertMenuList.length; i++) loadAlerts(alertMenuList[i]);
+				let nl = document.getElementsByClassName("menu_alerts");
+				for(var i=0; i < nl.length; i++) loadAlerts(nl[i],true);
 			}
 			runWebSockets(true);
 		}, backoff * 60 * 1000);
@@ -260,9 +262,9 @@ function runWebSockets(resume=false) {
 				return;
 			}
 
-			if ("msg" in data) wsAlertEvent(data);
+			if("msg" in data) wsAlertEvent(data);
 			else if("event" in data) {
-				if(data.event == "dismiss-alert"){
+				if(data.event=="dismiss-alert"){
 					Object.keys(alertMapping).forEach((key) => {
 						if(key!=data.id) return;
 						alertCount--;
@@ -275,15 +277,13 @@ function runWebSockets(resume=false) {
 						}
 						if(index==-1) return;
 
-						for(var i = index; (i+1) < alertList.length; i++) {
-							alertList[i] = alertList[i+1];
-						}
+						for(var i = index; (i+1) < alertList.length; i++) alertList[i] = alertList[i+1];
 						alertList.splice(alertList.length-1,1);
 						delete alertMapping[key];
 
 						// TODO: Add support for other alert feeds like PM Alerts
 						let generalAlerts = document.getElementById("general_alerts");
-						if(alertList.length < 8) loadAlerts(generalAlerts);
+						if(alertList.length < 8) loadAlerts(generalAlerts,true);
 						else updateAlertList(generalAlerts);
 					});
 				}
@@ -305,23 +305,21 @@ function runWebSockets(resume=false) {
 				$(".topic_list").prepend(node);
 				moreTopicCount++;
 
-				let moreTopicBlocks = document.getElementsByClassName("more_topic_block_initial");
-				for(let i=0; i < moreTopicBlocks.length; i++) {
-					let moreTopicBlock = moreTopicBlocks[i];
-					moreTopicBlock.classList.remove("more_topic_block_initial");
-					moreTopicBlock.classList.add("more_topic_block_active");
+				let blocks = document.getElementsByClassName("more_topic_block_initial");
+				for(let i=0; i < blocks.length; i++) {
+					let block = blocks[i];
+					block.classList.remove("more_topic_block_initial");
+					block.classList.add("more_topic_block_active");
 
 					console.log("phraseBox",phraseBox);
-					let msgBox = moreTopicBlock.getElementsByClassName("more_topics")[0];
+					let msgBox = block.getElementsByClassName("more_topics")[0];
 					msgBox.innerText = phraseBox["topic_list"]["topic_list.changed_topics"].replace("%d",moreTopicCount);
 				}
-			} else {
-				console.log("unknown message", data);
-			}
+			} else console.log("unknown message",data);
 		}
 
 		let messages = event.data.split('\r');
-		for(var i=0; i < messages.length; i++) {
+		for(var i=0; i<messages.length; i++) {
 			let message = messages[i];
 			//console.log("message",message);
 			let msgblocks = SplitN(message," ",3);
@@ -360,8 +358,8 @@ function getExt(name) {
 				// TODO: The load part of loadAlerts could be done asynchronously while the update of the DOM could be deferred
 				$(document).ready(() => {
 					alertsInitted = true;
-					var alertMenuList = document.getElementsByClassName("menu_alerts");
-					for(var i = 0; i < alertMenuList.length; i++) loadAlerts(alertMenuList[i]);
+					let alertMenuList = document.getElementsByClassName("menu_alerts");
+					for(var i=0; i<alertMenuList.length; i++) loadAlerts(alertMenuList[i]);
 					if(window["WebSocket"]) runWebSockets();
 				});
 			});
@@ -391,7 +389,7 @@ function PageOffset(count,page,perPage) {
 
 	// We don't want the offset to overflow the slices, if everything's in memory
 	//if(offset >= (count - 1)) offset = 0;
-	return {Offset:offset, Page:page, LastPage:lastPage};
+	return {Offset:offset,Page:page,LastPage:lastPage};
 }
 function LastPage(count,perPage) {
 	return (count / perPage) + 1
@@ -403,12 +401,12 @@ function Paginate(currentPage,lastPage,maxPages) {
 	
 	let page = currentPage - pre;
 	if(page < 0) page = 0;
-	let out = [];
-	while(out.length < maxPages && page < lastPage){
+	let o = [];
+	while(o.length < maxPages && page < lastPage){
 		page++;
-		out.push(page);
+		o.push(page);
 	}
-	return out;
+	return o;
 }
 
 function mainInit(){
@@ -416,9 +414,9 @@ function mainInit(){
 
 	$(".more_topics").click(ev => {
 		ev.preventDefault();
-		let moreTopicBlocks = document.getElementsByClassName("more_topic_block_active");
-		for(let i = 0; i < moreTopicBlocks.length; i++) {
-			let block = moreTopicBlocks[i];
+		let blocks = document.getElementsByClassName("more_topic_block_active");
+		for(let i=0; i<blocks.length; i++) {
+			let block = blocks[i];
 			block.classList.remove("more_topic_block_active");
 			block.classList.add("more_topic_block_initial");
 		}
@@ -443,29 +441,29 @@ function mainInit(){
 			this.classList.remove("add_like");
 			this.classList.add("remove_like");
 			if(!hadLikes) controls.classList.add("has_likes");
-			this.closest("a").setAttribute("href", target.replace("like","unlike"));
+			this.closest("a").setAttribute("href",target.replace("like","unlike"));
 			likeCountNode.innerHTML = parseInt(likeCountNode.innerHTML) + 1;
 		} else {
 			this.classList.remove("remove_like");
 			this.classList.add("add_like");
 			let likeCount = parseInt(likeCountNode.innerHTML);
 			if(likeCount==1) controls.classList.remove("has_likes");
-			this.closest("a").setAttribute("href", target.replace("unlike","like"));
+			this.closest("a").setAttribute("href",target.replace("unlike","like"));
 			likeCountNode.innerHTML = parseInt(likeCountNode.innerHTML) - 1;
 		}
 
 		//let likeButton = this;
 		$.ajax({
-			url: target,
-			type: "POST",
-			dataType: "json",
+			url:target,
+			type:"POST",
+			dataType:"json",
 			data: { js: 1 },
 			error: ajaxError,
-			success: function (data,status,xhr) {
-				if("success" in data && data["success"] == "1") return;
+			success: function (dat,status,xhr) {
+				if("success" in dat && dat["success"] == "1") return;
 				// addNotice("Failed to add a like: {err}")
 				//likeCountNode.innerHTML = parseInt(likeCountNode.innerHTML)-1;
-				console.log("data",data);
+				console.log("data",dat);
 				console.log("status",status);
 				console.log("xhr",xhr);
 			}
@@ -474,10 +472,10 @@ function mainInit(){
 
 	$(".link_label").click(function(ev) {
 		ev.preventDefault();
-		let linkSelect = $('#'+$(this).attr("data-for"));
-		if(!linkSelect.hasClass("link_opened")) {
+		let linkSel = $('#'+$(this).attr("data-for"));
+		if(!linkSel.hasClass("link_opened")) {
 			ev.stopPropagation();
-			linkSelect.addClass("link_opened");
+			linkSel.addClass("link_opened");
 		}
 	});
 
@@ -513,23 +511,23 @@ function mainInit(){
 				.then(resp => {
 					if(!resp.ok) throw(url+q+"&js=1 failed to load");
 					return resp.json();
-				}).then(data => {
-					if(!"Topics" in data) throw("no Topics in data");
-					let topics = data["Topics"];
+				}).then(dat => {
+					if(!"Topics" in dat) throw("no Topics in data");
+					let topics = dat["Topics"];
 					console.log("ajax navigated to different page");
 
 					// TODO: Fix the data race where the function hasn't been loaded yet
 					let out = "";
-					for(let i = 0; i < topics.length;i++) out += Tmpl_topics_topic(topics[i]);
+					for(let i=0; i<topics.length;i++) out += Tmpl_topics_topic(topics[i]);
 					$(".topic_list").html(out);
 
-					let obj = {Title: document.title, Url: url+q};
-					history.pushState(obj, obj.Title, obj.Url);
-					rebuildPaginator(data.LastPage);
+					let obj = {Title:document.title, Url:url+q};
+					history.pushState(obj,obj.Title,obj.Url);
+					rebuildPaginator(dat.LastPage);
 					rebindPaginator();
-				}).catch(ex => {
+				}).catch(e => {
 					console.log("Unable to get script '"+url+q+"&js=1"+"'");
-					console.log("ex",ex);
+					console.log("e",e);
 					console.trace();
 				});
 		});
@@ -544,19 +542,19 @@ function mainInit(){
 		// TODO: Take mostviewed into account
 		let url = "//"+window.location.host+"/topics/?fids="+fid;
 
-		fetch(url+"&js=1", {credentials: "same-origin"})
+		fetch(url+"&js=1",{credentials: "same-origin"})
 		.then(resp => {
 			if(!resp.ok) throw(url+"&js=1 failed to load");
 			return resp.json();
-		}).then(data => {
-			console.log("data",data);
-			if(!"Topics" in data) throw("no Topics in data");
-			let topics = data["Topics"];
+		}).then(dat => {
+			console.log("data",dat);
+			if(!"Topics" in dat) throw("no Topics in data");
+			let topics = dat["Topics"];
 			console.log("ajax navigated to "+that.innerText);
 			
 			// TODO: Fix the data race where the function hasn't been loaded yet
 			let out = "";
-			for(let i = 0; i < topics.length;i++) out += Tmpl_topics_topic(topics[i]);
+			for(let i=0;i<topics.length;i++) out += Tmpl_topics_topic(topics[i]);
 			$(".topic_list").html(out);
 			//$(".topic_list").addClass("single_forum");
 
@@ -565,7 +563,7 @@ function mainInit(){
 			else document.title = baseTitle;
 			let obj = {Title: document.title, Url: url};
 			history.pushState(obj, obj.Title, obj.Url);
-			rebuildPaginator(data.LastPage)
+			rebuildPaginator(dat.LastPage)
 			rebindPaginator();
 
 			$(".filter_item").each(function(){
@@ -573,9 +571,9 @@ function mainInit(){
 			});
 			that.classList.add("filter_selected");
 			$(".topic_list_title h1").text(that.innerText);
-		}).catch(ex => {
+		}).catch(e => {
 			console.log("Unable to get script '"+url+"&js=1"+"'");
-			console.log("ex",ex);
+			console.log("e",e);
 			console.trace();
 		});
 	});
@@ -596,7 +594,7 @@ function mainInit(){
 		if(q.length>1) q = q.slice(0,-1);
 
 		// TODO: Try to de-duplicate some of these fetch calls
-		fetch(url+q+"&js=1", {credentials: "same-origin"})
+		fetch(url+q+"&js=1",{credentials:"same-origin"})
 			.then(resp => {
 				if(!resp.ok) throw(url+q+"&js=1 failed to load");
 				return resp.json();
@@ -607,7 +605,7 @@ function mainInit(){
 
 				// TODO: Fix the data race where the function hasn't been loaded yet
 				let out = "";
-				for(let i = 0; i < topics.length;i++) out += Tmpl_topics_topic(topics[i]);
+				for(let i=0; i < topics.length;i++) out += Tmpl_topics_topic(topics[i]);
 				$(".topic_list").html(out);
 
 				baseTitle = phraseBox["topic_list"]["topic_list.search_head"];
@@ -618,9 +616,9 @@ function mainInit(){
 				history.pushState(obj, obj.Title, obj.Url);
 				rebuildPaginator(data.LastPage);
 				rebindPaginator();
-		}).catch(ex => {
+		}).catch(e => {
 			console.log("Unable to get script '"+url+q+"&js=1"+"'");
-			console.log("ex",ex);
+			console.log("e",e);
 			console.trace();
 		});
 	});
@@ -643,8 +641,8 @@ function mainInit(){
 			let formAction = $(this).closest('a').attr("href");
 			$.ajax({
 				url: formAction + "?s=" + me.User.S,
-				type: "POST",
-				dataType: "json",
+				type:"POST",
+				dataType:"json",
 				error: ajaxError,
 				data: { js: 1, edit_item: content }
 			});
@@ -655,11 +653,11 @@ function mainInit(){
 		ev.preventDefault();
 		if($(this).find("input").length!==0) return;
 		//console.log("clicked .edit_fields");
-		var blockParent = $(this).closest('.editable_parent');
-		blockParent.find('.hide_on_edit').addClass("edit_opened");
-		blockParent.find('.show_on_edit').addClass("edit_opened");
-		blockParent.find('.editable_block').show();
-		blockParent.find('.editable_block').each(function(){
+		var bp = $(this).closest('.editable_parent');
+		bp.find('.hide_on_edit').addClass("edit_opened");
+		bp.find('.show_on_edit').addClass("edit_opened");
+		bp.find('.editable_block').show();
+		bp.find('.editable_block').each(function(){
 			var fieldName = this.getAttribute("data-field");
 			var fieldType = this.getAttribute("data-type");
 			if(fieldType=="list") {
@@ -668,11 +666,11 @@ function mainInit(){
 				else var it = ['No','Yes'];
 				var itLen = it.length;
 				var out = "";
-				for (var i = 0; i < itLen; i++) {
+				for (var i=0; i<itLen; i++) {
 					var sel = "";
 					if(fieldValue == i || fieldValue == it[i]) {
 						sel = "selected ";
-						this.classList.remove(fieldName + '_' + it[i]);
+						this.classList.remove(fieldName+'_'+it[i]);
 						this.innerHTML = "";
 					}
 					out += "<option "+sel+"value='"+i+"'>"+it[i]+"</option>";
@@ -707,10 +705,10 @@ function mainInit(){
 				outData[fieldName] = newContent;
 			});
 
-			var formAction = $(this).closest('a').attr("href");
-			//console.log("Form Action", formAction);
+			let href = $(this).closest('a').attr("href");
+			//console.log("href",href);
 			//console.log(outData);
-			$.ajax({ url: formAction + "?s=" + me.User.S, type:"POST", dataType:"json", data: outData, error: ajaxError });
+			$.ajax({ url: href + "?s=" + me.User.S, type:"POST", dataType:"json", data: outData, error: ajaxError });
 			bp.find('.hide_on_edit').removeClass("edit_opened");
 			bp.find('.show_on_edit').removeClass("edit_opened");
 		});
@@ -723,7 +721,7 @@ function mainInit(){
 	});
 
 	$(".alert_bell").click(function(){
-		var menuAlerts = $(this).parent();
+		let menuAlerts = $(this).parent();
 		if(menuAlerts.hasClass("selectedAlert")) {
 			event.stopPropagation();
 			menuAlerts.removeClass("selectedAlert");
@@ -733,7 +731,7 @@ function mainInit(){
 	$(".menu_alerts").click(function(ev) {
 		ev.stopPropagation();
 		if($(this).hasClass("selectedAlert")) return;
-		if(!conn) loadAlerts(this);
+		if(!conn) loadAlerts(this,true);
 		this.className += " selectedAlert";
 		document.getElementById("back").className += " alertActive"
 	});
@@ -751,16 +749,16 @@ function mainInit(){
 	});
 
 	$("#themeSelectorSelect").change(function(){
-		console.log("Changing the theme to " + this.options[this.selectedIndex].getAttribute("value"));
+		console.log("Changing the theme to "+this.options[this.selectedIndex].getAttribute("value"));
 		$.ajax({
 			url: this.form.getAttribute("action") + "?s=" + me.User.S,
-			type: "POST",
-			dataType: "json",
+			type:"POST",
+			dataType:"json",
 			data: { "theme": this.options[this.selectedIndex].getAttribute("value"), js: 1 },
 			error: ajaxError,
-			success: function (data,status,xhr) {
+			success: function (dat,status,xhr) {
 				console.log("Theme successfully switched");
-				console.log("data",data);
+				console.log("dat",dat);
 				console.log("status",status);
 				console.log("xhr",xhr);
 				window.location.reload();
@@ -879,9 +877,9 @@ function mainInit(){
 				$(".elapsed").remove();
 				let obj = {Title: document.title, Url: base};
 				history.pushState(obj, obj.Title, obj.Url);
-			}).catch(ex => {
+			}).catch(e => {
 				console.log("Unable to get script '"+href+""+"'");
-				console.log("ex",ex);
+				console.log("e",e);
 				console.trace();
 			});
 		
@@ -934,8 +932,8 @@ function bindTopic() {
 				js: 1
 			},
 			error: ajaxError,
-			success: (data,status,xhr) => {
-				if("Content" in data) $(".topic_content").html(data["Content"]);
+			success: (dat,status,xhr) => {
+				if("Content" in dat) $(".topic_content").html(dat["Content"]);
 			}
 		});
 	});
@@ -1003,8 +1001,8 @@ function bindTopic() {
 				dataType:"json",
 				data: { js: 1, edit_item: content },
 				error: ajaxError,
-				success: (data,status,xhr) => {
-					if("Content" in data) block.innerHTML = data["Content"];
+				success: (dat,status,xhr) => {
+					if("Content" in dat) block.innerHTML = dat["Content"];
 				}
 			});
 		});
@@ -1018,8 +1016,8 @@ function bindTopic() {
 		console.log("content.value",content.value);
 
 		let item;
-		if(content.value=="") item = "<blockquote>" + src.innerHTML + "</blockquote>"
-		else item = "\r\n<blockquote>" + src.innerHTML + "</blockquote>";
+		if(content.value=="") item = "<blockquote>"+src.innerHTML+"</blockquote>"
+		else item = "\r\n<blockquote>"+src.innerHTML+"</blockquote>";
 		content.value = content.value + item;
 		console.log("content.value",content.value);
 
@@ -1027,18 +1025,18 @@ function bindTopic() {
 		quoteItemCallback(src.innerHTML,item);
 	});
 
-	//id="poll_results_{{.Poll.ID}}" class="poll_results auto_hide"
+	//id="poll_results_{pollid}" class="poll_results auto_hide"
 	$(".poll_results_button").click(function(){
 		let pollID = $(this).attr("data-poll-id");
-		$("#poll_results_" + pollID).removeClass("auto_hide");
-		fetch("/poll/results/" + pollID, {
+		$("#poll_results_"+pollID).removeClass("auto_hide");
+		fetch("/poll/results/"+pollID, {
 			credentials: 'same-origin'
-		}).then(resp => resp.text()).catch(err => console.error("err",err)).then(rawData => {
+		}).then(resp => resp.text()).catch(er => console.error("er",er)).then(rawData => {
 			// TODO: Make sure the received data is actually a list of integers
 			let data = JSON.parse(rawData);
 			let allZero = true;
-			for(let i = 0; i < data.length; i++) {
-				if(data[i] != "0") allZero = false;
+			for(let i=0; i<data.length; i++) {
+				if(data[i]!="0") allZero = false;
 			}
 			if(allZero) {
 				$("#poll_results_"+pollID+" .poll_no_results").removeClass("auto_hide");

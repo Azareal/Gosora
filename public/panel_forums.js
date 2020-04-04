@@ -7,7 +7,7 @@ formVars = {
 };
 var forums = {};
 let items = document.getElementsByClassName("panel_forum_item");
-for(let i = 0; item = items[i]; i++) forums[i] = item.getAttribute("data-fid");
+for(let i=0; item=items[i]; i++) forums[i] = item.getAttribute("data-fid");
 console.log("forums",forums);
 
 Sortable.create(document.getElementById("panel_forums"), {
@@ -37,12 +37,12 @@ document.getElementById("panel_forums_order_button").addEventListener("click", (
 			if(req.status!==200) return;
 			
 			let resp = JSON.parse(req.responseText);
-			console.log("resp", resp);
+			console.log("resp",resp);
 			// TODO: Should we move other notices into TmplPhrases like this one?
 			pushNotice(phraseBox["panel"]["panel.forums_order_updated"]);
 			if(resp.success==1) return;
-		} catch(ex) {
-			console.error("ex", ex)
+		} catch(e) {
+			console.error("e",e)
 		}
 		console.trace();
 	}
@@ -50,7 +50,7 @@ document.getElementById("panel_forums_order_button").addEventListener("click", (
 	req.open("POST","/panel/forums/order/edit/submit/?s=" + encodeURIComponent(me.User.S));
 	req.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
 	let items = "";
-	for(let i = 0; item = forums[i];i++) items += item+",";
+	for(let i=0;item=forums[i];i++) items += item+",";
 	if(items.length > 0) items = items.slice(0,-1);
 	req.send("js=1&amp;items={"+items+"}");
 });
