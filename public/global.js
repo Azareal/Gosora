@@ -370,9 +370,15 @@ function getExt(name) {
 					let sAlertMapping = localStorage.getItem("alertMapping");
 					let sAlertCount = localStorage.getItem("alertCount");
 					if(sAlertList!=""&&sAlertMapping!=""&&sAlertCount!="") {
+						console.log("sAlertList",sAlertList)
+						console.log("sAlertMapping",sAlertMapping)
+						console.log("sAlertCount",sAlertCount)
 						alertList = JSON.parse(sAlertList)
 						alertMapping = JSON.parse(sAlertMapping)
 						alertCount =  parseInt(sAlertCount)
+						console.log("alertList",alertList)
+						console.log("alertMapping",alertMapping)
+						console.log("alertCount",alertCount)
 						for(var i=0; i<al.length; i++) loadAlerts(al[i],true);
 					} else for(var i=0; i<al.length; i++) loadAlerts(al[i]);
 					if(window["WebSocket"]) runWebSockets();
