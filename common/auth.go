@@ -17,7 +17,7 @@ import (
 	"strings"
 
 	"github.com/Azareal/Gosora/common/gauth"
-	"github.com/Azareal/Gosora/query_gen"
+	qgen "github.com/Azareal/Gosora/query_gen"
 
 	//"golang.org/x/crypto/argon2"
 	"golang.org/x/crypto/bcrypt"
@@ -66,16 +66,16 @@ var HashPrefixes = map[string]string{
 
 // AuthInt is the main authentication interface.
 type AuthInt interface {
-	Authenticate(username string, password string) (uid int, err error, requiresExtraAuth bool)
+	Authenticate(name, password string) (uid int, err error, requiresExtraAuth bool)
 	ValidateMFAToken(mfaToken string, uid int) error
 	Logout(w http.ResponseWriter, uid int)
 	ForceLogout(uid int) error
 	SetCookies(w http.ResponseWriter, uid int, session string)
-	SetProvisionalCookies(w http.ResponseWriter, uid int, session string, signedSession string) // To avoid logging someone in until they've passed the MFA check
+	SetProvisionalCookies(w http.ResponseWriter, uid int, session, signedSession string) // To avoid logging someone in until they've passed the MFA check
 	GetCookies(r *http.Request) (uid int, session string, err error)
-	SessionCheck(w http.ResponseWriter, r *http.Request) (user *User, halt bool)
+	SessionCheck(w http.ResponseWriter, r *http.Request) (u *User, halt bool)
 	CreateSession(uid int) (session string, err error)
-	CreateProvisionalSession(uid int) (provSession string, signedSession string, err error) // To avoid logging someone in until they've passed the MFA check
+	CreateProvisionalSession(uid int) (provSession, signedSession string, err error) // To avoid logging someone in until they've passed the MFA check
 }
 
 // DefaultAuth is the default authenticator used by Gosora, may be swapped with an alternate authenticator in some situations. E.g. To support LDAP.
@@ -98,9 +98,9 @@ func NewDefaultAuth() (*DefaultAuth, error) {
 // Authenticate checks if a specific username and password is valid and returns the UID for the corresponding user, if so. Otherwise, a user safe error.
 // IF MFA is enabled, then pass it back a flag telling the caller that authentication isn't complete yet
 // TODO: Find a better way of handling errors we don't want to reach the user
-func (auth *DefaultAuth) Authenticate(username string, password string) (uid int, err error, requiresExtraAuth bool) {
+func (auth *DefaultAuth) Authenticate(name string, password string) (uid int, err error, requiresExtraAuth bool) {
 	var realPassword, salt string
-	err = auth.login.QueryRow(username).Scan(&uid, &realPassword, &salt)
+	err = auth.login.QueryRow(name).Scan(&uid, &realPassword, &salt)
 	if err == ErrNoRows {
 		return 0, ErrNoUserByName, false
 	} else if err != nil {
@@ -145,7 +145,7 @@ func (auth *DefaultAuth) ValidateMFAToken(mfaToken string, uid int) error {
 	if ok {
 		return nil
 	}
-	
+
 	for i, scratch := range mfaItem.Scratch {
 		if subtle.ConstantTimeCompare([]byte(scratch), []byte(mfaToken)) == 1 {
 			err = mfaItem.BurnScratch(i)
@@ -295,7 +295,7 @@ func (auth *DefaultAuth) CreateProvisionalSession(uid int) (provSession string, 
 	return provSession, hex.EncodeToString(h.Sum(nil)), nil
 }
 
-func CheckPassword(realPassword string, password string, salt string) (err error) {
+func CheckPassword(realPassword, password, salt string) (err error) {
 	blasted := strings.Split(realPassword, "$")
 	prefix := blasted[0]
 	if len(blasted) > 1 {
@@ -309,7 +309,7 @@ func CheckPassword(realPassword string, password string, salt string) (err error
 	return checker(realPassword, password, salt)
 }
 
-func GeneratePassword(password string) (hash string, salt string, err error) {
+func GeneratePassword(password string) (hash, salt string, err error) {
 	gen, ok := GeneratePasswordFuncs[DefaultHashAlgo]
 	if !ok {
 		return "", "", ErrHashNotExist
@@ -317,12 +317,12 @@ func GeneratePassword(password string) (hash string, salt string, err error) {
 	return gen(password)
 }
 
-func BcryptCheckPassword(realPassword string, password string, salt string) (err error) {
+func BcryptCheckPassword(realPassword, password, salt string) (err error) {
 	return bcrypt.CompareHashAndPassword([]byte(realPassword), []byte(password+salt))
 }
 
 // Note: The salt is in the hash, therefore the salt parameter is blank
-func BcryptGeneratePassword(password string) (hash string, salt string, err error) {
+func BcryptGeneratePassword(password string) (hash, salt string, err error) {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return "", "", err
@@ -337,7 +337,7 @@ func BcryptGeneratePassword(password string) (hash string, salt string, err erro
 	argon2KeyLen  uint32 = 32
 )
 
-func Argon2CheckPassword(realPassword string, password string, salt string) (err error) {
+func Argon2CheckPassword(realPassword, password, salt string) (err error) {
 	split := strings.Split(realPassword, "$")
 	// TODO: Better validation
 	if len(split) < 5 {
@@ -355,7 +355,7 @@ func Argon2CheckPassword(realPassword string, password string, salt string) (err
 	return nil
 }
 
-func Argon2GeneratePassword(password string) (hash string, salt string, err error) {
+func Argon2GeneratePassword(password string) (hash, salt string, err error) {
 	sbytes := make([]byte, SaltLength)
 	_, err = rand.Read(sbytes)
 	if err != nil {
@@ -380,7 +380,7 @@ func FriendlyGAuthSecret(secret string) (out string) {
 func GenerateGAuthSecret() (string, error) {
 	return GenerateStd32SafeString(14)
 }
-func VerifyGAuthToken(secret string, token string) (bool, error) {
+func VerifyGAuthToken(secret, token string) (bool, error) {
 	trueToken, err := gauth.GetTOTPToken(secret)
 	return subtle.ConstantTimeCompare([]byte(trueToken), []byte(token)) == 1, err
 }

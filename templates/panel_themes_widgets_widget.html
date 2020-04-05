@@ -2,11 +2,11 @@
 	<div class="formitem formlabel"><a>{{lang "panel_themes_widgets_type"}}</a></div>
 	<div class="formitem">
 		<select class="wtype_sel" name="wtype">
-			<option value="about"{{if eq .Type "about"}} selected{{end}}>{{lang "panel_themes_widgets_type_about"}}</option>
-			<option value="simple"{{if eq .Type "simple"}} selected{{end}}>{{lang "panel_themes_widgets_type_simple"}}</option>
-			<option value="wol"{{if eq .Type "wol"}} selected{{end}}>{{lang "panel_themes_widgets_type_wol"}}</option>
-			<option value="wol_context"{{if eq .Type "wol_context"}} selected{{end}}>{{lang "panel_themes_widgets_type_wol_context"}}</option>
-			<option value="search_and_filter"{{if eq .Type "search_and_filter"}} selected{{end}}>{{lang "panel_themes_widgets_type_search_and_filter"}}</option>
+			<option value="about"{{if eq .Type "about"}}selected{{end}}>{{lang "panel_themes_widgets_type_about"}}</option>
+			<option value="simple"{{if eq .Type "simple"}}selected{{end}}>{{lang "panel_themes_widgets_type_simple"}}</option>
+			<option value="wol"{{if eq .Type "wol"}}selected{{end}}>{{lang "panel_themes_widgets_type_wol"}}</option>
+			<option value="wol_context"{{if eq .Type "wol_context"}}selected{{end}}>{{lang "panel_themes_widgets_type_wol_context"}}</option>
+			<option value="search_and_filter"{{if eq .Type "search_and_filter"}}selected{{end}}>{{lang "panel_themes_widgets_type_search_and_filter"}}</option>
 		</select>
 	</div>
 </div>
@@ -47,9 +47,9 @@
 </div>
 <div class="formrow form_button_row">
 	<div class="formitem">
-		<button name="panel-button" class="formbutton widget_save">{{lang "panel_themes_widgets_save"}}</button>
+		<button name="panel-button"class="formbutton widget_save">{{lang "panel_themes_widgets_save"}}</button>
 		<a href="/panel/themes/widgets/delete/submit/{{.ID}}">
-			<button name="panel-button" class="formbutton widget_delete">{{lang "panel_themes_widgets_delete"}}</button>
+			<button name="panel-button"class="formbutton widget_delete">{{lang "panel_themes_widgets_delete"}}</button>
 		</a>
 	</div>
 </div>

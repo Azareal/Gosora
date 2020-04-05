@@ -1,6 +1,6 @@
 {{template "header.html" . }}
 <main id="topicsItemList" itemscope itemtype="http://schema.org/ItemList">
-{{if not .CurrentUser.Loggedin}}<link rel="canonical"href="//{{.Site.URL}}/topics/{{if eq .Sort.SortBy "mostviewed"}}most-viewed/{{end}}{{if gt .Page 1}}?page={{.Page}}{{end}}"/>{{end}}
+{{if not .CurrentUser.Loggedin}}<link rel="canonical"href="//{{.Site.URL}}/topics/{{if eq .Sort.SortBy "mostviewed"}}most-viewed/{{end}}{{if gt .Page 1}}?page={{.Page}}{{end}}">{{end}}
 
 <div class="rowblock rowhead topic_list_title_block{{if .CurrentUser.Loggedin}} has_opt{{end}}">
 	<div class="rowitem topic_list_title"><h1 itemprop="name">{{.Title}}</h1></div>
@@ -59,7 +59,7 @@
 		<div class="topic_meta">
 			<div class="formrow topic_board_row real_first_child">
 				<div class="formitem"><select form="quick_post_form" id="topic_board_input" name="board">
-					{{range .ForumList}}<option{{if eq .ID $.DefaultForum}} selected{{end}} value="{{.ID}}">{{.Name}}</option>{{end}}
+					{{range .ForumList}}<option value="{{.ID}}"{{if eq .ID $.DefaultForum}}selected{{end}}>{{.Name}}</option>{{end}}
 				</select></div>
 			</div>
 			<div class="formrow topic_name_row">
@@ -76,7 +76,7 @@
 <div class="rowblock more_topic_block more_topic_block_initial">
 	<div class="rowitem rowmsg"><a href=""class="more_topics"></a></div>
 </div>
-<div id="topic_list" class="rowblock topic_list topic_list_{{.Sort.SortBy}}" aria-label="{{lang "topics_list_aria"}}">
+<div id="topic_list"class="rowblock topic_list topic_list_{{.Sort.SortBy}}"aria-label="{{lang "topics_list_aria"}}">
 	{{range .TopicList}}{{template "topics_topic.html" . }}{{else}}<div class="rowitem passive rowmsg">{{lang "topics_no_topics"}}{{if .CurrentUser.Loggedin}}{{if .CurrentUser.Perms.CreateTopic}}&nbsp;<a href="/topics/create/">{{lang "topics_start_one"}}</a>{{end}}{{end}}</div>{{end}}
 </div>
 
