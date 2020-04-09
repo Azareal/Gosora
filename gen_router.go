@@ -616,18 +616,19 @@ var agentMapEnum = map[string]int{
 	"dotbot": 42,
 	"ahrefs": 43,
 	"proximic": 44,
-	"majestic": 45,
-	"netcraft": 46,
-	"blexbot": 47,
-	"burf": 48,
-	"aspiegel": 49,
-	"mail_ru": 50,
-	"ccbot": 51,
-	"zgrab": 52,
-	"cloudsystemnetworks": 53,
-	"curl": 54,
-	"python": 55,
-	"go": 56,
+	"megaindex": 45,
+	"majestic": 46,
+	"netcraft": 47,
+	"blexbot": 48,
+	"burf": 49,
+	"aspiegel": 50,
+	"mail_ru": 51,
+	"ccbot": 52,
+	"zgrab": 53,
+	"cloudsystemnetworks": 54,
+	"curl": 55,
+	"python": 56,
+	"go": 57,
 }
 var reverseAgentMapEnum = map[int]string{ 
 	0: "unknown",
@@ -675,18 +676,19 @@ var reverseAgentMapEnum = map[int]string{
 	42: "dotbot",
 	43: "ahrefs",
 	44: "proximic",
-	45: "majestic",
-	46: "netcraft",
-	47: "blexbot",
-	48: "burf",
-	49: "aspiegel",
-	50: "mail_ru",
-	51: "ccbot",
-	52: "zgrab",
-	53: "cloudsystemnetworks",
-	54: "curl",
-	55: "python",
-	56: "go",
+	45: "megaindex",
+	46: "majestic",
+	47: "netcraft",
+	48: "blexbot",
+	49: "burf",
+	50: "aspiegel",
+	51: "mail_ru",
+	52: "ccbot",
+	53: "zgrab",
+	54: "cloudsystemnetworks",
+	55: "curl",
+	56: "python",
+	57: "go",
 }
 var markToAgent = map[string]string{ 
 	"OPR": "opera",
@@ -734,6 +736,7 @@ var markToAgent = map[string]string{
 	"DotBot": "dotbot",
 	"AhrefsBot": "ahrefs",
 	"proximic": "proximic",
+	"MegaIndex": "megaindex",
 	"MJ12bot": "majestic",
 	"mj12bot": "majestic",
 	"NetcraftSurveyAgent": "netcraft",
@@ -794,19 +797,20 @@ var markToID = map[string]int{
 	"DotBot": 42,
 	"AhrefsBot": 43,
 	"proximic": 44,
-	"MJ12bot": 45,
-	"mj12bot": 45,
-	"NetcraftSurveyAgent": 46,
-	"BLEXBot": 47,
-	"Burf": 48,
-	"AspiegelBot": 49,
-	"RU_Bot": 50,
-	"CCBot": 51,
-	"zgrab": 52,
-	"Nimbostratus": 53,
-	"curl": 54,
-	"python": 55,
-	"Go": 56,
+	"MegaIndex": 45,
+	"MJ12bot": 46,
+	"mj12bot": 46,
+	"NetcraftSurveyAgent": 47,
+	"BLEXBot": 48,
+	"Burf": 49,
+	"AspiegelBot": 50,
+	"RU_Bot": 51,
+	"CCBot": 52,
+	"zgrab": 53,
+	"Nimbostratus": 54,
+	"curl": 55,
+	"python": 56,
+	"Go": 57,
 }
 /*var agentRank = map[string]int{
 	"opera":9,
@@ -1178,7 +1182,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			if strings.Contains(ua,"rv:11") {
 				agent = 6
 			}
-		case 52:
+		case 53:
 			r.SuspiciousRequest(req,"Vulnerability Scanner")
 		}
 		
@@ -1225,15 +1229,19 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if !c.Config.RefNoTrack {
-		ref := req.Header.Get("Referer") // Check the 'referrer' header too? :P
-		if ref != "" {
-			// ? Optimise this a little?
-			ref = strings.TrimPrefix(strings.TrimPrefix(ref,"http://"),"https://")
-			ref = strings.Split(ref,"/")[0]
-			portless := strings.Split(ref,":")[0]
-			// TODO: Handle c.Site.Host in uppercase too?
-			if portless != "localhost" && portless != "127.0.0.1" && portless != c.Site.Host {
-				co.ReferrerTracker.Bump(ref)
+		ae := req.Header.Get("Accept-Encoding")
+		likelyBot := ae == "gzip" || ae == ""
+		if !likelyBot {
+			ref := req.Header.Get("Referer") // Check the 'referrer' header too? :P
+			if ref != "" {
+				// ? Optimise this a little?
+				ref = strings.TrimPrefix(strings.TrimPrefix(ref,"http://"),"https://")
+				ref = strings.Split(ref,"/")[0]
+				portless := strings.Split(ref,":")[0]
+				// TODO: Handle c.Site.Host in uppercase too?
+				if portless != "localhost" && portless != "127.0.0.1" && portless != c.Site.Host {
+					co.ReferrerTracker.Bump(ref)
+				}
 			}
 		}
 	}

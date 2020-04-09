@@ -276,6 +276,7 @@ func main() {
 		"dotbot",
 		"ahrefs",
 		"proximic",
+		"megaindex",
 		"majestic",
 		"netcraft",
 		"blexbot",
@@ -343,6 +344,7 @@ func main() {
 		"DotBot",
 		"AhrefsBot",
 		"proximic",
+		"MegaIndex",
 		"MJ12bot",
 		"mj12bot",
 		"NetcraftSurveyAgent",
@@ -406,6 +408,7 @@ func main() {
 		"DotBot":              "dotbot",
 		"AhrefsBot":           "ahrefs",
 		"proximic":            "proximic",
+		"MegaIndex":           "megaindex",
 		"MJ12bot":             "majestic",
 		"mj12bot":             "majestic",
 		"NetcraftSurveyAgent": "netcraft",
@@ -898,15 +901,19 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if !c.Config.RefNoTrack {
-		ref := req.Header.Get("Referer") // Check the 'referrer' header too? :P
-		if ref != "" {
-			// ? Optimise this a little?
-			ref = strings.TrimPrefix(strings.TrimPrefix(ref,"http://"),"https://")
-			ref = strings.Split(ref,"/")[0]
-			portless := strings.Split(ref,":")[0]
-			// TODO: Handle c.Site.Host in uppercase too?
-			if portless != "localhost" && portless != "127.0.0.1" && portless != c.Site.Host {
-				co.ReferrerTracker.Bump(ref)
+		ae := req.Header.Get("Accept-Encoding")
+		likelyBot := ae == "gzip" || ae == ""
+		if !likelyBot {
+			ref := req.Header.Get("Referer") // Check the 'referrer' header too? :P
+			if ref != "" {
+				// ? Optimise this a little?
+				ref = strings.TrimPrefix(strings.TrimPrefix(ref,"http://"),"https://")
+				ref = strings.Split(ref,"/")[0]
+				portless := strings.Split(ref,":")[0]
+				// TODO: Handle c.Site.Host in uppercase too?
+				if portless != "localhost" && portless != "127.0.0.1" && portless != c.Site.Host {
+					co.ReferrerTracker.Bump(ref)
+				}
 			}
 		}
 	}
