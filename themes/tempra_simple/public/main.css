@@ -881,8 +881,8 @@ input[type=checkbox] + label.poll_option_label {
 	height: 18px;
 	margin-right: 2px;
 	background-color: white;
-    border: 1px solid hsl(0, 0%, 70%);
-    color: #505050;
+	border: 1px solid hsl(0, 0%, 70%);
+	color: #505050;
 }
 input[type=checkbox]:checked + label.poll_option_label .sel {
 	display: inline-block;

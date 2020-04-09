@@ -634,20 +634,20 @@ input, select, textarea {
 	display: none;
 }
 #poweredByHolder {
-    background-color: var(--main-block-color);
-    padding: 10px;
-    font-size: 14px;
-    padding-left: 13px;
-    padding-right: 13px;
+	background-color: var(--main-block-color);
+	padding: 10px;
+	font-size: 14px;
+	padding-left: 13px;
+	padding-right: 13px;
 	clear: left;
-    height: 25px;
+	height: 25px;
 }
 #poweredByHolder select {
-    background-color: var(--input-background-color);
-    border: 1px solid var(--input-border-color);
-    color: var(--input-text-color);
-    font-size: 13px;
-    padding: 4px;
+	background-color: var(--input-background-color);
+	border: 1px solid var(--input-border-color);
+	color: var(--input-text-color);
+	font-size: 13px;
+	padding: 4px;
 }
 #poweredBy {
 	float: left;
@@ -688,8 +688,8 @@ input[type=checkbox] + label.poll_option_label {
 	height: 14px;
 	margin-right: 3px;
 	background-color: var(--bright-input-background-color);
-    border: 1px solid var(--bright-input-border-color);
-    color: var(--bright-input-text-color);
+	border: 1px solid var(--bright-input-border-color);
+	color: var(--bright-input-text-color);
 }
 input[type=checkbox]:checked + label.poll_option_label .sel {
 	display: inline-block;
@@ -849,10 +849,10 @@ input[type=checkbox]:checked + label.poll_option_label .sel {
 	display: flex;
 }
 .topics_moderate .topic_row:hover .rowitem {
-    background-color: hsla(0, 0%, 27%, 1);
+	background-color: hsla(0, 0%, 27%, 1);
 }
 .topic_selected .rowitem {
-    background-color: hsla(0, 0%, 29%, 1);
+	background-color: hsla(0, 0%, 29%, 1);
 }
 /* Temporary hack, so that I don't break the topic lists of the other themes */
 .topic_list .topic_inner_right {
