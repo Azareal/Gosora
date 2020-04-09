@@ -79,7 +79,7 @@ func init() {
 		re := "replies"
 		replyStmts = ReplyStmts{
 			isLiked:                acc.Select("likes").Columns("targetItem").Where("sentBy=? and targetItem=? and targetType='replies'").Prepare(),
-			createLike:             acc.Insert("likes").Columns("weight,targetItem,targetType,sentBy").Fields("?,?,?,?").Prepare(),
+			createLike:             acc.Insert("likes").Columns("weight,targetItem,targetType,sentBy,createdAt").Fields("?,?,?,?,UTC_TIMESTAMP()").Prepare(),
 			edit:                   acc.Update(re).Set("content=?,parsed_content=?").Where("rid=? AND poll=0").Prepare(),
 			setPoll:                acc.Update(re).Set("poll=?").Where("rid=? AND poll=0").Prepare(),
 			delete:                 acc.Delete(re).Where("rid=?").Prepare(),
