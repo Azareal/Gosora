@@ -13,7 +13,6 @@
 	--light-text-color: hsl(0,0%,55%);
 	--lighter-text-color: hsl(0,0%,65%);
 
-	/*background-color: hsl(0,0%,97%);*/
 	--tinted-background-color: hsl(0,0%,98%);
 }
 
@@ -907,6 +906,9 @@ textarea {
 
 .topic_sticky .topic_left, .topic_sticky .topic_right {
 	border-bottom: 2px solid hsl(51, 60%, 70%);
+}
+.topics_moderate .topic_row:hover .topic_left, .topics_moderate .topic_row:hover .topic_right {
+	background-color: hsl(81, 60%, 97%);
 }
 .topic_selected .topic_left, .topic_selected .topic_right {
 	background-color: hsl(81, 60%, 95%);

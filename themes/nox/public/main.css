@@ -228,6 +228,9 @@ li a {
 .sidebar .rowblock:not(.topic_list):not(.rowhead):not(.opthead) .rowitem, .sidebar .search {
 	margin-left: 12px;
 }
+.topics_moderate .topic_row:hover {
+	background-color: rgb(78, 78, 98);
+}
 .widget_search:first-child {
 	margin-top: 36px;
 }
@@ -264,16 +267,16 @@ h1, h2, h3, h4, h5 {
 	margin-block-end:0;
 	margin-top:0;
 	margin-bottom:0;
-	font-weight: normal;
-	white-space: nowrap;
+	font-weight:normal;
+	white-space:nowrap;
 }
 
 /* new */
 .filter_list {
-    margin-top: 5px;
-    background-color: #444444;
-    margin-left: 12px;
-    border-radius: 3px;
+	margin-top: 5px;
+	background-color: #444444;
+	margin-left: 12px;
+	border-radius: 3px;
 }
 .filter_item {
 	margin-left: 0px !important;
@@ -570,7 +573,7 @@ h2 {
 .topic_inner_left .rowtopic {
 	white-space: nowrap;
 	text-overflow: ellipsis;
-    overflow: hidden;
+	overflow: hidden;
 }
 .parent_forum_sep {
 	margin-left: 6px;
@@ -690,8 +693,8 @@ button, .formbutton, .panel_right_button:not(.has_inner_button) {
 }
 
 .pageset {
-    display: flex;
-    margin-top: 8px;
+	display: flex;
+	margin-top: 8px;
 }
 .pageitem {
 	font-size: 17px;
@@ -702,7 +705,7 @@ button, .formbutton, .panel_right_button:not(.has_inner_button) {
 }
 .pagefirst, .pagenext, .pageprev, .pagelast {
 	padding-top: 2px;
-    padding-bottom: 6px;
+	padding-bottom: 6px;
 }
 .pagefirst a, .pagenext a, .pageprev a, .pagelast a {
 	font-size: 22px;
@@ -782,9 +785,8 @@ button, .formbutton, .panel_right_button:not(.has_inner_button) {
 	margin-right: 10px;
 	margin-bottom: 0px;
 	margin-left: 0px;
-	margin-left: 0px;
 }
-.topic_item .submit_edit {
+sp.topic_item .submit_edit {
 	/*margin-right: 16px;*/
 }
 .zone_view_topic button, .zone_view_topic .formbutton {
@@ -847,8 +849,8 @@ blockquote:first-child {
 	white-space: nowrap;
 	display: block;
 	font-size: 18px;
-    margin-top: 8px;
-    line-height: 16px;
+	margin-top: 8px;
+	line-height: 16px;
 }
 .tag_block {
 	display: flex;
@@ -1021,23 +1023,23 @@ input[type=checkbox]:not(:checked):hover + label .sel {
 }
 
 .add_like:before, .remove_like:before {
-	content: "{{lang "topic.plus_one" . }}";
+	content:"{{lang "topic.plus_one" . }}";
 }
 .remove_like:before {
-	content: "{{lang "topic.minus_one" . }}";
+	content:"{{lang "topic.minus_one" . }}";
 }
 .button_container .open_edit:after, .edit_item:after {
-	content: "{{lang "topic.edit_button_text" . }}";
+	content:"{{lang "topic.edit_button_text" . }}";
 }
 .ip_item_button:after {
-	content: "{{lang "topic.ip_button_text" . }}";
+	content:"{{lang "topic.ip_button_text" . }}";
 }{{$p := .}}
 {{range (toArr "quote" "delete" "lock" "unlock" "pin" "unpin" "report")}}
 .{{.}}_item:after {
-	content: "{{lang (concat "topic." . "_button_text") ($p) }}";
+	content:"{{lang (concat "topic." . "_button_text") ($p) }}";
 }{{end}}
 .like_count:after {
-	content: "{{lang "topic.like_count_suffix" . }}";
+	content:"{{lang "topic.like_count_suffix" . }}";
 }
 
 .attach_item {
@@ -1425,7 +1427,7 @@ input[type=checkbox]:not(:checked):hover + label .sel {
 		width: auto;
 		padding: 0px;
 	}
-	.user_box {
+	.user_box, .elapsed {
 		display: none;
 	}
 	#back {
@@ -1441,9 +1443,6 @@ input[type=checkbox]:not(:checked):hover + label .sel {
 	.topic_item .topic_forum {
 		font-size: 17px;
 		line-height: 28px;
-	}
-	.elapsed {
-		display: none;
 	}
 }
 

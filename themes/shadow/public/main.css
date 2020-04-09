@@ -848,6 +848,9 @@ input[type=checkbox]:checked + label.poll_option_label .sel {
 .topic_list .topic_row {
 	display: flex;
 }
+.topics_moderate .topic_row:hover .rowitem {
+    background-color: hsla(0, 0%, 27%, 1);
+}
 .topic_selected .rowitem {
     background-color: hsla(0, 0%, 29%, 1);
 }

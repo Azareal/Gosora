@@ -1,5 +1,5 @@
 // TODO: Push ImageFileExts to the client from the server in some sort of gen.js?
-var imageExts = ["png", "jpg", "jpe","jpeg","jif","jfi","jfif", "svg", "bmp", "gif", "tiff","tif", "webp"];
+var imageExts = ["png","jpg","jpe","jpeg","jif","jfi","jfif","svg","bmp","gif","tiff","tif","webp"];
 
 (() => {
 	function copyToClipboard(str) {
@@ -16,32 +16,32 @@ var imageExts = ["png", "jpg", "jpe","jpeg","jif","jfi","jfif", "svg", "bmp", "g
 
 	function uploadFileHandler(fileList, maxFiles = 5, step1 = () => {}, step2 = () => {}) {
 		let files = [];
-		for(var i = 0; i < fileList.length && i < 5; i++) files[i] = fileList[i];
+		for(var i=0; i<fileList.length && i<5; i++) files[i] = fileList[i];
 	
 		let totalSize = 0;
-		for(let i = 0; i < files.length; i++) {
-			console.log("files[" + i + "]",files[i]);
+		for(let i=0; i<files.length; i++) {
+			console.log("file "+i,files[i]);
 			totalSize += files[i]["size"];
 		}
-		if(totalSize > me.Site.MaxRequestSize) throw("You can't upload this much at once, max: " + me.Site.MaxRequestSize);
+		if(totalSize > me.Site.MaxRequestSize) throw("You can't upload this much at once, max: "+me.Site.MaxRequestSize);
 	
-		for(let i = 0; i < files.length; i++) {
-			let filename = files[i]["name"];
-			let f = (e) => {
-				step1(e,filename)
+		for(let i=0; i<files.length; i++) {
+			let fname = files[i]["name"];
+			let f = e => {
+				step1(e,fname)
 					
 				let reader = new FileReader();
-				reader.onload = (e2) => {
+				reader.onload = e2 => {
 					crypto.subtle.digest('SHA-256',e2.target.result)
-						.then((hash) => {
+						.then(hash => {
 							const hashArray = Array.from(new Uint8Array(hash))
 							return hashArray.map(b => ('00' + b.toString(16)).slice(-2)).join('')
-						}).then(hash => step2(e,hash,filename));
+						}).then(hash => step2(e,hash,fname));
 				}
 				reader.readAsArrayBuffer(files[i]);
 			};
 				
-			let ext = getExt(filename);
+			let ext = getExt(fname);
 			// TODO: Push ImageFileExts to the client from the server in some sort of gen.js?
 			let isImage = imageExts.includes(ext);
 			if(isImage) {
@@ -58,11 +58,11 @@ var imageExts = ["png", "jpg", "jpe","jpeg","jif","jfi","jfif", "svg", "bmp", "g
 		let fileDock = this.closest(".attach_edit_bay");
 		try {
 			uploadFileHandler(this.files, 5, () => {},
-			(e,hash,filename) => {
+			(e,hash,fname) => {
 				console.log("hash",hash);
 				let formData = new FormData();
 				formData.append("s",me.User.S);
-				for(let i = 0; i < this.files.length; i++) formData.append("upload_files",this.files[i]);
+				for(let i=0; i<this.files.length; i++) formData.append("upload_files",this.files[i]);
 				bindAttachManager();
 
 				let req = new XMLHttpRequest();
@@ -70,12 +70,12 @@ var imageExts = ["png", "jpg", "jpe","jpeg","jif","jfi","jfif", "svg", "bmp", "g
 					let data = JSON.parse(req.responseText);
 					//console.log("rdata",data);
 					let fileItem = document.createElement("div");
-					let ext = getExt(filename);
+					let ext = getExt(fname);
 					// TODO: Push ImageFileExts to the client from the server in some sort of gen.js?
 					let isImage = imageExts.includes(ext);
 					let c = "";
 					if(isImage) c = " attach_image_holder"
-					fileItem.className = "attach_item attach_item_item" + c;
+					fileItem.className = "attach_item attach_item_item"+c;
 					fileItem.innerHTML = Tmpl_topic_c_attach_item({
 						ID: data.elems[hash+"."+ext],
 						ImgSrc: isImage ? e.target.result : "",
@@ -100,32 +100,32 @@ var imageExts = ["png", "jpg", "jpe","jpeg","jif","jfi","jfif", "svg", "bmp", "g
 	// Quick Topic / Quick Reply
 	function uploadAttachHandler() {
 		try {
-			uploadFileHandler(this.files, 5, (e,filename) => {
+			uploadFileHandler(this.files, 5, (e,fname) => {
 				// TODO: Use client templates here
 				let fileDock = document.getElementById("upload_file_dock");
 				let fileItem = document.createElement("label");
 				console.log("fileItem",fileItem);
 
-				let ext = getExt(filename);
+				let ext = getExt(fname);
 				// TODO: Push ImageFileExts to the client from the server in some sort of gen.js?
 				let isImage = imageExts.includes(ext);
-				fileItem.innerText = "." + ext;
+				fileItem.innerText = "."+ext;
 				fileItem.className = "formbutton uploadItem";
 				// TODO: Check if this is actually an image
 				if(isImage) fileItem.style.backgroundImage = "url("+e.target.result+")";
 
 				fileDock.appendChild(fileItem);
-			},(e,hash,filename) => {
+			},(e,hash,fname) => {
 				console.log("hash",hash);
-				let ext = getExt(filename)
-				let content = document.getElementById("input_content")
-				console.log("content.value", content.value);
+				let ext = getExt(fname)
+				let con = document.getElementById("input_content")
+				console.log("con.value",con.value);
 				
 				let attachItem;
-				if(content.value=="") attachItem = "//" + window.location.host + "/attachs/" + hash + "." + ext;
-				else attachItem = "\r\n//" + window.location.host + "/attachs/" + hash + "." + ext;
-				content.value = content.value + attachItem;
-				console.log("content.value", content.value);
+				if(con.value=="") attachItem = "//"+window.location.host+"/attachs/"+hash+"."+ext;
+				else attachItem = "\r\n//"+window.location.host+"/attachs/"+hash+"."+ext;
+				con.value = con.value + attachItem;
+				console.log("con.value",con.value);
 				
 				// For custom / third party text editors
 				attachItemCallback(attachItem);
@@ -140,7 +140,7 @@ var imageExts = ["png", "jpg", "jpe","jpeg","jif","jfi","jfif", "svg", "bmp", "g
 	function bindAttachManager() {
 		let uploadFiles = document.getElementsByClassName("upload_files_post");
 		if(uploadFiles==null) return;
-		for(let i = 0; i < uploadFiles.length; i++) {
+		for(let i=0; i<uploadFiles.length; i++) {
 			let uploader = uploadFiles[i];
 			uploader.value = "";
 			uploader.removeEventListener("change", uploadAttachHandler2, false);
@@ -192,7 +192,7 @@ var imageExts = ["png", "jpg", "jpe","jpeg","jif","jfi","jfif", "svg", "bmp", "g
 		for(let i = 0; i < elems.length; i++) {
 			let pathNode = elems[i].querySelector(".attach_item_path");
 			console.log("pathNode",pathNode);
-			aidList += pathNode.getAttribute("aid") + ",";
+			aidList += pathNode.getAttribute("aid")+",";
 			elems[i].remove();
 		}
 		if(aidList.length > 0) aidList = aidList.slice(0, -1);
@@ -219,6 +219,7 @@ var imageExts = ["png", "jpg", "jpe","jpeg","jif","jfi","jfif", "svg", "bmp", "g
 		ev.preventDefault();
 		$(".pre_opt").removeClass("auto_hide");
 		$(".moderate_link").addClass("moderate_open");
+		$("#topicsItemList,#forumItemList").addClass("topics_moderate");
 		$(".topic_row").each(function(){
 			$(this).click(function(){
 				selectedTopics.push(parseInt($(this).attr("data-tid"),10));
@@ -233,10 +234,9 @@ var imageExts = ["png", "jpg", "jpe","jpeg","jif","jfi","jfif", "svg", "bmp", "g
 			});
 		});
 	
-		let bulkActionSender = function(action,selectedTopics,fragBit) {
-			let url = "/topic/"+action+"/submit/"+fragBit+"?s="+me.User.S;
+		let bulkActionSender = (action,selectedTopics,fragBit) => {
 			$.ajax({
-				url: url,
+				url: "/topic/"+action+"/submit/"+fragBit+"?s="+me.User.S,
 				type: "POST",
 				data: JSON.stringify(selectedTopics),
 				contentType: "application/json",
@@ -262,7 +262,7 @@ var imageExts = ["png", "jpg", "jpe","jpeg","jif","jfi","jfif", "svg", "bmp", "g
 					$("#mod_topic_mover .pane_row").click(function(){
 						modTopicMover.find(".pane_row").removeClass("pane_selected");
 						let fid = this.getAttribute("data-fid");
-						if (fid==null) return;
+						if(fid==null) return;
 						this.classList.add("pane_selected");
 						console.log("fid",fid);
 						forumToMoveTo = fid;

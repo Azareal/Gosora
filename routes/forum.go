@@ -11,39 +11,38 @@ import (
 )
 
 // TODO: Retire this in favour of an alias for /topics/?
-func ViewForum(w http.ResponseWriter, r *http.Request, user *c.User, header *c.Header, sfid string) c.RouteError {
+func ViewForum(w http.ResponseWriter, r *http.Request, u *c.User, h *c.Header, sfid string) c.RouteError {
 	page, _ := strconv.Atoi(r.FormValue("page"))
 	_, fid, err := ParseSEOURL(sfid)
 	if err != nil {
-		return c.SimpleError(p.GetErrorPhrase("url_id_must_be_integer"), w, r, header)
+		return c.SimpleError(p.GetErrorPhrase("url_id_must_be_integer"), w, r, h)
 	}
 
-	ferr := c.ForumUserCheck(header, w, r, user, fid)
+	ferr := c.ForumUserCheck(h, w, r, u, fid)
 	if ferr != nil {
 		return ferr
 	}
-	if !user.Perms.ViewTopic {
-		return c.NoPermissions(w, r, user)
+	if !u.Perms.ViewTopic {
+		return c.NoPermissions(w, r, u)
 	}
-	header.Path = "/forums/"
+	h.Path = "/forums/"
 
 	// TODO: Fix this double-check
 	forum, err := c.Forums.Get(fid)
 	if err == sql.ErrNoRows {
-		return c.NotFound(w, r, header)
+		return c.NotFound(w, r, h)
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
-	header.Title = forum.Name
-	header.OGDesc = forum.Desc
+	h.Title = forum.Name
+	h.OGDesc = forum.Desc
 
 	topicList, pagi, err := c.TopicList.GetListByForum(forum, page, 0)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
-
-	header.Zone = "view_forum"
-	header.ZoneID = forum.ID
+	h.Zone = "view_forum"
+	h.ZoneID = forum.ID
 
 	// TODO: Reduce the amount of boilerplate here
 	if r.FormValue("js") == "1" {
@@ -56,15 +55,15 @@ func ViewForum(w http.ResponseWriter, r *http.Request, user *c.User, header *c.H
 	}
 
 	//pageList := c.Paginate(page, lastPage, 5)
-	pi := c.ForumPage{header, topicList, forum, pagi}
+	pi := c.ForumPage{h, topicList, forum, pagi}
 	tmpl := forum.Tmpl
 	if tmpl == "" {
-		ferr = renderTemplate("forum", w, r, header, pi)
+		ferr = renderTemplate("forum", w, r, h, pi)
 	} else {
 		tmpl = "forum_" + tmpl
-		err = renderTemplate3(tmpl, tmpl, w, r, header, pi)
+		err = renderTemplate3(tmpl, tmpl, w, r, h, pi)
 		if err != nil {
-			ferr = renderTemplate("forum", w, r, header, pi)
+			ferr = renderTemplate("forum", w, r, h, pi)
 		}
 	}
 	counters.ForumViewCounter.Bump(forum.ID)
