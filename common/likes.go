@@ -15,20 +15,30 @@ type LikeStore interface {
 }
 
 type DefaultLikeStore struct {
-	count  *sql.Stmt
-	delete *sql.Stmt
+	count        *sql.Stmt
+	delete       *sql.Stmt
+	singleExists *sql.Stmt
 }
 
 func NewDefaultLikeStore(acc *qgen.Accumulator) (*DefaultLikeStore, error) {
 	return &DefaultLikeStore{
-		count:  acc.Count("likes").Prepare(),
-		delete: acc.Delete("likes").Where("targetItem=? AND targetType=?").Prepare(),
+		count:        acc.Count("likes").Prepare(),
+		delete:       acc.Delete("likes").Where("targetItem=? AND targetType=?").Prepare(),
+		singleExists: acc.Select("likes").Columns("targetItem").Where("sentBy=? AND targetType=? AND targetItem=?").Prepare(),
 	}, acc.FirstError()
 }
 
 // TODO: Write a test for this
 func (s *DefaultLikeStore) BulkExists(ids []int, sentBy int, targetType string) (eids []int, err error) {
-	rows, err := qgen.NewAcc().Select("likes").Columns("targetItem").Where("sentBy=? AND targetType=?").In("targetItem", ids).Query(sentBy, targetType)
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	var rows *sql.Rows
+	if len(ids) == 1 {
+		rows, err = s.singleExists.Query(sentBy, targetType, ids[0])
+	} else {
+		rows, err = qgen.NewAcc().Select("likes").Columns("targetItem").Where("sentBy=? AND targetType=?").In("targetItem", ids).Query(sentBy, targetType)
+	}
 	if err == sql.ErrNoRows {
 		return nil, nil
 	} else if err != nil {
