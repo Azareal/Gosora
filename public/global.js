@@ -6,8 +6,8 @@ var alertCount=0;
 var moreTopicCount=0;
 var conn=false;
 var selectedTopics=[];
-var attachItemCallback=function(){}
-var quoteItemCallback=function(){}
+var attachItemCallback=()=>{}
+var quoteItemCallback=()=>{}
 var baseTitle=document.title;
 var wsBackoff=0;
 var noAlerts=false;
@@ -36,7 +36,7 @@ function ajaxError(xhr,status,er) {
 function postLink(ev) {
 	ev.preventDefault();
 	let formAction = $(ev.target).closest('a').attr("href");
-	$.ajax({ url: formAction, type: "POST", dataType: "json", error: ajaxError, data: {js: 1} });
+	$.ajax({ url:formAction, type:"POST", dataType:"json", error: ajaxError, data: {js: 1} });
 }
 
 function bindToAlerts() {
@@ -62,7 +62,7 @@ function addAlert(msg,notice=false) {
 	var mmsg = msg.msg;
 	if(mmsg[0]==".") mmsg = phraseBox["alerts"]["alerts"+mmsg];
 	if("sub" in msg) {
-		for(var i=0; i<msg.sub.length; i++) mmsg = mmsg.replace("\{"+i+"\}", msg.sub[i]);
+		for(var i=0; i<msg.sub.length; i++) mmsg = mmsg.replace("\{"+i+"\}",msg.sub[i]);
 	}
 
 	let aItem = Tmpl_alert({
@@ -189,14 +189,14 @@ function SplitN(data,ch,n) {
 	var j = 0;
 	var lastN = 1;
 	for(let i=0; i<data.length; i++) {
-		if(data[i] === ch) {
+		if(data[i]===ch) {
 			o[j++] = data.substring(lastI,i);
 			lastI = i;
-			if(lastN === n) break;
+			if(lastN===n) break;
 			lastN++;
 		}
 	}
-	if(data.length > lastI) o[o.length - 1] += data.substring(lastI);
+	if(data.length > lastI) o[o.length-1] += data.substring(lastI);
 	return o;
 }
 
@@ -544,7 +544,7 @@ function mainInit(){
 					for(let i=0; i<topics.length;i++) out += Tmpl_topics_topic(topics[i]);
 					$(".topic_list").html(out);
 
-					let obj = {Title:document.title, Url:url+q};
+					let obj = {Title:document.title,Url:url+q};
 					history.pushState(obj,obj.Title,obj.Url);
 					rebuildPaginator(dat.LastPage);
 					rebindPaginator();
@@ -584,8 +584,8 @@ function mainInit(){
 			baseTitle = that.innerText;
 			if(alertCount > 0) document.title = "("+alertCount+") "+baseTitle;
 			else document.title = baseTitle;
-			let obj = {Title: document.title, Url: url};
-			history.pushState(obj, obj.Title, obj.Url);
+			let obj = {Title:document.title,Url:url};
+			history.pushState(obj,obj.Title,obj.Url);
 			rebuildPaginator(dat.LastPage)
 			rebindPaginator();
 
@@ -628,7 +628,7 @@ function mainInit(){
 
 				// TODO: Fix the data race where the function hasn't been loaded yet
 				let out = "";
-				for(let i=0; i < topics.length;i++) out += Tmpl_topics_topic(topics[i]);
+				for(let i=0;i<topics.length;i++) out += Tmpl_topics_topic(topics[i]);
 				$(".topic_list").html(out);
 
 				baseTitle = phraseBox["topic_list"]["topic_list.search_head"];
@@ -636,7 +636,7 @@ function mainInit(){
 				if(alertCount > 0) document.title = "("+alertCount+") "+baseTitle;
 				else document.title = baseTitle;
 				let obj = {Title: document.title, Url: url+q};
-				history.pushState(obj, obj.Title, obj.Url);
+				history.pushState(obj,obj.Title,obj.Url);
 				rebuildPaginator(data.LastPage);
 				rebindPaginator();
 		}).catch(e => {
@@ -652,7 +652,7 @@ function mainInit(){
 		ev.preventDefault();
 		let bp = $(this).closest('.editable_parent');
 		let block = bp.find('.editable_block').eq(0);
-		block.html("<input name='edit_field'value='" + block.text() + "' type='text'><a href='" + $(this).closest('a').attr("href") + "'><button class='submit_edit'type='submit'>Update</button></a>");
+		block.html("<input name='edit_field'value='"+block.text()+"' type='text'><a href='"+$(this).closest('a').attr("href")+"'><button class='submit_edit'type='submit'>Update</button></a>");
 
 		$(".submit_edit").click(function(ev) {
 			ev.preventDefault();
@@ -774,7 +774,7 @@ function mainInit(){
 	$("#themeSelectorSelect").change(function(){
 		console.log("Changing the theme to "+this.options[this.selectedIndex].getAttribute("value"));
 		$.ajax({
-			url: this.form.getAttribute("action") + "?s=" + me.User.S,
+			url: this.form.getAttribute("action")+"?s="+me.User.S,
 			type:"POST",
 			dataType:"json",
 			data: { "theme": this.options[this.selectedIndex].getAttribute("value"), js: 1 },
@@ -793,14 +793,14 @@ function mainInit(){
 	$(".autoSubmitRedirect").change(function(){
 		let elems = this.form.elements;
 		let s = "";
-		for(let i = 0; i < elems.length; i++) {
+		for(let i=0; i<elems.length; i++) {
 			let elem = elems[i];
 			if(elem.nodeName=="SELECT") {
-				s += elem.name + "=" + elem.options[elem.selectedIndex].getAttribute("value") + "&";
+				s += elem.name+"="+elem.options[elem.selectedIndex].getAttribute("value")+"&";
 			}
 			// TODO: Implement other element types...
 		}
-		if(s.length > 0) s = "?" + s.substr(0, s.length-1);
+		if(s.length > 0) s = "?"+s.substr(0, s.length-1);
 
 		window.location = this.form.getAttribute("action") + s; // Do a redirect as a form submission refuses to work properly
 	});
@@ -809,8 +809,8 @@ function mainInit(){
 		let unixTime = this.innerText;
 		let date = new Date(unixTime*1000);
 		console.log("date",date);
-		let minutes = "0" + date.getMinutes();
-		let formattedTime = date.getHours() + ":" + minutes.substr(-2);
+		let minutes = "0"+date.getMinutes();
+		let formattedTime = date.getHours()+":"+minutes.substr(-2);
 		console.log("formattedTime",formattedTime);
 		this.innerText = formattedTime;
 	});
@@ -820,8 +820,8 @@ function mainInit(){
 		let monthList = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 		let date = new Date(this.innerText * 1000);
 		console.log("date",date);
-		let day = "0" + date.getDate();
-		let formattedTime = monthList[date.getMonth()] + " " + day.substr(-2) + " " + date.getFullYear();
+		let day = "0"+date.getDate();
+		let formattedTime = monthList[date.getMonth()]+" "+day.substr(-2)+" "+date.getFullYear();
 		console.log("formattedTime",formattedTime);
 		this.innerText = formattedTime;
 	});
@@ -872,15 +872,13 @@ function mainInit(){
 		return name.split('?')[0];
 	}
 
-	$(".rowtopic a,a.rowtopic").click(function(ev) {
-		let base = this.getAttribute("href");
-		let href = base + "?i=1";
-		fetch(href, {credentials:"same-origin"})
+	function loadArb(base,href) {
+		fetch(href,{credentials:"same-origin"})
 			.then(resp => {
 				if(!resp.ok) throw(href+" failed to load");
-				let xRes = resp.headers.get("x-res")
-				if(xRes!=null) {
-					for(let res of xRes.split(",")) {
+				let xr = resp.headers.get("x-res")
+				if(xr!=null) {
+					for(let res of xr.split(",")) {
 						let pro;
 						if(stripQ(getExt(res))=="css") pro = asyncGetSheet("/s/"+res)
 						else pro = asyncGetScript("/s/"+res)
@@ -893,19 +891,23 @@ function mainInit(){
 					}
 				}
 				return resp.text();
-			}).then(data => {
-				document.querySelector("#back").outerHTML = data;
+			}).then(dat => {
+				document.querySelector("#back").outerHTML = dat;
 				unbindTopic();
 				bindTopic();
 				$(".elapsed").remove();
-				let obj = {Title: document.title, Url: base};
-				history.pushState(obj, obj.Title, obj.Url);
+				let obj = {Title:document.title,Url:base};
+				history.pushState(obj,obj.Title,obj.Url);
 			}).catch(e => {
 				console.log("Unable to get script '"+href+""+"'");
 				console.log("e",e);
 				console.trace();
 			});
-		
+	}
+
+	$(".rowtopic a,a.rowtopic,a.forum_poster").click(function(ev) {
+		let base = this.getAttribute("href");
+		loadArb(base,base+"?i=1");
 		ev.stopPropagation();
 		ev.preventDefault();
 	})
@@ -1012,9 +1014,9 @@ function bindTopic() {
 			$(bp).find('.hide_on_block_edit').removeClass("edit_opened");
 			$(bp).find('.show_on_block_edit').removeClass("edit_opened");
 			block.classList.remove("in_edit");
-			let content = block.querySelector('textarea').value;
-			block.innerHTML = quickParse(content);
-			if(srcNode!=null) srcNode.innerText = content;
+			let con = block.querySelector('textarea').value;
+			block.innerHTML = quickParse(con);
+			if(srcNode!=null) srcNode.innerText = con;
 
 			let formAction = this.closest('a').getAttribute("href");
 			// TODO: Bounce the parsed post back and set innerHTML to it?
@@ -1022,7 +1024,7 @@ function bindTopic() {
 				url: formAction,
 				type:"POST",
 				dataType:"json",
-				data: { js: 1, edit_item: content },
+				data: { js: 1, edit_item: con },
 				error: ajaxError,
 				success: (dat,status,xhr) => {
 					if("Content" in dat) block.innerHTML = dat["Content"];
@@ -1035,14 +1037,14 @@ function bindTopic() {
 		ev.preventDefault();
 		ev.stopPropagation();
 		let src = this.closest(".post_item").getElementsByClassName("edit_source")[0];
-		let content = document.getElementById("input_content")
-		console.log("content.value",content.value);
+		let con = document.getElementById("input_content")
+		console.log("con.value",con.value);
 
 		let item;
-		if(content.value=="") item = "<blockquote>"+src.innerHTML+"</blockquote>"
+		if(con.value=="") item = "<blockquote>"+src.innerHTML+"</blockquote>"
 		else item = "\r\n<blockquote>"+src.innerHTML+"</blockquote>";
-		content.value = content.value + item;
-		console.log("content.value",content.value);
+		con.value = con.value+item;
+		console.log("con.value",con.value);
 
 		// For custom / third party text editors
 		quoteItemCallback(src.innerHTML,item);
@@ -1054,7 +1056,7 @@ function bindTopic() {
 		$("#poll_results_"+pollID).removeClass("auto_hide");
 		fetch("/poll/results/"+pollID, {
 			credentials: 'same-origin'
-		}).then(resp => resp.text()).catch(er => console.error("er",er)).then(rawData => {
+		}).then(resp => resp.text()).catch(e => console.error("e",e)).then(rawData => {
 			// TODO: Make sure the received data is actually a list of integers
 			let data = JSON.parse(rawData);
 			let allZero = true;
