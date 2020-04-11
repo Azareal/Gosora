@@ -1,0 +1,83 @@
+<main id="topicsItemList"itemscope itemtype="http://schema.org/ItemList">
+{{if not .CurrentUser.Loggedin}}<link rel="canonical"href="//{{.Site.URL}}/topics/{{if eq .Sort.SortBy "mostviewed"}}most-viewed/{{end}}{{if gt .Page 1}}?page={{.Page}}{{end}}">{{end}}
+	
+	<div class="rowblock rowhead topic_list_title_block{{if .CurrentUser.Loggedin}} has_opt{{end}}">
+		<div class="rowitem topic_list_title"><h1 itemprop="name">{{.Title}}</h1></div>
+		{{if .CurrentUser.Loggedin}}
+			<div class="optbox">
+			{{if .ForumList}}
+				<div class="opt filter_opt">
+					<a class="filter_opt_sep"> - </a>
+					<a href="#"class="filter_opt_label link_label"data-for="topic_list_filter_select">{{if eq .Sort.SortBy "mostviewed"}}{{lang "topic_list.most_viewed_filter"}}{{else}}{{lang "topic_list.most_recent_filter"}}{{end}} <span class="filter_opt_pointy">▾</span></a>
+					<div id="topic_list_filter_select"class="link_select">
+						<div class="link_option link_selected">
+							<a href="/topics/">{{lang "topic_list.most_recent_filter"}}</a>
+						</div>
+						<div class="link_option">
+							<a href="/topics/most-viewed/">{{lang "topic_list.most_viewed_filter"}}</a>
+						</div>
+					</div>
+				</div>
+				<div class="pre_opt auto_hide"></div>
+				<div class="opt create_topic_opt"title="{{lang "topic_list.create_topic_tooltip"}}"aria-label="{{lang "topic_list.create_topic_aria"}}"><a class="create_topic_link"href="/topics/create/"></a></div>
+				{{/** TODO: Add a permissions check for this **/}}
+				<div class="opt mod_opt"title="{{lang "topic_list.moderate_tooltip"}}">
+					<a class="moderate_link"href="#"aria-label="{{lang "topic_list.moderate_aria"}}"></a>
+				</div>
+			{{else}}<div class="opt locked_opt"title="{{lang "topics_locked_tooltip"}}"aria-label="{{lang "topics_locked_aria"}}"><a></a></div>{{end}}
+			</div><div style="clear:both;"></div>
+		{{end}}
+	</div>
+	
+	{{if .CurrentUser.Loggedin}}
+	{{template "topics_mod_floater.html"}}
+	
+	{{if .ForumList}}
+	{{/** TODO: Have a seperate forum list for moving topics? Maybe an AJAX forum search compatible with plugin_guilds? **/}}
+	{{/** TODO: Add ARIA attributes for this **/}}
+	<div id="mod_topic_mover" class="modal_pane auto_hide">
+		<form action="/topic/move/submit/?s={{.CurrentUser.Session}}" method="post">
+			<input id="mover_fid"name="fid"value=0 type="hidden">
+			<div class="pane_header">
+				<h3>{{lang "topic_list.move_head"}}</h3>
+			</div>
+			<div class="pane_body">
+				<div class="pane_table">
+					{{range .ForumList}}<div id="mover_fid_{{.ID}}"data-fid="{{.ID}}"class="pane_row">{{.Name}}</div>{{end}}
+				</div>
+			</div>
+			<div class="pane_buttons">
+				<button id="mover_submit">{{lang "topic_list.move_button"}}</button>
+			</div>
+		</form>
+	</div>
+	<div class="rowblock topic_create_form quick_create_form auto_hide" aria-label="{{lang "quick_topic.aria"}}">
+		<form name="topic_create_form_form"id="quick_post_form" enctype="multipart/form-data"action="/topic/create/submit/?s={{.CurrentUser.Session}}" method="post"></form>
+		<img class="little_row_avatar"src="{{.CurrentUser.MicroAvatar}}" height=64 alt="{{lang "quick_topic.avatar_alt"}}" title="{{lang "quick_topic.avatar_tooltip"}}">
+		<div class="main_form">
+			<div class="topic_meta">
+				<div class="formrow topic_board_row real_first_child">
+					<div class="formitem"><select form="quick_post_form"id="topic_board_input"name="board">
+						{{range .ForumList}}<option value="{{.ID}}"{{if eq .ID $.DefaultForum}}selected{{end}}>{{.Name}}</option>{{end}}
+					</select></div>
+				</div>
+				<div class="formrow topic_name_row">
+					<div class="formitem">
+						<input form="quick_post_form"name="name"placeholder="{{lang "quick_topic.whatsup"}}"required>
+					</div>
+				</div>
+			</div>
+			{{template "topics_quick_topic.html" . }}
+		</div>
+	</div>
+		{{end}}
+	{{end}}
+	<div class="rowblock more_topic_block more_topic_block_initial">
+		<div class="rowitem rowmsg"><a href=""class="more_topics"></a></div>
+	</div>
+	<div id="topic_list"class="rowblock topic_list topic_list_{{.Sort.SortBy}}"aria-label="{{lang "topics_list_aria"}}">
+		{{range .TopicList}}{{template "topics_topic.html" . }}{{else}}<div class="rowitem passive rowmsg">{{lang "topics_no_topics"}}{{if .CurrentUser.Loggedin}}{{if .CurrentUser.Perms.CreateTopic}}&nbsp;<a href="/topics/create/">{{lang "topics_start_one"}}</a>{{end}}{{end}}</div>{{end}}
+	</div>
+	
+	{{template "paginator.html" . }}
+	</main>

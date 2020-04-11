@@ -19,16 +19,16 @@ func wsTopicList(topicList []*c.TopicsRow, lastPage int) *c.WsTopicList {
 	return &c.WsTopicList{wsTopicList, lastPage, 0}
 }
 
-func TopicList(w http.ResponseWriter, r *http.Request, user *c.User, h *c.Header) c.RouteError {
-	skip, rerr := h.Hooks.VhookSkippable("route_topic_list_start", w, r, user, h)
+func TopicList(w http.ResponseWriter, r *http.Request, u *c.User, h *c.Header) c.RouteError {
+	skip, rerr := h.Hooks.VhookSkippable("route_topic_list_start", w, r, u, h)
 	if skip || rerr != nil {
 		return rerr
 	}
-	return TopicListCommon(w, r, user, h, "lastupdated", 0)
+	return TopicListCommon(w, r, u, h, "lastupdated", 0)
 }
 
-func TopicListMostViewed(w http.ResponseWriter, r *http.Request, user *c.User, h *c.Header) c.RouteError {
-	return TopicListCommon(w, r, user, h, "mostviewed", c.TopicListMostViewed)
+func TopicListMostViewed(w http.ResponseWriter, r *http.Request, u *c.User, h *c.Header) c.RouteError {
+	return TopicListCommon(w, r, u, h, "mostviewed", c.TopicListMostViewed)
 }
 
 // TODO: Implement search
@@ -191,5 +191,8 @@ func TopicListCommon(w http.ResponseWriter, r *http.Request, user *c.User, h *c.
 	}
 
 	pi := c.TopicListPage{h, topicList, forumList, c.Config.DefaultForum, c.TopicListSort{torder, false}, pagi}
+	if r.FormValue("i") == "1" {
+		return renderTemplate("topics_mini", w, r, h, pi)
+	}
 	return renderTemplate("topics", w, r, h, pi)
 }

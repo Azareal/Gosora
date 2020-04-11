@@ -791,26 +791,26 @@ function mainInit(){
 
 	// The time range selector for the time graphs in the Control Panel
 	$(".autoSubmitRedirect").change(function(){
-		let elems = this.form.elements;
+		let els = this.form.elements;
 		let s = "";
-		for(let i=0; i<elems.length; i++) {
-			let elem = elems[i];
-			if(elem.nodeName=="SELECT") {
-				s += elem.name+"="+elem.options[elem.selectedIndex].getAttribute("value")+"&";
+		for(let i=0; i<els.length; i++) {
+			let el = els[i];
+			if(el.nodeName=="SELECT") {
+				s += el.name+"="+el.options[el.selectedIndex].getAttribute("value")+"&";
 			}
 			// TODO: Implement other element types...
 		}
 		if(s.length > 0) s = "?"+s.substr(0, s.length-1);
 
-		window.location = this.form.getAttribute("action") + s; // Do a redirect as a form submission refuses to work properly
+		window.location = this.form.getAttribute("action")+s; // Do a redirect as a form submission refuses to work properly
 	});
 
 	$(".unix_to_24_hour_time").each(function(){
 		let unixTime = this.innerText;
 		let date = new Date(unixTime*1000);
 		console.log("date",date);
-		let minutes = "0"+date.getMinutes();
-		let formattedTime = date.getHours()+":"+minutes.substr(-2);
+		let mins = "0"+date.getMinutes();
+		let formattedTime = date.getHours()+":"+mins.substr(-2);
 		console.log("formattedTime",formattedTime);
 		this.innerText = formattedTime;
 	});
@@ -884,8 +884,7 @@ function mainInit(){
 						else pro = asyncGetScript("/s/"+res)
 							pro.then(() => console.log("Loaded "+res))
 							.catch(e => {
-								console.log("Unable to get '"+res+"'");
-								console.log("e",e);
+								console.log("Unable to get '"+res+"'",e);
 								console.trace();
 							});
 					}
@@ -899,14 +898,20 @@ function mainInit(){
 				let obj = {Title:document.title,Url:base};
 				history.pushState(obj,obj.Title,obj.Url);
 			}).catch(e => {
-				console.log("Unable to get script '"+href+""+"'");
-				console.log("e",e);
+				console.log("Unable to get script '"+href+""+"'",e);
 				console.trace();
 			});
 	}
 
 	$(".rowtopic a,a.rowtopic,a.forum_poster").click(function(ev) {
 		let base = this.getAttribute("href");
+		loadArb(base,base+"?i=1");
+		ev.stopPropagation();
+		ev.preventDefault();
+	})
+	$("a").click(function(ev) {
+		let base = this.getAttribute("href");
+		if(base!="/topics/") return;
 		loadArb(base,base+"?i=1");
 		ev.stopPropagation();
 		ev.preventDefault();
