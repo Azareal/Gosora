@@ -76,7 +76,7 @@ func NewThemeList() (themes ThemeList, err error) {
 			return themes, err
 		}
 
-		theme := &Theme{Name: ""}
+		theme := &Theme{}
 		err = json.Unmarshal(themeFile, theme)
 		if err != nil {
 			return themes, err
@@ -97,7 +97,7 @@ func NewThemeList() (themes ThemeList, err error) {
 			if err != nil {
 				return themes, err
 			}
-			theme = &Theme{Name: "", Path: theme.Path}
+			theme = &Theme{Path: theme.Path}
 			err = json.Unmarshal(themeFile, theme)
 			if err != nil {
 				return themes, err
@@ -179,19 +179,28 @@ func NewThemeList() (themes ThemeList, err error) {
 
 		for i, res := range theme.Resources {
 			ext := filepath.Ext(res.Name)
-			if ext == ".css" {
+			switch ext {
+			case ".css":
 				res.Type = ResTypeSheet
-			} else if ext == ".js" {
+			case ".js":
 				res.Type = ResTypeScript
 			}
-			if res.Location == "global" {
+			switch res.Location {
+			case "global":
 				res.LocID = LocGlobal
-			} else if res.Location == "frontend" {
+			case "frontend":
 				res.LocID = LocFront
-			} else if res.Location == "panel" {
+			case "panel":
 				res.LocID = LocPanel
 			}
 			theme.Resources[i] = res
+		}
+
+		for _, dock := range theme.Docks {
+			id, ok := DockToID[dock]
+			if ok {
+				theme.DocksID = append(theme.DocksID, id)
+			}
 		}
 
 		// TODO: Bind the built template, or an interpreted one for any dock overrides this theme has

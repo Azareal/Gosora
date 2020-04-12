@@ -221,6 +221,61 @@ func BuildWidget(dock string, h *Header) (sbody string) {
 	return sbody
 }
 
+var DockToID = map[string]int{
+	"leftOfNav":    0,
+	"rightOfNav":   1,
+	"topMenu":      2,
+	"rightSidebar": 3,
+	"footer":       4,
+}
+
+func BuildWidget2(dock int, h *Header) (sbody string) {
+	if !h.Theme.HasDockByID(dock) {
+		return ""
+	}
+	// Let themes forcibly override this slot
+	sbody = h.Theme.BuildDockByID(dock)
+	if sbody != "" {
+		return sbody
+	}
+
+	var widgets []*Widget
+	switch dock {
+	case 0:
+		widgets = Docks.LeftOfNav
+	case 1:
+		widgets = Docks.RightOfNav
+	case 2:
+		// 1 = id for the default menu
+		mhold, err := Menus.Get(1)
+		if err == nil {
+			err := mhold.Build(h.Writer, h.CurrentUser, h.Path)
+			if err != nil {
+				LogError(err)
+			}
+		}
+		return ""
+	case 3:
+		widgets = Docks.RightSidebar.Items
+	case 4:
+		widgets = Docks.Footer.Items
+	}
+
+	for _, widget := range widgets {
+		if !widget.Enabled {
+			continue
+		}
+		if widget.Allowed(h.Zone, h.ZoneID) {
+			item, err := widget.Build(h)
+			if err != nil {
+				LogError(err)
+			}
+			sbody += item
+		}
+	}
+	return sbody
+}
+
 func getDockWidgets(dock string) (widgets []*Widget, err error) {
 	rows, err := widgetStmts.getDockList.Query(dock)
 	if err != nil {

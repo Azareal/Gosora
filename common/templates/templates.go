@@ -42,6 +42,7 @@ type CTemplateConfig struct {
 	SkipTmplPtrMap bool
 	SkipInitBlock  bool
 	PackageName    string
+	DockToID       map[string]int
 }
 
 // nolint
@@ -249,7 +250,7 @@ func Tmpl_` + fname + `(tmpl_i interface{}, w io.Writer) error {
 	c.fileDir = fileDir
 	content, err := c.loadTemplate(c.fileDir, name)
 	if err != nil {
-		c.detail("bailing out: ", err)
+		c.detail("bailing out:", err)
 		return "", "", "", err
 	}
 
@@ -274,7 +275,7 @@ func (c *CTemplateSet) Compile(name, fileDir, expects string, expectsInt interfa
 	c.fileDir = fileDir
 	content, err := c.loadTemplate(c.fileDir, name)
 	if err != nil {
-		c.detail("bailing out: ", err)
+		c.detail("bailing out:", err)
 		return "", err
 	}
 
@@ -455,7 +456,7 @@ func (c *CTemplateSet) compile(name, content, expects string, expectsInt interfa
 		if len(c.langIndexToName) > 0 {
 			for i, name := range c.langIndexToName {
 				//l += `"` + name + `"` + ",\n"
-				if i == 0{
+				if i == 0 {
 					l += `"` + name + `"`
 				} else {
 					l += `,"` + name + `"`
@@ -541,7 +542,8 @@ if !ok {
 	for fid := 0; len(outBuf) > fid; fid++ {
 		fr := outBuf[fid]
 		c.detail(fr.Type + " frame")
-		if fr.Type == "text" {
+		switch {
+		case fr.Type == "text":
 			c.detail(fr)
 			oid := fid
 			c.detail("oid:", oid)
@@ -568,14 +570,13 @@ if !ok {
 				c.detail("post fid:", fid)
 			}
 			writeTextFrame(fr.TemplateName, fr.Extra.(int)-skip)
-		} else if fr.Type == "varsub" || fr.Type == "cvarsub" {
+		case fr.Type == "varsub" || fr.Type == "cvarsub":
 			fout += "w.Write(" + fr.Body + ")\n"
-		} else if fr.Type == "identifier" {
-			fout += fr.Body
-		} else if fr.Type == "lang" {
+		case fr.Type == "lang":
 			//fout += "w.Write(plist[" + strconv.Itoa(fr.Extra.(int)) + "])\n"
 			fout += "w.Write(" + fname + "_phrase_arr[" + strconv.Itoa(fr.Extra.(int)) + "])\n"
-		} else {
+		//case fr.Type == "identifier":
+		default:
 			fout += fr.Body
 		}
 	}
@@ -587,7 +588,7 @@ if !ok {
 	}
 
 	for _, frag := range c.fragBuf {
-		c.detail("frag: ", frag)
+		c.detail("frag:", frag)
 		if frag.Seen {
 			c.detail("invisible")
 			continue
@@ -745,7 +746,7 @@ func (c *CTemplateSet) addText(con CContext, text []byte) {
 		return
 	}
 	nodeText := string(text)
-	c.detail("con.TemplateName: ", con.TemplateName)
+	c.detail("con.TemplateName:", con.TemplateName)
 	fragIndex := c.fragmentCursor[con.TemplateName]
 	_, ok := c.fragOnce[con.TemplateName]
 	c.fragBuf = append(c.fragBuf, Fragment{nodeText, con.TemplateName, fragIndex, ok})
@@ -756,7 +757,7 @@ func (c *CTemplateSet) addText(con CContext, text []byte) {
 func (c *CTemplateSet) compileRangeNode(con CContext, node *parse.RangeNode) {
 	c.dumpCall("compileRangeNode", con, node)
 	defer c.retCall("compileRangeNode")
-	c.detail("node.Pipe: ", node.Pipe)
+	c.detail("node.Pipe:", node.Pipe)
 	var expr string
 	var outVal reflect.Value
 	for _, cmd := range node.Pipe.Cmds {
@@ -882,7 +883,7 @@ func (c *CTemplateSet) compileSubSwitch(con CContext, node *parse.CommandNode) {
 			cur = c.skipStructPointers(cur, id)
 			c.checkIfValid(cur, con.VarHolder, con.HoldReflect, varBit, multiline)
 
-			c.detail("in-loop varBit: " + varBit)
+			c.detail("in-loop varBit:" + varBit)
 			if cur.Kind() == reflect.Map {
 				cur = cur.MapIndex(reflect.ValueOf(id))
 				varBit += "[\"" + id + "\"]"
@@ -927,7 +928,7 @@ func (c *CTemplateSet) compileSubSwitch(con CContext, node *parse.CommandNode) {
 				}
 				varBit += cur.Type().Name() + ")"
 			}
-			c.detail("End Cycle: ", varBit)
+			c.detail("End Cycle:", varBit)
 		}
 
 		if multiline {
@@ -1026,19 +1027,19 @@ func (c *CTemplateSet) compileIdentSwitchN(con CContext, n *parse.CommandNode) (
 }
 
 func (c *CTemplateSet) dumpSymbol(pos int, node *parse.CommandNode, symbol string) {
-	c.detail("symbol: ", symbol)
+	c.detail("symbol:", symbol)
 	c.detail("node.Args[pos+1]", node.Args[pos+1])
 	c.detail("node.Args[pos+2]", node.Args[pos+2])
 }
 
-func (c *CTemplateSet) compareFunc(con CContext, pos int, node *parse.CommandNode, compare string) (out string) {
-	c.dumpSymbol(pos, node, compare)
-	return c.compileIfVarSubN(con, node.Args[pos+1].String()) + " " + compare + " " + c.compileIfVarSubN(con, node.Args[pos+2].String())
+func (c *CTemplateSet) compareFunc(con CContext, pos int, n *parse.CommandNode, compare string) (out string) {
+	c.dumpSymbol(pos, n, compare)
+	return c.compileIfVarSubN(con, n.Args[pos+1].String()) + " " + compare + " " + c.compileIfVarSubN(con, n.Args[pos+2].String())
 }
 
-func (c *CTemplateSet) simpleMath(con CContext, pos int, node *parse.CommandNode, symbol string) (out string, val reflect.Value) {
-	leftParam, val2 := c.compileIfVarSub(con, node.Args[pos+1].String())
-	rightParam, val3 := c.compileIfVarSub(con, node.Args[pos+2].String())
+func (c *CTemplateSet) simpleMath(con CContext, pos int, n *parse.CommandNode, symbol string) (out string, val reflect.Value) {
+	leftParam, val2 := c.compileIfVarSub(con, n.Args[pos+1].String())
+	rightParam, val3 := c.compileIfVarSub(con, n.Args[pos+2].String())
 	if val2.IsValid() {
 		val = val2
 	} else if val3.IsValid() {
@@ -1048,7 +1049,7 @@ func (c *CTemplateSet) simpleMath(con CContext, pos int, node *parse.CommandNode
 		numSample := 1
 		val = reflect.ValueOf(numSample)
 	}
-	c.dumpSymbol(pos, node, symbol)
+	c.dumpSymbol(pos, n, symbol)
 	return leftParam + " " + symbol + " " + rightParam, val
 }
 
@@ -1097,7 +1098,7 @@ ArgLoop:
 	for pos := 0; pos < len(node.Args); pos++ {
 		id := node.Args[pos]
 		c.detail("pos:", pos)
-		c.detail("ID:", id)
+		c.detail("id:", id)
 		switch id.String() {
 		case "not":
 			out += "!"
@@ -1144,6 +1145,14 @@ ArgLoop:
 			val = val3
 
 			// TODO: Refactor this
+			if leftParam[0] == '"' {
+				leftParam = strings.TrimSuffix(strings.TrimPrefix(leftParam, "\""), "\"")
+				id, ok := c.config.DockToID[leftParam]
+				if ok {
+					litString("c.BuildWidget2("+strconv.Itoa(id)+","+rightParam+")", false)
+					break ArgLoop
+				}
+			}
 			litString("c.BuildWidget("+leftParam+","+rightParam+")", false)
 			break ArgLoop
 		case "hasWidgets":
@@ -1621,8 +1630,8 @@ func (c *CTemplateSet) compileVarSub(con CContext, varname string, val reflect.V
 		}
 	}
 
-	c.detail("varname: ", varname)
-	c.detail("assLines: ", assLines)
+	c.detail("varname:", varname)
+	c.detail("assLines:", assLines)
 	var base string
 	switch val.Kind() {
 	case reflect.Int:
@@ -1716,7 +1725,7 @@ func (c *CTemplateSet) compileVarSub(con CContext, varname string, val reflect.V
 		c.logger.Println("Unknown Type:", val.Type().Name())
 		panic("-- I don't know what this variable's type is o.o\n")
 	}
-	c.detail("base: ", base)
+	c.detail("base:", base)
 	if assLines == "" {
 		con.Push("varsub", base)
 	} else {
@@ -1893,12 +1902,12 @@ func (c *CTemplateSet) compileSubTemplate(pcon CContext, node *parse.TemplateNod
 	c.detailf("c.overridenRoots: %+v\n", c.overridenRoots)
 }
 
-func (c *CTemplateSet) loadTemplate(fileDir string, name string) (content string, err error) {
+func (c *CTemplateSet) loadTemplate(fileDir, name string) (content string, err error) {
 	c.dumpCall("loadTemplate", fileDir, name)
-	c.detail("c.themeName: ", c.themeName)
+	c.detail("c.themeName:", c.themeName)
 	if c.themeName != "" {
 		t := "./themes/" + c.themeName + "/overrides/" + name
-		c.detail("per-theme override: ", true)
+		c.detail("per-theme override:", true)
 		res, err := ioutil.ReadFile(t)
 		if err == nil {
 			content = string(res)
@@ -1907,13 +1916,13 @@ func (c *CTemplateSet) loadTemplate(fileDir string, name string) (content string
 			}
 			return content, nil
 		}
-		c.detail("override err: ", err)
+		c.detail("override err:", err)
 	}
 
 	res, err := ioutil.ReadFile(c.fileDir + "overrides/" + name)
 	if err != nil {
-		c.detail("override path: ", c.fileDir+"overrides/"+name)
-		c.detail("override err: ", err)
+		c.detail("override path:", c.fileDir+"overrides/"+name)
+		c.detail("override err:", err)
 		res, err = ioutil.ReadFile(c.fileDir + name)
 		if err != nil {
 			return "", err

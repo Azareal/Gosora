@@ -43,6 +43,7 @@ type Theme struct {
 	Tag            string
 	URL            string
 	Docks          []string // Allowed Values: leftSidebar, rightSidebar, footer
+	DocksID        []int    // Integer versions of Docks to try to get a speed boost in BuildWidget()
 	Settings       map[string]ThemeSetting
 	IntTmplHandle  *htmpl.Template
 	// TODO: Do we really need both OverridenTemplates AND OverridenMap?
@@ -58,6 +59,7 @@ type Theme struct {
 	// TODO: Implement this
 	MapTmplToDock map[string]ThemeMapTmplToDock // map[dockName]data
 	RunOnDock     func(string) string           //(dock string) (sbody string)
+	RunOnDockID   func(int) string              //(dock int) (sbody string)
 
 	// This variable should only be set and unset by the system, not the theme meta file
 	// TODO: Should we phase out Active and make the default theme store the primary source of truth?
@@ -377,6 +379,23 @@ func (t Theme) BuildDock(dock string) (sbody string) {
 	runOnDock := t.RunOnDock
 	if runOnDock != nil {
 		return runOnDock(dock)
+	}
+	return ""
+}
+
+func (t Theme) HasDockByID(id int) bool {
+	for _, dock := range t.DocksID {
+		if dock == id {
+			return true
+		}
+	}
+	return false
+}
+
+func (t Theme) BuildDockByID(id int) (sbody string) {
+	runOnDock := t.RunOnDockID
+	if runOnDock != nil {
+		return runOnDock(id)
 	}
 	return ""
 }

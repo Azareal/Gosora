@@ -162,11 +162,11 @@ func CompileTemplates() error {
 	log.Print("Compiling the templates")
 	// TODO: Implement per-theme template overrides here too
 	overriden := make(map[string]map[string]bool)
-	for _, theme := range Themes {
-		overriden[theme.Name] = make(map[string]bool)
-		log.Printf("theme.OverridenTemplates: %+v\n", theme.OverridenTemplates)
-		for _, override := range theme.OverridenTemplates {
-			overriden[theme.Name][override] = true
+	for _, th := range Themes {
+		overriden[th.Name] = make(map[string]bool)
+		log.Printf("th.OverridenTemplates: %+v\n", th.OverridenTemplates)
+		for _, override := range th.OverridenTemplates {
+			overriden[th.Name][override] = true
 		}
 	}
 	log.Printf("overriden: %+v\n", overriden)
@@ -175,6 +175,7 @@ func CompileTemplates() error {
 		Minify:     Config.MinifyTemplates,
 		Debug:      Dev.DebugMode,
 		SuperDebug: Dev.TemplateDebug,
+		DockToID:   DockToID,
 	}
 	c := tmpl.NewCTemplateSet("normal")
 	c.SetConfig(config)
@@ -195,13 +196,13 @@ func CompileTemplates() error {
 	log.Printf("oroots: %+v\n", oroots)
 
 	log.Print("Compiling the per-theme templates")
-	for theme, tmpls := range oroots {
-		c.ResetLogs("normal-" + theme)
-		c.SetThemeName(theme)
+	for th, tmpls := range oroots {
+		c.ResetLogs("normal-" + th)
+		c.SetThemeName(th)
 		c.SetPerThemeTmpls(tmpls)
-		log.Print("theme: ", theme)
+		log.Print("th: ", th)
 		log.Printf("perThemeTmpls: %+v\n", tmpls)
-		err := compileTemplates(&wg, c, theme)
+		err := compileTemplates(&wg, c, th)
 		if err != nil {
 			return err
 		}
@@ -229,6 +230,7 @@ func compileCommons(c *tmpl.CTemplateSet, head, head2 *Header, forumList []Forum
 	topicsList = append(topicsList, &TopicsRow{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, now, now, user3.ID, 1, 1, "", "127.0.0.1", 1, 0, 1, 1, 0, "classname", 0, "", user2, "", 0, user3, "General", "/forum/general.2", nil})
 	topicListPage := TopicListPage{htitle("Topic List"), topicsList, forumList, Config.DefaultForum, TopicListSort{"lastupdated", false}, Paginator{[]int{1}, 1, 1}}
 	o.Add("topics", "c.TopicListPage", topicListPage)
+	o.Add("topics_mini", "c.TopicListPage", topicListPage)
 
 	forumItem := BlankForum(1, "general-forum.1", "General Forum", "Where the general stuff happens", true, "all", 0, "", 0)
 	forumPage := ForumPage{htitle("General Forum"), topicsList, forumItem, Paginator{[]int{1}, 1, 1}}
@@ -472,6 +474,7 @@ func CompileJSTemplates() error {
 		SkipTmplPtrMap: true,
 		SkipInitBlock:  false,
 		PackageName:    "tmpl",
+		DockToID:       DockToID,
 	}
 	c := tmpl.NewCTemplateSet("js")
 	c.SetConfig(config)
