@@ -1149,7 +1149,8 @@ ArgLoop:
 				leftParam = strings.TrimSuffix(strings.TrimPrefix(leftParam, "\""), "\"")
 				id, ok := c.config.DockToID[leftParam]
 				if ok {
-					litString("c.BuildWidget2("+strconv.Itoa(id)+","+rightParam+")", false)
+					out = "c.BuildWidget3(" + strconv.Itoa(id) + "," + rightParam + ")\n"
+					literal = true
 					break ArgLoop
 				}
 			}
@@ -1176,6 +1177,15 @@ ArgLoop:
 			val = val3
 
 			// TODO: Refactor this
+			if leftParam[0] == '"' {
+				leftParam = strings.TrimSuffix(strings.TrimPrefix(leftParam, "\""), "\"")
+				id, ok := c.config.DockToID[leftParam]
+				if ok {
+					out = "c.HasWidgets2(" + strconv.Itoa(id) + "," + rightParam + ")"
+					literal = true
+					break ArgLoop
+				}
+			}
 			out = "c.HasWidgets(" + leftParam + "," + rightParam + ")"
 			literal = true
 			break ArgLoop

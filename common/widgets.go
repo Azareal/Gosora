@@ -11,6 +11,7 @@ import (
 	"sync/atomic"
 
 	min "github.com/Azareal/Gosora/common/templates"
+	"github.com/Azareal/Gosora/uutils"
 	"github.com/pkg/errors"
 )
 
@@ -261,12 +262,12 @@ func BuildWidget2(dock int, h *Header) (sbody string) {
 		widgets = Docks.Footer.Items
 	}
 
-	for _, widget := range widgets {
-		if !widget.Enabled {
+	for _, w := range widgets {
+		if !w.Enabled {
 			continue
 		}
-		if widget.Allowed(h.Zone, h.ZoneID) {
-			item, err := widget.Build(h)
+		if w.Allowed(h.Zone, h.ZoneID) {
+			item, err := w.Build(h)
 			if err != nil {
 				LogError(err)
 			}
@@ -274,6 +275,91 @@ func BuildWidget2(dock int, h *Header) (sbody string) {
 		}
 	}
 	return sbody
+}
+
+func BuildWidget3(dock int, h *Header) {
+	if !h.Theme.HasDockByID(dock) {
+		return
+	}
+	// Let themes forcibly override this slot
+	if sbody := h.Theme.BuildDockByID(dock); sbody != "" {
+		h.Writer.Write(uutils.StringToBytes(sbody))
+		return
+	}
+
+	var widgets []*Widget
+	switch dock {
+	case 0:
+		widgets = Docks.LeftOfNav
+	case 1:
+		widgets = Docks.RightOfNav
+	case 2:
+		// 1 = id for the default menu
+		mhold, err := Menus.Get(1)
+		if err == nil {
+			err := mhold.Build(h.Writer, h.CurrentUser, h.Path)
+			if err != nil {
+				LogError(err)
+			}
+		}
+		return
+	case 3:
+		widgets = Docks.RightSidebar.Items
+	case 4:
+		widgets = Docks.Footer.Items
+	}
+
+	for _, w := range widgets {
+		if !w.Enabled {
+			continue
+		}
+		if w.Allowed(h.Zone, h.ZoneID) {
+			item, err := w.Build(h)
+			if err != nil {
+				LogError(err)
+			}
+			if item != "" {
+				h.Writer.Write(uutils.StringToBytes(item))
+			}
+		}
+	}
+}
+
+// TODO: Find a more optimimal way of doing this...
+func HasWidgets2(dock int, h *Header) bool {
+	if !h.Theme.HasDockByID(dock) {
+		return false
+	}
+
+	// Let themes forcibly override this slot
+	// TODO: Optimise this bit
+	sbody := h.Theme.BuildDockByID(dock)
+	if sbody != "" {
+		return true
+	}
+
+	var widgets []*Widget
+	switch dock {
+	case 0:
+		widgets = Docks.LeftOfNav
+	case 1:
+		widgets = Docks.RightOfNav
+	case 3:
+		widgets = Docks.RightSidebar.Items
+	case 4:
+		widgets = Docks.Footer.Items
+	}
+
+	wcount := 0
+	for _, widget := range widgets {
+		if !widget.Enabled {
+			continue
+		}
+		if widget.Allowed(h.Zone, h.ZoneID) {
+			wcount++
+		}
+	}
+	return wcount > 0
 }
 
 func getDockWidgets(dock string) (widgets []*Widget, err error) {
