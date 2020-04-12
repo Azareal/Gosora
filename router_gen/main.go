@@ -289,6 +289,7 @@ func main() {
 		"curl",
 		"python",
 		"go",
+		"headlesschrome",
 	}
 
 	tmplVars.AllAgentMap = make(map[string]int)
@@ -358,6 +359,7 @@ func main() {
 		"curl",
 		"python",
 		"Go",
+		"HeadlessChrome",
 	}
 
 	tmplVars.AllAgentMarks = map[string]string{
@@ -422,6 +424,7 @@ func main() {
 		"curl":                "curl",
 		"python":              "python",
 		"Go":                  "go",
+		"HeadlessChrome":      "headlesschrome",
 	}
 
 	tmplVars.AllAgentMarkIDs = make(map[string]int)

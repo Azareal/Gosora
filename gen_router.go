@@ -629,6 +629,7 @@ var agentMapEnum = map[string]int{
 	"curl": 55,
 	"python": 56,
 	"go": 57,
+	"headlesschrome": 58,
 }
 var reverseAgentMapEnum = map[int]string{ 
 	0: "unknown",
@@ -689,6 +690,7 @@ var reverseAgentMapEnum = map[int]string{
 	55: "curl",
 	56: "python",
 	57: "go",
+	58: "headlesschrome",
 }
 var markToAgent = map[string]string{ 
 	"OPR": "opera",
@@ -750,6 +752,7 @@ var markToAgent = map[string]string{
 	"curl": "curl",
 	"python": "python",
 	"Go": "go",
+	"HeadlessChrome": "headlesschrome",
 }
 var markToID = map[string]int{ 
 	"OPR": 3,
@@ -811,6 +814,7 @@ var markToID = map[string]int{
 	"curl": 55,
 	"python": 56,
 	"Go": 57,
+	"HeadlessChrome": 58,
 }
 /*var agentRank = map[string]int{
 	"opera":9,

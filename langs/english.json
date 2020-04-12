@@ -241,6 +241,7 @@
 		"curl":"curl",
 		"python":"Python Bot",
 		"go":"Go Bot",
+		"headlesschrome":"Headless Chrome",
 		"suspicious":"Suspicious",
 		"unknown":"Unknown",
 		"blank":"Blank",
