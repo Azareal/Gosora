@@ -957,6 +957,8 @@ func isLocalHost(h string) bool {
 	return h=="localhost" || h=="127.0.0.1" || h=="::1"
 }
 
+var gzipPool = sync.Pool{}
+
 // TODO: Pass the default path or config struct to the router rather than accessing it via a package global
 // TODO: SetDefaultPath
 // TODO: GetDefaultPath
@@ -1271,12 +1273,22 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if prefix != "/ws" && strings.Contains(req.Header.Get("Accept-Encoding"), "gzip") {
 		h := w.Header()
 		h.Set("Content-Encoding", "gzip")
-		gzw := c.GzipResponseWriter{Writer: gzip.NewWriter(w), ResponseWriter: w}
+		var ii = gzipPool.Get()
+		var igzw *gzip.Writer
+		if ii == nil {
+			igzw = gzip.NewWriter(w)
+		} else {
+			igzw = ii.(*gzip.Writer)
+			igzw.Reset(w)
+		}
+		gzw := c.GzipResponseWriter{Writer: igzw, ResponseWriter: w}
 		defer func() {
 			//h := w.Header()
 			if h.Get("Content-Encoding") == "gzip" && h.Get("X-I") == "" {
 				//log.Print("push gzip close")
-				gzw.Writer.(*gzip.Writer).Close()
+				igzw := gzw.Writer.(*gzip.Writer)
+				igzw.Close()
+				gzipPool.Put(igzw)
 			}
 		}()
 		w = gzw
