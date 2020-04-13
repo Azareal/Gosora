@@ -1,16 +1,16 @@
 // Highly experimental plugin for caching rendered pages for guests
-package main
+package extend
 
 import (
 	//"log"
 	"bytes"
 	"errors"
-	"strings"
-	"strconv"
-	"time"
-	"sync/atomic"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
+	"strings"
+	"sync/atomic"
+	"time"
 
 	c "github.com/Azareal/Gosora/common"
 	"github.com/Azareal/Gosora/routes"
@@ -22,35 +22,35 @@ func init() {
 	c.Plugins.Add(&c.Plugin{UName: "hyperdrive", Name: "Hyperdrive", Author: "Azareal", Init: initHdrive, Deactivate: deactivateHdrive})
 }
 
-func initHdrive(plugin *c.Plugin) error {
+func initHdrive(pl *c.Plugin) error {
 	hyperspace = newHyperspace()
-	plugin.AddHook("tasks_tick_topic_list",tickHdrive)
-	plugin.AddHook("tasks_tick_widget_wol",tickHdriveWol)
-	plugin.AddHook("route_topic_list_start",jumpHdriveTopicList)
-	plugin.AddHook("route_forum_list_start",jumpHdriveForumList)
+	pl.AddHook("tasks_tick_topic_list", tickHdrive)
+	pl.AddHook("tasks_tick_widget_wol", tickHdriveWol)
+	pl.AddHook("route_topic_list_start", jumpHdriveTopicList)
+	pl.AddHook("route_forum_list_start", jumpHdriveForumList)
 	tickHdrive()
 	return nil
 }
 
-func deactivateHdrive(plugin *c.Plugin) {
-	plugin.RemoveHook("tasks_tick_topic_list",tickHdrive)
-	plugin.RemoveHook("tasks_tick_widget_wol",tickHdriveWol)
-	plugin.RemoveHook("route_topic_list_start",jumpHdriveTopicList)
-	plugin.RemoveHook("route_forum_list_start",jumpHdriveForumList)
+func deactivateHdrive(pl *c.Plugin) {
+	pl.RemoveHook("tasks_tick_topic_list", tickHdrive)
+	pl.RemoveHook("tasks_tick_widget_wol", tickHdriveWol)
+	pl.RemoveHook("route_topic_list_start", jumpHdriveTopicList)
+	pl.RemoveHook("route_forum_list_start", jumpHdriveForumList)
 	hyperspace = nil
 }
 
 type Hyperspace struct {
-	topicList atomic.Value
-	gzipTopicList atomic.Value
-	forumList atomic.Value
-	gzipForumList atomic.Value
+	topicList           atomic.Value
+	gzipTopicList       atomic.Value
+	forumList           atomic.Value
+	gzipForumList       atomic.Value
 	lastTopicListUpdate atomic.Value
 }
 
 func newHyperspace() *Hyperspace {
 	pageCache := new(Hyperspace)
-	blank := make(map[string][]byte,len(c.Themes))
+	blank := make(map[string][]byte, len(c.Themes))
 	pageCache.topicList.Store(blank)
 	pageCache.gzipTopicList.Store(blank)
 	pageCache.forumList.Store(blank)
@@ -69,7 +69,7 @@ func tickHdrive(args ...interface{}) (skip bool, rerr c.RouteError) {
 	c.DebugLog("Refueling...")
 
 	// Avoid accidentally caching already cached content
-	blank := make(map[string][]byte,len(c.Themes))
+	blank := make(map[string][]byte, len(c.Themes))
 	hyperspace.topicList.Store(blank)
 	hyperspace.gzipTopicList.Store(blank)
 	hyperspace.forumList.Store(blank)
@@ -80,69 +80,69 @@ func tickHdrive(args ...interface{}) (skip bool, rerr c.RouteError) {
 	fListMap := make(map[string][]byte)
 	gfListMap := make(map[string][]byte)
 
-	var cacheTheme = func(tname string) (skip bool, fail bool, rerr c.RouteError) {
+	cacheTheme := func(tname string) (skip, fail bool, rerr c.RouteError) {
 
-	themeCookie := http.Cookie{Name: "current_theme", Value: tname, Path: "/", MaxAge: c.Year}
+		themeCookie := http.Cookie{Name: "current_theme", Value: tname, Path: "/", MaxAge: c.Year}
 
-	w := httptest.NewRecorder()
-	req := httptest.NewRequest("get", "/topics/", bytes.NewReader(nil))
-	req.AddCookie(&themeCookie)
-	user := c.GuestUser
+		w := httptest.NewRecorder()
+		req := httptest.NewRequest("get", "/topics/", bytes.NewReader(nil))
+		req.AddCookie(&themeCookie)
+		user := c.GuestUser
 
-	head, rerr := c.UserCheck(w, req, &user)
-	if rerr != nil {
-		return true, true, rerr
-	}
-			
-	rerr = routes.TopicList(w, req, user, head)
-	if rerr != nil {
-		return true, true, rerr
-	}
-	if w.Code != 200 {
-		c.LogWarning(errors.New("not 200 for topic list in hyperdrive"))
-		return false, true, nil
-	}
+		head, rerr := c.UserCheck(w, req, &user)
+		if rerr != nil {
+			return true, true, rerr
+		}
 
-	buf := new(bytes.Buffer)
-	buf.ReadFrom(w.Result().Body)
-	tListMap[tname] = buf.Bytes()
+		rerr = routes.TopicList(w, req, &user, head)
+		if rerr != nil {
+			return true, true, rerr
+		}
+		if w.Code != 200 {
+			c.LogWarning(errors.New("not 200 for topic list in hyperdrive"))
+			return false, true, nil
+		}
 
-	gbuf, err := c.CompressBytesGzip(buf.Bytes())
-	if err != nil {
-		c.LogWarning(err)
-		return false, true, nil
-	}
-	gtListMap[tname] = gbuf
+		buf := new(bytes.Buffer)
+		buf.ReadFrom(w.Result().Body)
+		tListMap[tname] = buf.Bytes()
 
-	w = httptest.NewRecorder()
-	req = httptest.NewRequest("get", "/forums/", bytes.NewReader(nil))
-	user = c.GuestUser
+		gbuf, err := c.CompressBytesGzip(buf.Bytes())
+		if err != nil {
+			c.LogWarning(err)
+			return false, true, nil
+		}
+		gtListMap[tname] = gbuf
 
-	head, rerr = c.UserCheck(w, req, &user)
-	if rerr != nil {
-		return true, true, rerr
-	}
+		w = httptest.NewRecorder()
+		req = httptest.NewRequest("get", "/forums/", bytes.NewReader(nil))
+		user = c.GuestUser
 
-	rerr = routes.ForumList(w, req, user, head)
-	if rerr != nil {
-		return true, true, rerr
-	}
-	if w.Code != 200 {
-		c.LogWarning(errors.New("not 200 for forum list in hyperdrive"))
-		return false, true, nil
-	}
+		head, rerr = c.UserCheck(w, req, &user)
+		if rerr != nil {
+			return true, true, rerr
+		}
 
-	buf = new(bytes.Buffer)
-	buf.ReadFrom(w.Result().Body)
-	fListMap[tname] = buf.Bytes()
+		rerr = routes.ForumList(w, req, &user, head)
+		if rerr != nil {
+			return true, true, rerr
+		}
+		if w.Code != 200 {
+			c.LogWarning(errors.New("not 200 for forum list in hyperdrive"))
+			return false, true, nil
+		}
 
-	gbuf, err = c.CompressBytesGzip(buf.Bytes())
-	if err != nil {
-		c.LogWarning(err)
-		return false, true, nil
-	}
-	gfListMap[tname] = gbuf
-	return false, false, nil
+		buf = new(bytes.Buffer)
+		buf.ReadFrom(w.Result().Body)
+		fListMap[tname] = buf.Bytes()
+
+		gbuf, err = c.CompressBytesGzip(buf.Bytes())
+		if err != nil {
+			c.LogWarning(err)
+			return false, true, nil
+		}
+		gfListMap[tname] = gbuf
+		return false, false, nil
 	}
 
 	for tname, _ := range c.Themes {
@@ -157,7 +157,7 @@ func tickHdrive(args ...interface{}) (skip bool, rerr c.RouteError) {
 	hyperspace.forumList.Store(fListMap)
 	hyperspace.gzipForumList.Store(gfListMap)
 	hyperspace.lastTopicListUpdate.Store(time.Now().Unix())
-	
+
 	return false, nil
 }
 
@@ -175,7 +175,7 @@ func jumpHdriveForumList(args ...interface{}) (skip bool, rerr c.RouteError) {
 	return jumpHdrive(pg[theme.Name], p[theme.Name], args)
 }
 
-func jumpHdrive(pg []byte, p []byte, args []interface{}) (skip bool, rerr c.RouteError) {
+func jumpHdrive(pg, p []byte, args []interface{}) (skip bool, rerr c.RouteError) {
 	var tList []byte
 	w := args[0].(http.ResponseWriter)
 	var iw http.ResponseWriter
@@ -199,7 +199,7 @@ func jumpHdrive(pg []byte, p []byte, args []interface{}) (skip bool, rerr c.Rout
 		c.DebugLog("not guest")
 		return false, nil
 	}
-	
+
 	// Avoid intercepting search requests and filters as we don't have those in cache
 	r := args[1].(*http.Request)
 	//c.DebugLog("r.URL.Path:",r.URL.Path)
@@ -215,12 +215,12 @@ func jumpHdrive(pg []byte, p []byte, args []interface{}) (skip bool, rerr c.Rout
 
 	var etag string
 	lastUpdate := hyperspace.lastTopicListUpdate.Load().(int64)
-	c.DebugLog("lastUpdate:",lastUpdate)
+	c.DebugLog("lastUpdate:", lastUpdate)
 	if ok {
-		iw.Header().Set("X-I","1")
-		etag = "\""+strconv.FormatInt(lastUpdate, 10)+"-g\""
+		iw.Header().Set("X-I", "1")
+		etag = "\"" + strconv.FormatInt(lastUpdate, 10) + "-g\""
 	} else {
-		etag = "\""+strconv.FormatInt(lastUpdate, 10)+"\""
+		etag = "\"" + strconv.FormatInt(lastUpdate, 10) + "\""
 	}
 
 	if lastUpdate != 0 {
