@@ -915,6 +915,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				portless := strings.Split(ref,":")[0]
 				// TODO: Handle c.Site.Host in uppercase too?
 				if portless != "localhost" && portless != "127.0.0.1" && portless != c.Site.Host {
+					r.DumpRequest(req,"Ref Route")
 					co.ReferrerTracker.Bump(ref)
 				}
 			}
@@ -1048,7 +1049,13 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 				r.SuspiciousRequest(req,"Bad Route")
 				return c.MicroNotFound(w,req)
 			}
+
 			r.DumpRequest(req,"Bad Route")
+			ae := req.Header.Get("Accept-Encoding")
+			likelyBot := ae == "gzip" || ae == ""
+			if likelyBot {
+				return c.MicroNotFound(w,req)
+			}
 			return c.NotFound(w,req,nil)
 	}
 	return err

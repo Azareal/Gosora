@@ -17,6 +17,7 @@ import (
 	"sync"
 
 	tmpl "github.com/Azareal/Gosora/tmpl_client"
+	"github.com/andybalholm/brotli"
 )
 
 type SFileList map[string]SFile
@@ -25,15 +26,22 @@ var StaticFiles SFileList = make(map[string]SFile)
 var staticFileMutex sync.RWMutex
 
 type SFile struct {
-	Data             []byte
-	GzipData         []byte
-	Sha256           string
-	OName            string
-	Pos              int64
-	Length           int64
-	StrLength        string
-	GzipLength       int64
-	StrGzipLength    string
+	// TODO: Move these to the end?
+	Data     []byte
+	GzipData []byte
+	BrData   []byte
+
+	Sha256 string
+	OName  string
+	Pos    int64
+
+	Length        int64
+	StrLength     string
+	GzipLength    int64
+	StrGzipLength string
+	BrLength      int64
+	StrBrLength   string
+
 	Mimetype         string
 	Info             os.FileInfo
 	FormattedModTime string
@@ -254,6 +262,21 @@ func (list SFileList) JSTmplInit() error {
 		path = tmplName + ".js"
 		DebugLog("js path: ", path)
 		ext := filepath.Ext("/tmpl_client/" + path)
+
+		brData, err := CompressBytesBrotli(data)
+		if err != nil {
+			return err
+		}
+		// Don't use Brotli if we get meagre gains from it as it takes longer to process the responses
+		if len(brData) >= (len(data) + 110) {
+			brData = nil
+		} else {
+			diff := len(data) - len(brData)
+			if diff <= len(data)/100 {
+				brData = nil
+			}
+		}
+
 		gzipData, err := CompressBytesGzip(data)
 		if err != nil {
 			return err
@@ -273,7 +296,7 @@ func (list SFileList) JSTmplInit() error {
 		hasher.Write(data)
 		checksum := hex.EncodeToString(hasher.Sum(nil))
 
-		list.Set("/s/"+path, SFile{data, gzipData, checksum, path + "?h=" + checksum, 0, int64(len(data)), strconv.Itoa(len(data)), int64(len(gzipData)), strconv.Itoa(len(gzipData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)})
+		list.Set("/s/"+path, SFile{data, gzipData, brData, checksum, path + "?h=" + checksum, 0, int64(len(data)), strconv.Itoa(len(data)), int64(len(gzipData)), strconv.Itoa(len(gzipData)), int64(len(brData)), strconv.Itoa(len(brData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)})
 
 		DebugLogf("Added the '%s' static file.", path)
 		return nil
@@ -304,8 +327,22 @@ func (list SFileList) Init() error {
 		checksum := hex.EncodeToString(hasher.Sum(nil))
 
 		// Avoid double-compressing images
-		var gzipData []byte
+		var gzipData, brData []byte
 		if mimetype != "image/jpeg" && mimetype != "image/png" && mimetype != "image/gif" {
+			brData, err = CompressBytesBrotli(data)
+			if err != nil {
+				return err
+			}
+			// Don't use Brotli if we get meagre gains from it as it takes longer to process the responses
+			if len(brData) >= (len(data) + 130) {
+				brData = nil
+			} else {
+				diff := len(data) - len(brData)
+				if diff <= len(data)/100 {
+					brData = nil
+				}
+			}
+
 			gzipData, err = CompressBytesGzip(data)
 			if err != nil {
 				return err
@@ -321,7 +358,7 @@ func (list SFileList) Init() error {
 			}
 		}
 
-		list.Set("/s/"+path, SFile{data, gzipData, checksum, path + "?h=" + checksum, 0, int64(len(data)), strconv.Itoa(len(data)), int64(len(gzipData)), strconv.Itoa(len(gzipData)), mimetype, f, f.ModTime().UTC().Format(http.TimeFormat)})
+		list.Set("/s/"+path, SFile{data, gzipData, brData, checksum, path + "?h=" + checksum, 0, int64(len(data)), strconv.Itoa(len(data)), int64(len(gzipData)), strconv.Itoa(len(gzipData)), int64(len(brData)), strconv.Itoa(len(brData)), mimetype, f, f.ModTime().UTC().Format(http.TimeFormat)})
 
 		DebugLogf("Added the '%s' static file.", path)
 		return nil
@@ -344,6 +381,21 @@ func (list SFileList) Add(path, prefix string) error {
 
 	ext := filepath.Ext(path)
 	path = strings.TrimPrefix(path, prefix)
+
+	brData, err := CompressBytesBrotli(data)
+	if err != nil {
+		return err
+	}
+	// Don't use Brotli if we get meagre gains from it as it takes longer to process the responses
+	if len(brData) >= (len(data) + 130) {
+		brData = nil
+	} else {
+		diff := len(data) - len(brData)
+		if diff <= len(data)/100 {
+			brData = nil
+		}
+	}
+
 	gzipData, err := CompressBytesGzip(data)
 	if err != nil {
 		return err
@@ -363,7 +415,7 @@ func (list SFileList) Add(path, prefix string) error {
 	hasher.Write(data)
 	checksum := hex.EncodeToString(hasher.Sum(nil))
 
-	list.Set("/s"+path, SFile{data, gzipData, checksum, path + "?h=" + checksum, 0, int64(len(data)), strconv.Itoa(len(data)), int64(len(gzipData)), strconv.Itoa(len(gzipData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)})
+	list.Set("/s/"+path, SFile{data, gzipData, brData, checksum, path + "?h=" + checksum, 0, int64(len(data)), strconv.Itoa(len(data)), int64(len(gzipData)), strconv.Itoa(len(gzipData)), int64(len(brData)), strconv.Itoa(len(brData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)})
 
 	DebugLogf("Added the '%s' static file", path)
 	return nil
@@ -393,6 +445,20 @@ func CompressBytesGzip(in []byte) ([]byte, error) {
 		return nil, err
 	}
 	err = gz.Close()
+	if err != nil {
+		return nil, err
+	}
+	return buff.Bytes(), nil
+}
+
+func CompressBytesBrotli(in []byte) ([]byte, error) {
+	var buff bytes.Buffer
+	br := brotli.NewWriterLevel(&buff, brotli.BestCompression)
+	_, err := br.Write(in)
+	if err != nil {
+		return nil, err
+	}
+	err = br.Close()
 	if err != nil {
 		return nil, err
 	}

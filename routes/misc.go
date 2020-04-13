@@ -36,8 +36,16 @@ func StaticFile(w http.ResponseWriter, r *http.Request) {
 			} else {
 				h.Set("Cache-Control", cacheControlMaxAge) //Cache-Control: max-age=31536000
 			}
-			
-			if file.GzipLength > 300 && strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
+			ae := r.Header.Get("Accept-Encoding")
+
+			if file.BrLength > 300 && strings.Contains(ae, "br") {
+				h.Set("Content-Encoding", "br")
+				h.Set("Content-Length", file.StrBrLength)
+				http.ServeContent(w, r, r.URL.Path, file.Info.ModTime(), bytes.NewReader(file.BrData))
+				return
+			}
+
+			if file.GzipLength > 300 && strings.Contains(ae, "gzip") {
 				h.Set("Content-Encoding", "gzip")
 				h.Set("Content-Length", file.StrGzipLength)
 				http.ServeContent(w, r, r.URL.Path, file.Info.ModTime(), bytes.NewReader(file.GzipData))
@@ -65,7 +73,11 @@ func StaticFile(w http.ResponseWriter, r *http.Request) {
 	}
 	h.Set("Vary", "Accept-Encoding")
 
-	if file.GzipLength > 0 && strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
+	if file.BrLength > 0 && strings.Contains(r.Header.Get("Accept-Encoding"), "br") {
+		h.Set("Content-Encoding", "br")
+		h.Set("Content-Length", file.StrBrLength)
+		io.Copy(w, bytes.NewReader(file.BrData)) // Use w.Write instead?
+	} else if file.GzipLength > 0 && strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
 		h.Set("Content-Encoding", "gzip")
 		h.Set("Content-Length", file.StrGzipLength)
 		io.Copy(w, bytes.NewReader(file.GzipData)) // Use w.Write instead?
