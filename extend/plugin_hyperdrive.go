@@ -234,6 +234,9 @@ func jumpHdrive(pg, p []byte, args []interface{}) (skip bool, rerr c.RouteError)
 	}
 
 	header := args[3].(*c.Header)
+	if ok {
+		gzw.Header().Set("Content-Type", "text/html;charset=utf-8")
+	}
 	routes.FootHeaders(w, header)
 	iw.Write(tList)
 
