@@ -36,8 +36,8 @@ type TopicListInt interface {
 
 type DefaultTopicList struct {
 	// TODO: Rewrite this to put permTree as the primary and put canSeeStr on each group?
-	oddGroups  map[int]*TopicListHolder
-	evenGroups map[int]*TopicListHolder
+	oddGroups  map[int][2]*TopicListHolder
+	evenGroups map[int][2]*TopicListHolder
 	oddLock    sync.RWMutex
 	evenLock   sync.RWMutex
 
@@ -61,8 +61,8 @@ type DefaultTopicList struct {
 // Also, keep in mind that as-long as the groups don't all have unique sets of forums they can see, then we can optimise a large portion of the work away.
 func NewDefaultTopicList(acc *qgen.Accumulator) (*DefaultTopicList, error) {
 	tList := &DefaultTopicList{
-		oddGroups:        make(map[int]*TopicListHolder),
-		evenGroups:       make(map[int]*TopicListHolder),
+		oddGroups:        make(map[int][2]*TopicListHolder),
+		evenGroups:       make(map[int][2]*TopicListHolder),
 		forums:           make(map[int]*ForumTopicListHolder),
 		qcounts:          make(map[int]*sql.Stmt),
 		qcounts2:         make(map[int]*sql.Stmt),
@@ -90,9 +90,9 @@ func (tList *DefaultTopicList) Tick() error {
 	}
 	//fmt.Println("building topic list")
 
-	oddLists := make(map[int]*TopicListHolder)
-	evenLists := make(map[int]*TopicListHolder)
-	addList := func(gid int, h *TopicListHolder) {
+	oddLists := make(map[int][2]*TopicListHolder)
+	evenLists := make(map[int][2]*TopicListHolder)
+	addList := func(gid int, h [2]*TopicListHolder) {
 		if gid%2 == 0 {
 			evenLists[gid] = h
 		} else {
@@ -125,14 +125,21 @@ func (tList *DefaultTopicList) Tick() error {
 		gidToCanSee[g.ID] = sCanSee
 	}
 
-	canSeeHolders := make(map[string]*TopicListHolder)
+	canSeeHolders := make(map[string][2]*TopicListHolder)
 	forumCounts := make(map[int]int)
 	for name, canSee := range permTree {
 		topicList, forumList, pagi, err := tList.GetListByCanSee(canSee, 1, 0, nil)
 		if err != nil {
 			return err
 		}
-		canSeeHolders[name] = &TopicListHolder{topicList, forumList, pagi}
+		topicList2, forumList2, pagi2, err := tList.GetListByCanSee(canSee, 2, 0, nil)
+		if err != nil {
+			return err
+		}
+		canSeeHolders[name] = [2]*TopicListHolder{
+			&TopicListHolder{topicList, forumList, pagi},
+			&TopicListHolder{topicList2, forumList2, pagi2},
+		}
 		if len(canSee) > 1 {
 			forumCounts[len(canSee)] += 1
 		}
@@ -353,8 +360,9 @@ func (tList *DefaultTopicList) GetListByGroup(g *Group, page, orderby int, filte
 		page = 1
 	}
 	// TODO: Cache the first three pages not just the first along with all the topics on this beaten track
-	if page == 1 && orderby == 0 && len(filterIDs) == 0 {
-		var h *TopicListHolder
+	// TODO: Move this into CanSee to reduce redundancy
+	if (page == 1 || page == 2) && orderby == 0 && len(filterIDs) == 0 {
+		var h [2]*TopicListHolder
 		var ok bool
 		if g.ID%2 == 0 {
 			tList.evenLock.RLock()
@@ -366,7 +374,7 @@ func (tList *DefaultTopicList) GetListByGroup(g *Group, page, orderby int, filte
 			tList.oddLock.RUnlock()
 		}
 		if ok {
-			return h.List, h.ForumList, h.Paginator, nil
+			return h[page-1].List, h[page-1].ForumList, h[page-1].Paginator, nil
 		}
 	}
 
