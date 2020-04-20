@@ -16,6 +16,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 	"unicode"
 
@@ -30,6 +31,7 @@ var successJSONBytes = []byte(`{"success":1}`)
 // TODO: Refactor this
 // TODO: Use the phrase system
 var phraseLoginAlerts = []byte(`{"msgs":[{"msg":"Login to see your alerts","path":"/accounts/login"}],"count":0}`)
+var alertStrPool = sync.Pool{}
 
 // TODO: Refactor this endpoint
 // TODO: Move this into the routes package
@@ -73,8 +75,7 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError
 	case "alerts": // A feed of events tailored for a specific user
 		if !user.Loggedin {
 			h := w.Header()
-			gzw, ok := w.(c.GzipResponseWriter)
-			if ok {
+			if gzw, ok := w.(c.GzipResponseWriter); ok {
 				w = gzw.ResponseWriter
 				h.Del("Content-Encoding")
 			}
@@ -100,8 +101,7 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError
 		}
 
 		if count == 0 {
-			gzw, ok := w.(c.GzipResponseWriter)
-			if ok {
+			if gzw, ok := w.(c.GzipResponseWriter); ok {
 				w = gzw.ResponseWriter
 				w.Header().Del("Content-Encoding")
 			}
@@ -148,8 +148,7 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError
 		}
 
 		if len(alerts) == 0 || (rCreatedAt != 0 && rCreatedAt >= topCreatedAt && count == rCount) {
-			gzw, ok := w.(c.GzipResponseWriter)
-			if ok {
+			if gzw, ok := w.(c.GzipResponseWriter); ok {
 				w = gzw.ResponseWriter
 				w.Header().Del("Content-Encoding")
 			}
@@ -164,10 +163,18 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError
 			return c.InternalErrorJS(err, w, r)
 		}
 
-		var ok bool
-		var sb strings.Builder
+		var sb *strings.Builder
+		ii := alertStrPool.Get()
+		if ii == nil {
+			sb = &strings.Builder{}
+		} else {
+			sb = ii.(*strings.Builder)
+			sb.Reset()
+		}
 		sb.Grow(c.AlertsGrowHint + (len(alerts) * (c.AlertsGrowHint2 + 1)) - 1)
 		sb.WriteString(`{"msgs":[`)
+
+		var ok bool
 		for i, alert := range alerts {
 			if i != 0 {
 				sb.WriteRune(',')
@@ -176,7 +183,7 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError
 			if !ok {
 				return c.InternalErrorJS(errors.New("No such actor"), w, r)
 			}
-			err := c.BuildAlertSb(&sb, alert, user)
+			err := c.BuildAlertSb(sb, alert, user)
 			if err != nil {
 				return c.LocalErrorJS(err.Error(), w, r)
 			}
@@ -189,6 +196,7 @@ func routeAPI(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError
 		sb.WriteRune('}')
 
 		_, _ = io.WriteString(w, sb.String())
+		alertStrPool.Put(sb)
 	default:
 		return c.PreErrorJS("Invalid Module", w, r)
 	}
