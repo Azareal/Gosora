@@ -336,19 +336,27 @@ func (a *MysqlAdapter) AddForeignKey(name, table, column, ftable, fcolumn string
 	return q, nil
 }
 
-var silen1 = len("INSERT INTO ``() VALUES () ")
+const silen1 = len("INSERT INTO ``() VALUES () ")
 
 func (a *MysqlAdapter) SimpleInsert(name, table, columns, fields string) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
 
-	var sb strings.Builder
+	var sb *strings.Builder
+	ii := queryStrPool.Get()
+	if ii == nil {
+		sb = &strings.Builder{}
+	} else {
+		sb = ii.(*strings.Builder)
+		sb.Reset()
+	}
+
 	sb.Grow(silen1 + len(table))
 	sb.WriteString("INSERT INTO `")
 	sb.WriteString(table)
-	sb.WriteString("`(")
 	if columns != "" {
+		sb.WriteString("`(")
 		sb.WriteString(a.buildColumns(columns))
 		sb.WriteString(") VALUES (")
 		fs := processFields(fields)
@@ -359,20 +367,25 @@ func (a *MysqlAdapter) SimpleInsert(name, table, columns, fields string) (string
 			}
 			nameLen := len(field.Name)
 			if field.Name[0] == '"' && field.Name[nameLen-1] == '"' && nameLen >= 3 {
-				field.Name = "'" + field.Name[1:nameLen-1] + "'"
+				sb.WriteRune('\'')
+				sb.WriteString(field.Name[1 : nameLen-1])
+				sb.WriteRune('\'')
+			} else if field.Name[0] == '\'' && field.Name[nameLen-1] == '\'' && nameLen >= 3 {
+				sb.WriteRune('\'')
+				sb.WriteString(strings.Replace(field.Name[1:nameLen-1], "'", "''", -1))
+				sb.WriteRune('\'')
+			} else {
+				sb.WriteString(field.Name)
 			}
-			if field.Name[0] == '\'' && field.Name[nameLen-1] == '\'' && nameLen >= 3 {
-				field.Name = "'" + strings.Replace(field.Name[1:nameLen-1], "'", "''", -1) + "'"
-			}
-			sb.WriteString(field.Name)
 		}
 		sb.WriteString(")")
 	} else {
-		sb.WriteString(") VALUES ()")
+		sb.WriteString("`() VALUES ()")
 	}
 
 	// TODO: Shunt the table name logic and associated stmt list up to the a higher layer to reduce the amount of unnecessary overhead in the builder / accumulator
 	q := sb.String()
+	queryStrPool.Put(sb)
 	a.pushStatement(name, "insert", q)
 	return q, nil
 }
@@ -382,12 +395,19 @@ func (a *MysqlAdapter) SimpleBulkInsert(name, table, columns string, fieldSet []
 		return "", errors.New("You need a name for this table")
 	}
 
-	var sb strings.Builder
+	var sb *strings.Builder
+	ii := queryStrPool.Get()
+	if ii == nil {
+		sb = &strings.Builder{}
+	} else {
+		sb = ii.(*strings.Builder)
+		sb.Reset()
+	}
 	sb.Grow(silen1 + len(table))
 	sb.WriteString("INSERT INTO `")
 	sb.WriteString(table)
-	sb.WriteString("`(")
 	if columns != "" {
+		sb.WriteString("`(")
 		sb.WriteString(a.buildColumns(columns))
 		sb.WriteString(") VALUES (")
 		for oi, fields := range fieldSet {
@@ -412,11 +432,12 @@ func (a *MysqlAdapter) SimpleBulkInsert(name, table, columns string, fieldSet []
 			sb.WriteString(")")
 		}
 	} else {
-		sb.WriteString(") VALUES ()")
+		sb.WriteString("`() VALUES ()")
 	}
 
 	// TODO: Shunt the table name logic and associated stmt list up to the a higher layer to reduce the amount of unnecessary overhead in the builder / accumulator
 	q := sb.String()
+	queryStrPool.Put(sb)
 	a.pushStatement(name, "bulk-insert", q)
 	return q, nil
 }
@@ -503,7 +524,7 @@ func (a *MysqlAdapter) SimpleUpsert(name, table, columns, fields, where string) 
 	return q, nil
 }
 
-var sulen1 = len("UPDATE `` SET ")
+const sulen1 = len("UPDATE `` SET ")
 
 func (a *MysqlAdapter) SimpleUpdate(up *updatePrebuilder) (string, error) {
 	if up.table == "" {
@@ -512,7 +533,15 @@ func (a *MysqlAdapter) SimpleUpdate(up *updatePrebuilder) (string, error) {
 	if up.set == "" {
 		return "", errors.New("You need to set data in this update statement")
 	}
-	var sb strings.Builder
+
+	var sb *strings.Builder
+	ii := queryStrPool.Get()
+	if ii == nil {
+		sb = &strings.Builder{}
+	} else {
+		sb = ii.(*strings.Builder)
+		sb.Reset()
+	}
 	sb.Grow(sulen1 + len(up.table))
 	sb.WriteString("UPDATE `")
 	sb.WriteString(up.table)
@@ -545,17 +574,19 @@ func (a *MysqlAdapter) SimpleUpdate(up *updatePrebuilder) (string, error) {
 		}
 	}
 
-	whereStr, err := a.buildFlexiWhere(up.where, up.dateCutoff)
-	sb.WriteString(whereStr)
+	err := a.buildFlexiWhereSb(sb, up.where, up.dateCutoff)
 	if err != nil {
 		return sb.String(), err
 	}
 
 	// TODO: Shunt the table name logic and associated stmt list up to the a higher layer to reduce the amount of unnecessary overhead in the builder / accumulator
 	q := sb.String()
+	queryStrPool.Put(sb)
 	a.pushStatement(up.name, "update", q)
 	return q, nil
 }
+
+const sdlen1 = len("DELETE FROM `` WHERE")
 
 func (a *MysqlAdapter) SimpleDelete(name, table, where string) (string, error) {
 	if table == "" {
@@ -564,30 +595,51 @@ func (a *MysqlAdapter) SimpleDelete(name, table, where string) (string, error) {
 	if where == "" {
 		return "", errors.New("You need to specify what data you want to delete")
 	}
-	q := "DELETE FROM `" + table + "` WHERE"
+	var sb *strings.Builder
+	ii := queryStrPool.Get()
+	if ii == nil {
+		sb = &strings.Builder{}
+	} else {
+		sb = ii.(*strings.Builder)
+		sb.Reset()
+	}
+	sb.Grow(sdlen1 + len(table))
+	sb.WriteString("DELETE FROM `")
+	sb.WriteString(table)
+	sb.WriteString("` WHERE")
 
 	// Add support for BETWEEN x.x
-	for _, loc := range processWhere(where) {
+	for i, loc := range processWhere(where) {
+		if i != 0 {
+			sb.WriteString(" AND")
+		}
 		for _, token := range loc.Expr {
 			switch token.Type {
 			case TokenFunc, TokenOp, TokenNumber, TokenSub, TokenOr, TokenNot:
-				q += " " + token.Contents
+				sb.WriteRune(' ')
+				sb.WriteString(token.Contents)
 			case TokenColumn:
-				q += " `" + token.Contents + "`"
+				sb.WriteString(" `")
+				sb.WriteString(token.Contents)
+				sb.WriteRune('`')
 			case TokenString:
-				q += " '" + token.Contents + "'"
+				sb.WriteString(" '")
+				sb.WriteString(token.Contents)
+				sb.WriteRune('\'')
 			default:
 				panic("This token doesn't exist o_o")
 			}
 		}
-		q += " AND"
 	}
 
-	q = strings.TrimSpace(q[0 : len(q)-4])
+	q := strings.TrimSpace(sb.String())
+	queryStrPool.Put(sb)
 	// TODO: Shunt the table name logic and associated stmt list up to the a higher layer to reduce the amount of unnecessary overhead in the builder / accumulator
 	a.pushStatement(name, "delete", q)
 	return q, nil
 }
+
+const cdlen1 = len("DELETE FROM ``")
 
 func (a *MysqlAdapter) ComplexDelete(b *deletePrebuilder) (string, error) {
 	if b.table == "" {
@@ -596,13 +648,25 @@ func (a *MysqlAdapter) ComplexDelete(b *deletePrebuilder) (string, error) {
 	if b.where == "" && b.dateCutoff == nil {
 		return "", errors.New("You need to specify what data you want to delete")
 	}
-	q := "DELETE FROM `" + b.table + "`"
-
-	whereStr, err := a.buildFlexiWhere(b.where, b.dateCutoff)
-	if err != nil {
-		return q, err
+	var sb *strings.Builder
+	ii := queryStrPool.Get()
+	if ii == nil {
+		sb = &strings.Builder{}
+	} else {
+		sb = ii.(*strings.Builder)
+		sb.Reset()
 	}
-	q += whereStr
+	sb.Grow(cdlen1 + len(b.table))
+	sb.WriteString("DELETE FROM `")
+	sb.WriteString(b.table)
+	sb.WriteRune('`')
+
+	err := a.buildFlexiWhereSb(sb, b.where, b.dateCutoff)
+	if err != nil {
+		return sb.String(), err
+	}
+	q := sb.String()
+	queryStrPool.Put(sb)
 
 	// TODO: Shunt the table name logic and associated stmt list up to the a higher layer to reduce the amount of unnecessary overhead in the builder / accumulator
 	a.pushStatement(b.name, "delete", q)
@@ -653,7 +717,7 @@ func (a *MysqlAdapter) buildWhere(where string, sb *strings.Builder) error {
 }
 
 // The new version of buildWhere() currently only used in ComplexSelect for complex OO builder queries
-const FlexiHint1 = len(`  < UTC_TIMESTAMP() - interval ?  `)
+const FlexiHint1 = len(` <UTC_TIMESTAMP()-interval ?  `)
 
 func (a *MysqlAdapter) buildFlexiWhere(where string, dateCutoff *dateCutoff) (q string, err error) {
 	if len(where) == 0 && dateCutoff == nil {
@@ -668,16 +732,16 @@ func (a *MysqlAdapter) buildFlexiWhere(where string, dateCutoff *dateCutoff) (q 
 		sb.WriteString(dateCutoff.Column)
 		switch dateCutoff.Type {
 		case 0:
-			sb.WriteString(" BETWEEN (UTC_TIMESTAMP() - interval ")
+			sb.WriteString(" BETWEEN (UTC_TIMESTAMP()-interval ")
 			sb.WriteString(strconv.Itoa(dateCutoff.Quantity))
 			sb.WriteString(" ")
 			sb.WriteString(dateCutoff.Unit)
 			sb.WriteString(") AND UTC_TIMESTAMP()")
 		case 11:
-			sb.WriteString(" < UTC_TIMESTAMP() - interval ? ")
+			sb.WriteString("<UTC_TIMESTAMP()-interval ? ")
 			sb.WriteString(dateCutoff.Unit)
 		default:
-			sb.WriteString(" < UTC_TIMESTAMP() - interval ")
+			sb.WriteString("<UTC_TIMESTAMP()-interval ")
 			sb.WriteString(strconv.Itoa(dateCutoff.Quantity))
 			sb.WriteRune(' ')
 			sb.WriteString(dateCutoff.Unit)
@@ -717,6 +781,67 @@ func (a *MysqlAdapter) buildFlexiWhere(where string, dateCutoff *dateCutoff) (q 
 	return sb.String(), nil
 }
 
+func (a *MysqlAdapter) buildFlexiWhereSb(sb *strings.Builder, where string, dateCutoff *dateCutoff) (err error) {
+	if len(where) == 0 && dateCutoff == nil {
+		return nil
+	}
+
+	sb.WriteString(" WHERE")
+	if dateCutoff != nil {
+		sb.Grow(6 + FlexiHint1)
+		sb.WriteRune(' ')
+		sb.WriteString(dateCutoff.Column)
+		switch dateCutoff.Type {
+		case 0:
+			sb.WriteString(" BETWEEN (UTC_TIMESTAMP()-interval ")
+			sb.WriteString(strconv.Itoa(dateCutoff.Quantity))
+			sb.WriteString(" ")
+			sb.WriteString(dateCutoff.Unit)
+			sb.WriteString(") AND UTC_TIMESTAMP()")
+		case 11:
+			sb.WriteString(" < UTC_TIMESTAMP()-interval ? ")
+			sb.WriteString(dateCutoff.Unit)
+		default:
+			sb.WriteString(" < UTC_TIMESTAMP()-interval ")
+			sb.WriteString(strconv.Itoa(dateCutoff.Quantity))
+			sb.WriteRune(' ')
+			sb.WriteString(dateCutoff.Unit)
+		}
+	}
+
+	if dateCutoff != nil && len(where) != 0 {
+		sb.WriteString(" AND")
+	}
+
+	if len(where) != 0 {
+		wh := processWhere(where)
+		sb.Grow((len(wh) * 8) - 5)
+		for i, loc := range wh {
+			if i != 0 {
+				sb.WriteString(" AND ")
+			}
+			for _, token := range loc.Expr {
+				switch token.Type {
+				case TokenFunc, TokenOp, TokenNumber, TokenSub, TokenOr, TokenNot, TokenLike:
+					sb.WriteString(" ")
+					sb.WriteString(token.Contents)
+				case TokenColumn:
+					sb.WriteString(" `")
+					sb.WriteString(token.Contents)
+					sb.WriteString("`")
+				case TokenString:
+					sb.WriteString(" '")
+					sb.WriteString(token.Contents)
+					sb.WriteString("'")
+				default:
+					return errors.New("This token doesn't exist o_o")
+				}
+			}
+		}
+	}
+	return nil
+}
+
 func (a *MysqlAdapter) buildOrderby(orderby string) (q string) {
 	if len(orderby) != 0 {
 		var sb strings.Builder
@@ -739,43 +864,67 @@ func (a *MysqlAdapter) buildOrderby(orderby string) (q string) {
 	return q
 }
 
-func (a *MysqlAdapter) SimpleSelect(name, table, columns, where, orderby, limit string) (string, error) {
+func (a *MysqlAdapter) SimpleSelect(name, table, cols, where, orderby, limit string) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
-	if len(columns) == 0 {
+	if len(cols) == 0 {
 		return "", errors.New("No columns found for SimpleSelect")
 	}
-	q := "SELECT "
+	var sb *strings.Builder
+	ii := queryStrPool.Get()
+	if ii == nil {
+		sb = &strings.Builder{}
+	} else {
+		sb = ii.(*strings.Builder)
+		sb.Reset()
+	}
+	sb.WriteString("SELECT ")
 
 	// Slice up the user friendly strings into something easier to process
-	for _, column := range strings.Split(strings.TrimSpace(columns), ",") {
-		q += "`" + strings.TrimSpace(column) + "`,"
+	for i, col := range strings.Split(strings.TrimSpace(cols), ",") {
+		if i != 0 {
+			sb.WriteString("`,`")
+		} else {
+			sb.WriteRune('`')
+		}
+		sb.WriteString(strings.TrimSpace(col))
 	}
-	q = q[0 : len(q)-1]
 
-	sb := &strings.Builder{}
+	sb.WriteString("` FROM `")
+	sb.WriteString(table)
+	sb.WriteRune('`')
 	err := a.buildWhere(where, sb)
 	if err != nil {
 		return "", err
 	}
-	q += " FROM `" + table + "`" + sb.String() + a.buildOrderby(orderby) + a.buildLimit(limit)
+	sb.WriteString(a.buildOrderby(orderby))
+	sb.WriteString(a.buildLimit(limit))
 
-	q = strings.TrimSpace(q)
+	q := strings.TrimSpace(sb.String())
+	queryStrPool.Put(sb)
 	a.pushStatement(name, "select", q)
 	return q, nil
 }
 
 func (a *MysqlAdapter) ComplexSelect(preBuilder *selectPrebuilder) (out string, err error) {
-	sb := &strings.Builder{}
+	var sb *strings.Builder
+	ii := queryStrPool.Get()
+	if ii == nil {
+		sb = &strings.Builder{}
+	} else {
+		sb = ii.(*strings.Builder)
+		sb.Reset()
+	}
 	err = a.complexSelect(preBuilder, sb)
 	out = sb.String()
+	queryStrPool.Put(sb)
 	a.pushStatement(preBuilder.name, "select", out)
 	return out, err
 }
 
-var cslen1 = len("SELECT  FROM ``")
-var cslen2 = len(" WHERE `` IN(")
+const cslen1 = len("SELECT  FROM ``")
+const cslen2 = len(" WHERE `` IN(")
 
 func (a *MysqlAdapter) complexSelect(preBuilder *selectPrebuilder, sb *strings.Builder) error {
 	if preBuilder.table == "" {
@@ -805,11 +954,10 @@ func (a *MysqlAdapter) complexSelect(preBuilder *selectPrebuilder, sb *strings.B
 		}
 		sb.WriteRune(')')
 	} else {
-		whereStr, err := a.buildFlexiWhere(preBuilder.where, preBuilder.dateCutoff)
+		err := a.buildFlexiWhereSb(sb, preBuilder.where, preBuilder.dateCutoff)
 		if err != nil {
 			return err
 		}
-		sb.WriteString(whereStr)
 	}
 
 	orderby := a.buildOrderby(preBuilder.orderby)
@@ -1038,18 +1186,32 @@ func (a *MysqlAdapter) SimpleInsertInnerJoin(name string, ins DBInsert, sel DBJo
 	return q, nil
 }
 
+const sclen1 = len("SELECT COUNT(*) FROM ``")
+
 func (a *MysqlAdapter) SimpleCount(name, table, where, limit string) (q string, err error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
 	}
-	sb := &strings.Builder{}
+	var sb *strings.Builder
+	ii := queryStrPool.Get()
+	if ii == nil {
+		sb = &strings.Builder{}
+	} else {
+		sb = ii.(*strings.Builder)
+		sb.Reset()
+	}
+	sb.Grow(sclen1 + len(table))
+	sb.WriteString("SELECT COUNT(*) FROM `")
+	sb.WriteString(table)
+	sb.WriteRune('`')
 	err = a.buildWhere(where, sb)
 	if err != nil {
 		return "", err
 	}
+	sb.WriteString(a.buildLimit(limit))
 
-	q = "SELECT COUNT(*) FROM `" + table + "`" + sb.String() + a.buildLimit(limit)
-	q = strings.TrimSpace(q)
+	q = strings.TrimSpace(sb.String())
+	queryStrPool.Put(sb)
 	a.pushStatement(name, "select", q)
 	return q, nil
 }
@@ -1070,7 +1232,7 @@ func (a *MysqlAdapter) Write() error {
 			stmts += "\t" + name + " *qgen.MySQLUpsertCallback\n"
 			body += `	
 	common.DebugLog("Preparing ` + name + ` statement.")
-	stmts.` + name + `, err = qgen.PrepareMySQLUpsertCallback(db, "` + stmt.Contents + `")
+	stmts.` + name + `, err = qgen.PrepareMySQLUpsertCallback(db,"` + stmt.Contents + `")
 	if err != nil {
 		log.Print("Error in ` + name + ` statement.")
 		return err
@@ -1105,6 +1267,7 @@ import "github.com/Azareal/Gosora/common"
 type Stmts struct {
 ` + stmts + `
 	getActivityFeedByWatcher *sql.Stmt
+	//getActivityFeedByWatcherAfter *sql.Stmt
 	getActivityCountByWatcher *sql.Stmt
 
 	Mocks bool

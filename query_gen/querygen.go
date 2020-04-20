@@ -6,10 +6,12 @@ import (
 	"errors"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 var Registry []Adapter
 var ErrNoAdapter = errors.New("This adapter doesn't exist")
+var queryStrPool = sync.Pool{}
 
 type DBTableColumn struct {
 	Name          string
