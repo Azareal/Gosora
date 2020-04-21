@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	c "github.com/Azareal/Gosora/common"
@@ -23,14 +24,22 @@ func ParseSEOURL(urlBit string) (slug string, id int, err error) {
 	return halves[0], tid, err
 }
 
-var slen1 = len("</s/>;rel=preload;as=script,")
-var slen2 = len("</s/>;rel=preload;as=style,")
+const slen1 = len("</s/>;rel=preload;as=script,")
+const slen2 = len("</s/>;rel=preload;as=style,")
+
+var pushCdnPool = sync.Pool{}
 
 func doPush(w http.ResponseWriter, header *c.Header) {
 	//fmt.Println("in doPush")
 	if c.Config.EnableCDNPush {
-		// TODO: Cache these in a sync.Pool?
-		var sb strings.Builder
+		var sb *strings.Builder
+		ii := pushCdnPool.Get()
+		if ii == nil {
+			sb = &strings.Builder{}
+		} else {
+			sb = ii.(*strings.Builder)
+			sb.Reset()
+		}
 		push := func(in []string) {
 			sb.Grow((slen1 + 6) * len(in))
 			for _, path := range in {
@@ -55,12 +64,12 @@ func doPush(w http.ResponseWriter, header *c.Header) {
 
 		if sb.Len() > 0 {
 			sbuf := sb.String()
+			pushCdnPool.Put(sb)
 			w.Header().Set("Link", sbuf[:len(sbuf)-1])
 		}
 	} else if !c.Config.DisableServerPush {
 		//fmt.Println("push enabled")
-		gzw, ok := w.(c.GzipResponseWriter)
-		if ok {
+		if gzw, ok := w.(c.GzipResponseWriter); ok {
 			w = gzw.ResponseWriter
 		}
 		pusher, ok := w.(http.Pusher)
