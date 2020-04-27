@@ -146,11 +146,11 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user *c.User, header *c.H
 
 	// Get the replies if we have any...
 	if topic.PostCount > 0 {
-		var pFrag int
+		/*var pFrag int
 		if strings.HasPrefix(r.URL.Fragment, "post-") {
 			pFrag, _ = strconv.Atoi(strings.TrimPrefix(r.URL.Fragment, "post-"))
-		}
-		rlist, err := topic.Replies(offset, pFrag, user)
+		}*/
+		rlist, err := topic.Replies(offset /* pFrag,*/, user)
 		if err == sql.ErrNoRows {
 			return c.LocalError("Bad Page. Some of the posts may have been deleted or you got here by directly typing in the page number.", w, r, user)
 		} else if err != nil {

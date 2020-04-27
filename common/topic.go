@@ -732,7 +732,7 @@ func (ru *ReplyUser) Init3(u *User, tu *TopicUser) (group *Group, err error) {
 }
 
 // TODO: Factor TopicUser into a *Topic and *User, as this starting to become overly complicated x.x
-func (t *TopicUser) Replies(offset, pFrag int, user *User) (rlist []*ReplyUser /*, ogdesc string*/, err error) {
+func (t *TopicUser) Replies(offset int /*pFrag int, */, user *User) (rlist []*ReplyUser /*, ogdesc string*/, err error) {
 	var likedMap, attachMap map[int]int
 	var likedQueryList, attachQueryList []int
 
