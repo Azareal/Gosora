@@ -109,14 +109,15 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user *c.User, header *c.H
 		return c.InternalError(err, w, r)
 	}
 
-	var poll c.Poll
+	var poll *c.Poll
 	if topic.Poll != 0 {
 		pPoll, err := c.Polls.Get(topic.Poll)
 		if err != nil {
 			log.Print("Couldn't find the attached poll for topic " + strconv.Itoa(topic.ID))
 			return c.InternalError(err, w, r)
 		}
-		poll = pPoll.Copy()
+		poll = new(c.Poll)
+		*poll = pPoll.Copy()
 	}
 
 	if topic.LikeCount > 0 && user.Liked > 0 {
@@ -149,13 +150,12 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user *c.User, header *c.H
 		if strings.HasPrefix(r.URL.Fragment, "post-") {
 			pFrag, _ = strconv.Atoi(strings.TrimPrefix(r.URL.Fragment, "post-"))
 		}
-		rlist, ogdesc, err := topic.Replies(offset, pFrag, user)
+		rlist, err := topic.Replies(offset, pFrag, user)
 		if err == sql.ErrNoRows {
 			return c.LocalError("Bad Page. Some of the posts may have been deleted or you got here by directly typing in the page number.", w, r, user)
 		} else if err != nil {
 			return c.InternalError(err, w, r)
 		}
-		header.OGDesc = ogdesc
 		tpage.ItemList = rlist
 	}
 
@@ -166,7 +166,7 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user *c.User, header *c.H
 	var rerr c.RouteError
 	tmpl := forum.Tmpl
 	if r.FormValue("i") == "1" {
-		if tpage.Poll.ID != 0 {
+		if tpage.Poll != nil {
 			header.AddXRes("chartist/chartist.min.css", "chartist/chartist.min.js")
 		}
 		if tmpl == "" {
@@ -179,7 +179,7 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user *c.User, header *c.H
 			}
 		}
 	} else {
-		if tpage.Poll.ID != 0 {
+		if tpage.Poll != nil {
 			header.AddSheet("chartist/chartist.min.css")
 			header.AddScript("chartist/chartist.min.js")
 		}

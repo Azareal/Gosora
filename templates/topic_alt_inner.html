@@ -26,32 +26,7 @@
 </div>
 
 <div class="rowblock post_container">
-	{{if .Poll.ID}}<form id="poll_{{.Poll.ID}}_form" action="/poll/vote/{{.Poll.ID}}?s={{.CurrentUser.Session}}" method="post"></form>
-	<article class="rowitem passive deletable_block editable_parent post_item poll_item top_post hide_on_edit">
-		{{/**{{template "topic_alt_userinfo.html" .Topic }}**/}}
-		<div id="poll_voter_{{.Poll.ID}}" class="content_container poll_voter">
-			<div class="topic_content user_content">
-				{{range .Poll.QuickOptions}}
-				<div class="poll_option">
-					<input form="poll_{{$.Poll.ID}}_form" id="poll_option_{{.ID}}" name="poll_option_input" type="checkbox" value="{{.ID}}">
-					<label class="poll_option_label" for="poll_option_{{.ID}}"><div class="sel"></div></label>
-					<span id="poll_option_text_{{.ID}}" class="poll_option_text">{{.Value}}</span>
-				</div>
-				{{end}}
-				<div class="poll_buttons">
-					<button form="poll_{{.Poll.ID}}_form" class="poll_vote_button">{{lang "topic.poll_vote"}}</button>
-					<button class="poll_results_button" data-poll-id="{{.Poll.ID}}">{{lang "topic.poll_results"}}</button>
-					<a href="#"><button class="poll_cancel_button">{{lang "topic.poll_cancel"}}</button></a>
-				</div>
-			</div>
-		</div>
-		<div id="poll_results_{{.Poll.ID}}" class="content_container poll_results auto_hide">
-			<div class="topic_content user_content">
-				<div class="auto_hide poll_no_results">{{lang "topic.poll_no_results"}}</div>
-			</div>
-		</div>
-	</article>
-	{{end}}
+	{{if .Poll}}{{template "topic_alt_poll.html" . }}{{end}}
 	<article {{scope "opening_post"}} itemscope itemtype="http://schema.org/CreativeWork" class="rowitem passive deletable_block editable_parent post_item top_post{{if .Topic.Attachments}} has_attachs{{end}}" aria-label="{{lang "topic.opening_post_aria"}}">
 		{{template "topic_alt_userinfo.html" .Topic }}
 		<div class="content_container">
@@ -59,11 +34,11 @@
 			{{if .CurrentUser.Loggedin}}<textarea name="topic_content" class="show_on_edit topic_content_input edit_source">{{.Topic.Content}}</textarea>
 
 			{{if .CurrentUser.Perms.EditTopic}}
-			<div class="show_on_edit attach_edit_bay" type="topic" id="{{.Topic.ID}}">
+			<div class="show_on_edit attach_edit_bay"type="topic"id="{{.Topic.ID}}">
 				{{range .Topic.Attachments}}
 				<div class="attach_item attach_item_item{{if .Image}} attach_image_holder{{end}}">
-					{{if .Image}}<img src="//{{$.Header.Site.URL}}/attachs/{{.Path}}?sid={{.SectionID}}&amp;stype=forums" height=24 width=24>{{end}}
-					<span class="attach_item_path" aid="{{.ID}}" fullPath="//{{$.Header.Site.URL}}/attachs/{{.Path}}">{{.Path}}</span>
+					{{if .Image}}<img src="//{{$.Header.Site.URL}}/attachs/{{.Path}}?sid={{.SectionID}}&amp;stype=forums"height=24 width=24>{{end}}
+					<span class="attach_item_path"aid="{{.ID}}"fullPath="//{{$.Header.Site.URL}}/attachs/{{.Path}}">{{.Path}}</span>
 					<button class="attach_item_select">{{lang "topic.select_button_text"}}</button>
 					<button class="attach_item_copy">{{lang "topic.copy_button_text"}}</button>
 				</div>

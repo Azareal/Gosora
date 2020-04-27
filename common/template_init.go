@@ -227,7 +227,7 @@ func compileCommons(c *tmpl.CTemplateSet, head, head2 *Header, forumList []Forum
 	}*/
 
 	var topicsList []*TopicsRow
-	topicsList = append(topicsList, &TopicsRow{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, now, now, user3.ID, 1, 1, "", "127.0.0.1", 1, 0, 1, 1, 0, "classname", 0, "", user2, "", 0, user3, "General", "/forum/general.2", nil})
+	topicsList = append(topicsList, &TopicsRow{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, now, now, user3.ID, 1, 1, "", "::1", 1, 0, 1, 1, 0, "classname", 0, "", user2, "", 0, user3, "General", "/forum/general.2", nil})
 	topicListPage := TopicListPage{htitle("Topic List"), topicsList, forumList, Config.DefaultForum, TopicListSort{"lastupdated", false}, Paginator{[]int{1}, 1, 1}}
 	o.Add("topics", "c.TopicListPage", topicListPage)
 	o.Add("topics_mini", "c.TopicListPage", topicListPage)
@@ -246,11 +246,11 @@ func compileCommons(c *tmpl.CTemplateSet, head, head2 *Header, forumList []Forum
 	topic := TopicUser{1, "blah", "Blah", "Hey there!", 0, false, false, now, now, 1, 1, 0, "", "127.0.0.1", 1, 0, 1, 0, "classname", poll.ID, "weird-data", BuildProfileURL("fake-user", 62), "Fake User", Config.DefaultGroup, avatar, microAvatar, 0, "", "", "", 58, false, miniAttach, nil, false}
 
 	var replyList []*ReplyUser
-	reply := Reply{1, 1, "Yo!", 1, Config.DefaultGroup, now, 0, 0, 1, "::1", true, 1, 1, ""}
-	ru := &ReplyUser{ClassName: "", Reply: reply, CreatedByName: "Alice", Avatar: avatar, Level: 0, Attachments: miniAttach}
-	ru.Init()
+	reply := Reply{1, 1, "Yo!", 1 /*, Config.DefaultGroup*/, now, 0, 0, 1, "::1", true, 1, 1, ""}
+	ru := &ReplyUser{ClassName: "", Reply: reply, CreatedByName: "Alice", Avatar: avatar, Group: Config.DefaultGroup, Level: 0, Attachments: miniAttach}
+	ru.Init(user2)
 	replyList = append(replyList, ru)
-	tpage := TopicPage{htitle("Topic Name"), replyList, topic, &Forum{ID: 1, Name: "Hahaha"}, poll, Paginator{[]int{1}, 1, 1}}
+	tpage := TopicPage{htitle("Topic Name"), replyList, topic, &Forum{ID: 1, Name: "Hahaha"}, &poll, Paginator{[]int{1}, 1, 1}}
 	tpage.Forum.Link = BuildForumURL(NameToSlug(tpage.Forum.Name), tpage.Forum.ID)
 	o.Add("topic", "c.TopicPage", tpage)
 	o.Add("topic_mini", "c.TopicPage", tpage)
@@ -276,20 +276,24 @@ func compileTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName string
 	//topic := TopicUser{1, "blah", "Blah", "Hey there!", 0, false, false, now, now, 1, 1, 0, "", "127.0.0.1", 1, 0, 1, 0, "classname", poll.ID, "weird-data", BuildProfileURL("fake-user", 62), "Fake User", Config.DefaultGroup, avatar, microAvatar, 0, "", "", "", "", "", 58, false, miniAttach, nil}
 	// TODO: Do we want the UID on this to be 0?
 	//avatar, microAvatar = BuildAvatar(0, "")
-	reply := Reply{1, 1, "Yo!", 1, Config.DefaultGroup, now, 0, 0, 1, "::1", true, 1, 1, ""}
-	ru := &ReplyUser{ClassName: "", Reply: reply, CreatedByName: "Alice", Avatar: "", Level: 0, Attachments: miniAttach}
-	ru.Init()
+	reply := Reply{1, 1, "Yo!", 1 /*, Config.DefaultGroup*/, now, 0, 0, 1, "::1", true, 1, 1, ""}
+	ru := &ReplyUser{ClassName: "", Reply: reply, CreatedByName: "Alice", Avatar: "", Group: Config.DefaultGroup, Level: 0, Attachments: miniAttach}
+	ru.Init(user)
 	replyList = append(replyList, ru)
 
 	// TODO: Use a dummy forum list to avoid o(n) problems
-	var forumList []Forum
+	/*var forumList []Forum
 	forums, err := Forums.GetAll()
 	if err != nil {
 		return err
 	}
 	for _, forum := range forums {
 		forumList = append(forumList, *forum)
-	}
+	}*/
+	forum := BlankForum(1, "/forum/d.1", "d", "d desc", true, "", 0, "", 1)
+	forum.LastTopic = BlankTopic()
+	forum.LastReplyer = BlankUser()
+	forumList := []Forum{*forum}
 
 	// Convienience function to save a line here and there
 	htitle := func(name string) *Header {
@@ -297,7 +301,7 @@ func compileTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName string
 		return header
 	}
 	t := TItemHold(make(map[string]TItem))
-	err = compileCommons(c, header, header2, forumList, t)
+	err := compileCommons(c, header, header2, forumList, t)
 	if err != nil {
 		return err
 	}
@@ -547,14 +551,14 @@ func compileJSTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName stri
 	var replyList []*ReplyUser
 	// TODO: Do we really want the UID here to be zero?
 	avatar, microAvatar = BuildAvatar(0, "")
-	reply := Reply{1, 1, "Yo!", 1, Config.DefaultGroup, now, 0, 0, 1, "::1", true, 1, 1, ""}
-	ru := &ReplyUser{ClassName: "", Reply: reply, CreatedByName: "Alice", Avatar: avatar, Level: 0, Attachments: miniAttach}
-	ru.Init()
+	reply := Reply{1, 1, "Yo!", 1 /*, Config.DefaultGroup*/, now, 0, 0, 1, "::1", true, 1, 1, ""}
+	ru := &ReplyUser{ClassName: "", Reply: reply, CreatedByName: "Alice", Avatar: avatar, Group: Config.DefaultGroup, Level: 0, Attachments: miniAttach}
+	ru.Init(user)
 	replyList = append(replyList, ru)
 
 	varList = make(map[string]tmpl.VarItem)
 	header.Title = "Topic Name"
-	tpage := TopicPage{header, replyList, topic, &Forum{ID: 1, Name: "Hahaha"}, poll, Paginator{[]int{1}, 1, 1}}
+	tpage := TopicPage{header, replyList, topic, &Forum{ID: 1, Name: "Hahaha"}, &poll, Paginator{[]int{1}, 1, 1}}
 	tpage.Forum.Link = BuildForumURL(NameToSlug(tpage.Forum.Name), tpage.Forum.ID)
 	t.AddStd("topic_posts", "c.TopicPage", tpage)
 	t.AddStd("topic_alt_posts", "c.TopicPage", tpage)

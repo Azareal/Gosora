@@ -1,8 +1,8 @@
-{{range .ItemList}}<article {{scope "post"}} id="post-{{.ID}}" itemscope itemtype="http://schema.org/CreativeWork" class="rowitem passive deletable_block editable_parent post_item{{if .ActionType}} action_item{{end}}{{if .Attachments}} has_attachs{{end}}">
+{{range .ItemList}}<article {{scope "post"}} id="post-{{.ID}}"itemscope itemtype="http://schema.org/CreativeWork"class="rowitem passive deletable_block editable_parent post_item{{if .ActionType}} action_item{{end}}{{if .Attachments}} has_attachs{{end}}">
 	{{if js}}js{{/**{{ptmpl "topic_alt_userinfo" .}}**/}}{{else}}{{template "topic_alt_userinfo.html" . }}{{end}}
 	<div class="content_container">
 		{{if .ActionType}}
-			<span class="action_icon" aria-hidden="true">{{.ActionIcon}}</span><span itemprop="text">{{.ActionType}}</span>
+			<span class="action_icon"aria-hidden="true">{{.ActionIcon}}</span><span itemprop="text">{{.ActionType}}</span>
 		{{else}}
 		<div class="editable_block user_content"itemprop="text">{{.ContentHtml}}</div>
 		{{if $.CurrentUser.Loggedin}}
@@ -13,15 +13,15 @@
 			{{range .Attachments}}
 			<div class="attach_item attach_item_item{{if .Image}} attach_image_holder{{end}}">
 				{{if .Image}}<img src="//{{$.Header.Site.URL}}/attachs/{{.Path}}?sid={{.SectionID}}&amp;stype=forums"height=24 width=24>{{end}}
-				<span class="attach_item_path" aid={{.ID}} fullPath="//{{$.Header.Site.URL}}/attachs/{{.Path}}">{{.Path}}</span>
+				<span class="attach_item_path"aid={{.ID}} fullPath="//{{$.Header.Site.URL}}/attachs/{{.Path}}">{{.Path}}</span>
 				<button class="attach_item_select">{{lang "topic.select_button_text"}}</button>
 				<button class="attach_item_copy">{{lang "topic.copy_button_text"}}</button>
 			</div>
 			{{end}}
 			<div class="attach_item attach_item_buttons">
 				{{if $.CurrentUser.Perms.UploadFiles}}
-				<input name="upload_files" class="upload_files_post auto_hide" id="upload_files_post_{{.ID}}" multiple type="file">
-				<label for="upload_files_post_{{.ID}}" class="formbutton add_file_button">{{lang "topic.upload_button_text"}}</label>{{end}}
+				<input name="upload_files"class="upload_files_post auto_hide"id="upload_files_post_{{.ID}}"multiple type="file">
+				<label for="upload_files_post_{{.ID}}"class="formbutton add_file_button">{{lang "topic.upload_button_text"}}</label>{{end}}
 				<button class="attach_item_delete formbutton">{{lang "topic.delete_button_text"}}</button>
 			</div>
 		</div>
@@ -31,23 +31,23 @@
 			<div class="action_button_left">
 			{{if $.CurrentUser.Loggedin}}
 				{{if $.CurrentUser.Perms.LikeItem}}{{if ne $.CurrentUser.ID .CreatedBy}}
-				{{if .Liked}}<a href="/reply/unlike/submit/{{.ID}}?s={{$.CurrentUser.Session}}" class="action_button like_item remove_like" aria-label="{{lang "topic.post_unlike_aria"}}" data-action="unlike"></a>{{else}}
-				<a href="/reply/like/submit/{{.ID}}?s={{$.CurrentUser.Session}}" class="action_button like_item add_like" aria-label="{{lang "topic.post_like_aria"}}" data-action="like"></a>{{end}}
+				{{if .Liked}}<a href="/reply/unlike/submit/{{.ID}}?s={{$.CurrentUser.Session}}"class="action_button like_item remove_like"aria-label="{{lang "topic.post_unlike_aria"}}"data-action="unlike"></a>{{else}}
+				<a href="/reply/like/submit/{{.ID}}?s={{$.CurrentUser.Session}}"class="action_button like_item add_like"aria-label="{{lang "topic.post_like_aria"}}"data-action="like"></a>{{end}}
 				{{end}}{{end}}
-				<a href="" class="action_button quote_item" aria-label="{{lang "topic.quote_aria"}}" data-action="quote"></a>
+				<a href=""class="action_button quote_item"aria-label="{{lang "topic.quote_aria"}}"data-action="quote"></a>
 				{{if not $.Topic.IsClosed or $.CurrentUser.Perms.CloseTopic}}
-				{{if $.CurrentUser.Perms.EditReply}}<a href="/reply/edit/submit/{{.ID}}?s={{$.CurrentUser.Session}}" class="action_button edit_item" aria-label="{{lang "topic.post_edit_aria"}}" data-action="edit"></a>{{end}}
+				{{if $.CurrentUser.Perms.EditReply}}<a href="/reply/edit/submit/{{.ID}}?s={{$.CurrentUser.Session}}"class="action_button edit_item"aria-label="{{lang "topic.post_edit_aria"}}"data-action="edit"></a>{{end}}
 				{{end}}
-				{{if .Deletable}}<a href="/reply/delete/submit/{{.ID}}?s={{$.CurrentUser.Session}}" class="action_button delete_item" aria-label="{{lang "topic.post_delete_aria"}}" data-action="delete"></a>{{end}}
-				{{if $.CurrentUser.Perms.ViewIPs}}<a href="/users/ips/?ip={{.IP}}" title="{{lang "topic.ip_full_tooltip"}}" class="action_button ip_item_button hide_on_big" aria-label="{{lang "topic.ip_full_aria"}}" data-action="ip"></a>{{end}}
-				<a href="/report/submit/{{.ID}}?s={{$.CurrentUser.Session}}&amp;type=reply" class="action_button report_item" aria-label="{{lang "topic.report_aria"}}" data-action="report"></a>
-				<a href="#" class="action_button button_menu"></a>
+				{{if .Deletable}}<a href="/reply/delete/submit/{{.ID}}?s={{$.CurrentUser.Session}}"class="action_button delete_item"aria-label="{{lang "topic.post_delete_aria"}}"data-action="delete"></a>{{end}}
+				{{if $.CurrentUser.Perms.ViewIPs}}<a href="/users/ips/?ip={{.IP}}"title="{{lang "topic.ip_full_tooltip"}}"class="action_button ip_item_button hide_on_big"aria-label="{{lang "topic.ip_full_aria"}}"data-action="ip"></a>{{end}}
+				<a href="/report/submit/{{.ID}}?s={{$.CurrentUser.Session}}&amp;type=reply"class="action_button report_item"aria-label="{{lang "topic.report_aria"}}"data-action="report"></a>
+				<a href="#"class="action_button button_menu"></a>
 			{{end}}
 			</div>
 			<div class="action_button_right">
-				<a class="action_button like_count hide_on_micro" aria-label="{{lang "topic.post_like_count_tooltip"}}">{{.LikeCount}}</a>
-				<a class="action_button created_at hide_on_mobile" title="{{abstime .CreatedAt}}">{{reltime .CreatedAt}}</a>
-				{{if $.CurrentUser.Loggedin}}{{if $.CurrentUser.Perms.ViewIPs}}<a href="/users/ips/?ip={{.IP}}"title="IP Address" class="action_button ip_item hide_on_mobile" aria-hidden="true">{{.IP}}</a>{{end}}{{end}}
+				<a class="action_button like_count hide_on_micro"aria-label="{{lang "topic.post_like_count_tooltip"}}">{{.LikeCount}}</a>
+				<a class="action_button created_at hide_on_mobile"title="{{abstime .CreatedAt}}">{{reltime .CreatedAt}}</a>
+				{{if $.CurrentUser.Loggedin}}{{if $.CurrentUser.Perms.ViewIPs}}<a href="/users/ips/?ip={{.IP}}"title="IP Address"class="action_button ip_item hide_on_mobile"aria-hidden="true">{{.IP}}</a>{{end}}{{end}}
 			</div>
 		</div>
 		{{end}}

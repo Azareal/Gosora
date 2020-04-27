@@ -29,6 +29,7 @@ type ReplyUser struct {
 	URL           string
 	//URLPrefix string
 	//URLName   string
+	Group      int
 	Level      int
 	ActionIcon string
 
@@ -37,11 +38,11 @@ type ReplyUser struct {
 }
 
 type Reply struct {
-	ID           int
-	ParentID     int
-	Content      string
-	CreatedBy    int
-	Group        int
+	ID        int
+	ParentID  int
+	Content   string
+	CreatedBy int
+	//Group        int
 	CreatedAt    time.Time
 	LastEdit     int
 	LastEditBy   int
@@ -49,7 +50,7 @@ type Reply struct {
 	IP           string
 	Liked        bool
 	LikeCount    int
-	AttachCount  int
+	AttachCount  uint16
 	ActionType   string
 }
 

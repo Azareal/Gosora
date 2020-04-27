@@ -18,6 +18,7 @@ var ErrLongUsername = errors.New("this username is too long")
 type UserStore interface {
 	DirtyGet(id int) *User
 	Get(id int) (*User, error)
+	Getn(id int) *User
 	GetByName(name string) (*User, error)
 	Exists(id int) bool
 	GetOffset(offset, perPage int) ([]*User, error)
@@ -93,6 +94,15 @@ func (s *DefaultUserStore) Get(id int) (*User, error) {
 	u = &User{ID: id, Loggedin: true}
 	var embeds int
 	err = s.get.QueryRow(id).Scan(&u.Name, &u.Group, &u.Active, &u.IsSuperAdmin, &u.Session, &u.Email, &u.RawAvatar, &u.Message, &u.Level, &u.Score, &u.Posts, &u.Liked, &u.LastIP, &u.TempGroup, &u.CreatedAt, &embeds)
+	/*if err != nil {
+		return nil, err
+	}
+	if embeds != -1 {
+		u.ParseSettings = DefaultParseSettings.CopyPtr()
+		u.ParseSettings.NoEmbed = embeds == 0
+	}
+	u.Init()
+	s.cache.Set(u)*/
 	if err == nil {
 		if embeds != -1 {
 			u.ParseSettings = DefaultParseSettings.CopyPtr()
@@ -104,21 +114,43 @@ func (s *DefaultUserStore) Get(id int) (*User, error) {
 	return u, err
 }
 
+func (s *DefaultUserStore) Getn(id int) *User {
+	u := s.cache.Getn(id)
+	if u != nil {
+		return u
+	}
+
+	u = &User{ID: id, Loggedin: true}
+	var embeds int
+	err := s.get.QueryRow(id).Scan(&u.Name, &u.Group, &u.Active, &u.IsSuperAdmin, &u.Session, &u.Email, &u.RawAvatar, &u.Message, &u.Level, &u.Score, &u.Posts, &u.Liked, &u.LastIP, &u.TempGroup, &u.CreatedAt, &embeds)
+	if err != nil {
+		return nil
+	}
+	if embeds != -1 {
+		u.ParseSettings = DefaultParseSettings.CopyPtr()
+		u.ParseSettings.NoEmbed = embeds == 0
+	}
+	u.Init()
+	s.cache.Set(u)
+	return u
+}
+
 // TODO: Log weird cache errors? Not just here but in every *Cache?
 // ! This bypasses the cache, use frugally
 func (s *DefaultUserStore) GetByName(name string) (*User, error) {
 	u := &User{Loggedin: true}
 	var embeds int
 	err := s.getByName.QueryRow(name).Scan(&u.ID, &u.Name, &u.Group, &u.Active, &u.IsSuperAdmin, &u.Session, &u.Email, &u.RawAvatar, &u.Message, &u.Level, &u.Score, &u.Posts, &u.Liked, &u.LastIP, &u.TempGroup, &u.CreatedAt, &embeds)
-	if err == nil {
-		if embeds != -1 {
-			u.ParseSettings = DefaultParseSettings.CopyPtr()
-			u.ParseSettings.NoEmbed = embeds == 0
-		}
-		u.Init()
-		s.cache.Set(u)
+	if err != nil {
+		return nil, err
 	}
-	return u, err
+	if embeds != -1 {
+		u.ParseSettings = DefaultParseSettings.CopyPtr()
+		u.ParseSettings.NoEmbed = embeds == 0
+	}
+	u.Init()
+	s.cache.Set(u)
+	return u, nil
 }
 
 // TODO: Optimise this, so we don't wind up hitting the database every-time for small gaps

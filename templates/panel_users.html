@@ -4,10 +4,10 @@
 <div id="panel_users" class="colstack_item rowlist bgavatars">
 	{{range .ItemList}}
 	<div class="rowitem" style="background-image:url('{{.Avatar}}');">
-		<a class="rowAvatar"{{if $.CurrentUser.Perms.EditUser}} href="/panel/users/edit/{{.ID}}"{{end}}>
+		<a class="rowAvatar"{{if $.CurrentUser.Perms.EditUser}}href="/panel/users/edit/{{.ID}}"{{end}}>
 			<img class="bgsub"src="{{.Avatar}}"alt="Avatar"aria-hidden="true">
 		</a>
-		<a class="rowTitle"{{if $.CurrentUser.Perms.EditUser}} href="/panel/users/edit/{{.ID}}"{{end}}>{{.Name}}</a>
+		<a class="rowTitle"{{if $.CurrentUser.Perms.EditUser}}href="/panel/users/edit/{{.ID}}"{{end}}>{{.Name}}</a>
 		<span class="panel_floater">
 			<a href="{{.Link}}" class="tag-mini profile_url">{{lang "panel_users_profile"}}</a>
 			{{if (.Tag) and (.IsSuperMod)}}<span class="panel_tag">{{.Tag}}</span></span>{{end}}

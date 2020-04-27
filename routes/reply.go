@@ -209,7 +209,7 @@ func CreateReplySubmit(w http.ResponseWriter, r *http.Request, user *c.User) c.R
 
 // TODO: Disable stat updates in posts handled by plugin_guilds
 // TODO: Update the stats after edits so that we don't under or over decrement stats during deletes
-func ReplyEditSubmit(w http.ResponseWriter, r *http.Request, user *c.User, srid string) c.RouteError {
+func ReplyEditSubmit(w http.ResponseWriter, r *http.Request, u *c.User, srid string) c.RouteError {
 	js := r.PostFormValue("js") == "1"
 	rid, err := strconv.Atoi(srid)
 	if err != nil {
@@ -231,15 +231,15 @@ func ReplyEditSubmit(w http.ResponseWriter, r *http.Request, user *c.User, srid 
 	}
 
 	// TODO: Add hooks to make use of headerLite
-	lite, ferr := c.SimpleForumUserCheck(w, r, user, topic.ParentID)
+	lite, ferr := c.SimpleForumUserCheck(w, r, u, topic.ParentID)
 	if ferr != nil {
 		return ferr
 	}
-	if !user.Perms.ViewTopic || !user.Perms.EditReply {
-		return c.NoPermissionsJSQ(w, r, user, js)
+	if !u.Perms.ViewTopic || !u.Perms.EditReply {
+		return c.NoPermissionsJSQ(w, r, u, js)
 	}
-	if topic.IsClosed && !user.Perms.CloseTopic {
-		return c.NoPermissionsJSQ(w, r, user, js)
+	if topic.IsClosed && !u.Perms.CloseTopic {
+		return c.NoPermissionsJSQ(w, r, u, js)
 	}
 
 	err = reply.SetPost(r.PostFormValue("edit_item"))
@@ -257,7 +257,7 @@ func ReplyEditSubmit(w http.ResponseWriter, r *http.Request, user *c.User, srid 
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
 
-	skip, rerr := lite.Hooks.VhookSkippable("action_end_edit_reply", reply.ID, user)
+	skip, rerr := lite.Hooks.VhookSkippable("action_end_edit_reply", reply.ID, u)
 	if skip || rerr != nil {
 		return rerr
 	}
@@ -265,7 +265,7 @@ func ReplyEditSubmit(w http.ResponseWriter, r *http.Request, user *c.User, srid 
 	if !js {
 		http.Redirect(w, r, "/topic/"+strconv.Itoa(topic.ID)+"#reply-"+strconv.Itoa(rid), http.StatusSeeOther)
 	} else {
-		outBytes, err := json.Marshal(JsonReply{c.ParseMessage(reply.Content, topic.ParentID, "forums", user.ParseSettings, user)})
+		outBytes, err := json.Marshal(JsonReply{c.ParseMessage(reply.Content, topic.ParentID, "forums", u.ParseSettings, u)})
 		if err != nil {
 			return c.InternalErrorJSQ(err, w, r, js)
 		}
@@ -277,7 +277,7 @@ func ReplyEditSubmit(w http.ResponseWriter, r *http.Request, user *c.User, srid 
 
 // TODO: Refactor this
 // TODO: Disable stat updates in posts handled by plugin_guilds
-func ReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user *c.User, srid string) c.RouteError {
+func ReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, u *c.User, srid string) c.RouteError {
 	js := r.PostFormValue("js") == "1"
 	rid, err := strconv.Atoi(srid)
 	if err != nil {
@@ -298,20 +298,20 @@ func ReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user *c.User, sri
 	}
 
 	// TODO: Add hooks to make use of headerLite
-	lite, ferr := c.SimpleForumUserCheck(w, r, user, topic.ParentID)
+	lite, ferr := c.SimpleForumUserCheck(w, r, u, topic.ParentID)
 	if ferr != nil {
 		return ferr
 	}
-	if reply.CreatedBy != user.ID {
-		if !user.Perms.ViewTopic || !user.Perms.DeleteReply {
-			return c.NoPermissionsJSQ(w, r, user, js)
+	if reply.CreatedBy != u.ID {
+		if !u.Perms.ViewTopic || !u.Perms.DeleteReply {
+			return c.NoPermissionsJSQ(w, r, u, js)
 		}
 	}
 	if err := reply.Delete(); err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
 
-	skip, rerr := lite.Hooks.VhookSkippable("action_end_delete_reply", reply.ID, user)
+	skip, rerr := lite.Hooks.VhookSkippable("action_end_delete_reply", reply.ID, u)
 	if skip || rerr != nil {
 		return rerr
 	}
@@ -334,7 +334,7 @@ func ReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user *c.User, sri
 		return c.InternalErrorJSQ(err, w, r, js)
 	}*/
 
-	err = c.ModLogs.Create("delete", reply.ParentID, "reply", user.GetIP(), user.ID)
+	err = c.ModLogs.Create("delete", reply.ParentID, "reply", u.GetIP(), u.ID)
 	if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
@@ -455,7 +455,7 @@ func RemoveAttachFromReplySubmit(w http.ResponseWriter, r *http.Request, u *c.Us
 	return nil
 }
 
-func ReplyLikeSubmit(w http.ResponseWriter, r *http.Request, user *c.User, srid string) c.RouteError {
+func ReplyLikeSubmit(w http.ResponseWriter, r *http.Request, u *c.User, srid string) c.RouteError {
 	js := r.PostFormValue("js") == "1"
 	rid, err := strconv.Atoi(srid)
 	if err != nil {
@@ -477,39 +477,39 @@ func ReplyLikeSubmit(w http.ResponseWriter, r *http.Request, user *c.User, srid 
 	}
 
 	// TODO: Add hooks to make use of headerLite
-	lite, ferr := c.SimpleForumUserCheck(w, r, user, topic.ParentID)
+	lite, ferr := c.SimpleForumUserCheck(w, r, u, topic.ParentID)
 	if ferr != nil {
 		return ferr
 	}
-	if !user.Perms.ViewTopic || !user.Perms.LikeItem {
-		return c.NoPermissionsJSQ(w, r, user, js)
+	if !u.Perms.ViewTopic || !u.Perms.LikeItem {
+		return c.NoPermissionsJSQ(w, r, u, js)
 	}
-	if reply.CreatedBy == user.ID {
-		return c.LocalErrorJSQ("You can't like your own replies", w, r, user, js)
+	if reply.CreatedBy == u.ID {
+		return c.LocalErrorJSQ("You can't like your own replies", w, r, u, js)
 	}
 
 	_, err = c.Users.Get(reply.CreatedBy)
 	if err != nil && err != sql.ErrNoRows {
-		return c.LocalErrorJSQ("The target user doesn't exist", w, r, user, js)
+		return c.LocalErrorJSQ("The target user doesn't exist", w, r, u, js)
 	} else if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
 
-	err = reply.Like(user.ID)
+	err = reply.Like(u.ID)
 	if err == c.ErrAlreadyLiked {
-		return c.LocalErrorJSQ("You've already liked this!", w, r, user, js)
+		return c.LocalErrorJSQ("You've already liked this!", w, r, u, js)
 	} else if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
 
 	// ! Be careful about leaking per-route permission state with user ptr
-	alert := c.Alert{ActorID: user.ID, TargetUserID: reply.CreatedBy, Event: "like", ElementType: "post", ElementID: rid, Actor: user}
+	alert := c.Alert{ActorID: u.ID, TargetUserID: reply.CreatedBy, Event: "like", ElementType: "post", ElementID: rid, Actor: u}
 	err = c.AddActivityAndNotifyTarget(alert)
 	if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
 
-	skip, rerr := lite.Hooks.VhookSkippable("action_end_like_reply", reply.ID, user)
+	skip, rerr := lite.Hooks.VhookSkippable("action_end_like_reply", reply.ID, u)
 	if skip || rerr != nil {
 		return rerr
 	}
@@ -522,7 +522,7 @@ func ReplyLikeSubmit(w http.ResponseWriter, r *http.Request, user *c.User, srid 
 	return nil
 }
 
-func ReplyUnlikeSubmit(w http.ResponseWriter, r *http.Request, user *c.User, srid string) c.RouteError {
+func ReplyUnlikeSubmit(w http.ResponseWriter, r *http.Request, u *c.User, srid string) c.RouteError {
 	js := r.PostFormValue("js") == "1"
 	rid, err := strconv.Atoi(srid)
 	if err != nil {
@@ -544,22 +544,22 @@ func ReplyUnlikeSubmit(w http.ResponseWriter, r *http.Request, user *c.User, sri
 	}
 
 	// TODO: Add hooks to make use of headerLite
-	lite, ferr := c.SimpleForumUserCheck(w, r, user, topic.ParentID)
+	lite, ferr := c.SimpleForumUserCheck(w, r, u, topic.ParentID)
 	if ferr != nil {
 		return ferr
 	}
-	if !user.Perms.ViewTopic || !user.Perms.LikeItem {
-		return c.NoPermissionsJSQ(w, r, user, js)
+	if !u.Perms.ViewTopic || !u.Perms.LikeItem {
+		return c.NoPermissionsJSQ(w, r, u, js)
 	}
 
 	_, err = c.Users.Get(reply.CreatedBy)
 	if err != nil && err != sql.ErrNoRows {
-		return c.LocalErrorJSQ("The target user doesn't exist", w, r, user, js)
+		return c.LocalErrorJSQ("The target user doesn't exist", w, r, u, js)
 	} else if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
 
-	err = reply.Unlike(user.ID)
+	err = reply.Unlike(u.ID)
 	if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
@@ -577,7 +577,7 @@ func ReplyUnlikeSubmit(w http.ResponseWriter, r *http.Request, user *c.User, sri
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
 
-	skip, rerr := lite.Hooks.VhookSkippable("action_end_unlike_reply", reply.ID, user)
+	skip, rerr := lite.Hooks.VhookSkippable("action_end_unlike_reply", reply.ID, u)
 	if skip || rerr != nil {
 		return rerr
 	}

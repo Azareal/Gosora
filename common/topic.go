@@ -188,6 +188,8 @@ func (t *TopicsRow) Topic() *Topic {
 type TopicStmts struct {
 	getRids             *sql.Stmt
 	getReplies          *sql.Stmt
+	getReplies2         *sql.Stmt
+	getReplies3         *sql.Stmt
 	addReplies          *sql.Stmt
 	updateLastReply     *sql.Stmt
 	lock                *sql.Stmt
@@ -217,7 +219,9 @@ func init() {
 		t := "topics"
 		topicStmts = TopicStmts{
 			getRids:             acc.Select("replies").Columns("rid").Where("tid=?").Orderby("rid ASC").Limit("?,?").Prepare(),
-			getReplies:          acc.SimpleLeftJoin("replies AS r", "users AS u", "r.rid, r.content, r.createdBy, r.createdAt, r.lastEdit, r.lastEditBy, u.avatar, u.name, u.group, u.level, r.ip, r.likeCount, r.attachCount, r.actionType", "r.createdBy = u.uid", "r.tid = ?", "r.rid ASC", "?,?"),
+			getReplies:          acc.SimpleLeftJoin("replies AS r", "users AS u", "r.rid, r.content, r.createdBy, r.createdAt, r.lastEdit, r.lastEditBy, u.avatar, u.name, u.group, u.level, r.ip, r.likeCount, r.attachCount, r.actionType", "r.createdBy=u.uid", "r.tid=?", "r.rid ASC", "?,?"),
+			getReplies2:         acc.SimpleLeftJoin("replies AS r", "users AS u", "r.rid, r.content, r.createdBy, r.createdAt, r.lastEdit, r.lastEditBy, u.avatar, u.name, u.group, u.level, r.likeCount, r.attachCount, r.actionType", "r.createdBy=u.uid", "r.tid=?", "r.rid ASC", "?,?"),
+			getReplies3:         acc.Select("replies").Columns("rid, content, createdBy, createdAt, lastEdit, lastEditBy, likeCount, attachCount, actionType").Where("tid=?").Orderby("rid ASC").Limit("?,?").Prepare(),
 			addReplies:          acc.Update(t).Set("postCount=postCount+?, lastReplyBy=?, lastReplyAt=UTC_TIMESTAMP()").Where("tid=?").Prepare(),
 			updateLastReply:     acc.Update(t).Set("lastReplyID=?").Where("lastReplyID > ? AND tid=?").Prepare(),
 			lock:                acc.Update(t).Set("is_closed=1").Where("tid=?").Prepare(),
@@ -570,8 +574,7 @@ var unlockai = "&#x1F513"
 var stickai = "&#x1F4CC"
 var unstickai = "&#x1F4CC" + aipost
 
-func (ru *ReplyUser) Init() (group *Group, err error) {
-	ru.UserLink = BuildProfileURL(NameToSlug(ru.CreatedByName), ru.CreatedBy)
+func (ru *ReplyUser) Init(u *User) (group *Group, err error) {
 	ru.ContentLines = strings.Count(ru.Content, "\n")
 
 	postGroup, err := Groups.Get(ru.Group)
@@ -583,8 +586,117 @@ func (ru *ReplyUser) Init() (group *Group, err error) {
 	}
 	ru.Tag = postGroup.Tag
 
-	// TODO: Make a function for this? Build a more sophisticated noavatar handling system? Do bulk user loads and let the c.UserStore initialise this?
-	ru.Avatar, ru.MicroAvatar = BuildAvatar(ru.CreatedBy, ru.Avatar)
+	if u.ID != ru.CreatedBy {
+		ru.UserLink = BuildProfileURL(NameToSlug(ru.CreatedByName), ru.CreatedBy)
+		// TODO: Make a function for this? Build a more sophisticated noavatar handling system? Do bulk user loads and let the c.UserStore initialise this?
+		ru.Avatar, ru.MicroAvatar = BuildAvatar(ru.CreatedBy, ru.Avatar)
+	} else {
+		ru.UserLink = u.Link
+		ru.Avatar, ru.MicroAvatar = u.Avatar, u.MicroAvatar
+	}
+
+	// We really shouldn't have inline HTML, we should do something about this...
+	if ru.ActionType != "" {
+		aarr := strings.Split(ru.ActionType, "-")
+		action := aarr[0]
+		switch action {
+		case "lock":
+			ru.ActionIcon = lockai
+		case "unlock":
+			ru.ActionIcon = unlockai
+		case "stick":
+			ru.ActionIcon = stickai
+		case "unstick":
+			ru.ActionIcon = unstickai
+		case "move":
+			if len(aarr) == 2 {
+				fid, _ := strconv.Atoi(aarr[1])
+				forum, err := Forums.Get(fid)
+				if err == nil {
+					ru.ActionType = p.GetTmplPhrasef("topic.action_topic_move_dest", forum.Link, forum.Name, ru.UserLink, ru.CreatedByName)
+					return postGroup, nil
+				}
+			}
+		default:
+			// TODO: Only fire this off if a corresponding phrase for the ActionType doesn't exist? Or maybe have some sort of action registry?
+			ru.ActionType = p.GetTmplPhrasef("topic.action_topic_default", ru.ActionType)
+			return postGroup, nil
+		}
+		ru.ActionType = p.GetTmplPhrasef("topic.action_topic_"+action, ru.UserLink, ru.CreatedByName)
+	}
+
+	return postGroup, nil
+}
+
+func (ru *ReplyUser) Init2() (group *Group, err error) {
+	//ru.UserLink = BuildProfileURL(NameToSlug(ru.CreatedByName), ru.CreatedBy)
+	ru.ContentLines = strings.Count(ru.Content, "\n")
+
+	postGroup, err := Groups.Get(ru.Group)
+	if err != nil {
+		return nil, err
+	}
+	if postGroup.IsMod {
+		ru.ClassName = Config.StaffCSS
+	}
+	ru.Tag = postGroup.Tag
+
+	// We really shouldn't have inline HTML, we should do something about this...
+	if ru.ActionType != "" {
+		aarr := strings.Split(ru.ActionType, "-")
+		action := aarr[0]
+		switch action {
+		case "lock":
+			ru.ActionIcon = lockai
+		case "unlock":
+			ru.ActionIcon = unlockai
+		case "stick":
+			ru.ActionIcon = stickai
+		case "unstick":
+			ru.ActionIcon = unstickai
+		case "move":
+			if len(aarr) == 2 {
+				fid, _ := strconv.Atoi(aarr[1])
+				forum, err := Forums.Get(fid)
+				if err == nil {
+					ru.ActionType = p.GetTmplPhrasef("topic.action_topic_move_dest", forum.Link, forum.Name, ru.UserLink, ru.CreatedByName)
+					return postGroup, nil
+				}
+			}
+		default:
+			// TODO: Only fire this off if a corresponding phrase for the ActionType doesn't exist? Or maybe have some sort of action registry?
+			ru.ActionType = p.GetTmplPhrasef("topic.action_topic_default", ru.ActionType)
+			return postGroup, nil
+		}
+		ru.ActionType = p.GetTmplPhrasef("topic.action_topic_"+action, ru.UserLink, ru.CreatedByName)
+	}
+
+	return postGroup, nil
+}
+
+func (ru *ReplyUser) Init3(u *User, tu *TopicUser) (group *Group, err error) {
+	ru.ContentLines = strings.Count(ru.Content, "\n")
+
+	postGroup, err := Groups.Get(ru.Group)
+	if err != nil {
+		return nil, err
+	}
+	if postGroup.IsMod {
+		ru.ClassName = Config.StaffCSS
+	}
+	ru.Tag = postGroup.Tag
+
+	if u.ID == ru.CreatedBy {
+		ru.UserLink = u.Link
+		ru.Avatar, ru.MicroAvatar = u.Avatar, u.MicroAvatar
+	} else if tu.CreatedBy == ru.CreatedBy {
+		ru.UserLink = tu.UserLink
+		ru.Avatar, ru.MicroAvatar = tu.Avatar, tu.MicroAvatar
+	} else {
+		ru.UserLink = BuildProfileURL(NameToSlug(ru.CreatedByName), ru.CreatedBy)
+		// TODO: Make a function for this? Build a more sophisticated noavatar handling system? Do bulk user loads and let the c.UserStore initialise this?
+		ru.Avatar, ru.MicroAvatar = BuildAvatar(ru.CreatedBy, ru.Avatar)
+	}
 
 	// We really shouldn't have inline HTML, we should do something about this...
 	if ru.ActionType != "" {
@@ -620,18 +732,9 @@ func (ru *ReplyUser) Init() (group *Group, err error) {
 }
 
 // TODO: Factor TopicUser into a *Topic and *User, as this starting to become overly complicated x.x
-func (t *TopicUser) Replies(offset, pFrag int, user *User) (rlist []*ReplyUser, ogdesc string, err error) {
-	var likedMap map[int]int
-	if user.Liked > 0 {
-		likedMap = make(map[int]int)
-	}
-	likedQueryList := []int{user.ID}
-
-	var attachMap map[int]int
-	if user.Perms.EditReply {
-		attachMap = make(map[int]int)
-	}
-	attachQueryList := []int{}
+func (t *TopicUser) Replies(offset, pFrag int, user *User) (rlist []*ReplyUser /*, ogdesc string*/, err error) {
+	var likedMap, attachMap map[int]int
+	var likedQueryList, attachQueryList []int
 
 	var rid int
 	if len(t.Rids) > 0 {
@@ -641,15 +744,19 @@ func (t *TopicUser) Replies(offset, pFrag int, user *User) (rlist []*ReplyUser, 
 	re, err := Rstore.GetCache().Get(rid)
 	ucache := Users.GetCache()
 	var ruser *User
-	if err == nil && ucache != nil {
+	if ucache != nil {
 		//log.Print("ucache step")
-		ruser, err = ucache.Get(re.CreatedBy)
+		if err == nil {
+			ruser = ucache.Getn(re.CreatedBy)
+		} else if t.PostCount == 2 {
+			ruser = ucache.Getn(t.LastReplyBy)
+		}
 	}
 
 	hTbl := GetHookTable()
-	rf := func(r *ReplyUser) error {
+	rf := func(r *ReplyUser) (err error) {
 		//log.Printf("before r: %+v\n", r)
-		group, err := r.Init()
+		group, err := r.Init3(user, t)
 		if err != nil {
 			return err
 		}
@@ -668,6 +775,7 @@ func (t *TopicUser) Replies(offset, pFrag int, user *User) (rlist []*ReplyUser, 
 		if r.ContentHtml == r.Content {
 			r.ContentHtml = r.Content
 		}
+		r.Deletable = user.Perms.DeleteReply || r.CreatedBy == user.ID
 
 		// TODO: This doesn't work properly so pick the first one instead?
 		/*if r.ID == pFrag {
@@ -677,61 +785,211 @@ func (t *TopicUser) Replies(offset, pFrag int, user *User) (rlist []*ReplyUser, 
 			}
 		}*/
 
-		if r.LikeCount > 0 && user.Liked > 0 {
-			likedMap[r.ID] = len(rlist)
-			likedQueryList = append(likedQueryList, r.ID)
+		return nil
+	}
+
+	rf3 := func(r *ReplyUser) error {
+		//log.Printf("before r: %+v\n", r)
+		group, err := r.Init2()
+		if err != nil {
+			return err
 		}
-		if user.Perms.EditReply && r.AttachCount > 0 {
-			attachMap[r.ID] = len(rlist)
-			attachQueryList = append(attachQueryList, r.ID)
+
+		var parseSettings *ParseSettings
+		if !group.Perms.AutoEmbed && (user.ParseSettings == nil || !user.ParseSettings.NoEmbed) {
+			parseSettings = DefaultParseSettings.CopyPtr()
+			parseSettings.NoEmbed = true
+		} else {
+			parseSettings = user.ParseSettings
+		}
+
+		r.ContentHtml = ParseMessage(r.Content, t.ParentID, "forums", parseSettings, user)
+		// TODO: Do this more efficiently by avoiding the allocations entirely in ParseMessage, if there's nothing to do.
+		if r.ContentHtml == r.Content {
+			r.ContentHtml = r.Content
 		}
 		r.Deletable = user.Perms.DeleteReply || r.CreatedBy == user.ID
 
-		hTbl.VhookNoRet("topic_reply_row_assign", &rlist, &r)
-		// TODO: Use a pointer instead to make it easier to abstract this loop? What impact would this have on escape analysis?
-		rlist = append(rlist, r)
-		//log.Printf("r: %d-%d", r.ID, len(rlist)-1)
 		return nil
 	}
 
 	// TODO: Factor the user fields out and embed a user struct instead
-	if err == nil {
+	if err == nil && ruser != nil {
 		//log.Print("reply cached serve")
-		reply := &ReplyUser{ClassName: "", Reply: *re, CreatedByName: ruser.Name, Avatar: ruser.Avatar /*URLPrefix: ruser.URLPrefix, URLName: ruser.URLName, */, Level: ruser.Level, Tag: ruser.Tag}
-		reply.Group = ruser.Group
-		err = rf(reply)
-		if err != nil {
-			return nil, "", err
+		r := &ReplyUser{ /*ClassName: "", */ Reply: *re, CreatedByName: ruser.Name, UserLink: ruser.Link, Avatar: ruser.Avatar, MicroAvatar: ruser.MicroAvatar /*URLPrefix: ruser.URLPrefix, URLName: ruser.URLName, */, Group: ruser.Group, Level: ruser.Level, Tag: ruser.Tag}
+		if err = rf3(r); err != nil {
+			return nil, err
 		}
+
+		if r.LikeCount > 0 && user.Liked > 0 {
+			likedMap = map[int]int{r.ID: len(rlist)}
+			likedQueryList = []int{r.ID}
+		}
+		if user.Perms.EditReply && r.AttachCount > 0 {
+			attachMap = map[int]int{r.ID: len(rlist)}
+			attachQueryList = []int{r.ID}
+		}
+
+		hTbl.VhookNoRet("topic_reply_row_assign", &r)
+		// TODO: Use a pointer instead to make it easier to abstract this loop? What impact would this have on escape analysis?
+		rlist = []*ReplyUser{r}
+		//log.Printf("r: %d-%d", r.ID, len(rlist)-1)
 	} else {
 		//log.Print("reply query serve")
-		rows, err := topicStmts.getReplies.Query(t.ID, offset, Config.ItemsPerPage)
-		if err != nil {
-			return nil, "", err
-		}
-		defer rows.Close()
+		rf2 := func(r *ReplyUser) {
+			if r.LikeCount > 0 && user.Liked > 0 {
+				if likedMap == nil {
+					likedMap = map[int]int{r.ID: len(rlist)}
+					likedQueryList = []int{r.ID}
+				} else {
+					likedMap[r.ID] = len(rlist)
+					likedQueryList = append(likedQueryList, r.ID)
+				}
+			}
+			if user.Perms.EditReply && r.AttachCount > 0 {
+				if attachMap == nil {
+					attachMap = map[int]int{r.ID: len(rlist)}
+					attachQueryList = []int{r.ID}
+				} else {
+					attachMap[r.ID] = len(rlist)
+					attachQueryList = append(attachQueryList, r.ID)
+				}
+			}
 
-		for rows.Next() {
-			r := &ReplyUser{}
-			err := rows.Scan(&r.ID, &r.Content, &r.CreatedBy, &r.CreatedAt, &r.LastEdit, &r.LastEditBy, &r.Avatar, &r.CreatedByName, &r.Group /*&r.URLPrefix, &r.URLName,*/, &r.Level, &r.IP, &r.LikeCount, &r.AttachCount, &r.ActionType)
-			if err != nil {
-				return nil, "", err
-			}
-			err = rf(r)
-			if err != nil {
-				return nil, "", err
-			}
+			hTbl.VhookNoRet("topic_reply_row_assign", &r)
+			// TODO: Use a pointer instead to make it easier to abstract this loop? What impact would this have on escape analysis?
+			rlist = append(rlist, r)
+			//log.Printf("r: %d-%d", r.ID, len(rlist)-1)
 		}
-		if err = rows.Err(); err != nil {
-			return nil, "", err
+		if !user.Perms.ViewIPs && ruser != nil {
+			rows, err := topicStmts.getReplies3.Query(t.ID, offset, Config.ItemsPerPage)
+			if err != nil {
+				return nil, err
+			}
+			defer rows.Close()
+			for rows.Next() {
+				r := &ReplyUser{Avatar: ruser.Avatar, MicroAvatar: ruser.MicroAvatar, UserLink: ruser.Link, CreatedByName: ruser.Name, Group: ruser.Group, Level: ruser.Level}
+				err := rows.Scan(&r.ID, &r.Content, &r.CreatedBy, &r.CreatedAt, &r.LastEdit, &r.LastEditBy, &r.LikeCount, &r.AttachCount, &r.ActionType)
+				if err != nil {
+					return nil, err
+				}
+				if err = rf3(r); err != nil {
+					return nil, err
+				}
+				rf2(r)
+			}
+			if err = rows.Err(); err != nil {
+				return nil, err
+			}
+		} else if user.Perms.ViewIPs {
+			rows, err := topicStmts.getReplies.Query(t.ID, offset, Config.ItemsPerPage)
+			if err != nil {
+				return nil, err
+			}
+			defer rows.Close()
+			for rows.Next() {
+				r := &ReplyUser{}
+				err := rows.Scan(&r.ID, &r.Content, &r.CreatedBy, &r.CreatedAt, &r.LastEdit, &r.LastEditBy, &r.Avatar, &r.CreatedByName, &r.Group /*&r.URLPrefix, &r.URLName,*/, &r.Level, &r.IP, &r.LikeCount, &r.AttachCount, &r.ActionType)
+				if err != nil {
+					return nil, err
+				}
+				if err = rf(r); err != nil {
+					return nil, err
+				}
+				rf2(r)
+			}
+			if err = rows.Err(); err != nil {
+				return nil, err
+			}
+		} else if t.PostCount >= 20 {
+			rows, err := topicStmts.getReplies3.Query(t.ID, offset, Config.ItemsPerPage)
+			if err != nil {
+				return nil, err
+			}
+			defer rows.Close()
+			reqUserList := make(map[int]bool)
+			for rows.Next() {
+				r := &ReplyUser{}
+				err := rows.Scan(&r.ID, &r.Content, &r.CreatedBy, &r.CreatedAt, &r.LastEdit, &r.LastEditBy /*&r.URLPrefix, &r.URLName,*/, &r.LikeCount, &r.AttachCount, &r.ActionType)
+				if err != nil {
+					return nil, err
+				}
+				if r.CreatedBy != t.CreatedBy && r.CreatedBy != user.ID {
+					reqUserList[r.CreatedBy] = true
+				}
+			}
+			if err = rows.Err(); err != nil {
+				return nil, err
+			}
+
+			var userList map[int]*User
+			if len(reqUserList) > 0 {
+				// Convert the user ID map to a slice, then bulk load the users
+				idSlice := make([]int, len(reqUserList))
+				var i int
+				for userID := range reqUserList {
+					idSlice[i] = userID
+					i++
+				}
+				userList, err = Users.BulkGetMap(idSlice)
+				if err != nil {
+					return nil, nil // TODO: Implement this!
+				}
+			}
+
+			for _, r := range rlist {
+				var u *User
+				if r.CreatedBy == t.CreatedBy {
+					r.CreatedByName = t.CreatedByName
+					r.Avatar = t.Avatar
+					r.MicroAvatar = t.MicroAvatar
+					r.Group = t.Group
+					r.Level = t.Level
+				} else {
+					if r.CreatedBy == user.ID {
+						u = user
+					} else {
+						u = userList[r.CreatedBy]
+					}
+					r.CreatedByName = u.Name
+					r.Avatar = u.Avatar
+					r.MicroAvatar = u.MicroAvatar
+					r.Group = u.Group
+					r.Level = u.Level
+				}
+				if err = rf(r); err != nil {
+					return nil, err
+				}
+				rf2(r)
+			}
+		} else {
+			rows, err := topicStmts.getReplies2.Query(t.ID, offset, Config.ItemsPerPage)
+			if err != nil {
+				return nil, err
+			}
+			defer rows.Close()
+			for rows.Next() {
+				r := &ReplyUser{}
+				err := rows.Scan(&r.ID, &r.Content, &r.CreatedBy, &r.CreatedAt, &r.LastEdit, &r.LastEditBy, &r.Avatar, &r.CreatedByName, &r.Group /*&r.URLPrefix, &r.URLName,*/, &r.Level, &r.LikeCount, &r.AttachCount, &r.ActionType)
+				if err != nil {
+					return nil, err
+				}
+				if err = rf(r); err != nil {
+					return nil, err
+				}
+				rf2(r)
+			}
+			if err = rows.Err(); err != nil {
+				return nil, err
+			}
 		}
 	}
 
 	// TODO: Add a config setting to disable the liked query for a burst of extra speed
-	if user.Liked > 0 && len(likedQueryList) > 1 /*&& user.LastLiked <= time.Now()*/ {
-		eids, err := Likes.BulkExists(likedQueryList[1:], user.ID, "replies")
+	if user.Liked > 0 && len(likedQueryList) > 0 /*&& user.LastLiked <= time.Now()*/ {
+		eids, err := Likes.BulkExists(likedQueryList, user.ID, "replies")
 		if err != nil {
-			return nil, "", err
+			return nil, err
 		}
 		for _, eid := range eids {
 			rlist[likedMap[eid]].Liked = true
@@ -742,7 +1000,7 @@ func (t *TopicUser) Replies(offset, pFrag int, user *User) (rlist []*ReplyUser, 
 		//log.Printf("attachQueryList: %+v\n", attachQueryList)
 		amap, err := Attachments.BulkMiniGetList("replies", attachQueryList)
 		if err != nil && err != sql.ErrNoRows {
-			return nil, "", err
+			return nil, err
 		}
 		//log.Printf("amap: %+v\n", amap)
 		//log.Printf("attachMap: %+v\n", attachMap)
@@ -755,7 +1013,9 @@ func (t *TopicUser) Replies(offset, pFrag int, user *User) (rlist []*ReplyUser, 
 		}
 	}
 
-	return rlist, ogdesc, nil
+	//hTbl.VhookNoRet("topic_reply_end", &rlist)
+
+	return rlist, nil
 }
 
 // TODO: Test this
@@ -873,6 +1133,20 @@ func BuildTopicURL(slug string, tid int) string {
 		return "/topic/" + strconv.Itoa(tid)
 	}
 	return "/topic/" + slug + "." + strconv.Itoa(tid)
+}
+
+func BuildTopicURLSb(sb *strings.Builder, slug string, tid int) {
+	if slug == "" || !Config.BuildSlugs {
+		sb.Grow(7 + 2)
+		sb.WriteString("/topic/")
+		sb.WriteString(strconv.Itoa(tid))
+		return
+	}
+	sb.Grow(7 + 3 + len(slug))
+	sb.WriteString("/topic/")
+	sb.WriteString(slug)
+	sb.WriteRune('.')
+	sb.WriteString(strconv.Itoa(tid))
 }
 
 // I don't care if it isn't used,, it will likely be in the future. Nolint.

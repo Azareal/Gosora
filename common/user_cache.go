@@ -9,6 +9,7 @@ import (
 type UserCache interface {
 	DeallocOverflow(evictPriority bool) (evicted int) // May cause thread contention, looks for items to evict
 	Get(id int) (*User, error)
+	Getn(id int) *User
 	GetUnsafe(id int) (*User, error)
 	BulkGet(ids []int) (list []*User)
 	Set(item *User) error
@@ -95,12 +96,19 @@ func (s *MemoryUserCache) DeallocOverflow(evictPriority bool) (evicted int) {
 // Get fetches a user by ID. Returns ErrNoRows if not present.
 func (s *MemoryUserCache) Get(id int) (*User, error) {
 	s.RLock()
-	item, ok := s.items[id]
+	item := s.items[id]
 	s.RUnlock()
-	if ok {
-		return item, nil
+	if item == nil {
+		return item, ErrNoRows
 	}
-	return item, ErrNoRows
+	return item, nil
+}
+
+func (s *MemoryUserCache) Getn(id int) *User {
+	s.RLock()
+	item := s.items[id]
+	s.RUnlock()
+	return item
 }
 
 // BulkGet fetches multiple users by their IDs. Indices without users will be set to nil, so make sure you check for those, we might want to change this behaviour to make it less confusing.

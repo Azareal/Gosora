@@ -192,7 +192,7 @@ type TopicPage struct {
 	ItemList []*ReplyUser
 	Topic    TopicUser
 	Forum    *Forum
-	Poll     Poll
+	Poll     *Poll
 	Paginator
 }
 

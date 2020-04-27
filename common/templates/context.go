@@ -25,13 +25,13 @@ type OutBufferFrame struct {
 }
 
 type CContext struct {
-	RootHolder   string
-	VarHolder    string
-	HoldReflect  reflect.Value
+	RootHolder       string
+	VarHolder        string
+	HoldReflect      reflect.Value
 	RootTemplateName string
-	TemplateName string
-	LoopDepth    int
-	OutBuf       *[]OutBufferFrame
+	TemplateName     string
+	LoopDepth        int
+	OutBuf           *[]OutBufferFrame
 }
 
 func (con *CContext) Push(nType string, body string) (index int) {
@@ -54,6 +54,20 @@ func (con *CContext) PushPhrasef(langIndex int, args string) (index int) {
 	return con.LastBufIndex()
 }
 
+func (con *CContext) StartIf(body string) (index int) {
+	*con.OutBuf = append(*con.OutBuf, OutBufferFrame{body, "startif", con.TemplateName, false, nil})
+	return con.LastBufIndex()
+}
+func (con *CContext) StartIfPtr(body string) (index int) {
+	*con.OutBuf = append(*con.OutBuf, OutBufferFrame{body, "startif", con.TemplateName, true, nil})
+	return con.LastBufIndex()
+}
+
+func (con *CContext) EndIf(startIndex int, body string) (index int) {
+	*con.OutBuf = append(*con.OutBuf, OutBufferFrame{body, "endif", con.TemplateName, startIndex, nil})
+	return con.LastBufIndex()
+}
+
 func (con *CContext) StartLoop(body string) (index int) {
 	con.LoopDepth++
 	return con.Push("startloop", body)
@@ -73,15 +87,15 @@ func (con *CContext) EndTemplate(body string) (index int) {
 
 func (con *CContext) AttachVars(vars string, index int) {
 	outBuf := *con.OutBuf
-	node := outBuf[index]
-	if node.Type != "starttemplate" && node.Type != "startloop" {
-		panic("not a starttemplate node")
+	n := outBuf[index]
+	if n.Type != "starttemplate" && n.Type != "startloop" && n.Type != "startif" {
+		panic("not a starttemplate, startloop or startif node")
 	}
-	node.Body += vars
-	outBuf[index] = node
+	n.Body += vars
+	outBuf[index] = n
 }
 
-func (con *CContext) addFrame(body string, ftype string, extra1 interface{}, extra2 interface{}) (index int) {
+func (con *CContext) addFrame(body, ftype string, extra1 interface{}, extra2 interface{}) (index int) {
 	*con.OutBuf = append(*con.OutBuf, OutBufferFrame{body, ftype, con.TemplateName, extra1, extra2})
 	return con.LastBufIndex()
 }

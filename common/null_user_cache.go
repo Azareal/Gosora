@@ -16,6 +16,10 @@ func (c *NullUserCache) DeallocOverflow(evictPriority bool) (evicted int) {
 func (c *NullUserCache) Get(id int) (*User, error) {
 	return nil, ErrNoRows
 }
+
+func (c *NullUserCache) Getn(id int) *User {
+	return nil
+}
 func (c *NullUserCache) BulkGet(ids []int) (list []*User) {
 	return make([]*User, len(ids))
 }

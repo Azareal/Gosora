@@ -105,7 +105,6 @@ func (s *SQLReplyStore) Create(t *Topic, content, ip string, uid int) (id int, e
 	if err != nil {
 		return 0, err
 	}
-
 	lastID, err := res.LastInsertId()
 	if err != nil {
 		return 0, err

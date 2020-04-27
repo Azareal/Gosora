@@ -513,8 +513,7 @@ if !ok {
 		}
 		`*/
 		fout += `var iw http.ResponseWriter
-	gzw, ok := w.(c.GzipResponseWriter)
-	if ok {
+	if gzw, ok := w.(c.GzipResponseWriter); ok {
 		iw = gzw.ResponseWriter
 	}
 	_ = iw
@@ -711,14 +710,26 @@ func (c *CTemplateSet) compileSwitch(con CContext, node parse.Node) {
 			return
 		}
 
-		con.Push("startif", "if "+expr+" {\n")
+		var startIf int
+		var nilIf = strings.HasPrefix(expr, con.RootHolder) && strings.HasSuffix(expr, "!=nil")
+		if nilIf {
+			startIf = con.StartIfPtr("if " + expr + " {\n")
+		} else {
+			startIf = con.StartIf("if " + expr + " {\n")
+		}
 		c.compileSwitch(con, node.List)
 		if node.ElseList == nil {
 			c.detail("Selected Branch 1")
-			con.Push("endif", "}\n")
+			con.EndIf(startIf, "}\n")
+			if nilIf {
+				c.afterTemplate(con, startIf)
+			}
 		} else {
 			c.detail("Selected Branch 2")
-			con.Push("endif", "}")
+			con.EndIf(startIf, "}")
+			if nilIf {
+				c.afterTemplate(con, startIf)
+			}
 			con.Push("startelse", " else {\n")
 			c.compileSwitch(con, node.ElseList)
 			con.Push("endelse", "}\n")
@@ -769,7 +780,7 @@ func (c *CTemplateSet) compileRangeNode(con CContext, node *parse.RangeNode) {
 	c.detail("Range Kind Switch!")
 
 	startIf := func(item reflect.Value, useCopy bool) {
-		con.Push("startif", "if len("+expr+") != 0 {\n")
+		sIndex := con.StartIf("if len(" + expr + ")!=0 {\n")
 		startIndex := con.StartLoop("for _, item := range " + expr + " {\n")
 		ccon := con
 		var depth string
@@ -793,7 +804,7 @@ func (c *CTemplateSet) compileRangeNode(con CContext, node *parse.RangeNode) {
 		con.EndLoop("}\n")
 		c.afterTemplate(con, startIndex)
 		if node.ElseList != nil {
-			con.Push("endif", "}")
+			con.EndIf(sIndex, "}")
 			con.Push("startelse", " else {\n")
 			if !useCopy {
 				ccon = con
@@ -801,7 +812,7 @@ func (c *CTemplateSet) compileRangeNode(con CContext, node *parse.RangeNode) {
 			c.compileSwitch(ccon, node.ElseList)
 			con.Push("endelse", "}\n")
 		} else {
-			con.Push("endif", "}\n")
+			con.EndIf(sIndex, "}\n")
 		}
 	}
 
@@ -1512,12 +1523,15 @@ func (c *CTemplateSet) compileBoolSub(con CContext, varname string) string {
 	// TODO: What if it's a pointer or an interface? I *think* we've got pointers handled somewhere, but not interfaces which we don't know the types of at compile time
 	switch val.Kind() {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Float32, reflect.Float64:
-		out += " > 0"
+		out += ">0"
 	case reflect.Bool: // Do nothing
 	case reflect.String:
-		out += " != \"\""
+		out += "!=\"\""
 	case reflect.Slice, reflect.Map:
-		out = "len(" + out + ") != 0"
+		out = "len(" + out + ")!=0"
+	// TODO: Follow the pointer and evaluate it?
+	case reflect.Ptr:
+		out += "!=nil"
 	default:
 		c.logger.Println("Variable Name:", varname)
 		c.logger.Println("Variable Holder:", con.VarHolder)
@@ -1675,9 +1689,9 @@ func (c *CTemplateSet) compileVarSub(con CContext, varname string, val reflect.V
 				return
 			}
 		}
-		con.Push("startif", "if "+varname+" {\n")
+		startIf := con.StartIf("if " + varname + " {\n")
 		c.addText(con, []byte("true"))
-		con.Push("endif", "} ")
+		con.EndIf(startIf, "} ")
 		con.Push("startelse", "else {\n")
 		c.addText(con, []byte("false"))
 		con.Push("endelse", "}\n")
@@ -1945,42 +1959,66 @@ func (c *CTemplateSet) loadTemplate(fileDir, name string) (content string, err e
 	return content, nil
 }
 
-func (c *CTemplateSet) afterTemplate(con CContext, startIndex int) {
+func (c *CTemplateSet) afterTemplate(con CContext, startIndex int /*, svmap map[string]int*/) {
 	c.dumpCall("afterTemplate", con, startIndex)
 	defer c.retCall("afterTemplate")
 
 	loopDepth := 0
+	ifNilDepth := 0
 	var outBuf = *con.OutBuf
 	varcounts := make(map[string]int)
 	loopStart := startIndex
-	if outBuf[startIndex].Type == "startloop" && (len(outBuf) > startIndex+1) {
+	otype := outBuf[startIndex].Type
+	if otype == "startloop" && (len(outBuf) > startIndex+1) {
+		loopStart++
+	}
+	if otype == "startif" && (len(outBuf) > startIndex+1) {
 		loopStart++
 	}
 
 	// Exclude varsubs within loops for now
+OLoop:
 	for i := loopStart; i < len(outBuf); i++ {
 		item := outBuf[i]
 		c.detail("item:", item)
-		if item.Type == "startloop" {
+		switch item.Type {
+		case "startloop":
 			loopDepth++
 			c.detail("loopDepth:", loopDepth)
-		} else if item.Type == "endloop" {
+		case "endloop":
 			loopDepth--
 			c.detail("loopDepth:", loopDepth)
 			if loopDepth == -1 {
-				break
+				break OLoop
 			}
-		} else if item.Type == "varsub" && loopDepth == 0 {
-			count := varcounts[item.Body]
-			varcounts[item.Body] = count + 1
-			c.detail("count " + strconv.Itoa(count) + " for " + item.Body)
-			c.detail("loopDepth:", loopDepth)
+		case "startif":
+			if item.Extra.(bool) == true {
+				ifNilDepth++
+			}
+		case "endif":
+			item2 := outBuf[item.Extra.(int)]
+			if item2.Extra.(bool) == true {
+				ifNilDepth--
+			}
+			if ifNilDepth == -1 {
+				break OLoop
+			}
+		case "varsub":
+			if loopDepth == 0 && ifNilDepth == 0 {
+				count := varcounts[item.Body]
+				varcounts[item.Body] = count + 1
+				c.detail("count " + strconv.Itoa(count) + " for " + item.Body)
+				c.detail("loopDepth:", loopDepth)
+			}
 		}
 	}
 
 	var varstr string
 	var i int
 	varmap := make(map[string]int)
+	/*for svkey, sventry := range svmap {
+		varmap[svkey] = sventry
+	}*/
 	for name, count := range varcounts {
 		if count > 1 {
 			varstr += "var c_v_" + strconv.Itoa(i) + "=" + name + "\n"
@@ -1991,21 +2029,153 @@ func (c *CTemplateSet) afterTemplate(con CContext, startIndex int) {
 
 	// Exclude varsubs within loops for now
 	loopDepth = 0
+	ifNilDepth = 0
+OOLoop:
 	for i := loopStart; i < len(outBuf); i++ {
 		item := outBuf[i]
-		if item.Type == "startloop" {
+		switch item.Type {
+		case "startloop":
 			loopDepth++
-		} else if item.Type == "endloop" {
+		case "endloop":
 			loopDepth--
 			if loopDepth == -1 {
-				break
+				break OOLoop
+			} //con.Push("startif", "if "+varname+" {\n")
+		case "startif":
+			if item.Extra.(bool) == true {
+				ifNilDepth++
 			}
-		} else if item.Type == "varsub" && loopDepth == 0 {
-			index, ok := varmap[item.Body]
-			if ok {
-				item.Body = "c_v_" + strconv.Itoa(index)
-				item.Type = "cvarsub"
-				outBuf[i] = item
+		case "endif":
+			item2 := outBuf[item.Extra.(int)]
+			if item2.Extra.(bool) == true {
+				ifNilDepth--
+			}
+			if ifNilDepth == -1 {
+				break OOLoop
+			}
+		case "varsub":
+			if loopDepth == 0 && ifNilDepth == 0 {
+				index, ok := varmap[item.Body]
+				if ok {
+					item.Body = "c_v_" + strconv.Itoa(index)
+					item.Type = "cvarsub"
+					outBuf[i] = item
+				}
+			}
+		}
+	}
+
+	con.AttachVars(varstr, startIndex)
+}
+
+const (
+	ATTmpl = iota
+	ATLoop
+	ATIfPtr
+)
+
+func (c *CTemplateSet) afterTemplateV2(con CContext, startIndex int /*, typ int*/, svmap map[string]int) {
+	c.dumpCall("afterTemplateV2", con, startIndex)
+	defer c.retCall("afterTemplateV2")
+
+	loopDepth := 0
+	ifNilDepth := 0
+	var outBuf = *con.OutBuf
+	varcounts := make(map[string]int)
+	loopStart := startIndex
+	otype := outBuf[startIndex].Type
+	if otype == "startloop" && (len(outBuf) > startIndex+1) {
+		loopStart++
+	}
+	if otype == "startif" && (len(outBuf) > startIndex+1) {
+		loopStart++
+	}
+
+	// Exclude varsubs within loops for now
+OLoop:
+	for i := loopStart; i < len(outBuf); i++ {
+		item := outBuf[i]
+		c.detail("item:", item)
+		switch item.Type {
+		case "startloop":
+			loopDepth++
+			c.detail("loopDepth:", loopDepth)
+		case "endloop":
+			loopDepth--
+			c.detail("loopDepth:", loopDepth)
+			if loopDepth == -1 {
+				break OLoop
+			}
+		case "startif":
+			if item.Extra.(bool) == true {
+				ifNilDepth++
+			}
+		case "endif":
+			item2 := outBuf[item.Extra.(int)]
+			if item2.Extra.(bool) == true {
+				ifNilDepth--
+			}
+			if ifNilDepth == -1 {
+				break OLoop
+			}
+		case "varsub":
+			if loopDepth == 0 && ifNilDepth == 0 {
+				count := varcounts[item.Body]
+				varcounts[item.Body] = count + 1
+				c.detail("count " + strconv.Itoa(count) + " for " + item.Body)
+				c.detail("loopDepth:", loopDepth)
+			}
+		}
+	}
+
+	var varstr string
+	var i int
+	varmap := make(map[string]int)
+	/*for svkey, sventry := range svmap {
+		varmap[svkey] = sventry
+	}*/
+	for name, count := range varcounts {
+		if count > 1 {
+			varstr += "var c_v_" + strconv.Itoa(i) + "=" + name + "\n"
+			varmap[name] = i
+			i++
+		}
+	}
+
+	// Exclude varsubs within loops for now
+	loopDepth = 0
+	ifNilDepth = 0
+OOLoop:
+	for i := loopStart; i < len(outBuf); i++ {
+		item := outBuf[i]
+		switch item.Type {
+		case "startloop":
+			loopDepth++
+		case "endloop":
+			loopDepth--
+			if loopDepth == -1 {
+				break OOLoop
+			} //con.Push("startif", "if "+varname+" {\n")
+		case "startif":
+			if item.Extra.(bool) == true {
+				ifNilDepth++
+			}
+		case "endif":
+			item2 := outBuf[item.Extra.(int)]
+			if item2.Extra.(bool) == true {
+				ifNilDepth--
+			}
+			if ifNilDepth == -1 {
+				break OOLoop
+			}
+		case "varsub":
+			if loopDepth == 0 && ifNilDepth == 0 {
+				index, ok := varmap[item.Body]
+				if ok {
+					item.Body = "c_v_" + strconv.Itoa(index)
+					item.Type = "cvarsub"
+					outBuf[i] = item
+				}
 			}
 		}
 	}

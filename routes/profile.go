@@ -27,7 +27,7 @@ func init() {
 }
 
 // TODO: Remove the View part of the name?
-func ViewProfile(w http.ResponseWriter, r *http.Request, user *c.User, header *c.Header) c.RouteError {
+func ViewProfile(w http.ResponseWriter, r *http.Request, user *c.User, h *c.Header) c.RouteError {
 	var reCreatedAt time.Time
 	var reContent, reCreatedByName, reAvatar string
 	var rid, reCreatedBy, reLastEdit, reLastEditBy, reGroup int
@@ -36,13 +36,13 @@ func ViewProfile(w http.ResponseWriter, r *http.Request, user *c.User, header *c
 	// TODO: Do a 301 if it's the wrong username? Do a canonical too?
 	_, pid, err := ParseSEOURL(r.URL.Path[len("/user/"):])
 	if err != nil {
-		return c.SimpleError(phrases.GetErrorPhrase("url_id_must_be_integer"), w, r, header)
+		return c.SimpleError(phrases.GetErrorPhrase("url_id_must_be_integer"), w, r, h)
 	}
 
 	// TODO: Preload this?
-	header.AddSheet(header.Theme.Name + "/profile.css")
+	h.AddSheet(h.Theme.Name + "/profile.css")
 	if user.Loggedin {
-		header.AddScriptAsync("profile_member.js")
+		h.AddScriptAsync("profile_member.js")
 	}
 
 	var puser *c.User
@@ -54,13 +54,13 @@ func ViewProfile(w http.ResponseWriter, r *http.Request, user *c.User, header *c
 		// TODO: Add a shared function for checking for ErrNoRows and internal erroring if it's not that case?
 		puser, err = c.Users.Get(pid)
 		if err == sql.ErrNoRows {
-			return c.NotFound(w, r, header)
+			return c.NotFound(w, r, h)
 		} else if err != nil {
 			return c.InternalError(err, w, r)
 		}
 	}
-	header.Title = phrases.GetTitlePhrasef("profile", puser.Name)
-	header.Path = c.BuildProfileURL(c.NameToSlug(puser.Name), puser.ID)
+	h.Title = phrases.GetTitlePhrasef("profile", puser.Name)
+	h.Path = c.BuildProfileURL(c.NameToSlug(puser.Name), puser.ID)
 
 	// Get the replies..
 	rows, err := profileStmts.getReplies.Query(puser.ID)
@@ -77,8 +77,8 @@ func ViewProfile(w http.ResponseWriter, r *http.Request, user *c.User, header *c
 
 		reLiked := false
 		reLikeCount := 0
-		ru := &c.ReplyUser{Reply: c.Reply{rid, puser.ID, reContent, reCreatedBy, reGroup, reCreatedAt, reLastEdit, reLastEditBy, 0, "", reLiked, reLikeCount, 0, ""}, ContentHtml: c.ParseMessage(reContent, 0, "", user.ParseSettings, user), CreatedByName: reCreatedByName, Avatar: reAvatar, Level: 0}
-		_, err = ru.Init()
+		ru := &c.ReplyUser{Reply: c.Reply{rid, puser.ID, reContent, reCreatedBy /*, reGroup*/, reCreatedAt, reLastEdit, reLastEditBy, 0, "", reLiked, reLikeCount, 0, ""}, ContentHtml: c.ParseMessage(reContent, 0, "", user.ParseSettings, user), CreatedByName: reCreatedByName, Avatar: reAvatar, Group: reGroup, Level: 0}
+		_, err = ru.Init(user)
 		if err != nil {
 			return c.InternalError(err, w, r)
 		}
@@ -111,6 +111,6 @@ func ViewProfile(w http.ResponseWriter, r *http.Request, user *c.User, header *c
 	canMessage := (!blockedInv && user.Perms.UseConvos) || (!blockedInv && puser.IsSuperMod && user.Perms.UseConvosOnlyWithMod) || user.IsSuperMod
 	canComment := !blockedInv && user.Perms.CreateProfileReply
 
-	ppage := c.ProfilePage{header, reList, *puser, currentScore, nextScore, blocked, canMessage, canComment}
-	return renderTemplate("profile", w, r, header, ppage)
+	ppage := c.ProfilePage{h, reList, *puser, currentScore, nextScore, blocked, canMessage, canComment}
+	return renderTemplate("profile", w, r, h, ppage)
 }
