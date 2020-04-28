@@ -517,6 +517,8 @@ if !ok {
 		iw = gzw.ResponseWriter
 	}
 	_ = iw
+	var tmp []byte
+	_ = tmp
 `
 	} else {
 		fout += "// nolint\nfunc Tmpl_" + fname + "(tmpl_" + fname + "_vars interface{}, w io.Writer) error {\n"
@@ -856,11 +858,11 @@ func (c *CTemplateSet) skipStructPointers(cur reflect.Value, id string) reflect.
 }
 
 // For compileSubSwitch and compileSubTemplate
-func (c *CTemplateSet) checkIfValid(cur reflect.Value, varHolder string, holdreflect reflect.Value, varBit string, multiline bool) {
+func (c *CTemplateSet) checkIfValid(cur reflect.Value, varHolder string, holdReflect reflect.Value, varBit string, multiline bool) {
 	if !cur.IsValid() {
 		c.critical("Debug Data:")
-		c.critical("Holdreflect:", holdreflect)
-		c.critical("Holdreflect.Kind():", holdreflect.Kind())
+		c.critical("Holdreflect:", holdReflect)
+		c.critical("Holdreflect.Kind():", holdReflect.Kind())
 		if !c.config.SuperDebug {
 			c.critical("cur.Kind():", cur.Kind().String())
 		}
@@ -1100,7 +1102,7 @@ func (c *CTemplateSet) compileIdentSwitch(con CContext, node *parse.CommandNode)
 	c.dumpCall("compileIdentSwitch", con, node)
 	litString := func(inner string, bytes bool) {
 		if !bytes {
-			inner = "StringToBytes(" + inner + ")"
+			inner = "StringToBytes(" + inner + "/*,tmp*/)"
 		}
 		out = "w.Write(" + inner + ")\n"
 		literal = true
@@ -1307,7 +1309,7 @@ ArgLoop:
 			}
 			leftParam, _ := c.compileIfVarSub(con, leftOp)
 			out = "{\nbyteFloat, unit := c.ConvertByteUnit(float64(" + leftParam + "))\n"
-			out += "w.Write(StringToBytes(fmt.Sprintf(\"%.1f\", byteFloat) + unit))\n}\n"
+			out += "w.Write(StringToBytes(fmt.Sprintf(\"%.1f\", byteFloat)/*,tmp*/))\nw.Write(StringToBytes(unit/*,tmp*/))\n}\n"
 			literal = true
 			c.importMap["fmt"] = "fmt"
 			break ArgLoop
@@ -1629,7 +1631,7 @@ func (c *CTemplateSet) compileVarSub(con CContext, varname string, val reflect.V
 
 	// Is this a literal string?
 	if len(varname) != 0 && varname[0] == '"' {
-		con.Push("lvarsub", onEnd(assLines+"w.Write(StringToBytes("+varname+"))\n"))
+		con.Push("lvarsub", onEnd(assLines+"w.Write(StringToBytes("+varname+"/*,tmp*/))\n"))
 		return
 	}
 	for _, varItem := range c.varList {
@@ -1660,7 +1662,7 @@ func (c *CTemplateSet) compileVarSub(con CContext, varname string, val reflect.V
 	switch val.Kind() {
 	case reflect.Int:
 		c.importMap["strconv"] = "strconv"
-		base = "StringToBytes(strconv.Itoa(" + varname + "))"
+		base = "StringToBytes(strconv.Itoa(" + varname + ")/*,tmp*/)"
 	case reflect.Bool:
 		// TODO: Take c.memberOnly into account
 		// TODO: Make this a template fragment so more optimisations can be applied to this
@@ -1710,28 +1712,28 @@ func (c *CTemplateSet) compileVarSub(con CContext, varname string, val reflect.V
 		if val.Type().Name() != "string" && !strings.HasPrefix(varname, "string(") {
 			varname = "string(" + varname + ")"
 		}
-		base = "StringToBytes(" + varname + ")"
+		base = "StringToBytes(" + varname + "/*,tmp*/)"
 		// We don't to waste time on this conversion / w.Write call when guests don't have sessions
 		// TODO: Implement this properly
-		if c.guestOnly && base == "StringToBytes("+con.RootHolder+".CurrentUser.Session))" {
+		if c.guestOnly && base == "StringToBytes("+con.RootHolder+".CurrentUser.Session/*,tmp*/))" {
 			return
 		}
 	case reflect.Int8, reflect.Int16, reflect.Int32:
 		c.importMap["strconv"] = "strconv"
-		base = "StringToBytes(strconv.FormatInt(int64(" + varname + "), 10))"
+		base = "StringToBytes(strconv.FormatInt(int64(" + varname + "), 10)/*,tmp*/)"
 	case reflect.Int64:
 		c.importMap["strconv"] = "strconv"
-		base = "StringToBytes(strconv.FormatInt(" + varname + ", 10))"
+		base = "StringToBytes(strconv.FormatInt(" + varname + ", 10)/*,tmp*/)"
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32:
 		c.importMap["strconv"] = "strconv"
-		base = "StringToBytes(strconv.FormatUint(uint64(" + varname + "), 10))"
+		base = "StringToBytes(strconv.FormatUint(uint64(" + varname + "), 10)/*,tmp*/)"
 	case reflect.Uint64:
 		c.importMap["strconv"] = "strconv"
-		base = "StringToBytes(strconv.FormatUint(" + varname + ", 10))"
+		base = "StringToBytes(strconv.FormatUint(" + varname + ", 10)/*,tmp*/)"
 	case reflect.Struct:
 		// TODO: Avoid clashing with other packages which have structs named Time
 		if val.Type().Name() == "Time" {
-			base = "StringToBytes(" + varname + ".String())"
+			base = "StringToBytes(" + varname + ".String()/*,tmp*/)"
 		} else {
 			if !val.IsValid() {
 				panic(assLines + varname + "^\n" + "Invalid value. Maybe, it doesn't exist?")
