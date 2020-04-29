@@ -471,7 +471,11 @@ func (c *CTemplateSet) compile(name, content, expects string, expectsInt interfa
 	} else if !c.config.SkipInitBlock {
 		if len(c.langIndexToName) > 0 {
 			fout += "var " + fname + "_tmpl_phrase_id int\n\n"
-			fout += "var " + fname + "_phrase_arr [" + strconv.Itoa(len(c.langIndexToName)) + "][]byte\n\n"
+			if len(c.langIndexToName) > 1 {
+				fout += "var " + fname + "_phrase_arr [" + strconv.Itoa(len(c.langIndexToName)) + "][]byte\n\n"
+			} else {
+				fout += "var " + fname + "_phrase []byte\n\n"
+			}
 		}
 		fout += "// nolint\nfunc init() {\n"
 
@@ -492,10 +496,17 @@ func (c *CTemplateSet) compile(name, content, expects string, expectsInt interfa
 			}
 			fout += "\t})\n"
 
-			fout += `	phrases.AddTmplIndexCallback(func(phraseSet [][]byte) {
+			if len(c.langIndexToName) > 1 {
+				fout += `	phrases.AddTmplIndexCallback(func(phraseSet [][]byte) {
 		copy(` + fname + `_phrase_arr[:], phraseSet)
 	})
 `
+			} else {
+				fout += `	phrases.AddTmplIndexCallback(func(phraseSet [][]byte) {
+		` + fname + `_phrase = phraseSet[0]
+	})
+`
+			}
 		}
 		fout += "}\n\n"
 	}
@@ -575,7 +586,11 @@ if !ok {
 			fout += "w.Write(" + fr.Body + ")\n"
 		case fr.Type == "lang":
 			//fout += "w.Write(plist[" + strconv.Itoa(fr.Extra.(int)) + "])\n"
-			fout += "w.Write(" + fname + "_phrase_arr[" + strconv.Itoa(fr.Extra.(int)) + "])\n"
+			if len(c.langIndexToName) == 1 {
+				fout += "w.Write(" + fname + "_phrase)\n"
+			} else {
+				fout += "w.Write(" + fname + "_phrase_arr[" + strconv.Itoa(fr.Extra.(int)) + "])\n"
+			}
 		//case fr.Type == "identifier":
 		default:
 			fout += fr.Body
@@ -1039,10 +1054,10 @@ func (c *CTemplateSet) compileIdentSwitchN(con CContext, n *parse.CommandNode) (
 	return out
 }
 
-func (c *CTemplateSet) dumpSymbol(pos int, node *parse.CommandNode, symbol string) {
+func (c *CTemplateSet) dumpSymbol(pos int, n *parse.CommandNode, symbol string) {
 	c.detail("symbol:", symbol)
-	c.detail("node.Args[pos+1]", node.Args[pos+1])
-	c.detail("node.Args[pos+2]", node.Args[pos+2])
+	c.detail("n.Args[pos+1]", n.Args[pos+1])
+	c.detail("n.Args[pos+2]", n.Args[pos+2])
 }
 
 func (c *CTemplateSet) compareFunc(con CContext, pos int, n *parse.CommandNode, compare string) (out string) {
@@ -1087,8 +1102,8 @@ func (c *CTemplateSet) compareJoin(con CContext, pos int, node *parse.CommandNod
 	}
 	out = left + " " + symbol + " " + right
 
-	c.detail("Left operand:", node.Args[pos-1])
-	c.detail("Right operand:", node.Args[pos+1])
+	c.detail("Left op:", node.Args[pos-1])
+	c.detail("Right op:", node.Args[pos+1])
 	if !funcExists {
 		pos++
 	}
@@ -1671,22 +1686,22 @@ func (c *CTemplateSet) compileVarSub(con CContext, varname string, val reflect.V
 		if c.guestOnly {
 			c.detail("optimising away member branch")
 			if inSlice(userExprs, varname) {
-				c.detail("positive conditional:", varname)
+				c.detail("positive condition:", varname)
 				c.addText(con, []byte("false"))
 				return
 			} else if inSlice(negUserExprs, varname) {
-				c.detail("negative conditional:", varname)
+				c.detail("negative condition:", varname)
 				c.addText(con, []byte("true"))
 				return
 			}
 		} else if c.memberOnly {
 			c.detail("optimising away guest branch")
 			if (con.RootHolder + ".CurrentUser.Loggedin") == varname {
-				c.detail("positive conditional:", varname)
+				c.detail("positive condition:", varname)
 				c.addText(con, []byte("true"))
 				return
 			} else if ("!" + con.RootHolder + ".CurrentUser.Loggedin") == varname {
-				c.detail("negative conditional:", varname)
+				c.detail("negative condition:", varname)
 				c.addText(con, []byte("false"))
 				return
 			}

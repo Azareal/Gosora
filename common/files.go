@@ -202,6 +202,7 @@ func (list SFileList) JSTmplInit() error {
 		//rep("//var plist = GetTmplPhrasesBytes("+shortName+"_tmpl_phrase_id)", "const "+shortName+"_phrase_arr = tmplPhrases[\""+tmplName+"\"];")
 		rep("//var plist = GetTmplPhrasesBytes("+shortName+"_tmpl_phrase_id)", "const pl=tmplPhrases[\""+tmplName+"\"];")
 		rep(shortName+"_phrase_arr", "pl")
+		rep(shortName+"_phrase", "pl")
 		rep("tmpl_"+shortName+"_vars", "t_v")
 
 		rep("var c_v_", "let c_v_")
@@ -434,11 +435,20 @@ func (list SFileList) Set(name string, data SFile) {
 	list[name] = data
 }
 
-func CompressBytesGzip(in []byte) ([]byte, error) {
-	var buff bytes.Buffer
-	gz, err := gzip.NewWriterLevel(&buff, gzip.BestCompression)
-	if err != nil {
-		return nil, err
+var gzipBestCompress sync.Pool
+
+func CompressBytesGzip(in []byte) (b []byte, err error) {
+	var buf bytes.Buffer
+	ii := gzipBestCompress.Get()
+	var gz *gzip.Writer
+	if ii == nil {
+		gz, err = gzip.NewWriterLevel(&buf, gzip.BestCompression)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		gz = ii.(*gzip.Writer)
+		gz.Reset(&buf)
 	}
 	_, err = gz.Write(in)
 	if err != nil {
@@ -448,7 +458,8 @@ func CompressBytesGzip(in []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return buff.Bytes(), nil
+	gzipBestCompress.Put(gz)
+	return buf.Bytes(), nil
 }
 
 func CompressBytesBrotli(in []byte) ([]byte, error) {
