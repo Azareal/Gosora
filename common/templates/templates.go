@@ -526,6 +526,7 @@ if !ok {
 		fout += `var iw http.ResponseWriter
 	if gzw, ok := w.(c.GzipResponseWriter); ok {
 		iw = gzw.ResponseWriter
+		w = gzw.Writer
 	}
 	_ = iw
 	var tmp []byte
