@@ -798,6 +798,9 @@ sp.topic_item .submit_edit {
 	width: 100%;
 	max-width: 320px;
 }
+video {
+	width: 100%;
+}
 blockquote {
 	background-color: #555555;
 	border-radius: 3px;

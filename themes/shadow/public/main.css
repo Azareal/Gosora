@@ -949,6 +949,9 @@ input[type=checkbox]:checked + label.poll_option_label .sel {
 	background-color: rgb(71,71,71);
 	padding: 10px;
 }
+video {
+	width: 100%;
+}
 blockquote {
 	background-color: rgb(71,71,71);
 	margin: 0px;

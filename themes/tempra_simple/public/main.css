@@ -560,6 +560,9 @@ input, select {
 	background-color: white;
 	padding: 10px;
 }
+video {
+	width: 100%;
+}
 /*blockquote {
 	background-color: #EEEEEE;
 	padding: 12px;
