@@ -24,15 +24,15 @@ var Meta meta.MetaStore
 
 // nolint I don't want to write comments for each of these o.o
 const Hour int = 60 * 60
-const Day int = Hour * 24
-const Week int = Day * 7
-const Month int = Day * 30
-const Year int = Day * 365
+const Day = Hour * 24
+const Week = Day * 7
+const Month = Day * 30
+const Year = Day * 365
 const Kilobyte int = 1024
-const Megabyte int = Kilobyte * 1024
-const Gigabyte int = Megabyte * 1024
-const Terabyte int = Gigabyte * 1024
-const Petabyte int = Terabyte * 1024
+const Megabyte = Kilobyte * 1024
+const Gigabyte = Megabyte * 1024
+const Terabyte = Gigabyte * 1024
+const Petabyte = Terabyte * 1024
 
 var StartTime time.Time
 var GzipStartEtag string
@@ -65,18 +65,28 @@ type StringList []string
 // TODO: Let admins manage this from the Control Panel
 // apng is commented out for now, as we have no way of re-encoding it into a smaller file
 var AllowedFileExts = StringList{
-	"png", "jpg", "jpe", "jpeg", "jif", "jfi", "jfif", "svg", "bmp", "gif", "tiff", "tif", "webp", /*"apng",*/ // images
+	"png", "jpg", "jpe", "jpeg", "jif", "jfi", "jfif", "svg", "bmp", "gif", "tiff", "tif", "webp", "apng", /*"bpg", "heif",*/ // images (encodable) + apng (browser support) + bpg
 
 	"txt", "xml", "json", "yaml", "toml", "ini", "md", "html", "rtf", "js", "py", "rb", "css", "scss", "less", "eqcss", "pcss", "java", "ts", "cs", "c", "cc", "cpp", "cxx", "C", "c++", "h", "hh", "hpp", "hxx", "h++", "rs", "rlib", "htaccess", "gitignore", /*"go","php",*/ // text
 
-	"mp3", "mp4", "avi", "wmv", "webm", // video
+	"mp3", // audio
+
+	"mp4", "avi", "ogg", "wmv", "webm", // video
 
 	"otf", "woff2", "woff", "ttf", "eot", // fonts
 
 	"bz2", "zip", "zipx", "gz", "7z", "tar", "cab", "rar", "kgb", "pea", "xz", "zz", // archives
+
+	//"docx", "pdf", // documents
 }
 var ImageFileExts = StringList{
-	"png", "jpg", "jpe", "jpeg", "jif", "jfi", "jfif", "svg", "bmp", "gif", "tiff", "tif", "webp", /* "apng",*/
+	"png", "jpg", "jpe", "jpeg", "jif", "jfi", "jfif", "svg", "bmp", "gif", "tiff", "tif", "webp", /* "apng", "bpg", */
+}
+var VideoFileExts = StringList{
+	"mp4", "avi", "ogg", "wmv", "webm",
+}
+var WebVideoFileExts = StringList{
+	"mp4", "avi", "ogg", "webm",
 }
 var ArchiveFileExts = StringList{
 	"bz2", "zip", "zipx", "gz", "7z", "tar", "cab", "rar", "kgb", "pea", "xz", "zz",
@@ -92,8 +102,8 @@ func init() {
 }
 
 // TODO: Write a test for this
-func (slice StringList) Contains(needle string) bool {
-	for _, item := range slice {
+func (sl StringList) Contains(needle string) bool {
+	for _, item := range sl {
 		if item == needle {
 			return true
 		}
@@ -101,13 +111,34 @@ func (slice StringList) Contains(needle string) bool {
 	return false
 }
 
+/*var DbTables []string
+var TableToID = make(map[string]int)
+var IDToTable = make(map[int]string)
+
+func InitTables(acc *qgen.Accumulator) error {
+	stmt := acc.Select("tables").Columns("id,name").Prepare()
+	if err := acc.FirstError(); err != nil {
+		return err
+	}
+	return eachall(stmt, func(r *sql.Rows) error {
+		var id int
+		var name string
+		if err := r.Scan(&id, &name); err != nil {
+			return err
+		}
+		TableToID[name] = id
+		IDToTable[id] = name
+		return nil
+	})
+}*/
+
 type dbInits []func(acc *qgen.Accumulator) error
 
 var DbInits dbInits
 
 func (inits dbInits) Run() error {
-	for _, init := range inits {
-		err := init(qgen.NewAcc())
+	for _, i := range inits {
+		err := i(qgen.NewAcc())
 		if err != nil {
 			return err
 		}
