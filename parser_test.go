@@ -232,6 +232,11 @@ func TestParser(t *testing.T) {
 		l.Add("http://"+u, "<a href='"+fs+"'>"+c.Site.URL+"</a>")
 		l.Add("https://"+u, "<a href='"+fs+"'>"+c.Site.URL+"</a>")
 
+		l.Add("//"+u+"/attachs/sha256hash.webm?sid=1&stype=forums", "<video controls src=\""+fs+"/attachs/sha256hash.webm?sid=1&amp;stype=forums\"><a class='attach'href=\""+fs+"/attachs/sha256hash.webm?sid=1&amp;stype=forums\"download>Attachment</a></video>")
+		l.Add("//"+u+"/attachs/sha256hash.webm", "<video controls src=\""+fs+"/attachs/sha256hash.webm?sid=1&amp;stype=forums\"><a class='attach'href=\""+fs+"/attachs/sha256hash.webm?sid=1&amp;stype=forums\"download>Attachment</a></video>")
+		l.Add("//"+u+"/attachs/sha256hash.webm?sid=1", "<video controls src=\""+fs+"/attachs/sha256hash.webm?sid=1&amp;stype=forums\"><a class='attach'href=\""+fs+"/attachs/sha256hash.webm?sid=1&amp;stype=forums\"download>Attachment</a></video>")
+		l.Add("//"+u+"/attachs/sha256hash.webm?stype=forums", "<video controls src=\""+fs+"/attachs/sha256hash.webm?sid=1&amp;stype=forums\"><a class='attach'href=\""+fs+"/attachs/sha256hash.webm?sid=1&amp;stype=forums\"download>Attachment</a></video>")
+
 		l.Add("//"+u+"/attachs/sha256hash.png?sid=1&stype=forums", "<a href=\""+fs+"/attachs/sha256hash.png?sid=1&amp;stype=forums\"><img src='"+fs+"/attachs/sha256hash.png?sid=1&amp;stype=forums'class='postImage'></a>")
 		l.Add("//"+u+"/attachs/sha256hash?sid=1&stype=forums", "<red>[Invalid URL]</red>")
 		l.Add("//"+u+"/attachs/s?sid=1&stype=forums", "<red>[Invalid URL]</red>")
@@ -242,7 +247,7 @@ func TestParser(t *testing.T) {
 		l.Add("//"+u+"/attachs/sha256hash.png?sid=1", "<a href=\""+fs+"/attachs/sha256hash.png?sid=1&amp;stype=forums\"><img src='"+fs+"/attachs/sha256hash.png?sid=1&amp;stype=forums'class='postImage'></a>")
 		l.Add("//"+u+"/attachs/sha256hash.png?stype=forums", "<a href=\""+fs+"/attachs/sha256hash.png?sid=1&amp;stype=forums\"><img src='"+fs+"/attachs/sha256hash.png?sid=1&amp;stype=forums'class='postImage'></a>")
 
-		l.Add("//"+u+"/attachs/sha256hash.txt?sid=1&stype=forums", "<a download class='attach'href=\""+fs+"/attachs/sha256hash.txt?sid=1&amp;stype=forums\">Attachment</a>")
+		l.Add("//"+u+"/attachs/sha256hash.txt?sid=1&stype=forums", "<a class='attach'href=\""+fs+"/attachs/sha256hash.txt?sid=1&amp;stype=forums\"download>Attachment</a>")
 
 		l.Add("//example.com/image.png", "<a href=\"//example.com/image.png\"><img src='//example.com/image.png'class='postImage'></a>")
 		l.Add("https://example.com/image.png", "<a href=\"https://example.com/image.png\"><img src='https://example.com/image.png'class='postImage'></a>")

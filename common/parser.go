@@ -28,18 +28,25 @@ var URLOpen = []byte("<a href='")
 var URLOpenUser = []byte("<a rel='ugc'href='")
 var URLOpen2 = []byte("'>")
 var bytesSinglequote = []byte("'")
-var bytesGreaterthan = []byte(">")
+var bytesGreaterThan = []byte(">")
 var urlMention = []byte("'class='mention'")
 var URLClose = []byte("</a>")
+var videoOpen = []byte("<video controls src=\"")
+var videoOpen2 = []byte("\"><a class='attach'href=\"")
+var videoClose = []byte("\"download>Attachment</a></video>")
 var imageOpen = []byte("<a href=\"")
 var imageOpen2 = []byte("\"><img src='")
 var imageClose = []byte("'class='postImage'></a>")
-var attachOpen = []byte("<a download class='attach'href=\"")
-var attachClose = []byte("\">Attachment</a>")
+var attachOpen = []byte("<a class='attach'href=\"")
+var attachClose = []byte("\"download>Attachment</a>")
 var sidParam = []byte("?sid=")
 var stypeParam = []byte("&amp;stype=")
 var urlPattern = `(?s)([ {1}])((http|https|ftp|mailto)*)(:{??)\/\/([\.a-zA-Z\/]+)([ {1}])`
 var urlReg *regexp.Regexp
+
+const imageSizeHint = len("<a href=\"") + len("\"><img src='") + len("'class='postImage'></a>")
+const videoSizeHint = len("<video controls src=\"") + len("\"><a class='attach'href=\"") + len("\"download>Attachment</a></video>") + len("?sid=") + len("&amp;stype=") + 8
+const mentionSizeHint = len("<a href='") + len("'class='mention'") + len(">@") + len("</a>")
 
 func init() {
 	urlReg = regexp.MustCompile(urlPattern)
@@ -492,8 +499,14 @@ func ParseMessage(msg string, sectionID int, sectionType string, settings *Parse
 		LogError(err)
 		return ""
 	}
-	for _, filter := range wordFilters {
-		msg = strings.Replace(msg, filter.Find, filter.Replace, -1)
+	for _, f := range wordFilters {
+		msg = strings.Replace(msg, f.Find, f.Replace, -1)
+	}
+
+	if len(msg) < 2 {
+		msg = strings.Replace(msg, "\n", "<br>", -1)
+		msg = GetHookTable().Sshook("parse_assign", msg)
+		return msg
 	}
 
 	// Search for URLs, mentions and hashlinks in the messages...
@@ -513,7 +526,9 @@ func ParseMessage(msg string, sectionID int, sectionType string, settings *Parse
 				break
 			}
 			//fmt.Println("s2")
-			if msg[i] == '#' {
+			ch := msg[i]
+			switch ch {
+			case '#':
 				//fmt.Println("msg[i+1]:", msg[i+1])
 				//fmt.Println("string(msg[i+1]):", string(msg[i+1]))
 				hashType := hashLinkTypes[msg[i+1]]
@@ -540,31 +555,37 @@ func ParseMessage(msg string, sectionID int, sectionType string, settings *Parse
 				hashLinkMap[hashType](&sb, msg, &i)
 				lastItem = i
 				i--
-			} else if msg[i] == '@' {
+			case '@':
 				sb.WriteString(msg[lastItem:i])
 				i++
 				start := i
 				uid, intLen := CoerceIntString(msg[start:])
 				i += intLen
 
-				menUser, err := Users.Get(uid)
-				if err != nil {
-					sb.Write(InvalidProfile)
-					lastItem = i
-					i--
-					continue
+				var menUser *User
+				if uid != 0 && user.ID == uid {
+					menUser = user
+				} else {
+					menUser = Users.Getn(uid)
+					if menUser == nil {
+						sb.Write(InvalidProfile)
+						lastItem = i
+						i--
+						continue
+					}
 				}
 
+				sb.Grow(mentionSizeHint + len(menUser.Link) + len(menUser.Name))
 				sb.Write(URLOpen)
 				sb.WriteString(menUser.Link)
 				sb.Write(urlMention)
-				sb.Write(bytesGreaterthan)
+				sb.Write(bytesGreaterThan)
 				sb.WriteByte('@')
 				sb.WriteString(menUser.Name)
 				sb.Write(URLClose)
 				lastItem = i
 				i--
-			} else if msg[i] == 'h' || msg[i] == 'f' || msg[i] == 'g' || msg[i] == '/' {
+			case 'h', 'f', 'g', '/':
 				//fmt.Println("s3")
 				if len(msg) > i+5 && msg[i+1] == 't' && msg[i+2] == 't' && msg[i+3] == 'p' {
 					if len(msg) > i+6 && msg[i+4] == 's' && msg[i+5] == ':' && msg[i+6] == '/' {
@@ -574,10 +595,17 @@ func ParseMessage(msg string, sectionID int, sectionType string, settings *Parse
 					} else {
 						continue
 					}
-				} else if len(msg) > i+4 && msg[i+1] == 't' && msg[i+2] == 'p' && msg[i+3] == ':' && msg[i+4] == '/' {
-					// Do nothing
-				} else if len(msg) > i+4 && msg[i+1] == 'i' && msg[i+2] == 't' && msg[i+3] == ':' && msg[i+4] == '/' {
-					// Do nothing
+				} else if len(msg) > i+4 {
+					fch := msg[i+1]
+					if fch == 't' && msg[i+2] == 'p' && msg[i+3] == ':' && msg[i+4] == '/' {
+						// Do nothing
+					} else if fch == 'i' && msg[i+2] == 't' && msg[i+3] == ':' && msg[i+4] == '/' {
+						// Do nothing
+					} else if fch == '/' {
+						// Do nothing
+					} else {
+						continue
+					}
 				} else if msg[i+1] == '/' {
 					// Do nothing
 				} else {
@@ -626,7 +654,7 @@ func ParseMessage(msg string, sectionID int, sectionType string, settings *Parse
 				//fmt.Println("p2")
 
 				addImage := func(url string) {
-					sb.Grow(len(imageOpen) + len(url) + len(url) + len(imageOpen2) + len(imageClose))
+					sb.Grow(imageSizeHint + len(url) + len(url))
 					sb.Write(imageOpen)
 					sb.WriteString(url)
 					sb.Write(imageOpen2)
@@ -638,13 +666,32 @@ func ParseMessage(msg string, sectionID int, sectionType string, settings *Parse
 
 				// TODO: Reduce the amount of code duplication
 				// TODO: Avoid allocating a string for media.Type?
-				if media.Type == "attach" {
+				switch media.Type {
+				case AImage:
 					addImage(media.URL + "?sid=" + strconv.Itoa(sectionID) + "&amp;stype=" + sectionType)
 					continue
-				} else if media.Type == "image" {
+				case AVideo:
+					sb.Grow(videoSizeHint + (len(media.URL) + len(sectionType)*2))
+					sb.Write(videoOpen)
+					sb.WriteString(media.URL)
+					sb.Write(sidParam)
+					sb.WriteString(strconv.Itoa(sectionID))
+					sb.Write(stypeParam)
+					sb.WriteString(sectionType)
+					sb.Write(videoOpen2)
+					sb.WriteString(media.URL)
+					sb.Write(sidParam)
+					sb.WriteString(strconv.Itoa(sectionID))
+					sb.Write(stypeParam)
+					sb.WriteString(sectionType)
+					sb.Write(videoClose)
+					i += urlLen
+					lastItem = i
+					continue
+				case EImage:
 					addImage(media.URL)
 					continue
-				} else if media.Type == "aother" {
+				case AOther:
 					sb.Write(attachOpen)
 					sb.WriteString(media.URL)
 					sb.Write(sidParam)
@@ -655,12 +702,15 @@ func ParseMessage(msg string, sectionID int, sectionType string, settings *Parse
 					i += urlLen
 					lastItem = i
 					continue
-				} else if media.Type == "raw" {
+				case ERaw:
 					sb.WriteString(media.Body)
 					i += urlLen
 					lastItem = i
 					continue
-				} else if media.Type != "" {
+				case ENone:
+					// Do nothing
+				// TODO: Add support for media plugins
+				default:
 					sb.Write(unknownMedia)
 					i += urlLen
 					continue
@@ -863,13 +913,25 @@ func PartialURLStringLen2(data string) int {
 }
 
 type MediaEmbed struct {
-	Type string //image
+	//Type string //image
+	Type int
 	URL  string
 	FURL string
 	Body string
 
 	Trusted bool // samesite urls
 }
+
+const (
+	ENone = iota
+	ERaw
+	EImage
+	AImage
+	AVideo
+	AOther
+)
+
+var LastEmbedID = AOther
 
 // TODO: Write a test for this
 func parseMediaString(data string, settings *ParseSettings) (media MediaEmbed, ok bool) {
@@ -920,9 +982,11 @@ func parseMediaString(data string, settings *ParseSettings) (media MediaEmbed, o
 				return media, false
 			}
 			if ImageFileExts.Contains(ext) {
-				media.Type = "attach"
+				media.Type = AImage
+			} else if WebVideoFileExts.Contains(ext) {
+				media.Type = AVideo
 			} else {
-				media.Type = "aother"
+				media.Type = AOther
 			}
 			return media, true
 		}
@@ -934,7 +998,7 @@ func parseMediaString(data string, settings *ParseSettings) (media MediaEmbed, o
 		if strings.HasSuffix(host, ".youtube.com") && path == "/watch" {
 			video, ok := query["v"]
 			if ok && len(video) >= 1 && video[0] != "" {
-				media.Type = "raw"
+				media.Type = ERaw
 				// TODO: Filter the URL to make sure no nasties end up in there
 				media.Body = "<iframe class='postIframe'src='https://www.youtube-nocookie.com/embed/" + video[0] + "'frameborder=0 allowfullscreen></iframe>"
 				return media, true
@@ -943,10 +1007,10 @@ func parseMediaString(data string, settings *ParseSettings) (media MediaEmbed, o
 
 		if lastFrag := pathFrags[len(pathFrags)-1]; lastFrag != "" {
 			// TODO: Write a function for getting the file extension of a string
-			ext := strings.TrimPrefix(filepath.Ext(lastFrag),".")
+			ext := strings.TrimPrefix(filepath.Ext(lastFrag), ".")
 			if len(ext) != 0 {
 				if ImageFileExts.Contains(ext) {
-					media.Type = "image"
+					media.Type = EImage
 					var sport string
 					if port != "443" && port != "80" && port != "" {
 						sport = ":" + port
@@ -954,6 +1018,7 @@ func parseMediaString(data string, settings *ParseSettings) (media MediaEmbed, o
 					media.URL = scheme + "//" + host + sport + path
 					return media, true
 				}
+				// TODO: Support external videos
 			}
 		}
 	}
