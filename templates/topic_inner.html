@@ -32,20 +32,20 @@
 
 		<span class="controls{{if .Topic.LikeCount}} has_likes{{end}}" aria-label="{{lang "topic.post_controls_aria"}}">
 
-		<a href="{{.Topic.UserLink}}" class="username real_username" rel="author">{{.Topic.CreatedByName}}</a>&nbsp;&nbsp;
+		<a href="{{.Topic.UserLink}}"class="username real_username"rel="author">{{.Topic.CreatedByName}}</a>&nbsp;&nbsp;
 
 		{{if .CurrentUser.Loggedin}}
 		{{if .CurrentUser.Perms.LikeItem}}{{if ne .CurrentUser.ID .Topic.CreatedBy}}
 
 		{{if .Topic.Liked}}
-		<a href="/topic/unlike/submit/{{.Topic.ID}}?s={{.CurrentUser.Session}}" class="mod_button"title="{{lang "topic.unlike_tooltip"}}" aria-label="{{lang "topic.unlike_aria"}}">
+		<a href="/topic/unlike/submit/{{.Topic.ID}}?s={{.CurrentUser.Session}}" class="mod_button"title="{{lang "topic.unlike_tooltip"}}"aria-label="{{lang "topic.unlike_aria"}}">
 		<button class="username like_label remove_like"></button></a>{{else}}
-		<a href="/topic/like/submit/{{.Topic.ID}}?s={{.CurrentUser.Session}}" class="mod_button"title="{{lang "topic.like_tooltip"}}" aria-label="{{lang "topic.like_aria"}}">
+		<a href="/topic/like/submit/{{.Topic.ID}}?s={{.CurrentUser.Session}}" class="mod_button"title="{{lang "topic.like_tooltip"}}"aria-label="{{lang "topic.like_aria"}}">
 		<button class="username like_label add_like"></button></a>{{end}}
 		
 		{{end}}{{end}}
 
-		<a href="" class="mod_button quote_item"title="{{lang "topic.quote_tooltip"}}" aria-label="{{lang "topic.quote_aria"}}"><button class="username quote_label"></button></a>
+		<a href=""class="mod_button quote_item"title="{{lang "topic.quote_tooltip"}}" aria-label="{{lang "topic.quote_aria"}}"><button class="username quote_label"></button></a>
 
 		{{if not .Topic.IsClosed or .CurrentUser.Perms.CloseTopic}}
 		{{if .CurrentUser.Perms.EditTopic}}<a href='/topic/edit/{{.Topic.ID}}' class="mod_button open_edit"title="{{lang "topic.edit_tooltip"}}" aria-label="{{lang "topic.edit_aria"}}"><button class="username edit_label"></button></a>{{end}}
