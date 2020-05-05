@@ -34,6 +34,9 @@ var URLClose = []byte("</a>")
 var videoOpen = []byte("<video controls src=\"")
 var videoOpen2 = []byte("\"><a class='attach'href=\"")
 var videoClose = []byte("\"download>Attachment</a></video>")
+var audioOpen = []byte("<audio controls src=\"")
+var audioOpen2 = []byte("\"><a class='attach'href=\"")
+var audioClose = []byte("\"download>Attachment</a></audio>")
 var imageOpen = []byte("<a href=\"")
 var imageOpen2 = []byte("\"><img src='")
 var imageClose = []byte("'class='postImage'></a>")
@@ -46,6 +49,7 @@ var urlReg *regexp.Regexp
 
 const imageSizeHint = len("<a href=\"") + len("\"><img src='") + len("'class='postImage'></a>")
 const videoSizeHint = len("<video controls src=\"") + len("\"><a class='attach'href=\"") + len("\"download>Attachment</a></video>") + len("?sid=") + len("&amp;stype=") + 8
+const audioSizeHint = len("<audio controls src=\"") + len("\"><a class='attach'href=\"") + len("\"download>Attachment</a></audio>") + len("?sid=") + len("&amp;stype=") + 8
 const mentionSizeHint = len("<a href='") + len("'class='mention'") + len(">@") + len("</a>")
 
 func init() {
@@ -688,6 +692,24 @@ func ParseMessage(msg string, sectionID int, sectionType string, settings *Parse
 					i += urlLen
 					lastItem = i
 					continue
+				case AAudio:
+					sb.Grow(audioSizeHint + (len(media.URL) + len(sectionType)*2))
+					sb.Write(audioOpen)
+					sb.WriteString(media.URL)
+					sb.Write(sidParam)
+					sb.WriteString(strconv.Itoa(sectionID))
+					sb.Write(stypeParam)
+					sb.WriteString(sectionType)
+					sb.Write(audioOpen2)
+					sb.WriteString(media.URL)
+					sb.Write(sidParam)
+					sb.WriteString(strconv.Itoa(sectionID))
+					sb.Write(stypeParam)
+					sb.WriteString(sectionType)
+					sb.Write(audioClose)
+					i += urlLen
+					lastItem = i
+					continue
 				case EImage:
 					addImage(media.URL)
 					continue
@@ -928,6 +950,7 @@ const (
 	EImage
 	AImage
 	AVideo
+	AAudio
 	AOther
 )
 
@@ -981,11 +1004,14 @@ func parseMediaString(data string, settings *ParseSettings) (media MediaEmbed, o
 				// TODO: Write a unit test for this
 				return media, false
 			}
-			if ImageFileExts.Contains(ext) {
+			switch {
+			case ImageFileExts.Contains(ext):
 				media.Type = AImage
-			} else if WebVideoFileExts.Contains(ext) {
+			case WebVideoFileExts.Contains(ext):
 				media.Type = AVideo
-			} else {
+			case WebAudioFileExts.Contains(ext):
+				media.Type = AAudio
+			default:
 				media.Type = AOther
 			}
 			return media, true

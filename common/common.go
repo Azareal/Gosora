@@ -69,9 +69,9 @@ var AllowedFileExts = StringList{
 
 	"txt", "xml", "json", "yaml", "toml", "ini", "md", "html", "rtf", "js", "py", "rb", "css", "scss", "less", "eqcss", "pcss", "java", "ts", "cs", "c", "cc", "cpp", "cxx", "C", "c++", "h", "hh", "hpp", "hxx", "h++", "rs", "rlib", "htaccess", "gitignore", /*"go","php",*/ // text
 
-	"mp3", // audio
+	"wav", "mp3", "oga", // audio
 
-	"mp4", "avi", "ogg", "wmv", "webm", // video
+	"mp4", "avi", "ogg", "ogv", "ogx", "wmv", "webm", // video
 
 	"otf", "woff2", "woff", "ttf", "eot", // fonts
 
@@ -83,10 +83,13 @@ var ImageFileExts = StringList{
 	"png", "jpg", "jpe", "jpeg", "jif", "jfi", "jfif", "svg", "bmp", "gif", "tiff", "tif", "webp", /* "apng", "bpg", */
 }
 var VideoFileExts = StringList{
-	"mp4", "avi", "ogg", "wmv", "webm",
+	"mp4", "avi", "ogg", "ogv", "ogx", "wmv", "webm",
 }
 var WebVideoFileExts = StringList{
-	"mp4", "avi", "ogg", "webm",
+	"mp4", "avi", "ogg", "ogv", "webm",
+}
+var WebAudioFileExts = StringList{
+	"wav", "mp3", "oga",
 }
 var ArchiveFileExts = StringList{
 	"bz2", "zip", "zipx", "gz", "7z", "tar", "cab", "rar", "kgb", "pea", "xz", "zz",

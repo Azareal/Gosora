@@ -298,7 +298,7 @@ func BuildAlertSb(sb *strings.Builder, a *Alert, u *User /* The current user */)
 	return nil
 }
 
-//var AlertsGrowHint3 = len(`{"msg":"._","sub":["",""],"path":"","img":"","id":}`) + 3 + 2 + 2 + 2 + 2 + 1
+//const AlertsGrowHint3 = len(`{"msg":"._","sub":["",""],"path":"","img":"","id":}`) + 3 + 2 + 2 + 2 + 2 + 1
 
 func AddActivityAndNotifyAll(a Alert) error {
 	id, err := Activity.Add(a)

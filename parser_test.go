@@ -237,6 +237,11 @@ func TestParser(t *testing.T) {
 		l.Add("//"+u+"/attachs/sha256hash.webm?sid=1", "<video controls src=\""+fs+"/attachs/sha256hash.webm?sid=1&amp;stype=forums\"><a class='attach'href=\""+fs+"/attachs/sha256hash.webm?sid=1&amp;stype=forums\"download>Attachment</a></video>")
 		l.Add("//"+u+"/attachs/sha256hash.webm?stype=forums", "<video controls src=\""+fs+"/attachs/sha256hash.webm?sid=1&amp;stype=forums\"><a class='attach'href=\""+fs+"/attachs/sha256hash.webm?sid=1&amp;stype=forums\"download>Attachment</a></video>")
 
+		l.Add("//"+u+"/attachs/sha256hash.mp3?sid=1&stype=forums", "<audio controls src=\""+fs+"/attachs/sha256hash.mp3?sid=1&amp;stype=forums\"><a class='attach'href=\""+fs+"/attachs/sha256hash.mp3?sid=1&amp;stype=forums\"download>Attachment</a></audio>")
+		l.Add("//"+u+"/attachs/sha256hash.mp3", "<audio controls src=\""+fs+"/attachs/sha256hash.mp3?sid=1&amp;stype=forums\"><a class='attach'href=\""+fs+"/attachs/sha256hash.mp3?sid=1&amp;stype=forums\"download>Attachment</a></audio>")
+		l.Add("//"+u+"/attachs/sha256hash.mp3?sid=1", "<audio controls src=\""+fs+"/attachs/sha256hash.mp3?sid=1&amp;stype=forums\"><a class='attach'href=\""+fs+"/attachs/sha256hash.mp3?sid=1&amp;stype=forums\"download>Attachment</a></audio>")
+		l.Add("//"+u+"/attachs/sha256hash.mp3?stype=forums", "<audio controls src=\""+fs+"/attachs/sha256hash.mp3?sid=1&amp;stype=forums\"><a class='attach'href=\""+fs+"/attachs/sha256hash.mp3?sid=1&amp;stype=forums\"download>Attachment</a></audio>")
+
 		l.Add("//"+u+"/attachs/sha256hash.png?sid=1&stype=forums", "<a href=\""+fs+"/attachs/sha256hash.png?sid=1&amp;stype=forums\"><img src='"+fs+"/attachs/sha256hash.png?sid=1&amp;stype=forums'class='postImage'></a>")
 		l.Add("//"+u+"/attachs/sha256hash?sid=1&stype=forums", "<red>[Invalid URL]</red>")
 		l.Add("//"+u+"/attachs/s?sid=1&stype=forums", "<red>[Invalid URL]</red>")
