@@ -24,11 +24,11 @@ function pushNotice(msg) {
 }
 
 // TODO: Write a friendlier error handler which uses a .notice or something, we could have a specialised one for alerts
-function ajaxError(xhr,status,er) {
+function ajaxError(xhr,status,e) {
 	console.log("The AJAX request failed");
 	console.log("xhr",xhr);
 	console.log("status",status);
-	console.log("er",er);
+	console.log("e",e);
 	if(status=="parsererror") console.log("The server didn't respond with a valid JSON response");
 	console.trace();
 }
@@ -508,20 +508,21 @@ function mainInit(){
 		if(page=="") page = 1;
 
 		let pageList = Paginate(page,lastPage,5)
-		//$(".pageset").html(Tmpl_paginator({PageList: pageList, Page: page, LastPage: lastPage}));
+		//$(".pageset").html(Tmpl_paginator({PageList:pageList,Page:page,LastPage:lastPage}));
 		let ok = false;
 		$(".pageset").each(function(){
-			this.outerHTML = Tmpl_paginator({PageList: pageList, Page: page, LastPage: lastPage});
+			this.outerHTML = Tmpl_paginator({PageList:pageList,Page:page,LastPage:lastPage});
 			ok = true;
 		});
-		if(!ok) $(Tmpl_paginator({PageList: pageList, Page: page, LastPage: lastPage})).insertAfter("#topic_list");
+		if(!ok) $(Tmpl_paginator({PageList:pageList,Page:page,LastPage:lastPage})).insertAfter("#topic_list");
 	}
 
 	function rebindPaginator() {
+		// TODO: Take mostviewed into account
+		// TODO: Get this to work with topics too
 		$(".pageitem a").unbind("click");
-		$(".pageitem a").click(function() {
-			event.preventDefault();
-			// TODO: Take mostviewed into account
+		$(".pageitem a").click(function(ev) {
+			ev.preventDefault();
 			let url = "//"+window.location.host+window.location.pathname;
 			let urlParams = new URLSearchParams(window.location.search);
 			urlParams.set("page",new URLSearchParams(this.getAttribute("href")).get("page"));
@@ -530,7 +531,7 @@ function mainInit(){
 			if(q.length>1) q = q.slice(0,-1);
 
 			// TODO: Try to de-duplicate some of these fetch calls
-			fetch(url+q+"&js=1", {credentials: "same-origin"})
+			fetch(url+q+"&js=1",{credentials:"same-origin"})
 				.then(resp => {
 					if(!resp.ok) throw(url+q+"&js=1 failed to load");
 					return resp.json();
@@ -541,7 +542,7 @@ function mainInit(){
 
 					// TODO: Fix the data race where the function hasn't been loaded yet
 					let out = "";
-					for(let i=0; i<topics.length;i++) out += Tmpl_topics_topic(topics[i]);
+					for(let i=0;i<topics.length;i++) out += Tmpl_topics_topic(topics[i]);
 					$(".topic_list").html(out);
 
 					let obj = {Title:document.title,Url:url+q};
@@ -549,8 +550,7 @@ function mainInit(){
 					rebuildPaginator(dat.LastPage);
 					rebindPaginator();
 				}).catch(e => {
-					console.log("Unable to get script '"+url+q+"&js=1"+"'");
-					console.log("e",e);
+					console.log("Unable to get script '"+url+q+"&js=1"+"'",e);
 					console.trace();
 				});
 		});
@@ -607,6 +607,7 @@ function mainInit(){
 	// TODO: Show a search button when JS is disabled?
 	$(".widget_search_input").keypress(function(e) {
 		if(e.keyCode!='13') return;
+		// TODO: Only fire on /topics/
 		event.preventDefault();
 		// TODO: Take mostviewed into account
 		let url = "//"+window.location.host+window.location.pathname;
@@ -762,15 +763,6 @@ function mainInit(){
 
 	$("input,textarea,select,option").keyup(ev => ev.stopPropagation())
 
-	$(".create_topic_link").click(ev => {
-		ev.preventDefault();
-		$(".topic_create_form").removeClass("auto_hide");
-	});
-	$(".topic_create_form .close_form").click(ev => {
-		ev.preventDefault();
-		$(".topic_create_form").addClass("auto_hide");
-	});
-
 	$("#themeSelectorSelect").change(function(){
 		console.log("Changing the theme to "+this.options[this.selectedIndex].getAttribute("value"));
 		$.ajax({
@@ -872,7 +864,7 @@ function mainInit(){
 		return name.split('?')[0];
 	}
 
-	function loadArb(base,href) {
+	function loadArb(base,href,h = null) {
 		fetch(href,{credentials:"same-origin"})
 			.then(resp => {
 				if(!resp.ok) throw(href+" failed to load");
@@ -892,8 +884,7 @@ function mainInit(){
 				return resp.text();
 			}).then(dat => {
 				document.querySelector("#back").outerHTML = dat;
-				unbindTopic();
-				bindTopic();
+				if(h!==null) h(dat);
 				$(".elapsed").remove();
 				let obj = {Title:document.title,Url:base};
 				history.pushState(obj,obj.Title,obj.Url);
@@ -905,14 +896,20 @@ function mainInit(){
 
 	$(".rowtopic a,a.rowtopic,a.forum_poster").click(function(ev) {
 		let base = this.getAttribute("href");
-		loadArb(base,base+"?i=1");
+		loadArb(base,base+"?i=1", () => {
+			unbindTopic();
+			bindTopic();
+		});
 		ev.stopPropagation();
 		ev.preventDefault();
 	})
 	$("a").click(function(ev) {
 		let base = this.getAttribute("href");
 		if(base!="/topics/") return;
-		loadArb(base,base+"?i=1");
+		loadArb(base,base+"?i=1", () => {
+			unbindPage();
+			bindPage();
+		});
 		ev.stopPropagation();
 		ev.preventDefault();
 	})
@@ -922,10 +919,21 @@ function mainInit(){
 }
 
 function bindPage() {
+	$(".create_topic_link").click(ev => {
+		ev.preventDefault();
+		$(".topic_create_form").removeClass("auto_hide");
+	});
+	$(".topic_create_form .close_form").click(ev => {
+		ev.preventDefault();
+		$(".topic_create_form").addClass("auto_hide");
+	});
+	
 	bindTopic();
 }
 
 function unbindPage() {
+	$(".create_topic_link").unbind("click");
+	$(".topic_create_form .close_form").unbind("click");
 	unbindTopic();
 }
 
