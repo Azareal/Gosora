@@ -16,10 +16,10 @@ require (
 	github.com/olivere/elastic v6.2.16+incompatible // indirect
 	github.com/oschwald/geoip2-golang v1.2.1
 	github.com/oschwald/maxminddb-golang v1.3.0 // indirect
-	github.com/pkg/errors v0.8.0
+	github.com/pkg/errors v0.9.1
 	github.com/robertkrimen/otto v0.0.0-20180617131154-15f95af6e78d
-	golang.org/x/crypto v0.0.0-20181025213731-e84da0312774
-	golang.org/x/image v0.0.0-20191009234506-e7c1f5e7dbb8
+	golang.org/x/crypto v0.0.0-20200429183012-4b2356b1ed79
+	golang.org/x/image v0.0.0-20200430140353-33d19683fad8
 	google.golang.org/appengine v1.2.0 // indirect
 	gopkg.in/olivere/elastic.v6 v6.2.16
 	gopkg.in/sourcemap.v1 v1.0.5 // indirect
