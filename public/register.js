@@ -7,7 +7,7 @@
 			console.log("resp",resp);
 			return;
 		}
-		resp.text().then(dat => eval(dat));
+		resp.text().then(d => eval(d));
 	})
 	.catch(e => console.log("e",e));
 	});

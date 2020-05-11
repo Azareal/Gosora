@@ -67,7 +67,8 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user *c.User, header *c.H
 		return c.NoPermissions(w, r, user)
 	}
 	header.Title = topic.Title
-	header.Path = c.BuildTopicURL(c.NameToSlug(topic.Title), topic.ID)
+	header.Path = topic.Link
+	//header.Path = c.BuildTopicURL(c.NameToSlug(topic.Title), topic.ID)
 
 	postGroup, err := c.Groups.Get(topic.Group)
 	if err != nil {
