@@ -58,31 +58,33 @@ Please type the following commands into the console and hit enter:
 
 Type in a strong password for the `gosora` user, please oh please... Don't use "password", just... don't, okay? Also, you might want to note this down somewhere.
 
-`mkdir gosora`
+```bash
+mkdir gosora
 
-`cd gosora`
+cd gosora
 
-`git clone https://github.com/Azareal/Gosora src`
+git clone https://github.com/Azareal/Gosora src
 
-`chown -R gosora ../gosora`
+chown -R gosora ../gosora
 
-`chgrp -R www-data ../gosora`
+chgrp -R www-data ../gosora
 
-`cd src`
+cd src
 
-`chmod 2775 logs`
+chmod 2775 logs
 
-`chmod 2775 attachs`
+chmod 2775 attachs
 
-`chmod 2775 uploads`
+chmod 2775 uploads
 
-`chmod 2775 tmp`
+chmod 2775 tmp
 
-`chmod 755 ./update-deps-linux`
+chmod 755 ./update-deps-linux
 
-`chmod 755 ./install-linux`
+chmod 755 ./install-linux
 
-`./install-linux`
+./install-linux
+```
 
 Follow the instructions shown on the screen.
 
@@ -118,9 +120,9 @@ You may also need to open a port in your firewall in order for the outside world
 
 This section explains how to set things up without running the batch or shell files. For Windows, you will likely have to open up cmd.exe (the app called Command Prompt in Win10) to run these commands inside or something similar, while with Linux you would likely use the Terminal or console.
 
-Linux is similar, however you might need to use cd and mv a bit more like in the shell files due to the differences in go build across platforms. Additionally, Linux doesn't require `StackExchange/wmi` or `/x/sys/windows`
+For more info, you might want to take a gander inside the `./run-linux` and `./install-linux` shell files to see how they're implemented.
 
-You also need to substitute the `gosora.exe` bits for `./Gosora` on Linux. For more info, you might want to take a gander inside the `./run-linux` and `./install-linux` shell files to see how they're implemented.
+Linux:
 
 ```bash
 git clone https://github.com/Azareal/Gosora gosora
@@ -141,13 +143,69 @@ rm -f tmpl_client/tmpl_*.go
 
 rm -f ./Gosora
 
+rm -f ./common/gen_extend.go
+
 go generate
 
-go build -ldflags="-s -w" ./router_gen
+go build -ldflags="-s -w" -o RouterGen "./router_gen"
+
+./RouterGen
+
+go build -ldflags="-s -w" -o QGen "./cmd/query_gen"
+
+./QGen
+
+go build -ldflags="-s -w" -o Gosora
+
+go build -ldflags="-s -w" -o Install "./cmd/install"
+
+./Install
+
+go get -u github.com/mailru/easyjson/...
+
+easyjson -pkg common
+
+./Gosora -build-templates
+
+./Gosora
+```
+
+Windows:
+
+```batch
+git clone https://github.com/Azareal/Gosora gosora
+
+cd gosora
+
+go get -u github.com/mailru/easyjson/...
+
+easyjson -pkg common
+
+go get
+
+del "template_*.go"
+
+del "tmpl_*.go"
+
+del "gen_*.go"
+
+del ".\tmpl_client\template_*"
+
+del ".\tmpl_client\tmpl_*"
+
+del ".\common\gen_extend.go"
+
+del "gosora.exe"
+
+go generate
+
+go build -ldflags="-s -w" "./router_gen"
 
 router_gen.exe
 
-go build -ldflags="-s -w" ./cmd/query_gen
+easyjson -pkg common
+
+go build -ldflags="-s -w" "./cmd/query_gen"
 
 query_gen.exe
 
@@ -157,10 +215,6 @@ go build -ldflags="-s -w" "./cmd/install"
 
 install.exe
 
-go get -u github.com/mailru/easyjson/...
-
-easyjson -pkg common
-
 gosora.exe -build-templates
 
 gosora.exe
@@ -169,3 +223,5 @@ gosora.exe
 I'm looking into minimising the number of go gets for the advanced build and to maybe remove the platform and database engine specific dependencies if possible for those who don't need them.
 
 If systemd gives you no permission errors, then make sure you `chown`, `chgrp` and `chmod` the files and folders appropriately.
+
+You don't need `-ldflags="-s -w"` in any of the commands, however it will make compilation times faster.
