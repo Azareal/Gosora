@@ -86,8 +86,9 @@ var hookTable = &HookTable{
 		"simple_forum_check_pre_perms": nil,
 		"forum_check_pre_perms":        nil,
 
-		"route_topic_list_start": nil,
-		"route_forum_list_start": nil,
+		"route_topic_list_start":            nil,
+		"route_topic_list_mostviewed_start": nil,
+		"route_forum_list_start":            nil,
 
 		"action_end_create_topic":  nil,
 		"action_end_edit_topic":    nil,
@@ -203,6 +204,22 @@ func (t *HookTable) VhookSkippable(name string, data ...interface{}) (bool, Rout
 	}
 	return false, nil
 }
+
+/*func VhookSkippableTest(t *HookTable, name string, data ...interface{}) (bool, RouteError) {
+	hook := t.VhookSkippable_[name]
+	if hook != nil {
+		return hook(data...)
+	}
+	return false, nil
+}
+
+func forum_check_pre_perms_hook(t *HookTable, w http.ResponseWriter, r *http.Request, u *User, fid *int, h *Header) (bool, RouteError) {
+	hook := t.VhookSkippable_["forum_check_pre_perms"]
+	if hook != nil {
+		return hook(w, r, u, fid, h)
+	}
+	return false, nil
+}*/
 
 // Hooks which take in and spit out a string. This is usually used for parser components
 // Trying to get a teeny bit of type-safety where-ever possible, especially for such a critical set of hooks
@@ -329,8 +346,14 @@ type Plugin struct {
 	Install    func(pl *Plugin) error
 	Uninstall  func(pl *Plugin) error // TODO: I'm not sure uninstall is implemented
 
-	Hooks map[string]int
+	Hooks map[string]int // Active hooks
+	Meta  PluginMetaData
 	Data  interface{} // Usually used for hosting the VMs / reusable elements of non-native plugins
+}
+
+type PluginMetaData struct {
+	Hooks []string
+	//StaticHooks map[string]string
 }
 
 func (pl *Plugin) BypassActive() (active bool, err error) {
@@ -406,8 +429,8 @@ func init() {
 	})
 }
 
-func InitExtend() (err error) {
-	err = InitPluginLangs()
+func InitExtend() error {
+	err := InitPluginLangs()
 	if err != nil {
 		return err
 	}
@@ -431,54 +454,54 @@ func (l PluginList) Load() error {
 		}
 
 		// Was the plugin deleted at some point?
-		plugin, ok := l[uname]
+		pl, ok := l[uname]
 		if !ok {
 			continue
 		}
-		plugin.Active = active
-		plugin.Installed = installed
-		l[uname] = plugin
+		pl.Active = active
+		pl.Installed = installed
+		l[uname] = pl
 	}
 	return rows.Err()
 }
 
 // ? - Is this racey?
 // TODO: Generate the cases in this switch
-func (plugin *Plugin) AddHook(name string, handler interface{}) {
+func (pl *Plugin) AddHook(name string, hInt interface{}) {
 	hookTableUpdateMutex.Lock()
 	defer hookTableUpdateMutex.Unlock()
 
-	switch h := handler.(type) {
+	switch h := hInt.(type) {
 	case func(interface{}) interface{}:
 		if len(hookTable.Hooks[name]) == 0 {
 			hookTable.Hooks[name] = []func(interface{}) interface{}{}
 		}
 		hookTable.Hooks[name] = append(hookTable.Hooks[name], h)
-		plugin.Hooks[name] = len(hookTable.Hooks[name]) - 1
+		pl.Hooks[name] = len(hookTable.Hooks[name]) - 1
 	case func(string) string:
 		if len(hookTable.Sshooks[name]) == 0 {
 			hookTable.Sshooks[name] = []func(string) string{}
 		}
 		hookTable.Sshooks[name] = append(hookTable.Sshooks[name], h)
-		plugin.Hooks[name] = len(hookTable.Sshooks[name]) - 1
+		pl.Hooks[name] = len(hookTable.Sshooks[name]) - 1
 	case func(http.ResponseWriter, *http.Request, *User, interface{}) bool:
 		if len(PreRenderHooks[name]) == 0 {
 			PreRenderHooks[name] = []func(http.ResponseWriter, *http.Request, *User, interface{}) bool{}
 		}
 		PreRenderHooks[name] = append(PreRenderHooks[name], h)
-		plugin.Hooks[name] = len(PreRenderHooks[name]) - 1
+		pl.Hooks[name] = len(PreRenderHooks[name]) - 1
 	case func() error: // ! We might want a more generic name, as we might use this signature for things other than tasks hooks
 		if len(taskHooks[name]) == 0 {
 			taskHooks[name] = []func() error{}
 		}
 		taskHooks[name] = append(taskHooks[name], h)
-		plugin.Hooks[name] = len(taskHooks[name]) - 1
+		pl.Hooks[name] = len(taskHooks[name]) - 1
 	case func(...interface{}) interface{}:
 		hookTable.Vhooks[name] = h
-		plugin.Hooks[name] = 0
+		pl.Hooks[name] = 0
 	case func(...interface{}) (bool, RouteError):
 		hookTable.VhookSkippable_[name] = h
-		plugin.Hooks[name] = 0
+		pl.Hooks[name] = 0
 	default:
 		panic("I don't recognise this kind of handler!") // Should this be an error for the plugin instead of a panic()?
 	}
@@ -488,16 +511,16 @@ func (plugin *Plugin) AddHook(name string, handler interface{}) {
 
 // ? - Is this racey?
 // TODO: Generate the cases in this switch
-func (plugin *Plugin) RemoveHook(name string, handler interface{}) {
+func (pl *Plugin) RemoveHook(name string, hInt interface{}) {
 	hookTableUpdateMutex.Lock()
 	defer hookTableUpdateMutex.Unlock()
 
-	key, ok := plugin.Hooks[name]
+	key, ok := pl.Hooks[name]
 	if !ok {
 		panic("handler not registered as hook")
 	}
 
-	switch handler.(type) {
+	switch hInt.(type) {
 	case func(interface{}) interface{}:
 		hook := hookTable.Hooks[name]
 		if len(hook) == 1 {
@@ -537,7 +560,7 @@ func (plugin *Plugin) RemoveHook(name string, handler interface{}) {
 	default:
 		panic("I don't recognise this kind of handler!") // Should this be an error for the plugin instead of a panic()?
 	}
-	delete(plugin.Hooks, name)
+	delete(pl.Hooks, name)
 	// TODO: Do this once during plugin activation / deactivation rather than doing it for each hook
 	unsafeRebuildHookTable()
 }
@@ -552,8 +575,7 @@ func InitPlugins() {
 		if body.Active {
 			log.Printf("Initialised plugin '%s'", name)
 			if body.Init != nil {
-				err := body.Init(body)
-				if err != nil {
+				if err := body.Init(body); err != nil {
 					log.Print(err)
 				}
 			} else {
@@ -574,12 +596,12 @@ func RunTaskHook(name string) error {
 	return nil
 }
 
-func RunPreRenderHook(name string, w http.ResponseWriter, r *http.Request, user *User, data interface{}) (halt bool) {
+func RunPreRenderHook(name string, w http.ResponseWriter, r *http.Request, u *User, data interface{}) (halt bool) {
 	// This hook runs on ALL PreRender hooks
 	preRenderHooks, ok := PreRenderHooks["pre_render"]
 	if ok {
 		for _, hook := range preRenderHooks {
-			if hook(w, r, user, data) {
+			if hook(w, r, u, data) {
 				return true
 			}
 		}
@@ -589,7 +611,7 @@ func RunPreRenderHook(name string, w http.ResponseWriter, r *http.Request, user 
 	preRenderHooks, ok = PreRenderHooks[name]
 	if ok {
 		for _, hook := range preRenderHooks {
-			if hook(w, r, user, data) {
+			if hook(w, r, u, data) {
 				return true
 			}
 		}
