@@ -151,6 +151,14 @@ go build -ldflags="-s -w" -o RouterGen "./router_gen"
 
 ./RouterGen
 
+go build -ldflags="-s -w" -o HookStubGen "./cmd/hook_stub_gen"
+
+./HookStubGen
+
+go build -ldflags="-s -w" -o HookGen "./cmd/hook_gen"
+
+./HookGen
+
 go build -ldflags="-s -w" -o QGen "./cmd/query_gen"
 
 ./QGen
@@ -203,6 +211,14 @@ go build -ldflags="-s -w" "./router_gen"
 
 router_gen.exe
 
+go build -ldflags="-s -w" "./cmd/hook_stub_gen"
+
+hook_stub_gen.exe
+
+go build -ldflags="-s -w" "./cmd/hook_gen"
+
+hook_gen.exe
+
 easyjson -pkg common
 
 go build -ldflags="-s -w" "./cmd/query_gen"
@@ -225,3 +241,5 @@ I'm looking into minimising the number of go gets for the advanced build and to 
 If systemd gives you no permission errors, then make sure you `chown`, `chgrp` and `chmod` the files and folders appropriately.
 
 You don't need `-ldflags="-s -w"` in any of the commands, however it will make compilation times faster.
+
+Building and running HookGen is optional, but strips unneccesary hook indirects for plugins you don't use.

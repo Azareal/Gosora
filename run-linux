@@ -5,6 +5,7 @@ rm -f gen_*.go
 rm -f tmpl_client/template_*
 rm -f tmpl_client/tmpl_*
 rm -f ./Gosora
+rm -f ./common/gen_extend.go
 
 echo "Generating the dynamic code"
 go generate
@@ -14,13 +15,23 @@ go build -ldflags="-s -w" -o RouterGen "./router_gen"
 echo "Running the router generator"
 ./RouterGen
 
-echo "Building the query generator"
-go build -ldflags="-s -w" -o QueryGen "./cmd/query_gen"
-echo "Running the query generator"
-./QueryGen
+echo "Building the hook stub generator"
+go build -ldflags="-s -w" -o HookStubGen "./cmd/hook_stub_gen"
+echo "Running the hook stub generator"
+./HookStubGen
+
+echo "Building the hook generator"
+go build -tags hookgen -ldflags="-s -w" -o HookGen "./cmd/hook_gen"
+echo "Running the hook generator"
+./HookGen
 
 echo "Generating the JSON handlers"
 easyjson -pkg common
+
+echo "Building the query generator"
+go build -ldflags="-s -w" -o QGen "./cmd/query_gen"
+echo "Running the query generator"
+./QGen
 
 echo "Building Gosora"
 go build -ldflags="-s -w" -o Gosora
