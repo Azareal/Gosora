@@ -20,6 +20,8 @@ import (
 	"github.com/Azareal/Gosora/uutils"
 	"github.com/Azareal/Gosora/routes"
 	"github.com/Azareal/Gosora/routes/panel"
+
+	//"github.com/andybalholm/brotli"
 )
 
 var ErrNoRoute = errors.New("That route doesn't exist.")
@@ -618,18 +620,22 @@ var agentMapEnum = map[string]int{
 	"proximic": 44,
 	"megaindex": 45,
 	"majestic": 46,
-	"netcraft": 47,
-	"blexbot": 48,
-	"burf": 49,
-	"aspiegel": 50,
-	"mail_ru": 51,
-	"ccbot": 52,
-	"zgrab": 53,
-	"cloudsystemnetworks": 54,
-	"curl": 55,
-	"python": 56,
-	"go": 57,
-	"headlesschrome": 58,
+	"cocolyze": 47,
+	"babbar": 48,
+	"surdotly": 49,
+	"netcraft": 50,
+	"blexbot": 51,
+	"burf": 52,
+	"aspiegel": 53,
+	"mail_ru": 54,
+	"ccbot": 55,
+	"zgrab": 56,
+	"cloudsystemnetworks": 57,
+	"curl": 58,
+	"python": 59,
+	"go": 60,
+	"headlesschrome": 61,
+	"awesome_bot": 62,
 }
 var reverseAgentMapEnum = map[int]string{ 
 	0: "unknown",
@@ -679,18 +685,22 @@ var reverseAgentMapEnum = map[int]string{
 	44: "proximic",
 	45: "megaindex",
 	46: "majestic",
-	47: "netcraft",
-	48: "blexbot",
-	49: "burf",
-	50: "aspiegel",
-	51: "mail_ru",
-	52: "ccbot",
-	53: "zgrab",
-	54: "cloudsystemnetworks",
-	55: "curl",
-	56: "python",
-	57: "go",
-	58: "headlesschrome",
+	47: "cocolyze",
+	48: "babbar",
+	49: "surdotly",
+	50: "netcraft",
+	51: "blexbot",
+	52: "burf",
+	53: "aspiegel",
+	54: "mail_ru",
+	55: "ccbot",
+	56: "zgrab",
+	57: "cloudsystemnetworks",
+	58: "curl",
+	59: "python",
+	60: "go",
+	61: "headlesschrome",
+	62: "awesome_bot",
 }
 var markToAgent = map[string]string{ 
 	"OPR": "opera",
@@ -741,6 +751,9 @@ var markToAgent = map[string]string{
 	"MegaIndex": "megaindex",
 	"MJ12bot": "majestic",
 	"mj12bot": "majestic",
+	"Cocolyzebot": "cocolyze",
+	"Barkrowler": "babbar",
+	"SurdotlyBot": "surdotly",
 	"NetcraftSurveyAgent": "netcraft",
 	"BLEXBot": "blexbot",
 	"Burf": "burf",
@@ -753,6 +766,7 @@ var markToAgent = map[string]string{
 	"python": "python",
 	"Go": "go",
 	"HeadlessChrome": "headlesschrome",
+	"awesome_bot": "awesome_bot",
 }
 var markToID = map[string]int{ 
 	"OPR": 3,
@@ -803,18 +817,22 @@ var markToID = map[string]int{
 	"MegaIndex": 45,
 	"MJ12bot": 46,
 	"mj12bot": 46,
-	"NetcraftSurveyAgent": 47,
-	"BLEXBot": 48,
-	"Burf": 49,
-	"AspiegelBot": 50,
-	"RU_Bot": 51,
-	"CCBot": 52,
-	"zgrab": 53,
-	"Nimbostratus": 54,
-	"curl": 55,
-	"python": 56,
-	"Go": 57,
-	"HeadlessChrome": 58,
+	"Cocolyzebot": 47,
+	"Barkrowler": 48,
+	"SurdotlyBot": 49,
+	"NetcraftSurveyAgent": 50,
+	"BLEXBot": 51,
+	"Burf": 52,
+	"AspiegelBot": 53,
+	"RU_Bot": 54,
+	"CCBot": 55,
+	"zgrab": 56,
+	"Nimbostratus": 57,
+	"curl": 58,
+	"python": 59,
+	"Go": 60,
+	"HeadlessChrome": 61,
+	"awesome_bot": 62,
 }
 /*var agentRank = map[string]int{
 	"opera":9,
@@ -957,7 +975,9 @@ func isLocalHost(h string) bool {
 	return h=="localhost" || h=="127.0.0.1" || h=="::1"
 }
 
+//var brPool = sync.Pool{}
 var gzipPool = sync.Pool{}
+//var uaBufPool = sync.Pool{}
 
 // TODO: Pass the default path or config struct to the router rather than accessing it via a package global
 // TODO: SetDefaultPath
@@ -1040,7 +1060,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	lp := strings.ToLower(req.URL.Path)
 	// TODO: Flag any requests which has a dot with anything but a number after that
 	// TODO: Use HasSuffix to avoid over-scanning?
-	if strings.Contains(lp,"..")/* || strings.Contains(lp,"--")*/ || strings.Contains(lp,".php") || strings.Contains(lp,".asp") || strings.Contains(lp,".cgi") || strings.Contains(lp,".py") || strings.Contains(lp,".sql") || strings.Contains(lp,".action") {
+	if strings.Contains(lp,"..")/* || strings.Contains(lp,"--")*/ || strings.Contains(lp,".php") || strings.Contains(lp,".asp") || strings.Contains(lp,".cgi") || strings.Contains(lp,".py") || strings.Contains(lp,".sql") || strings.Contains(lp,".act") { //.action
 		r.SuspiciousRequest(req,"Bad snippet in path")
 	}
 
@@ -1053,7 +1073,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 	// TODO: Use the same hook table as downstream
 	hTbl := c.GetHookTable()
-	skip, ferr := hTbl.VhookSkippable("router_after_filters", w, req, prefix)
+	skip, ferr := c.H_router_after_filters_hook(hTbl, w, req, prefix)
 	if skip || ferr != nil {
 		return
 	}
@@ -1116,18 +1136,22 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		}
 	} else {		
 		// WIP UA Parser
+		//var ii = uaBufPool.Get()
+		var buf []byte
+		//if ii != nil {
+		//	buf = ii.([]byte)
+		//}
 		var items []string
-		var buffer []byte
 		var os int
 		for _, it := range uutils.StringToBytes(ua) {
 			if (it > 64 && it < 91) || (it > 96 && it < 123) || it == '_' {
 				// TODO: Store an index and slice that instead?
-				buffer = append(buffer, it)
-			} else if it == ' ' || it == '(' || it == ')' || it == '-' || (it > 47 && it < 58) || it == ';' || it == ':' || it == '.' || it == '+' || it == '~' || it == '@' /*|| (it == ':' && bytes.Equal(buffer,[]byte("http")))*/ || it == ',' || it == '/' {
-				if len(buffer) != 0 {
-					if len(buffer) > 2 {
+				buf = append(buf, it)
+			} else if it == ' ' || it == '(' || it == ')' || it == '-' || (it > 47 && it < 58) || it == ';' || it == ':' || it == '.' || it == '+' || it == '~' || it == '@' /*|| (it == ':' && bytes.Equal(buf,[]byte("http")))*/ || it == ',' || it == '/' {
+				if len(buf) != 0 {
+					if len(buf) > 2 {
 						// Use an unsafe zero copy conversion here just to use the switch, it's not safe for this string to escape from here, as it will get mutated, so do a regular string conversion in append
-						switch(uutils.BytesToString(buffer)) {
+						switch(uutils.BytesToString(buf)) {
 						case "Windows":
 							os = 1
 						case "Linux":
@@ -1138,23 +1162,24 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 							os = 5
 						case "Android":
 							os = 4
-						case "like","compatible":
+						case "like","compatible","NT","X","KHTML":
 							// Skip these words
 						default:
-							items = append(items, string(buffer))
+							items = append(items, string(buf))
 						}
 					}
-					buffer = buffer[:0]
+					buf = buf[:0]
 				}
 			} else {
 				// TODO: Test this
 				items = items[:0]
 				r.SuspiciousRequest(req,"Illegal char "+strconv.Itoa(int(it))+" in UA")
-				r.requestLogger.Print("UA Buf: ", buffer)
-				r.requestLogger.Print("UA Buf String: ", string(buffer))
+				r.requestLogger.Print("UA Buf: ", buf)
+				r.requestLogger.Print("UA Buf String: ", string(buf))
 				break
 			}
 		}
+		//uaBufPool.Put(buf)
 
 		// Iterate over this in reverse as the real UA tends to be on the right side
 		for i := len(items) - 1; i >= 0; i-- {
@@ -1171,6 +1196,9 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			r.requestLogger.Print("parsed agent: ", agent)
 			r.requestLogger.Print("os: ", os)
 			r.requestLogger.Printf("items: %+v\n",items)
+			/*for _, it := range items {
+				r.requestLogger.Printf("it: %+v\n",string(it))
+			}*/
 		}
 		
 		// Special handling
@@ -1188,12 +1216,12 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			if strings.Contains(ua,"rv:11") {
 				agent = 6
 			}
-		case 53:
-			r.SuspiciousRequest(req,"Vulnerability Scanner")
+		case 56:
+			r.SuspiciousRequest(req,"Vuln Scanner")
 		}
 		
 		if agent == 0 {
-			co.AgentViewCounter.Bump(0)
+			//co.AgentViewCounter.Bump(0)
 			if c.Dev.DebugMode {
 				var pre string
 				for _, char := range req.UserAgent() {
@@ -1203,10 +1231,10 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			} else {
 				r.requestLogger.Print("unknown ua: ", c.SanitiseSingleLine(ua))
 			}
-		} else {
+		}// else {
 			//co.AgentViewCounter.Bump(agentMapEnum[agent])
 			co.AgentViewCounter.Bump(agent)
-		}
+		//}
 		co.OSViewCounter.Bump(os)
 	}
 
@@ -1270,31 +1298,56 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	//log.Println("req: ", req)
 
 	// Disable Gzip when SSL is disabled for security reasons?
-	if prefix != "/ws" && strings.Contains(req.Header.Get("Accept-Encoding"), "gzip") {
-		h := w.Header()
-		h.Set("Content-Encoding", "gzip")
-		var ii = gzipPool.Get()
-		var igzw *gzip.Writer
-		if ii == nil {
-			igzw = gzip.NewWriter(w)
-		} else {
-			igzw = ii.(*gzip.Writer)
-			igzw.Reset(w)
-		}
-		gzw := c.GzipResponseWriter{Writer: igzw, ResponseWriter: w}
-		defer func() {
-			//h := w.Header()
-			if h.Get("Content-Encoding") == "gzip" && h.Get("X-I") == "" {
-				//log.Print("push gzip close")
-				igzw := gzw.Writer.(*gzip.Writer)
-				igzw.Close()
-				gzipPool.Put(igzw)
+	if prefix != "/ws" {
+		ae := req.Header.Get("Accept-Encoding")
+		/*if strings.Contains(ae, "br") {
+			h := w.Header()
+			h.Set("Content-Encoding", "br")
+			var ii = brPool.Get()
+			var igzw *brotli.Writer
+			if ii == nil {
+				igzw = brotli.NewWriter(w)
+			} else {
+				igzw = ii.(*brotli.Writer)
+				igzw.Reset(w)
 			}
-		}()
-		w = gzw
+			gzw := c.BrResponseWriter{Writer: igzw, ResponseWriter: w}
+			defer func() {
+				//h := w.Header()
+				if h.Get("Content-Encoding") == "br" && h.Get("X-I") == "" {
+					//log.Print("push br close")
+					igzw := gzw.Writer.(*brotli.Writer)
+					igzw.Close()
+					brPool.Put(igzw)
+				}
+			}()
+			w = gzw
+		} else */if strings.Contains(ae, "gzip") {
+			h := w.Header()
+			h.Set("Content-Encoding", "gzip")
+			var ii = gzipPool.Get()
+			var igzw *gzip.Writer
+			if ii == nil {
+				igzw = gzip.NewWriter(w)
+			} else {
+				igzw = ii.(*gzip.Writer)
+				igzw.Reset(w)
+			}
+			gzw := c.GzipResponseWriter{Writer: igzw, ResponseWriter: w}
+			defer func() {
+				//h := w.Header()
+				if h.Get("Content-Encoding") == "gzip" && h.Get("X-I") == "" {
+					//log.Print("push gzip close")
+					igzw := gzw.Writer.(*gzip.Writer)
+					igzw.Close()
+					gzipPool.Put(igzw)
+				}
+			}()
+			w = gzw
+		}
 	}
 
-	skip, ferr = hTbl.VhookSkippable("router_pre_route", w, req, user, prefix)
+	skip, ferr = c.H_router_pre_route_hook(hTbl, w, req, user, prefix)
 	if skip || ferr != nil {
 		r.handleError(ferr,w,req,user)
 		return
@@ -1363,8 +1416,8 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 					return err
 				}
 				
-					gzw, ok := w.(c.GzipResponseWriter)
-					if ok {
+					
+					if gzw, ok := w.(c.GzipResponseWriter); ok {
 					w = gzw.ResponseWriter
 					w.Header().Del("Content-Encoding")
 					}
@@ -1929,8 +1982,8 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 						return err
 					}
 					
-					gzw, ok := w.(c.GzipResponseWriter)
-					if ok {
+					
+					if gzw, ok := w.(c.GzipResponseWriter); ok {
 					w = gzw.ResponseWriter
 					w.Header().Del("Content-Encoding")
 					}
@@ -2821,11 +2874,12 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 				co.RouteViewCounter.Bump3(166, cn)
 				return c.NotFound(w,req,nil)
 			}
-			gzw, ok := w.(c.GzipResponseWriter)
-			if ok {
+			/*if bzw, ok := w.(c.BrResponseWriter); ok {
+				w = bzw.ResponseWriter
+				w.Header().Del("Content-Encoding")
+			} else */if gzw, ok := w.(c.GzipResponseWriter); ok {
 				w = gzw.ResponseWriter
-				h := w.Header()
-				h.Del("Content-Encoding")
+				w.Header().Del("Content-Encoding")
 			}
 			req.URL.Path += extraData
 			// TODO: Find a way to propagate errors up from this?
@@ -2840,11 +2894,12 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 					co.RouteViewCounter.Bump3(168, cn)
 					return routes.RobotsTxt(w,req)
 				case "favicon.ico":
-					gzw, ok := w.(c.GzipResponseWriter)
-					if ok {
+					/*if bzw, ok := w.(c.BrResponseWriter); ok {
+						w = bzw.ResponseWriter
+						w.Header().Del("Content-Encoding")
+					} else */if gzw, ok := w.(c.GzipResponseWriter); ok {
 						w = gzw.ResponseWriter
-						h := w.Header()
-						h.Del("Content-Encoding")
+						w.Header().Del("Content-Encoding")
 					}
 					req.URL.Path = "/s/favicon.ico"
 					routes.StaticFile(w,req)
