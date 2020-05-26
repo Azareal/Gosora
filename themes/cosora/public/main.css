@@ -433,6 +433,14 @@ h1, h2, h3, h4, h5 {
 	display: none;
 }
 
+.auto_hide,
+.show_on_edit:not(.edit_opened),
+.hide_on_edit.edit_opened,
+.show_on_block_edit:not(.edit_opened),
+.hide_on_block_edit.edit_opened,
+.link_select:not(.link_opened) {
+	display: none !important;
+}
 .topic_create_form {
 	display: flex !important;
 	padding-bottom: 12px;
@@ -538,14 +546,6 @@ input[type=checkbox]:checked + label .sel {
 }
 .pollinput:not(:only-child):not(:first-child) {
 	margin-bottom: 5px;
-}
-.auto_hide,
-.show_on_edit:not(.edit_opened),
-.hide_on_edit.edit_opened,
-.show_on_block_edit:not(.edit_opened),
-.hide_on_block_edit.edit_opened,
-.link_select:not(.link_opened) {
-	display: none !important;
 }
 
 input[type=checkbox] + label.poll_option_label {
