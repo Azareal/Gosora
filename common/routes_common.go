@@ -29,29 +29,29 @@ var SimpleUserCheck func(w http.ResponseWriter, r *http.Request, u *User) (heade
 var UserCheck func(w http.ResponseWriter, r *http.Request, u *User) (h *Header, err RouteError) = userCheck
 var UserCheckNano func(w http.ResponseWriter, r *http.Request, u *User, nano int64) (h *Header, err RouteError) = userCheck2
 
-func simpleForumUserCheck(w http.ResponseWriter, r *http.Request, u *User, fid int) (header *HeaderLite, rerr RouteError) {
-	header, rerr = SimpleUserCheck(w, r, u)
+func simpleForumUserCheck(w http.ResponseWriter, r *http.Request, u *User, fid int) (h *HeaderLite, rerr RouteError) {
+	h, rerr = SimpleUserCheck(w, r, u)
 	if rerr != nil {
-		return header, rerr
+		return h, rerr
 	}
 	if !Forums.Exists(fid) {
 		return nil, PreError("The target forum doesn't exist.", w, r)
 	}
 
 	// Is there a better way of doing the skip AND the success flag on this hook like multiple returns?
-	skip, rerr := header.Hooks.VhookSkippable("simple_forum_check_pre_perms", w, r, u, &fid, &header)
+	skip, rerr := h.Hooks.VhookSkippable("simple_forum_check_pre_perms", w, r, u, &fid, h)
 	if skip || rerr != nil {
-		return header, rerr
+		return h, rerr
 	}
 
 	fperms, err := FPStore.Get(fid, u.Group)
 	if err == ErrNoRows {
 		fperms = BlankForumPerms()
 	} else if err != nil {
-		return header, InternalError(err, w, r)
+		return h, InternalError(err, w, r)
 	}
 	cascadeForumPerms(fperms, u)
-	return header, nil
+	return h, nil
 }
 
 func forumUserCheck(h *Header, w http.ResponseWriter, r *http.Request, u *User, fid int) (rerr RouteError) {
@@ -59,7 +59,15 @@ func forumUserCheck(h *Header, w http.ResponseWriter, r *http.Request, u *User, 
 		return NotFound(w, r, h)
 	}
 
-	skip, rerr := h.Hooks.VhookSkippable("forum_check_pre_perms", w, r, u, &fid, &h)
+	/*skip, rerr := h.Hooks.VhookSkippable("forum_check_pre_perms", w, r, u, &fid, h)
+	if skip || rerr != nil {
+		return rerr
+	}*/
+	/*skip, rerr := VhookSkippableTest(h.Hooks, "forum_check_pre_perms", w, r, u, &fid, h)
+	if skip || rerr != nil {
+		return rerr
+	}*/
+	skip, rerr := H_forum_check_pre_perms_hook(h.Hooks, w, r, u, &fid, h)
 	if skip || rerr != nil {
 		return rerr
 	}
@@ -230,6 +238,14 @@ func userCheck2(w http.ResponseWriter, r *http.Request, u *User, nano int64) (h 
 	if u.Loggedin && !u.Active {
 		h.AddNotice("account_inactive")
 	}
+	/*h.Scripts, _ = StrSlicePool.Get().([]string)
+	if h.Scripts != nil {
+		h.Scripts = h.Scripts[:0]
+	}
+	h.PreScriptsAsync, _ = StrSlicePool.Get().([]string)
+	if h.PreScriptsAsync != nil {
+		h.PreScriptsAsync = h.PreScriptsAsync[:0]
+	}*/
 
 	// An optimisation so we don't populate StartedAt for users who shouldn't see the stat anyway
 	// ? - Should we only show this in debug mode? It might be useful for detecting issues in production, if we show it there as-well
