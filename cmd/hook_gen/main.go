@@ -20,7 +20,6 @@ func main() {
 		if r := recover(); r != nil {
 			fmt.Println(r)
 			debug.PrintStack()
-			return
 		}
 	}()
 	
@@ -49,7 +48,7 @@ func main() {
 	
 	imports := []string{"net/http"}
 	hookVars := h.HookVars{imports,nil}
-	add := func(name, params, ret, htype string) {
+	add := func(name, params, ret, htype string, multiHook, skip bool, defaultRet, pure string) {
 		var params2 string
 		first := true
 		for _, param := range strings.Split(params,",") {
@@ -60,7 +59,7 @@ func main() {
 			params2 += pspl[0]
 			first = false
 		}
-		hookVars.Hooks = append(hookVars.Hooks, h.Hook{name, params, params2, ret, htype, hooks[name] > 0})
+		hookVars.Hooks = append(hookVars.Hooks, h.Hook{name, params, params2, ret, htype, hooks[name] > 0, multiHook, skip, defaultRet, pure})
 	}
 	
 	h.AddHooks(add)

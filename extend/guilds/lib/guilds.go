@@ -162,7 +162,7 @@ func GuildWidgets(header *c.Header, guildItem *Guild) (success bool) {
 */
 
 func RouteGuildList(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
-	h, ferr := c.UserCheck(w, r, &user)
+	h, ferr := c.UserCheck(w, r, user)
 	if ferr != nil {
 		return ferr
 	}
@@ -216,7 +216,7 @@ func MiddleViewGuild(w http.ResponseWriter, r *http.Request, user *c.User) c.Rou
 }
 
 func RouteCreateGuild(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
-	h, ferr := c.UserCheck(w, r, &user)
+	h, ferr := c.UserCheck(w, r, user)
 	if ferr != nil {
 		return ferr
 	}
@@ -334,7 +334,7 @@ func RouteMemberList(w http.ResponseWriter, r *http.Request, user *c.User) c.Rou
 
 	pi := MemberListPage{"Guild Member List", user, header, gMembers, guild, 0, 0}
 	// A plugin with plugins. Pluginception!
-	if c.RunPreRenderHook("pre_render_guilds_member_list", w, r, &user, &pi) {
+	if c.RunPreRenderHook("pre_render_guilds_member_list", w, r, user, &pi) {
 		return nil
 	}
 	err = c.RunThemeTemplate(header.Theme.Name, "guilds_member_list", pi, w)
@@ -373,7 +373,7 @@ func PreRenderViewForum(w http.ResponseWriter, r *http.Request, user *c.User, da
 			guildItem := guildData.(*Guild)
 
 			guildpi := Page{pi.Title, pi.Header, pi.ItemList, pi.Forum, guildItem, pi.Page, pi.LastPage}
-			err := routes.RenderTemplate("guilds_view_guild", w, r, header, guildpi)
+			err := routes.RenderTemplate("guilds_view_guild", w, r, pi.Header, guildpi)
 			if err != nil {
 				c.LogError(err)
 				return false
@@ -442,13 +442,13 @@ func ForumCheck(args ...interface{}) (skip bool, rerr c.RouteError) {
 			return true, c.InternalError(err, w, r)
 		} else if err != nil {
 			// TODO: Should we let admins / guests into public groups?
-			return true, c.LocalError("You're not part of this group!", w, r, *user)
+			return true, c.LocalError("You're not part of this group!", w, r, user)
 		}
 
 		// TODO: Implement bans properly by adding the Local Ban API in the next commit
 		// TODO: How does this even work? Refactor it along with the rest of this plugin!
 		if rank < 0 {
-			return true, c.LocalError("You've been banned from this group!", w, r, *user)
+			return true, c.LocalError("You've been banned from this group!", w, r, user)
 		}
 
 		// Basic permissions for members, more complicated permissions coming in the next commit!

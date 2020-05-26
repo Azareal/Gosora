@@ -2,7 +2,7 @@ package main
 
 import (
 	c "github.com/Azareal/Gosora/common"
-	"github.com/Azareal/Gosora/extend/guilds/lib"
+	guilds "github.com/Azareal/Gosora/extend/guilds/lib"
 )
 
 // TODO: Add a better way of splitting up giant plugins like this
@@ -54,7 +54,7 @@ func initGuilds(pl *c.Plugin) (err error) {
 	return acc.FirstError()
 }
 
-func deactivateGuilds(pl *common.Plugin) {
+func deactivateGuilds(pl *c.Plugin) {
 	pl.RemoveHook("intercept_build_widgets", guilds.Widgets)
 	pl.RemoveHook("trow_assign", guilds.TrowAssign)
 	pl.RemoveHook("topic_create_pre_loop", guilds.TopicCreatePreLoop)
@@ -77,7 +77,8 @@ func deactivateGuilds(pl *common.Plugin) {
 
 // TODO: Stop accessing the query builder directly and add a feature in Gosora which is more easily reversed, if an error comes up during the installation process
 type tC = qgen.DBTableColumn
-func installGuilds(plugin *common.Plugin) error {
+
+func installGuilds(plugin *c.Plugin) error {
 	guildTableStmt, err := qgen.Builder.CreateTable("guilds", "utf8mb4", "utf8mb4_general_ci",
 		[]tC{
 			tC{"guildID", "int", 0, false, true, ""},

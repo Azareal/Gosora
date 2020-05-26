@@ -28,14 +28,14 @@
 				<a class="profile_menu_item">{{lang "profile.login_for_options"}}</a>
 			</div>{{else}}
 			{{if .CanMessage}}<div class="rowitem passive">
-				<a href="/user/convos/create/?with={{.ProfileOwner.ID}}" class="profile_menu_item">{{lang "profile.send_message"}}</a>
+				<a href="/user/convos/create/?with={{.ProfileOwner.ID}}"class="profile_menu_item">{{lang "profile.send_message"}}</a>
 			</div>{{end}}
 			<!--<div class="rowitem passive">
 				<a class="profile_menu_item">{{lang "profile.add_friend"}}</a>
 			</div>-->
 
 			{{if (.CurrentUser.IsSuperMod) and not (.ProfileOwner.IsSuperMod)}}<div class="rowitem passive">
-				{{if .ProfileOwner.IsBanned}}<a href="/users/unban/{{.ProfileOwner.ID}}?s={{.CurrentUser.Session}}" class="profile_menu_item">{{lang "profile.unban"}}</a>
+				{{if .ProfileOwner.IsBanned}}<a href="/users/unban/{{.ProfileOwner.ID}}?s={{.CurrentUser.Session}}"class="profile_menu_item">{{lang "profile.unban"}}</a>
 			{{else}}<a href="#ban_user"class="profile_menu_item">{{lang "profile.ban"}}</a>{{end}}
 			</div>
 			<div class="rowitem passive">
@@ -58,10 +58,10 @@
 	{{if .CurrentUser.Loggedin}}
 	{{if .CurrentUser.Perms.BanUsers}}
 	<!-- TODO: Inline the display:none; CSS -->
-	<div id="ban_user_head" class="colstack_item colstack_head hash_hide ban_user_hash" style="display:none;">
+	<div id="ban_user_head"class="colstack_item colstack_head hash_hide ban_user_hash" style="display:none;">
 		<div class="rowitem"><h1><a>{{lang "profile.ban_user_head"}}</a></h1></div>
 	</div>
-	<form id="ban_user_form" class="hash_hide ban_user_hash" action="/users/ban/submit/{{.ProfileOwner.ID}}?s={{.CurrentUser.Session}}" method="post" style="display:none;">
+	<form id="ban_user_form"class="hash_hide ban_user_hash"action="/users/ban/submit/{{.ProfileOwner.ID}}?s={{.CurrentUser.Session}}"method="post"style="display:none;">
 	<div class="the_form">
 		{{/** TODO: Put a JS duration calculator here instead of this text? **/}}
 		<div class="colline">{{lang "profile.ban_user_notice"}}</div>
@@ -105,7 +105,7 @@
 	<div id="delete_posts_head"class="colstack_item colstack_head hash_hide delete_posts_hash"style="display:none;">
 		<div class="rowitem"><h1><a>{{lang "profile.delete_posts_head"}}</a></h1></div>
 	</div>
-	<form id="delete_posts_form" class="hash_hide delete_posts_hash" action="/users/delete-posts/submit/{{.ProfileOwner.ID}}?s={{.CurrentUser.Session}}" method="post" style="display:none;">
+	<form id="delete_posts_form"class="hash_hide delete_posts_hash"action="/users/delete-posts/submit/{{.ProfileOwner.ID}}?s={{.CurrentUser.Session}}"method="post"style="display:none;">
 	<div class="the_form">
 		<div class="colline">{{langf "profile.delete_posts_notice" .ProfileOwner.Posts}}</div>
 		<div class="colstack_item">

@@ -19,11 +19,15 @@ type Hook struct {
 	Ret string
 	Type string
 	Any bool
+	MultiHook bool
+	Skip bool
+	DefaultRet string
+	Pure string
 }
 
-func AddHooks(add func(name, params, ret, htype string)) {
+func AddHooks(add func(name, params, ret, htype string, multiHook, skip bool, defaultRet, pure string)) {
 	vhookskip := func(name, params string) {
-		add(name,params,"(bool, RouteError)","VhookSkippable_")
+		add(name,params,"(bool,RouteError)","VhookSkippable_",false,true,"false,nil","")
 	}
 	vhookskip("forum_check_pre_perms","w http.ResponseWriter,r *http.Request,u *User,fid *int,h *Header")
 	vhookskip("router_after_filters","w http.ResponseWriter,r *http.Request,prefix string")
@@ -31,10 +35,24 @@ func AddHooks(add func(name, params, ret, htype string)) {
 	vhookskip("route_forum_list_start","w http.ResponseWriter,r *http.Request,u *User,h *Header")
 	vhookskip("route_topic_list_start","w http.ResponseWriter,r *http.Request,u *User,h *Header")
 	vhooknoret := func(name, params string) {
-		add(name,params,"","Vhooks")
+		add(name,params,"","Vhooks",false,false,"false,nil","")
 	}
 	vhooknoret("router_end","w http.ResponseWriter,r *http.Request,u *User,prefix string, extraData string")
 	vhooknoret("topic_reply_row_assign","r *ReplyUser")
+	//forums_frow_assign
+	//Hook(name string, data interface{}) interface{}
+	/*hook := func(name, params, ret, pure string) {
+		add(name,params,ret,"Hooks",true,false,ret,pure)
+	}*/
+	hooknoret := func(name, params string) {
+		add(name,params,"","HooksNoRet",true,false,"","")
+	}
+	hooknoret("forums_frow_assign","f *Forum")
+	hookskip := func(name, params string) {
+		add(name,params,"(skip bool)","HooksSkip",true,true,"","")
+	}
+	//hookskip("forums_frow_assign","f *Forum")
+	hookskip("topic_create_frow_assign","f *Forum")
 }
 
 func Write(hookVars HookVars) {
@@ -45,12 +63,17 @@ import ({{range .Imports}}
 	"{{.}}"{{end}}
 )
 {{range .Hooks}}
-func H_{{.Name}}_hook(t *HookTable, {{.Params}}) {{.Ret}} { {{if .Any}}
-	hook := t.{{.Type}}["{{.Name}}"]
+func H_{{.Name}}_hook(t *HookTable,{{.Params}}) {{.Ret}} { {{if .Any}}
+	{{if .MultiHook}}for _, hook := range t.{{.Type}}["{{.Name}}"] {
+		{{if .Skip}}if skip = hook({{.Params2}}); skip {
+			break
+		}{{else}}{{if .Pure}}{{.Pure}} = {{else if .Ret}}return {{end}}hook({{.Params2}}){{end}}
+	}{{else}}hook := t.{{.Type}}["{{.Name}}"]
 	if hook != nil {
 		{{if .Ret}}return {{end}}hook({{.Params2}})
-	} {{end}}
-	{{if .Ret}}return false, nil{{end}}
+	} {{end}}{{end}}{{if .Pure}}
+	return {{.Pure}}{{else if .Ret}}
+	return {{.DefaultRet}}{{end}}
 }{{end}}
 `
 	tmpl := template.Must(template.New("hooks").Parse(fileData))

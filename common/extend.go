@@ -49,14 +49,16 @@ var hookTableBox atomic.Value
 // TODO: Make the RunXHook functions methods on HookTable
 // TODO: Have plugins update hooks on a mutex guarded map and create a copy of that map in a serial global goroutine which gets thrown in the atomic.Value
 type HookTable struct {
-	Hooks           map[string][]func(interface{}) interface{}
+	//Hooks           map[string][]func(interface{}) interface{}
+	HooksNoRet      map[string][]func(interface{})
+	HooksSkip       map[string][]func(interface{}) bool
 	Vhooks          map[string]func(...interface{}) interface{}
 	VhookSkippable_ map[string]func(...interface{}) (bool, RouteError)
 	Sshooks         map[string][]func(string) string
 	PreRenderHooks  map[string][]func(http.ResponseWriter, *http.Request, *User, interface{}) bool
 
 	// For future use:
-	messageHooks map[string][]func(Message, PageInt, ...interface{}) interface{}
+	//messageHooks map[string][]func(Message, PageInt, ...interface{}) interface{}
 }
 
 func init() {
@@ -65,15 +67,18 @@ func init() {
 
 // For extend.go use only, access this via GetHookTable() elsewhere
 var hookTable = &HookTable{
-	map[string][]func(interface{}) interface{}{
-		"forums_frow_assign":       nil,
-		"topic_create_frow_assign": nil,
+	//map[string][]func(interface{}) interface{}{},
+	map[string][]func(interface{}){
+		"forums_frow_assign": nil, //hg
+	},
+	map[string][]func(interface{}) bool{
+		"topic_create_frow_assign": nil, //hg
 	},
 	map[string]func(...interface{}) interface{}{
 		//"convo_post_update":nil,
 		//"convo_post_create":nil,
 
-		"forum_trow_assign":       nil,
+		///"forum_trow_assign":       nil,
 		"topics_topic_row_assign": nil,
 		//"topics_user_row_assign": nil,
 		"topic_reply_row_assign": nil,
@@ -83,8 +88,8 @@ var hookTable = &HookTable{
 		"router_end": nil,
 	},
 	map[string]func(...interface{}) (bool, RouteError){
-		"simple_forum_check_pre_perms": nil,
-		"forum_check_pre_perms":        nil,
+		"simple_forum_check_pre_perms": nil, //hg
+		"forum_check_pre_perms":        nil, //hg
 
 		"route_topic_list_start":            nil,
 		"route_topic_list_mostviewed_start": nil,
@@ -125,7 +130,7 @@ var hookTable = &HookTable{
 		"parse_assign":       nil,
 	},
 	nil,
-	nil,
+	//nil,
 }
 var hookTableUpdateMutex sync.Mutex
 
@@ -146,25 +151,24 @@ func GetHookTable() *HookTable {
 }
 
 // Hooks with a single argument. Is this redundant? Might be useful for inlining, as variadics aren't inlined? Are closures even inlined to begin with?
-func (t *HookTable) Hook(name string, data interface{}) interface{} {
-	hooks, ok := t.Hooks[name]
-	if ok {
-		for _, hook := range hooks {
-			data = hook(data)
-		}
+/*func (t *HookTable) Hook(name string, data interface{}) interface{} {
+	for _, hook := range t.Hooks[name] {
+		data = hook(data)
 	}
 	return data
+}*/
+
+func (t *HookTable) HookNoRet(name string, data interface{}) {
+	for _, hook := range t.HooksNoRet[name] {
+		hook(data)
+	}
 }
 
 // To cover the case in routes/topic.go's CreateTopic route, we could probably obsolete this use and replace it
-func (t *HookTable) HookSkippable(name string, data interface{}) (skip bool) {
-	hooks, ok := t.Hooks[name]
-	if ok {
-		for _, hook := range hooks {
-			skip = hook(data).(bool)
-			if skip {
-				break
-			}
+func (t *HookTable) HookSkip(name string, data interface{}) (skip bool) {
+	for _, hook := range t.HooksSkip[name] {
+		if skip = hook(data); skip {
+			break
 		}
 	}
 	return skip
@@ -173,24 +177,21 @@ func (t *HookTable) HookSkippable(name string, data interface{}) (skip bool) {
 // Hooks with a variable number of arguments
 // TODO: Use RunHook semantics to allow multiple lined up plugins / modules their turn?
 func (t *HookTable) Vhook(name string, data ...interface{}) interface{} {
-	hook := t.Vhooks[name]
-	if hook != nil {
+	if hook := t.Vhooks[name]; hook != nil {
 		return hook(data...)
 	}
 	return nil
 }
 
 func (t *HookTable) VhookNoRet(name string, data ...interface{}) {
-	hook := t.Vhooks[name]
-	if hook != nil {
+	if hook := t.Vhooks[name]; hook != nil {
 		_ = hook(data...)
 	}
 }
 
 // TODO: Find a better way of doing this
 func (t *HookTable) VhookNeedHook(name string, data ...interface{}) (ret interface{}, hasHook bool) {
-	hook := t.Vhooks[name]
-	if hook != nil {
+	if hook := t.Vhooks[name]; hook != nil {
 		return hook(data...), true
 	}
 	return nil, false
@@ -198,16 +199,14 @@ func (t *HookTable) VhookNeedHook(name string, data ...interface{}) (ret interfa
 
 // Hooks with a variable number of arguments and return values for skipping the parent function and propagating an error upwards
 func (t *HookTable) VhookSkippable(name string, data ...interface{}) (bool, RouteError) {
-	hook := t.VhookSkippable_[name]
-	if hook != nil {
+	if hook := t.VhookSkippable_[name]; hook != nil {
 		return hook(data...)
 	}
 	return false, nil
 }
 
 /*func VhookSkippableTest(t *HookTable, name string, data ...interface{}) (bool, RouteError) {
-	hook := t.VhookSkippable_[name]
-	if hook != nil {
+	if hook := t.VhookSkippable_[name]; hook != nil {
 		return hook(data...)
 	}
 	return false, nil
@@ -224,11 +223,8 @@ func forum_check_pre_perms_hook(t *HookTable, w http.ResponseWriter, r *http.Req
 // Hooks which take in and spit out a string. This is usually used for parser components
 // Trying to get a teeny bit of type-safety where-ever possible, especially for such a critical set of hooks
 func (t *HookTable) Sshook(name, data string) string {
-	ssHooks, ok := t.Sshooks[name]
-	if ok {
-		for _, hook := range ssHooks {
-			data = hook(data)
-		}
+	for _, hook := range t.Sshooks[name] {
+		data = hook(data)
 	}
 	return data
 }
@@ -472,12 +468,24 @@ func (pl *Plugin) AddHook(name string, hInt interface{}) {
 	defer hookTableUpdateMutex.Unlock()
 
 	switch h := hInt.(type) {
-	case func(interface{}) interface{}:
-		if len(hookTable.Hooks[name]) == 0 {
-			hookTable.Hooks[name] = []func(interface{}) interface{}{}
+	/*case func(interface{}) interface{}:
+	if len(hookTable.Hooks[name]) == 0 {
+		hookTable.Hooks[name] = []func(interface{}) interface{}{}
+	}
+	hookTable.Hooks[name] = append(hookTable.Hooks[name], h)
+	pl.Hooks[name] = len(hookTable.Hooks[name]) - 1*/
+	case func(interface{}):
+		if len(hookTable.HooksNoRet[name]) == 0 {
+			hookTable.HooksNoRet[name] = []func(interface{}){}
 		}
-		hookTable.Hooks[name] = append(hookTable.Hooks[name], h)
-		pl.Hooks[name] = len(hookTable.Hooks[name]) - 1
+		hookTable.HooksNoRet[name] = append(hookTable.HooksNoRet[name], h)
+		pl.Hooks[name] = len(hookTable.HooksNoRet[name]) - 1
+	case func(interface{}) bool:
+		if len(hookTable.HooksSkip[name]) == 0 {
+			hookTable.HooksSkip[name] = []func(interface{}) bool{}
+		}
+		hookTable.HooksSkip[name] = append(hookTable.HooksSkip[name], h)
+		pl.Hooks[name] = len(hookTable.HooksSkip[name]) - 1
 	case func(string) string:
 		if len(hookTable.Sshooks[name]) == 0 {
 			hookTable.Sshooks[name] = []func(string) string{}
@@ -521,14 +529,30 @@ func (pl *Plugin) RemoveHook(name string, hInt interface{}) {
 	}
 
 	switch hInt.(type) {
-	case func(interface{}) interface{}:
-		hook := hookTable.Hooks[name]
+	/*case func(interface{}) interface{}:
+	hook := hookTable.Hooks[name]
+	if len(hook) == 1 {
+		hook = []func(interface{}) interface{}{}
+	} else {
+		hook = append(hook[:key], hook[key+1:]...)
+	}
+	hookTable.Hooks[name] = hook*/
+	case func(interface{}):
+		hook := hookTable.HooksNoRet[name]
 		if len(hook) == 1 {
-			hook = []func(interface{}) interface{}{}
+			hook = []func(interface{}){}
 		} else {
 			hook = append(hook[:key], hook[key+1:]...)
 		}
-		hookTable.Hooks[name] = hook
+		hookTable.HooksNoRet[name] = hook
+	case func(interface{}) bool:
+		hook := hookTable.HooksSkip[name]
+		if len(hook) == 1 {
+			hook = []func(interface{}) bool{}
+		} else {
+			hook = append(hook[:key], hook[key+1:]...)
+		}
+		hookTable.HooksSkip[name] = hook
 	case func(string) string:
 		hook := hookTable.Sshooks[name]
 		if len(hook) == 1 {
@@ -589,8 +613,8 @@ func InitPlugins() {
 // ? - Are the following functions racey?
 func RunTaskHook(name string) error {
 	for _, hook := range taskHooks[name] {
-		if err := hook(); err != nil {
-			return err
+		if e := hook(); e != nil {
+			return e
 		}
 	}
 	return nil

@@ -9,7 +9,11 @@ import (
 )
 
 func ForumList(w http.ResponseWriter, r *http.Request, user *c.User, h *c.Header) c.RouteError {
-	skip, rerr := h.Hooks.VhookSkippable("route_forum_list_start", w, r, user, h)
+	/*skip, rerr := h.Hooks.VhookSkippable("route_forum_list_start", w, r, user, h)
+	if skip || rerr != nil {
+		return rerr
+	}*/
+	skip, rerr := c.H_route_forum_list_start_hook(h.Hooks, w, r, user, h)
 	if skip || rerr != nil {
 		return rerr
 	}
@@ -44,7 +48,8 @@ func ForumList(w http.ResponseWriter, r *http.Request, user *c.User, h *c.Header
 					f.LastTopicTime = c.RelativeTime(f.LastTopic.LastReplyAt)
 				}
 			}
-			h.Hooks.Hook("forums_frow_assign", &f)
+			//h.Hooks.Hook("forums_frow_assign", &f)
+			c.H_forums_frow_assign_hook(h.Hooks, &f)
 			forumList = append(forumList, f)
 		}
 	}

@@ -4,10 +4,10 @@
 		<div class="rowitem"><h1>{{lang "register_head"}}</h1></div>
 	</div>
 	<div class="rowblock the_form">
-		<form action="/accounts/create/submit/" method="post">
+		<form action="/accounts/create/submit/"method="post">
 			<div class="formrow">
 				<div class="formitem formlabel"><a id="name_label">{{lang "register_account_name"}}</a></div>
-				<div class="formitem"><input name="name"type="text"placeholder="{{lang "register_account_name"}}" aria-labelledby="name_label"required></div>
+				<div class="formitem"><input name="name"type="text"placeholder="{{lang "register_account_name"}}"aria-labelledby="name_label"required></div>
 			</div>
 			<div class="formrow">
 				<div class="formitem formlabel"><a id="email_label">{{if not .Something}}{{lang "register_account_email"}}{{else}}{{lang "register_account_email_optional"}}{{end}}</a></div>

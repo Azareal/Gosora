@@ -13,7 +13,7 @@
 		</div>
 		<div class="formrow">
 			<div class="formitem formlabel"><a>{{lang "create_topic_name"}}</a></div>
-			<div class="formitem"><input form="quick_post_form" name="name" type="text" placeholder="{{lang "create_topic_name"}}" required /></div>
+			<div class="formitem"><input form="quick_post_form" name="name" type="text" placeholder="{{lang "create_topic_name"}}" required></div>
 		</div>
 		<div class="formrow">
 			<div class="formitem formlabel"><a>{{lang "create_topic_content"}}</a></div>
@@ -22,7 +22,7 @@
 		<div class="formrow">
 			<button form="quick_post_form" name="topic-button" class="formbutton">{{lang "create_topic_create_button"}}</button>
 			{{if .CurrentUser.Perms.UploadFiles}}
-			<input name="quick_topic_upload_files" form="quick_post_form" id="quick_topic_upload_files" multiple type="file" style="display:none;" />
+			<input name="quick_topic_upload_files" form="quick_post_form" id="quick_topic_upload_files" multiple type="file" class="auto_hide">
 			<label for="quick_topic_upload_files" class="formbutton add_file_button">{{lang "create_topic_add_file_button"}}</label>{{end}}
 			<div id="upload_file_dock"></div>
 		</div>

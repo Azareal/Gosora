@@ -1,2 +1,1 @@
-{{if .Avatar}}<div class='alertItem withAvatar'style='background-image:url("{{.Avatar}}");'><img src='{{.Avatar}}'class='bgsub'><a class='text'data-asid='{{.ASID}}'href="{{.Path}}">{{.Message}}</a></div>{{else}}
-<div class='alertItem'><a href="{{.Path}}"class='text'>{{.Message}}</a></div>{{end}}
+{{if .Avatar}}<div class='alertItem withAvatar'style='background-image:url("{{.Avatar}}");'><img src='{{.Avatar}}'class='bgsub'><a class='text'data-asid='{{.ASID}}'href="{{.Path}}">{{.Message}}</a></div>{{else}}<div class='alertItem'><a href="{{.Path}}"class='text'>{{.Message}}</a></div>{{end}}
