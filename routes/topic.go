@@ -288,7 +288,7 @@ func RemoveAttachFromTopicSubmit(w http.ResponseWriter, r *http.Request, user *c
 // ? - Log username changes and put restrictions on this?
 // TODO: Test this
 // TODO: Revamp this route
-func CreateTopic(w http.ResponseWriter, r *http.Request, user *c.User, header *c.Header, sfid string) c.RouteError {
+func CreateTopic(w http.ResponseWriter, r *http.Request, user *c.User, h *c.Header, sfid string) c.RouteError {
 	var fid int
 	var err error
 	if sfid != "" {
@@ -301,7 +301,7 @@ func CreateTopic(w http.ResponseWriter, r *http.Request, user *c.User, header *c
 		fid = c.Config.DefaultForum
 	}
 
-	ferr := c.ForumUserCheck(header, w, r, user, fid)
+	ferr := c.ForumUserCheck(h, w, r, user, fid)
 	if ferr != nil {
 		return ferr
 	}
@@ -309,13 +309,13 @@ func CreateTopic(w http.ResponseWriter, r *http.Request, user *c.User, header *c
 		return c.NoPermissions(w, r, user)
 	}
 	// TODO: Add a phrase for this
-	header.Title = phrases.GetTitlePhrase("create_topic")
-	header.Zone = "create_topic"
+	h.Title = phrases.GetTitlePhrase("create_topic")
+	h.Zone = "create_topic"
 
 	// Lock this to the forum being linked?
 	// Should we always put it in strictmode when it's linked from another forum? Well, the user might end up changing their mind on what forum they want to post in and it would be a hassle, if they had to switch pages, even if it is a single click for many (exc. mobile)
 	var strict bool
-	header.Hooks.VhookNoRet("topic_create_pre_loop", w, r, fid, &header, user, &strict)
+	h.Hooks.VhookNoRet("topic_create_pre_loop", w, r, fid, h, user, &strict)
 
 	// TODO: Re-add support for plugin_guilds
 	var forumList []c.Forum
@@ -348,14 +348,15 @@ func CreateTopic(w http.ResponseWriter, r *http.Request, user *c.User, header *c
 		if f.Name != "" && f.Active {
 			fcopy := f.Copy()
 			// TODO: Abstract this
-			if header.Hooks.HookSkippable("topic_create_frow_assign", &fcopy) {
+			//if h.Hooks.HookSkip("topic_create_frow_assign", &fcopy) {
+			if c.H_topic_create_frow_assign_hook(h.Hooks, &fcopy) {
 				continue
 			}
 			forumList = append(forumList, fcopy)
 		}
 	}
 
-	return renderTemplate("create_topic", w, r, header, c.CreateTopicPage{header, forumList, fid})
+	return renderTemplate("create_topic", w, r, h, c.CreateTopicPage{h, forumList, fid})
 }
 
 func CreateTopicSubmit(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
