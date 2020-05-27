@@ -979,13 +979,7 @@ func LikeTopicSubmit(w http.ResponseWriter, r *http.Request, user *c.User, stid 
 	if skip || rerr != nil {
 		return rerr
 	}
-
-	if !js {
-		http.Redirect(w, r, "/topic/"+strconv.Itoa(tid), http.StatusSeeOther)
-	} else {
-		_, _ = w.Write(successJSONBytes)
-	}
-	return nil
+	return actionSuccess(w, r, "/topic/"+strconv.Itoa(tid), js)
 }
 func UnlikeTopicSubmit(w http.ResponseWriter, r *http.Request, user *c.User, stid string) c.RouteError {
 	js := r.PostFormValue("js") == "1"
@@ -993,7 +987,6 @@ func UnlikeTopicSubmit(w http.ResponseWriter, r *http.Request, user *c.User, sti
 	if err != nil {
 		return c.PreErrorJSQ(phrases.GetErrorPhrase("id_must_be_integer"), w, r, js)
 	}
-
 	topic, err := c.Topics.Get(tid)
 	if err == sql.ErrNoRows {
 		return c.PreErrorJSQ("The requested topic doesn't exist.", w, r, js)
@@ -1016,7 +1009,6 @@ func UnlikeTopicSubmit(w http.ResponseWriter, r *http.Request, user *c.User, sti
 	} else if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
-
 	err = topic.Unlike(user.ID)
 	if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
@@ -1039,11 +1031,5 @@ func UnlikeTopicSubmit(w http.ResponseWriter, r *http.Request, user *c.User, sti
 	if skip || rerr != nil {
 		return rerr
 	}
-
-	if !js {
-		http.Redirect(w, r, "/topic/"+strconv.Itoa(tid), http.StatusSeeOther)
-	} else {
-		_, _ = w.Write(successJSONBytes)
-	}
-	return nil
+	return actionSuccess(w, r, "/topic/"+strconv.Itoa(tid), js)
 }

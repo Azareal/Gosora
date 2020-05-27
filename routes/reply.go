@@ -513,13 +513,7 @@ func ReplyLikeSubmit(w http.ResponseWriter, r *http.Request, u *c.User, srid str
 	if skip || rerr != nil {
 		return rerr
 	}
-
-	if !js {
-		http.Redirect(w, r, "/topic/"+strconv.Itoa(reply.ParentID), http.StatusSeeOther)
-	} else {
-		_, _ = w.Write(successJSONBytes)
-	}
-	return nil
+	return actionSuccess(w, r, "/topic/"+strconv.Itoa(reply.ParentID), js)
 }
 
 func ReplyUnlikeSubmit(w http.ResponseWriter, r *http.Request, u *c.User, srid string) c.RouteError {
@@ -558,7 +552,6 @@ func ReplyUnlikeSubmit(w http.ResponseWriter, r *http.Request, u *c.User, srid s
 	} else if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
-
 	err = reply.Unlike(u.ID)
 	if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
@@ -581,11 +574,5 @@ func ReplyUnlikeSubmit(w http.ResponseWriter, r *http.Request, u *c.User, srid s
 	if skip || rerr != nil {
 		return rerr
 	}
-
-	if !js {
-		http.Redirect(w, r, "/topic/"+strconv.Itoa(reply.ParentID), http.StatusSeeOther)
-	} else {
-		_, _ = w.Write(successJSONBytes)
-	}
-	return nil
+	return actionSuccess(w, r, "/topic/"+strconv.Itoa(reply.ParentID), js)
 }

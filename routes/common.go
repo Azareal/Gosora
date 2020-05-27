@@ -24,52 +24,64 @@ func ParseSEOURL(urlBit string) (slug string, id int, err error) {
 	return halves[0], tid, err
 }
 
-const slen1 = len("</s/>;rel=preload;as=script,")
-const slen2 = len("</s/>;rel=preload;as=style,")
+const slen1 = len("</s/>;rel=preload;as=script,") + 6
+const slen2 = len("</s/>;rel=preload;as=style,") + 7
 
-var pushCdnPool = sync.Pool{}
+var pushStrPool = sync.Pool{}
 
-func doPush(w http.ResponseWriter, header *c.Header) {
+func doPush(w http.ResponseWriter, h *c.Header) {
 	//fmt.Println("in doPush")
+	if len(h.Scripts) == 0 && len(h.ScriptsAsync) == 0 && len(h.Stylesheets) == 0 {
+		return
+	}
 	if c.Config.EnableCDNPush {
-		var sb *strings.Builder
-		ii := pushCdnPool.Get()
+		var sb *strings.Builder = &strings.Builder{}
+		/*ii := pushStrPool.Get()
 		if ii == nil {
 			sb = &strings.Builder{}
 		} else {
 			sb = ii.(*strings.Builder)
 			sb.Reset()
-		}
+		}*/
+		sb.Grow((slen1 * (len(h.Scripts) + len(h.ScriptsAsync))) + ((slen2 + 7) * len(h.Stylesheets)))
 		push := func(in []string) {
-			sb.Grow((slen1 + 6) * len(in))
-			for _, path := range in {
-				sb.WriteString("</s/")
+			for i, path := range in {
+				if i != 0 {
+					sb.WriteString(",</s/")
+				} else {
+					sb.WriteString("</s/")
+				}
 				sb.WriteString(path)
-				sb.WriteString(">;rel=preload;as=script,")
+				sb.WriteString(">;rel=preload;as=script")
 			}
 		}
-		push(header.Scripts)
-		//push(header.PreScriptsAsync)
-		push(header.ScriptsAsync)
+		push(h.Scripts)
+		//push(h.PreScriptsAsync)
+		push(h.ScriptsAsync)
 
-		if len(header.Stylesheets) > 0 {
-			sb.Grow((slen2 + 7) * len(header.Stylesheets))
-			for _, path := range header.Stylesheets {
-				sb.WriteString("</s/")
+		if len(h.Stylesheets) > 0 {
+			for i, path := range h.Stylesheets {
+				if i != 0 {
+					sb.WriteString(",</s/")
+				} else {
+					sb.WriteString("</s/")
+				}
 				sb.WriteString(path)
-				sb.WriteString(">;rel=preload;as=style,")
+				sb.WriteString(">;rel=preload;as=style")
 			}
 		}
 		// TODO: Push avatars?
 
 		if sb.Len() > 0 {
 			sbuf := sb.String()
-			pushCdnPool.Put(sb)
-			w.Header().Set("Link", sbuf[:len(sbuf)-1])
+			w.Header().Set("Link", sbuf)
+			//pushStrPool.Put(sb)
 		}
 	} else if !c.Config.DisableServerPush {
 		//fmt.Println("push enabled")
-		if gzw, ok := w.(c.GzipResponseWriter); ok {
+		/*if bzw, ok := w.(c.BrResponseWriter); ok {
+			w = bzw.ResponseWriter
+		} else */if gzw, ok := w.(c.GzipResponseWriter); ok {
 			w = gzw.ResponseWriter
 		}
 		pusher, ok := w.(http.Pusher)
@@ -79,21 +91,33 @@ func doPush(w http.ResponseWriter, header *c.Header) {
 		//panic("has pusher")
 		//fmt.Println("has pusher")
 
+		var sb *strings.Builder = &strings.Builder{}
+		/*ii := pushStrPool.Get()
+		if ii == nil {
+			sb = &strings.Builder{}
+		} else {
+			sb = ii.(*strings.Builder)
+			sb.Reset()
+		}*/
+		sb.Grow(6 * (len(h.Scripts) + len(h.ScriptsAsync) + len(h.Stylesheets)))
 		push := func(in []string) {
 			for _, path := range in {
 				//fmt.Println("pushing /s/" + path)
-				// TODO: Avoid concatenating here
-				err := pusher.Push("/s/"+path, nil)
+				sb.WriteString("/s/")
+				sb.WriteString(path)
+				err := pusher.Push(sb.String(), nil)
 				if err != nil {
 					break
 				}
+				sb.Reset()
 			}
 		}
-		push(header.Scripts)
-		//push(header.PreScriptsAsync)
-		push(header.ScriptsAsync)
-		push(header.Stylesheets)
+		push(h.Scripts)
+		//push(h.PreScriptsAsync)
+		push(h.ScriptsAsync)
+		push(h.Stylesheets)
 		// TODO: Push avatars?
+		//pushStrPool.Put(sb)
 	}
 }
 
@@ -172,8 +196,21 @@ func renderTemplate3(tmplName, hookName string, w http.ResponseWriter, r *http.R
 	if c.RunPreRenderHook("pre_render_"+hookName, w, r, h.CurrentUser, pi) {
 		return nil
 	}
+	/*defer func() {
+		c.StrSlicePool.Put(h.Scripts)
+		c.StrSlicePool.Put(h.PreScriptsAsync)
+	}()*/
 	return h.Theme.RunTmpl(tmplName, pi, w)
 }
 
 // TODO: Rename renderTemplate to RenderTemplate instead of using this hack to avoid breaking things
 var RenderTemplate = renderTemplate3
+
+func actionSuccess(w http.ResponseWriter, r *http.Request, dest string, js bool) c.RouteError {
+	if !js {
+		http.Redirect(w, r, dest, http.StatusSeeOther)
+	} else {
+		_, _ = w.Write(successJSONBytes)
+	}
+	return nil
+}

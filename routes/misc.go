@@ -131,11 +131,5 @@ func ChangeTheme(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError
 
 	cookie := http.Cookie{Name: "current_theme", Value: newTheme, Path: "/", MaxAge: int(c.Year)}
 	http.SetCookie(w, &cookie)
-
-	if !js {
-		http.Redirect(w, r, "/", http.StatusSeeOther)
-	} else {
-		_, _ = w.Write(successJSONBytes)
-	}
-	return nil
+	return actionSuccess(w, r, "/", js)
 }

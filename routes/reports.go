@@ -103,12 +103,6 @@ func ReportSubmit(w http.ResponseWriter, r *http.Request, user *c.User, sItemID 
 		return c.LocalError("Someone has already reported this!", w, r, user)
 	}
 	counters.PostCounter.Bump()
-
-	if !js {
-		// TODO: Redirect back to where we came from
-		http.Redirect(w, r, "/", http.StatusSeeOther)
-	} else {
-		_, _ = w.Write(successJSONBytes)
-	}
-	return nil
+	// TODO: Redirect back to where we came from
+	return actionSuccess(w, r, "/", js)
 }
