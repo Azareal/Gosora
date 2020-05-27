@@ -1680,14 +1680,14 @@ func TestPluginManager(t *testing.T) {
 	pl.RemoveHook("haha", handle)
 	expect(t, ht().Sshook("haha", "ho") == "ho", "Sshook shouldn't have anything bound to it anymore")
 
-	expect(t, ht().Hook("haha", "ho") == "ho", "Hook shouldn't have anything bound to it yet")
+	/*expect(t, ht().Hook("haha", "ho") == "ho", "Hook shouldn't have anything bound to it yet")
 	handle2 := func(inI interface{}) (out interface{}) {
 		return inI.(string) + "hi"
 	}
 	pl.AddHook("hehe", handle2)
 	expect(t, ht().Hook("hehe", "ho").(string) == "hohi", "Hook didn't give hohi")
 	pl.RemoveHook("hehe", handle2)
-	expect(t, ht().Hook("hehe", "ho").(string) == "ho", "Hook shouldn't have anything bound to it anymore")
+	expect(t, ht().Hook("hehe", "ho").(string) == "ho", "Hook shouldn't have anything bound to it anymore")*/
 
 	// TODO: Add tests for more hook types
 }
