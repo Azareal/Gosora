@@ -199,32 +199,39 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user *c.User, header *c.H
 	return rerr
 }
 
+func AttachTopicActCommon(w http.ResponseWriter, r *http.Request, u *c.User, stid string) (t *c.Topic, ferr c.RouteError) {
+	tid, err := strconv.Atoi(stid)
+	if err != nil {
+		return t, c.LocalErrorJS(phrases.GetErrorPhrase("id_must_be_integer"), w, r)
+	}
+	t, err = c.Topics.Get(tid)
+	if err != nil {
+		return t, c.NotFoundJS(w, r)
+	}
+	_, ferr = c.SimpleForumUserCheck(w, r, u, t.ParentID)
+	if ferr != nil {
+		return t, ferr
+	}
+	if t.IsClosed && !u.Perms.CloseTopic {
+		return t, c.NoPermissionsJS(w, r, u)
+	}
+	return t, nil
+}
+
 // TODO: Avoid uploading this again if the attachment already exists? They'll resolve to the same hash either way, but we could save on some IO / bandwidth here
 // TODO: Enforce the max request limit on all of this topic's attachments
 // TODO: Test this route
-func AddAttachToTopicSubmit(w http.ResponseWriter, r *http.Request, user *c.User, stid string) c.RouteError {
-	tid, err := strconv.Atoi(stid)
-	if err != nil {
-		return c.LocalErrorJS(phrases.GetErrorPhrase("id_must_be_integer"), w, r)
-	}
-	topic, err := c.Topics.Get(tid)
-	if err != nil {
-		return c.NotFoundJS(w, r)
-	}
-
-	_, ferr := c.SimpleForumUserCheck(w, r, user, topic.ParentID)
+func AddAttachToTopicSubmit(w http.ResponseWriter, r *http.Request, u *c.User, stid string) c.RouteError {
+	topic, ferr := AttachTopicActCommon(w,r,u,stid)
 	if ferr != nil {
 		return ferr
 	}
-	if !user.Perms.ViewTopic || !user.Perms.EditTopic || !user.Perms.UploadFiles {
-		return c.NoPermissionsJS(w, r, user)
-	}
-	if topic.IsClosed && !user.Perms.CloseTopic {
-		return c.NoPermissionsJS(w, r, user)
+	if !u.Perms.ViewTopic || !u.Perms.EditTopic || !u.Perms.UploadFiles {
+		return c.NoPermissionsJS(w, r, u)
 	}
 
 	// Handle the file attachments
-	pathMap, rerr := uploadAttachment(w, r, user, topic.ParentID, "forums", tid, "topics", "")
+	pathMap, rerr := uploadAttachment(w, r, u, topic.ParentID, "forums", topic.ID, "topics", "")
 	if rerr != nil {
 		// TODO: This needs to be a JS error...
 		return rerr
@@ -245,25 +252,13 @@ func AddAttachToTopicSubmit(w http.ResponseWriter, r *http.Request, user *c.User
 	return nil
 }
 
-func RemoveAttachFromTopicSubmit(w http.ResponseWriter, r *http.Request, user *c.User, stid string) c.RouteError {
-	tid, err := strconv.Atoi(stid)
-	if err != nil {
-		return c.LocalErrorJS(phrases.GetErrorPhrase("id_must_be_integer"), w, r)
-	}
-	topic, err := c.Topics.Get(tid)
-	if err != nil {
-		return c.NotFoundJS(w, r)
-	}
-
-	_, ferr := c.SimpleForumUserCheck(w, r, user, topic.ParentID)
+func RemoveAttachFromTopicSubmit(w http.ResponseWriter, r *http.Request, u *c.User, stid string) c.RouteError {
+	_, ferr := AttachTopicActCommon(w,r,u,stid)
 	if ferr != nil {
 		return ferr
 	}
-	if !user.Perms.ViewTopic || !user.Perms.EditTopic {
-		return c.NoPermissionsJS(w, r, user)
-	}
-	if topic.IsClosed && !user.Perms.CloseTopic {
-		return c.NoPermissionsJS(w, r, user)
+	if !u.Perms.ViewTopic || !u.Perms.EditTopic {
+		return c.NoPermissionsJS(w, r, u)
 	}
 
 	for _, said := range strings.Split(r.PostFormValue("aids"), ",") {
@@ -271,7 +266,7 @@ func RemoveAttachFromTopicSubmit(w http.ResponseWriter, r *http.Request, user *c
 		if err != nil {
 			return c.LocalErrorJS(phrases.GetErrorPhrase("id_must_be_integer"), w, r)
 		}
-		rerr := deleteAttachment(w, r, user, aid, true)
+		rerr := deleteAttachment(w, r, u, aid, true)
 		if rerr != nil {
 			// TODO: This needs to be a JS error...
 			return rerr
@@ -288,25 +283,25 @@ func RemoveAttachFromTopicSubmit(w http.ResponseWriter, r *http.Request, user *c
 // ? - Log username changes and put restrictions on this?
 // TODO: Test this
 // TODO: Revamp this route
-func CreateTopic(w http.ResponseWriter, r *http.Request, user *c.User, h *c.Header, sfid string) c.RouteError {
+func CreateTopic(w http.ResponseWriter, r *http.Request, u *c.User, h *c.Header, sfid string) c.RouteError {
 	var fid int
 	var err error
 	if sfid != "" {
 		fid, err = strconv.Atoi(sfid)
 		if err != nil {
-			return c.LocalError(phrases.GetErrorPhrase("url_id_must_be_integer"), w, r, user)
+			return c.LocalError(phrases.GetErrorPhrase("url_id_must_be_integer"), w, r, u)
 		}
 	}
 	if fid == 0 {
 		fid = c.Config.DefaultForum
 	}
 
-	ferr := c.ForumUserCheck(h, w, r, user, fid)
+	ferr := c.ForumUserCheck(h, w, r, u, fid)
 	if ferr != nil {
 		return ferr
 	}
-	if !user.Perms.ViewTopic || !user.Perms.CreateTopic {
-		return c.NoPermissions(w, r, user)
+	if !u.Perms.ViewTopic || !u.Perms.CreateTopic {
+		return c.NoPermissions(w, r, u)
 	}
 	// TODO: Add a phrase for this
 	h.Title = phrases.GetTitlePhrase("create_topic")
@@ -315,22 +310,22 @@ func CreateTopic(w http.ResponseWriter, r *http.Request, user *c.User, h *c.Head
 	// Lock this to the forum being linked?
 	// Should we always put it in strictmode when it's linked from another forum? Well, the user might end up changing their mind on what forum they want to post in and it would be a hassle, if they had to switch pages, even if it is a single click for many (exc. mobile)
 	var strict bool
-	h.Hooks.VhookNoRet("topic_create_pre_loop", w, r, fid, h, user, &strict)
+	h.Hooks.VhookNoRet("topic_create_pre_loop", w, r, fid, h, u, &strict)
 
 	// TODO: Re-add support for plugin_guilds
 	var forumList []c.Forum
 	var canSee []int
-	if user.IsSuperAdmin {
+	if u.IsSuperAdmin {
 		canSee, err = c.Forums.GetAllVisibleIDs()
 		if err != nil {
 			return c.InternalError(err, w, r)
 		}
 	} else {
-		group, err := c.Groups.Get(user.Group)
+		group, err := c.Groups.Get(u.Group)
 		if err != nil {
 			// TODO: Refactor this
-			c.LocalError("Something weird happened behind the scenes", w, r, user)
-			log.Printf("Group #%d doesn't exist, but it's set on c.User #%d", user.Group, user.ID)
+			c.LocalError("Something weird happened behind the scenes", w, r, u)
+			log.Printf("Group #%d doesn't exist, but it's set on c.User #%d", u.Group, u.ID)
 			return nil
 		}
 		canSee = group.CanSee
@@ -359,41 +354,41 @@ func CreateTopic(w http.ResponseWriter, r *http.Request, user *c.User, h *c.Head
 	return renderTemplate("create_topic", w, r, h, c.CreateTopicPage{h, forumList, fid})
 }
 
-func CreateTopicSubmit(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
+func CreateTopicSubmit(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
 	fid, err := strconv.Atoi(r.PostFormValue("board"))
 	if err != nil {
-		return c.LocalError(phrases.GetErrorPhrase("id_must_be_integer"), w, r, user)
+		return c.LocalError(phrases.GetErrorPhrase("id_must_be_integer"), w, r, u)
 	}
 	// TODO: Add hooks to make use of headerLite
-	lite, ferr := c.SimpleForumUserCheck(w, r, user, fid)
+	lite, ferr := c.SimpleForumUserCheck(w, r, u, fid)
 	if ferr != nil {
 		return ferr
 	}
-	if !user.Perms.ViewTopic || !user.Perms.CreateTopic {
-		return c.NoPermissions(w, r, user)
+	if !u.Perms.ViewTopic || !u.Perms.CreateTopic {
+		return c.NoPermissions(w, r, u)
 	}
 
 	name := c.SanitiseSingleLine(r.PostFormValue("name"))
 	content := c.PreparseMessage(r.PostFormValue("content"))
 	// TODO: Fully parse the post and store it in the parsed column
-	tid, err := c.Topics.Create(fid, name, content, user.ID, user.GetIP())
+	tid, err := c.Topics.Create(fid, name, content, u.ID, u.GetIP())
 	if err != nil {
 		switch err {
 		case c.ErrNoRows:
-			return c.LocalError("Something went wrong, perhaps the forum got deleted?", w, r, user)
+			return c.LocalError("Something went wrong, perhaps the forum got deleted?", w, r, u)
 		case c.ErrNoTitle:
-			return c.LocalError("This topic doesn't have a title", w, r, user)
+			return c.LocalError("This topic doesn't have a title", w, r, u)
 		case c.ErrLongTitle:
-			return c.LocalError("The length of the title is too long, max: "+strconv.Itoa(c.Config.MaxTopicTitleLength), w, r, user)
+			return c.LocalError("The length of the title is too long, max: "+strconv.Itoa(c.Config.MaxTopicTitleLength), w, r, u)
 		case c.ErrNoBody:
-			return c.LocalError("This topic doesn't have a body", w, r, user)
+			return c.LocalError("This topic doesn't have a body", w, r, u)
 		}
 		return c.InternalError(err, w, r)
 	}
 
 	topic, err := c.Topics.Get(tid)
 	if err != nil {
-		return c.LocalError("Unable to load the topic", w, r, user)
+		return c.LocalError("Unable to load the topic", w, r, u)
 	}
 	if r.PostFormValue("has_poll") == "1" {
 		maxPollOptions := 10
@@ -405,13 +400,13 @@ func CreateTopicSubmit(w http.ResponseWriter, r *http.Request, user *c.User) c.R
 				}
 				halves := strings.Split(key, "[")
 				if len(halves) != 2 {
-					return c.LocalError("Malformed pollinputitem", w, r, user)
+					return c.LocalError("Malformed pollinputitem", w, r, u)
 				}
 				halves[1] = strings.TrimSuffix(halves[1], "]")
 
 				index, err := strconv.Atoi(halves[1])
 				if err != nil {
-					return c.LocalError("Malformed pollinputitem", w, r, user)
+					return c.LocalError("Malformed pollinputitem", w, r, u)
 				}
 
 				// If there are duplicates, then something has gone horribly wrong, so let's ignore them, this'll likely happen during an attack
@@ -436,24 +431,24 @@ func CreateTopicSubmit(w http.ResponseWriter, r *http.Request, user *c.User) c.R
 			pollType := 0 // Basic single choice
 			_, err := c.Polls.Create(topic, pollType, seqPollInputItems)
 			if err != nil {
-				return c.LocalError("Failed to add poll to topic", w, r, user) // TODO: Might need to be an internal error as it could leave phantom polls?
+				return c.LocalError("Failed to add poll to topic", w, r, u) // TODO: Might need to be an internal error as it could leave phantom polls?
 			}
 		}
 	}
 
-	err = c.Subscriptions.Add(user.ID, tid, "topic")
+	err = c.Subscriptions.Add(u.ID, tid, "topic")
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
 
-	err = user.IncreasePostStats(c.WordCount(content), true)
+	err = u.IncreasePostStats(c.WordCount(content), true)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
 
 	// Handle the file attachments
-	if user.Perms.UploadFiles {
-		_, rerr := uploadAttachment(w, r, user, fid, "forums", tid, "topics", "")
+	if u.Perms.UploadFiles {
+		_, rerr := uploadAttachment(w, r, u, fid, "forums", tid, "topics", "")
 		if rerr != nil {
 			return rerr
 		}
@@ -462,7 +457,7 @@ func CreateTopicSubmit(w http.ResponseWriter, r *http.Request, user *c.User) c.R
 	counters.PostCounter.Bump()
 	counters.TopicCounter.Bump()
 	// TODO: Pass more data to this hook?
-	skip, rerr := lite.Hooks.VhookSkippable("action_end_create_topic", tid, user)
+	skip, rerr := lite.Hooks.VhookSkippable("action_end_create_topic", tid, u)
 	if skip || rerr != nil {
 		return rerr
 	}
@@ -471,13 +466,13 @@ func CreateTopicSubmit(w http.ResponseWriter, r *http.Request, user *c.User) c.R
 }
 
 // TODO: Move this function
-func uploadFilesWithHash(w http.ResponseWriter, r *http.Request, user *c.User, dir string) (filenames []string, rerr c.RouteError) {
+func uploadFilesWithHash(w http.ResponseWriter, r *http.Request, u *c.User, dir string) (filenames []string, rerr c.RouteError) {
 	files, ok := r.MultipartForm.File["upload_files"]
 	if !ok {
 		return nil, nil
 	}
 	if len(files) > 5 {
-		return nil, c.LocalError("You can't attach more than five files", w, r, user)
+		return nil, c.LocalError("You can't attach more than five files", w, r, u)
 	}
 	disableEncode := r.PostFormValue("ko") == "1"
 
@@ -489,30 +484,30 @@ func uploadFilesWithHash(w http.ResponseWriter, r *http.Request, user *c.User, d
 
 		extarr := strings.Split(file.Filename, ".")
 		if len(extarr) < 2 {
-			return nil, c.LocalError("Bad file", w, r, user)
+			return nil, c.LocalError("Bad file", w, r, u)
 		}
 		ext := extarr[len(extarr)-1]
 
 		// TODO: Can we do this without a regex?
 		reg, err := regexp.Compile("[^A-Za-z0-9]+")
 		if err != nil {
-			return nil, c.LocalError("Bad file extension", w, r, user)
+			return nil, c.LocalError("Bad file extension", w, r, u)
 		}
 		ext = strings.ToLower(reg.ReplaceAllString(ext, ""))
 		if !c.AllowedFileExts.Contains(ext) {
-			return nil, c.LocalError("You're not allowed to upload files with this extension", w, r, user)
+			return nil, c.LocalError("You're not allowed to upload files with this extension", w, r, u)
 		}
 
 		inFile, err := file.Open()
 		if err != nil {
-			return nil, c.LocalError("Upload failed", w, r, user)
+			return nil, c.LocalError("Upload failed", w, r, u)
 		}
 		defer inFile.Close()
 
 		hasher := sha256.New()
 		_, err = io.Copy(hasher, inFile)
 		if err != nil {
-			return nil, c.LocalError("Upload failed [Hashing Failed]", w, r, user)
+			return nil, c.LocalError("Upload failed [Hashing Failed]", w, r, u)
 		}
 		inFile.Close()
 
@@ -521,32 +516,26 @@ func uploadFilesWithHash(w http.ResponseWriter, r *http.Request, user *c.User, d
 
 		inFile, err = file.Open()
 		if err != nil {
-			return nil, c.LocalError("Upload failed", w, r, user)
+			return nil, c.LocalError("Upload failed", w, r, u)
 		}
 		defer inFile.Close()
 
-		if disableEncode || (ext != "jpg" && ext != "jpeg" && ext != "png" && ext != "gif" && ext != "tiff" && ext != "tif") {
-			outFile, err := os.Create(dir + filename)
-			if err != nil {
-				return nil, c.LocalError("Upload failed [File Creation Failed]", w, r, user)
-			}
-			defer outFile.Close()
+		outFile, err := os.Create(dir + filename)
+		if err != nil {
+			return nil, c.LocalError("Upload failed [File Creation Failed]", w, r, u)
+		}
+		defer outFile.Close()
 
+		if disableEncode || (ext != "jpg" && ext != "jpeg" && ext != "png" && ext != "gif" && ext != "tiff" && ext != "tif") {
 			_, err = io.Copy(outFile, inFile)
 			if err != nil {
-				return nil, c.LocalError("Upload failed [Copy Failed]", w, r, user)
+				return nil, c.LocalError("Upload failed [Copy Failed]", w, r, u)
 			}
 		} else {
 			img, _, err := image.Decode(inFile)
 			if err != nil {
-				return nil, c.LocalError("Upload failed [Image Decoding Failed]", w, r, user)
+				return nil, c.LocalError("Upload failed [Image Decoding Failed]", w, r, u)
 			}
-
-			outFile, err := os.Create(dir + filename)
-			if err != nil {
-				return nil, c.LocalError("Upload failed [File Creation Failed]", w, r, user)
-			}
-			defer outFile.Close()
 
 			switch ext {
 			case "gif":
@@ -559,7 +548,7 @@ func uploadFilesWithHash(w http.ResponseWriter, r *http.Request, user *c.User, d
 				err = jpeg.Encode(outFile, img, nil)
 			}
 			if err != nil {
-				return nil, c.LocalError("Upload failed [Image Encoding Failed]", w, r, user)
+				return nil, c.LocalError("Upload failed [Image Encoding Failed]", w, r, u)
 			}
 		}
 
@@ -577,7 +566,6 @@ func EditTopicSubmit(w http.ResponseWriter, r *http.Request, user *c.User, stid 
 	if err != nil {
 		return c.PreErrorJSQ(phrases.GetErrorPhrase("id_must_be_integer"), w, r, js)
 	}
-
 	topic, err := c.Topics.Get(tid)
 	if err == sql.ErrNoRows {
 		return c.PreErrorJSQ("The topic you tried to edit doesn't exist.", w, r, js)
@@ -715,15 +703,15 @@ func DeleteTopicSubmit(w http.ResponseWriter, r *http.Request, user *c.User) c.R
 	return nil
 }
 
-func StickTopicSubmit(w http.ResponseWriter, r *http.Request, user *c.User, stid string) c.RouteError {
-	topic, lite, rerr := topicActionPre(stid, "pin", w, r, user)
+func StickTopicSubmit(w http.ResponseWriter, r *http.Request, u *c.User, stid string) c.RouteError {
+	topic, lite, rerr := topicActionPre(stid, "pin", w, r, u)
 	if rerr != nil {
 		return rerr
 	}
-	if !user.Perms.ViewTopic || !user.Perms.PinTopic {
-		return c.NoPermissions(w, r, user)
+	if !u.Perms.ViewTopic || !u.Perms.PinTopic {
+		return c.NoPermissions(w, r, u)
 	}
-	return topicActionPost(topic.Stick(), "stick", w, r, lite, topic, user)
+	return topicActionPost(topic.Stick(), "stick", w, r, lite, topic, u)
 }
 
 func topicActionPre(stid, action string, w http.ResponseWriter, r *http.Request, u *c.User) (*c.Topic, *c.HeaderLite, c.RouteError) {
@@ -856,7 +844,6 @@ func MoveTopicSubmit(w http.ResponseWriter, r *http.Request, user *c.User, sfid 
 	if err != nil {
 		return c.PreErrorJS(phrases.GetErrorPhrase("id_must_be_integer"), w, r)
 	}
-
 	// TODO: Move this to some sort of middleware
 	var tids []int
 	if r.Body == nil {
