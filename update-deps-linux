@@ -17,4 +17,10 @@ GO111MODULE="auto"
 } || {
 	echo "Defaulting to bundled generated easyjson file"
 }
+
+echo "Building the query generator"
+go build -ldflags="-s -w" -o QGen "./cmd/query_gen"
+echo "Running the query generator"
+./QGen
+
 go get
