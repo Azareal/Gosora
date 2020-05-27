@@ -18,9 +18,9 @@ GO111MODULE="auto"
 	echo "Defaulting to bundled generated easyjson file"
 }
 
-echo "Building the query generator"
-go build -ldflags="-s -w" -o QGen "./cmd/query_gen"
-echo "Running the query generator"
-./QGen
+echo "Building the hook stub generator"
+go build -ldflags="-s -w" -o HookStubGen "./cmd/hook_stub_gen"
+echo "Running the hook stub generator"
+./HookStubGen
 
 go get
