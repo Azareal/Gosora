@@ -10,9 +10,6 @@ rm -f ./common/gen_extend.go
 echo "Generating the dynamic code"
 go generate
 
-echo "Generating the JSON handlers"
-easyjson -pkg common
-
 echo "Building the router generator"
 go build -ldflags="-s -w" -o RouterGen "./router_gen"
 echo "Running the router generator"
@@ -27,6 +24,9 @@ echo "Building the hook generator"
 go build -tags hookgen -ldflags="-s -w" -o HookGen "./cmd/hook_gen"
 echo "Running the hook generator"
 ./HookGen
+
+echo "Generating the JSON handlers"
+easyjson -pkg common
 
 echo "Building Gosora"
 go build -ldflags="-s -w" -o Gosora
