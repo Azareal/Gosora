@@ -25,16 +25,16 @@ go build -tags hookgen -ldflags="-s -w" -o HookGen "./cmd/hook_gen"
 echo "Running the hook generator"
 ./HookGen
 
+echo "Building the query generator"
+go build -ldflags="-s -w" -o QueryGen "./cmd/query_gen"
+echo "Running the query generator"
+./QueryGen
+
 echo "Generating the JSON handlers"
 easyjson -pkg common
 
 echo "Building Gosora"
 go build -ldflags="-s -w" -o Gosora
-
-echo "Building the query generator"
-go build -ldflags="-s -w" -o QueryGen "./cmd/query_gen"
-echo "Running the query generator"
-./QueryGen
 
 echo "Building the templates"
 ./Gosora -build-templates
