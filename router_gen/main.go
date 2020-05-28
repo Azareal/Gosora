@@ -258,6 +258,7 @@ func main() {
 		"duckduckgo",
 		"seznambot",
 		"discord",
+		"telegram",
 		"twitter",
 		"facebook",
 		"cloudflare",
@@ -281,6 +282,7 @@ func main() {
 		"cocolyze",
 		"babbar",
 		"surdotly",
+		"domcop",
 		"netcraft",
 		"blexbot",
 		"burf",
@@ -289,6 +291,7 @@ func main() {
 		"ccbot",
 		"zgrab",
 		"cloudsystemnetworks",
+		"maui",
 		"curl",
 		"python",
 		"go",
@@ -337,6 +340,7 @@ func main() {
 		"Slackbot",
 		"Slack",
 		"Discordbot",
+		"TelegramBot",
 		"Twitterbot",
 		"facebookexternalhit",
 		"Facebot",
@@ -355,6 +359,7 @@ func main() {
 		"Cocolyzebot",
 		"Barkrowler",
 		"SurdotlyBot",
+		"DomCopBot",
 		"NetcraftSurveyAgent",
 		"BLEXBot",
 		"Burf",
@@ -363,6 +368,7 @@ func main() {
 		"CCBot",
 		"zgrab",
 		"Nimbostratus",
+		"MauiBot",
 		"curl",
 		"python",
 		"Go",
@@ -406,6 +412,7 @@ func main() {
 		"Slackbot":            "slackbot",
 		"Slack":               "slackbot",
 		"Discordbot":          "discord",
+		"TelegramBot":          "telegram",
 		"Twitterbot":          "twitter",
 		"facebookexternalhit": "facebook",
 		"Facebot":             "facebook",
@@ -424,14 +431,17 @@ func main() {
 		"Cocolyzebot":         "cocolyze",
 		"Barkrowler":          "babbar",
 		"SurdotlyBot":         "surdotly",
+		"DomCopBot":"domcop",
 		"NetcraftSurveyAgent": "netcraft",
 		"BLEXBot":             "blexbot",
 		"Burf":                "burf",
 		"AspiegelBot":         "aspiegel",
+		"PetalBot":         "aspiegel",
 		"RU_Bot":              "mail_ru", // Mail.RU_Bot
 		"CCBot":               "ccbot",
 		"zgrab":               "zgrab",
 		"Nimbostratus":        "cloudsystemnetworks",
+		"MauiBot":"maui",
 		"curl":                "curl",
 		"python":              "python",
 		"Go":                  "go",
@@ -477,29 +487,29 @@ var RouteMap = map[string]interface{}{ {{range .AllRouteNames}}
 }
 
 // ! NEVER RELY ON THESE REMAINING THE SAME BETWEEN COMMITS
-var routeMapEnum = map[string]int{ {{range $index, $element := .AllRouteNames}}
-	"{{$element.Plain}}": {{$index}},{{end}}
+var routeMapEnum = map[string]int{ {{range $index, $el := .AllRouteNames}}
+	"{{$el.Plain}}": {{$index}},{{end}}
 }
-var reverseRouteMapEnum = map[int]string{ {{range $index, $element := .AllRouteNames}}
-	{{$index}}: "{{$element.Plain}}",{{end}}
+var reverseRouteMapEnum = map[int]string{ {{range $index, $el := .AllRouteNames}}
+	{{$index}}: "{{$el.Plain}}",{{end}}
 }
-var osMapEnum = map[string]int{ {{range $index, $element := .AllOSNames}}
-	"{{$element}}": {{$index}},{{end}}
+var osMapEnum = map[string]int{ {{range $index, $el := .AllOSNames}}
+	"{{$el}}": {{$index}},{{end}}
 }
-var reverseOSMapEnum = map[int]string{ {{range $index, $element := .AllOSNames}}
-	{{$index}}: "{{$element}}",{{end}}
+var reverseOSMapEnum = map[int]string{ {{range $index, $el := .AllOSNames}}
+	{{$index}}: "{{$el}}",{{end}}
 }
-var agentMapEnum = map[string]int{ {{range $index, $element := .AllAgentNames}}
-	"{{$element}}": {{$index}},{{end}}
+var agentMapEnum = map[string]int{ {{range $index, $el := .AllAgentNames}}
+	"{{$el}}": {{$index}},{{end}}
 }
-var reverseAgentMapEnum = map[int]string{ {{range $index, $element := .AllAgentNames}}
-	{{$index}}: "{{$element}}",{{end}}
+var reverseAgentMapEnum = map[int]string{ {{range $index, $el := .AllAgentNames}}
+	{{$index}}: "{{$el}}",{{end}}
 }
-var markToAgent = map[string]string{ {{range $index, $element := .AllAgentMarkNames}}
-	"{{$element}}": "{{index $.AllAgentMarks $element}}",{{end}}
+var markToAgent = map[string]string{ {{range $index, $el := .AllAgentMarkNames}}
+	"{{$el}}": "{{index $.AllAgentMarks $el}}",{{end}}
 }
-var markToID = map[string]int{ {{range $index, $element := .AllAgentMarkNames}}
-	"{{$element}}": {{index $.AllAgentMarkIDs $element}},{{end}}
+var markToID = map[string]int{ {{range $index, $el := .AllAgentMarkNames}}
+	"{{$el}}": {{index $.AllAgentMarkIDs $el}},{{end}}
 }
 /*var agentRank = map[string]int{
 	"opera":9,
@@ -569,11 +579,10 @@ func NewGenRouter(uploads http.Handler) (*GenRouter, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	return &GenRouter{
-		UploadHandler: func(w http.ResponseWriter, req *http.Request) {
+		UploadHandler: func(w http.ResponseWriter, r *http.Request) {
 			writ := NewWriterIntercept(w)
-			http.StripPrefix("/uploads/",uploads).ServeHTTP(writ,req)
+			http.StripPrefix("/uploads/",uploads).ServeHTTP(writ,r)
 		},
 		extraRoutes: make(map[string]func(http.ResponseWriter, *http.Request, *c.User) c.RouteError),
 		requestLogger: log.New(f, "", log.LstdFlags),
