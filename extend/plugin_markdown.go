@@ -29,8 +29,6 @@ func init() {
 }
 
 func InitMarkdown(pl *c.Plugin) error {
-	pl.AddHook("parse_assign", MarkdownParse)
-
 	markdownUnclosedElement = []byte("<red>[Unclosed Element]</red>")
 
 	markdownBoldTagOpen = []byte("<b>")
@@ -47,6 +45,8 @@ func InitMarkdown(pl *c.Plugin) error {
 	markdownSpoilerTagClose = []byte("</spoiler>")
 	markdownH1TagOpen = []byte("<h2>")
 	markdownH1TagClose = []byte("</h2>")
+
+	pl.AddHook("parse_assign", MarkdownParse)
 	return nil
 }
 
@@ -73,7 +73,7 @@ func _markdownParse(msg string, n int) string {
 	var outbytes []byte
 	var lastElement int
 	breaking := false
-	//c.DebugLogf("Initial Message: %+v\n", strings.Replace(msg, "\r", "\\r", -1))
+	//c.DebugLogf("Initial Msg: %+v\n", strings.Replace(msg, "\r", "\\r", -1))
 
 	for index := 0; index < len(msg); index++ {
 		simpleMatch := func(char byte, o []byte, c []byte) {
@@ -136,6 +136,13 @@ func _markdownParse(msg string, n int) string {
 			index--
 		}
 
+		uniqueWord := func(i int) bool {
+			if i == 0 {
+				return true
+			}
+			return msg[i-1] <= 32
+		}
+
 		switch msg[index] {
 		// TODO: Do something slightly less hacky for skipping URLs
 		case '/':
@@ -146,6 +153,9 @@ func _markdownParse(msg string, n int) string {
 				continue
 			}
 		case '_':
+			if !uniqueWord(index) {
+				break
+			}
 			simpleMatch('_', markdownUnderlineTagOpen, markdownUnderlineTagClose)
 			if breaking {
 				break
