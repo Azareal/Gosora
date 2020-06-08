@@ -29,16 +29,16 @@ func init() {
 
 var maxAgeYear = "max-age=" + strconv.Itoa(int(c.Year))
 
-func ShowAttachment(w http.ResponseWriter, r *http.Request, user *c.User, filename string) c.RouteError {
+func ShowAttachment(w http.ResponseWriter, r *http.Request, u *c.User, filename string) c.RouteError {
 	filename = c.Stripslashes(filename)
 	ext := filepath.Ext("./attachs/" + filename)
 	if !c.AllowedFileExts.Contains(strings.TrimPrefix(ext, ".")) {
-		return c.LocalError("Bad extension", w, r, user)
+		return c.LocalError("Bad extension", w, r, u)
 	}
 
 	sid, err := strconv.Atoi(r.FormValue("sid"))
 	if err != nil {
-		return c.LocalError("The sid is not an integer", w, r, user)
+		return c.LocalError("The sid is not an integer", w, r, u)
 	}
 	sectionTable := r.FormValue("stype")
 
@@ -52,22 +52,22 @@ func ShowAttachment(w http.ResponseWriter, r *http.Request, user *c.User, filena
 	}
 
 	if sectionTable == "forums" {
-		_, ferr := c.SimpleForumUserCheck(w, r, user, sid)
+		_, ferr := c.SimpleForumUserCheck(w, r, u, sid)
 		if ferr != nil {
 			return ferr
 		}
-		if !user.Perms.ViewTopic {
-			return c.NoPermissions(w, r, user)
+		if !u.Perms.ViewTopic {
+			return c.NoPermissions(w, r, u)
 		}
 	} else {
-		return c.LocalError("Unknown section", w, r, user)
+		return c.LocalError("Unknown section", w, r, u)
 	}
 
 	if originTable != "topics" && originTable != "replies" {
-		return c.LocalError("Unknown origin", w, r, user)
+		return c.LocalError("Unknown origin", w, r, u)
 	}
 
-	if !user.Loggedin {
+	if !u.Loggedin {
 		w.Header().Set("Cache-Control", maxAgeYear)
 	} else {
 		guest := c.GuestUser

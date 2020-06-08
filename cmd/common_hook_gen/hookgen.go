@@ -53,6 +53,10 @@ func AddHooks(add func(name, params, ret, htype string, multiHook, skip bool, de
 	}
 	//hookskip("forums_frow_assign","f *Forum")
 	hookskip("topic_create_frow_assign","f *Forum")
+	hookss := func(name string) {
+		add(name,"d string","string","Sshooks",true,false,"","d")
+	}
+	hookss("topic_ogdesc_assign")
 }
 
 func Write(hookVars HookVars) {

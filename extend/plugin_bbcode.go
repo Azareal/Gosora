@@ -31,8 +31,6 @@ func init() {
 }
 
 func InitBbcode(pl *c.Plugin) error {
-	pl.AddHook("parse_assign", BbcodeFullParse)
-
 	bbcodeInvalidNumber = []byte("<red>[Invalid Number]</red>")
 	bbcodeNoNegative = []byte("<red>[No Negative Numbers]</red>")
 	bbcodeMissingTag = []byte("<red>[Missing Tag]</red>")
@@ -50,11 +48,23 @@ func InitBbcode(pl *c.Plugin) error {
 	bbcodeSpoiler = regexp.MustCompile(`\[spoiler\](.*)\[/spoiler\]`)
 
 	bbcodeRandom = rand.New(rand.NewSource(time.Now().UnixNano()))
+
+	pl.AddHook("parse_assign", BbcodeFullParse)
+	pl.AddHook("topic_ogdesc_assign", BbcodeStripTags)
 	return nil
 }
 
 func deactivateBbcode(pl *c.Plugin) {
 	pl.RemoveHook("parse_assign", BbcodeFullParse)
+	pl.RemoveHook("topic_ogdesc_assign", BbcodeStripTags)
+}
+
+func BbcodeStripTags(msg string) string {
+	msg = bbcodeBold.ReplaceAllString(msg, "$1")
+	msg = bbcodeItalic.ReplaceAllString(msg, "$1")
+	msg = bbcodeUnderline.ReplaceAllString(msg, "$1")
+	msg = bbcodeStrike.ReplaceAllString(msg, "$1")
+	return msg
 }
 
 func BbcodeRegexParse(msg string) string {

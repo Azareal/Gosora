@@ -10,8 +10,8 @@ import (
 	c "github.com/Azareal/Gosora/common"
 )
 
-func Backups(w http.ResponseWriter, r *http.Request, user *c.User, backupURL string) c.RouteError {
-	basePage, ferr := buildBasePage(w, r, user, "backups", "backups")
+func Backups(w http.ResponseWriter, r *http.Request, u *c.User, backupURL string) c.RouteError {
+	basePage, ferr := buildBasePage(w, r, u, "backups", "backups")
 	if ferr != nil {
 		return ferr
 	}
@@ -42,7 +42,7 @@ func Backups(w http.ResponseWriter, r *http.Request, user *c.User, backupURL str
 		}
 		// TODO: Fix the problem where non-existent files aren't greeted with custom 404s on ServeFile()'s side
 		http.ServeFile(w, r, "./backups/"+backupURL)
-		err = c.AdminLogs.Create("download", 0, "backup", user.GetIP(), user.ID)
+		err = c.AdminLogs.Create("download", 0, "backup", u.GetIP(), u.ID)
 		if err != nil {
 			return c.InternalError(err, w, r)
 		}

@@ -23,7 +23,7 @@ import (
 	"golang.org/x/image/tiff"
 
 	c "github.com/Azareal/Gosora/common"
-	"github.com/Azareal/Gosora/common/counters"
+	co "github.com/Azareal/Gosora/common/counters"
 	"github.com/Azareal/Gosora/common/phrases"
 	qgen "github.com/Azareal/Gosora/query_gen"
 )
@@ -44,11 +44,11 @@ func init() {
 	})
 }
 
-func ViewTopic(w http.ResponseWriter, r *http.Request, user *c.User, header *c.Header, urlBit string) c.RouteError {
+func ViewTopic(w http.ResponseWriter, r *http.Request, user *c.User, h *c.Header, urlBit string) c.RouteError {
 	page, _ := strconv.Atoi(r.FormValue("page"))
 	_, tid, err := ParseSEOURL(urlBit)
 	if err != nil {
-		return c.SimpleError(phrases.GetErrorPhrase("url_id_must_be_integer"), w, r, header)
+		return c.SimpleError(phrases.GetErrorPhrase("url_id_must_be_integer"), w, r, h)
 	}
 
 	// Get the topic...
@@ -59,16 +59,16 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user *c.User, header *c.H
 		return c.InternalError(err, w, r)
 	}
 
-	ferr := c.ForumUserCheck(header, w, r, user, topic.ParentID)
+	ferr := c.ForumUserCheck(h, w, r, user, topic.ParentID)
 	if ferr != nil {
 		return ferr
 	}
 	if !user.Perms.ViewTopic {
 		return c.NoPermissions(w, r, user)
 	}
-	header.Title = topic.Title
-	header.Path = topic.Link
-	//header.Path = c.BuildTopicURL(c.NameToSlug(topic.Title), topic.ID)
+	h.Title = topic.Title
+	h.Path = topic.Link
+	//h.Path = c.BuildTopicURL(c.NameToSlug(topic.Title), topic.ID)
 
 	postGroup, err := c.Groups.Get(topic.Group)
 	if err != nil {
@@ -78,10 +78,11 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user *c.User, header *c.H
 	topic.ContentLines = strings.Count(topic.Content, "\n")
 	if !user.Loggedin && user.LastAgent != c.SimpleBots[0] && user.LastAgent != c.SimpleBots[1] {
 		if len(topic.Content) > 200 {
-			header.OGDesc = topic.Content[:197] + "..."
+			h.OGDesc = topic.Content[:197] + "..."
 		} else {
-			header.OGDesc = topic.Content
+			h.OGDesc = topic.Content
 		}
+		h.OGDesc = c.H_topic_ogdesc_assign_hook(h.Hooks, h.OGDesc)
 	}
 
 	var parseSettings *c.ParseSettings
@@ -143,7 +144,7 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user *c.User, header *c.H
 	// Calculate the offset
 	offset, page, lastPage := c.PageOffset(topic.PostCount, page, c.Config.ItemsPerPage)
 	pageList := c.Paginate(page, lastPage, 5)
-	tpage := c.TopicPage{header, nil, topic, forum, poll, c.Paginator{pageList, page, lastPage}}
+	tpage := c.TopicPage{h, nil, topic, forum, poll, c.Paginator{pageList, page, lastPage}}
 
 	// Get the replies if we have any...
 	if topic.PostCount > 0 {
@@ -160,42 +161,42 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user *c.User, header *c.H
 		tpage.ItemList = rlist
 	}
 
-	header.Zone = "view_topic"
-	header.ZoneID = topic.ID
-	header.ZoneData = topic
+	h.Zone = "view_topic"
+	h.ZoneID = topic.ID
+	h.ZoneData = topic
 
 	var rerr c.RouteError
 	tmpl := forum.Tmpl
 	if r.FormValue("i") == "1" {
 		if tpage.Poll != nil {
-			header.AddXRes("chartist/chartist.min.css", "chartist/chartist.min.js")
+			h.AddXRes("chartist/chartist.min.css", "chartist/chartist.min.js")
 		}
 		if tmpl == "" {
-			rerr = renderTemplate("topic_mini", w, r, header, tpage)
+			rerr = renderTemplate("topic_mini", w, r, h, tpage)
 		} else {
 			tmpl = "topic_mini" + tmpl
-			err = renderTemplate3(tmpl, tmpl, w, r, header, tpage)
+			err = renderTemplate3(tmpl, tmpl, w, r, h, tpage)
 			if err != nil {
-				rerr = renderTemplate("topic_mini", w, r, header, tpage)
+				rerr = renderTemplate("topic_mini", w, r, h, tpage)
 			}
 		}
 	} else {
 		if tpage.Poll != nil {
-			header.AddSheet("chartist/chartist.min.css")
-			header.AddScript("chartist/chartist.min.js")
+			h.AddSheet("chartist/chartist.min.css")
+			h.AddScript("chartist/chartist.min.js")
 		}
 		if tmpl == "" {
-			rerr = renderTemplate("topic", w, r, header, tpage)
+			rerr = renderTemplate("topic", w, r, h, tpage)
 		} else {
 			tmpl = "topic_" + tmpl
-			err = renderTemplate3(tmpl, tmpl, w, r, header, tpage)
+			err = renderTemplate3(tmpl, tmpl, w, r, h, tpage)
 			if err != nil {
-				rerr = renderTemplate("topic", w, r, header, tpage)
+				rerr = renderTemplate("topic", w, r, h, tpage)
 			}
 		}
 	}
-	counters.TopicViewCounter.Bump(topic.ID) // TODO: Move this into the router?
-	counters.ForumViewCounter.Bump(topic.ParentID)
+	co.TopicViewCounter.Bump(topic.ID) // TODO: Move this into the router?
+	co.ForumViewCounter.Bump(topic.ParentID)
 	return rerr
 }
 
@@ -394,21 +395,20 @@ func CreateTopicSubmit(w http.ResponseWriter, r *http.Request, u *c.User) c.Rout
 		maxPollOptions := 10
 		pollInputItems := make(map[int]string)
 		for key, values := range r.Form {
+			if !strings.HasPrefix(key, "pollinputitem[") {
+				continue
+			}
+			halves := strings.Split(key, "[")
+			if len(halves) != 2 {
+				return c.LocalError("Malformed pollinputitem", w, r, u)
+			}
+			halves[1] = strings.TrimSuffix(halves[1], "]")
+
+			index, err := strconv.Atoi(halves[1])
+			if err != nil {
+				return c.LocalError("Malformed pollinputitem", w, r, u)
+			}
 			for _, value := range values {
-				if !strings.HasPrefix(key, "pollinputitem[") {
-					continue
-				}
-				halves := strings.Split(key, "[")
-				if len(halves) != 2 {
-					return c.LocalError("Malformed pollinputitem", w, r, u)
-				}
-				halves[1] = strings.TrimSuffix(halves[1], "]")
-
-				index, err := strconv.Atoi(halves[1])
-				if err != nil {
-					return c.LocalError("Malformed pollinputitem", w, r, u)
-				}
-
 				// If there are duplicates, then something has gone horribly wrong, so let's ignore them, this'll likely happen during an attack
 				_, exists := pollInputItems[index]
 				// TODO: Should we use SanitiseBody instead to keep the newlines?
@@ -440,7 +440,6 @@ func CreateTopicSubmit(w http.ResponseWriter, r *http.Request, u *c.User) c.Rout
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
-
 	err = u.IncreasePostStats(c.WordCount(content), true)
 	if err != nil {
 		return c.InternalError(err, w, r)
@@ -454,8 +453,8 @@ func CreateTopicSubmit(w http.ResponseWriter, r *http.Request, u *c.User) c.Rout
 		}
 	}
 
-	counters.PostCounter.Bump()
-	counters.TopicCounter.Bump()
+	co.PostCounter.Bump()
+	co.TopicCounter.Bump()
 	// TODO: Pass more data to this hook?
 	skip, rerr := lite.Hooks.VhookSkippable("action_end_create_topic", tid, u)
 	if skip || rerr != nil {
@@ -634,8 +633,8 @@ func EditTopicSubmit(w http.ResponseWriter, r *http.Request, user *c.User, stid 
 func DeleteTopicSubmit(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
 	// TODO: Move this to some sort of middleware
 	var tids []int
-	js := false
-	if c.ReqIsJson(r) {
+	js := c.ReqIsJson(r)
+	if js {
 		if r.Body == nil {
 			return c.PreErrorJS("No request body", w, r)
 		}
@@ -643,7 +642,6 @@ func DeleteTopicSubmit(w http.ResponseWriter, r *http.Request, user *c.User) c.R
 		if err != nil {
 			return c.PreErrorJS("We weren't able to parse your data", w, r)
 		}
-		js = true
 	} else {
 		tid, err := strconv.Atoi(r.URL.Path[len("/topic/delete/submit/"):])
 		if err != nil {
@@ -679,7 +677,6 @@ func DeleteTopicSubmit(w http.ResponseWriter, r *http.Request, user *c.User) c.R
 		if err != nil {
 			return c.InternalErrorJSQ(err, w, r, js)
 		}
-
 		err = c.ModLogs.Create("delete", tid, "topic", user.GetIP(), user.ID)
 		if err != nil {
 			return c.InternalErrorJSQ(err, w, r, js)
@@ -714,12 +711,16 @@ func StickTopicSubmit(w http.ResponseWriter, r *http.Request, u *c.User, stid st
 	return topicActionPost(topic.Stick(), "stick", w, r, lite, topic, u)
 }
 
+//
+//
+// mark
+//
+//
 func topicActionPre(stid, action string, w http.ResponseWriter, r *http.Request, u *c.User) (*c.Topic, *c.HeaderLite, c.RouteError) {
 	tid, err := strconv.Atoi(stid)
 	if err != nil {
 		return nil, nil, c.PreError(phrases.GetErrorPhrase("id_must_be_integer"), w, r)
 	}
-
 	t, err := c.Topics.Get(tid)
 	if err == sql.ErrNoRows {
 		return nil, nil, c.PreError("The topic you tried to "+action+" doesn't exist.", w, r)
@@ -765,8 +766,8 @@ func UnstickTopicSubmit(w http.ResponseWriter, r *http.Request, u *c.User, stid 
 func LockTopicSubmit(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
 	// TODO: Move this to some sort of middleware
 	var tids []int
-	js := false
-	if c.ReqIsJson(r) {
+	js := c.ReqIsJson(r)
+	if js {
 		if r.Body == nil {
 			return c.PreErrorJS("No request body", w, r)
 		}
@@ -774,7 +775,6 @@ func LockTopicSubmit(w http.ResponseWriter, r *http.Request, user *c.User) c.Rou
 		if err != nil {
 			return c.PreErrorJS("We weren't able to parse your data", w, r)
 		}
-		js = true
 	} else {
 		tid, err := strconv.Atoi(r.URL.Path[len("/topic/lock/submit/"):])
 		if err != nil {
@@ -885,7 +885,6 @@ func MoveTopicSubmit(w http.ResponseWriter, r *http.Request, user *c.User, sfid 
 		if err != nil {
 			return c.InternalErrorJS(err, w, r)
 		}
-
 		// ? - Is there a better way of doing this?
 		err = addTopicAction("move-"+strconv.Itoa(fid), topic, user)
 		if err != nil {
@@ -920,7 +919,6 @@ func LikeTopicSubmit(w http.ResponseWriter, r *http.Request, user *c.User, stid 
 	if err != nil {
 		return c.PreErrorJSQ(phrases.GetErrorPhrase("id_must_be_integer"), w, r, js)
 	}
-
 	topic, err := c.Topics.Get(tid)
 	if err == sql.ErrNoRows {
 		return c.PreErrorJSQ("The requested topic doesn't exist.", w, r, js)

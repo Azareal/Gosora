@@ -10,13 +10,13 @@ import (
 	p "github.com/Azareal/Gosora/common/phrases"
 )
 
-func Settings(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
-	basePage, ferr := buildBasePage(w, r, user, "settings", "settings")
+func Settings(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
+	basePage, ferr := buildBasePage(w, r, u, "settings", "settings")
 	if ferr != nil {
 		return ferr
 	}
-	if !user.Perms.EditSettings {
-		return c.NoPermissions(w, r, user)
+	if !u.Perms.EditSettings {
+		return c.NoPermissions(w, r, u)
 	}
 
 	// TODO: What if the list gets too long? How should we structure this?
@@ -35,7 +35,7 @@ func Settings(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError
 			labels := strings.Split(llist, ",")
 			conv, err := strconv.Atoi(s.Content)
 			if err != nil {
-				return c.LocalError("The setting '"+s.Name+"' can't be converted to an integer", w, r, user)
+				return c.LocalError("The setting '"+s.Name+"' can't be converted to an integer", w, r, u)
 			}
 			s.Content = labels[conv-1]
 			// TODO: Localise this

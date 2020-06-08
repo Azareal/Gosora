@@ -128,6 +128,7 @@ var hookTable = &HookTable{
 	map[string][]func(string) string{
 		"preparse_preassign": nil,
 		"parse_assign":       nil,
+		"topic_ogdesc_assign": nil,
 	},
 	nil,
 	//nil,
