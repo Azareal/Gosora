@@ -3,14 +3,14 @@
 </div>{{flush}}
 <div class="colstack_grid panel_dashboard grid1">
 {{range .Grid1}}
-	<div id="{{.ID}}" class="grid_item {{.Class}}" title="{{.Note}}" style="{{if .TextColour}}color:{{.TextColour}};{{end}}{{if .Background}}background-color:{{.Background}};{{end}}">
+	<div id="{{.ID}}"class="grid_item {{.Class}}"title="{{.Note}}"style="{{if .TextColour}}color:{{.TextColour}};{{end}}{{if .Background}}background-color:{{.Background}};{{end}}">
 		{{if .Href}}<a href="{{.Href}}">{{.Body}}</a>{{else}}<span>{{.Body}}</span>{{end}}
 	</div>
 {{end}}
 </div>{{flush}}
 <div class="colstack_grid panel_dashboard grid2">
 {{range .Grid2}}
-	<div id="{{.ID}}" class="grid_item {{.Class}}" title="{{.Note}}" style="{{if .TextColour}}color:{{.TextColour}};{{end}}{{if .Background}}background-color:{{.Background}};{{end}}">
+	<div id="{{.ID}}"class="grid_item {{.Class}}"title="{{.Note}}"style="{{if .TextColour}}color:{{.TextColour}};{{end}}{{if .Background}}background-color:{{.Background}};{{end}}">
 		{{if .Href}}<a href="{{.Href}}">{{.Body}}</a>{{else}}<span>{{.Body}}</span>{{end}}
 	</div>
 {{end}}

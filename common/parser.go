@@ -44,6 +44,9 @@ var attachOpen = []byte("<a class='attach'href=\"")
 var attachClose = []byte("\"download>Attachment</a>")
 var sidParam = []byte("?sid=")
 var stypeParam = []byte("&amp;stype=")
+var textOpen = []byte("<a class='attach'href=\"")
+var textOpen2 = []byte("\">View</a> / <a class='attach'href=\"")
+var textClose = []byte("\"download>Download</a>")
 var urlPattern = `(?s)([ {1}])((http|https|ftp|mailto)*)(:{??)\/\/([\.a-zA-Z\/]+)([ {1}])`
 var urlReg *regexp.Regexp
 
@@ -713,6 +716,24 @@ func ParseMessage(msg string, sectionID int, sectionType string, settings *Parse
 				case EImage:
 					addImage(media.URL)
 					continue
+				case AText:
+					sb.Write(textOpen)
+					sb.WriteString(media.URL)
+					sb.Write(sidParam)
+					sid := strconv.Itoa(sectionID)
+					sb.WriteString(sid)
+					sb.Write(stypeParam)
+					sb.WriteString(sectionType)
+					sb.Write(textOpen2)
+					sb.WriteString(media.URL)
+					sb.Write(sidParam)
+					sb.WriteString(sid)
+					sb.Write(stypeParam)
+					sb.WriteString(sectionType)
+					sb.Write(textClose)
+					i += urlLen
+					lastItem = i
+					continue
 				case AOther:
 					sb.Write(attachOpen)
 					sb.WriteString(media.URL)
@@ -951,6 +972,7 @@ const (
 	AImage
 	AVideo
 	AAudio
+	AText
 	AOther
 )
 
@@ -1011,6 +1033,8 @@ func parseMediaString(data string, settings *ParseSettings) (media MediaEmbed, o
 				media.Type = AVideo
 			case WebAudioFileExts.Contains(ext):
 				media.Type = AAudio
+			case TextFileExts.Contains(ext):
+				media.Type = AText
 			default:
 				media.Type = AOther
 			}

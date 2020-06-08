@@ -5,11 +5,11 @@
 			<h1>{{lang "ip_search_head"}}</h1>
 		</div>
 	</div>
-	<form action="/users/ips/" method="get" id="ip-search-form"></form>
+	<form action="/users/ips/"method="get"id="ip-search-form"></form>
 	<div class="rowblock ip_search_block">
 		<div class="rowitem passive">
-			<input form="ip-search-form" name="ip" class="ip_search_input" type="search" placeholder="🔍︎"{{if .IP}} value="{{.IP}}"{{end}}>
-			<input form="ip-search-form" class="ip_search_search" type="submit" value="{{lang "ip_search_search_button"}}">
+			<input form="ip-search-form"name="ip"class="ip_search_input"type="search"placeholder="🔍︎"{{if .IP}}value="{{.IP}}"{{end}}>
+			<input form="ip-search-form"class="ip_search_search"type="submit"value="{{lang "ip_search_search_button"}}">
 		</div>
 	</div>
 	{{if .IP}}<div class="rowblock rowlist bgavatars micro_grid{{if .ItemList}} has_items{{end}}">

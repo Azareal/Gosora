@@ -1,10 +1,10 @@
 <div class="colstack_item colstack_head">
 	<div class="rowitem"><h1>{{lang "panel_themes_menus_head"}}</h1></div>
 </div>
-<div id="panel_menus" class="colstack_item rowlist">
+<div id="panel_menus"class="colstack_item rowlist">
 	{{range .ItemList}}
 	<div class="rowitem panel_compactrow editable_parent">
-		<a href="/panel/themes/menus/edit/{{.ID}}" class="editable_block panel_upshift">{{if .Name}}{{.Name}} - {{end}}#{{.ID}}</a>
+		<a href="/panel/themes/menus/edit/{{.ID}}"class="editable_block panel_upshift">{{if .Name}}{{.Name}} - {{end}}#{{.ID}}</a>
 		<a class="panel_compacttext to_right">{{.ItemCount}}{{lang "panel_themes_menus_items_suffix"}}</a>
 	</div>
 	{{end}}

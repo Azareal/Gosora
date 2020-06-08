@@ -82,6 +82,9 @@ var AllowedFileExts = StringList{
 var ImageFileExts = StringList{
 	"png", "jpg", "jpe", "jpeg", "jif", "jfi", "jfif", "svg", "bmp", "gif", "tiff", "tif", "webp", /* "apng", "bpg", */
 }
+var TextFileExts = StringList{
+	"txt", "xml", "json", "yaml", "toml", "ini", "md", "html", "rtf", "js", "py", "rb", "css", "scss", "less", "eqcss", "pcss", "java", "ts", "cs", "c", "cc", "cpp", "cxx", "C", "c++", "h", "hh", "hpp", "hxx", "h++", "rs", "rlib", "htaccess", "gitignore", /*"go","php",*/
+}
 var VideoFileExts = StringList{
 	"mp4", "avi", "ogg", "ogv", "ogx", "wmv", "webm",
 }
