@@ -27,8 +27,8 @@ func (l *MEPairList) Add(msg, expects string) {
 
 func TestBBCodeRender(t *testing.T) {
 	//t.Skip()
-	if err := e.InitBbcode(c.Plugins["bbcode"]); err != nil {
-		t.Fatal(err)
+	if e := e.InitBbcode(c.Plugins["bbcode"]); e != nil {
+		t.Fatal(e)
 	}
 
 	var res string
@@ -74,7 +74,7 @@ func TestBBCodeRender(t *testing.T) {
 	l.Add("-你好-", "-你好-")
 	l.Add("[i]-你好-[/i]", "<i>-你好-</i>") // TODO: More of these Unicode tests? Emoji, Chinese, etc.?
 
-	t.Log("Testing bbcodeFullParse")
+	t.Log("Testing BbcodeFullParse")
 	for _, item := range l.Items {
 		res = e.BbcodeFullParse(item.Msg)
 		if res != item.Expects {
@@ -163,6 +163,23 @@ func TestBBCodeRender(t *testing.T) {
 			t.Error("Expected:", item.Expects)
 		}
 	}*/
+	
+	l = &MEPairList{nil}
+	l.Add("", "")
+	l.Add("ddd", "ddd")
+	l.Add("[b][/b]", "")
+	l.Add("[b]ddd[/b]", "ddd")
+	l.Add("ddd[b]ddd[/b]ddd", "ddddddddd")
+	l.Add("ddd\n[b]ddd[/b]\nddd", "ddd\nddd\nddd")
+	t.Log("Testing BbcodeStripTags")
+	for _, item := range l.Items {
+		res = e.BbcodeStripTags(item.Msg)
+		if res != item.Expects {
+			t.Error("Testing string '" + item.Msg + "'")
+			t.Error("Bad output:", "'"+res+"'")
+			t.Error("Expected:", "'"+item.Expects+"'")
+		}
+	}
 }
 
 func TestMarkdownRender(t *testing.T) {
