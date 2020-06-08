@@ -1078,6 +1078,13 @@ func parseMediaString(data string, settings *ParseSettings) (media MediaEmbed, o
 				media.Body = "<iframe class='postIframe'src='https://www.youtube-nocookie.com/embed/" + video[0] + "'frameborder=0 allowfullscreen></iframe>"
 				return media, true
 			}
+		} else if strings.HasPrefix(host, "www.nicovideo.jp") && strings.HasPrefix(path, "/watch/sm") {
+			vid, err := strconv.ParseInt(strings.TrimPrefix(path, "/watch/sm"), 10, 64)
+			if err == nil {
+				media.Type = ERaw
+				media.Body = "<iframe class='postIframe'src='https://embed.nicovideo.jp/watch/sm"+strconv.FormatInt(vid, 10)+"?jsapi=1&amp;playerId=1'frameborder=0 allowfullscreen></iframe>"
+				return media, true
+			}
 		}
 
 		if lastFrag := pathFrags[len(pathFrags)-1]; lastFrag != "" {
