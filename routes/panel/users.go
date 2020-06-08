@@ -8,8 +8,8 @@ import (
 	c "github.com/Azareal/Gosora/common"
 )
 
-func Users(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
-	basePage, ferr := buildBasePage(w, r, user, "users", "users")
+func Users(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
+	basePage, ferr := buildBasePage(w, r, u, "users", "users")
 	if ferr != nil {
 		return ferr
 	}
@@ -27,27 +27,27 @@ func Users(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "", "", "panel_users", &pi})
 }
 
-func UsersEdit(w http.ResponseWriter, r *http.Request, user *c.User, suid string) c.RouteError {
-	basePage, ferr := buildBasePage(w, r, user, "edit_user", "users")
+func UsersEdit(w http.ResponseWriter, r *http.Request, u *c.User, suid string) c.RouteError {
+	basePage, ferr := buildBasePage(w, r, u, "edit_user", "users")
 	if ferr != nil {
 		return ferr
 	}
-	if !user.Perms.EditUser {
-		return c.NoPermissions(w, r, user)
+	if !u.Perms.EditUser {
+		return c.NoPermissions(w, r, u)
 	}
 
 	uid, err := strconv.Atoi(suid)
 	if err != nil {
-		return c.LocalError("The provided UserID is not a valid number.", w, r, user)
+		return c.LocalError("The provided UserID is not a valid number.", w, r, u)
 	}
 	targetUser, err := c.Users.Get(uid)
 	if err == sql.ErrNoRows {
-		return c.LocalError("The user you're trying to edit doesn't exist.", w, r, user)
+		return c.LocalError("The user you're trying to edit doesn't exist.", w, r, u)
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
-	if targetUser.IsAdmin && !user.IsAdmin {
-		return c.LocalError("Only administrators can edit the account of an administrator.", w, r, user)
+	if targetUser.IsAdmin && !u.IsAdmin {
+		return c.LocalError("Only administrators can edit the account of an administrator.", w, r, u)
 	}
 
 	// ? - Should we stop admins from deleting all the groups? Maybe, protect the group they're currently using?
@@ -58,10 +58,10 @@ func UsersEdit(w http.ResponseWriter, r *http.Request, user *c.User, suid string
 
 	var groupList []*c.Group
 	for _, group := range groups {
-		if !user.Perms.EditUserGroupAdmin && group.IsAdmin {
+		if !u.Perms.EditUserGroupAdmin && group.IsAdmin {
 			continue
 		}
-		if !user.Perms.EditUserGroupSuperMod && group.IsMod {
+		if !u.Perms.EditUserGroupSuperMod && group.IsMod {
 			continue
 		}
 		groupList = append(groupList, group)
@@ -183,31 +183,31 @@ func UsersEditSubmit(w http.ResponseWriter, r *http.Request, user *c.User, suid 
 	return nil
 }
 
-func UsersAvatarSubmit(w http.ResponseWriter, r *http.Request, user *c.User, suid string) c.RouteError {
-	_, ferr := c.SimplePanelUserCheck(w, r, user)
+func UsersAvatarSubmit(w http.ResponseWriter, r *http.Request, u *c.User, suid string) c.RouteError {
+	_, ferr := c.SimplePanelUserCheck(w, r, u)
 	if ferr != nil {
 		return ferr
 	}
 	// TODO: Check the UploadAvatars permission too?
-	if !user.Perms.EditUser {
-		return c.NoPermissions(w, r, user)
+	if !u.Perms.EditUser {
+		return c.NoPermissions(w, r, u)
 	}
 
 	uid, err := strconv.Atoi(suid)
 	if err != nil {
-		return c.LocalError("The provided UserID is not a valid number.", w, r, user)
+		return c.LocalError("The provided UserID is not a valid number.", w, r, u)
 	}
 	targetUser, err := c.Users.Get(uid)
 	if err == sql.ErrNoRows {
-		return c.LocalError("The user you're trying to edit doesn't exist.", w, r, user)
+		return c.LocalError("The user you're trying to edit doesn't exist.", w, r, u)
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
-	if targetUser.IsAdmin && !user.IsAdmin {
-		return c.LocalError("Only administrators can edit the account of other administrators.", w, r, user)
+	if targetUser.IsAdmin && !u.IsAdmin {
+		return c.LocalError("Only administrators can edit the account of other administrators.", w, r, u)
 	}
 
-	ext, ferr := c.UploadAvatar(w, r, user, targetUser.ID)
+	ext, ferr := c.UploadAvatar(w, r, u, targetUser.ID)
 	if ferr != nil {
 		return ferr
 	}
@@ -221,7 +221,7 @@ func UsersAvatarSubmit(w http.ResponseWriter, r *http.Request, user *c.User, sui
 		return c.InternalError(err, w, r)
 	}
 
-	err = c.AdminLogs.Create("edit", targetUser.ID, "user", user.GetIP(), user.ID)
+	err = c.AdminLogs.Create("edit", targetUser.ID, "user", u.GetIP(), u.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -234,34 +234,34 @@ func UsersAvatarSubmit(w http.ResponseWriter, r *http.Request, user *c.User, sui
 	return nil
 }
 
-func UsersAvatarRemoveSubmit(w http.ResponseWriter, r *http.Request, user *c.User, suid string) c.RouteError {
-	_, ferr := c.SimplePanelUserCheck(w, r, user)
+func UsersAvatarRemoveSubmit(w http.ResponseWriter, r *http.Request, u *c.User, suid string) c.RouteError {
+	_, ferr := c.SimplePanelUserCheck(w, r, u)
 	if ferr != nil {
 		return ferr
 	}
-	if !user.Perms.EditUser {
-		return c.NoPermissions(w, r, user)
+	if !u.Perms.EditUser {
+		return c.NoPermissions(w, r, u)
 	}
 
 	uid, err := strconv.Atoi(suid)
 	if err != nil {
-		return c.LocalError("The provided UserID is not a valid number.", w, r, user)
+		return c.LocalError("The provided UserID is not a valid number.", w, r, u)
 	}
 	targetUser, err := c.Users.Get(uid)
 	if err == sql.ErrNoRows {
-		return c.LocalError("The user you're trying to edit doesn't exist.", w, r, user)
+		return c.LocalError("The user you're trying to edit doesn't exist.", w, r, u)
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
-	if targetUser.IsAdmin && !user.IsAdmin {
-		return c.LocalError("Only administrators can edit the account of other administrators.", w, r, user)
+	if targetUser.IsAdmin && !u.IsAdmin {
+		return c.LocalError("Only administrators can edit the account of other administrators.", w, r, u)
 	}
 	ferr = c.ChangeAvatar("", w, r, targetUser)
 	if ferr != nil {
 		return ferr
 	}
 
-	err = c.AdminLogs.Create("edit", targetUser.ID, "user", user.GetIP(), user.ID)
+	err = c.AdminLogs.Create("edit", targetUser.ID, "user", u.GetIP(), u.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}

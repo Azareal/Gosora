@@ -86,8 +86,8 @@ func PollResults(w http.ResponseWriter, r *http.Request, user *c.User, sPollID s
 	defer rows.Close()
 
 	optionList := ""
+	var votes int
 	for rows.Next() {
-		var votes int
 		err := rows.Scan(&votes)
 		if err != nil {
 			return c.InternalError(err, w, r)

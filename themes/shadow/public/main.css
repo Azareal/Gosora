@@ -377,6 +377,12 @@ red {
 .hide_spoil img {
 	content: "   ";
 }
+.attach_box {
+	background-color: #5a5555;
+	background-color: rgb(71,71,76);
+	border-radius: 3px;
+	padding: 16px;
+}
 
 .formrow.real_first_child, .formrow:first-child {
 	margin-top: 8px;

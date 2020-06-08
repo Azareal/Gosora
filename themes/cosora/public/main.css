@@ -1266,6 +1266,13 @@ red {
 .hide_spoil img {
 	content: "   ";
 }
+.attach_box {
+	background-color: #5a5555;
+	background-color: #EFEEEE;
+	border-radius: 3px;
+	padding: 16px;
+	white-space: nowrap;
+}
 
 #ip_search_container .rowlist:not(.has_items) {
 	display: block;
