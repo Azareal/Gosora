@@ -826,6 +826,26 @@ red {
 .staff_post .hide_spoil img {
 	background-color: rgb(240,180,240);
 }
+.attach_box {
+	background-color: #5a5555;
+	background-color: rgb(71,71,76);
+	border-radius: 3px;
+	padding: 16px;
+}
+.attach_box {
+	border: 1px solid hsl(10, 0%, 80%);
+	background: white;
+	padding: 5px;
+	margin: 0px;
+	display: inline-block;
+	width: 100%;
+	margin-top: 8px;
+	margin-bottom: 8px;
+	overflow-wrap: break-word;
+}
+.attach_box:first-child {
+	margin-top: 0px;
+}
 
 blockquote {
 	border: 1px solid hsl(0, 0%, 80%);

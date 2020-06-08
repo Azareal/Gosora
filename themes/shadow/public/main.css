@@ -382,6 +382,7 @@ red {
 	background-color: rgb(71,71,76);
 	border-radius: 3px;
 	padding: 16px;
+	overflow-wrap: break-word;
 }
 
 .formrow.real_first_child, .formrow:first-child {
