@@ -15,6 +15,7 @@ import (
 	"unicode/utf8"
 )
 
+// TODO: Use the template system?
 // TODO: Somehow localise these?
 var SpaceGap = []byte("          ")
 var httpProtBytes = []byte("http://")
@@ -44,9 +45,13 @@ var attachOpen = []byte("<a class='attach'href=\"")
 var attachClose = []byte("\"download>Attachment</a>")
 var sidParam = []byte("?sid=")
 var stypeParam = []byte("&amp;stype=")
-var textOpen = []byte("<a class='attach'href=\"")
-var textOpen2 = []byte("\">View</a> / <a class='attach'href=\"")
-var textClose = []byte("\"download>Download</a>")
+/*var textShortOpen = []byte("<a class='attach'href=\"")
+var textShortOpen2 = []byte("\">View</a> / <a class='attach'href=\"")
+var textShortClose = []byte("\"download>Download</a>")*/
+var textOpen = []byte("<div class='attach_box'><div class='attach_info'>")
+var textOpen2 = []byte("</div><div class='attach_opts'><a class='attach'href=\"")
+var textOpen3 = []byte("\">View</a> / <a class='attach'href=\"")
+var textClose = []byte("\"download>Download</a></div></div>")
 var urlPattern = `(?s)([ {1}])((http|https|ftp|mailto)*)(:{??)\/\/([\.a-zA-Z\/]+)([ {1}])`
 var urlReg *regexp.Regexp
 
@@ -140,6 +145,7 @@ func tryStepBackward(i, step int, runes []rune) (int, bool) {
 }
 
 // TODO: Preparse Markdown and normalize it into HTML?
+// TODO: Use a string builder
 func PreparseMessage(msg string) string {
 	// TODO: Kick this check down a level into SanitiseBody?
 	if !utf8.ValidString(msg) {
@@ -717,7 +723,7 @@ func ParseMessage(msg string, sectionID int, sectionType string, settings *Parse
 					addImage(media.URL)
 					continue
 				case AText:
-					sb.Write(textOpen)
+					/*sb.Write(textOpen)
 					sb.WriteString(media.URL)
 					sb.Write(sidParam)
 					sid := strconv.Itoa(sectionID)
@@ -725,6 +731,25 @@ func ParseMessage(msg string, sectionID int, sectionType string, settings *Parse
 					sb.Write(stypeParam)
 					sb.WriteString(sectionType)
 					sb.Write(textOpen2)
+					sb.WriteString(media.URL)
+					sb.Write(sidParam)
+					sb.WriteString(sid)
+					sb.Write(stypeParam)
+					sb.WriteString(sectionType)
+					sb.Write(textClose)
+					i += urlLen
+					lastItem = i
+					continue*/
+					sb.Write(textOpen)
+					sb.WriteString(media.URL)
+					sb.Write(textOpen2)
+					sb.WriteString(media.URL)
+					sb.Write(sidParam)
+					sid := strconv.Itoa(sectionID)
+					sb.WriteString(sid)
+					sb.Write(stypeParam)
+					sb.WriteString(sectionType)
+					sb.Write(textOpen3)
 					sb.WriteString(media.URL)
 					sb.Write(sidParam)
 					sb.WriteString(sid)

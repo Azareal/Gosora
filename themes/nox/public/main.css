@@ -932,6 +932,11 @@ red {
 .hide_spoil img {
 	content: "   ";
 }
+.attach_box {
+	background-color: #5a5555;
+	border-radius: 3px;
+	padding: 16px;
+}
 .update_buttons {
 	display: flex;
 	background-color: #444444;
