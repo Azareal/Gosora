@@ -44,6 +44,7 @@ type Header struct {
 	GoogSiteVerify string
 	IsoCode        string
 	LooseCSP       bool
+	ExternalMedia bool
 	//StartedAt      time.Time
 	StartedAt int64
 	Elapsed1  string

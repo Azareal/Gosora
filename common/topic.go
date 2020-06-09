@@ -415,8 +415,8 @@ func handleTopicReplies(umap map[int]struct{}, uid, tid int) error {
 	}
 	defer rows.Close()
 
+	var createdBy int
 	for rows.Next() {
-		var createdBy int
 		err := rows.Scan(&createdBy)
 		if err != nil {
 			return err
@@ -705,12 +705,16 @@ func (ru *ReplyUser) Init3(u *User, tu *TopicUser) (group *Group, err error) {
 		switch action {
 		case "lock":
 			ru.ActionIcon = lockai
+			action = "topic.action_topic_lock"
 		case "unlock":
 			ru.ActionIcon = unlockai
+			action = "topic.action_topic_unlock"
 		case "stick":
 			ru.ActionIcon = stickai
+			action = "topic.action_topic_stick"
 		case "unstick":
 			ru.ActionIcon = unstickai
+			action = "topic.action_topic_unstick"
 		case "move":
 			if len(aarr) == 2 {
 				fid, _ := strconv.Atoi(aarr[1])
@@ -725,14 +729,14 @@ func (ru *ReplyUser) Init3(u *User, tu *TopicUser) (group *Group, err error) {
 			ru.ActionType = p.GetTmplPhrasef("topic.action_topic_default", ru.ActionType)
 			return postGroup, nil
 		}
-		ru.ActionType = p.GetTmplPhrasef("topic.action_topic_"+action, ru.UserLink, ru.CreatedByName)
+		ru.ActionType = p.GetTmplPhrasef(action, ru.UserLink, ru.CreatedByName)
 	}
 
 	return postGroup, nil
 }
 
 // TODO: Factor TopicUser into a *Topic and *User, as this starting to become overly complicated x.x
-func (t *TopicUser) Replies(offset int /*pFrag int, */, user *User) (rlist []*ReplyUser /*, ogdesc string*/, err error) {
+func (t *TopicUser) Replies(offset int /*pFrag int, */, user *User) (rlist []*ReplyUser /*, ogdesc string*/, externalHead bool, err error) {
 	var likedMap, attachMap map[int]int
 	var likedQueryList, attachQueryList []int
 
@@ -770,7 +774,7 @@ func (t *TopicUser) Replies(offset int /*pFrag int, */, user *User) (rlist []*Re
 			parseSettings = user.ParseSettings
 		}
 
-		r.ContentHtml = ParseMessage(r.Content, t.ParentID, "forums", parseSettings, user)
+		r.ContentHtml, externalHead = ParseMessage2(r.Content, t.ParentID, "forums", parseSettings, user)
 		// TODO: Do this more efficiently by avoiding the allocations entirely in ParseMessage, if there's nothing to do.
 		if r.ContentHtml == r.Content {
 			r.ContentHtml = r.Content
@@ -803,7 +807,7 @@ func (t *TopicUser) Replies(offset int /*pFrag int, */, user *User) (rlist []*Re
 			parseSettings = user.ParseSettings
 		}
 
-		r.ContentHtml = ParseMessage(r.Content, t.ParentID, "forums", parseSettings, user)
+		r.ContentHtml, externalHead = ParseMessage2(r.Content, t.ParentID, "forums", parseSettings, user)
 		// TODO: Do this more efficiently by avoiding the allocations entirely in ParseMessage, if there's nothing to do.
 		if r.ContentHtml == r.Content {
 			r.ContentHtml = r.Content
@@ -818,19 +822,24 @@ func (t *TopicUser) Replies(offset int /*pFrag int, */, user *User) (rlist []*Re
 		//log.Print("reply cached serve")
 		r := &ReplyUser{ /*ClassName: "", */ Reply: *re, CreatedByName: ruser.Name, UserLink: ruser.Link, Avatar: ruser.Avatar, MicroAvatar: ruser.MicroAvatar /*URLPrefix: ruser.URLPrefix, URLName: ruser.URLName, */, Group: ruser.Group, Level: ruser.Level, Tag: ruser.Tag}
 		if err = rf3(r); err != nil {
-			return nil, err
+			return nil, externalHead, err
 		}
 
 		if r.LikeCount > 0 && user.Liked > 0 {
-			likedMap = map[int]int{r.ID: len(rlist)}
+			likedMap = map[int]int{r.ID: 0}
 			likedQueryList = []int{r.ID}
 		}
 		if user.Perms.EditReply && r.AttachCount > 0 {
-			attachMap = map[int]int{r.ID: len(rlist)}
-			attachQueryList = []int{r.ID}
+			if likedMap == nil {
+				attachMap = map[int]int{r.ID: 0}
+				attachQueryList = []int{r.ID}
+			} else {
+				attachMap = likedMap
+				attachQueryList = likedQueryList
+			}
 		}
 
-		hTbl.VhookNoRet("topic_reply_row_assign", &r)
+		H_topic_reply_row_assign_hook(hTbl, r)
 		// TODO: Use a pointer instead to make it easier to abstract this loop? What impact would this have on escape analysis?
 		rlist = []*ReplyUser{r}
 		//log.Printf("r: %d-%d", r.ID, len(rlist)-1)
@@ -856,7 +865,7 @@ func (t *TopicUser) Replies(offset int /*pFrag int, */, user *User) (rlist []*Re
 				}
 			}
 
-			hTbl.VhookNoRet("topic_reply_row_assign", &r)
+			H_topic_reply_row_assign_hook(hTbl, r)
 			// TODO: Use a pointer instead to make it easier to abstract this loop? What impact would this have on escape analysis?
 			rlist = append(rlist, r)
 			//log.Printf("r: %d-%d", r.ID, len(rlist)-1)
@@ -864,47 +873,47 @@ func (t *TopicUser) Replies(offset int /*pFrag int, */, user *User) (rlist []*Re
 		if !user.Perms.ViewIPs && ruser != nil {
 			rows, err := topicStmts.getReplies3.Query(t.ID, offset, Config.ItemsPerPage)
 			if err != nil {
-				return nil, err
+				return nil, externalHead, err
 			}
 			defer rows.Close()
 			for rows.Next() {
 				r := &ReplyUser{Avatar: ruser.Avatar, MicroAvatar: ruser.MicroAvatar, UserLink: ruser.Link, CreatedByName: ruser.Name, Group: ruser.Group, Level: ruser.Level}
 				err := rows.Scan(&r.ID, &r.Content, &r.CreatedBy, &r.CreatedAt, &r.LastEdit, &r.LastEditBy, &r.LikeCount, &r.AttachCount, &r.ActionType)
 				if err != nil {
-					return nil, err
+					return nil, externalHead, err
 				}
 				if err = rf3(r); err != nil {
-					return nil, err
+					return nil, externalHead, err
 				}
 				rf2(r)
 			}
 			if err = rows.Err(); err != nil {
-				return nil, err
+				return nil, externalHead, err
 			}
 		} else if user.Perms.ViewIPs {
 			rows, err := topicStmts.getReplies.Query(t.ID, offset, Config.ItemsPerPage)
 			if err != nil {
-				return nil, err
+				return nil, externalHead, err
 			}
 			defer rows.Close()
 			for rows.Next() {
 				r := &ReplyUser{}
 				err := rows.Scan(&r.ID, &r.Content, &r.CreatedBy, &r.CreatedAt, &r.LastEdit, &r.LastEditBy, &r.Avatar, &r.CreatedByName, &r.Group /*&r.URLPrefix, &r.URLName,*/, &r.Level, &r.IP, &r.LikeCount, &r.AttachCount, &r.ActionType)
 				if err != nil {
-					return nil, err
+					return nil, externalHead, err
 				}
 				if err = rf(r); err != nil {
-					return nil, err
+					return nil, externalHead, err
 				}
 				rf2(r)
 			}
 			if err = rows.Err(); err != nil {
-				return nil, err
+				return nil, externalHead, err
 			}
 		} else if t.PostCount >= 20 {
 			rows, err := topicStmts.getReplies3.Query(t.ID, offset, Config.ItemsPerPage)
 			if err != nil {
-				return nil, err
+				return nil, externalHead, err
 			}
 			defer rows.Close()
 			reqUserList := make(map[int]bool)
@@ -912,75 +921,110 @@ func (t *TopicUser) Replies(offset int /*pFrag int, */, user *User) (rlist []*Re
 				r := &ReplyUser{}
 				err := rows.Scan(&r.ID, &r.Content, &r.CreatedBy, &r.CreatedAt, &r.LastEdit, &r.LastEditBy /*&r.URLPrefix, &r.URLName,*/, &r.LikeCount, &r.AttachCount, &r.ActionType)
 				if err != nil {
-					return nil, err
+					return nil, externalHead, err
 				}
 				if r.CreatedBy != t.CreatedBy && r.CreatedBy != user.ID {
 					reqUserList[r.CreatedBy] = true
 				}
 			}
 			if err = rows.Err(); err != nil {
-				return nil, err
+				return nil, externalHead, err
 			}
 
-			var userList map[int]*User
-			if len(reqUserList) > 0 {
-				// Convert the user ID map to a slice, then bulk load the users
-				idSlice := make([]int, len(reqUserList))
-				var i int
-				for userID := range reqUserList {
-					idSlice[i] = userID
-					i++
-				}
-				userList, err = Users.BulkGetMap(idSlice)
-				if err != nil {
-					return nil, nil // TODO: Implement this!
-				}
-			}
-
-			for _, r := range rlist {
-				var u *User
-				if r.CreatedBy == t.CreatedBy {
-					r.CreatedByName = t.CreatedByName
-					r.Avatar = t.Avatar
-					r.MicroAvatar = t.MicroAvatar
-					r.Group = t.Group
-					r.Level = t.Level
-				} else {
-					if r.CreatedBy == user.ID {
-						u = user
-					} else {
-						u = userList[r.CreatedBy]
+			if len(reqUserList) == 1 {
+				var uitem *User
+				for uid, _ := range reqUserList {
+					uitem, err = Users.Get(uid)
+					if err != nil {
+						return nil, externalHead, nil // TODO: Implement this!
 					}
-					r.CreatedByName = u.Name
-					r.Avatar = u.Avatar
-					r.MicroAvatar = u.MicroAvatar
-					r.Group = u.Group
-					r.Level = u.Level
 				}
-				if err = rf(r); err != nil {
-					return nil, err
+				for _, r := range rlist {
+					if r.CreatedBy == t.CreatedBy {
+						r.CreatedByName = t.CreatedByName
+						r.Avatar = t.Avatar
+						r.MicroAvatar = t.MicroAvatar
+						r.Group = t.Group
+						r.Level = t.Level
+					} else {
+						var u *User
+						if r.CreatedBy == user.ID {
+							u = user
+						} else {
+							u = uitem
+						}
+						r.CreatedByName = u.Name
+						r.Avatar = u.Avatar
+						r.MicroAvatar = u.MicroAvatar
+						r.Group = u.Group
+						r.Level = u.Level
+					}
+					if err = rf(r); err != nil {
+						return nil, externalHead, err
+					}
+					rf2(r)
 				}
-				rf2(r)
+			} else {
+				var userList map[int]*User
+				if len(reqUserList) > 0 {
+					// Convert the user ID map to a slice, then bulk load the users
+					idSlice := make([]int, len(reqUserList))
+					var i int
+					for userID := range reqUserList {
+						idSlice[i] = userID
+						i++
+					}
+					userList, err = Users.BulkGetMap(idSlice)
+					if err != nil {
+						return nil, externalHead, nil // TODO: Implement this!
+					}
+				}
+
+				for _, r := range rlist {
+					if r.CreatedBy == t.CreatedBy {
+						r.CreatedByName = t.CreatedByName
+						r.Avatar = t.Avatar
+						r.MicroAvatar = t.MicroAvatar
+						r.Group = t.Group
+						r.Level = t.Level
+					} else {
+						var u *User
+						if r.CreatedBy == user.ID {
+							u = user
+						} else {
+							u = userList[r.CreatedBy]
+						}
+						r.CreatedByName = u.Name
+						r.Avatar = u.Avatar
+						r.MicroAvatar = u.MicroAvatar
+						r.Group = u.Group
+						r.Level = u.Level
+					}
+					if err = rf(r); err != nil {
+						return nil, externalHead, err
+					}
+					rf2(r)
+				}
 			}
 		} else {
 			rows, err := topicStmts.getReplies2.Query(t.ID, offset, Config.ItemsPerPage)
 			if err != nil {
-				return nil, err
+				return nil, externalHead, err
 			}
 			defer rows.Close()
 			for rows.Next() {
 				r := &ReplyUser{}
 				err := rows.Scan(&r.ID, &r.Content, &r.CreatedBy, &r.CreatedAt, &r.LastEdit, &r.LastEditBy, &r.Avatar, &r.CreatedByName, &r.Group /*&r.URLPrefix, &r.URLName,*/, &r.Level, &r.LikeCount, &r.AttachCount, &r.ActionType)
 				if err != nil {
-					return nil, err
+					return nil, externalHead, err
 				}
 				if err = rf(r); err != nil {
-					return nil, err
+					return nil, externalHead, err
 				}
 				rf2(r)
 			}
 			if err = rows.Err(); err != nil {
-				return nil, err
+				return nil, externalHead, err
 			}
 		}
 	}
@@ -989,7 +1033,7 @@ func (t *TopicUser) Replies(offset int /*pFrag int, */, user *User) (rlist []*Re
 	if user.Liked > 0 && len(likedQueryList) > 0 /*&& user.LastLiked <= time.Now()*/ {
 		eids, err := Likes.BulkExists(likedQueryList, user.ID, "replies")
 		if err != nil {
-			return nil, err
+			return nil, externalHead, err
 		}
 		for _, eid := range eids {
 			rlist[likedMap[eid]].Liked = true
@@ -1000,7 +1044,7 @@ func (t *TopicUser) Replies(offset int /*pFrag int, */, user *User) (rlist []*Re
 		//log.Printf("attachQueryList: %+v\n", attachQueryList)
 		amap, err := Attachments.BulkMiniGetList("replies", attachQueryList)
 		if err != nil && err != sql.ErrNoRows {
-			return nil, err
+			return nil, externalHead, err
 		}
 		//log.Printf("amap: %+v\n", amap)
 		//log.Printf("attachMap: %+v\n", attachMap)
@@ -1015,7 +1059,7 @@ func (t *TopicUser) Replies(offset int /*pFrag int, */, user *User) (rlist []*Re
 
 	//hTbl.VhookNoRet("topic_reply_end", &rlist)
 
-	return rlist, nil
+	return rlist, externalHead, nil
 }
 
 // TODO: Test this

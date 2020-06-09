@@ -483,10 +483,15 @@ func (ps *ParseSettings) CopyPtr() *ParseSettings {
 	return n
 }
 
+func ParseMessage(msg string, sectionID int, sectionType string, settings *ParseSettings, user *User) string {
+	msg, _ = ParseMessage2(msg,sectionID,sectionType,settings,user)
+	return msg
+}
+
 // TODO: Write a test for this
 // TODO: We need a lot more hooks here. E.g. To add custom media types and handlers.
 // TODO: Use templates to reduce the amount of boilerplate?
-func ParseMessage(msg string, sectionID int, sectionType string, settings *ParseSettings, user *User) string {
+func ParseMessage2(msg string, sectionID int, sectionType string, settings *ParseSettings, user *User) (string,bool) {
 	if settings == nil {
 		settings = DefaultParseSettings
 	}
@@ -510,7 +515,7 @@ func ParseMessage(msg string, sectionID int, sectionType string, settings *Parse
 	wordFilters, err := WordFilters.GetAll()
 	if err != nil {
 		LogError(err)
-		return ""
+		return "", false
 	}
 	for _, f := range wordFilters {
 		msg = strings.Replace(msg, f.Find, f.Replace, -1)
@@ -519,13 +524,14 @@ func ParseMessage(msg string, sectionID int, sectionType string, settings *Parse
 	if len(msg) < 2 {
 		msg = strings.Replace(msg, "\n", "<br>", -1)
 		msg = GetHookTable().Sshook("parse_assign", msg)
-		return msg
+		return msg, false
 	}
 
 	// Search for URLs, mentions and hashlinks in the messages...
 	var sb strings.Builder
 	lastItem := 0
 	i := 0
+	var externalHead bool
 	//var c bool
 	//fmt.Println("msg:", "'"+msg+"'")
 	for ; len(msg) > i; i++ {
@@ -775,6 +781,12 @@ func ParseMessage(msg string, sectionID int, sectionType string, settings *Parse
 					i += urlLen
 					lastItem = i
 					continue
+				case ERawExternal:
+					sb.WriteString(media.Body)
+					i += urlLen
+					lastItem = i
+					externalHead = true
+					continue
 				case ENone:
 					// Do nothing
 				// TODO: Add support for media plugins
@@ -820,7 +832,7 @@ func ParseMessage(msg string, sectionID int, sectionType string, settings *Parse
 
 	msg = strings.Replace(msg, "\n", "<br>", -1)
 	msg = GetHookTable().Sshook("parse_assign", msg)
-	return msg
+	return msg, externalHead
 }
 
 // 6, 7, 8, 6, 2, 7
@@ -993,6 +1005,7 @@ type MediaEmbed struct {
 const (
 	ENone = iota
 	ERaw
+	ERawExternal
 	EImage
 	AImage
 	AVideo
@@ -1073,7 +1086,7 @@ func parseMediaString(data string, settings *ParseSettings) (media MediaEmbed, o
 		if strings.HasSuffix(host, ".youtube.com") && path == "/watch" {
 			video, ok := query["v"]
 			if ok && len(video) >= 1 && video[0] != "" {
-				media.Type = ERaw
+				media.Type = ERawExternal
 				// TODO: Filter the URL to make sure no nasties end up in there
 				media.Body = "<iframe class='postIframe'src='https://www.youtube-nocookie.com/embed/" + video[0] + "'frameborder=0 allowfullscreen></iframe>"
 				return media, true
@@ -1081,7 +1094,7 @@ func parseMediaString(data string, settings *ParseSettings) (media MediaEmbed, o
 		} else if strings.HasPrefix(host, "www.nicovideo.jp") && strings.HasPrefix(path, "/watch/sm") {
 			vid, err := strconv.ParseInt(strings.TrimPrefix(path, "/watch/sm"), 10, 64)
 			if err == nil {
-				media.Type = ERaw
+				media.Type = ERawExternal
 				media.Body = "<iframe class='postIframe'src='https://embed.nicovideo.jp/watch/sm"+strconv.FormatInt(vid, 10)+"?jsapi=1&amp;playerId=1'frameborder=0 allowfullscreen></iframe>"
 				return media, true
 			}

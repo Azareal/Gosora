@@ -94,7 +94,7 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user *c.User, h *c.Header
 	}
 
 	// TODO: Cache ContentHTML when possible?
-	topic.ContentHTML = c.ParseMessage(topic.Content, topic.ParentID, "forums", parseSettings, user)
+	topic.ContentHTML, h.ExternalMedia = c.ParseMessage2(topic.Content, topic.ParentID, "forums", parseSettings, user)
 	// TODO: Do this more efficiently by avoiding the allocations entirely in ParseMessage, if there's nothing to do.
 	if topic.ContentHTML == topic.Content {
 		topic.ContentHTML = topic.Content
@@ -152,13 +152,16 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user *c.User, h *c.Header
 		if strings.HasPrefix(r.URL.Fragment, "post-") {
 			pFrag, _ = strconv.Atoi(strings.TrimPrefix(r.URL.Fragment, "post-"))
 		}*/
-		rlist, err := topic.Replies(offset /* pFrag,*/, user)
+		rlist, externalHead, err := topic.Replies(offset /* pFrag,*/, user)
 		if err == sql.ErrNoRows {
 			return c.LocalError("Bad Page. Some of the posts may have been deleted or you got here by directly typing in the page number.", w, r, user)
 		} else if err != nil {
 			return c.InternalError(err, w, r)
 		}
 		tpage.ItemList = rlist
+		if externalHead {
+			h.ExternalMedia = true
+		}
 	}
 
 	h.Zone = "view_topic"
