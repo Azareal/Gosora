@@ -1271,7 +1271,7 @@ red {
 	background-color: #EFEEEE;
 	border-radius: 3px;
 	padding: 16px;
-	white-space: nowrap;
+	overflow-wrap: break-word;
 }
 
 #ip_search_container .rowlist:not(.has_items) {
@@ -1693,6 +1693,10 @@ red {
 @media(min-width: 721px) {
 	.hide_on_big {
 		display: none;
+	}
+	.postIframe {
+		min-width: 400px;
+		min-height: 200px;
 	}
 }
 
