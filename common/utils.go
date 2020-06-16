@@ -341,7 +341,7 @@ func NameToSlug(name string) (slug string) {
 func HasSuspiciousEmail(email string) bool {
 	lowEmail := strings.ToLower(email)
 	// TODO: Use a more flexible blacklist, perhaps with a similar mechanism to the HTML tag registration system in PreparseMessage()
-	if strings.Contains(lowEmail, "casino") || strings.Contains(lowEmail, "viagra") || strings.Contains(lowEmail, "pharma") || strings.Contains(lowEmail, "pill") {
+	if !strings.Contains(lowEmail,"@") || strings.Contains(lowEmail, "casino") || strings.Contains(lowEmail, "viagra") || strings.Contains(lowEmail, "pharma") || strings.Contains(lowEmail, "pill") {
 		return true
 	}
 
@@ -436,6 +436,19 @@ func WeakPassword(password, username, email string) error {
 		return errors.New("You don't have enough unique characters in your password")
 	}
 	return nil
+}
+
+// TODO: Write a test for this
+func CanonEmail(email string) string {
+	email = strings.ToLower(email)
+	
+	// Gmail emails are equivalent without the dots
+	espl := strings.Split(email, "@")
+	if len(espl) >= 2 && espl[1] == "gmail.com" {
+		return strings.Replace(espl[0],".","",-1) + "@" + espl[1]
+	}
+
+	return email
 }
 
 // TODO: Write a test for this
