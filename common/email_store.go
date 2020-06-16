@@ -73,6 +73,7 @@ func (s *DefaultEmailStore) GetEmailsByUser(user *User) (emails []Email, err err
 }
 
 func (s *DefaultEmailStore) Add(uid int, email, token string) error {
+	email = CanonEmail(SanitiseSingleLine(email))
 	_, err := s.add.Exec(uid, email, 0, token)
 	return err
 }
@@ -83,6 +84,7 @@ func (s *DefaultEmailStore) Delete(uid int, email string) error {
 }
 
 func (s *DefaultEmailStore) VerifyEmail(email string) error {
+	email = CanonEmail(SanitiseSingleLine(email))
 	_, err := s.verifyEmail.Exec(email)
 	return err
 }

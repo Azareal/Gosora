@@ -139,7 +139,7 @@ func UsersEditSubmit(w http.ResponseWriter, r *http.Request, user *c.User, suid 
 		return c.LocalError("You need the EditUserGroupSuperMod permission to assign someone to a super mod group.", w, r, user)
 	}
 
-	err = targetUser.Update(newName, newEmail, newGroup)
+	err = targetUser.Update(newName, c.CanonEmail(newEmail), newGroup)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}

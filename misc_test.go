@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"strings"
 	"database/sql"
 	"fmt"
 	"io/ioutil"
@@ -1996,6 +1997,32 @@ func TestWidgets(t *testing.T) {
 	recordMustNotExist(t, err, "There shouldn't be any widgets anymore")
 	widgets = c.Docks.RightSidebar.Items
 	expect(t, len(widgets) == 0, fmt.Sprintf("RightSidebar should have 0 items, not %d", len(widgets)))
+}
+
+func TestUtils(t *testing.T) {
+	email := "test@example.com"
+	cemail := c.CanonEmail(email)
+	expect(t,cemail==email,fmt.Sprintf("%s should be %s", cemail, email))
+	email = "test.test@example.com"
+	cemail = c.CanonEmail(email)
+	expect(t,cemail==email,fmt.Sprintf("%s should be %s", cemail, email))
+
+	email = "test.test@gmail.com"
+	eemail := "testtest@gmail.com"
+	cemail = c.CanonEmail(email)
+	expect(t,cemail==eemail,fmt.Sprintf("%s should be %s", cemail, eemail))
+
+	email = "TEST.test@gmail.com"
+	eemail = "testtest@gmail.com"
+	cemail = c.CanonEmail(email)
+	expect(t,cemail==eemail,fmt.Sprintf("%s should be %s", cemail, eemail))
+
+	email = "TEST.test@example.com"
+	lowEmail := strings.ToLower(email)
+	cemail = c.CanonEmail(email)
+	expect(t,cemail==lowEmail,fmt.Sprintf("%s should be %s", cemail, lowEmail))
+	
+	// TODO: More utils.go tests
 }
 
 func TestAuth(t *testing.T) {

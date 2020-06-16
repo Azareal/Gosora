@@ -31,25 +31,25 @@ func AccountLogin(w http.ResponseWriter, r *http.Request, u *c.User, h *c.Header
 // TODO: Log failed attempted logins?
 // TODO: Lock IPS out if they have too many failed attempts?
 // TODO: Log unusual countries in comparison to the country a user usually logs in from? Alert the user about this?
-func AccountLoginSubmit(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
-	if user.Loggedin {
-		return c.LocalError("You're already logged in.", w, r, user)
+func AccountLoginSubmit(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
+	if u.Loggedin {
+		return c.LocalError("You're already logged in.", w, r, u)
 	}
 
 	name := c.SanitiseSingleLine(r.PostFormValue("username"))
 	uid, err, requiresExtraAuth := c.Auth.Authenticate(name, r.PostFormValue("password"))
 	if err != nil {
 		// TODO: uid is currently set to 0 as authenticate fetches the user by username and password. Get the actual uid, so we can alert the user of attempted logins? What if someone takes advantage of the response times to deduce if an account exists?
-		logItem := &c.LoginLogItem{UID: uid, Success: false, IP: user.GetIP()}
+		logItem := &c.LoginLogItem{UID: uid, Success: false, IP: u.GetIP()}
 		_, ierr := logItem.Create()
 		if ierr != nil {
 			return c.InternalError(ierr, w, r)
 		}
-		return c.LocalError(err.Error(), w, r, user)
+		return c.LocalError(err.Error(), w, r, u)
 	}
 
 	// TODO: Take 2FA into account
-	logItem := &c.LoginLogItem{UID: uid, Success: true, IP: user.GetIP()}
+	logItem := &c.LoginLogItem{UID: uid, Success: true, IP: u.GetIP()}
 	_, err = logItem.Create()
 	if err != nil {
 		return c.InternalError(err, w, r)
@@ -67,31 +67,31 @@ func AccountLoginSubmit(w http.ResponseWriter, r *http.Request, user *c.User) c.
 		return nil
 	}
 
-	return loginSuccess(uid, w, r, user)
+	return loginSuccess(uid, w, r, u)
 }
 
-func loginSuccess(uid int, w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
+func loginSuccess(uid int, w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
 	userPtr, err := c.Users.Get(uid)
 	if err != nil {
-		return c.LocalError("Bad account", w, r, user)
+		return c.LocalError("Bad account", w, r, u)
 	}
-	*user = *userPtr
+	*u = *userPtr
 
 	var session string
-	if user.Session == "" {
+	if u.Session == "" {
 		session, err = c.Auth.CreateSession(uid)
 		if err != nil {
 			return c.InternalError(err, w, r)
 		}
 	} else {
-		session = user.Session
+		session = u.Session
 	}
 
 	c.Auth.SetCookies(w, uid, session)
-	if user.IsAdmin {
+	if u.IsAdmin {
 		// Is this error check redundant? We already check for the error in PreRoute for the same IP
 		// TODO: Should we be logging this?
-		log.Printf("#%d has logged in with IP %s", uid, user.GetIP())
+		log.Printf("#%d has logged in with IP %s", uid, u.GetIP())
 	}
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 	return nil
@@ -295,7 +295,8 @@ func AccountRegisterSubmit(w http.ResponseWriter, r *http.Request, user *c.User)
 		return nil
 	}
 
-	uid, err := c.Users.Create(name, password, email, group, active)
+	canonEmail := c.CanonEmail(email)
+	uid, err := c.Users.Create(name, password, canonEmail, group, active)
 	if err != nil {
 		regLog.Success = false
 		if err == c.ErrAccountExists {
@@ -337,17 +338,17 @@ func AccountRegisterSubmit(w http.ResponseWriter, r *http.Request, user *c.User)
 	c.Auth.SetCookies(w, uid, session)
 
 	// Check if this user actually owns this email, if email activation is on, automatically flip their account to active when the email is validated. Validation is also useful for determining whether this user should receive any alerts, etc. via email
-	if c.Site.EnableEmails && email != "" {
+	if c.Site.EnableEmails && canonEmail != "" {
 		token, err := c.GenerateSafeString(80)
 		if err != nil {
 			return c.InternalError(err, w, r)
 		}
 		// TODO: Add an EmailStore and move this there
-		_, err = qgen.NewAcc().Insert("emails").Columns("email,uid,validated,token").Fields("?,?,?,?").Exec(email, uid, 0, token)
+		_, err = qgen.NewAcc().Insert("emails").Columns("email,uid,validated,token").Fields("?,?,?,?").Exec(canonEmail, uid, 0, token)
 		if err != nil {
 			return c.InternalError(err, w, r)
 		}
-		err = c.SendActivationEmail(name, email, token)
+		err = c.SendActivationEmail(name, canonEmail, token)
 		if err != nil {
 			return c.LocalError(p.GetErrorPhrase("register_email_fail"), w, r, user)
 		}
@@ -401,8 +402,8 @@ func AccountEditPassword(w http.ResponseWriter, r *http.Request, u *c.User, h *c
 }
 
 // TODO: Require re-authentication if the user hasn't logged in in a while
-func AccountEditPasswordSubmit(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
-	_, ferr := c.SimpleUserCheck(w, r, user)
+func AccountEditPasswordSubmit(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
+	_, ferr := c.SimpleUserCheck(w, r, u)
 	if ferr != nil {
 		return ferr
 	}
@@ -413,50 +414,50 @@ func AccountEditPasswordSubmit(w http.ResponseWriter, r *http.Request, user *c.U
 	confirmPassword := r.PostFormValue("confirm-password")
 
 	// TODO: Use a reusable statement
-	err := qgen.NewAcc().Select("users").Columns("password,salt").Where("uid=?").QueryRow(user.ID).Scan(&realPassword, &salt)
+	err := qgen.NewAcc().Select("users").Columns("password,salt").Where("uid=?").QueryRow(u.ID).Scan(&realPassword, &salt)
 	if err == sql.ErrNoRows {
-		return c.LocalError("Your account no longer exists.", w, r, user)
+		return c.LocalError("Your account no longer exists.", w, r, u)
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
 
 	err = c.CheckPassword(realPassword, currentPassword, salt)
 	if err == c.ErrMismatchedHashAndPassword {
-		return c.LocalError("That's not the correct password.", w, r, user)
+		return c.LocalError("That's not the correct password.", w, r, u)
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
 	if newPassword != confirmPassword {
-		return c.LocalError("The two passwords don't match.", w, r, user)
+		return c.LocalError("The two passwords don't match.", w, r, u)
 	}
-	c.SetPassword(user.ID, newPassword) // TODO: Limited version of WeakPassword()
+	c.SetPassword(u.ID, newPassword) // TODO: Limited version of WeakPassword()
 
 	// Log the user out as a safety precaution
-	c.Auth.ForceLogout(user.ID)
+	c.Auth.ForceLogout(u.ID)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 	return nil
 }
 
-func AccountEditAvatarSubmit(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
-	_, ferr := c.SimpleUserCheck(w, r, user)
+func AccountEditAvatarSubmit(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
+	_, ferr := c.SimpleUserCheck(w, r, u)
 	if ferr != nil {
 		return ferr
 	}
-	if !user.Perms.UploadAvatars {
-		return c.NoPermissions(w, r, user)
+	if !u.Perms.UploadAvatars {
+		return c.NoPermissions(w, r, u)
 	}
 
-	ext, ferr := c.UploadAvatar(w, r, user, user.ID)
+	ext, ferr := c.UploadAvatar(w, r, u, u.ID)
 	if ferr != nil {
 		return ferr
 	}
-	ferr = c.ChangeAvatar("."+ext, w, r, user)
+	ferr = c.ChangeAvatar("."+ext, w, r, u)
 	if ferr != nil {
 		return ferr
 	}
 
 	// TODO: Only schedule a resize if the avatar isn't tiny
-	err := user.ScheduleAvatarResize()
+	err := u.ScheduleAvatarResize()
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -464,13 +465,13 @@ func AccountEditAvatarSubmit(w http.ResponseWriter, r *http.Request, user *c.Use
 	return nil
 }
 
-func AccountEditRevokeAvatarSubmit(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
-	_, ferr := c.SimpleUserCheck(w, r, user)
+func AccountEditRevokeAvatarSubmit(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
+	_, ferr := c.SimpleUserCheck(w, r, u)
 	if ferr != nil {
 		return ferr
 	}
 
-	ferr = c.ChangeAvatar("", w, r, user)
+	ferr = c.ChangeAvatar("", w, r, u)
 	if ferr != nil {
 		return ferr
 	}
@@ -517,17 +518,17 @@ func AccountEditMFASetup(w http.ResponseWriter, r *http.Request, u *c.User, h *c
 	accountEditHead("account_mfa_setup", w, r, u, h)
 
 	// Flash an error if mfa is already setup
-	_, err := c.MFAstore.Get(u.ID)
-	if err != sql.ErrNoRows && err != nil {
-		return c.InternalError(err, w, r)
-	} else if err != sql.ErrNoRows {
+	_, e := c.MFAstore.Get(u.ID)
+	if e != sql.ErrNoRows && e != nil {
+		return c.InternalError(e, w, r)
+	} else if e != sql.ErrNoRows {
 		return c.LocalError("You have already setup two-factor authentication", w, r, u)
 	}
 
 	// TODO: Entitise this?
-	code, err := c.GenerateGAuthSecret()
-	if err != nil {
-		return c.InternalError(err, w, r)
+	code, e := c.GenerateGAuthSecret()
+	if e != nil {
+		return c.InternalError(e, w, r)
 	}
 
 	pi := c.Page{h, tList, c.FriendlyGAuthSecret(code)}
@@ -535,18 +536,18 @@ func AccountEditMFASetup(w http.ResponseWriter, r *http.Request, u *c.User, h *c
 }
 
 // Form should bounce the random mfa secret back and the otp to be verified server-side to reduce the chances of a bug arising on the JS side which makes every code mismatch
-func AccountEditMFASetupSubmit(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
-	_, ferr := c.SimpleUserCheck(w, r, user)
+func AccountEditMFASetupSubmit(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
+	_, ferr := c.SimpleUserCheck(w, r, u)
 	if ferr != nil {
 		return ferr
 	}
 
 	// Flash an error if mfa is already setup
-	_, err := c.MFAstore.Get(user.ID)
+	_, err := c.MFAstore.Get(u.ID)
 	if err != sql.ErrNoRows && err != nil {
 		return c.InternalError(err, w, r)
 	} else if err != sql.ErrNoRows {
-		return c.LocalError("You have already setup two-factor authentication", w, r, user)
+		return c.LocalError("You have already setup two-factor authentication", w, r, u)
 	}
 
 	code := r.PostFormValue("code")
@@ -554,15 +555,15 @@ func AccountEditMFASetupSubmit(w http.ResponseWriter, r *http.Request, user *c.U
 	ok, err := c.VerifyGAuthToken(code, otp)
 	if err != nil {
 		//fmt.Println("err: ", err)
-		return c.LocalError("Something weird happened", w, r, user) // TODO: Log this error?
+		return c.LocalError("Something weird happened", w, r, u) // TODO: Log this error?
 	}
 	// TODO: Use AJAX for this
 	if !ok {
-		return c.LocalError("The token isn't right", w, r, user)
+		return c.LocalError("The token isn't right", w, r, u)
 	}
 
 	// TODO: How should we handle races where a mfa key is already setup? Right now, it's a fairly generic error, maybe try parsing the error message?
-	err = c.MFAstore.Create(code, user.ID)
+	err = c.MFAstore.Create(code, u.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -611,14 +612,13 @@ func AccountEditPrivacySubmit(w http.ResponseWriter, r *http.Request, u *c.User)
 	//headerLite, _ := c.SimpleUserCheck(w, r, u)
 
 	sEnableEmbeds := r.FormValue("enable_embeds")
-	enableEmbeds, err := strconv.Atoi(sEnableEmbeds)
-	if err != nil {
+	enableEmbeds, e := strconv.Atoi(sEnableEmbeds)
+	if e != nil {
 		return c.LocalError("enable_embeds must be 0 or 1", w, r, u)
 	}
 	if sEnableEmbeds != r.FormValue("o_enable_embeds") {
-		err = u.UpdatePrivacy(enableEmbeds)
-		if err != nil {
-			return c.InternalError(err, w, r)
+		if e = u.UpdatePrivacy(enableEmbeds); e != nil {
+			return c.InternalError(e, w, r)
 		}
 	}
 
@@ -650,11 +650,12 @@ func AccountEditEmail(w http.ResponseWriter, r *http.Request, u *c.User, h *c.He
 	return renderTemplate("account", w, r, h, pi)
 }
 
-func AccountEditEmailAddSubmit(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
-	email := r.PostFormValue("email")
-	_, err := c.Emails.Get(user, email)
+func AccountEditEmailAddSubmit(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
+	email := c.SanitiseSingleLine(r.PostFormValue("email"))
+	canonEmail := c.CanonEmail(email)
+	_, err := c.Emails.Get(u, canonEmail)
 	if err == nil {
-		return c.LocalError("You have already added this email.", w, r, user)
+		return c.LocalError("You have already added this email.", w, r, u)
 	} else if err != sql.ErrNoRows && err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -666,14 +667,14 @@ func AccountEditEmailAddSubmit(w http.ResponseWriter, r *http.Request, user *c.U
 			return c.InternalError(err, w, r)
 		}
 	}
-	err = c.Emails.Add(user.ID, email, token)
+	err = c.Emails.Add(u.ID, canonEmail, token)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
 	if c.Site.EnableEmails {
-		err = c.SendValidationEmail(user.Name, email, token)
+		err = c.SendValidationEmail(u.Name, canonEmail, token)
 		if err != nil {
-			return c.LocalError(p.GetErrorPhrase("register_email_fail"), w, r, user)
+			return c.LocalError(p.GetErrorPhrase("register_email_fail"), w, r, u)
 		}
 	}
 
@@ -683,20 +684,21 @@ func AccountEditEmailAddSubmit(w http.ResponseWriter, r *http.Request, user *c.U
 
 func AccountEditEmailRemoveSubmit(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
 	headerLite, _ := c.SimpleUserCheck(w, r, u)
-	email := r.PostFormValue("email")
+	email := c.SanitiseSingleLine(r.PostFormValue("email"))
+	canonEmail := c.CanonEmail(email)
 
 	// Quick and dirty check
-	_, err := c.Emails.Get(u, email)
+	_, err := c.Emails.Get(u, canonEmail)
 	if err == sql.ErrNoRows {
 		return c.LocalError("This email isn't set on this user.", w, r, u)
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
-	if headerLite.Settings["activation_type"] == 2 && u.Email == email {
+	if headerLite.Settings["activation_type"] == 2 && u.Email == canonEmail {
 		return c.LocalError("You can't remove your primary email when mandatory email activation is enabled.", w, r, u)
 	}
 
-	err = c.Emails.Delete(u.ID, email)
+	err = c.Emails.Delete(u.ID, canonEmail)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -804,29 +806,29 @@ func AccountBlocked(w http.ResponseWriter, r *http.Request, user *c.User, h *c.H
 	return renderTemplate("account", w, r, h, pi)
 }
 
-func LevelList(w http.ResponseWriter, r *http.Request, user *c.User, h *c.Header) c.RouteError {
+func LevelList(w http.ResponseWriter, r *http.Request, u *c.User, h *c.Header) c.RouteError {
 	h.Title = p.GetTitlePhrase("account_level_list")
 
 	fScores := c.GetLevels(20)
 	levels := make([]c.LevelListItem, len(fScores))
 	for i, fScore := range fScores {
 		var status string
-		if user.Level > i {
+		if u.Level > i {
 			status = "complete"
-		} else if user.Level < i {
+		} else if u.Level < i {
 			status = "future"
 		} else {
 			status = "inprogress"
 		}
 		iScore := int(math.Ceil(fScore))
-		perc := int(math.Ceil((fScore / float64(user.Score)) * 100))
+		perc := int(math.Ceil((fScore / float64(u.Score)) * 100))
 		levels[i] = c.LevelListItem{i, iScore, status, perc * 2}
 	}
 
 	return renderTemplate("level_list", w, r, h, c.LevelListPage{h, levels[1:]})
 }
 
-func Alerts(w http.ResponseWriter, r *http.Request, user *c.User, h *c.Header) c.RouteError {
+func Alerts(w http.ResponseWriter, r *http.Request, u *c.User, h *c.Header) c.RouteError {
 	return nil
 }
 
@@ -913,23 +915,23 @@ func AccountPasswordResetSubmit(w http.ResponseWriter, r *http.Request, user *c.
 	return nil
 }
 
-func AccountPasswordResetToken(w http.ResponseWriter, r *http.Request, user *c.User, header *c.Header) c.RouteError {
-	if user.Loggedin {
-		return c.LocalError("You're already logged in.", w, r, user)
+func AccountPasswordResetToken(w http.ResponseWriter, r *http.Request, u *c.User, h *c.Header) c.RouteError {
+	if u.Loggedin {
+		return c.LocalError("You're already logged in.", w, r, u)
 	}
 	// TODO: Find a way to flash this notice
 	/*if r.FormValue("token_verified") == "1" {
-		header.AddNotice("password_reset_token_token_verified")
+		h.AddNotice("password_reset_token_token_verified")
 	}*/
 
 	uid, err := strconv.Atoi(r.FormValue("uid"))
 	if err != nil {
-		return c.LocalError("Invalid uid", w, r, user)
+		return c.LocalError("Invalid uid", w, r, u)
 	}
 	token := r.FormValue("token")
 	err = c.PasswordResetter.ValidateToken(uid, token)
 	if err == sql.ErrNoRows || err == c.ErrBadResetToken {
-		return c.LocalError("This reset token has expired.", w, r, user)
+		return c.LocalError("This reset token has expired.", w, r, u)
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -940,25 +942,25 @@ func AccountPasswordResetToken(w http.ResponseWriter, r *http.Request, user *c.U
 	}
 	mfa := err != sql.ErrNoRows
 
-	header.Title = p.GetTitlePhrase("password_reset_token")
-	return renderTemplate("password_reset_token", w, r, header, c.ResetPage{header, uid, html.EscapeString(token), mfa})
+	h.Title = p.GetTitlePhrase("password_reset_token")
+	return renderTemplate("password_reset_token", w, r, h, c.ResetPage{h, uid, html.EscapeString(token), mfa})
 }
 
-func AccountPasswordResetTokenSubmit(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
-	if user.Loggedin {
-		return c.LocalError("You're already logged in.", w, r, user)
+func AccountPasswordResetTokenSubmit(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
+	if u.Loggedin {
+		return c.LocalError("You're already logged in.", w, r, u)
 	}
 	uid, err := strconv.Atoi(r.FormValue("uid"))
 	if err != nil {
-		return c.LocalError("Invalid uid", w, r, user)
+		return c.LocalError("Invalid uid", w, r, u)
 	}
 	if !c.Users.Exists(uid) {
-		return c.LocalError("This reset token has expired.", w, r, user)
+		return c.LocalError("This reset token has expired.", w, r, u)
 	}
 
 	err = c.PasswordResetter.ValidateToken(uid, r.FormValue("token"))
 	if err == sql.ErrNoRows || err == c.ErrBadResetToken {
-		return c.LocalError("This reset token has expired.", w, r, user)
+		return c.LocalError("This reset token has expired.", w, r, u)
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -966,13 +968,13 @@ func AccountPasswordResetTokenSubmit(w http.ResponseWriter, r *http.Request, use
 	mfaToken := r.PostFormValue("mfa_token")
 	err = c.Auth.ValidateMFAToken(mfaToken, uid)
 	if err != nil && err != c.ErrNoMFAToken {
-		return c.LocalError(err.Error(), w, r, user)
+		return c.LocalError(err.Error(), w, r, u)
 	}
 
 	newPassword := r.PostFormValue("password")
 	confirmPassword := r.PostFormValue("confirm_password")
 	if newPassword != confirmPassword {
-		return c.LocalError("The two passwords don't match.", w, r, user)
+		return c.LocalError("The two passwords don't match.", w, r, u)
 	}
 	c.SetPassword(uid, newPassword) // TODO: Limited version of WeakPassword()
 
