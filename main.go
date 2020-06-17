@@ -159,6 +159,9 @@ func storeInit() (err error) {
 	if err = c.InitEmoji(); err != nil {
 		return errors.WithStack(err)
 	}
+	if err = c.InitWeakPasswords(); err != nil {
+		return errors.WithStack(err)
+	}
 
 	log.Print("Loading the static files.")
 	if err = c.Themes.LoadStaticFiles(); err != nil {

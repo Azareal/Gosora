@@ -4,10 +4,8 @@ import (
 	"bytes"
 	//"fmt"
 	//"log"
-	"encoding/json"
-	"io/ioutil"
+
 	"net/url"
-	"os"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -45,6 +43,7 @@ var attachOpen = []byte("<a class='attach'href=\"")
 var attachClose = []byte("\"download>Attachment</a>")
 var sidParam = []byte("?sid=")
 var stypeParam = []byte("&amp;stype=")
+
 /*var textShortOpen = []byte("<a class='attach'href=\"")
 var textShortOpen2 = []byte("\">View</a> / <a class='attach'href=\"")
 var textShortClose = []byte("\"download>Download</a>")*/
@@ -71,13 +70,8 @@ type emojiHolder struct {
 }
 
 func InitEmoji() error {
-	data, err := ioutil.ReadFile("./config/emoji_default.json")
-	if err != nil {
-		return err
-	}
-
 	var emoji emojiHolder
-	err = json.Unmarshal(data, &emoji)
+	err := unmarshalJsonFile("./config/emoji_default.json", &emoji)
 	if err != nil {
 		return err
 	}
@@ -89,15 +83,8 @@ func InitEmoji() error {
 		}
 	}
 
-	data, err = ioutil.ReadFile("./config/emoji.json")
-	if err == os.ErrPermission || err == os.ErrClosed {
-		return err
-	} else if err != nil {
-		return nil
-	}
-
 	emoji = emojiHolder{}
-	err = json.Unmarshal(data, &emoji)
+	err = unmarshalJsonFileIgnore404("./config/emoji.json", &emoji)
 	if err != nil {
 		return err
 	}
@@ -484,14 +471,14 @@ func (ps *ParseSettings) CopyPtr() *ParseSettings {
 }
 
 func ParseMessage(msg string, sectionID int, sectionType string, settings *ParseSettings, user *User) string {
-	msg, _ = ParseMessage2(msg,sectionID,sectionType,settings,user)
+	msg, _ = ParseMessage2(msg, sectionID, sectionType, settings, user)
 	return msg
 }
 
 // TODO: Write a test for this
 // TODO: We need a lot more hooks here. E.g. To add custom media types and handlers.
 // TODO: Use templates to reduce the amount of boilerplate?
-func ParseMessage2(msg string, sectionID int, sectionType string, settings *ParseSettings, user *User) (string,bool) {
+func ParseMessage2(msg string, sectionID int, sectionType string, settings *ParseSettings, user *User) (string, bool) {
 	if settings == nil {
 		settings = DefaultParseSettings
 	}
@@ -1095,7 +1082,7 @@ func parseMediaString(data string, settings *ParseSettings) (media MediaEmbed, o
 			vid, err := strconv.ParseInt(strings.TrimPrefix(path, "/watch/sm"), 10, 64)
 			if err == nil {
 				media.Type = ERawExternal
-				media.Body = "<iframe class='postIframe'src='https://embed.nicovideo.jp/watch/sm"+strconv.FormatInt(vid, 10)+"?jsapi=1&amp;playerId=1'frameborder=0 allowfullscreen></iframe>"
+				media.Body = "<iframe class='postIframe'src='https://embed.nicovideo.jp/watch/sm" + strconv.FormatInt(vid, 10) + "?jsapi=1&amp;playerId=1'frameborder=0 allowfullscreen></iframe>"
 				return media, true
 			}
 		}

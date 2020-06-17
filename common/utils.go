@@ -10,9 +10,11 @@ import (
 	"crypto/rand"
 	"encoding/base32"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"html"
+	"io/ioutil"
 	"math"
 	"os"
 	"strconv"
@@ -161,11 +163,12 @@ func RelativeTimeBytes(t time.Time, lang int) []byte {
 }
 */
 
-var pMs = 1000;
-var pSec = pMs * 1000;
-var pMin = pSec * 60;
-var pHour = pMin * 60;
-var pDay = pHour * 24;
+var pMs = 1000
+var pSec = pMs * 1000
+var pMin = pSec * 60
+var pHour = pMin * 60
+var pDay = pHour * 24
+
 func ConvertPerfUnit(quan float64) (out float64, unit string) {
 	f := func() (float64, string) {
 		switch {
@@ -185,7 +188,6 @@ func ConvertPerfUnit(quan float64) (out float64, unit string) {
 	out, unit = f()
 	return math.Ceil(out), unit
 }
-
 
 // TODO: Write a test for this
 func ConvertByteUnit(bytes float64) (float64, string) {
@@ -341,7 +343,7 @@ func NameToSlug(name string) (slug string) {
 func HasSuspiciousEmail(email string) bool {
 	lowEmail := strings.ToLower(email)
 	// TODO: Use a more flexible blacklist, perhaps with a similar mechanism to the HTML tag registration system in PreparseMessage()
-	if !strings.Contains(lowEmail,"@") || strings.Contains(lowEmail, "casino") || strings.Contains(lowEmail, "viagra") || strings.Contains(lowEmail, "pharma") || strings.Contains(lowEmail, "pill") {
+	if !strings.Contains(lowEmail, "@") || strings.Contains(lowEmail, "casino") || strings.Contains(lowEmail, "viagra") || strings.Contains(lowEmail, "pharma") || strings.Contains(lowEmail, "pill") {
 		return true
 	}
 
@@ -361,36 +363,113 @@ func HasSuspiciousEmail(email string) bool {
 	return dotCount > 7 || shortBits > 2
 }
 
-var weakPassStrings = []string{"test", "123", "6969", "password", "qwerty", "fuck", "love"}
+func unmarshalJsonFile(name string, in interface{}) error {
+	data, err := ioutil.ReadFile(name)
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(data, in)
+}
+
+func unmarshalJsonFileIgnore404(name string, in interface{}) error {
+	data, err := ioutil.ReadFile(name)
+	if err == os.ErrPermission || err == os.ErrClosed {
+		return err
+	} else if err != nil {
+		return nil
+	}
+	return json.Unmarshal(data, in)
+}
+
+type weakpassHolder struct {
+	Contains []string `json:"contains"`
+	Literal  []string `json:"literal"`
+}
+
+func InitWeakPasswords() error {
+	var weakpass weakpassHolder
+	err := unmarshalJsonFile("./config/weakpass_default.json", &weakpass)
+	if err != nil {
+		return err
+	}
+
+	wcon := make(map[string]struct{})
+	for _, item := range weakpass.Contains {
+		wcon[item] = struct{}{}
+	}
+	for _, item := range weakpass.Literal {
+		weakPassLit[item] = struct{}{}
+	}
+
+	weakpass = weakpassHolder{}
+	err = unmarshalJsonFileIgnore404("./config/weakpass.json", &weakpass)
+	if err != nil {
+		return err
+	}
+
+	for _, item := range weakpass.Contains {
+		wcon[item] = struct{}{}
+	}
+	for _, item := range weakpass.Literal {
+		weakPassLit[item] = struct{}{}
+	}
+	weakPassStrings = make([]string, len(wcon))
+	var i int
+	for pattern, _ := range wcon {
+		weakPassStrings[i] = pattern
+		i++
+	}
+
+	s := "You may not have "
+	for i, passBit := range weakPassStrings {
+		if i > 0 {
+			if i == len(weakPassStrings)-1 {
+				s += " or "
+			} else {
+				s += ", "
+			}
+		}
+		s += "'" + passBit + "'"
+	}
+	ErrWeakPasswordContains = errors.New(s + " in your password")
+
+	return nil
+}
+
+var weakPassStrings []string
+var weakPassLit = make(map[string]struct{})
+var ErrWeakPasswordNone = errors.New("You didn't put in a password.")
+var ErrWeakPasswordShort = errors.New("Your password needs to be at-least eight characters long")
+var ErrWeakPasswordNameInPass = errors.New("You can't use your name in your password.")
+var ErrWeakPasswordEmailInPass = errors.New("You can't use your email in your password.")
+var ErrWeakPasswordCommon = errors.New("You may not use a password that is in common use")
+var ErrWeakPasswordNoNumbers = errors.New("You don't have any numbers in your password")
+var ErrWeakPasswordNoUpper = errors.New("You don't have any uppercase characters in your password")
+var ErrWeakPasswordNoLower = errors.New("You don't have any lowercase characters in your password")
+var ErrWeakPasswordUniqueChars = errors.New("You don't have enough unique characters in your password")
+var ErrWeakPasswordContains error
 
 // TODO: Write a test for this
 func WeakPassword(password, username, email string) error {
 	lowPassword := strings.ToLower(password)
 	switch {
 	case password == "":
-		return errors.New("You didn't put in a password.")
+		return ErrWeakPasswordNone
 	case len(password) < 8:
-		return errors.New("Your password needs to be at-least eight characters long")
-	case strings.Contains(lowPassword, strings.ToLower(username)) && len(username) > 3:
-		return errors.New("You can't use your username in your password.")
-	case email != "" && strings.Contains(lowPassword, strings.ToLower(email)):
-		return errors.New("You can't use your email in your password.")
+		return ErrWeakPasswordShort
+	case len(username) > 3 && strings.Contains(lowPassword, strings.ToLower(username)):
+		return ErrWeakPasswordNameInPass
+	case len(email) > 2 && strings.Contains(lowPassword, strings.ToLower(email)):
+		return ErrWeakPasswordEmailInPass
 	}
 
+	_, ok := weakPassLit[lowPassword]
+	if ok {
+		return ErrWeakPasswordCommon
+	}
 	for _, passBit := range weakPassStrings {
 		if strings.Contains(lowPassword, passBit) {
-			s := "You may not have "
-			for i, passBit := range weakPassStrings {
-				if i > 0 {
-					if i == len(weakPassStrings)-1 {
-						s += " or "
-					} else {
-						s += ", "
-					}
-				}
-				s += "'" + passBit + "'"
-			}
-			return errors.New(s + " in your password")
+			return ErrWeakPasswordContains
 		}
 	}
 
@@ -418,22 +497,22 @@ func WeakPassword(password, username, email string) error {
 		}
 	}
 
-	if numbers == 0 {
-		return errors.New("You don't have any numbers in your password")
-	}
 	if upper == 0 {
-		return errors.New("You don't have any uppercase characters in your password")
+		return ErrWeakPasswordNoUpper
 	}
 	if lower == 0 {
-		return errors.New("You don't have any lowercase characters in your password")
+		return ErrWeakPasswordNoLower
 	}
 	if len(password) < 18 {
+		if numbers == 0 {
+			return ErrWeakPasswordNoNumbers
+		}
 		if (len(password) / 2) > len(charMap) {
-			return errors.New("You don't have enough unique characters in your password")
+			return ErrWeakPasswordUniqueChars
 		}
 	} else if (len(password) / 3) > len(charMap) {
 		// Be a little lenient on the number of unique characters for long passwords
-		return errors.New("You don't have enough unique characters in your password")
+		return ErrWeakPasswordUniqueChars
 	}
 	return nil
 }
@@ -441,11 +520,11 @@ func WeakPassword(password, username, email string) error {
 // TODO: Write a test for this
 func CanonEmail(email string) string {
 	email = strings.ToLower(email)
-	
+
 	// Gmail emails are equivalent without the dots
 	espl := strings.Split(email, "@")
 	if len(espl) >= 2 && espl[1] == "gmail.com" {
-		return strings.Replace(espl[0],".","",-1) + "@" + espl[1]
+		return strings.Replace(espl[0], ".", "", -1) + "@" + espl[1]
 	}
 
 	return email

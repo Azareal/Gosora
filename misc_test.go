@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"strings"
 	"database/sql"
 	"fmt"
 	"io/ioutil"
@@ -10,12 +9,14 @@ import (
 	"os"
 	"runtime/debug"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
 	c "github.com/Azareal/Gosora/common"
 	"github.com/Azareal/Gosora/common/gauth"
 	"github.com/Azareal/Gosora/common/phrases"
+	"github.com/pkg/errors"
 )
 
 func miscinit(t *testing.T) {
@@ -2002,26 +2003,85 @@ func TestWidgets(t *testing.T) {
 func TestUtils(t *testing.T) {
 	email := "test@example.com"
 	cemail := c.CanonEmail(email)
-	expect(t,cemail==email,fmt.Sprintf("%s should be %s", cemail, email))
+	expect(t, cemail == email, fmt.Sprintf("%s should be %s", cemail, email))
 	email = "test.test@example.com"
 	cemail = c.CanonEmail(email)
-	expect(t,cemail==email,fmt.Sprintf("%s should be %s", cemail, email))
+	expect(t, cemail == email, fmt.Sprintf("%s should be %s", cemail, email))
 
 	email = "test.test@gmail.com"
 	eemail := "testtest@gmail.com"
 	cemail = c.CanonEmail(email)
-	expect(t,cemail==eemail,fmt.Sprintf("%s should be %s", cemail, eemail))
+	expect(t, cemail == eemail, fmt.Sprintf("%s should be %s", cemail, eemail))
 
 	email = "TEST.test@gmail.com"
 	eemail = "testtest@gmail.com"
 	cemail = c.CanonEmail(email)
-	expect(t,cemail==eemail,fmt.Sprintf("%s should be %s", cemail, eemail))
+	expect(t, cemail == eemail, fmt.Sprintf("%s should be %s", cemail, eemail))
+
+	email = "test.TEST.test@gmail.com"
+	eemail = "testtesttest@gmail.com"
+	cemail = c.CanonEmail(email)
+	expect(t, cemail == eemail, fmt.Sprintf("%s should be %s", cemail, eemail))
+
+	email = "test..TEST.test@gmail.com"
+	eemail = "testtesttest@gmail.com"
+	cemail = c.CanonEmail(email)
+	expect(t, cemail == eemail, fmt.Sprintf("%s should be %s", cemail, eemail))
 
 	email = "TEST.test@example.com"
 	lowEmail := strings.ToLower(email)
 	cemail = c.CanonEmail(email)
-	expect(t,cemail==lowEmail,fmt.Sprintf("%s should be %s", cemail, lowEmail))
-	
+	expect(t, cemail == lowEmail, fmt.Sprintf("%s should be %s", cemail, lowEmail))
+
+	email = "test.TEST.test@example.com"
+	lowEmail = strings.ToLower(email)
+	cemail = c.CanonEmail(email)
+	expect(t, cemail == lowEmail, fmt.Sprintf("%s should be %s", cemail, lowEmail))
+
+	/*weakPass := func(password, username, email string) func(error,string,...interface{}) {
+		err := c.WeakPassword(password, username, email)
+		return func(expectErr error, m string, p ...interface{}) {
+			m = fmt.Sprintf("pass=%s, user=%s, email=%s ", password, username, email) + m
+			expect(t, err == expectErr, fmt.Sprintf(m,p...))
+		}
+	}*/
+	nilErrStr := func(e error) error {
+		if e == nil {
+			e = errors.New("nil")
+		}
+		return e
+	}
+	weakPass := func(password, username, email string) func(error) {
+		err := c.WeakPassword(password, username, email)
+		e := nilErrStr(err)
+		m := fmt.Sprintf("pass=%s, user=%s, email=%s ", password, username, email)
+		return func(expectErr error) {
+			ee := nilErrStr(expectErr)
+			expect(t, err == expectErr, m+fmt.Sprintf("err should be '%s' not '%s'", ee, e))
+		}
+	}
+
+	//weakPass("test", "test", "test@example.com")(c.ErrWeakPasswordContains,"err should be ErrWeakPasswordContains not '%s'")
+	weakPass("", "draw", "test@example.com")(c.ErrWeakPasswordNone)
+	weakPass("test", "draw", "test@example.com")(c.ErrWeakPasswordShort)
+	weakPass("testtest", "draw", "test@example.com")(c.ErrWeakPasswordContains)
+	weakPass("testdraw", "draw", "test@example.com")(c.ErrWeakPasswordNameInPass)
+	weakPass("test@example.com", "draw", "test@example.com")(c.ErrWeakPasswordEmailInPass)
+	weakPass("meet@example.com2", "draw", "")(c.ErrWeakPasswordNoUpper)
+	weakPass("Meet@example.com2", "draw", "")(nil)
+	weakPass("test2", "draw", "test@example.com")(c.ErrWeakPasswordShort)
+	weakPass("test22222222", "draw", "test@example.com")(c.ErrWeakPasswordContains)
+	weakPass("superman", "draw", "test@example.com")(c.ErrWeakPasswordCommon)
+	weakPass("K\\@<^s}1", "draw", "test@example.com")(nil)
+	weakPass("K\\@<^s}r", "draw", "test@example.com")(c.ErrWeakPasswordNoNumbers)
+	weakPass("k\\@<^s}1", "draw", "test@example.com")(c.ErrWeakPasswordNoUpper)
+	weakPass("aaaaaaaa", "draw", "test@example.com")(c.ErrWeakPasswordNoUpper)
+	weakPass("aA1aA1aA1", "draw", "test@example.com")(c.ErrWeakPasswordUniqueChars)
+	weakPass("abababab", "draw", "test@example.com")(c.ErrWeakPasswordNoUpper)
+	weakPass("11111111111111111111", "draw", "test@example.com")(c.ErrWeakPasswordNoUpper)
+	weakPass("aaaaaaaaaaAAAAAAAAAA", "draw", "test@example.com")(c.ErrWeakPasswordUniqueChars)
+	weakPass("-:u/nMxb,A!n=B;H\\sjM", "draw", "test@example.com")(nil)
+
 	// TODO: More utils.go tests
 }
 
