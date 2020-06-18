@@ -2,6 +2,7 @@ package common
 
 import (
 	"errors"
+	"strconv"
 	"strings"
 	"unicode"
 )
@@ -87,8 +88,15 @@ func WeakPassword(password, username, email string) error {
 	case len(email) > 2 && strings.Contains(lowPassword, strings.ToLower(email)):
 		return ErrWeakPasswordEmailInPass
 	}
+	if len(lowPassword) > 30 {
+		return nil
+	}
 
-	_, ok := weakPassLit[lowPassword]
+	litPass := lowPassword
+	for i := 0; i < 10; i++ {
+		litPass = strings.TrimSuffix(litPass, strconv.Itoa(i))
+	}
+	_, ok := weakPassLit[litPass]
 	if ok {
 		return ErrWeakPasswordCommon
 	}
