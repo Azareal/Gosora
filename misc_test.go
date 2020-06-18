@@ -2038,6 +2038,10 @@ func TestUtils(t *testing.T) {
 	cemail = c.CanonEmail(email)
 	expect(t, cemail == lowEmail, fmt.Sprintf("%s should be %s", cemail, lowEmail))
 
+	// TODO: More utils.go tests
+}
+
+func TestWeakPassword(t *testing.T) {
 	/*weakPass := func(password, username, email string) func(error,string,...interface{}) {
 		err := c.WeakPassword(password, username, email)
 		return func(expectErr error, m string, p ...interface{}) {
@@ -2072,6 +2076,7 @@ func TestUtils(t *testing.T) {
 	weakPass("test2", "draw", "test@example.com")(c.ErrWeakPasswordShort)
 	weakPass("test22222222", "draw", "test@example.com")(c.ErrWeakPasswordContains)
 	weakPass("superman", "draw", "test@example.com")(c.ErrWeakPasswordCommon)
+	weakPass("superman2", "draw", "test@example.com")(c.ErrWeakPasswordNoUpper)
 	weakPass("K\\@<^s}1", "draw", "test@example.com")(nil)
 	weakPass("K\\@<^s}r", "draw", "test@example.com")(c.ErrWeakPasswordNoNumbers)
 	weakPass("k\\@<^s}1", "draw", "test@example.com")(c.ErrWeakPasswordNoUpper)
@@ -2081,8 +2086,6 @@ func TestUtils(t *testing.T) {
 	weakPass("11111111111111111111", "draw", "test@example.com")(c.ErrWeakPasswordNoUpper)
 	weakPass("aaaaaaaaaaAAAAAAAAAA", "draw", "test@example.com")(c.ErrWeakPasswordUniqueChars)
 	weakPass("-:u/nMxb,A!n=B;H\\sjM", "draw", "test@example.com")(nil)
-
-	// TODO: More utils.go tests
 }
 
 func TestAuth(t *testing.T) {
