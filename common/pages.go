@@ -44,7 +44,7 @@ type Header struct {
 	GoogSiteVerify string
 	IsoCode        string
 	LooseCSP       bool
-	ExternalMedia bool
+	ExternalMedia  bool
 	//StartedAt      time.Time
 	StartedAt int64
 	Elapsed1  string
@@ -244,6 +244,12 @@ type IPSearchPage struct {
 	*Header
 	ItemList map[int]*User
 	IP       string
+}
+
+type RegisterPage struct {
+	*Header
+	RequireEmail bool
+	Token string
 }
 
 type Account struct {

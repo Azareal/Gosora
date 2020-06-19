@@ -191,7 +191,16 @@ func AccountRegister(w http.ResponseWriter, r *http.Request, u *c.User, h *c.Hea
 	}
 	h.Title = p.GetTitlePhrase("register")
 	h.AddScriptAsync("register.js")
-	return renderTemplate("register", w, r, h, c.Page{h, tList, h.Settings["activation_type"] != 2})
+
+	var token string
+	if c.Config.DisableJSAntispam {
+		h := sha256.New()
+		h.Write([]byte(c.JSTokenBox.Load().(string)))
+		h.Write([]byte(u.GetIP()))
+		token = hex.EncodeToString(h.Sum(nil))
+	}
+
+	return renderTemplate("register", w, r, h, c.RegisterPage{h, h.Settings["activation_type"] != 2, token})
 }
 
 func isNumeric(data string) (numeric bool) {
@@ -221,12 +230,19 @@ func AccountRegisterSubmit(w http.ResponseWriter, r *http.Request, user *c.User)
 	if r.PostFormValue("tos") != "0" {
 		regError(p.GetErrorPhrase("register_might_be_machine"), "trap-question")
 	}
-	if !c.Config.DisableJSAntispam {
+	
+	{
 		h := sha256.New()
 		h.Write([]byte(c.JSTokenBox.Load().(string)))
 		h.Write([]byte(user.GetIP()))
-		if r.PostFormValue("golden-watch") != hex.EncodeToString(h.Sum(nil)) {
-			regError(p.GetErrorPhrase("register_might_be_machine"), "js-antispam")
+		if !c.Config.DisableJSAntispam {
+			if r.PostFormValue("golden-watch") != hex.EncodeToString(h.Sum(nil)) {
+				regError(p.GetErrorPhrase("register_might_be_machine"), "js-antispam")
+			}
+		} else {
+			if r.PostFormValue("areg") != hex.EncodeToString(h.Sum(nil)) {
+				regError(p.GetErrorPhrase("register_might_be_machine"), "token")
+			}
 		}
 	}
 

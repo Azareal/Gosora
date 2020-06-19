@@ -10,8 +10,8 @@
 				<div class="formitem"><input name="name"type="text"placeholder="{{lang "register_account_name"}}"aria-labelledby="name_label"required></div>
 			</div>
 			<div class="formrow">
-				<div class="formitem formlabel"><a id="email_label">{{if not .Something}}{{lang "register_account_email"}}{{else}}{{lang "register_account_email_optional"}}{{end}}</a></div>
-				<div class="formitem"><input name="email"type="email"placeholder="joe.doe@example.com"aria-labelledby="email_label"{{if not .Something}}required{{end}}></div>
+				<div class="formitem formlabel"><a id="email_label">{{if not .RequireEmail}}{{lang "register_account_email"}}{{else}}{{lang "register_account_email_optional"}}{{end}}</a></div>
+				<div class="formitem"><input name="email"type="email"placeholder="joe.doe@example.com"aria-labelledby="email_label"{{if not .RequireEmail}}required{{end}}></div>
 			</div>
 			<div class="formrow">
 				<div class="formitem formlabel"><a id="password_label">{{lang "register_account_password"}}</a></div>
@@ -31,7 +31,7 @@
 			<div class="formrow register_button_row form_button_row">
 				<div class="formitem"><button name="register-button"class="formbutton">{{lang "register_submit_button"}}</button></div>
 			</div>
-			<input id="golden-watch"name="golden-watch"value="$500"type="hidden">
+			{{if eq .Token ""}}<input id="golden-watch"name="golden-watch"value="$500"type="hidden">{{else}}<input id="areg"name="areg"value="{{.Token}}"type="hidden">{{end}}
 		</form>
 	</div>
 </main>

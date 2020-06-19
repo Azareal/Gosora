@@ -349,7 +349,7 @@ func compileTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName string
 	}
 
 	t.AddStd("login", "c.Page", Page{htitle("Login Page"), tList, nil})
-	t.AddStd("register", "c.Page", Page{htitle("Registration Page"), tList, false})
+	t.AddStd("register", "c.RegisterPage", RegisterPage{htitle("Registration Page"), false,""})
 	t.AddStd("error", "c.ErrorPage", ErrorPage{htitle("Error"), "A problem has occurred in the system."})
 
 	ipSearchPage := IPSearchPage{htitle("IP Search"), map[int]*User{1: user2}, "::1"}
@@ -625,6 +625,7 @@ func getTemplateList(c *tmpl.CTemplateSet, wg *sync.WaitGroup, prefix string) st
 	bodyMap := make(map[string]string) //map[body]fragmentPrefix
 	//tmplMap := make(map[string]map[string]string) // map[tmpl]map[body]fragmentPrefix
 	tmpCount := 0
+	var bsb strings.Builder
 	for _, frag := range c.FragOut {
 		front := frag.TmplName + "_frags[" + strconv.Itoa(frag.Index) + "]"
 		DebugLog("front: ", front)
@@ -637,25 +638,32 @@ func getTemplateList(c *tmpl.CTemplateSet, wg *sync.WaitGroup, prefix string) st
 		fp, ok := bodyMap[frag.Body]
 		if !ok {
 			bodyMap[frag.Body] = front
-			var bits string
+			//var bits string
+			bsb.Reset()
 			DebugLog("encoding f.Body")
 			for _, char := range []byte(frag.Body) {
 				if char == '\'' {
-					bits += "'\\" + string(char) + "',"
+					//bits += "'\\" + string(char) + "',"
+					bsb.WriteString("'\\'',")
 				} else if char < 32 {
-					bits += strconv.Itoa(int(char)) + ","
+					//bits += strconv.Itoa(int(char)) + ","
+					bsb.WriteString(strconv.Itoa(int(char)))
+					bsb.WriteByte(',')
 				} else {
-					bits += "'" + string(char) + "',"
+					//bits += "'" + string(char) + "',"
+					bsb.WriteByte('\'')
+					bsb.WriteString(string(char))
+					bsb.WriteString("',")
 				}
 			}
 			tmpStr := strconv.Itoa(tmpCount)
-			pout += "arr_" + tmpStr + " := [...]byte{" + bits + "}\n"
-			pout += front + " = arr_" + tmpStr + "[:]\n"
+			pout += "arr_" + tmpStr + ":=[...]byte{" + /*bits*/ bsb.String() + "}\n"
+			pout += front + "=arr_" + tmpStr + "[:]\n"
 			tmpCount++
-			//pout += front + " = []byte(`" + frag.Body + "`)\n"
+			//pout += front + "=[]byte(`" + frag.Body + "`)\n"
 		} else {
 			DebugLog("encoding cached index " + fp)
-			pout += front + " = " + fp + "\n"
+			pout += front + "=" + fp + "\n"
 		}
 
 		_, ok = tFragCount[frag.TmplName]
@@ -665,20 +673,42 @@ func getTemplateList(c *tmpl.CTemplateSet, wg *sync.WaitGroup, prefix string) st
 		tFragCount[frag.TmplName]++
 	}
 
-	out := "package " + c.GetConfig().PackageName + "\n\n"
-	getterstr := "\n// nolint\nGetFrag = func(name string) [][]byte {\nswitch(name) {\n"
+	//out := "package " + c.GetConfig().PackageName + "\n\n"
+	var sb strings.Builder
+	sb.Grow(tllenhint)
+	sb.WriteString("package ")
+	sb.WriteString(c.GetConfig().PackageName)
+	sb.WriteString("\n\n")
 	for templateName, count := range tFragCount {
 		//out += "var " + templateName + "_frags = make([][]byte," + strconv.Itoa(count) + ")\n"
-		out += "var " + templateName + "_frags [" + strconv.Itoa(count) + "][]byte\n"
-		getterstr += "\tcase \"" + templateName + "\":\n"
-		//getterstr += "\treturn " + templateName + "_frags\n"
-		getterstr += "\treturn " + templateName + "_frags[:]\n"
+		//out += "var " + templateName + "_frags [" + strconv.Itoa(count) + "][]byte\n"
+		sb.WriteString("var ")
+		sb.WriteString(templateName)
+		sb.WriteString("_frags [")
+		sb.WriteString(strconv.Itoa(count))
+		sb.WriteString("][]byte\n")
 	}
-	getterstr += "}\nreturn nil\n}\n"
-	out += pout + "\n" + getterstr + "}\n"
+	sb.WriteString(pout)
+	sb.WriteString("\n\n// nolint\nGetFrag = func(name string) [][]byte {\nswitch(name) {\n")
+	//getterstr := "\n// nolint\nGetFrag = func(name string) [][]byte {\nswitch(name) {\n"
+	for templateName, _ := range tFragCount {
+		//getterstr += "\tcase \"" + templateName + "\":\n"
+		///getterstr += "\treturn " + templateName + "_frags\n"
+		//getterstr += "\treturn " + templateName + "_frags[:]\n"
+		sb.WriteString("\tcase \"")
+		sb.WriteString(templateName)
+		sb.WriteString("\":\n\treturn ")
+		sb.WriteString(templateName)
+		sb.WriteString("_frags[:]\n")
+	}
+	sb.WriteString("}\nreturn nil\n}\n}\n")
+	//getterstr += "}\nreturn nil\n}\n"
+	//out += pout + "\n" + getterstr + "}\n"
 
-	return out
+	return sb.String()
 }
+
+var tllenhint = len("package \n\n\n// nolint\nGetFrag = func(name string) [][]byte {\nswitch(name) {\nvar _frags [][]byte\n\tcase \"\":\n\treturn _frags[:]\n}\nreturn nil\n}\n\n}\n")
 
 func writeTemplateList(c *tmpl.CTemplateSet, wg *sync.WaitGroup, prefix string) {
 	log.Print("Writing template list")
