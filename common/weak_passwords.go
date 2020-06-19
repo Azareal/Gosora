@@ -75,7 +75,6 @@ func InitWeakPasswords() error {
 	return nil
 }
 
-// TODO: Write a test for this
 func WeakPassword(password, username, email string) error {
 	lowPassword := strings.ToLower(password)
 	switch {

@@ -16,6 +16,8 @@ Plugin which you may not have run into is a category in which plugins can define
 
 An example of what the file might look like: https://github.com/Azareal/Gosora/blob/master/config/config_example.json
 
+Other configuration files: [config/weakpass.json](https://github.com/Azareal/Gosora/blob/master/docs/weak_passwords.md), emoji.json (WIP)
+
 # Site
 
 ShortName - A two or three letter abbreviation of your site's name. Intended for compact spaces where the full name is too long to squeeze in.

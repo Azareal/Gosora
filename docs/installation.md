@@ -9,7 +9,7 @@ To navigate to the folder the software is in at any time in the future, you can 
 
 # Linux Simple Installation
 
-Simple installations are usually recommended for trying out the software rather than for deploying it in production as they are less hardened and have fewer service facilities.
+Simple installations are usually recommended for trying out the software rather than for deploying it in production as they're less hardened and have fewer service facilities.
 
 This might also be fine, if you're using something else as a reverse-proxy (e.g. Nginx or Apache).
 
@@ -40,13 +40,13 @@ Follow the instructions shown on the screen.
 
 You will need administrator privileges on the machine (aka root) to add a service.
 
-First, you will need to jump to the place where you want to put the code, we will use `/home/gosora/src/` here, but if you want to use something else, then you'll have to modify the service file with your own path (but *never* in a folder where the files are automatically served by a webserver).
+First, you will need to jump to the place where you want to put the code, we will use `/home/gosora/src/` here, but if you want to use something else, you'll have to modify the service file with your own path (but *never* in a folder where the files are automatically served by a webserver).
 
-If you place it in `/www/`, `/public_html/` or any similar folder, then there's a chance that your server might be compromised.
+If you place it in `/www/`, `/public_html/` or any similar folder, there's a chance that your server might be compromised.
 
 The following commands will pull the latest copy of Gosora off the Git repository, will create a user account to run Gosora as, will set it as the owner of the files and will start the installation process.
 
-If you're just casually setting up an installation on your own machine which isn't exposed to the internet just to try out Gosora, then you might not need to setup a seperate account for it or do `chmod 2775 logs`.
+If you're casually setting up an installation on your own machine which isn't exposed to the internet just to try out Gosora, you might not need to setup a seperate account for it or do `chmod 2775 logs`.
 
 Please type the following commands into the console and hit enter:
 
@@ -103,17 +103,17 @@ For things like HTTPS, you might also need to [modify your config.json](https://
 
 You can get a free private key and certificate pair from Let's Encrypt or Cloudflare.
 
-If you're using Nginx or something else as a reverse-proxy in-front of Gosora, then you will have to consult their documentation for advice on setting HTTPS. You may also need to enable LoosePort and LooseHost in `config/config.json`.
+If you're using Nginx or something else as a reverse-proxy in-front of Gosora, you will have to consult their documentation for advice on setting HTTPS. You may also need to enable LoosePort and LooseHost in `config/config.json`.
 
-If you're behind a reverse-proxy that terminates the SSL / TLS connection, for instance, if the certificate is setup on there instead of the instance, then you may also want to set the SslSchema config setting to true in `config/config.json` and leave EnableSsl disabled.
+If you're behind a reverse-proxy that terminates the SSL / TLS connection, you may want to set the SslSchema config setting to true in `config/config.json` and leave EnableSsl disabled. An example of this is if the certificate is setup on the reverse-proxy rather than the instance.
 
 
 For email, you will need a SMTP server (either provided by yourself or by a transactional mail provider who specialises in doing so).
 You can setup it up via config.json with the Email setting and the ones starting with SMTP.
 
-It is also possible to send emails without SMTP with the experimental sendmail plugin, however there is a high chance of your emails ending up in the user's spam folder, if it arrives at all.
+It is possible to send emails without SMTP with the experimental sendmail plugin, however there is a high chance of your emails ending up in the user's spam folder, if it arrives at all.
 
-You may also need to open a port in your firewall in order for the outside world to see your instance of Gosora.
+You may need to open a port in your firewall in order for the outside world to see your instance of Gosora.
 
 
 # Advanced Installation
