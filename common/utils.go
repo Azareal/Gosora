@@ -341,6 +341,9 @@ func NameToSlug(name string) (slug string) {
 
 // TODO: Write a test for this
 func HasSuspiciousEmail(email string) bool {
+	if email == "" {
+		return false
+	}
 	lowEmail := strings.ToLower(email)
 	// TODO: Use a more flexible blacklist, perhaps with a similar mechanism to the HTML tag registration system in PreparseMessage()
 	if !strings.Contains(lowEmail, "@") || strings.Contains(lowEmail, "casino") || strings.Contains(lowEmail, "viagra") || strings.Contains(lowEmail, "pharma") || strings.Contains(lowEmail, "pill") {
@@ -381,7 +384,6 @@ func unmarshalJsonFileIgnore404(name string, in interface{}) error {
 	return json.Unmarshal(data, in)
 }
 
-// TODO: Write a test for this
 func CanonEmail(email string) string {
 	email = strings.ToLower(email)
 
