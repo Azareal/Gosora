@@ -4,8 +4,8 @@ require (
 	cloud.google.com/go v0.31.0 // indirect
 	github.com/Azareal/gopsutil v0.0.0-20170716174751-0763ca4e911d
 	github.com/StackExchange/wmi v0.0.0-20180725035823-b12b22c5341f // indirect
-	github.com/andybalholm/brotli v1.0.1-0.20200508234816-e2c5f2109f20
-	github.com/denisenkom/go-mssqldb v0.0.0-20181014144952-4e0d7dc8888f
+	github.com/andybalholm/brotli v1.0.1-0.20200619015827-c3da72aa01ed
+	github.com/denisenkom/go-mssqldb v0.0.0-20200428022330-06a60b6afbbc
 	github.com/fortytw2/leaktest v1.3.0 // indirect
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/go-ole/go-ole v1.2.1 // indirect

@@ -2008,8 +2008,18 @@ func TestUtils(t *testing.T) {
 	cemail = c.CanonEmail(email)
 	expect(t, cemail == email, fmt.Sprintf("%s should be %s", cemail, email))
 
+	email = ""
+	eemail := ""
+	cemail = c.CanonEmail(email)
+	expect(t, cemail == eemail, fmt.Sprintf("%s should be %s", cemail, eemail))
+	
+	email = "ddd"
+	eemail = "ddd"
+	cemail = c.CanonEmail(email)
+	expect(t, cemail == eemail, fmt.Sprintf("%s should be %s", cemail, eemail))
+
 	email = "test.test@gmail.com"
-	eemail := "testtest@gmail.com"
+	eemail = "testtest@gmail.com"
 	cemail = c.CanonEmail(email)
 	expect(t, cemail == eemail, fmt.Sprintf("%s should be %s", cemail, eemail))
 

@@ -100,7 +100,7 @@ var imageExts = ["png","jpg","jpe","jpeg","jif","jfi","jfif","svg","bmp","gif","
 	// Quick Topic / Quick Reply
 	function uploadAttachHandler() {
 		try {
-			uploadFileHandler(this.files, 5, (e,fname) => {
+			uploadFileHandler(this.files,5,(e,fname) => {
 				// TODO: Use client templates here
 				let fileDock = document.getElementById("upload_file_dock");
 				let fileItem = document.createElement("label");
