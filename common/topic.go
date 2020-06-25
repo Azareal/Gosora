@@ -774,7 +774,11 @@ func (t *TopicUser) Replies(offset int /*pFrag int, */, user *User) (rlist []*Re
 			parseSettings = user.ParseSettings
 		}
 
-		r.ContentHtml, externalHead = ParseMessage2(r.Content, t.ParentID, "forums", parseSettings, user)
+		var eh bool
+		r.ContentHtml, eh = ParseMessage2(r.Content, t.ParentID, "forums", parseSettings, user)
+		if eh {
+			externalHead = true
+		}
 		// TODO: Do this more efficiently by avoiding the allocations entirely in ParseMessage, if there's nothing to do.
 		if r.ContentHtml == r.Content {
 			r.ContentHtml = r.Content
@@ -807,7 +811,11 @@ func (t *TopicUser) Replies(offset int /*pFrag int, */, user *User) (rlist []*Re
 			parseSettings = user.ParseSettings
 		}
 
-		r.ContentHtml, externalHead = ParseMessage2(r.Content, t.ParentID, "forums", parseSettings, user)
+		var eh bool
+		r.ContentHtml, eh = ParseMessage2(r.Content, t.ParentID, "forums", parseSettings, user)
+		if eh {
+			externalHead = true
+		}
 		// TODO: Do this more efficiently by avoiding the allocations entirely in ParseMessage, if there's nothing to do.
 		if r.ContentHtml == r.Content {
 			r.ContentHtml = r.Content
