@@ -1037,6 +1037,7 @@ func parseMediaString(data string, settings *ParseSettings) (media MediaEmbed, o
 	media.Trusted = samesite
 
 	path := uurl.EscapedPath()
+	//fmt.Println("path:", path)
 	pathFrags := strings.Split(path, "/")
 	if len(pathFrags) >= 2 {
 		if samesite && pathFrags[1] == "attachs" && (scheme == "http:" || scheme == "https:") {
@@ -1067,22 +1068,90 @@ func parseMediaString(data string, settings *ParseSettings) (media MediaEmbed, o
 		}
 	}
 
+	//fmt.Printf("settings.NoEmbed: %+v\n", settings.NoEmbed)
+	//settings.NoEmbed = false
 	if !settings.NoEmbed {
 		// ? - I don't think this hostname will hit every YT domain
 		// TODO: Make this a more customisable handler rather than hard-coding it in here
+		ytInvalid := func(v string) bool {
+			for _, ch := range v {
+				if !((ch > 47 && ch < 58) || (ch > 64 && ch < 91) || (ch > 96 && ch < 123) || ch == '-' || ch == '_') {
+					var sport string
+					if port != "443" && port != "80" && port != "" {
+						sport = ":" + port
+					}
+					var q string
+					if len(uurl.RawQuery) > 0 {
+						q = "?" + uurl.RawQuery
+					}
+					var frag string
+					if len(uurl.Fragment) > 0 {
+						frag = "#" + uurl.Fragment
+					}
+					media.FURL = host + sport + path + q + frag
+					media.URL = scheme + "//" + media.FURL
+					//fmt.Printf("ytInvalid true: %+v\n",v)
+					return true
+				}
+			}
+			return false
+		}
+		ytInvalid2 := func(t string) bool {
+			for _, ch := range t {
+				if !((ch > 47 && ch < 58) || ch == 'h' || ch =='m' || ch =='s') {
+					//fmt.Printf("ytInvalid2 true: %+v\n",t)
+					return true
+				}
+			}
+			return false
+		}
 		if strings.HasSuffix(host, ".youtube.com") && path == "/watch" {
 			video, ok := query["v"]
 			if ok && len(video) >= 1 && video[0] != "" {
+				v := video[0]
+				if ytInvalid(v) {
+					return media, true
+				}
+				var t,t2 string
+				tt, ok := query["t"]
+				if ok && len(tt) >= 1 {
+					t, t2 = tt[0], tt[0]
+				}
 				media.Type = ERawExternal
-				// TODO: Filter the URL to make sure no nasties end up in there
-				media.Body = "<iframe class='postIframe'src='https://www.youtube-nocookie.com/embed/" + video[0] + "'frameborder=0 allowfullscreen></iframe>"
+				if t != "" && !ytInvalid2(t) {
+					s,m,h := parseDuration(t2)
+					calc := s + (m * 60) + (h * 60 * 60)
+					if calc > 0 {
+						t = "&t="+t
+						t2 = "?start="+strconv.Itoa(calc)
+					} else {
+						t, t2 = "",""
+					}
+				}
+				l := "https://"+ host + path+"?v="+v+t
+				media.Body = "<iframe class='postIframe'src='https://www.youtube-nocookie.com/embed/" + v+t2 + "'frameborder=0 allowfullscreen></iframe><noscript><a href='" + l+"'>"+l+"</a></noscript>"
 				return media, true
 			}
+		} else if host == "youtu.be" {
+			v := strings.TrimPrefix(path,"/")
+			if ytInvalid(v) {
+				return media, true
+			}
+			l := "https://youtu.be/"+v
+			media.Type = ERawExternal
+			media.Body = "<iframe class='postIframe'src='https://www.youtube-nocookie.com/embed/" + v + "'frameborder=0 allowfullscreen></iframe><noscript><a href='" + l+"'>"+l+"</a></noscript>"
+			return media, true
 		} else if strings.HasPrefix(host, "www.nicovideo.jp") && strings.HasPrefix(path, "/watch/sm") {
 			vid, err := strconv.ParseInt(strings.TrimPrefix(path, "/watch/sm"), 10, 64)
 			if err == nil {
+				var sport string
+				if port != "443" && port != "80" && port != "" {
+					sport = ":" + port
+				}
 				media.Type = ERawExternal
-				media.Body = "<iframe class='postIframe'src='https://embed.nicovideo.jp/watch/sm" + strconv.FormatInt(vid, 10) + "?jsapi=1&amp;playerId=1'frameborder=0 allowfullscreen></iframe>"
+				sm := strconv.FormatInt(vid, 10)
+				l := "https://"+ host + sport + path
+				media.Body = "<iframe class='postIframe'src='https://embed.nicovideo.jp/watch/sm" + sm + "?jsapi=1&amp;playerId=1'frameborder=0 allowfullscreen></iframe><noscript><a href='" + l+"'>"+l+"</a></noscript>"
 				return media, true
 			}
 		}
@@ -1121,6 +1190,30 @@ func parseMediaString(data string, settings *ParseSettings) (media MediaEmbed, o
 	media.URL = scheme + "//" + media.FURL
 
 	return media, true
+}
+
+func parseDuration(dur string) (s,m,h int) {
+	var ibuf []byte
+	for _, ch := range dur {
+		switch {
+		case ch > 47 && ch < 58:
+			ibuf = append(ibuf,byte(ch))
+		case ch == 'h':
+			h, _ = strconv.Atoi(string(ibuf))
+			ibuf = ibuf[:0]
+		case ch == 'm':
+			m, _ = strconv.Atoi(string(ibuf))
+			ibuf = ibuf[:0]
+		case ch == 's':
+			s, _ = strconv.Atoi(string(ibuf))
+			ibuf = ibuf[:0]
+		}
+	}
+	// Stop accidental uses of timestamps
+	if h == 0 && m == 0 && s < 2 {
+		s = 0
+	}
+	return s,m,h
 }
 
 // TODO: Write a test for this
