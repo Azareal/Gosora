@@ -634,7 +634,7 @@ func (ru *ReplyUser) Init2() (group *Group, err error) {
 
 	postGroup, err := Groups.Get(ru.Group)
 	if err != nil {
-		return nil, err
+		return postGroup, err
 	}
 	if postGroup.IsMod {
 		ru.ClassName = Config.StaffCSS
@@ -679,7 +679,7 @@ func (ru *ReplyUser) Init3(u *User, tu *TopicUser) (group *Group, err error) {
 
 	postGroup, err := Groups.Get(ru.Group)
 	if err != nil {
-		return nil, err
+		return postGroup, err
 	}
 	if postGroup.IsMod {
 		ru.ClassName = Config.StaffCSS
@@ -760,14 +760,14 @@ func (t *TopicUser) Replies(offset int /*pFrag int, */, user *User) (rlist []*Re
 	hTbl := GetHookTable()
 	rf := func(r *ReplyUser) (err error) {
 		//log.Printf("before r: %+v\n", r)
-		group, err := r.Init3(user, t)
+		postGroup, err := r.Init3(user, t)
 		if err != nil {
 			return err
 		}
 		//log.Printf("after r: %+v\n", r)
 
 		var parseSettings *ParseSettings
-		if !group.Perms.AutoEmbed && (user.ParseSettings == nil || !user.ParseSettings.NoEmbed) {
+		if (Config.NoEmbed || !postGroup.Perms.AutoEmbed) && (user.ParseSettings == nil || !user.ParseSettings.NoEmbed) {
 			parseSettings = DefaultParseSettings.CopyPtr()
 			parseSettings.NoEmbed = true
 		} else {
@@ -798,13 +798,13 @@ func (t *TopicUser) Replies(offset int /*pFrag int, */, user *User) (rlist []*Re
 
 	rf3 := func(r *ReplyUser) error {
 		//log.Printf("before r: %+v\n", r)
-		group, err := r.Init2()
+		postGroup, err := r.Init2()
 		if err != nil {
 			return err
 		}
 
 		var parseSettings *ParseSettings
-		if !group.Perms.AutoEmbed && (user.ParseSettings == nil || !user.ParseSettings.NoEmbed) {
+		if (Config.NoEmbed || !postGroup.Perms.AutoEmbed) && (user.ParseSettings == nil || !user.ParseSettings.NoEmbed) {
 			parseSettings = DefaultParseSettings.CopyPtr()
 			parseSettings.NoEmbed = true
 		} else {

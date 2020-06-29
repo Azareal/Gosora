@@ -86,7 +86,7 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user *c.User, h *c.Header
 	}
 
 	var parseSettings *c.ParseSettings
-	if !postGroup.Perms.AutoEmbed && (user.ParseSettings == nil || !user.ParseSettings.NoEmbed) {
+	if (c.Config.NoEmbed || !postGroup.Perms.AutoEmbed) && (user.ParseSettings == nil || !user.ParseSettings.NoEmbed) {
 		parseSettings = c.DefaultParseSettings.CopyPtr()
 		parseSettings.NoEmbed = true
 	} else {
@@ -226,7 +226,7 @@ func AttachTopicActCommon(w http.ResponseWriter, r *http.Request, u *c.User, sti
 // TODO: Enforce the max request limit on all of this topic's attachments
 // TODO: Test this route
 func AddAttachToTopicSubmit(w http.ResponseWriter, r *http.Request, u *c.User, stid string) c.RouteError {
-	topic, ferr := AttachTopicActCommon(w,r,u,stid)
+	topic, ferr := AttachTopicActCommon(w, r, u, stid)
 	if ferr != nil {
 		return ferr
 	}
@@ -257,7 +257,7 @@ func AddAttachToTopicSubmit(w http.ResponseWriter, r *http.Request, u *c.User, s
 }
 
 func RemoveAttachFromTopicSubmit(w http.ResponseWriter, r *http.Request, u *c.User, stid string) c.RouteError {
-	_, ferr := AttachTopicActCommon(w,r,u,stid)
+	_, ferr := AttachTopicActCommon(w, r, u, stid)
 	if ferr != nil {
 		return ferr
 	}

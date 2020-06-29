@@ -124,7 +124,7 @@ RefNoTrack - This switch disables tracking the referrers of users who click from
 
 RefNoRef - This switch makes it so that if a user clicks on a link, then the incoming site won't know which site they're coming from.
 
-NoEmbed - Avoid expanding links into videos or images. Default: false
+NoEmbed - Don't expand links into videos or images. Default: false
 
 NoAvatar - The default avatar to use for users when they don't have their own. The default for this may change in the near future to better utilise HTTP/2. Example: https://api.adorable.io/avatars/{width}/{id}.png
 
