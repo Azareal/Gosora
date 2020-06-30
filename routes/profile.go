@@ -38,11 +38,8 @@ func ViewProfile(w http.ResponseWriter, r *http.Request, user *c.User, h *c.Head
 	if err != nil {
 		return c.SimpleError(phrases.GetErrorPhrase("url_id_must_be_integer"), w, r, h)
 	}
-
-	// TODO: Preload this?
-	h.AddSheet(h.Theme.Name + "/profile.css")
-	if user.Loggedin {
-		h.AddScriptAsync("profile_member.js")
+	if pid == 0 {
+		return c.NotFound(w, r, h)
 	}
 
 	var puser *c.User
@@ -61,6 +58,11 @@ func ViewProfile(w http.ResponseWriter, r *http.Request, user *c.User, h *c.Head
 	}
 	h.Title = phrases.GetTitlePhrasef("profile", puser.Name)
 	h.Path = c.BuildProfileURL(c.NameToSlug(puser.Name), puser.ID)
+	// TODO: Preload this?
+	h.AddSheet(h.Theme.Name + "/profile.css")
+	if user.Loggedin {
+		h.AddScriptAsync("profile_member.js")
+	}
 
 	// Get the replies..
 	rows, err := profileStmts.getReplies.Query(puser.ID)
