@@ -123,10 +123,14 @@ func (a *MysqlAdapter) CreateTable(name, table, charset, collation string, colum
 				q += ","
 			} else {
 				q += "("
-				for _, column := range strings.Split(key.Columns, ",") {
-					q += "`" + column + "`,"
+				for i, column := range strings.Split(key.Columns, ",") {
+					if i != 0 {
+						q += ",`" + column + "`"
+					} else {
+						q += "`" + column + "`"
+					}
 				}
-				q = q[0:len(q)-1] + "),"
+				q += "),"
 			}
 		}
 	}
@@ -167,9 +171,6 @@ func (a *MysqlAdapter) ChangeColumn(name, table, colName string, col DBTableColu
 }
 
 func (a *MysqlAdapter) SetDefaultColumn(name, table, colName, colType, defaultStr string) (string, error) {
-	if colType == "text" {
-		return "", errors.New("text fields cannot have default values")
-	}
 	if defaultStr == "" {
 		defaultStr = "''"
 	}
@@ -799,10 +800,10 @@ func (a *MysqlAdapter) buildFlexiWhereSb(sb *strings.Builder, where string, date
 			sb.WriteString(dateCutoff.Unit)
 			sb.WriteString(") AND UTC_TIMESTAMP()")
 		case 11:
-			sb.WriteString(" < UTC_TIMESTAMP()-interval ? ")
+			sb.WriteString("<UTC_TIMESTAMP()-interval ? ")
 			sb.WriteString(dateCutoff.Unit)
 		default:
-			sb.WriteString(" < UTC_TIMESTAMP()-interval ")
+			sb.WriteString("<UTC_TIMESTAMP()-interval ")
 			sb.WriteString(strconv.Itoa(dateCutoff.Quantity))
 			sb.WriteRune(' ')
 			sb.WriteString(dateCutoff.Unit)
@@ -864,6 +865,25 @@ func (a *MysqlAdapter) buildOrderby(orderby string) (q string) {
 	return q
 }
 
+func (a *MysqlAdapter) buildOrderbySb(sb *strings.Builder, orderby string) {
+	if len(orderby) != 0 {
+		ord := processOrderby(orderby)
+		sb.Grow(10 + (len(ord) * 8) - 1)
+		sb.WriteString(" ORDER BY ")
+		for i, col := range ord {
+			// TODO: We might want to escape this column
+			if i != 0 {
+				sb.WriteString(",`")
+			} else {
+				sb.WriteString("`")
+			}
+			sb.WriteString(strings.Replace(col.Column, ".", "`.`", -1))
+			sb.WriteString("` ")
+			sb.WriteString(strings.ToUpper(col.Order))
+		}
+	}
+}
+
 func (a *MysqlAdapter) SimpleSelect(name, table, cols, where, orderby, limit string) (string, error) {
 	if table == "" {
 		return "", errors.New("You need a name for this table")
@@ -898,8 +918,8 @@ func (a *MysqlAdapter) SimpleSelect(name, table, cols, where, orderby, limit str
 	if err != nil {
 		return "", err
 	}
-	sb.WriteString(a.buildOrderby(orderby))
-	sb.WriteString(a.buildLimit(limit))
+	a.buildOrderbySb(sb, orderby)
+	a.buildLimitSb(sb, limit)
 
 	q := strings.TrimSpace(sb.String())
 	queryStrPool.Put(sb)
@@ -960,11 +980,8 @@ func (a *MysqlAdapter) complexSelect(preBuilder *selectPrebuilder, sb *strings.B
 		}
 	}
 
-	orderby := a.buildOrderby(preBuilder.orderby)
-	limit := a.buildLimit(preBuilder.limit)
-	sb.Grow(len(orderby) + len(limit))
-	sb.WriteString(orderby)
-	sb.WriteString(limit)
+	a.buildOrderbySb(sb, preBuilder.orderby)
+	a.buildLimitSb(sb, preBuilder.limit)
 	return nil
 }
 
@@ -1143,6 +1160,13 @@ func (a *MysqlAdapter) buildLimit(limit string) (q string) {
 	return q
 }
 
+func (a *MysqlAdapter) buildLimitSb(sb *strings.Builder, limit string) {
+	if limit != "" {
+		sb.WriteString(" LIMIT ")
+		sb.WriteString(limit)
+	}
+}
+
 func (a *MysqlAdapter) buildJoinColumns(cols string) (q string) {
 	for _, col := range processColumns(cols) {
 		// TODO: Move the stirng and number logic to processColumns?
@@ -1208,7 +1232,7 @@ func (a *MysqlAdapter) SimpleCount(name, table, where, limit string) (q string, 
 	if err != nil {
 		return "", err
 	}
-	sb.WriteString(a.buildLimit(limit))
+	a.buildLimitSb(sb, limit)
 
 	q = strings.TrimSpace(sb.String())
 	queryStrPool.Put(sb)
