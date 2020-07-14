@@ -264,8 +264,8 @@ function runWebSockets(resume=false) {
 			let data = "";
 			try {
 				data = JSON.parse(event.data);
-			} catch(err) {
-				console.log(err);
+			} catch(e) {
+				console.log(e);
 				return;
 			}
 
@@ -595,8 +595,7 @@ function mainInit(){
 			that.classList.add("filter_selected");
 			$(".topic_list_title h1").text(that.innerText);
 		}).catch(e => {
-			console.log("Unable to get script '"+url+"&js=1"+"'");
-			console.log("e",e);
+			console.log("Unable to get script '"+url+"&js=1"+"'",e);
 			console.trace();
 		});
 	});
@@ -641,8 +640,7 @@ function mainInit(){
 				rebuildPaginator(data.LastPage);
 				rebindPaginator();
 		}).catch(e => {
-			console.log("Unable to get script '"+url+q+"&js=1"+"'");
-			console.log("e",e);
+			console.log("Unable to get script '"+url+q+"&js=1"+"'",e);
 			console.trace();
 		});
 	});
@@ -658,13 +656,13 @@ function mainInit(){
 		$(".submit_edit").click(function(ev) {
 			ev.preventDefault();
 			let bp = $(this).closest('.editable_parent');
-			let block = bp.find('.editable_block').eq(0);
-			let content = block.find('input').eq(0).val();
-			block.html(content);
+			let bl = bp.find('.editable_block').eq(0);
+			let content = bl.find('input').eq(0).val();
+			bl.html(content);
 
 			let formAction = $(this).closest('a').attr("href");
 			$.ajax({
-				url: formAction + "?s=" + me.User.S,
+				url: formAction+"?s="+me.User.S,
 				type:"POST",
 				dataType:"json",
 				error: ajaxError,
@@ -717,7 +715,7 @@ function mainInit(){
 				var fieldType = this.getAttribute("data-type");
 				if(fieldType=="list") {
 					var newContent = $(this).find('select :selected').text();
-					this.classList.add(fieldName + '_' + newContent);
+					this.classList.add(fieldName+'_'+newContent);
 					this.innerHTML = "";
 				} else if(fieldType=="hidden") {
 					var newContent = $(this).val();
@@ -732,7 +730,7 @@ function mainInit(){
 			let href = $(this).closest('a').attr("href");
 			//console.log("href",href);
 			//console.log(outData);
-			$.ajax({ url: href + "?s=" + me.User.S, type:"POST", dataType:"json", data: outData, error: ajaxError });
+			$.ajax({ url: href+"?s="+me.User.S, type:"POST", dataType:"json", data: outData, error: ajaxError });
 			bp.find('.hide_on_edit').removeClass("edit_opened");
 			bp.find('.show_on_edit').removeClass("edit_opened");
 		});
@@ -864,7 +862,7 @@ function mainInit(){
 		return name.split('?')[0];
 	}
 
-	function loadArb(base,href,h = null) {
+	function loadArb(base,href,h=null) {
 		fetch(href,{credentials:"same-origin"})
 			.then(resp => {
 				if(!resp.ok) throw(href+" failed to load");
@@ -894,7 +892,7 @@ function mainInit(){
 			});
 	}
 
-	$(".rowtopic a,a.rowtopic,a.forum_poster").click(function(ev) {
+	/*$(".rowtopic a,a.rowtopic,a.forum_poster").click(function(ev) {
 		let base = this.getAttribute("href");
 		loadArb(base,base+"?i=1", () => {
 			unbindTopic();
@@ -902,7 +900,7 @@ function mainInit(){
 		});
 		ev.stopPropagation();
 		ev.preventDefault();
-	})
+	})*/
 	$("a").click(function(ev) {
 		let base = this.getAttribute("href");
 		if(base!="/topics/") return;
