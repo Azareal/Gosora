@@ -62,6 +62,12 @@ type User struct {
 	TempGroup int
 
 	ParseSettings *ParseSettings
+	Privacy       UserPrivacy
+}
+
+type UserPrivacy struct {
+	ShowComments int // 0 = default, 1 = public, 2 = registered, 3 = friends, 4 = mods / self
+	AllowMessage int // 0 = default, 1 = registered, 2 = friends, 3 = mods / self
 }
 
 func (u *User) WebSockets() *WsJSONUser {
@@ -191,7 +197,7 @@ func init() {
 			decLiked: acc.Update(u).Set("liked=liked-?").Where(w).Prepare(),
 			//recalcLastLiked: acc...
 			updateLastIP:  acc.SimpleUpdate(u, "last_ip=?", w),
-			updatePrivacy: acc.Update(u).Set("enable_embeds=?").Where(w).Prepare(),
+			updatePrivacy: acc.Update(u).Set("profile_comments=?,enable_embeds=?").Where(w).Prepare(),
 
 			setPassword: acc.Update(u).Set("password=?,salt=?").Where(w).Prepare(),
 
@@ -211,6 +217,10 @@ func init() {
 }
 
 func (u *User) Init() {
+	// TODO: Let admins configure the minimum default?
+	if u.Privacy.ShowComments < 1 {
+		u.Privacy.ShowComments = 1
+	}
 	u.Avatar, u.MicroAvatar = BuildAvatar(u.ID, u.RawAvatar)
 	u.Link = BuildProfileURL(NameToSlug(u.Name), u.ID)
 	u.Tag = Groups.DirtyGet(u.Group).Tag
@@ -554,12 +564,27 @@ func (u *User) UpdateIP(ip string) error {
 	return err
 }
 
-func (u *User) UpdatePrivacy(enableEmbeds int) error {
-	_, err := userStmts.updatePrivacy.Exec(enableEmbeds, u.ID)
+//var ErrMalformedInteger = errors.New("malformed integer")
+var ErrProfileCommentsOutOfBounds = errors.New("profile_comments must be an integer between -1 and 4")
+var ErrEnableEmbedsOutOfBounds = errors.New("enable_embeds must be -1, 0 or 1")
+
+/*func (u *User) UpdatePrivacyS(sProfileComments, sEnableEmbeds string) error {
+
+	return u.UpdatePrivacy(profileComments, enableEmbeds)
+}*/
+
+func (u *User) UpdatePrivacy(profileComments, enableEmbeds int) error {
+	if profileComments < -1 || profileComments > 4 {
+		return ErrProfileCommentsOutOfBounds
+	}
+	if enableEmbeds < -1 || enableEmbeds > 1 {
+		return ErrEnableEmbedsOutOfBounds
+	}
+	_, e := userStmts.updatePrivacy.Exec(profileComments, enableEmbeds, u.ID)
 	if uc := Users.GetCache(); uc != nil {
 		uc.Remove(u.ID)
 	}
-	return err
+	return e
 }
 
 func (u *User) Update(name, email string, group int) (err error) {
@@ -789,4 +814,18 @@ func BuildProfileURL(slug string, uid int) string {
 		return "/user/" + strconv.Itoa(uid)
 	}
 	return "/user/" + slug + "." + strconv.Itoa(uid)
+}
+
+func BuildProfileURLSb(sb *strings.Builder, slug string, uid int) {
+	if slug == "" || !Config.BuildSlugs {
+		sb.Grow(6 + 1)
+		sb.WriteString("/user/")
+		sb.WriteString(strconv.Itoa(uid))
+		return
+	}
+	sb.Grow(7 + 1 + len(slug))
+	sb.WriteString("/user/")
+	sb.WriteString(slug)
+	sb.WriteRune('.')
+	sb.WriteString(strconv.Itoa(uid))
 }

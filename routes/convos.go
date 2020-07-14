@@ -399,24 +399,18 @@ func ConvosEditReplySubmit(w http.ResponseWriter, r *http.Request, user *c.User,
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
-
-	if !js {
-		http.Redirect(w, r, "/user/convo/"+strconv.Itoa(post.CID), http.StatusSeeOther)
-	} else {
-		w.Write(successJSONBytes)
-	}
-	return nil
+	return actionSuccess(w, r, "/user/convo/"+strconv.Itoa(post.CID), js)
 }
 
-func RelationsBlockCreate(w http.ResponseWriter, r *http.Request, user *c.User, h *c.Header, spid string) c.RouteError {
+func RelationsBlockCreate(w http.ResponseWriter, r *http.Request, u *c.User, h *c.Header, spid string) c.RouteError {
 	h.Title = p.GetTitlePhrase("create_block")
 	pid, err := strconv.Atoi(spid)
 	if err != nil {
-		return c.LocalError(p.GetErrorPhrase("id_must_be_integer"), w, r, user)
+		return c.LocalError(p.GetErrorPhrase("id_must_be_integer"), w, r, u)
 	}
 	puser, err := c.Users.Get(pid)
 	if err == sql.ErrNoRows {
-		return c.LocalError("The user you're trying to block doesn't exist.", w, r, user)
+		return c.LocalError("The user you're trying to block doesn't exist.", w, r, u)
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -425,22 +419,22 @@ func RelationsBlockCreate(w http.ResponseWriter, r *http.Request, user *c.User, 
 	return renderTemplate("are_you_sure", w, r, h, pi)
 }
 
-func RelationsBlockCreateSubmit(w http.ResponseWriter, r *http.Request, user *c.User, spid string) c.RouteError {
+func RelationsBlockCreateSubmit(w http.ResponseWriter, r *http.Request, u *c.User, spid string) c.RouteError {
 	pid, err := strconv.Atoi(spid)
 	if err != nil {
-		return c.LocalError(p.GetErrorPhrase("id_must_be_integer"), w, r, user)
+		return c.LocalError(p.GetErrorPhrase("id_must_be_integer"), w, r, u)
 	}
 	puser, err := c.Users.Get(pid)
 	if err == sql.ErrNoRows {
-		return c.LocalError("The user you're trying to block doesn't exist.", w, r, user)
+		return c.LocalError("The user you're trying to block doesn't exist.", w, r, u)
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
-	if user.ID == puser.ID {
-		return c.LocalError("You can't block yourself.", w, r, user)
+	if u.ID == puser.ID {
+		return c.LocalError("You can't block yourself.", w, r, u)
 	}
 
-	err = c.UserBlocks.Add(user.ID, puser.ID)
+	err = c.UserBlocks.Add(u.ID, puser.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -449,15 +443,15 @@ func RelationsBlockCreateSubmit(w http.ResponseWriter, r *http.Request, user *c.
 	return nil
 }
 
-func RelationsBlockRemove(w http.ResponseWriter, r *http.Request, user *c.User, h *c.Header, spid string) c.RouteError {
+func RelationsBlockRemove(w http.ResponseWriter, r *http.Request, u *c.User, h *c.Header, spid string) c.RouteError {
 	h.Title = p.GetTitlePhrase("remove_block")
 	pid, err := strconv.Atoi(spid)
 	if err != nil {
-		return c.LocalError(p.GetErrorPhrase("id_must_be_integer"), w, r, user)
+		return c.LocalError(p.GetErrorPhrase("id_must_be_integer"), w, r, u)
 	}
 	puser, err := c.Users.Get(pid)
 	if err == sql.ErrNoRows {
-		return c.LocalError("The user you're trying to block doesn't exist.", w, r, user)
+		return c.LocalError("The user you're trying to block doesn't exist.", w, r, u)
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -466,19 +460,19 @@ func RelationsBlockRemove(w http.ResponseWriter, r *http.Request, user *c.User, 
 	return renderTemplate("are_you_sure", w, r, h, pi)
 }
 
-func RelationsBlockRemoveSubmit(w http.ResponseWriter, r *http.Request, user *c.User, spid string) c.RouteError {
+func RelationsBlockRemoveSubmit(w http.ResponseWriter, r *http.Request, u *c.User, spid string) c.RouteError {
 	pid, err := strconv.Atoi(spid)
 	if err != nil {
-		return c.LocalError(p.GetErrorPhrase("id_must_be_integer"), w, r, user)
+		return c.LocalError(p.GetErrorPhrase("id_must_be_integer"), w, r, u)
 	}
 	puser, err := c.Users.Get(pid)
 	if err == sql.ErrNoRows {
-		return c.LocalError("The user you're trying to unblock doesn't exist.", w, r, user)
+		return c.LocalError("The user you're trying to unblock doesn't exist.", w, r, u)
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
 
-	err = c.UserBlocks.Remove(user.ID, puser.ID)
+	err = c.UserBlocks.Remove(u.ID, puser.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}

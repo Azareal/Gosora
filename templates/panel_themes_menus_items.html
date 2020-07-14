@@ -4,14 +4,14 @@
 		<h2 class="hguide">{{lang "panel_hints_reorder"}}</h2>
 	</div>
 </div>
-<div id="panel_menu_item_holder" class="colstack_item rowlist">
+<div id="panel_menu_item_holder"class="colstack_item rowlist">
 	{{range .ItemList}}
-	<div class="panel_menu_item rowitem panel_compactrow editable_parent" data-miid="{{.ID}}">
+	<div class="panel_menu_item rowitem panel_compactrow editable_parent"data-miid="{{.ID}}">
 		<span class="grip"></span>
-		<a href="/panel/themes/menus/item/edit/{{.ID}}" class="editable_block panel_upshift">{{.Name}}</a>
+		<a href="/panel/themes/menus/item/edit/{{.ID}}"class="editable_block panel_upshift">{{.Name}}</a>
 		<span class="panel_buttons">
-			<a href="/panel/themes/menus/item/edit/{{.ID}}" class="panel_tag panel_right_button edit_button" aria-label="{{lang "panel_themes_menus_items_edit_button_aria"}}"></a>
-			<a href="/panel/themes/menus/item/delete/submit/{{.ID}}?s={{$.CurrentUser.Session}}" class="panel_tag panel_right_button delete_button" aria-label="{{lang "panel_themes_menus_items_delete_button_aria"}}"></a>
+			<a href="/panel/themes/menus/item/edit/{{.ID}}"class="panel_tag panel_right_button edit_button"aria-label="{{lang "panel_themes_menus_items_edit_button_aria"}}"></a>
+			<a href="/panel/themes/menus/item/delete/submit/{{.ID}}?s={{$.CurrentUser.Session}}"class="panel_tag panel_right_button delete_button"aria-label="{{lang "panel_themes_menus_items_delete_button_aria"}}"></a>
 		</span>
 	</div>{{end}}
 </div>
@@ -21,9 +21,9 @@
 <div class="colstack_item colstack_head">
 	<div class="rowitem"><h1>{{lang "panel_themes_menus_create_head"}}</h1></div>
 </div>
-<form action="/panel/themes/menus/item/create/submit/?s={{.CurrentUser.Session}}" method="post">
-	<input name="mid" value="{{.MenuID}}" type="hidden">
-	<div id="panel_themes_menu_item_create" class="colstack_item the_form">
+<form action="/panel/themes/menus/item/create/submit/?s={{.CurrentUser.Session}}"method="post">
+	<input name="mid"value="{{.MenuID}}"type="hidden">
+	<div id="panel_themes_menu_item_create"class="colstack_item the_form">
 		{{/** TODO: Let an admin move a menu item from one menu to another? **/}}
 		<div class="formrow">
 			<div class="formitem formlabel"><a>{{lang "panel_themes_menus_name"}}</a></div>

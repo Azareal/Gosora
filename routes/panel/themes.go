@@ -12,13 +12,13 @@ import (
 	p "github.com/Azareal/Gosora/common/phrases"
 )
 
-func Themes(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
-	basePage, ferr := buildBasePage(w, r, user, "themes", "themes")
+func Themes(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
+	basePage, ferr := buildBasePage(w, r, u, "themes", "themes")
 	if ferr != nil {
 		return ferr
 	}
-	if !user.Perms.ManageThemes {
-		return c.NoPermissions(w, r, user)
+	if !u.Perms.ManageThemes {
+		return c.NoPermissions(w, r, u)
 	}
 
 	var pThemeList, vThemeList []*c.Theme
@@ -37,28 +37,28 @@ func Themes(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_themes", "", "panel_themes", &pi})
 }
 
-func ThemesSetDefault(w http.ResponseWriter, r *http.Request, user *c.User, uname string) c.RouteError {
-	_, ferr := c.SimplePanelUserCheck(w, r, user)
+func ThemesSetDefault(w http.ResponseWriter, r *http.Request, u *c.User, uname string) c.RouteError {
+	_, ferr := c.SimplePanelUserCheck(w, r, u)
 	if ferr != nil {
 		return ferr
 	}
-	if !user.Perms.ManageThemes {
-		return c.NoPermissions(w, r, user)
+	if !u.Perms.ManageThemes {
+		return c.NoPermissions(w, r, u)
 	}
 
 	theme, ok := c.Themes[uname]
 	if !ok {
-		return c.LocalError("The theme isn't registered in the system", w, r, user)
+		return c.LocalError("The theme isn't registered in the system", w, r, u)
 	}
 	if theme.Disabled {
-		return c.LocalError("You must not enable this theme", w, r, user)
+		return c.LocalError("You must not enable this theme", w, r, u)
 	}
 
 	err := c.UpdateDefaultTheme(theme)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
-	err = c.AdminLogs.CreateExtra("set_default", 0, "theme", user.GetIP(), user.ID, c.SanitiseSingleLine(theme.Name))
+	err = c.AdminLogs.CreateExtra("set_default", 0, "theme", u.GetIP(), u.ID, c.SanitiseSingleLine(theme.Name))
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -67,13 +67,13 @@ func ThemesSetDefault(w http.ResponseWriter, r *http.Request, user *c.User, unam
 	return nil
 }
 
-func ThemesMenus(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
-	basePage, ferr := buildBasePage(w, r, user, "themes_menus", "themes")
+func ThemesMenus(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
+	basePage, ferr := buildBasePage(w, r, u, "themes_menus", "themes")
 	if ferr != nil {
 		return ferr
 	}
-	if !user.Perms.ManageThemes {
-		return c.NoPermissions(w, r, user)
+	if !u.Perms.ManageThemes {
+		return c.NoPermissions(w, r, u)
 	}
 
 	var menuList []c.PanelMenuListItem
@@ -92,21 +92,21 @@ func ThemesMenus(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteEr
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "", "", "panel_themes_menus", &c.PanelMenuListPage{basePage, menuList}})
 }
 
-func ThemesMenusEdit(w http.ResponseWriter, r *http.Request, user *c.User, smid string) c.RouteError {
+func ThemesMenusEdit(w http.ResponseWriter, r *http.Request, u *c.User, smid string) c.RouteError {
 	// TODO: Something like Menu #1 for the title?
-	basePage, ferr := buildBasePage(w, r, user, "themes_menus_edit", "themes")
+	basePage, ferr := buildBasePage(w, r, u, "themes_menus_edit", "themes")
 	if ferr != nil {
 		return ferr
 	}
-	if !user.Perms.ManageThemes {
-		return c.NoPermissions(w, r, user)
+	if !u.Perms.ManageThemes {
+		return c.NoPermissions(w, r, u)
 	}
 	basePage.Header.AddScript("Sortable-1.4.0/Sortable.min.js")
 	basePage.Header.AddScriptAsync("panel_menu_items.js")
 
 	mid, err := strconv.Atoi(smid)
 	if err != nil {
-		return c.LocalError(p.GetErrorPhrase("url_id_must_be_integer"), w, r, user)
+		return c.LocalError(p.GetErrorPhrase("url_id_must_be_integer"), w, r, u)
 	}
 	menuHold, err := c.Menus.Get(mid)
 	if err == sql.ErrNoRows {
@@ -138,19 +138,19 @@ func ThemesMenusEdit(w http.ResponseWriter, r *http.Request, user *c.User, smid 
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "", "", "panel_themes_menus_items", &c.PanelMenuPage{basePage, mid, menuList}})
 }
 
-func ThemesMenuItemEdit(w http.ResponseWriter, r *http.Request, user *c.User, sitemID string) c.RouteError {
+func ThemesMenuItemEdit(w http.ResponseWriter, r *http.Request, u *c.User, sitemID string) c.RouteError {
 	// TODO: Something like Menu #1 for the title?
-	basePage, ferr := buildBasePage(w, r, user, "themes_menus_edit", "themes")
+	basePage, ferr := buildBasePage(w, r, u, "themes_menus_edit", "themes")
 	if ferr != nil {
 		return ferr
 	}
-	if !user.Perms.ManageThemes {
-		return c.NoPermissions(w, r, user)
+	if !u.Perms.ManageThemes {
+		return c.NoPermissions(w, r, u)
 	}
 
 	itemID, err := strconv.Atoi(sitemID)
 	if err != nil {
-		return c.LocalError(p.GetErrorPhrase("url_id_must_be_integer"), w, r, user)
+		return c.LocalError(p.GetErrorPhrase("url_id_must_be_integer"), w, r, u)
 	}
 	menuItem, err := c.Menus.ItemStore().Get(itemID)
 	if err == sql.ErrNoRows {
@@ -205,23 +205,23 @@ func themesMenuItemSetters(r *http.Request, i c.MenuItem) c.MenuItem {
 	return i
 }
 
-func ThemesMenuItemEditSubmit(w http.ResponseWriter, r *http.Request, user *c.User, sitemID string) c.RouteError {
-	_, ferr := c.SimplePanelUserCheck(w, r, user)
+func ThemesMenuItemEditSubmit(w http.ResponseWriter, r *http.Request, u *c.User, sitemID string) c.RouteError {
+	_, ferr := c.SimplePanelUserCheck(w, r, u)
 	if ferr != nil {
 		return ferr
 	}
 	js := r.PostFormValue("js") == "1"
-	if !user.Perms.ManageThemes {
-		return c.NoPermissionsJSQ(w, r, user, js)
+	if !u.Perms.ManageThemes {
+		return c.NoPermissionsJSQ(w, r, u, js)
 	}
 
 	itemID, err := strconv.Atoi(sitemID)
 	if err != nil {
-		return c.LocalErrorJSQ(p.GetErrorPhrase("id_must_be_integer"), w, r, user, js)
+		return c.LocalErrorJSQ(p.GetErrorPhrase("id_must_be_integer"), w, r, u, js)
 	}
 	menuItem, err := c.Menus.ItemStore().Get(itemID)
 	if err == sql.ErrNoRows {
-		return c.LocalErrorJSQ("This item doesn't exist.", w, r, user, js)
+		return c.LocalErrorJSQ("This item doesn't exist.", w, r, u, js)
 	} else if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
@@ -232,7 +232,7 @@ func ThemesMenuItemEditSubmit(w http.ResponseWriter, r *http.Request, user *c.Us
 	if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
-	err = c.AdminLogs.Create("edit", menuItem.ID, "menu_item", user.GetIP(), user.ID)
+	err = c.AdminLogs.Create("edit", menuItem.ID, "menu_item", u.GetIP(), u.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -240,23 +240,23 @@ func ThemesMenuItemEditSubmit(w http.ResponseWriter, r *http.Request, user *c.Us
 	return successRedirect("/panel/themes/menus/item/edit/"+strconv.Itoa(itemID), w, r, js)
 }
 
-func ThemesMenuItemCreateSubmit(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
-	_, ferr := c.SimplePanelUserCheck(w, r, user)
+func ThemesMenuItemCreateSubmit(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
+	_, ferr := c.SimplePanelUserCheck(w, r, u)
 	if ferr != nil {
 		return ferr
 	}
 	js := r.PostFormValue("js") == "1"
-	if !user.Perms.ManageThemes {
-		return c.NoPermissionsJSQ(w, r, user, js)
+	if !u.Perms.ManageThemes {
+		return c.NoPermissionsJSQ(w, r, u, js)
 	}
 
 	smenuID := r.PostFormValue("mid")
 	if smenuID == "" {
-		return c.LocalErrorJSQ("No menuID provided", w, r, user, js)
+		return c.LocalErrorJSQ("No menuID provided", w, r, u, js)
 	}
 	menuID, err := strconv.Atoi(smenuID)
 	if err != nil {
-		return c.LocalErrorJSQ(p.GetErrorPhrase("id_must_be_integer"), w, r, user, js)
+		return c.LocalErrorJSQ(p.GetErrorPhrase("id_must_be_integer"), w, r, u, js)
 	}
 
 	menuItem := c.MenuItem{MenuID: menuID}
@@ -265,7 +265,7 @@ func ThemesMenuItemCreateSubmit(w http.ResponseWriter, r *http.Request, user *c.
 	if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
-	err = c.AdminLogs.Create("create", itemID, "menu_item", user.GetIP(), user.ID)
+	err = c.AdminLogs.Create("create", itemID, "menu_item", u.GetIP(), u.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -273,23 +273,23 @@ func ThemesMenuItemCreateSubmit(w http.ResponseWriter, r *http.Request, user *c.
 	return successRedirect("/panel/themes/menus/item/edit/"+strconv.Itoa(itemID), w, r, js)
 }
 
-func ThemesMenuItemDeleteSubmit(w http.ResponseWriter, r *http.Request, user *c.User, sitemID string) c.RouteError {
-	_, ferr := c.SimplePanelUserCheck(w, r, user)
+func ThemesMenuItemDeleteSubmit(w http.ResponseWriter, r *http.Request, u *c.User, sitemID string) c.RouteError {
+	_, ferr := c.SimplePanelUserCheck(w, r, u)
 	if ferr != nil {
 		return ferr
 	}
 	js := r.PostFormValue("js") == "1"
-	if !user.Perms.ManageThemes {
-		return c.NoPermissionsJSQ(w, r, user, js)
+	if !u.Perms.ManageThemes {
+		return c.NoPermissionsJSQ(w, r, u, js)
 	}
 
 	itemID, err := strconv.Atoi(sitemID)
 	if err != nil {
-		return c.LocalErrorJSQ(p.GetErrorPhrase("id_must_be_integer"), w, r, user, js)
+		return c.LocalErrorJSQ(p.GetErrorPhrase("id_must_be_integer"), w, r, u, js)
 	}
 	menuItem, err := c.Menus.ItemStore().Get(itemID)
 	if err == sql.ErrNoRows {
-		return c.LocalErrorJSQ("This item doesn't exist.", w, r, user, js)
+		return c.LocalErrorJSQ("This item doesn't exist.", w, r, u, js)
 	} else if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
@@ -299,7 +299,7 @@ func ThemesMenuItemDeleteSubmit(w http.ResponseWriter, r *http.Request, user *c.
 	if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
-	err = c.AdminLogs.Create("delete", menuItem.ID, "menu_item", user.GetIP(), user.ID)
+	err = c.AdminLogs.Create("delete", menuItem.ID, "menu_item", u.GetIP(), u.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -307,23 +307,23 @@ func ThemesMenuItemDeleteSubmit(w http.ResponseWriter, r *http.Request, user *c.
 	return successRedirect("/panel/themes/menus/", w, r, js)
 }
 
-func ThemesMenuItemOrderSubmit(w http.ResponseWriter, r *http.Request, user *c.User, smid string) c.RouteError {
-	_, ferr := c.SimplePanelUserCheck(w, r, user)
+func ThemesMenuItemOrderSubmit(w http.ResponseWriter, r *http.Request, u *c.User, smid string) c.RouteError {
+	_, ferr := c.SimplePanelUserCheck(w, r, u)
 	if ferr != nil {
 		return ferr
 	}
 	js := r.PostFormValue("js") == "1"
-	if !user.Perms.ManageThemes {
-		return c.NoPermissionsJSQ(w, r, user, js)
+	if !u.Perms.ManageThemes {
+		return c.NoPermissionsJSQ(w, r, u, js)
 	}
 
 	mid, err := strconv.Atoi(smid)
 	if err != nil {
-		return c.LocalErrorJSQ(p.GetErrorPhrase("id_must_be_integer"), w, r, user, js)
+		return c.LocalErrorJSQ(p.GetErrorPhrase("id_must_be_integer"), w, r, u, js)
 	}
 	menuHold, err := c.Menus.Get(mid)
 	if err == sql.ErrNoRows {
-		return c.LocalErrorJSQ("Can't find menu", w, r, user, js)
+		return c.LocalErrorJSQ("Can't find menu", w, r, u, js)
 	} else if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
@@ -335,13 +335,13 @@ func ThemesMenuItemOrderSubmit(w http.ResponseWriter, r *http.Request, user *c.U
 	for index, smiid := range strings.Split(sitems, ",") {
 		miid, err := strconv.Atoi(smiid)
 		if err != nil {
-			return c.LocalErrorJSQ("Invalid integer in menu item list", w, r, user, js)
+			return c.LocalErrorJSQ("Invalid integer in menu item list", w, r, u, js)
 		}
 		updateMap[miid] = index
 	}
 	menuHold.UpdateOrder(updateMap)
 
-	err = c.AdminLogs.Create("suborder", menuHold.MenuID, "menu", user.GetIP(), user.ID)
+	err = c.AdminLogs.Create("suborder", menuHold.MenuID, "menu", u.GetIP(), u.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -349,13 +349,13 @@ func ThemesMenuItemOrderSubmit(w http.ResponseWriter, r *http.Request, user *c.U
 	return successRedirect("/panel/themes/menus/edit/"+strconv.Itoa(mid), w, r, js)
 }
 
-func ThemesWidgets(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
-	basePage, ferr := buildBasePage(w, r, user, "themes_widgets", "themes")
+func ThemesWidgets(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
+	basePage, ferr := buildBasePage(w, r, u, "themes_widgets", "themes")
 	if ferr != nil {
 		return ferr
 	}
-	if !user.Perms.ManageThemes {
-		return c.NoPermissions(w, r, user)
+	if !u.Perms.ManageThemes {
+		return c.NoPermissions(w, r, u)
 	}
 	basePage.Header.AddScript("widgets.js")
 
@@ -414,20 +414,20 @@ func widgetsParseInputs(r *http.Request, widget *c.Widget) (*c.WidgetEdit, error
 }
 
 // ThemesWidgetsEditSubmit is an action which is triggered when someone sends an update request for a widget
-func ThemesWidgetsEditSubmit(w http.ResponseWriter, r *http.Request, user *c.User, swid string) c.RouteError {
+func ThemesWidgetsEditSubmit(w http.ResponseWriter, r *http.Request, u *c.User, swid string) c.RouteError {
 	//fmt.Println("in ThemesWidgetsEditSubmit")
-	_, ferr := c.SimplePanelUserCheck(w, r, user)
+	_, ferr := c.SimplePanelUserCheck(w, r, u)
 	if ferr != nil {
 		return ferr
 	}
 	js := r.PostFormValue("js") == "1"
-	if !user.Perms.ManageThemes {
-		return c.NoPermissionsJSQ(w, r, user, js)
+	if !u.Perms.ManageThemes {
+		return c.NoPermissionsJSQ(w, r, u, js)
 	}
 
 	wid, err := strconv.Atoi(swid)
 	if err != nil {
-		return c.LocalErrorJSQ(p.GetErrorPhrase("id_must_be_integer"), w, r, user, js)
+		return c.LocalErrorJSQ(p.GetErrorPhrase("id_must_be_integer"), w, r, u, js)
 	}
 	widget, err := c.Widgets.Get(wid)
 	if err == sql.ErrNoRows {
@@ -438,14 +438,14 @@ func ThemesWidgetsEditSubmit(w http.ResponseWriter, r *http.Request, user *c.Use
 
 	ewidget, err := widgetsParseInputs(r, widget.Copy())
 	if err != nil {
-		return c.LocalErrorJSQ(err.Error(), w, r, user, js)
+		return c.LocalErrorJSQ(err.Error(), w, r, u, js)
 	}
 
 	err = ewidget.Commit()
 	if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
-	err = c.AdminLogs.Create("edit", widget.ID, "widget", user.GetIP(), user.ID)
+	err = c.AdminLogs.Create("edit", widget.ID, "widget", u.GetIP(), u.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -454,25 +454,25 @@ func ThemesWidgetsEditSubmit(w http.ResponseWriter, r *http.Request, user *c.Use
 }
 
 // ThemesWidgetsCreateSubmit is an action which is triggered when someone sends a create request for a widget
-func ThemesWidgetsCreateSubmit(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
+func ThemesWidgetsCreateSubmit(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
 	js := r.PostFormValue("js") == "1"
-	_, ferr := c.SimplePanelUserCheck(w, r, user)
+	_, ferr := c.SimplePanelUserCheck(w, r, u)
 	if ferr != nil {
 		return ferr
 	}
-	if !user.Perms.ManageThemes {
-		return c.NoPermissionsJSQ(w, r, user, js)
+	if !u.Perms.ManageThemes {
+		return c.NoPermissionsJSQ(w, r, u, js)
 	}
 
 	ewidget, err := widgetsParseInputs(r, &c.Widget{})
 	if err != nil {
-		return c.LocalErrorJSQ(err.Error(), w, r, user, js)
+		return c.LocalErrorJSQ(err.Error(), w, r, u, js)
 	}
 	wid, err := ewidget.Create()
 	if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
-	err = c.AdminLogs.Create("create", wid, "widget", user.GetIP(), user.ID)
+	err = c.AdminLogs.Create("create", wid, "widget", u.GetIP(), u.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -480,19 +480,19 @@ func ThemesWidgetsCreateSubmit(w http.ResponseWriter, r *http.Request, user *c.U
 	return successRedirect("/panel/themes/widgets/", w, r, js)
 }
 
-func ThemesWidgetsDeleteSubmit(w http.ResponseWriter, r *http.Request, user *c.User, swid string) c.RouteError {
-	_, ferr := c.SimplePanelUserCheck(w, r, user)
+func ThemesWidgetsDeleteSubmit(w http.ResponseWriter, r *http.Request, u *c.User, swid string) c.RouteError {
+	_, ferr := c.SimplePanelUserCheck(w, r, u)
 	if ferr != nil {
 		return ferr
 	}
 	js := r.PostFormValue("js") == "1"
-	if !user.Perms.ManageThemes {
-		return c.NoPermissionsJSQ(w, r, user, js)
+	if !u.Perms.ManageThemes {
+		return c.NoPermissionsJSQ(w, r, u, js)
 	}
 
 	wid, err := strconv.Atoi(swid)
 	if err != nil {
-		return c.LocalErrorJSQ(p.GetErrorPhrase("id_must_be_integer"), w, r, user, js)
+		return c.LocalErrorJSQ(p.GetErrorPhrase("id_must_be_integer"), w, r, u, js)
 	}
 	widget, err := c.Widgets.Get(wid)
 	if err == sql.ErrNoRows {
@@ -504,7 +504,7 @@ func ThemesWidgetsDeleteSubmit(w http.ResponseWriter, r *http.Request, user *c.U
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
-	err = c.AdminLogs.Create("delete", widget.ID, "widget", user.GetIP(), user.ID)
+	err = c.AdminLogs.Create("delete", widget.ID, "widget", u.GetIP(), u.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}

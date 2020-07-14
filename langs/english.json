@@ -577,7 +577,11 @@
 		"account_password_update_button":"Update",
 
 		"account_privacy_head":"Privacy",
-		"account_privacy_profile_comments":"Enable Profile Comments",
+		"account_privacy_profile_comments":"Profile Comment Visibility",
+		"account_privacy_profile_comments_public":"Anyone",
+		"account_privacy_profile_comments_registered":"Registered Users",
+		"account_privacy_profile_comments_self":"Only Me",
+		"account_privacy_enable_embeds":"Enable Embeds",
 		"account_privacy_button":"Update",
 
 		"account_mfa_head":"Manage 2FA",

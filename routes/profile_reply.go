@@ -17,7 +17,6 @@ func ProfileReplyCreateSubmit(w http.ResponseWriter, r *http.Request, user *c.Us
 	if err != nil {
 		return c.LocalError("Invalid UID", w, r, user)
 	}
-
 	profileOwner, err := c.Users.Get(uid)
 	if err == sql.ErrNoRows {
 		return c.LocalError("The profile you're trying to post on doesn't exist.", w, r, user)
@@ -30,7 +29,7 @@ func ProfileReplyCreateSubmit(w http.ResponseWriter, r *http.Request, user *c.Us
 		return c.InternalError(err, w, r)
 	}
 	// Supermods can bypass blocks so they can tell people off when they do something stupid or have to convey important information
-	if blocked && !user.IsSuperMod {
+	if (blocked || !profileCommentsShow(profileOwner, user)) && !user.IsSuperMod {
 		return c.LocalError("You don't have permission to send messages to one of these users.", w, r, user)
 	}
 
@@ -56,13 +55,12 @@ func ProfileReplyCreateSubmit(w http.ResponseWriter, r *http.Request, user *c.Us
 	return nil
 }
 
-func ProfileReplyEditSubmit(w http.ResponseWriter, r *http.Request, user *c.User, srid string) c.RouteError {
+func ProfileReplyEditSubmit(w http.ResponseWriter, r *http.Request, u *c.User, srid string) c.RouteError {
 	js := r.PostFormValue("js") == "1"
 	rid, err := strconv.Atoi(srid)
 	if err != nil {
-		return c.LocalErrorJSQ("The provided Reply ID is not a valid number.", w, r, user, js)
+		return c.LocalErrorJSQ("The provided Reply ID is not a valid number.", w, r, u, js)
 	}
-
 	reply, err := c.Prstore.Get(rid)
 	if err == sql.ErrNoRows {
 		return c.PreErrorJSQ("The target reply doesn't exist.", w, r, js)
@@ -74,34 +72,41 @@ func ProfileReplyEditSubmit(w http.ResponseWriter, r *http.Request, user *c.User
 	if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
-	if !user.Perms.CreateProfileReply {
-		return c.NoPermissionsJSQ(w, r, user, js)
+	if !u.Perms.CreateProfileReply {
+		return c.NoPermissionsJSQ(w, r, u, js)
 	}
 	// ? Does the admin understand that this group perm affects this?
-	if user.ID != creator.ID && !user.Perms.EditReply {
-		return c.NoPermissionsJSQ(w, r, user, js)
+	if u.ID != creator.ID && !u.Perms.EditReply {
+		return c.NoPermissionsJSQ(w, r, u, js)
 	}
 
-	// TODO: Stop blocked users from modifying profile replies?
+	profileOwner, err := c.Users.Get(reply.ParentID)
+	if err == sql.ErrNoRows {
+		return c.LocalError("The profile you're trying to edit a post on doesn't exist.", w, r, u)
+	} else if err != nil {
+		return c.InternalError(err, w, r)
+	}
+	blocked, err := c.UserBlocks.IsBlockedBy(profileOwner.ID, u.ID)
+	if err != nil {
+		return c.InternalError(err, w, r)
+	}
+	// Supermods can bypass blocks so they can tell people off when they do something stupid or have to convey important information
+	if (blocked || !profileCommentsShow(profileOwner, u)) && !u.IsSuperMod {
+		return c.NoPermissionsJSQ(w, r, u, js)
+	}
 
 	err = reply.SetBody(r.PostFormValue("edit_item"))
 	if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
-
-	if !js {
-		http.Redirect(w, r, "/user/"+strconv.Itoa(creator.ID)+"#reply-"+strconv.Itoa(rid), http.StatusSeeOther)
-	} else {
-		w.Write(successJSONBytes)
-	}
-	return nil
+	return actionSuccess(w, r, "/user/"+strconv.Itoa(creator.ID)+"#reply-"+strconv.Itoa(rid), js)
 }
 
-func ProfileReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user *c.User, srid string) c.RouteError {
+func ProfileReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, u *c.User, srid string) c.RouteError {
 	js := r.PostFormValue("js") == "1"
 	rid, err := strconv.Atoi(srid)
 	if err != nil {
-		return c.LocalErrorJSQ("The provided Reply ID is not a valid number.", w, r, user, js)
+		return c.LocalErrorJSQ("The provided Reply ID is not a valid number.", w, r, u, js)
 	}
 
 	reply, err := c.Prstore.Get(rid)
@@ -115,15 +120,15 @@ func ProfileReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user *c.Us
 	if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
-	if user.ID != creator.ID && !user.Perms.DeleteReply {
-		return c.NoPermissionsJSQ(w, r, user, js)
+	if u.ID != creator.ID && !u.Perms.DeleteReply {
+		return c.NoPermissionsJSQ(w, r, u, js)
 	}
 
 	err = reply.Delete()
 	if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
-	//log.Printf("The profile post '%d' was deleted by c.User #%d", reply.ID, user.ID)
+	//log.Printf("The profile post '%d' was deleted by c.User #%d", reply.ID, u.ID)
 
 	if !js {
 		//http.Redirect(w,r, "/user/" + strconv.Itoa(creator.ID), http.StatusSeeOther)
@@ -131,7 +136,7 @@ func ProfileReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, user *c.Us
 		w.Write(successJSONBytes)
 	}
 
-	err = c.ModLogs.Create("delete", reply.ParentID, "profile-reply", user.GetIP(), user.ID)
+	err = c.ModLogs.Create("delete", reply.ParentID, "profile-reply", u.GetIP(), u.ID)
 	if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}

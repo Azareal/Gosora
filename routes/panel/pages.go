@@ -35,23 +35,23 @@ func Pages(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_page_list", "", "panel_pages", &pi})
 }
 
-func PagesCreateSubmit(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
-	_, ferr := c.SimplePanelUserCheck(w, r, user)
+func PagesCreateSubmit(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
+	_, ferr := c.SimplePanelUserCheck(w, r, u)
 	if ferr != nil {
 		return ferr
 	}
 
 	name := c.SanitiseSingleLine(r.PostFormValue("name"))
 	if name == "" {
-		return c.LocalError("No name was provided for this page", w, r, user)
+		return c.LocalError("No name was provided for this page", w, r, u)
 	}
 	title := c.SanitiseSingleLine(r.PostFormValue("title"))
 	if title == "" {
-		return c.LocalError("No title was provided for this page", w, r, user)
+		return c.LocalError("No title was provided for this page", w, r, u)
 	}
 	body := r.PostFormValue("body")
 	if body == "" {
-		return c.LocalError("No body was provided for this page", w, r, user)
+		return c.LocalError("No body was provided for this page", w, r, u)
 	}
 
 	page := c.BlankCustomPage()
@@ -62,7 +62,7 @@ func PagesCreateSubmit(w http.ResponseWriter, r *http.Request, user *c.User) c.R
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
-	err = c.AdminLogs.Create("create", pid, "page", user.GetIP(), user.ID)
+	err = c.AdminLogs.Create("create", pid, "page", u.GetIP(), u.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -95,27 +95,27 @@ func PagesEdit(w http.ResponseWriter, r *http.Request, u *c.User, spid string) c
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_page_edit", "", "panel_pages_edit", &pi})
 }
 
-func PagesEditSubmit(w http.ResponseWriter, r *http.Request, user *c.User, spid string) c.RouteError {
-	_, ferr := c.SimplePanelUserCheck(w, r, user)
+func PagesEditSubmit(w http.ResponseWriter, r *http.Request, u *c.User, spid string) c.RouteError {
+	_, ferr := c.SimplePanelUserCheck(w, r, u)
 	if ferr != nil {
 		return ferr
 	}
 
 	pid, err := strconv.Atoi(spid)
 	if err != nil {
-		return c.LocalError("Page ID needs to be an integer", w, r, user)
+		return c.LocalError("Page ID needs to be an integer", w, r, u)
 	}
 	name := c.SanitiseSingleLine(r.PostFormValue("name"))
 	if name == "" {
-		return c.LocalError("No name was provided for this page", w, r, user)
+		return c.LocalError("No name was provided for this page", w, r, u)
 	}
 	title := c.SanitiseSingleLine(r.PostFormValue("title"))
 	if title == "" {
-		return c.LocalError("No title was provided for this page", w, r, user)
+		return c.LocalError("No title was provided for this page", w, r, u)
 	}
 	body := r.PostFormValue("body")
 	if body == "" {
-		return c.LocalError("No body was provided for this page", w, r, user)
+		return c.LocalError("No body was provided for this page", w, r, u)
 	}
 
 	page, err := c.Pages.Get(pid)
@@ -129,7 +129,7 @@ func PagesEditSubmit(w http.ResponseWriter, r *http.Request, user *c.User, spid 
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
-	err = c.AdminLogs.Create("edit", pid, "page", user.GetIP(), user.ID)
+	err = c.AdminLogs.Create("edit", pid, "page", u.GetIP(), u.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}

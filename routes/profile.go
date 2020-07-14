@@ -110,9 +110,49 @@ func ViewProfile(w http.ResponseWriter, r *http.Request, user *c.User, h *c.Head
 			return c.InternalError(err, w, r)
 		}
 	}
+
 	canMessage := (!blockedInv && user.Perms.UseConvos) || (!blockedInv && puser.IsSuperMod && user.Perms.UseConvosOnlyWithMod) || user.IsSuperMod
 	canComment := !blockedInv && user.Perms.CreateProfileReply
+	showComments := profileCommentsShow(puser, user)
+	if !showComments {
+		canComment = false
+	}
+	if !profileAllowMessage(puser, user) {
+		canMessage = false
+	}
 
-	ppage := c.ProfilePage{h, reList, *puser, currentScore, nextScore, blocked, canMessage, canComment}
+	ppage := c.ProfilePage{h, reList, *puser, currentScore, nextScore, blocked, canMessage, canComment, showComments}
 	return renderTemplate("profile", w, r, h, ppage)
+}
+
+func profileAllowMessage(pu, u *c.User) (canMsg bool) {
+	switch pu.Privacy.AllowMessage {
+	case 4: // Unused
+		canMsg = false
+	case 3: // mods / self
+		canMsg = u.IsSuperMod
+	//case 2: // friends
+	case 1: // registered
+		canMsg = true
+	default: // 0
+		canMsg = true
+	}
+	return canMsg
+}
+
+func profileCommentsShow(pu, u *c.User) (showComments bool) {
+	switch pu.Privacy.ShowComments {
+	case 5: // Unused
+		showComments = false
+	case 4: // Self
+		showComments = u.ID == pu.ID
+	//case 3: // friends
+	case 2: // registered
+		showComments = u.Loggedin
+	case 1: // public
+		showComments = true
+	default: // 0
+		showComments = true
+	}
+	return showComments
 }

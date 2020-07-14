@@ -9,46 +9,46 @@ import (
 	c "github.com/Azareal/Gosora/common"
 )
 
-func BanUserSubmit(w http.ResponseWriter, r *http.Request, user *c.User, suid string) c.RouteError {
-	if !user.Perms.BanUsers {
-		return c.NoPermissions(w, r, user)
+func BanUserSubmit(w http.ResponseWriter, r *http.Request, u *c.User, suid string) c.RouteError {
+	if !u.Perms.BanUsers {
+		return c.NoPermissions(w, r, u)
 	}
 	uid, err := strconv.Atoi(suid)
 	if err != nil {
-		return c.LocalError("The provided UserID is not a valid number.", w, r, user)
+		return c.LocalError("The provided UserID is not a valid number.", w, r, u)
 	}
 	if uid == -2 {
-		return c.LocalError("Why don't you like Merlin?", w, r, user)
+		return c.LocalError("Why don't you like Merlin?", w, r, u)
 	}
 
 	targetUser, err := c.Users.Get(uid)
 	if err == sql.ErrNoRows {
-		return c.LocalError("The user you're trying to ban no longer exists.", w, r, user)
+		return c.LocalError("The user you're trying to ban no longer exists.", w, r, u)
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
 	// TODO: Is there a difference between IsMod and IsSuperMod? Should we delete the redundant one?
 	if targetUser.IsMod {
-		return c.LocalError("You may not ban another staff member.", w, r, user)
+		return c.LocalError("You may not ban another staff member.", w, r, u)
 	}
-	if uid == user.ID {
-		return c.LocalError("Why are you trying to ban yourself? Stop that.", w, r, user)
+	if uid == u.ID {
+		return c.LocalError("Why are you trying to ban yourself? Stop that.", w, r, u)
 	}
 	if targetUser.IsBanned {
-		return c.LocalError("The user you're trying to unban is already banned.", w, r, user)
+		return c.LocalError("The user you're trying to unban is already banned.", w, r, u)
 	}
 
 	durDays, err := strconv.Atoi(r.FormValue("dur-days"))
 	if err != nil {
-		return c.LocalError("You can only use whole numbers for the number of days", w, r, user)
+		return c.LocalError("You can only use whole numbers for the number of days", w, r, u)
 	}
 	durWeeks, err := strconv.Atoi(r.FormValue("dur-weeks"))
 	if err != nil {
-		return c.LocalError("You can only use whole numbers for the number of weeks", w, r, user)
+		return c.LocalError("You can only use whole numbers for the number of weeks", w, r, u)
 	}
 	durMonths, err := strconv.Atoi(r.FormValue("dur-months"))
 	if err != nil {
-		return c.LocalError("You can only use whole numbers for the number of months", w, r, user)
+		return c.LocalError("You can only use whole numbers for the number of months", w, r, u)
 	}
 	deletePosts := false
 	switch r.FormValue("delete-posts") {
@@ -67,13 +67,13 @@ func BanUserSubmit(w http.ResponseWriter, r *http.Request, user *c.User, suid st
 		dur, _ = time.ParseDuration(strconv.Itoa(secs) + "s")
 	}
 
-	err = targetUser.Ban(dur, user.ID)
+	err = targetUser.Ban(dur, u.ID)
 	if err == sql.ErrNoRows {
-		return c.LocalError("The user you're trying to ban no longer exists.", w, r, user)
+		return c.LocalError("The user you're trying to ban no longer exists.", w, r, u)
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
-	err = c.ModLogs.Create("ban", uid, "user", user.GetIP(), user.ID)
+	err = c.ModLogs.Create("ban", uid, "user", u.GetIP(), u.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -81,11 +81,11 @@ func BanUserSubmit(w http.ResponseWriter, r *http.Request, user *c.User, suid st
 	if deletePosts {
 		err = targetUser.DeletePosts()
 		if err == sql.ErrNoRows {
-			return c.LocalError("The user you're trying to ban no longer exists.", w, r, user)
+			return c.LocalError("The user you're trying to ban no longer exists.", w, r, u)
 		} else if err != nil {
 			return c.InternalError(err, w, r)
 		}
-		err = c.ModLogs.Create("delete-posts", uid, "user", user.GetIP(), user.ID)
+		err = c.ModLogs.Create("delete-posts", uid, "user", u.GetIP(), u.ID)
 		if err != nil {
 			return c.InternalError(err, w, r)
 		}
@@ -93,7 +93,7 @@ func BanUserSubmit(w http.ResponseWriter, r *http.Request, user *c.User, suid st
 
 	// TODO: Trickle the hookTable down from the router
 	hTbl := c.GetHookTable()
-	skip, rerr := hTbl.VhookSkippable("action_end_ban_user", targetUser.ID, user)
+	skip, rerr := hTbl.VhookSkippable("action_end_ban_user", targetUser.ID, u)
 	if skip || rerr != nil {
 		return rerr
 	}
@@ -102,42 +102,42 @@ func BanUserSubmit(w http.ResponseWriter, r *http.Request, user *c.User, suid st
 	return nil
 }
 
-func UnbanUser(w http.ResponseWriter, r *http.Request, user *c.User, suid string) c.RouteError {
-	if !user.Perms.BanUsers {
-		return c.NoPermissions(w, r, user)
+func UnbanUser(w http.ResponseWriter, r *http.Request, u *c.User, suid string) c.RouteError {
+	if !u.Perms.BanUsers {
+		return c.NoPermissions(w, r, u)
 	}
 	uid, err := strconv.Atoi(suid)
 	if err != nil {
-		return c.LocalError("The provided UserID is not a valid number.", w, r, user)
+		return c.LocalError("The provided UserID is not a valid number.", w, r, u)
 	}
 
 	targetUser, err := c.Users.Get(uid)
 	if err == sql.ErrNoRows {
-		return c.LocalError("The user you're trying to unban no longer exists.", w, r, user)
+		return c.LocalError("The user you're trying to unban no longer exists.", w, r, u)
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
 	if !targetUser.IsBanned {
-		return c.LocalError("The user you're trying to unban isn't banned.", w, r, user)
+		return c.LocalError("The user you're trying to unban isn't banned.", w, r, u)
 	}
 
 	err = targetUser.Unban()
 	if err == c.ErrNoTempGroup {
-		return c.LocalError("The user you're trying to unban is not banned", w, r, user)
+		return c.LocalError("The user you're trying to unban is not banned", w, r, u)
 	} else if err == sql.ErrNoRows {
-		return c.LocalError("The user you're trying to unban no longer exists.", w, r, user)
+		return c.LocalError("The user you're trying to unban no longer exists.", w, r, u)
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
 
-	err = c.ModLogs.Create("unban", uid, "user", user.GetIP(), user.ID)
+	err = c.ModLogs.Create("unban", uid, "user", u.GetIP(), u.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
 
 	// TODO: Trickle the hookTable down from the router
 	hTbl := c.GetHookTable()
-	skip, rerr := hTbl.VhookSkippable("action_end_unban_user", targetUser.ID, user)
+	skip, rerr := hTbl.VhookSkippable("action_end_unban_user", targetUser.ID, u)
 	if skip || rerr != nil {
 		return rerr
 	}
@@ -146,23 +146,23 @@ func UnbanUser(w http.ResponseWriter, r *http.Request, user *c.User, suid string
 	return nil
 }
 
-func ActivateUser(w http.ResponseWriter, r *http.Request, user *c.User, suid string) c.RouteError {
-	if !user.Perms.ActivateUsers {
-		return c.NoPermissions(w, r, user)
+func ActivateUser(w http.ResponseWriter, r *http.Request, u *c.User, suid string) c.RouteError {
+	if !u.Perms.ActivateUsers {
+		return c.NoPermissions(w, r, u)
 	}
 	uid, err := strconv.Atoi(suid)
 	if err != nil {
-		return c.LocalError("The provided UserID is not a valid number.", w, r, user)
+		return c.LocalError("The provided UserID is not a valid number.", w, r, u)
 	}
 
 	targetUser, err := c.Users.Get(uid)
 	if err == sql.ErrNoRows {
-		return c.LocalError("The account you're trying to activate no longer exists.", w, r, user)
+		return c.LocalError("The account you're trying to activate no longer exists.", w, r, u)
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
 	if targetUser.Active {
-		return c.LocalError("The account you're trying to activate has already been activated.", w, r, user)
+		return c.LocalError("The account you're trying to activate has already been activated.", w, r, u)
 	}
 	err = targetUser.Activate()
 	if err != nil {
@@ -171,7 +171,7 @@ func ActivateUser(w http.ResponseWriter, r *http.Request, user *c.User, suid str
 
 	targetUser, err = c.Users.Get(uid)
 	if err == sql.ErrNoRows {
-		return c.LocalError("The account you're trying to activate no longer exists.", w, r, user)
+		return c.LocalError("The account you're trying to activate no longer exists.", w, r, u)
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -181,14 +181,14 @@ func ActivateUser(w http.ResponseWriter, r *http.Request, user *c.User, suid str
 	}
 	targetUser.CacheRemove()
 
-	err = c.ModLogs.Create("activate", targetUser.ID, "user", user.GetIP(), user.ID)
+	err = c.ModLogs.Create("activate", targetUser.ID, "user", u.GetIP(), u.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
 
 	// TODO: Trickle the hookTable down from the router
 	hTbl := c.GetHookTable()
-	skip, rerr := hTbl.VhookSkippable("action_end_activate_user", targetUser.ID, user)
+	skip, rerr := hTbl.VhookSkippable("action_end_activate_user", targetUser.ID, u)
 	if skip || rerr != nil {
 		return rerr
 	}
@@ -197,40 +197,40 @@ func ActivateUser(w http.ResponseWriter, r *http.Request, user *c.User, suid str
 	return nil
 }
 
-func DeletePostsSubmit(w http.ResponseWriter, r *http.Request, user *c.User, suid string) c.RouteError {
-	if !user.Perms.BanUsers {
-		return c.NoPermissions(w, r, user)
+func DeletePostsSubmit(w http.ResponseWriter, r *http.Request, u *c.User, suid string) c.RouteError {
+	if !u.Perms.BanUsers {
+		return c.NoPermissions(w, r, u)
 	}
 	uid, err := strconv.Atoi(suid)
 	if err != nil {
-		return c.LocalError("The provided UserID is not a valid number.", w, r, user)
+		return c.LocalError("The provided UserID is not a valid number.", w, r, u)
 	}
 
 	targetUser, err := c.Users.Get(uid)
 	if err == sql.ErrNoRows {
-		return c.LocalError("The user you're trying to purge posts of no longer exists.", w, r, user)
+		return c.LocalError("The user you're trying to purge posts of no longer exists.", w, r, u)
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
 	// TODO: Is there a difference between IsMod and IsSuperMod? Should we delete the redundant one?
 	if targetUser.IsMod {
-		return c.LocalError("You may not purge the posts of another staff member.", w, r, user)
+		return c.LocalError("You may not purge the posts of another staff member.", w, r, u)
 	}
 
 	err = targetUser.DeletePosts()
 	if err == sql.ErrNoRows {
-		return c.LocalError("The user you're trying to purge posts of no longer exists.", w, r, user)
+		return c.LocalError("The user you're trying to purge posts of no longer exists.", w, r, u)
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
-	err = c.ModLogs.Create("delete-posts", uid, "user", user.GetIP(), user.ID)
+	err = c.ModLogs.Create("delete-posts", uid, "user", u.GetIP(), u.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
 
 	// TODO: Trickle the hookTable down from the router
 	hTbl := c.GetHookTable()
-	skip, rerr := hTbl.VhookSkippable("action_end_delete_posts", targetUser.ID, user)
+	skip, rerr := hTbl.VhookSkippable("action_end_delete_posts", targetUser.ID, u)
 	if skip || rerr != nil {
 		return rerr
 	}

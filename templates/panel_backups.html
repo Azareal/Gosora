@@ -1,12 +1,12 @@
 <div class="colstack_item colstack_head">
 	<div class="rowitem"><h1>{{lang "panel_backups_head"}}</h1></div>
 </div>
-<div id="panel_backups" class="colstack_item rowlist">
+<div id="panel_backups"class="colstack_item rowlist">
 	{{range .Backups}}
 	<div class="rowitem panel_compactrow">
 		<span>{{.SQLURL}}</span>
 		<span class="panel_floater">
-			<a href="/panel/backups/{{.SQLURL}}" class="panel_tag panel_right_button">{{lang "panel_backups_download"}}</a>
+			<a href="/panel/backups/{{.SQLURL}}"class="panel_tag panel_right_button">{{lang "panel_backups_download"}}</a>
 		</span>
 	</div>
 	{{else}}<div class="rowitem rowmsg">{{lang "panel_backups_no_backups"}}</div>{{end}}

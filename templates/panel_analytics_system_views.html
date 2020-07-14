@@ -4,8 +4,8 @@
 		{{template "panel_analytics_time_range.html" . }}
 	</div>
 </div>
-<form id="timeRangeForm" name="timeRangeForm" action="/panel/analytics/system/{{.Agent}}" method="get"></form>
-<div id="panel_analytics_systems" class="colstack_graph_holder">
+<form id="timeRangeForm"name="timeRangeForm"action="/panel/analytics/system/{{.Agent}}"method="get"></form>
+<div id="panel_analytics_systems"class="colstack_graph_holder">
 	<div class="ct_chart"></div>
 </div>
 {{template "panel_analytics_script.html" . }}

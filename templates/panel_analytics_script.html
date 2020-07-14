@@ -13,7 +13,7 @@ let legendNames = [{{range .Graph.Legends}}
 addInitHook("after_phrases", () => {
 	addInitHook("end_init", () => {
 		addInitHook("analytics_loaded", () => {
-			buildStatsChart(rawLabels, seriesData, "{{.TimeRange}}",legendNames);
+			buildStatsChart(rawLabels,seriesData,"{{.TimeRange}}",legendNames);
 		});
 	});
 });

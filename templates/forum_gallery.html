@@ -1,8 +1,8 @@
 {{template "header.html" . }}
-<main id="forumItemList" itemscope itemtype="http://schema.org/ItemList">
-<link rel="canonical" href="//{{.Site.URL}}{{.Forum.Link}}{{if gt .Page 1}}?page={{.Page}}{{end}}"/>
+<main id="forumItemList"itemscope itemtype="http://schema.org/ItemList">
+<link rel="canonical"href="//{{.Site.URL}}{{.Forum.Link}}{{if gt .Page 1}}?page={{.Page}}{{end}}">
 
-	<div id="forum_head_block" class="rowblock rowhead topic_list_title_block{{if .CurrentUser.Loggedin}} has_opt{{end}}">
+	<div id="forum_head_block"class="rowblock rowhead topic_list_title_block{{if .CurrentUser.Loggedin}} has_opt{{end}}">
 		<div class="rowitem forum_title">
 			<h1 itemprop="name">{{.Title}}</h1>
 		</div>

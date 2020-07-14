@@ -51,18 +51,21 @@ func init() {
 	addPatch(31, patch31)
 	addPatch(32, patch32)
 	addPatch(33, patch33)
+	addPatch(34, patch34)
+	//addPatch(35, patch35)
+}
+
+func bcol(col string, val bool) qgen.DBTableColumn {
+	if val {
+		return tC{col, "boolean", 0, false, false, "1"}
+	}
+	return tC{col, "boolean", 0, false, false, "0"}
+}
+func ccol(col string, size int, sdefault string) qgen.DBTableColumn {
+	return tC{col, "varchar", size, false, false, sdefault}
 }
 
 func patch0(scanner *bufio.Scanner) (err error) {
-	err = execStmt(qgen.Builder.DropTable("menus"))
-	if err != nil {
-		return err
-	}
-	err = execStmt(qgen.Builder.DropTable("menu_items"))
-	if err != nil {
-		return err
-	}
-
 	err = createTable("menus", "", "",
 		[]tC{
 			tC{"mid", "int", 0, false, true, ""},
@@ -79,20 +82,20 @@ func patch0(scanner *bufio.Scanner) (err error) {
 		[]tC{
 			tC{"miid", "int", 0, false, true, ""},
 			tC{"mid", "int", 0, false, false, ""},
-			tC{"name", "varchar", 200, false, false, ""},
-			tC{"htmlID", "varchar", 200, false, false, "''"},
-			tC{"cssClass", "varchar", 200, false, false, "''"},
-			tC{"position", "varchar", 100, false, false, ""},
-			tC{"path", "varchar", 200, false, false, "''"},
-			tC{"aria", "varchar", 200, false, false, "''"},
-			tC{"tooltip", "varchar", 200, false, false, "''"},
-			tC{"tmplName", "varchar", 200, false, false, "''"},
+			ccol("name", 200, ""),
+			ccol("htmlID", 200, "''"),
+			ccol("cssClass", 200, "''"),
+			ccol("position", 100, ""),
+			ccol("path", 200, "''"),
+			ccol("aria", 200, "''"),
+			ccol("tooltip", 200, "''"),
+			ccol("tmplName", 200, "''"),
 			tC{"order", "int", 0, false, false, "0"},
 
-			tC{"guestOnly", "boolean", 0, false, false, "0"},
-			tC{"memberOnly", "boolean", 0, false, false, "0"},
-			tC{"staffOnly", "boolean", 0, false, false, "0"},
-			tC{"adminOnly", "boolean", 0, false, false, "0"},
+			bcol("guestOnly", false),
+			bcol("memberOnly", false),
+			bcol("staffOnly", false),
+			bcol("adminOnly", false),
 		},
 		[]tK{
 			tK{"miid", "primary", "", false},
@@ -194,11 +197,11 @@ func patch3(scanner *bufio.Scanner) error {
 	return createTable("registration_logs", "", "",
 		[]tC{
 			tC{"rlid", "int", 0, false, true, ""},
-			tC{"username", "varchar", 100, false, false, ""},
-			tC{"email", "varchar", 100, false, false, ""},
-			tC{"failureReason", "varchar", 100, false, false, ""},
-			tC{"success", "bool", 0, false, false, "0"}, // Did this attempt succeed?
-			tC{"ipaddress", "varchar", 200, false, false, ""},
+			ccol("username", 100, ""),
+			ccol("email", 100, ""),
+			ccol("failureReason", 100, ""),
+			bcol("success", false), // Did this attempt succeed?
+			ccol("ipaddress", 200, ""),
 			tC{"doneAt", "createdAt", 0, false, false, ""},
 		},
 		[]tK{
@@ -258,8 +261,8 @@ func patch4(scanner *bufio.Scanner) error {
 	err = createTable("pages", "utf8mb4", "utf8mb4_general_ci",
 		[]tC{
 			tC{"pid", "int", 0, false, true, ""},
-			tC{"name", "varchar", 200, false, false, ""},
-			tC{"title", "varchar", 200, false, false, ""},
+			ccol("name", 200, ""),
+			ccol("title", 200, ""),
 			tC{"body", "text", 0, false, false, ""},
 			tC{"allowedGroups", "text", 0, false, false, ""},
 			tC{"menuID", "int", 0, false, false, "-1"},
@@ -293,29 +296,24 @@ func patch5(scanner *bufio.Scanner) error {
 		return err
 	}
 
-	err = createTable("users_2fa_keys", "utf8mb4", "utf8mb4_general_ci",
+	return createTable("users_2fa_keys", "utf8mb4", "utf8mb4_general_ci",
 		[]tC{
 			tC{"uid", "int", 0, false, false, ""},
-			tC{"secret", "varchar", 100, false, false, ""},
-			tC{"scratch1", "varchar", 50, false, false, ""},
-			tC{"scratch2", "varchar", 50, false, false, ""},
-			tC{"scratch3", "varchar", 50, false, false, ""},
-			tC{"scratch4", "varchar", 50, false, false, ""},
-			tC{"scratch5", "varchar", 50, false, false, ""},
-			tC{"scratch6", "varchar", 50, false, false, ""},
-			tC{"scratch7", "varchar", 50, false, false, ""},
-			tC{"scratch8", "varchar", 50, false, false, ""},
+			ccol("secret", 100, ""),
+			ccol("scratch1", 50, ""),
+			ccol("scratch2", 50, ""),
+			ccol("scratch3", 50, ""),
+			ccol("scratch4", 50, ""),
+			ccol("scratch5", 50, ""),
+			ccol("scratch6", 50, ""),
+			ccol("scratch7", 50, ""),
+			ccol("scratch8", 50, ""),
 			tC{"createdAt", "createdAt", 0, false, false, ""},
 		},
 		[]tK{
 			tK{"uid", "primary", "", false},
 		},
 	)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func patch6(scanner *bufio.Scanner) error {
@@ -382,10 +380,6 @@ func patch8(scanner *bufio.Scanner) error {
 		return err
 	}
 
-	err = execStmt(qgen.Builder.DropTable("updates"))
-	if err != nil {
-		return err
-	}
 	return createTable("updates", "", "",
 		[]tC{
 			tC{"dbVersion", "int", 0, false, false, "0"},
@@ -404,8 +398,8 @@ func patch9(scanner *bufio.Scanner) error {
 		[]tC{
 			tC{"lid", "int", 0, false, true, ""},
 			tC{"uid", "int", 0, false, false, ""},
-			tC{"success", "bool", 0, false, false, "0"}, // Did this attempt succeed?
-			tC{"ipaddress", "varchar", 200, false, false, ""},
+			bcol("success", false), // Did this attempt succeed?
+			ccol("ipaddress", 200, ""),
 			tC{"doneAt", "createdAt", 0, false, false, ""},
 		},
 		[]tK{
@@ -463,7 +457,7 @@ func patch11(scanner *bufio.Scanner) error {
 	}
 
 	// Attachments for replies got the topicID rather than the replyID for a while in error, so we want to separate these out
-	_, err = acc().Update("attachments").Set("originTable = 'freplies'").Where("originTable = 'replies'").Exec()
+	_, err = acc().Update("attachments").Set("originTable='freplies'").Where("originTable='replies'").Exec()
 	if err != nil {
 		return err
 	}
@@ -491,39 +485,26 @@ func patch11(scanner *bufio.Scanner) error {
 }
 
 func patch12(scanner *bufio.Scanner) error {
-	err := execStmt(qgen.Builder.AddIndex("topics", "parentID", "parentID"))
-	if err != nil {
-		return err
+	var e error
+	addIndex := func(tbl, iname, colname string) {
+		if e != nil {
+			return
+		}
+		/*e = execStmt(qgen.Builder.RemoveIndex(tbl, iname))
+		if e != nil {
+			return
+		}*/
+		e = execStmt(qgen.Builder.AddIndex(tbl, iname, colname))
 	}
-	err = execStmt(qgen.Builder.AddIndex("replies", "tid", "tid"))
-	if err != nil {
-		return err
-	}
-	err = execStmt(qgen.Builder.AddIndex("polls", "parentID", "parentID"))
-	if err != nil {
-		return err
-	}
-	err = execStmt(qgen.Builder.AddIndex("likes", "targetItem", "targetItem"))
-	if err != nil {
-		return err
-	}
-	err = execStmt(qgen.Builder.AddIndex("emails", "uid", "uid"))
-	if err != nil {
-		return err
-	}
-	err = execStmt(qgen.Builder.AddIndex("attachments", "originID", "originID"))
-	if err != nil {
-		return err
-	}
-	err = execStmt(qgen.Builder.AddIndex("attachments", "path", "path"))
-	if err != nil {
-		return err
-	}
-	err = execStmt(qgen.Builder.AddIndex("activity_stream_matches", "watcher", "watcher"))
-	if err != nil {
-		return err
-	}
-	return nil
+	addIndex("topics", "parentID", "parentID")
+	addIndex("replies", "tid", "tid")
+	addIndex("polls", "parentID", "parentID")
+	addIndex("likes", "targetItem", "targetItem")
+	addIndex("emails", "uid", "uid")
+	addIndex("attachments", "originID", "originID")
+	addIndex("attachments", "path", "path")
+	addIndex("activity_stream_matches", "watcher", "watcher")
+	return e
 }
 
 func patch13(scanner *bufio.Scanner) error {
@@ -554,17 +535,17 @@ func patch15(scanner *bufio.Scanner) error {
 func patch16(scanner *bufio.Scanner) error {
 	return createTable("password_resets", "", "",
 		[]tC{
-			tC{"email", "varchar", 200, false, false, ""},
-			tC{"uid", "int", 0, false, false, ""},             // TODO: Make this a foreign key
-			tC{"validated", "varchar", 200, false, false, ""}, // Token given once the one-use token is consumed, used to prevent multiple people consuming the same one-use token
-			tC{"token", "varchar", 200, false, false, ""},
+			ccol("email", 200, ""),
+			tC{"uid", "int", 0, false, false, ""}, // TODO: Make this a foreign key
+			ccol("validated", 200, ""),            // Token given once the one-use token is consumed, used to prevent multiple people consuming the same one-use token
+			ccol("token", 200, ""),
 			tC{"createdAt", "createdAt", 0, false, false, ""},
 		}, nil,
 	)
 }
 
 func patch17(scanner *bufio.Scanner) error {
-	err := execStmt(qgen.Builder.AddColumn("attachments", tC{"extra", "varchar", 200, false, false, ""}, nil))
+	err := execStmt(qgen.Builder.AddColumn("attachments", ccol("extra", 200, ""), nil))
 	if err != nil {
 		return err
 	}
@@ -575,7 +556,7 @@ func patch17(scanner *bufio.Scanner) error {
 		if err != nil {
 			return err
 		}
-		_, err = acc().Update("attachments").Set("sectionID=?").Where("originTable = 'topics' AND originID = ?").Exec(parentID, tid)
+		_, err = acc().Update("attachments").Set("sectionID=?").Where("originTable='topics' AND originID=?").Exec(parentID, tid)
 		return err
 	})
 	if err != nil {
@@ -592,7 +573,7 @@ func patch17(scanner *bufio.Scanner) error {
 		if err != nil {
 			return err
 		}
-		_, err = acc().Update("attachments").Set("sectionID=?, extra=?").Where("originTable = 'replies' AND originID = ?").Exec(sectionID, tid, rid)
+		_, err = acc().Update("attachments").Set("sectionID=?, extra=?").Where("originTable='replies' AND originID=?").Exec(sectionID, tid, rid)
 		return err
 	})
 }
@@ -613,16 +594,15 @@ func patch19(scanner *bufio.Scanner) error {
 func patch20(scanner *bufio.Scanner) error {
 	err := acc().Select("activity_stream_matches").Cols("asid").Each(func(rows *sql.Rows) error {
 		var asid int
-		err := rows.Scan(&asid)
-		if err != nil {
-			return err
+		if e := rows.Scan(&asid); e != nil {
+			return e
 		}
-		err = acc().Select("activity_stream").Cols("asid").Where("asid = ?").QueryRow(asid).Scan(&asid)
-		if err != sql.ErrNoRows {
-			return err
+		e := acc().Select("activity_stream").Cols("asid").Where("asid=?").QueryRow(asid).Scan(&asid)
+		if e != sql.ErrNoRows {
+			return e
 		}
-		_, err = acc().Delete("activity_stream_matches").Where("asid = ?").Run(asid)
-		return err
+		_, e = acc().Delete("activity_stream_matches").Where("asid=?").Run(asid)
+		return e
 	})
 	if err != nil {
 		return err
@@ -644,8 +624,8 @@ func patch21(scanner *bufio.Scanner) error {
 
 	err = createTable("meta", "", "",
 		[]tC{
-			tC{"name", "varchar", 200, false, false, ""},
-			tC{"value", "varchar", 200, false, false, ""},
+			ccol("name", 200, ""),
+			ccol("value", 200, ""),
 		}, nil,
 	)
 	if err != nil {
@@ -656,15 +636,11 @@ func patch21(scanner *bufio.Scanner) error {
 }
 
 func patch22(scanner *bufio.Scanner) error {
-	return execStmt(qgen.Builder.AddColumn("forums", tC{"tmpl", "varchar", 200, false, false, "''"}, nil))
+	return execStmt(qgen.Builder.AddColumn("forums", ccol("tmpl", 200, "''"), nil))
 }
 
 func patch23(scanner *bufio.Scanner) error {
-	err := execStmt(qgen.Builder.DropTable("conversations"))
-	if err != nil {
-		return err
-	}
-	err = createTable("conversations", "", "",
+	err := createTable("conversations", "", "",
 		[]tC{
 			tC{"cid", "int", 0, false, true, ""},
 			tC{"createdBy", "int", 0, false, false, ""}, // TODO: Make this a foreign key
@@ -680,17 +656,13 @@ func patch23(scanner *bufio.Scanner) error {
 		return err
 	}
 
-	err = execStmt(qgen.Builder.DropTable("conversations_posts"))
-	if err != nil {
-		return err
-	}
 	err = createTable("conversations_posts", "", "",
 		[]tC{
 			tC{"pid", "int", 0, false, true, ""},
 			tC{"cid", "int", 0, false, false, ""},
 			tC{"createdBy", "int", 0, false, false, ""},
-			tC{"body", "varchar", 50, false, false, ""},
-			tC{"post", "varchar", 50, false, false, "''"},
+			ccol("body", 50, ""),
+			ccol("post", 50, "''"),
 		},
 		[]tK{
 			tK{"pid", "primary", "", false},
@@ -700,10 +672,6 @@ func patch23(scanner *bufio.Scanner) error {
 		return err
 	}
 
-	err = execStmt(qgen.Builder.DropTable("conversations_participants"))
-	if err != nil {
-		return err
-	}
 	return createTable("conversations_participants", "", "",
 		[]tC{
 			tC{"uid", "int", 0, false, false, ""},
@@ -713,16 +681,12 @@ func patch23(scanner *bufio.Scanner) error {
 }
 
 func patch24(scanner *bufio.Scanner) error {
-	err := execStmt(qgen.Builder.DropTable("users_groups_promotions"))
-	if err != nil {
-		return err
-	}
 	return createTable("users_groups_promotions", "", "",
 		[]tC{
 			tC{"pid", "int", 0, false, true, ""},
 			tC{"from_gid", "int", 0, false, false, ""},
 			tC{"to_gid", "int", 0, false, false, ""},
-			tC{"two_way", "boolean", 0, false, false, "0"}, // If a user no longer meets the requirements for this promotion then they will be demoted if this flag is set
+			bcol("two_way", false), // If a user no longer meets the requirements for this promotion then they will be demoted if this flag is set
 
 			// Requirements
 			tC{"level", "int", 0, false, false, ""},
@@ -812,28 +776,21 @@ func patch29(scanner *bufio.Scanner) error {
 		return err
 	}
 
-	fixCol := func(tbl string) error {
-		//err := execStmt(qgen.Builder.RenameColumn(tbl, "ipaddress","ip"))
-		err := execStmt(qgen.Builder.ChangeColumn(tbl, "ipaddress", tC{"ip", "varchar", 200, false, false, "''"}))
-		if err != nil {
-			return err
+	fixCols := func(tbls ...string) error {
+		for _, tbl := range tbls {
+			//err := execStmt(qgen.Builder.RenameColumn(tbl, "ipaddress","ip"))
+			err := execStmt(qgen.Builder.ChangeColumn(tbl, "ipaddress", ccol("ip", 200, "''")))
+			if err != nil {
+				return err
+			}
+			err = execStmt(qgen.Builder.SetDefaultColumn(tbl, "ip", "varchar", ""))
+			if err != nil {
+				return err
+			}
 		}
-		return execStmt(qgen.Builder.SetDefaultColumn(tbl, "ip", "varchar", ""))
+		return nil
 	}
-
-	err = fixCol("topics")
-	if err != nil {
-		return err
-	}
-	err = fixCol("replies")
-	if err != nil {
-		return err
-	}
-	err = fixCol("polls_votes")
-	if err != nil {
-		return err
-	}
-	err = fixCol("users_replies")
+	err = fixCols("topics", "replies", "polls_votes", "users_replies")
 	if err != nil {
 		return err
 	}
@@ -867,36 +824,31 @@ func patch30(scanner *bufio.Scanner) error {
 	return execStmt(qgen.Builder.SetDefaultColumn("users", "last_ip", "varchar", ""))
 }
 
-func patch31(scanner *bufio.Scanner) error {
-	err := execStmt(qgen.Builder.RemoveIndex("topics", "title"))
+func patch31(scanner *bufio.Scanner) (e error) {
+	addKey := func(tbl, col string, tk qgen.DBTableKey) error {
+		/*err := execStmt(qgen.Builder.RemoveIndex(tbl, col))
+		if err != nil {
+			return err
+		}*/
+		return execStmt(qgen.Builder.AddKey(tbl, col, tk))
+	}
+	err := addKey("topics", "title", tK{"title", "fulltext", "", false})
 	if err != nil {
 		return err
 	}
-	err = execStmt(qgen.Builder.RemoveIndex("topics", "content"))
+	err = addKey("topics", "content", tK{"content", "fulltext", "", false})
 	if err != nil {
 		return err
 	}
-	err = execStmt(qgen.Builder.RemoveIndex("replies", "content"))
-	if err != nil {
-		return err
-	}
-	err = execStmt(qgen.Builder.AddKey("topics", "title", tK{"title", "fulltext", "", false}))
-	if err != nil {
-		return err
-	}
-	err = execStmt(qgen.Builder.AddKey("topics", "content", tK{"content", "fulltext", "", false}))
-	if err != nil {
-		return err
-	}
-	err = execStmt(qgen.Builder.AddKey("replies", "content", tK{"content", "fulltext", "", false}))
-	if err != nil {
-		return err
-	}
-	return nil
+	return addKey("replies", "content", tK{"content", "fulltext", "", false})
 }
 
-func createTable(table, charset, collation string, cols []tC, keys []tK) error {
-	return execStmt(qgen.Builder.CreateTable(table, charset, collation, cols, keys))
+func createTable(tbl, charset, collation string, cols []tC, keys []tK) error {
+	err := execStmt(qgen.Builder.DropTable(tbl))
+	if err != nil {
+		return err
+	}
+	return execStmt(qgen.Builder.CreateTable(tbl, charset, collation, cols, keys))
 }
 
 func patch32(scanner *bufio.Scanner) error {
@@ -912,4 +864,76 @@ func patch32(scanner *bufio.Scanner) error {
 
 func patch33(scanner *bufio.Scanner) error {
 	return execStmt(qgen.Builder.AddColumn("viewchunks", tC{"avg", "int", 0, false, false, "0"}, nil))
+}
+
+func patch34(scanner *bufio.Scanner) error {
+	/*err := createTable("tables", "", "",
+		[]tC{
+			tC{"id", "int", 0, false, true, ""},
+			ccol("name", 200, ""),
+		},
+		[]tK{
+			tK{"id", "primary", "", false},
+			tK{"name", "unique", "", false},
+		},
+	)
+	if err != nil {
+		return err
+	}
+	insert := func(tbl, cols, fields string) {
+		if err != nil {
+			return
+		}
+		err = execStmt(qgen.Builder.SimpleInsert(tbl, cols, fields))
+	}
+	insert("tables", "name", "forums")
+	insert("tables", "name", "topics")
+	insert("tables", "name", "replies")
+	// ! Hold onto freplies for a while longer
+	insert("tables", "name", "freplies")*/
+	/*err := execStmt(qgen.Builder.AddColumn("topics", tC{"attachCount", "int", 0, false, false, "0"}, nil))
+	if err != nil {
+		return err
+	}*/
+	overwriteColumn := func(tbl, col string, tc qgen.DBTableColumn) error {
+		/*e := execStmt(qgen.Builder.DropColumn(tbl, col))
+		if e != nil {
+			return e
+		}*/
+		return execStmt(qgen.Builder.AddColumn(tbl, tc, nil))
+	}
+	err := overwriteColumn("users", "profile_comments", tC{"profile_comments", "int", 0, false, false, "0"})
+	if err != nil {
+		return err
+	}
+	err = overwriteColumn("users", "who_can_convo", tC{"who_can_convo", "int", 0, false, false, "0"})
+	if err != nil {
+		return err
+	}
+
+	setDefault := func(tbl, col, typ, val string) {
+		if err != nil {
+			return
+		}
+		err = execStmt(qgen.Builder.SetDefaultColumn(tbl, col, typ, val))
+	}
+	setDefault("users_groups", "permissions", "text", "{}")
+	setDefault("users_groups", "plugin_perms", "text", "{}")
+	setDefault("forums_permissions", "permissions", "text", "{}")
+	setDefault("topics", "content", "text", "")
+	setDefault("topics", "parsed_content", "text", "")
+	setDefault("replies", "content", "text", "")
+	setDefault("replies", "parsed_content", "text", "")
+	//setDefault("revisions", "content", "text", "")
+	setDefault("users_replies", "content", "text", "")
+	setDefault("users_replies", "parsed_content", "text", "")
+	setDefault("pages", "body", "text", "")
+	setDefault("pages", "allowedGroups", "text", "")
+	setDefault("moderation_logs", "extra", "text", "")
+	setDefault("administration_logs", "extra", "text", "")
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

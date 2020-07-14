@@ -230,7 +230,7 @@ func AccountRegisterSubmit(w http.ResponseWriter, r *http.Request, user *c.User)
 	if r.PostFormValue("tos") != "0" {
 		regError(p.GetErrorPhrase("register_might_be_machine"), "trap-question")
 	}
-	
+
 	{
 		h := sha256.New()
 		h.Write([]byte(c.JSTokenBox.Load().(string)))
@@ -614,8 +614,8 @@ func AccountEditMFADisableSubmit(w http.ResponseWriter, r *http.Request, u *c.Us
 
 func AccountEditPrivacy(w http.ResponseWriter, r *http.Request, u *c.User, h *c.Header) c.RouteError {
 	accountEditHead("account_privacy", w, r, u, h)
-	profileComments := false
-	receiveConvos := false
+	profileComments := u.Privacy.ShowComments
+	receiveConvos := u.Privacy.AllowMessage
 	enableEmbeds := !c.DefaultParseSettings.NoEmbed
 	if u.ParseSettings != nil {
 		enableEmbeds = !u.ParseSettings.NoEmbed
@@ -626,14 +626,21 @@ func AccountEditPrivacy(w http.ResponseWriter, r *http.Request, u *c.User, h *c.
 
 func AccountEditPrivacySubmit(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
 	//headerLite, _ := c.SimpleUserCheck(w, r, u)
-
+	sProfileComments := r.FormValue("profile_comments")
 	sEnableEmbeds := r.FormValue("enable_embeds")
-	enableEmbeds, e := strconv.Atoi(sEnableEmbeds)
-	if e != nil {
-		return c.LocalError("enable_embeds must be 0 or 1", w, r, u)
-	}
-	if sEnableEmbeds != r.FormValue("o_enable_embeds") {
-		if e = u.UpdatePrivacy(enableEmbeds); e != nil {
+	oProfileComments := r.FormValue("o_profile_comments")
+	oEnableEmbeds := r.FormValue("o_enable_embeds")
+
+	if sProfileComments != oProfileComments || sEnableEmbeds != oEnableEmbeds {
+		profileComments, e := strconv.Atoi(sProfileComments)
+		enableEmbeds, e2 := strconv.Atoi(sEnableEmbeds)
+		if e != nil || e2 != nil {
+			return c.LocalError("malformed integer", w, r, u)
+		}
+		e = u.UpdatePrivacy(profileComments, enableEmbeds)
+		if e == c.ErrProfileCommentsOutOfBounds || e == c.ErrEnableEmbedsOutOfBounds {
+			return c.LocalError(e.Error(), w, r, u)
+		} else if e != nil {
 			return c.InternalError(e, w, r)
 		}
 	}

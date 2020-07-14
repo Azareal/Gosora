@@ -126,7 +126,7 @@ type DBStmt struct {
 	Type     string // create-table, insert, update, delete
 }
 
-// TODO: Add the DropTable, TableExists, AddColumn, ColumnExists, and RemoveColumn methods
+// TODO: Add the TableExists and ColumnExists methods
 type Adapter interface {
 	GetName() string
 	BuildConn(config map[string]string) (*sql.DB, error)

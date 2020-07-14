@@ -232,6 +232,7 @@ type ProfilePage struct {
 	Blocked      bool
 	CanMessage   bool
 	CanComment   bool
+	ShowComments bool
 }
 
 type CreateTopicPage struct {
@@ -249,7 +250,7 @@ type IPSearchPage struct {
 type RegisterPage struct {
 	*Header
 	RequireEmail bool
-	Token string
+	Token        string
 }
 
 type Account struct {
@@ -278,8 +279,8 @@ type AccountBlocksPage struct {
 
 type AccountPrivacyPage struct {
 	*Header
-	ProfileComments bool
-	ReceiveConvos   bool
+	ProfileComments int
+	ReceiveConvos   int
 	EnableEmbeds    bool
 }
 

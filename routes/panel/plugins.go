@@ -26,54 +26,54 @@ func Plugins(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
 }
 
 // TODO: Abstract more of the plugin activation / installation / deactivation logic, so we can test all that more reliably and easily
-func PluginsActivate(w http.ResponseWriter, r *http.Request, user *c.User, uname string) c.RouteError {
-	_, ferr := c.SimplePanelUserCheck(w, r, user)
+func PluginsActivate(w http.ResponseWriter, r *http.Request, u *c.User, uname string) c.RouteError {
+	_, ferr := c.SimplePanelUserCheck(w, r, u)
 	if ferr != nil {
 		return ferr
 	}
-	if !user.Perms.ManagePlugins {
-		return c.NoPermissions(w, r, user)
+	if !u.Perms.ManagePlugins {
+		return c.NoPermissions(w, r, u)
 	}
 
-	plugin, ok := c.Plugins[uname]
+	pl, ok := c.Plugins[uname]
 	if !ok {
-		return c.LocalError("The plugin isn't registered in the system", w, r, user)
+		return c.LocalError("The plugin isn't registered in the system", w, r, u)
 	}
-	if plugin.Installable && !plugin.Installed {
-		return c.LocalError("You can't activate this plugin without installing it first", w, r, user)
+	if pl.Installable && !pl.Installed {
+		return c.LocalError("You can't activate this plugin without installing it first", w, r, u)
 	}
 
-	active, err := plugin.BypassActive()
-	hasPlugin, err2 := plugin.InDatabase()
+	active, err := pl.BypassActive()
+	hasPlugin, err2 := pl.InDatabase()
 	if err != nil || err2 != nil {
 		return c.InternalError(err, w, r)
 	}
 
-	if plugin.Activate != nil {
-		err = plugin.Activate(plugin)
+	if pl.Activate != nil {
+		err = pl.Activate(pl)
 		if err != nil {
-			return c.LocalError(err.Error(), w, r, user)
+			return c.LocalError(err.Error(), w, r, u)
 		}
 	}
 
 	if hasPlugin {
 		if active {
-			return c.LocalError("The plugin is already active", w, r, user)
+			return c.LocalError("The plugin is already active", w, r, u)
 		}
-		err = plugin.SetActive(true)
+		err = pl.SetActive(true)
 	} else {
-		err = plugin.AddToDatabase(true, false)
+		err = pl.AddToDatabase(true, false)
 	}
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
 
-	log.Printf("Activating plugin '%s'", plugin.Name)
-	err = plugin.Init(plugin)
+	log.Printf("Activating plugin '%s'", pl.Name)
+	err = pl.Init(pl)
 	if err != nil {
-		return c.LocalError(err.Error(), w, r, user)
+		return c.LocalError(err.Error(), w, r, u)
 	}
-	err = c.AdminLogs.CreateExtra("activate", 0, "plugin", user.GetIP(), user.ID, c.SanitiseSingleLine(plugin.Name))
+	err = c.AdminLogs.CreateExtra("activate", 0, "plugin", u.GetIP(), u.ID, c.SanitiseSingleLine(pl.Name))
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -82,36 +82,36 @@ func PluginsActivate(w http.ResponseWriter, r *http.Request, user *c.User, uname
 	return nil
 }
 
-func PluginsDeactivate(w http.ResponseWriter, r *http.Request, user *c.User, uname string) c.RouteError {
-	_, ferr := c.SimplePanelUserCheck(w, r, user)
+func PluginsDeactivate(w http.ResponseWriter, r *http.Request, u *c.User, uname string) c.RouteError {
+	_, ferr := c.SimplePanelUserCheck(w, r, u)
 	if ferr != nil {
 		return ferr
 	}
-	if !user.Perms.ManagePlugins {
-		return c.NoPermissions(w, r, user)
+	if !u.Perms.ManagePlugins {
+		return c.NoPermissions(w, r, u)
 	}
 
-	plugin, ok := c.Plugins[uname]
+	pl, ok := c.Plugins[uname]
 	if !ok {
-		return c.LocalError("The plugin isn't registered in the system", w, r, user)
+		return c.LocalError("The plugin isn't registered in the system", w, r, u)
 	}
-	log.Printf("plugin: %+v\n", plugin)
+	log.Printf("plugin: %+v\n", pl)
 
-	active, err := plugin.BypassActive()
+	active, err := pl.BypassActive()
 	if err != nil {
 		return c.InternalError(err, w, r)
 	} else if !active {
-		return c.LocalError("The plugin you're trying to deactivate isn't active", w, r, user)
+		return c.LocalError("The plugin you're trying to deactivate isn't active", w, r, u)
 	}
 
-	err = plugin.SetActive(false)
+	err = pl.SetActive(false)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
-	if plugin.Deactivate != nil {
-		plugin.Deactivate(plugin)
+	if pl.Deactivate != nil {
+		pl.Deactivate(pl)
 	}
-	err = c.AdminLogs.CreateExtra("deactivate", 0, "plugin", user.GetIP(), user.ID, c.SanitiseSingleLine(plugin.Name))
+	err = c.AdminLogs.CreateExtra("deactivate", 0, "plugin", u.GetIP(), u.ID, c.SanitiseSingleLine(pl.Name))
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -120,28 +120,28 @@ func PluginsDeactivate(w http.ResponseWriter, r *http.Request, user *c.User, una
 	return nil
 }
 
-func PluginsInstall(w http.ResponseWriter, r *http.Request, user *c.User, uname string) c.RouteError {
-	_, ferr := c.SimplePanelUserCheck(w, r, user)
+func PluginsInstall(w http.ResponseWriter, r *http.Request, u *c.User, uname string) c.RouteError {
+	_, ferr := c.SimplePanelUserCheck(w, r, u)
 	if ferr != nil {
 		return ferr
 	}
-	if !user.Perms.ManagePlugins {
-		return c.NoPermissions(w, r, user)
+	if !u.Perms.ManagePlugins {
+		return c.NoPermissions(w, r, u)
 	}
 
-	plugin, ok := c.Plugins[uname]
+	pl, ok := c.Plugins[uname]
 	if !ok {
-		return c.LocalError("The plugin isn't registered in the system", w, r, user)
+		return c.LocalError("The plugin isn't registered in the system", w, r, u)
 	}
-	if !plugin.Installable {
-		return c.LocalError("This plugin is not installable", w, r, user)
+	if !pl.Installable {
+		return c.LocalError("This plugin is not installable", w, r, u)
 	}
-	if plugin.Installed {
-		return c.LocalError("This plugin has already been installed", w, r, user)
+	if pl.Installed {
+		return c.LocalError("This plugin has already been installed", w, r, u)
 	}
 
-	active, err := plugin.BypassActive()
-	hasPlugin, err2 := plugin.InDatabase()
+	active, err := pl.BypassActive()
+	hasPlugin, err2 := pl.InDatabase()
 	if err != nil || err2 != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -149,39 +149,39 @@ func PluginsInstall(w http.ResponseWriter, r *http.Request, user *c.User, uname 
 		return c.InternalError(errors.New("An uninstalled plugin is still active"), w, r)
 	}
 
-	if plugin.Install != nil {
-		err = plugin.Install(plugin)
+	if pl.Install != nil {
+		err = pl.Install(pl)
 		if err != nil {
-			return c.LocalError(err.Error(), w, r, user)
+			return c.LocalError(err.Error(), w, r, u)
 		}
 	}
 
-	if plugin.Activate != nil {
-		err = plugin.Activate(plugin)
+	if pl.Activate != nil {
+		err = pl.Activate(pl)
 		if err != nil {
-			return c.LocalError(err.Error(), w, r, user)
+			return c.LocalError(err.Error(), w, r, u)
 		}
 	}
 
 	if hasPlugin {
-		err = plugin.SetInstalled(true)
+		err = pl.SetInstalled(true)
 		if err != nil {
 			return c.InternalError(err, w, r)
 		}
-		err = plugin.SetActive(true)
+		err = pl.SetActive(true)
 	} else {
-		err = plugin.AddToDatabase(true, true)
+		err = pl.AddToDatabase(true, true)
 	}
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
 
-	log.Printf("Installing plugin '%s'", plugin.Name)
-	err = plugin.Init(plugin)
+	log.Printf("Installing plugin '%s'", pl.Name)
+	err = pl.Init(pl)
 	if err != nil {
-		return c.LocalError(err.Error(), w, r, user)
+		return c.LocalError(err.Error(), w, r, u)
 	}
-	err = c.AdminLogs.CreateExtra("install", 0, "plugin", user.GetIP(), user.ID, c.SanitiseSingleLine(plugin.Name))
+	err = c.AdminLogs.CreateExtra("install", 0, "plugin", u.GetIP(), u.ID, c.SanitiseSingleLine(pl.Name))
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}

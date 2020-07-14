@@ -98,7 +98,7 @@ func NewDefaultAuth() (*DefaultAuth, error) {
 // Authenticate checks if a specific username and password is valid and returns the UID for the corresponding user, if so. Otherwise, a user safe error.
 // IF MFA is enabled, then pass it back a flag telling the caller that authentication isn't complete yet
 // TODO: Find a better way of handling errors we don't want to reach the user
-func (auth *DefaultAuth) Authenticate(name string, password string) (uid int, err error, requiresExtraAuth bool) {
+func (auth *DefaultAuth) Authenticate(name, password string) (uid int, err error, requiresExtraAuth bool) {
 	var realPassword, salt string
 	err = auth.login.QueryRow(name).Scan(&uid, &realPassword, &salt)
 	if err == ErrNoRows {
@@ -211,7 +211,7 @@ func (auth *DefaultAuth) SetCookies(w http.ResponseWriter, uid int, session stri
 
 // TODO: Set the cookie domain
 // SetProvisionalCookies sets the two cookies required for guests to be recognised as having passed the initial login but not having passed the additional checks (e.g. multi-factor authentication)
-func (auth *DefaultAuth) SetProvisionalCookies(w http.ResponseWriter, uid int, provSession string, signedSession string) {
+func (auth *DefaultAuth) SetProvisionalCookies(w http.ResponseWriter, uid int, provSession, signedSession string) {
 	cookie := http.Cookie{Name: "uid", Value: strconv.Itoa(uid), Path: "/", MaxAge: int(Year)}
 	setCookie(w, &cookie, "lax")
 	cookie = http.Cookie{Name: "provSession", Value: provSession, Path: "/", MaxAge: int(Year)}
@@ -282,7 +282,7 @@ func (auth *DefaultAuth) CreateSession(uid int) (session string, err error) {
 	return session, nil
 }
 
-func (auth *DefaultAuth) CreateProvisionalSession(uid int) (provSession string, signedSession string, err error) {
+func (auth *DefaultAuth) CreateProvisionalSession(uid int) (provSession, signedSession string, err error) {
 	provSession, err = GenerateSafeString(SessionLength)
 	if err != nil {
 		return "", "", err

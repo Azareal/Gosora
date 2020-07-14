@@ -5,12 +5,16 @@ import qgen "github.com/Azareal/Gosora/query_gen"
 var mysqlPre = "utf8mb4"
 var mysqlCol = "utf8mb4_general_ci"
 
+var tables []string
+
 type tblColumn = qgen.DBTableColumn
 type tC = tblColumn
 type tblKey = qgen.DBTableKey
 
 func createTables(a qgen.Adapter) error {
+	tables = nil
 	f := func(table, charset, collation string, cols []tC, keys []tblKey) error {
+		tables = append(tables, table)
 		return qgen.Install.CreateTable(table, charset, collation, cols, keys)
 	}
 	return createTables2(a, f)
@@ -23,30 +27,65 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 		}
 		err = f(table, charset, collation, cols, keys)
 	}
+	bcol := func(col string, val bool) qgen.DBTableColumn {
+		if val {
+			return tC{col, "boolean", 0, false, false, "1"}
+		}
+		return tC{col, "boolean", 0, false, false, "0"}
+	}
+	ccol := func(col string, size int, sdefault string) qgen.DBTableColumn {
+		return tC{col, "varchar", size, false, false, sdefault}
+	}
+	text := func(params ...string) qgen.DBTableColumn {
+		if len(params) == 0 {
+			return tC{"", "text", 0, false, false, ""}
+		}
+		col, sdefault := params[0], ""
+		if len(params) > 1 {
+			sdefault = params[1]
+			if sdefault == "" {
+				sdefault = "''"
+			}
+		}
+		return tC{col, "text", 0, false, false, sdefault}
+	}
+	createdAt := func(coll ...string) qgen.DBTableColumn {
+		var col string
+		if len(coll) > 0 {
+			col = coll[0]
+		}
+		if col == "" {
+			col = "createdAt"
+		}
+		return tC{col, "createdAt", 0, false, false, ""}
+	}
+
 	createTable("users", mysqlPre, mysqlCol,
 		[]tC{
 			tC{"uid", "int", 0, false, true, ""},
-			tC{"name", "varchar", 100, false, false, ""},
-			tC{"password", "varchar", 100, false, false, ""},
+			ccol("name", 100, ""),
+			ccol("password", 100, ""),
 
-			tC{"salt", "varchar", 80, false, false, "''"},
+			ccol("salt", 80, "''"),
 			tC{"group", "int", 0, false, false, ""}, // TODO: Make this a foreign key
-			tC{"active", "boolean", 0, false, false, "0"},
-			tC{"is_super_admin", "boolean", 0, false, false, "0"},
-			tC{"createdAt", "createdAt", 0, false, false, ""},
+			bcol("active", false),
+			bcol("is_super_admin", false),
+			createdAt(),
 			tC{"lastActiveAt", "datetime", 0, false, false, ""},
-			tC{"session", "varchar", 200, false, false, "''"},
-			//tC{"authToken", "varchar", 200, false, false, "''"},
-			tC{"last_ip", "varchar", 200, false, false, "''"},
+			ccol("session", 200, "''"),
+			//ccol("authToken", 200, "''"),
+			ccol("last_ip", 200, "''"),
+			tC{"profile_comments", "int", 0, false, false, "0"},
+			tC{"who_can_convo", "int", 0, false, false, "0"},
 			tC{"enable_embeds", "int", 0, false, false, "-1"},
-			tC{"email", "varchar", 200, false, false, "''"},
-			tC{"avatar", "varchar", 100, false, false, "''"},
-			tC{"message", "text", 0, false, false, "''"},
+			ccol("email", 200, "''"),
+			ccol("avatar", 100, "''"),
+			text("message"),
 
 			// TODO: Drop these columns?
-			tC{"url_prefix", "varchar", 20, false, false, "''"},
-			tC{"url_name", "varchar", 100, false, false, "''"},
-			//tC{"pub_key", "text", 0, false, false, "''"},
+			ccol("url_prefix", 20, "''"),
+			ccol("url_name", 100, "''"),
+			//text("pub_key"),
 
 			tC{"level", "smallint", 0, false, false, "0"},
 			tC{"score", "int", 0, false, false, "0"},
@@ -63,27 +102,27 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 			//tC{"penalty_count","int",0,false,false,"0"},
 			tC{"temp_group", "int", 0, false, false, "0"}, // For temporary groups, set this to zero when a temporary group isn't in effect
 		},
-		[]tblKey{
-			tblKey{"uid", "primary", "", false},
-			tblKey{"name", "unique", "", false},
+		[]tK{
+			tK{"uid", "primary", "", false},
+			tK{"name", "unique", "", false},
 		},
 	)
 
 	createTable("users_groups", mysqlPre, mysqlCol,
 		[]tC{
 			tC{"gid", "int", 0, false, true, ""},
-			tC{"name", "varchar", 100, false, false, ""},
-			tC{"permissions", "text", 0, false, false, ""},
-			tC{"plugin_perms", "text", 0, false, false, ""},
-			tC{"is_mod", "boolean", 0, false, false, "0"},
-			tC{"is_admin", "boolean", 0, false, false, "0"},
-			tC{"is_banned", "boolean", 0, false, false, "0"},
+			ccol("name", 100, ""),
+			text("permissions"),
+			text("plugin_perms"),
+			bcol("is_mod", false),
+			bcol("is_admin", false),
+			bcol("is_banned", false),
 			tC{"user_count", "int", 0, false, false, "0"}, // TODO: Implement this
 
-			tC{"tag", "varchar", 50, false, false, "''"},
+			ccol("tag", 50, "''"),
 		},
-		[]tblKey{
-			tblKey{"gid", "primary", "", false},
+		[]tK{
+			tK{"gid", "primary", "", false},
 		},
 	)
 
@@ -92,7 +131,7 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 			tC{"pid", "int", 0, false, true, ""},
 			tC{"from_gid", "int", 0, false, false, ""},
 			tC{"to_gid", "int", 0, false, false, ""},
-			tC{"two_way", "boolean", 0, false, false, "0"}, // If a user no longer meets the requirements for this promotion then they will be demoted if this flag is set
+			bcol("two_way", false), // If a user no longer meets the requirements for this promotion then they will be demoted if this flag is set
 
 			// Requirements
 			tC{"level", "int", 0, false, false, ""},
@@ -100,8 +139,8 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 			tC{"minTime", "int", 0, false, false, ""},        // How long someone needs to have been in their current group before being promoted
 			tC{"registeredFor", "int", 0, false, false, "0"}, // minutes
 		},
-		[]tblKey{
-			tblKey{"pid", "primary", "", false},
+		[]tK{
+			tK{"pid", "primary", "", false},
 		},
 	)
 
@@ -122,15 +161,15 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 	createTable("users_2fa_keys", mysqlPre, mysqlCol,
 		[]tC{
 			tC{"uid", "int", 0, false, false, ""},
-			tC{"secret", "varchar", 100, false, false, ""},
-			tC{"scratch1", "varchar", 50, false, false, ""},
-			tC{"scratch2", "varchar", 50, false, false, ""},
-			tC{"scratch3", "varchar", 50, false, false, ""},
-			tC{"scratch4", "varchar", 50, false, false, ""},
-			tC{"scratch5", "varchar", 50, false, false, ""},
-			tC{"scratch6", "varchar", 50, false, false, ""},
-			tC{"scratch7", "varchar", 50, false, false, ""},
-			tC{"scratch8", "varchar", 50, false, false, ""},
+			ccol("secret", 100, ""),
+			ccol("scratch1", 50, ""),
+			ccol("scratch2", 50, ""),
+			ccol("scratch3", 50, ""),
+			ccol("scratch4", 50, ""),
+			ccol("scratch5", 50, ""),
+			ccol("scratch6", 50, ""),
+			ccol("scratch7", 50, ""),
+			ccol("scratch8", 50, ""),
 			tC{"createdAt", "createdAt", 0, false, false, ""},
 		},
 		[]tblKey{
@@ -148,12 +187,12 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 		[]tC{
 			tC{"uid","int",0,false,false,""},
 			tC{"element_id","int",0,false,false,""},
-			tC{"element_type","varchar",50,false,false,""}, //forum, profile?, and social_group. Leave blank for global.
-			tC{"overrides","text",0,false,false,"{}"},
+			ccol("element_type",50,""), //forum, profile?, and social_group. Leave blank for global.
+			text("overrides","{}"),
 
-			tC{"mod_queue","boolean",0,false,false,"0"},
-			tC{"shadow_ban","boolean",0,false,false,"0"},
-			tC{"no_avatar","boolean",0,false,false,"0"}, // Coming Soon. Should this be a perm override instead?
+			bcol("mod_queue",false),
+			bcol("shadow_ban",false),
+			bcol("no_avatar",false), // Coming Soon. Should this be a perm override instead?
 
 			// Do we *really* need rate-limit penalty types? Are we going to be allowing bots or something?
 			//tC{"posts_per_hour","int",0,false,false,"0"},
@@ -163,7 +202,7 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 			//tC{"last_hour","int",0,false,false,"0"}, // UNIX Time, as we don't need to do anything too fancy here. When an hour has elapsed since that time, reset the hourly penalty counters.
 
 			tC{"issued_by","int",0,false,false,""},
-			tC{"issued_at","createdAt",0,false,false,""},
+			createdAt("issued_at"),
 			tC{"expires_at","datetime",0,false,false,""},
 		}, nil,
 	)*/
@@ -174,7 +213,7 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 			tC{"set_group", "int", 0, false, false, ""},
 
 			tC{"issued_by", "int", 0, false, false, ""},
-			tC{"issued_at", "createdAt", 0, false, false, ""},
+			createdAt("issued_at"),
 			tC{"revert_at", "datetime", 0, false, false, ""},
 			tC{"temporary", "boolean", 0, false, false, ""}, // special case for permanent bans to do the necessary bookkeeping, might be removed in the future
 		},
@@ -197,10 +236,10 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 	// TODO: Add an autoincrement key?
 	createTable("emails", "", "",
 		[]tC{
-			tC{"email", "varchar", 200, false, false, ""},
+			ccol("email", 200, ""),
 			tC{"uid", "int", 0, false, false, ""}, // TODO: Make this a foreign key
-			tC{"validated", "boolean", 0, false, false, "0"},
-			tC{"token", "varchar", 200, false, false, "''"},
+			bcol("validated", false),
+			ccol("token", 200, "''"),
 		}, nil,
 	)
 
@@ -208,11 +247,11 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 	/*
 		createTable("email_domain_blacklist", "", "",
 			[]tC{
-				tC{"domain", "varchar", 200, false, false, ""},
-				tC{"gtld", "boolean", 0, false, false, "0"},
+				ccol("domain", 200, ""),
+				bcol("gtld", false),
 			},
-			[]tblKey{
-				tblKey{"domain", "primary"},
+			[]tK{
+				tK{"domain", "primary"},
 			},
 		)
 	*/
@@ -220,26 +259,26 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 	// TODO: Implement password resets
 	createTable("password_resets", "", "",
 		[]tC{
-			tC{"email", "varchar", 200, false, false, ""},
-			tC{"uid", "int", 0, false, false, ""},             // TODO: Make this a foreign key
-			tC{"validated", "varchar", 200, false, false, ""}, // Token given once the one-use token is consumed, used to prevent multiple people consuming the same one-use token
-			tC{"token", "varchar", 200, false, false, ""},
-			tC{"createdAt", "createdAt", 0, false, false, ""},
+			ccol("email", 200, ""),
+			tC{"uid", "int", 0, false, false, ""}, // TODO: Make this a foreign key
+			ccol("validated", 200, ""),            // Token given once the one-use token is consumed, used to prevent multiple people consuming the same one-use token
+			ccol("token", 200, ""),
+			createdAt(),
 		}, nil,
 	)
 
 	createTable("forums", mysqlPre, mysqlCol,
 		[]tC{
 			tC{"fid", "int", 0, false, true, ""},
-			tC{"name", "varchar", 100, false, false, ""},
-			tC{"desc", "varchar", 200, false, false, ""},
-			tC{"tmpl", "varchar", 200, false, false, "''"},
-			tC{"active", "boolean", 0, false, false, "1"},
+			ccol("name", 100, ""),
+			ccol("desc", 200, ""),
+			ccol("tmpl", 200, "''"),
+			bcol("active", true),
 			tC{"order", "int", 0, false, false, "0"},
 			tC{"topicCount", "int", 0, false, false, "0"},
-			tC{"preset", "varchar", 100, false, false, "''"},
+			ccol("preset", 100, "''"),
 			tC{"parentID", "int", 0, false, false, "0"},
-			tC{"parentType", "varchar", 50, false, false, "''"},
+			ccol("parentType", 50, "''"),
 			tC{"lastTopicID", "int", 0, false, false, "0"},
 			tC{"lastReplyerID", "int", 0, false, false, "0"},
 		},
@@ -252,8 +291,8 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 		[]tC{
 			tC{"fid", "int", 0, false, false, ""},
 			tC{"gid", "int", 0, false, false, ""},
-			tC{"preset", "varchar", 100, false, false, "''"},
-			tC{"permissions", "text", 0, false, false, ""},
+			ccol("preset", 100, "''"),
+			text("permissions", "{}"),
 		},
 		[]tblKey{
 			// TODO: Test to see that the compound primary key works
@@ -264,19 +303,19 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 	createTable("topics", mysqlPre, mysqlCol,
 		[]tC{
 			tC{"tid", "int", 0, false, true, ""},
-			tC{"title", "varchar", 100, false, false, ""}, // TODO: Increase the max length to 200?
-			tC{"content", "text", 0, false, false, ""},
-			tC{"parsed_content", "text", 0, false, false, ""},
-			tC{"createdAt", "createdAt", 0, false, false, ""},
+			ccol("title", 100, ""), // TODO: Increase the max length to 200?
+			text("content"),
+			text("parsed_content"),
+			createdAt(),
 			tC{"lastReplyAt", "datetime", 0, false, false, ""},
 			tC{"lastReplyBy", "int", 0, false, false, ""},
 			tC{"lastReplyID", "int", 0, false, false, "0"},
 			tC{"createdBy", "int", 0, false, false, ""}, // TODO: Make this a foreign key
-			tC{"is_closed", "boolean", 0, false, false, "0"},
-			tC{"sticky", "boolean", 0, false, false, "0"},
+			bcol("is_closed", false),
+			bcol("sticky", false),
 			// TODO: Add an index for this
 			tC{"parentID", "int", 0, false, false, "2"},
-			tC{"ip", "varchar", 200, false, false, "''"},
+			ccol("ip", 200, "''"),
 			tC{"postCount", "int", 0, false, false, "1"},
 			tC{"likeCount", "int", 0, false, false, "0"},
 			tC{"attachCount", "int", 0, false, false, "0"},
@@ -288,14 +327,14 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 			// ? - A little hacky, maybe we could do something less likely to bite us with huge numbers of topics?
 			// TODO: Add an index for this?
 			//tC{"lastMonth", "datetime", 0, false, false, ""},
-			tC{"css_class", "varchar", 100, false, false, "''"},
+			ccol("css_class", 100, "''"),
 			tC{"poll", "int", 0, false, false, "0"},
-			tC{"data", "varchar", 200, false, false, "''"},
+			ccol("data", 200, "''"),
 		},
-		[]tblKey{
-			tblKey{"tid", "primary", "", false},
-			tblKey{"title", "fulltext", "", false},
-			tblKey{"content", "fulltext", "", false},
+		[]tK{
+			tK{"tid", "primary", "", false},
+			tK{"title", "fulltext", "", false},
+			tK{"content", "fulltext", "", false},
 		},
 	)
 
@@ -303,23 +342,23 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 		[]tC{
 			tC{"rid", "int", 0, false, true, ""},  // TODO: Rename to replyID?
 			tC{"tid", "int", 0, false, false, ""}, // TODO: Rename to topicID?
-			tC{"content", "text", 0, false, false, ""},
-			tC{"parsed_content", "text", 0, false, false, ""},
-			tC{"createdAt", "createdAt", 0, false, false, ""},
+			text("content"),
+			text("parsed_content"),
+			createdAt(),
 			tC{"createdBy", "int", 0, false, false, ""}, // TODO: Make this a foreign key
 			tC{"lastEdit", "int", 0, false, false, "0"},
 			tC{"lastEditBy", "int", 0, false, false, "0"},
 			tC{"lastUpdated", "datetime", 0, false, false, ""},
-			tC{"ip", "varchar", 200, false, false, "''"},
+			ccol("ip", 200, "''"),
 			tC{"likeCount", "int", 0, false, false, "0"},
 			tC{"attachCount", "int", 0, false, false, "0"},
 			tC{"words", "int", 0, false, false, "1"}, // ? - replies has a default of 1 and topics has 0? why?
-			tC{"actionType", "varchar", 20, false, false, "''"},
+			ccol("actionType", 20, "''"),
 			tC{"poll", "int", 0, false, false, "0"},
 		},
-		[]tblKey{
-			tblKey{"rid", "primary", "", false},
-			tblKey{"content", "fulltext", "", false},
+		[]tK{
+			tK{"rid", "primary", "", false},
+			tK{"content", "fulltext", "", false},
 		},
 	)
 
@@ -327,12 +366,12 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 		[]tC{
 			tC{"attachID", "int", 0, false, true, ""},
 			tC{"sectionID", "int", 0, false, false, "0"},
-			tC{"sectionTable", "varchar", 200, false, false, "forums"},
+			ccol("sectionTable", 200, "forums"),
 			tC{"originID", "int", 0, false, false, ""},
-			tC{"originTable", "varchar", 200, false, false, "replies"},
+			ccol("originTable", 200, "replies"),
 			tC{"uploadedBy", "int", 0, false, false, ""}, // TODO; Make this a foreign key
-			tC{"path", "varchar", 200, false, false, ""},
-			tC{"extra", "varchar", 200, false, false, ""},
+			ccol("path", 200, ""),
+			ccol("extra", 200, ""),
 		},
 		[]tblKey{
 			tblKey{"attachID", "primary", "", false},
@@ -342,10 +381,10 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 	createTable("revisions", mysqlPre, mysqlCol,
 		[]tC{
 			tC{"reviseID", "int", 0, false, true, ""},
-			tC{"content", "text", 0, false, false, ""},
+			text("content"),
 			tC{"contentID", "int", 0, false, false, ""},
-			tC{"contentType", "varchar", 100, false, false, "replies"},
-			tC{"createdAt", "createdAt", 0, false, false, ""},
+			ccol("contentType", 100, "replies"),
+			createdAt(),
 			// TODO: Add a createdBy column?
 		},
 		[]tblKey{
@@ -357,7 +396,7 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 		[]tC{
 			tC{"pollID", "int", 0, false, true, ""},
 			tC{"parentID", "int", 0, false, false, "0"},
-			tC{"parentTable", "varchar", 100, false, false, "topics"}, // topics, replies
+			ccol("parentTable", 100, "topics"), // topics, replies
 			tC{"type", "int", 0, false, false, "0"},
 			tC{"options", "json", 0, false, false, ""},
 			tC{"votes", "int", 0, false, false, "0"},
@@ -380,8 +419,8 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 			tC{"pollID", "int", 0, false, false, ""},
 			tC{"uid", "int", 0, false, false, ""}, // TODO: Make this a foreign key
 			tC{"option", "int", 0, false, false, "0"},
-			tC{"castAt", "createdAt", 0, false, false, ""},
-			tC{"ip", "varchar", 200, false, false, "''"},
+			createdAt("castAt"),
+			ccol("ip", 200, "''"),
 		}, nil,
 	)
 
@@ -389,13 +428,13 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 		[]tC{
 			tC{"rid", "int", 0, false, true, ""},
 			tC{"uid", "int", 0, false, false, ""}, // TODO: Make this a foreign key
-			tC{"content", "text", 0, false, false, ""},
-			tC{"parsed_content", "text", 0, false, false, ""},
-			tC{"createdAt", "createdAt", 0, false, false, ""},
+			text("content"),
+			text("parsed_content"),
+			createdAt(),
 			tC{"createdBy", "int", 0, false, false, ""}, // TODO: Make this a foreign key
 			tC{"lastEdit", "int", 0, false, false, "0"},
 			tC{"lastEditBy", "int", 0, false, false, "0"},
-			tC{"ip", "varchar", 200, false, false, "''"},
+			ccol("ip", 200, "''"),
 		},
 		[]tblKey{
 			tblKey{"rid", "primary", "", false},
@@ -406,9 +445,9 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 		[]tC{
 			tC{"weight", "tinyint", 0, false, false, "1"},
 			tC{"targetItem", "int", 0, false, false, ""},
-			tC{"targetType", "varchar", 50, false, false, "replies"},
+			ccol("targetType", 50, "replies"),
 			tC{"sentBy", "int", 0, false, false, ""}, // TODO: Make this a foreign key
-			tC{"createdAt", "createdAt", 0, false, false, ""},
+			createdAt(),
 			tC{"recalc", "tinyint", 0, false, false, "0"},
 		}, nil,
 	)
@@ -418,7 +457,7 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 		[]tC{
 			tC{"cid", "int", 0, false, true, ""},
 			tC{"createdBy", "int", 0, false, false, ""}, // TODO: Make this a foreign key
-			tC{"createdAt", "createdAt", 0, false, false, ""},
+			createdAt(),
 			tC{"lastReplyAt", "datetime", 0, false, false, ""},
 			tC{"lastReplyBy", "int", 0, false, false, ""},
 		},
@@ -432,8 +471,8 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 			tC{"pid", "int", 0, false, true, ""},
 			tC{"cid", "int", 0, false, false, ""},
 			tC{"createdBy", "int", 0, false, false, ""},
-			tC{"body", "varchar", 50, false, false, ""},
-			tC{"post", "varchar", 50, false, false, "''"},
+			ccol("body", 50, ""),
+			ccol("post", 50, "''"),
 		},
 		[]tblKey{
 			tblKey{"pid", "primary", "", false},
@@ -482,35 +521,39 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 	createTable("activity_stream", "", "",
 		[]tC{
 			tC{"asid", "int", 0, false, true, ""},
-			tC{"actor", "int", 0, false, false, ""},            /* the one doing the act */ // TODO: Make this a foreign key
-			tC{"targetUser", "int", 0, false, false, ""},       /* the user who created the item the actor is acting on, some items like forums may lack a targetUser field */
-			tC{"event", "varchar", 50, false, false, ""},       /* mention, like, reply (as in the act of replying to an item, not the reply item type, you can "reply" to a forum by making a topic in it), friend_invite */
-			tC{"elementType", "varchar", 50, false, false, ""}, /* topic, post (calling it post here to differentiate it from the 'reply' event), forum, user */
-			tC{"elementID", "int", 0, false, false, ""},        /* the ID of the element being acted upon */
-			tC{"createdAt", "createdAt", 0, false, false, ""},
-			tC{"extra", "varchar", 200, false, false, "''"},
+			tC{"actor", "int", 0, false, false, ""},      /* the one doing the act */ // TODO: Make this a foreign key
+			tC{"targetUser", "int", 0, false, false, ""}, /* the user who created the item the actor is acting on, some items like forums may lack a targetUser field */
+			ccol("event", 50, ""),                        /* mention, like, reply (as in the act of replying to an item, not the reply item type, you can "reply" to a forum by making a topic in it), friend_invite */
+			ccol("elementType", 50, ""),                  /* topic, post (calling it post here to differentiate it from the 'reply' event), forum, user */
+
+			// replacement for elementType
+			tC{"elementTable", "int", 0, false, false, "0"},
+
+			tC{"elementID", "int", 0, false, false, ""}, /* the ID of the element being acted upon */
+			createdAt(),
+			ccol("extra", 200, "''"),
 		},
-		[]tblKey{
-			tblKey{"asid", "primary", "", false},
+		[]tK{
+			tK{"asid", "primary", "", false},
 		},
 	)
 
 	createTable("activity_subscriptions", "", "",
 		[]tC{
-			tC{"user", "int", 0, false, false, ""},            // TODO: Make this a foreign key
-			tC{"targetID", "int", 0, false, false, ""},        /* the ID of the element being acted upon */
-			tC{"targetType", "varchar", 50, false, false, ""}, /* topic, post (calling it post here to differentiate it from the 'reply' event), forum, user */
-			tC{"level", "int", 0, false, false, "0"},          /* 0: Mentions (aka the global default for any post), 1: Replies To You, 2: All Replies*/
+			tC{"user", "int", 0, false, false, ""},     // TODO: Make this a foreign key
+			tC{"targetID", "int", 0, false, false, ""}, /* the ID of the element being acted upon */
+			ccol("targetType", 50, ""),                 /* topic, post (calling it post here to differentiate it from the 'reply' event), forum, user */
+			tC{"level", "int", 0, false, false, "0"},   /* 0: Mentions (aka the global default for any post), 1: Replies To You, 2: All Replies*/
 		}, nil,
 	)
 
 	/* Due to MySQL's design, we have to drop the unique keys for table settings, plugins, and themes down from 200 to 180 or it will error */
 	createTable("settings", "", "",
 		[]tC{
-			tC{"name", "varchar", 180, false, false, ""},
-			tC{"content", "varchar", 250, false, false, ""},
-			tC{"type", "varchar", 50, false, false, ""},
-			tC{"constraints", "varchar", 200, false, false, "''"},
+			ccol("name", 180, ""),
+			ccol("content", 250, ""),
+			ccol("type", 50, ""),
+			ccol("constraints", 200, "''"),
 		},
 		[]tblKey{
 			tblKey{"name", "unique", "", false},
@@ -520,8 +563,8 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 	createTable("word_filters", "", "",
 		[]tC{
 			tC{"wfid", "int", 0, false, true, ""},
-			tC{"find", "varchar", 200, false, false, ""},
-			tC{"replacement", "varchar", 200, false, false, ""},
+			ccol("find", 200, ""),
+			ccol("replacement", 200, ""),
 		},
 		[]tblKey{
 			tblKey{"wfid", "primary", "", false},
@@ -530,9 +573,9 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 
 	createTable("plugins", "", "",
 		[]tC{
-			tC{"uname", "varchar", 180, false, false, ""},
-			tC{"active", "boolean", 0, false, false, "0"},
-			tC{"installed", "boolean", 0, false, false, "0"},
+			ccol("uname", 180, ""),
+			bcol("active", false),
+			bcol("installed", false),
 		},
 		[]tblKey{
 			tblKey{"uname", "unique", "", false},
@@ -541,9 +584,9 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 
 	createTable("themes", "", "",
 		[]tC{
-			tC{"uname", "varchar", 180, false, false, ""},
-			tC{"default", "boolean", 0, false, false, "0"},
-			//tC{"profileUserVars", "text", 0, false, false, "''"},
+			ccol("uname", 180, ""),
+			bcol("default", false),
+			//text("profileUserVars"),
 		},
 		[]tblKey{
 			tblKey{"uname", "unique", "", false},
@@ -554,11 +597,11 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 		[]tC{
 			tC{"wid", "int", 0, false, true, ""},
 			tC{"position", "int", 0, false, false, ""},
-			tC{"side", "varchar", 100, false, false, ""},
-			tC{"type", "varchar", 100, false, false, ""},
-			tC{"active", "boolean", 0, false, false, "0"},
-			tC{"location", "varchar", 100, false, false, ""},
-			tC{"data", "text", 0, false, false, "''"},
+			ccol("side", 100, ""),
+			ccol("type", 100, ""),
+			bcol("active", false),
+			ccol("location", 100, ""),
+			text("data"),
 		},
 		[]tblKey{
 			tblKey{"wid", "primary", "", false},
@@ -578,51 +621,51 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 		[]tC{
 			tC{"miid", "int", 0, false, true, ""},
 			tC{"mid", "int", 0, false, false, ""},
-			tC{"name", "varchar", 200, false, false, "''"},
-			tC{"htmlID", "varchar", 200, false, false, "''"},
-			tC{"cssClass", "varchar", 200, false, false, "''"},
-			tC{"position", "varchar", 100, false, false, ""},
-			tC{"path", "varchar", 200, false, false, "''"},
-			tC{"aria", "varchar", 200, false, false, "''"},
-			tC{"tooltip", "varchar", 200, false, false, "''"},
-			tC{"tmplName", "varchar", 200, false, false, "''"},
+			ccol("name", 200, "''"),
+			ccol("htmlID", 200, "''"),
+			ccol("cssClass", 200, "''"),
+			ccol("position", 100, ""),
+			ccol("path", 200, "''"),
+			ccol("aria", 200, "''"),
+			ccol("tooltip", 200, "''"),
+			ccol("tmplName", 200, "''"),
 			tC{"order", "int", 0, false, false, "0"},
 
-			tC{"guestOnly", "boolean", 0, false, false, "0"},
-			tC{"memberOnly", "boolean", 0, false, false, "0"},
-			tC{"staffOnly", "boolean", 0, false, false, "0"},
-			tC{"adminOnly", "boolean", 0, false, false, "0"},
+			bcol("guestOnly", false),
+			bcol("memberOnly", false),
+			bcol("staffOnly", false),
+			bcol("adminOnly", false),
 		},
-		[]tblKey{
-			tblKey{"miid", "primary", "", false},
+		[]tK{
+			tK{"miid", "primary", "", false},
 		},
 	)
 
 	createTable("pages", mysqlPre, mysqlCol,
 		[]tC{
 			tC{"pid", "int", 0, false, true, ""},
-			//tC{"path", "varchar", 200, false, false, ""},
-			tC{"name", "varchar", 200, false, false, ""},
-			tC{"title", "varchar", 200, false, false, ""},
-			tC{"body", "text", 0, false, false, ""},
+			//ccol("path", 200, ""),
+			ccol("name", 200, ""),
+			ccol("title", 200, ""),
+			text("body"),
 			// TODO: Make this a table?
-			tC{"allowedGroups", "text", 0, false, false, ""},
+			text("allowedGroups"),
 			tC{"menuID", "int", 0, false, false, "-1"}, // simple sidebar menu
 		},
-		[]tblKey{
-			tblKey{"pid", "primary", "", false},
+		[]tK{
+			tK{"pid", "primary", "", false},
 		},
 	)
 
 	createTable("registration_logs", "", "",
 		[]tC{
 			tC{"rlid", "int", 0, false, true, ""},
-			tC{"username", "varchar", 100, false, false, ""},
+			ccol("username", 100, ""),
 			tC{"email", "varchar", 100, false, false, ""},
-			tC{"failureReason", "varchar", 100, false, false, ""},
-			tC{"success", "bool", 0, false, false, "0"}, // Did this attempt succeed?
-			tC{"ipaddress", "varchar", 200, false, false, ""},
-			tC{"doneAt", "createdAt", 0, false, false, ""},
+			ccol("failureReason", 100, ""),
+			bcol("success", false), // Did this attempt succeed?
+			ccol("ipaddress", 200, ""),
+			createdAt("doneAt"),
 		},
 		[]tblKey{
 			tblKey{"rlid", "primary", "", false},
@@ -633,9 +676,9 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 		[]tC{
 			tC{"lid", "int", 0, false, true, ""},
 			tC{"uid", "int", 0, false, false, ""},
-			tC{"success", "bool", 0, false, false, "0"}, // Did this attempt succeed?
-			tC{"ipaddress", "varchar", 200, false, false, ""},
-			tC{"doneAt", "createdAt", 0, false, false, ""},
+			bcol("success", false), // Did this attempt succeed?
+			ccol("ipaddress", 200, ""),
+			createdAt("doneAt"),
 		},
 		[]tblKey{
 			tblKey{"lid", "primary", "", false},
@@ -644,25 +687,25 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 
 	createTable("moderation_logs", "", "",
 		[]tC{
-			tC{"action", "varchar", 100, false, false, ""},
+			ccol("action", 100, ""),
 			tC{"elementID", "int", 0, false, false, ""},
-			tC{"elementType", "varchar", 100, false, false, ""},
-			tC{"ipaddress", "varchar", 200, false, false, ""},
+			ccol("elementType", 100, ""),
+			ccol("ipaddress", 200, ""),
 			tC{"actorID", "int", 0, false, false, ""}, // TODO: Make this a foreign key
 			tC{"doneAt", "datetime", 0, false, false, ""},
-			tC{"extra", "text", 0, false, false, ""},
+			text("extra"),
 		}, nil,
 	)
 
 	createTable("administration_logs", "", "",
 		[]tC{
-			tC{"action", "varchar", 100, false, false, ""},
+			ccol("action", 100, ""),
 			tC{"elementID", "int", 0, false, false, ""},
-			tC{"elementType", "varchar", 100, false, false, ""},
-			tC{"ipaddress", "varchar", 200, false, false, ""},
+			ccol("elementType", 100, ""),
+			ccol("ipaddress", 200, ""),
 			tC{"actorID", "int", 0, false, false, ""}, // TODO: Make this a foreign key
 			tC{"doneAt", "datetime", 0, false, false, ""},
-			tC{"extra", "text", 0, false, false, ""},
+			text("extra"),
 		}, nil,
 	)
 
@@ -671,7 +714,7 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 			tC{"count", "int", 0, false, false, "0"},
 			tC{"avg", "int", 0, false, false, "0"},
 			tC{"createdAt", "datetime", 0, false, false, ""},
-			tC{"route", "varchar", 200, false, false, ""}, // todo: set a default empty here
+			ccol("route", 200, ""), // TODO: set a default empty here
 		}, nil,
 	)
 
@@ -679,8 +722,8 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 		[]tC{
 			tC{"count", "int", 0, false, false, "0"},
 			tC{"createdAt", "datetime", 0, false, false, ""},
-			tC{"browser", "varchar", 200, false, false, ""}, // googlebot, firefox, opera, etc.
-			//tC{"version","varchar",0,false,false,""}, // the version of the browser or bot
+			ccol("browser", 200, ""), // googlebot, firefox, opera, etc.
+			//ccol("version",0,""), // the version of the browser or bot
 		}, nil,
 	)
 
@@ -688,7 +731,7 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 		[]tC{
 			tC{"count", "int", 0, false, false, "0"},
 			tC{"createdAt", "datetime", 0, false, false, ""},
-			tC{"system", "varchar", 200, false, false, ""}, // windows, android, unknown, etc.
+			ccol("system", 200, ""), // windows, android, unknown, etc.
 		}, nil,
 	)
 
@@ -696,7 +739,7 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 		[]tC{
 			tC{"count", "int", 0, false, false, "0"},
 			tC{"createdAt", "datetime", 0, false, false, ""},
-			tC{"lang", "varchar", 200, false, false, ""}, // en, ru, etc.
+			ccol("lang", 200, ""), // en, ru, etc.
 		}, nil,
 	)
 
@@ -704,7 +747,7 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 		[]tC{
 			tC{"count", "int", 0, false, false, "0"},
 			tC{"createdAt", "datetime", 0, false, false, ""},
-			tC{"domain", "varchar", 200, false, false, ""},
+			ccol("domain", 200, ""),
 		}, nil,
 	)
 
@@ -764,18 +807,19 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 
 	createTable("meta", "", "",
 		[]tC{
-			tC{"name", "varchar", 200, false, false, ""},
-			tC{"value", "varchar", 200, false, false, ""},
+			ccol("name", 200, ""),
+			ccol("value", 200, ""),
 		}, nil,
 	)
 
-	/*createTable("tables", mysqlPre, mysqlCol,
+	/*createTable("tables", "", "",
 		[]tC{
 			tC{"id", "int", 0, false, true, ""},
-			tC{"name", "varchar", 200, false, false, ""},
+			ccol("name", 200, ""),
 		},
-		[]tblKey{
-			tblKey{"id", "primary", "", false},
+		[]tK{
+			tK{"id", "primary", "", false},
+			tK{"name", "unique", "", false},
 		},
 	)*/
 

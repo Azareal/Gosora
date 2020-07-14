@@ -1,25 +1,25 @@
 <div class="colstack_item colstack_head">
 	<div class="rowitem">
 		<h1>{{lang "panel_stats_active_memory_head"}}</h1>
-		<select form="timeRangeForm" class="typeSelector to_right autoSubmitRedirect" name="mtype">
-			<option value="0"{{if eq .MemType 0}} selected{{end}}>{{lang "panel_stats_memory_type_total"}}</option>
-			<option value="1"{{if eq .MemType 1}} selected{{end}}>{{lang "panel_stats_memory_type_stack"}}</option>
-			<option value="2"{{if eq .MemType 2}} selected{{end}}>{{lang "panel_stats_memory_type_heap"}}</option>
+		<select form="timeRangeForm"class="typeSelector to_right autoSubmitRedirect"name="mtype">
+			<option value="0"{{if eq .MemType 0}}selected{{end}}>{{lang "panel_stats_memory_type_total"}}</option>
+			<option value="1"{{if eq .MemType 1}}selected{{end}}>{{lang "panel_stats_memory_type_stack"}}</option>
+			<option value="2"{{if eq .MemType 2}}selected{{end}}>{{lang "panel_stats_memory_type_heap"}}</option>
 		</select>
-		<noscript><input form="timeRangeForm" type="submit"></noscript>
+		<noscript><input form="timeRangeForm"type="submit"></noscript>
 		{{template "panel_analytics_time_range_month.html" . }}
 	</div>
 </div>
-<form id="timeRangeForm" name="timeRangeForm" action="/panel/analytics/active-memory/" method="get"></form>
-<div id="panel_analytics_memory" class="colstack_graph_holder">
-	<div class="ct_chart" aria-label="{{lang "panel_stats_memory_chart_aria"}}"></div>
+<form id="timeRangeForm"name="timeRangeForm"action="/panel/analytics/active-memory/"method="get"></form>
+<div id="panel_analytics_memory"class="colstack_graph_holder">
+	<div class="ct_chart"aria-label="{{lang "panel_stats_memory_chart_aria"}}"></div>
 </div>
 <div class="colstack_item colstack_head">
 	<div class="rowitem">
 		<h1>{{lang "panel_stats_details_head"}}</h1>
 	</div>
 </div>
-<div id="panel_analytics_memory_table" class="colstack_item rowlist" aria-label="{{lang "panel_stats_memory_table_aria"}}">
+<div id="panel_analytics_memory_table"class="colstack_item rowlist"aria-label="{{lang "panel_stats_memory_table_aria"}}">
 	{{range .ViewItems}}
 	<div class="rowitem panel_compactrow editable_parent">
 		<a class="panel_upshift unix_to_{{if or (or (or (eq $.TimeRange "six-hours") (eq $.TimeRange "twelve-hours")) (eq $.TimeRange "one-day")) (eq $.TimeRange "two-days")}}24_hour_time{{else}}date{{end}}">{{.Time}}</a>

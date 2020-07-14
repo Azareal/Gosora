@@ -10,6 +10,8 @@ CREATE TABLE `users` (
 	`lastActiveAt` datetime not null,
 	`session` varchar(200) DEFAULT '' not null,
 	`last_ip` varchar(200) DEFAULT '' not null,
+	`profile_comments` int DEFAULT 0 not null,
+	`who_can_convo` int DEFAULT 0 not null,
 	`enable_embeds` int DEFAULT -1 not null,
 	`email` varchar(200) DEFAULT '' not null,
 	`avatar` varchar(100) DEFAULT '' not null,

@@ -95,14 +95,14 @@ var Template_account_handle = genIntTmpl("account")
 
 func tmplInitUsers() (*User, *User, *User) {
 	avatar, microAvatar := BuildAvatar(62, "")
-	u := User{62, BuildProfileURL("fake-user", 62), "Fake User", "compiler@localhost", 0, false, false, false, false, false, false, GuestPerms, make(map[string]bool), "", false, "", avatar, microAvatar, "", "", 0, 0, 0, 0, StartTime, "0.0.0.0.0", 0, 0, nil}
+	u := User{62, BuildProfileURL("fake-user", 62), "Fake User", "compiler@localhost", 0, false, false, false, false, false, false, GuestPerms, make(map[string]bool), "", false, "", avatar, microAvatar, "", "", 0, 0, 0, 0, StartTime, "0.0.0.0.0", 0, 0, nil, UserPrivacy{}}
 
 	// TODO: Do a more accurate level calculation for this?
 	avatar, microAvatar = BuildAvatar(1, "")
-	u2 := User{1, BuildProfileURL("admin-alice", 1), "Admin Alice", "alice@localhost", 1, true, true, true, true, false, false, AllPerms, make(map[string]bool), "", true, "", avatar, microAvatar, "", "", 58, 1000, 0, 1000, StartTime, "127.0.0.1", 0, 0, nil}
+	u2 := User{1, BuildProfileURL("admin-alice", 1), "Admin Alice", "alice@localhost", 1, true, true, true, true, false, false, AllPerms, make(map[string]bool), "", true, "", avatar, microAvatar, "", "", 58, 1000, 0, 1000, StartTime, "127.0.0.1", 0, 0, nil, UserPrivacy{}}
 
 	avatar, microAvatar = BuildAvatar(2, "")
-	u3 := User{2, BuildProfileURL("admin-fred", 62), "Admin Fred", "fred@localhost", 1, true, true, true, true, false, false, AllPerms, make(map[string]bool), "", true, "", avatar, microAvatar, "", "", 42, 900, 0, 900, StartTime, "::1", 0, 0, nil}
+	u3 := User{2, BuildProfileURL("admin-fred", 62), "Admin Fred", "fred@localhost", 1, true, true, true, true, false, false, AllPerms, make(map[string]bool), "", true, "", avatar, microAvatar, "", "", 42, 900, 0, 900, StartTime, "::1", 0, 0, nil, UserPrivacy{}}
 	return &u, &u2, &u3
 }
 
@@ -306,7 +306,7 @@ func compileTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName string
 		return err
 	}
 
-	ppage := ProfilePage{htitle("User 526"), replyList, *user, 0, 0, false, false, false} // TODO: Use the score from user to generate the currentScore and nextScore
+	ppage := ProfilePage{htitle("User 526"), replyList, *user, 0, 0, false, false, false, false} // TODO: Use the score from user to generate the currentScore and nextScore
 	t.Add("profile", "c.ProfilePage", ppage)
 
 	var topicsList []*TopicsRow
@@ -349,7 +349,7 @@ func compileTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName string
 	}
 
 	t.AddStd("login", "c.Page", Page{htitle("Login Page"), tList, nil})
-	t.AddStd("register", "c.RegisterPage", RegisterPage{htitle("Registration Page"), false,""})
+	t.AddStd("register", "c.RegisterPage", RegisterPage{htitle("Registration Page"), false, ""})
 	t.AddStd("error", "c.ErrorPage", ErrorPage{htitle("Error"), "A problem has occurred in the system."})
 
 	ipSearchPage := IPSearchPage{htitle("IP Search"), map[int]*User{1: user2}, "::1"}
