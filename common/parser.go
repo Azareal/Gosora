@@ -66,7 +66,8 @@ func init() {
 var emojis map[string]string
 
 type emojiHolder struct {
-	Emojis []map[string]string `json:"emojis"`
+	NoDefault bool                `json:"no_defaults"`
+	Emojis    []map[string]string `json:"emojis"`
 }
 
 func InitEmoji() error {
@@ -77,9 +78,11 @@ func InitEmoji() error {
 	}
 
 	emojis = make(map[string]string, len(emoji.Emojis))
-	for _, item := range emoji.Emojis {
-		for ikey, ival := range item {
-			emojis[ikey] = ival
+	if !emoji.NoDefault {
+		for _, item := range emoji.Emojis {
+			for ikey, ival := range item {
+				emojis[ikey] = ival
+			}
 		}
 	}
 
@@ -87,6 +90,9 @@ func InitEmoji() error {
 	err = unmarshalJsonFileIgnore404("./config/emoji.json", &emoji)
 	if err != nil {
 		return err
+	}
+	if emoji.NoDefault {
+		emojis = make(map[string]string)
 	}
 
 	for _, item := range emoji.Emojis {
@@ -1098,7 +1104,7 @@ func parseMediaString(data string, settings *ParseSettings) (media MediaEmbed, o
 		}
 		ytInvalid2 := func(t string) bool {
 			for _, ch := range t {
-				if !((ch > 47 && ch < 58) || ch == 'h' || ch =='m' || ch =='s') {
+				if !((ch > 47 && ch < 58) || ch == 'h' || ch == 'm' || ch == 's') {
 					//fmt.Printf("ytInvalid2 true: %+v\n",t)
 					return true
 				}
@@ -1112,34 +1118,34 @@ func parseMediaString(data string, settings *ParseSettings) (media MediaEmbed, o
 				if ytInvalid(v) {
 					return media, true
 				}
-				var t,t2 string
+				var t, t2 string
 				tt, ok := query["t"]
 				if ok && len(tt) >= 1 {
 					t, t2 = tt[0], tt[0]
 				}
 				media.Type = ERawExternal
 				if t != "" && !ytInvalid2(t) {
-					s,m,h := parseDuration(t2)
+					s, m, h := parseDuration(t2)
 					calc := s + (m * 60) + (h * 60 * 60)
 					if calc > 0 {
-						t = "&t="+t
-						t2 = "?start="+strconv.Itoa(calc)
+						t = "&t=" + t
+						t2 = "?start=" + strconv.Itoa(calc)
 					} else {
-						t, t2 = "",""
+						t, t2 = "", ""
 					}
 				}
-				l := "https://"+ host + path+"?v="+v+t
-				media.Body = "<iframe class='postIframe'src='https://www.youtube-nocookie.com/embed/" + v+t2 + "'frameborder=0 allowfullscreen></iframe><noscript><a href='" + l+"'>"+l+"</a></noscript>"
+				l := "https://" + host + path + "?v=" + v + t
+				media.Body = "<iframe class='postIframe'src='https://www.youtube-nocookie.com/embed/" + v + t2 + "'frameborder=0 allowfullscreen></iframe><noscript><a href='" + l + "'>" + l + "</a></noscript>"
 				return media, true
 			}
 		} else if host == "youtu.be" {
-			v := strings.TrimPrefix(path,"/")
+			v := strings.TrimPrefix(path, "/")
 			if ytInvalid(v) {
 				return media, true
 			}
-			l := "https://youtu.be/"+v
+			l := "https://youtu.be/" + v
 			media.Type = ERawExternal
-			media.Body = "<iframe class='postIframe'src='https://www.youtube-nocookie.com/embed/" + v + "'frameborder=0 allowfullscreen></iframe><noscript><a href='" + l+"'>"+l+"</a></noscript>"
+			media.Body = "<iframe class='postIframe'src='https://www.youtube-nocookie.com/embed/" + v + "'frameborder=0 allowfullscreen></iframe><noscript><a href='" + l + "'>" + l + "</a></noscript>"
 			return media, true
 		} else if strings.HasPrefix(host, "www.nicovideo.jp") && strings.HasPrefix(path, "/watch/sm") {
 			vid, err := strconv.ParseInt(strings.TrimPrefix(path, "/watch/sm"), 10, 64)
@@ -1150,8 +1156,8 @@ func parseMediaString(data string, settings *ParseSettings) (media MediaEmbed, o
 				}
 				media.Type = ERawExternal
 				sm := strconv.FormatInt(vid, 10)
-				l := "https://"+ host + sport + path
-				media.Body = "<iframe class='postIframe'src='https://embed.nicovideo.jp/watch/sm" + sm + "?jsapi=1&amp;playerId=1'frameborder=0 allowfullscreen></iframe><noscript><a href='" + l+"'>"+l+"</a></noscript>"
+				l := "https://" + host + sport + path
+				media.Body = "<iframe class='postIframe'src='https://embed.nicovideo.jp/watch/sm" + sm + "?jsapi=1&amp;playerId=1'frameborder=0 allowfullscreen></iframe><noscript><a href='" + l + "'>" + l + "</a></noscript>"
 				return media, true
 			}
 		}
@@ -1192,12 +1198,12 @@ func parseMediaString(data string, settings *ParseSettings) (media MediaEmbed, o
 	return media, true
 }
 
-func parseDuration(dur string) (s,m,h int) {
+func parseDuration(dur string) (s, m, h int) {
 	var ibuf []byte
 	for _, ch := range dur {
 		switch {
 		case ch > 47 && ch < 58:
-			ibuf = append(ibuf,byte(ch))
+			ibuf = append(ibuf, byte(ch))
 		case ch == 'h':
 			h, _ = strconv.Atoi(string(ibuf))
 			ibuf = ibuf[:0]
@@ -1213,7 +1219,7 @@ func parseDuration(dur string) (s,m,h int) {
 	if h == 0 && m == 0 && s < 2 {
 		s = 0
 	}
-	return s,m,h
+	return s, m, h
 }
 
 // TODO: Write a test for this
