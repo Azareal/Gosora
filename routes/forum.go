@@ -6,7 +6,7 @@ import (
 	"strconv"
 
 	c "github.com/Azareal/Gosora/common"
-	"github.com/Azareal/Gosora/common/counters"
+	co "github.com/Azareal/Gosora/common/counters"
 	p "github.com/Azareal/Gosora/common/phrases"
 )
 
@@ -55,7 +55,7 @@ func ViewForum(w http.ResponseWriter, r *http.Request, u *c.User, h *c.Header, s
 	}
 
 	//pageList := c.Paginate(page, lastPage, 5)
-	pi := c.ForumPage{h, topicList, forum, pagi}
+	pi := c.ForumPage{h, topicList, forum, u.Perms.CloseTopic, u.Perms.MoveTopic, pagi}
 	tmpl := forum.Tmpl
 	if tmpl == "" {
 		ferr = renderTemplate("forum", w, r, h, pi)
@@ -66,6 +66,6 @@ func ViewForum(w http.ResponseWriter, r *http.Request, u *c.User, h *c.Header, s
 			ferr = renderTemplate("forum", w, r, h, pi)
 		}
 	}
-	counters.ForumViewCounter.Bump(forum.ID)
+	co.ForumViewCounter.Bump(forum.ID)
 	return ferr
 }

@@ -208,6 +208,8 @@ type TopicListPage struct {
 	ForumList    []Forum
 	DefaultForum int
 	Sort         TopicListSort
+	CanLock      bool
+	CanMove      bool
 	Paginator
 }
 
@@ -215,6 +217,8 @@ type ForumPage struct {
 	*Header
 	ItemList []*TopicsRow
 	Forum    *Forum
+	CanLock  bool
+	CanMove  bool
 	Paginator
 }
 

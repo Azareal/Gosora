@@ -228,12 +228,12 @@ func compileCommons(c *tmpl.CTemplateSet, head, head2 *Header, forumList []Forum
 
 	var topicsList []*TopicsRow
 	topicsList = append(topicsList, &TopicsRow{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, now, now, user3.ID, 1, 1, "", "::1", 1, 0, 1, 1, 0, "classname", 0, "", user2, "", 0, user3, "General", "/forum/general.2", nil})
-	topicListPage := TopicListPage{htitle("Topic List"), topicsList, forumList, Config.DefaultForum, TopicListSort{"lastupdated", false}, Paginator{[]int{1}, 1, 1}}
+	topicListPage := TopicListPage{htitle("Topic List"), topicsList, forumList, Config.DefaultForum, TopicListSort{"lastupdated", false}, false, false, Paginator{[]int{1}, 1, 1}}
 	o.Add("topics", "c.TopicListPage", topicListPage)
 	o.Add("topics_mini", "c.TopicListPage", topicListPage)
 
 	forumItem := BlankForum(1, "general-forum.1", "General Forum", "Where the general stuff happens", true, "all", 0, "", 0)
-	forumPage := ForumPage{htitle("General Forum"), topicsList, forumItem, Paginator{[]int{1}, 1, 1}}
+	forumPage := ForumPage{htitle("General Forum"), topicsList, forumItem, false, false, Paginator{[]int{1}, 1, 1}}
 	o.Add("forum", "c.ForumPage", forumPage)
 	o.Add("forums", "c.ForumsPage", ForumsPage{htitle("Forum List"), forumList})
 
@@ -311,10 +311,10 @@ func compileTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName string
 
 	var topicsList []*TopicsRow
 	topicsList = append(topicsList, &TopicsRow{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, now, now, user3.ID, 1, 1, "", "127.0.0.1", 1, 0, 1, 1, 0, "classname", 0, "", user2, "", 0, user3, "General", "/forum/general.2", nil})
-	topicListPage := TopicListPage{htitle("Topic List"), topicsList, forumList, Config.DefaultForum, TopicListSort{"lastupdated", false}, Paginator{[]int{1}, 1, 1}}
+	topicListPage := TopicListPage{htitle("Topic List"), topicsList, forumList, Config.DefaultForum, TopicListSort{"lastupdated", false}, false, false, Paginator{[]int{1}, 1, 1}}
 
 	forumItem := BlankForum(1, "general-forum.1", "General Forum", "Where the general stuff happens", true, "all", 0, "", 0)
-	forumPage := ForumPage{htitle("General Forum"), topicsList, forumItem, Paginator{[]int{1}, 1, 1}}
+	forumPage := ForumPage{htitle("General Forum"), topicsList, forumItem, false, false, Paginator{[]int{1}, 1, 1}}
 
 	// Experimental!
 	for _, tmpl := range strings.Split(Dev.ExtraTmpls, ",") {

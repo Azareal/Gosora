@@ -30,7 +30,7 @@
 	</div>
 	
 	{{if .CurrentUser.Loggedin}}
-	{{template "topics_mod_floater.html"}}
+	{{template "topics_mod_floater.html" .}}
 	
 	{{if .ForumList}}
 	{{/** TODO: Have a seperate forum list for moving topics? Maybe an AJAX forum search compatible with plugin_guilds? **/}}

@@ -26,7 +26,7 @@
 	{{end}}
 	</div>
 	{{if .CurrentUser.Loggedin}}
-	{{template "topics_mod_floater.html"}}
+	{{template "topics_mod_floater.html" .}}
 	
 	{{if .CurrentUser.Perms.CreateTopic}}
 	<div id="forum_topic_create_form"class="rowblock topic_create_form quick_create_form auto_hide"aria-label="{{lang "quick_topic.aria"}}">

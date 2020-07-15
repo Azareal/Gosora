@@ -20,7 +20,11 @@ func wsTopicList(topicList []*c.TopicsRow, lastPage int) *c.WsTopicList {
 }
 
 func TopicList(w http.ResponseWriter, r *http.Request, u *c.User, h *c.Header) c.RouteError {
-	skip, rerr := h.Hooks.VhookSkippable("route_topic_list_start", w, r, u, h)
+	/*skip, rerr := h.Hooks.VhookSkippable("route_topic_list_start", w, r, u, h)
+	if skip || rerr != nil {
+		return rerr
+	}*/
+	skip, rerr := c.H_route_topic_list_start_hook(h.Hooks, w, r, u, h)
 	if skip || rerr != nil {
 		return rerr
 	}
@@ -28,6 +32,10 @@ func TopicList(w http.ResponseWriter, r *http.Request, u *c.User, h *c.Header) c
 }
 
 func TopicListMostViewed(w http.ResponseWriter, r *http.Request, u *c.User, h *c.Header) c.RouteError {
+	skip, rerr := h.Hooks.VhookSkippable("route_topic_list_mostviewed_start", w, r, u, h)
+	if skip || rerr != nil {
+		return rerr
+	}
 	return TopicListCommon(w, r, u, h, "mostviewed", c.TopicListMostViewed)
 }
 
@@ -71,6 +79,7 @@ func TopicListCommon(w http.ResponseWriter, r *http.Request, user *c.User, h *c.
 	var topicList []*c.TopicsRow
 	var forumList []c.Forum
 	var pagi c.Paginator
+	var canLock, ccanLock, canMove, ccanMove bool
 	q := r.FormValue("q")
 	if q != "" && c.RepliesSearch != nil {
 		var canSee []int
@@ -117,6 +126,7 @@ func TopicListCommon(w http.ResponseWriter, r *http.Request, user *c.User, h *c.
 		if err != nil {
 			return c.InternalError(err, w, r)
 		}
+		// TODO: Cache emptied map across requests with sync pool
 		reqUserList := make(map[int]bool)
 		for _, t := range tMap {
 			reqUserList[t.CreatedBy] = true
@@ -141,16 +151,41 @@ func TopicListCommon(w http.ResponseWriter, r *http.Request, user *c.User, h *c.
 		}
 
 		// TODO: De-dupe this logic in common/topic_list.go?
+		//var sb strings.Builder
 		for _, t := range topicList {
+			//c.BuildTopicURLSb(&sb, c.NameToSlug(t.Title), t.ID)
+			//t.Link = sb.String()
+			//sb.Reset()
 			t.Link = c.BuildTopicURL(c.NameToSlug(t.Title), t.ID)
 			// TODO: Pass forum to something like t.Forum and use that instead of these two properties? Could be more flexible.
 			forum := c.Forums.DirtyGet(t.ParentID)
 			t.ForumName = forum.Name
 			t.ForumLink = forum.Link
 
+			fp, err := c.FPStore.Get(forum.ID, user.Group)
+			if err == c.ErrNoRows {
+				fp = c.BlankForumPerms()
+			} else if err != nil {
+				return c.InternalError(err, w, r)
+			}
+			if fp.Overrides && !user.IsSuperAdmin {
+				ccanLock = fp.CloseTopic
+				ccanMove = fp.MoveTopic
+			} else {
+				ccanLock = user.Perms.CloseTopic
+				ccanMove = user.Perms.MoveTopic
+			}
+			if ccanLock {
+				canLock = true
+			}
+			if ccanMove {
+				canMove = true
+			}
+
 			// TODO: Create a specialised function with a bit less overhead for getting the last page for a post count
 			_, _, lastPage := c.PageOffset(t.PostCount, 1, c.Config.ItemsPerPage)
 			t.LastPage = lastPage
+			// TODO: Avoid map if either is equal to the current user
 			t.Creator = userList[t.CreatedBy]
 			t.LastUser = userList[t.LastReplyBy]
 		}
@@ -166,15 +201,37 @@ func TopicListCommon(w http.ResponseWriter, r *http.Request, user *c.User, h *c.
 		}
 
 		h.Title = phrases.GetTitlePhrase("topics_search")
-		pi := c.TopicListPage{h, topicList, forumList, c.Config.DefaultForum, c.TopicListSort{torder, false}, pagi}
+		pi := c.TopicListPage{h, topicList, forumList, c.Config.DefaultForum, c.TopicListSort{torder, false}, canLock, canMove, pagi}
 		return renderTemplate("topics", w, r, h, pi)
 	}
 
 	// TODO: Pass a struct back rather than passing back so many variables
 	if user.IsSuperAdmin {
 		topicList, forumList, pagi, err = c.TopicList.GetList(page, tsorder, fids)
+		canLock, canMove = true, true
 	} else {
 		topicList, forumList, pagi, err = c.TopicList.GetListByGroup(group, page, tsorder, fids)
+		for _, forum := range forumList {
+			fp, err := c.FPStore.Get(forum.ID, user.Group)
+			if err == c.ErrNoRows {
+				fp = c.BlankForumPerms()
+			} else if err != nil {
+				return c.InternalError(err, w, r)
+			}
+			if fp.Overrides {
+				ccanLock = fp.CloseTopic
+				ccanMove = fp.MoveTopic
+			} else {
+				ccanLock = user.Perms.CloseTopic
+				ccanMove = user.Perms.MoveTopic
+			}
+			if ccanLock {
+				canLock = true
+			}
+			if ccanMove {
+				canMove = true
+			}
+		}
 	}
 	if err != nil {
 		return c.InternalError(err, w, r)
@@ -190,7 +247,7 @@ func TopicListCommon(w http.ResponseWriter, r *http.Request, user *c.User, h *c.
 		return nil
 	}
 
-	pi := c.TopicListPage{h, topicList, forumList, c.Config.DefaultForum, c.TopicListSort{torder, false}, pagi}
+	pi := c.TopicListPage{h, topicList, forumList, c.Config.DefaultForum, c.TopicListSort{torder, false}, canLock, canMove, pagi}
 	if r.FormValue("i") == "1" {
 		return renderTemplate("topics_mini", w, r, h, pi)
 	}
