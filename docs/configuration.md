@@ -16,7 +16,7 @@ Plugin which you may not have run into is a category in which plugins can define
 
 An example of what the file might look like: https://github.com/Azareal/Gosora/blob/master/config/config_example.json
 
-Other configuration files: [config/weakpass.json](https://github.com/Azareal/Gosora/blob/master/docs/weak_passwords.md), emoji.json (WIP)
+Other configuration files: [config/weakpass.json](https://github.com/Azareal/Gosora/blob/master/docs/weak_passwords.md), [config/emoji.json](https://github.com/Azareal/Gosora/blob/master/docs/emoji.md) (WIP)
 
 # Site
 
