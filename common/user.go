@@ -66,8 +66,8 @@ type User struct {
 }
 
 type UserPrivacy struct {
-	ShowComments int // 0 = default, 1 = public, 2 = registered, 3 = friends, 4 = mods / self
-	AllowMessage int // 0 = default, 1 = registered, 2 = friends, 3 = mods / self
+	ShowComments int // 0 = default, 1 = public, 2 = registered, 3 = friends, 4 = self, 5 = disabled / unused
+	AllowMessage int // 0 = default, 1 = registered, 2 = friends, 3 = mods, 4 = disabled / unused
 }
 
 func (u *User) WebSockets() *WsJSONUser {
@@ -569,7 +569,6 @@ var ErrProfileCommentsOutOfBounds = errors.New("profile_comments must be an inte
 var ErrEnableEmbedsOutOfBounds = errors.New("enable_embeds must be -1, 0 or 1")
 
 /*func (u *User) UpdatePrivacyS(sProfileComments, sEnableEmbeds string) error {
-
 	return u.UpdatePrivacy(profileComments, enableEmbeds)
 }*/
 
@@ -721,6 +720,43 @@ func (u *User) InitPerms() {
 	if u.IsBanned && u.IsSuperMod {
 		u.IsBanned = false
 	}
+}
+
+// TODO: Write tests
+// TODO: Implement and use this
+// TODO: Implement friends
+func PrivacyAllowMessage(pu, u *User) (canMsg bool) {
+	switch pu.Privacy.AllowMessage {
+	case 4: // Unused
+		canMsg = false
+	case 3: // mods
+		canMsg = u.IsSuperMod
+	//case 2: // friends
+	case 1: // registered
+		canMsg = true
+	default: // 0
+		canMsg = true
+	}
+	return canMsg
+}
+
+// TODO: Implement friend system
+func PrivacyCommentsShow(pu, u *User) (showComments bool) {
+	switch pu.Privacy.ShowComments {
+	case 5: // Unused
+		showComments = false
+	case 4: // Self
+		showComments = u.ID == pu.ID
+	case 3: // friends
+		showComments = u.ID == pu.ID
+	case 2: // registered
+		showComments = u.Loggedin
+	case 1: // public
+		showComments = true
+	default: // 0
+		showComments = true
+	}
+	return showComments
 }
 
 var guestAvatar GuestAvatar

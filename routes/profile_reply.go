@@ -6,51 +6,51 @@ import (
 	"strconv"
 
 	c "github.com/Azareal/Gosora/common"
-	"github.com/Azareal/Gosora/common/counters"
+	co "github.com/Azareal/Gosora/common/counters"
 )
 
-func ProfileReplyCreateSubmit(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
-	if !user.Perms.CreateProfileReply {
-		return c.NoPermissions(w, r, user)
+func ProfileReplyCreateSubmit(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
+	if !u.Perms.CreateProfileReply {
+		return c.NoPermissions(w, r, u)
 	}
 	uid, err := strconv.Atoi(r.PostFormValue("uid"))
 	if err != nil {
-		return c.LocalError("Invalid UID", w, r, user)
+		return c.LocalError("Invalid UID", w, r, u)
 	}
 	profileOwner, err := c.Users.Get(uid)
 	if err == sql.ErrNoRows {
-		return c.LocalError("The profile you're trying to post on doesn't exist.", w, r, user)
+		return c.LocalError("The profile you're trying to post on doesn't exist.", w, r, u)
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
 
-	blocked, err := c.UserBlocks.IsBlockedBy(profileOwner.ID, user.ID)
+	blocked, err := c.UserBlocks.IsBlockedBy(profileOwner.ID, u.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
 	// Supermods can bypass blocks so they can tell people off when they do something stupid or have to convey important information
-	if (blocked || !profileCommentsShow(profileOwner, user)) && !user.IsSuperMod {
-		return c.LocalError("You don't have permission to send messages to one of these users.", w, r, user)
+	if (blocked || !c.PrivacyCommentsShow(profileOwner, u)) && !u.IsSuperMod {
+		return c.LocalError("You don't have permission to send messages to one of these users.", w, r, u)
 	}
 
 	content := c.PreparseMessage(r.PostFormValue("content"))
 	if len(content) == 0 {
-		return c.LocalError("You can't make a blank post", w, r, user)
+		return c.LocalError("You can't make a blank post", w, r, u)
 	}
 	// TODO: Fully parse the post and store it in the parsed column
-	prid, err := c.Prstore.Create(profileOwner.ID, content, user.ID, user.GetIP())
+	prid, err := c.Prstore.Create(profileOwner.ID, content, u.ID, u.GetIP())
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
 
 	// ! Be careful about leaking per-route permission state with user ptr
-	alert := c.Alert{ActorID: user.ID, TargetUserID: profileOwner.ID, Event: "reply", ElementType: "user", ElementID: profileOwner.ID, Actor: user, Extra: strconv.Itoa(prid)}
+	alert := c.Alert{ActorID: u.ID, TargetUserID: profileOwner.ID, Event: "reply", ElementType: "user", ElementID: profileOwner.ID, Actor: u, Extra: strconv.Itoa(prid)}
 	err = c.AddActivityAndNotifyTarget(alert)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
 
-	counters.PostCounter.Bump()
+	co.PostCounter.Bump()
 	http.Redirect(w, r, "/user/"+strconv.Itoa(uid), http.StatusSeeOther)
 	return nil
 }
@@ -91,7 +91,7 @@ func ProfileReplyEditSubmit(w http.ResponseWriter, r *http.Request, u *c.User, s
 		return c.InternalError(err, w, r)
 	}
 	// Supermods can bypass blocks so they can tell people off when they do something stupid or have to convey important information
-	if (blocked || !profileCommentsShow(profileOwner, u)) && !u.IsSuperMod {
+	if (blocked || !c.PrivacyCommentsShow(profileOwner, u)) && !u.IsSuperMod {
 		return c.NoPermissionsJSQ(w, r, u, js)
 	}
 
@@ -108,7 +108,6 @@ func ProfileReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, u *c.User,
 	if err != nil {
 		return c.LocalErrorJSQ("The provided Reply ID is not a valid number.", w, r, u, js)
 	}
-
 	reply, err := c.Prstore.Get(rid)
 	if err == sql.ErrNoRows {
 		return c.PreErrorJSQ("The target reply doesn't exist.", w, r, js)

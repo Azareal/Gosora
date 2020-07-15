@@ -2012,7 +2012,7 @@ func TestUtils(t *testing.T) {
 	eemail := ""
 	cemail = c.CanonEmail(email)
 	expect(t, cemail == eemail, fmt.Sprintf("%s should be %s", cemail, eemail))
-	
+
 	email = "ddd"
 	eemail = "ddd"
 	cemail = c.CanonEmail(email)
@@ -2195,6 +2195,108 @@ func passwordTest(t *testing.T, realPassword, hashedPassword string) {
 	err = c.CheckPassword(hashedPassword, password, salt)
 	expect(t, err != c.ErrPasswordTooLong, "CheckPassword thinks the password is too long")
 	expect(t, err != nil, "The two shouldn't match!")
+}
+
+func TestUserPrivacy(t *testing.T) {
+	pu, u := c.BlankUser(), &c.GuestUser
+	pu.ID = 1
+
+	var msg string
+	test := func(expects bool, level int) {
+		pu.Privacy.ShowComments = level
+		val := c.PrivacyCommentsShow(pu, u)
+		var bit string
+		if !expects {
+			bit = " not"
+			val = !val
+		}
+		expect(t, val, fmt.Sprintf("%s should%s be able to see comments on level %d", msg, bit, level))
+	}
+	// 0 = default, 1 = public, 2 = registered, 3 = friends, 4 = self, 5 = disabled
+
+	msg = "guest users"
+	test(true, 0)
+	test(true, 1)
+	test(false, 2)
+	test(false, 3)
+	test(false, 4)
+	test(false, 5)
+
+	u = c.BlankUser()
+	msg = "blank users"
+	test(true, 0)
+	test(true, 1)
+	test(false, 2)
+	//test(false,3)
+	test(false, 4)
+	test(false, 5)
+
+	u.Loggedin = true
+	msg = "registered users"
+	test(true, 0)
+	test(true, 1)
+	test(true, 2)
+	test(false, 3)
+	test(false, 4)
+	test(false, 5)
+
+	u.IsBanned = true
+	msg = "banned users"
+	test(true, 0)
+	test(true, 1)
+	test(true, 2)
+	test(false, 3)
+	test(false, 4)
+	test(false, 5)
+	u.IsBanned = false
+
+	u.IsMod = true
+	msg = "mods"
+	test(true, 0)
+	test(true, 1)
+	test(true, 2)
+	test(false, 3)
+	test(false, 4)
+	test(false, 5)
+	u.IsMod = false
+
+	u.IsSuperMod = true
+	msg = "super mods"
+	test(true, 0)
+	test(true, 1)
+	test(true, 2)
+	test(false, 3)
+	test(false, 4)
+	test(false, 5)
+	u.IsSuperMod = false
+
+	u.IsAdmin = true
+	msg = "admins"
+	test(true, 0)
+	test(true, 1)
+	test(true, 2)
+	test(false, 3)
+	test(false, 4)
+	test(false, 5)
+	u.IsAdmin = false
+
+	u.IsSuperAdmin = true
+	msg = "super admins"
+	test(true, 0)
+	test(true, 1)
+	test(true, 2)
+	test(false, 3)
+	test(false, 4)
+	test(false, 5)
+	u.IsSuperAdmin = false
+
+	u.ID = 1
+	test(true, 0)
+	test(true, 1)
+	test(true, 2)
+	test(true, 3)
+	test(true, 4)
+	test(false, 5)
 }
 
 type METri struct {
