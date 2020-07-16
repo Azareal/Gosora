@@ -80,6 +80,32 @@ func (u *WSUser) WriteToPageBytes(msg []byte, page string) error {
 	return nil
 }
 
+// Inefficient as it looks for sockets for a page even if there are none
+func (u *WSUser) WriteToPageBytesMulti(msgs [][]byte, page string) error {
+	var success bool
+	for _, socket := range u.Sockets {
+		if socket == nil {
+			continue
+		}
+		if socket.Page != page {
+			continue
+		}
+		w, err := socket.conn.NextWriter(websocket.TextMessage)
+		if err != nil {
+			continue // Skip dead sockets, a dedicated goroutine handles those
+		}
+		for _, msg := range msgs {
+			_, _ = w.Write(msg)
+		}
+		w.Close()
+		success = true
+	}
+	if !success {
+		return ErrNoneOnPage
+	}
+	return nil
+}
+
 func (u *WSUser) AddSocket(conn *websocket.Conn, page string) {
 	u.Lock()
 	// If the number of the sockets is small, then we can keep the size of the slice mostly static and just walk through it looking for empty slots
