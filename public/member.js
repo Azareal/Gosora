@@ -250,16 +250,29 @@ var imageExts = ["png","jpg","jpe","jpeg","jif","jfi","jfif","svg","bmp","gif","
 			$("#topicsItemList,#forumItemList").addClass("topics_moderate");
 			$(".topic_row").each(function(){
 				$(this).click(function(){
-					if(!this.classList.contains("can_mod") || this.classList.contains("topic_selected")) return;
-					selectedTopics.push(parseInt($(this).attr("data-tid"),10));
+					if(!this.classList.contains("can_mod")) return;
+					let tid = parseInt($(this).attr("data-tid"),10);
+					let sel = this.classList.contains("topic_selected");
+					if(sel) {
+						for(var i=0; i<selectedTopics.length; i++){
+							if(selectedTopics[i]===tid) selectedTopics.splice(i, 1);
+						}
+					} else {
+						selectedTopics.push(tid);
+					}
 					if(selectedTopics.length==1) {
 						var msg = phraseBox["topic_list"]["topic_list.what_to_do_single"];
 					} else {
 						var msg = "What do you want to do with these "+selectedTopics.length+" topics?";
 					}
 					$(".mod_floater_head span").html(msg);
-					$(this).addClass("topic_selected");
-					$(".mod_floater").removeClass("auto_hide");
+					if(!sel) {
+						$(this).addClass("topic_selected");
+						$(".mod_floater").removeClass("auto_hide");
+					} else {
+						$(this).removeClass("topic_selected");
+					}
+					if(selectedTopics.length==0 && !$(".mod_floater").hasClass("auto_hide")) $(".mod_floater").addClass("auto_hide");
 				});
 			});
 			
