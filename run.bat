@@ -41,6 +41,9 @@ if %errorlevel% neq 0 (
 	exit /b %errorlevel%
 )
 
+echo Generating the JSON handlers
+easyjson -pkg common
+
 echo Building the hook generator
 go build -tags hookgen -ldflags="-s -w" "./cmd/hook_gen"
 if %errorlevel% neq 0 (
@@ -53,9 +56,6 @@ if %errorlevel% neq 0 (
 	pause
 	exit /b %errorlevel%
 )
-
-echo Generating the JSON handlers
-easyjson -pkg common
 
 echo Building the query generator
 go build -ldflags="-s -w" "./cmd/query_gen"
