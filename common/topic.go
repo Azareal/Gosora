@@ -94,6 +94,11 @@ type TopicUser struct {
 	Deletable   bool
 }
 
+type TopicsRowMut struct {
+	*TopicsRow
+	CanMod bool
+}
+
 // TODO: Embed TopicUser to simplify this structure and it's related logic?
 type TopicsRow struct {
 	ID          int
@@ -151,11 +156,17 @@ type WsTopicsRow struct {
 	LastUser            *WsJSONUser
 	ForumName           string
 	ForumLink           string
+	CanMod              bool
 }
 
 // TODO: Can we get the client side to render the relative times instead?
 func (r *TopicsRow) WebSockets() *WsTopicsRow {
-	return &WsTopicsRow{r.ID, r.Link, r.Title, r.CreatedBy, r.IsClosed, r.Sticky, r.CreatedAt, r.LastReplyAt, RelativeTime(r.LastReplyAt), r.LastReplyBy, r.LastReplyID, r.ParentID, r.ViewCount, r.PostCount, r.LikeCount, r.AttachCount, r.ClassName, r.Creator.WebSockets(), r.LastUser.WebSockets(), r.ForumName, r.ForumLink}
+	return &WsTopicsRow{r.ID, r.Link, r.Title, r.CreatedBy, r.IsClosed, r.Sticky, r.CreatedAt, r.LastReplyAt, RelativeTime(r.LastReplyAt), r.LastReplyBy, r.LastReplyID, r.ParentID, r.ViewCount, r.PostCount, r.LikeCount, r.AttachCount, r.ClassName, r.Creator.WebSockets(), r.LastUser.WebSockets(), r.ForumName, r.ForumLink, false}
+}
+
+// TODO: Can we get the client side to render the relative times instead?
+func (r *TopicsRow) WebSockets2(canMod bool) *WsTopicsRow {
+	return &WsTopicsRow{r.ID, r.Link, r.Title, r.CreatedBy, r.IsClosed, r.Sticky, r.CreatedAt, r.LastReplyAt, RelativeTime(r.LastReplyAt), r.LastReplyBy, r.LastReplyID, r.ParentID, r.ViewCount, r.PostCount, r.LikeCount, r.AttachCount, r.ClassName, r.Creator.WebSockets(), r.LastUser.WebSockets(), r.ForumName, r.ForumLink, canMod}
 }
 
 // TODO: Stop relying on so many struct types?

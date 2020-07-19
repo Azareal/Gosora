@@ -19,6 +19,21 @@ func wsTopicList(topicList []*c.TopicsRow, lastPage int) *c.WsTopicList {
 	return &c.WsTopicList{wsTopicList, lastPage, 0}
 }
 
+func wsTopicList2(topicList []*c.TopicsRow, u *c.User, fps map[int]c.QuickTools, lastPage int) *c.WsTopicList {
+	wsTopicList := make([]*c.WsTopicsRow, len(topicList))
+	for i, t := range topicList {
+		var canMod bool
+		if fps == nil {
+			canMod = true
+		} else {
+			quickTools := fps[t.ParentID]
+			canMod = t.CreatedBy == u.ID || quickTools.CanDelete || quickTools.CanLock || quickTools.CanMove
+		}
+		wsTopicList[i] = t.WebSockets2(canMod)
+	}
+	return &c.WsTopicList{wsTopicList, lastPage, 0}
+}
+
 func TopicList(w http.ResponseWriter, r *http.Request, u *c.User, h *c.Header) c.RouteError {
 	/*skip, rerr := h.Hooks.VhookSkippable("route_topic_list_start", w, r, u, h)
 	if skip || rerr != nil {
@@ -79,7 +94,7 @@ func TopicListCommon(w http.ResponseWriter, r *http.Request, user *c.User, h *c.
 	var topicList []*c.TopicsRow
 	var forumList []c.Forum
 	var pagi c.Paginator
-	var canLock, ccanLock, canMove, ccanMove bool
+	var canDelete, ccanDelete, canLock, ccanLock, canMove, ccanMove bool
 	q := r.FormValue("q")
 	if q != "" && c.RepliesSearch != nil {
 		var canSee []int
@@ -152,34 +167,45 @@ func TopicListCommon(w http.ResponseWriter, r *http.Request, user *c.User, h *c.
 
 		// TODO: De-dupe this logic in common/topic_list.go?
 		//var sb strings.Builder
+		fps := make(map[int]c.QuickTools)
 		for _, t := range topicList {
 			//c.BuildTopicURLSb(&sb, c.NameToSlug(t.Title), t.ID)
 			//t.Link = sb.String()
 			//sb.Reset()
 			t.Link = c.BuildTopicURL(c.NameToSlug(t.Title), t.ID)
 			// TODO: Pass forum to something like t.Forum and use that instead of these two properties? Could be more flexible.
-			forum := c.Forums.DirtyGet(t.ParentID)
-			t.ForumName = forum.Name
-			t.ForumLink = forum.Link
+			f := c.Forums.DirtyGet(t.ParentID)
+			t.ForumName = f.Name
+			t.ForumLink = f.Link
 
-			fp, err := c.FPStore.Get(forum.ID, user.Group)
-			if err == c.ErrNoRows {
-				fp = c.BlankForumPerms()
-			} else if err != nil {
-				return c.InternalError(err, w, r)
-			}
-			if fp.Overrides && !user.IsSuperAdmin {
-				ccanLock = fp.CloseTopic
-				ccanMove = fp.MoveTopic
-			} else {
-				ccanLock = user.Perms.CloseTopic
-				ccanMove = user.Perms.MoveTopic
-			}
-			if ccanLock {
-				canLock = true
-			}
-			if ccanMove {
-				canMove = true
+			_, ok := fps[f.ID]
+			if !ok {
+				// TODO: Abstract this?
+				fp, err := c.FPStore.Get(f.ID, user.Group)
+				if err == c.ErrNoRows {
+					fp = c.BlankForumPerms()
+				} else if err != nil {
+					return c.InternalError(err, w, r)
+				}
+				if fp.Overrides && !user.IsSuperAdmin {
+					ccanDelete = fp.DeleteTopic
+					ccanLock = fp.CloseTopic
+					ccanMove = fp.MoveTopic
+				} else {
+					ccanDelete = user.Perms.DeleteTopic
+					ccanLock = user.Perms.CloseTopic
+					ccanMove = user.Perms.MoveTopic
+				}
+				if ccanDelete {
+					canDelete = true
+				}
+				if ccanLock {
+					canLock = true
+				}
+				if ccanMove {
+					canMove = true
+				}
+				fps[f.ID] = c.QuickTools{ccanDelete, ccanLock, ccanMove}
 			}
 
 			// TODO: Create a specialised function with a bit less overhead for getting the last page for a post count
@@ -192,7 +218,7 @@ func TopicListCommon(w http.ResponseWriter, r *http.Request, user *c.User, h *c.
 
 		// TODO: Reduce the amount of boilerplate here
 		if r.FormValue("js") == "1" {
-			outBytes, err := wsTopicList(topicList, pagi.LastPage).MarshalJSON()
+			outBytes, err := wsTopicList2(topicList, user, fps, pagi.LastPage).MarshalJSON()
 			if err != nil {
 				return c.InternalError(err, w, r)
 			}
@@ -200,30 +226,49 @@ func TopicListCommon(w http.ResponseWriter, r *http.Request, user *c.User, h *c.
 			return nil
 		}
 
+		topicList2 := make([]c.TopicsRowMut, len(topicList))
+		for i, t := range topicList {
+			var canMod bool
+			if fps == nil {
+				canMod = true
+			} else {
+				quickTools := fps[t.ParentID]
+				canMod = t.CreatedBy == user.ID || quickTools.CanDelete || quickTools.CanLock || quickTools.CanMove
+			}
+			topicList2[i] = c.TopicsRowMut{t, canMod}
+		}
+
 		h.Title = phrases.GetTitlePhrase("topics_search")
-		pi := c.TopicListPage{h, topicList, forumList, c.Config.DefaultForum, c.TopicListSort{torder, false}, canLock, canMove, pagi}
+		pi := c.TopicListPage{h, topicList2, forumList, c.Config.DefaultForum, c.TopicListSort{torder, false}, c.QuickTools{canDelete, canLock, canMove}, pagi}
 		return renderTemplate("topics", w, r, h, pi)
 	}
 
 	// TODO: Pass a struct back rather than passing back so many variables
+	var fps map[int]c.QuickTools
 	if user.IsSuperAdmin {
 		topicList, forumList, pagi, err = c.TopicList.GetList(page, tsorder, fids)
 		canLock, canMove = true, true
 	} else {
 		topicList, forumList, pagi, err = c.TopicList.GetListByGroup(group, page, tsorder, fids)
-		for _, forum := range forumList {
-			fp, err := c.FPStore.Get(forum.ID, user.Group)
+		fps = make(map[int]c.QuickTools)
+		for _, f := range forumList {
+			fp, err := c.FPStore.Get(f.ID, user.Group)
 			if err == c.ErrNoRows {
 				fp = c.BlankForumPerms()
 			} else if err != nil {
 				return c.InternalError(err, w, r)
 			}
 			if fp.Overrides {
+				ccanDelete = fp.DeleteTopic
 				ccanLock = fp.CloseTopic
 				ccanMove = fp.MoveTopic
 			} else {
+				ccanDelete = user.Perms.DeleteTopic
 				ccanLock = user.Perms.CloseTopic
 				ccanMove = user.Perms.MoveTopic
+			}
+			if ccanDelete {
+				canDelete = true
 			}
 			if ccanLock {
 				canLock = true
@@ -231,6 +276,7 @@ func TopicListCommon(w http.ResponseWriter, r *http.Request, user *c.User, h *c.
 			if ccanMove {
 				canMove = true
 			}
+			fps[f.ID] = c.QuickTools{ccanDelete, ccanLock, ccanMove}
 		}
 	}
 	if err != nil {
@@ -239,7 +285,7 @@ func TopicListCommon(w http.ResponseWriter, r *http.Request, user *c.User, h *c.
 
 	// TODO: Reduce the amount of boilerplate here
 	if r.FormValue("js") == "1" {
-		outBytes, err := wsTopicList(topicList, pagi.LastPage).MarshalJSON()
+		outBytes, err := wsTopicList2(topicList, user, fps, pagi.LastPage).MarshalJSON()
 		if err != nil {
 			return c.InternalError(err, w, r)
 		}
@@ -247,7 +293,19 @@ func TopicListCommon(w http.ResponseWriter, r *http.Request, user *c.User, h *c.
 		return nil
 	}
 
-	pi := c.TopicListPage{h, topicList, forumList, c.Config.DefaultForum, c.TopicListSort{torder, false}, canLock, canMove, pagi}
+	topicList2 := make([]c.TopicsRowMut, len(topicList))
+	for i, t := range topicList {
+		var canMod bool
+		if fps == nil {
+			canMod = true
+		} else {
+			quickTools := fps[t.ParentID]
+			canMod = t.CreatedBy == user.ID || quickTools.CanDelete || quickTools.CanLock || quickTools.CanMove
+		}
+		topicList2[i] = c.TopicsRowMut{t, canMod}
+	}
+
+	pi := c.TopicListPage{h, topicList2, forumList, c.Config.DefaultForum, c.TopicListSort{torder, false}, c.QuickTools{canDelete, canLock, canMove}, pagi}
 	if r.FormValue("i") == "1" {
 		return renderTemplate("topics_mini", w, r, h, pi)
 	}

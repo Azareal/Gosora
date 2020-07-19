@@ -54,8 +54,14 @@ func ViewForum(w http.ResponseWriter, r *http.Request, u *c.User, h *c.Header, s
 		return nil
 	}
 
+	topicList2 := make([]c.TopicsRowMut, len(topicList))
+	canMod := u.Perms.CloseTopic || u.Perms.MoveTopic
+	for i, t := range topicList {
+		topicList2[i] = c.TopicsRowMut{t, t.CreatedBy == u.ID || canMod}
+	}
+
 	//pageList := c.Paginate(page, lastPage, 5)
-	pi := c.ForumPage{h, topicList, forum, u.Perms.CloseTopic, u.Perms.MoveTopic, pagi}
+	pi := c.ForumPage{h, topicList2, forum, u.Perms.CloseTopic, u.Perms.MoveTopic, pagi}
 	tmpl := forum.Tmpl
 	if tmpl == "" {
 		ferr = renderTemplate("forum", w, r, h, pi)

@@ -151,16 +151,16 @@ var imageExts = ["png","jpg","jpe","jpeg","jif","jfi","jfif","svg","bmp","gif","
 	addInitHook("start_init", () => {
 	addHook("end_bind_topic", () => {
 
+	let changeListener = (files,handler) => {
+		if(files!=null) {
+			files.removeEventListener("change", handler, false);
+			files.addEventListener("change", handler, false);
+		}
+	};
 	let uploadFiles = document.getElementById("upload_files");
-	if(uploadFiles!=null) {
-		uploadFiles.removeEventListener("change", uploadAttachHandler, false);
-		uploadFiles.addEventListener("change", uploadAttachHandler, false);
-	}
+	changeListener(uploadFiles,uploadAttachHandler);
 	let uploadFilesOp = document.getElementById("upload_files_op");
-	if(uploadFilesOp!=null) {
-		uploadFilesOp.removeEventListener("change", uploadAttachHandler2, false);
-		uploadFilesOp.addEventListener("change", uploadAttachHandler2, false);
-	}
+	changeListener(uploadFilesOp,uploadAttachHandler2);
 	bindAttachManager();
 		
 	function bindAttachItems() {
@@ -212,73 +212,6 @@ var imageExts = ["png","jpg","jpe","jpeg","jif","jfi","jfif","svg","bmp","gif","
 		bindAttachItems();
 		bindAttachManager();
 	});
-		
-	$(".moderate_link").unbind("click");
-	$(".mod_floater_submit").unbind("click");
-	$(".moderate_link").click(ev => {
-		ev.preventDefault();
-		$(".pre_opt").removeClass("auto_hide");
-		$(".moderate_link").addClass("moderate_open");
-		$("#topicsItemList,#forumItemList").addClass("topics_moderate");
-		$(".topic_row").each(function(){
-			$(this).click(function(){
-				selectedTopics.push(parseInt($(this).attr("data-tid"),10));
-				if(selectedTopics.length==1) {
-					var msg = phraseBox["topic_list"]["topic_list.what_to_do_single"];
-				} else {
-					var msg = "What do you want to do with these "+selectedTopics.length+" topics?";
-				}
-				$(".mod_floater_head span").html(msg);
-				$(this).addClass("topic_selected");
-				$(".mod_floater").removeClass("auto_hide");
-			});
-		});
-	
-		let bulkActionSender = (action,selectedTopics,fragBit) => {
-			$.ajax({
-				url: "/topic/"+action+"/submit/"+fragBit+"?s="+me.User.S,
-				type: "POST",
-				data: JSON.stringify(selectedTopics),
-				contentType: "application/json",
-				error: ajaxError,
-				success: () => {
-					window.location.reload();
-				}
-			});
-		};
-		// TODO: Should we unbind this here to avoid binding multiple listeners to this accidentally?
-		$(".mod_floater_submit").click(function(ev){
-			ev.preventDefault();
-			let selectNode = this.form.querySelector(".mod_floater_options");
-			let optionNode = selectNode.options[selectNode.selectedIndex];
-			let action = optionNode.getAttribute("value");
-	
-			// Handle these specially
-			switch(action) {
-				case "move":
-					console.log("move action");
-					let modTopicMover = $("#mod_topic_mover");
-					$("#mod_topic_mover").removeClass("auto_hide");
-					$("#mod_topic_mover .pane_row").click(function(){
-						modTopicMover.find(".pane_row").removeClass("pane_selected");
-						let fid = this.getAttribute("data-fid");
-						if(fid==null) return;
-						this.classList.add("pane_selected");
-						console.log("fid",fid);
-						forumToMoveTo = fid;
-	
-						$("#mover_submit").unbind("click");
-						$("#mover_submit").click(ev => {
-							ev.preventDefault();
-							bulkActionSender("move",selectedTopics,forumToMoveTo);
-						});
-					});
-					return;
-			}
-				
-			bulkActionSender(action,selectedTopics,"");
-		});
-	});
 	
 	function addPollInput() {
 		console.log("clicked on pollinputinput");
@@ -305,5 +238,75 @@ var imageExts = ["png","jpg","jpe","jpeg","jif","jfi","jfif","svg","bmp","gif","
 		$(".pollinputinput").click(addPollInput);
 	});
 	});
+	});
+	//addInitHook("after_init_bind_page", () => {
+	addHook("end_bind_page", () => {
+		$(".moderate_link").unbind("click");
+		$(".mod_floater_submit").unbind("click");
+		$(".moderate_link").click(ev => {
+			ev.preventDefault();
+			$(".pre_opt").removeClass("auto_hide");
+			$(".moderate_link").addClass("moderate_open");
+			$("#topicsItemList,#forumItemList").addClass("topics_moderate");
+			$(".topic_row").each(function(){
+				$(this).click(function(){
+					if(!this.classList.contains("can_mod") || this.classList.contains("topic_selected")) return;
+					selectedTopics.push(parseInt($(this).attr("data-tid"),10));
+					if(selectedTopics.length==1) {
+						var msg = phraseBox["topic_list"]["topic_list.what_to_do_single"];
+					} else {
+						var msg = "What do you want to do with these "+selectedTopics.length+" topics?";
+					}
+					$(".mod_floater_head span").html(msg);
+					$(this).addClass("topic_selected");
+					$(".mod_floater").removeClass("auto_hide");
+				});
+			});
+			
+			let bulkActionSender = (action,selectedTopics,fragBit) => {
+				$.ajax({
+					url: "/topic/"+action+"/submit/"+fragBit+"?s="+me.User.S,
+					type: "POST",
+					data: JSON.stringify(selectedTopics),
+					contentType: "application/json",
+					error: ajaxError,
+					success: () => {
+						window.location.reload();
+					}
+				});
+			};
+			// TODO: Should we unbind this here to avoid binding multiple listeners to this accidentally?
+			$(".mod_floater_submit").click(function(ev){
+				ev.preventDefault();
+				let selectNode = this.form.querySelector(".mod_floater_options");
+				let optionNode = selectNode.options[selectNode.selectedIndex];
+				let action = optionNode.getAttribute("value");
+				
+				// Handle these specially
+				switch(action) {
+					case "move":
+						console.log("move action");
+						let modTopicMover = $("#mod_topic_mover");
+						$("#mod_topic_mover").removeClass("auto_hide");
+						$("#mod_topic_mover .pane_row").click(function(){
+							modTopicMover.find(".pane_row").removeClass("pane_selected");
+							let fid = this.getAttribute("data-fid");
+							if(fid==null) return;
+							this.classList.add("pane_selected");
+							console.log("fid",fid);
+							forumToMoveTo = fid;
+							
+							$("#mover_submit").unbind("click");
+							$("#mover_submit").click(ev => {
+								ev.preventDefault();
+								bulkActionSender("move",selectedTopics,forumToMoveTo);
+							});
+						});
+						return;
+				}
+
+				bulkActionSender(action,selectedTopics,"");
+			});
+		});
 	});
 })()

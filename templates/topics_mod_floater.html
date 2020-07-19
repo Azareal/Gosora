@@ -6,9 +6,9 @@
 		</div>
 		<div class="mod_floater_body">
 			<select class="mod_floater_options">
-				<option value="delete">{{lang "topic_list.moderate_delete"}}</option>
-				{{if .CanLock}}<option value="lock">{{lang "topic_list.moderate_lock"}}</option>{{end}}
-				{{if .CanMove}}<option value="move">{{lang "topic_list.moderate_move"}}</option>{{end}}
+				<option class="val_delete" value="delete">{{lang "topic_list.moderate_delete"}}</option>
+				<option class="val_lock{{if not .CanLock}} auto_hide{{end}}" value="lock">{{lang "topic_list.moderate_lock"}}</option>
+				<option class="val_move{{if not .CanMove}} auto_hide{{end}}" value="move">{{lang "topic_list.moderate_move"}}</option>
 			</select>
 			<button class="mod_floater_submit">{{lang "topic_list.moderate_run"}}</button>
 		</div>

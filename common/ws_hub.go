@@ -151,6 +151,7 @@ func wsTopicListTick(h *WsHubImpl) error {
 	}
 
 	canSeeRenders := make(map[string][]byte)
+	canSeeLists := make(map[string][]*WsTopicsRow)
 	for name, canSee := range canSeeMap {
 		topicList, forumList, _, err := TopicList.GetListByCanSee(canSee, 1, 0, nil)
 		if err != nil {
@@ -180,6 +181,7 @@ func wsTopicListTick(h *WsHubImpl) error {
 		for i, topicRow := range topicList {
 			wsTopicList[i] = topicRow.WebSockets()
 		}
+		canSeeLists[name] = wsTopicList
 
 		outBytes, err := json.Marshal(&WsTopicList{wsTopicList, 0, tickStart.Unix()})
 		if err != nil {
@@ -191,17 +193,94 @@ func wsTopicListTick(h *WsHubImpl) error {
 	// TODO: Use MessagePack for additional speed?
 	//fmt.Println("writing to the clients")
 	for _, wsUser := range currentWatchers {
-		group := groups[wsUser.User.Group]
+		u := wsUser.User
+		group := groups[u.Group]
 		canSee := make([]byte, len(group.CanSee))
 		for i, item := range group.CanSee {
 			canSee[i] = byte(item)
 		}
+		sCanSee := string(canSee)
+		l := canSeeLists[sCanSee]
+
+		// TODO: Optimise this away for guests?
+		anyMod, anyLock, anyMove, allMod := false, false, false, true
+		var modSet map[int]int
+		if u.IsSuperAdmin {
+			anyMod = true
+			anyLock = true
+			anyMove = true
+		} else {
+			modSet = make(map[int]int, len(l))
+			for i, t := range l {
+				// TODO: Abstract this?
+				fp, err := FPStore.Get(t.ParentID, u.Group)
+				if err == ErrNoRows {
+					fp = BlankForumPerms()
+				} else if err != nil {
+					return err
+				}
+				var ccanMod, ccanLock, ccanMove bool
+				if fp.Overrides {
+					ccanLock = fp.CloseTopic
+					ccanMove = fp.MoveTopic
+					ccanMod = t.CreatedBy == u.ID || fp.DeleteTopic || ccanLock || ccanMove
+				} else {
+					ccanLock = u.Perms.CloseTopic
+					ccanMove = u.Perms.MoveTopic
+					ccanMod = t.CreatedBy == u.ID || u.Perms.DeleteTopic || ccanLock || ccanMove
+				}
+				if ccanLock {
+					anyLock = true
+				}
+				if ccanMove {
+					anyMove = true
+				}
+				if ccanMod {
+					anyMod = true
+				} else {
+					allMod = false
+				}
+				var v int
+				if ccanMod {
+					v = 1
+				}
+				modSet[i] = v
+			}
+		}
 
 		//fmt.Println("writing to user #", wsUser.User.ID)
-		outBytes := canSeeRenders[string(canSee)]
+		outBytes := canSeeRenders[sCanSee]
 		//fmt.Println("outBytes: ", string(outBytes))
-		err := wsUser.WriteToPageBytes(outBytes, "/topics/")
-		if err == ErrNoneOnPage {
+		//fmt.Println("outBytes[:len(outBytes)-1]: ", string(outBytes[:len(outBytes)-1]))
+		//e := wsUser.WriteToPageBytes(outBytes, "/topics/")
+		//e := wsUser.WriteToPageBytesMulti([][]byte{outBytes[:len(outBytes)-1], []byte(`,"mod":1}`)}, "/topics/")
+		var e error
+		if !anyMod {
+			e = wsUser.WriteToPageBytes(outBytes, "/topics/")
+		} else {
+			var lm []byte
+			if anyLock && anyMove {
+				lm = []byte(`,"lock":1,"move":1}`)
+			} else if anyLock {
+				lm = []byte(`,"lock":1}`)
+			} else if anyMove {
+				lm = []byte(`,"move":1}`)
+			} else {
+				lm = []byte("}")
+			}
+			if allMod {
+				e = wsUser.WriteToPageBytesMulti([][]byte{outBytes[:len(outBytes)-1], []byte(`,"mod":1`), lm}, "/topics/")
+			} else {
+				// TODO: Temporary and inefficient
+				mBytes, err := json.Marshal(modSet)
+				if err != nil {
+					return err
+				}
+				e = wsUser.WriteToPageBytesMulti([][]byte{outBytes[:len(outBytes)-1], []byte(`,"mod":`), mBytes, lm}, "/topics/")
+			}
+		}
+
+		if e == ErrNoneOnPage {
 			//fmt.Printf("werr for #%d: %s\n", wsUser.User.ID, err)
 			wsUser.FinalizePage("/topics/", func() {
 				topicListMutex.Lock()

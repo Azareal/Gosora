@@ -855,11 +855,17 @@ input[type=checkbox]:checked + label.poll_option_label .sel {
 .topic_list .topic_row {
 	display: flex;
 }
-.topics_moderate .topic_row:hover .rowitem {
-	background-color: hsla(0, 0%, 27%, 1);
+.topics_moderate .topic_row:not(.can_mod) .rowitem {
+	background-color: hsla(0, 0%, 22%, 1);
 }
-.topic_selected .rowitem {
+.topics_moderate .can_mod .rowitem {
+	background-color: hsla(0, 0%, 25%, 1);
+}
+.topics_moderate .can_mod:hover .rowitem {
 	background-color: hsla(0, 0%, 29%, 1);
+}
+.topic_row.topic_selected .rowitem {
+	background-color: hsla(0, 0%, 31%, 1);
 }
 /* Temporary hack, so that I don't break the topic lists of the other themes */
 .topic_list .topic_inner_right {

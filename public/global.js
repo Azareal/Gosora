@@ -221,8 +221,8 @@ function runWebSockets(resume=false) {
 	if(window.location.protocol == "https:") s = "s";
 	conn = new WebSocket("ws"+s+"://" + document.location.host + "/ws/");
 
-	conn.onerror = err => {
-		console.log(err);
+	conn.onerror = e => {
+		console.log(e);
 	}
 
 	// TODO: Sync alerts, topic list, etc.
@@ -297,10 +297,25 @@ function runWebSockets(resume=false) {
 			} else if("Topics" in data) {
 				console.log("topic in data");
 				console.log("data",data);
+				// TODO: Handle desyncs more gracefully?
+				// TODO: Send less unneccessary data?
 				let topic = data.Topics[0];
 				if(topic===undefined){
 					console.log("empty topic list");
 					return;
+				}
+				if("mod" in data) {
+					topic.CanMod = data.mod==1 || data.mod[0]==1;
+					if(data.lock==1) {
+						$(".val_lock").each(function(){
+							this.classList.remove("auto_hide");
+						});
+					}
+					if(data.move==1) {
+						$(".val_move").each(function(){
+							this.classList.remove("auto_hide");
+						});
+					}
 				}
 				// TODO: Fix the data race where the function hasn't been loaded yet
 				let renTopic = Tmpl_topics_topic(topic);
@@ -313,7 +328,7 @@ function runWebSockets(resume=false) {
 				moreTopicCount++;
 
 				let blocks = document.getElementsByClassName("more_topic_block_initial");
-				for(let i=0; i < blocks.length; i++) {
+				for(let i=0; i<blocks.length; i++) {
 					let block = blocks[i];
 					block.classList.remove("more_topic_block_initial");
 					block.classList.add("more_topic_block_active");
@@ -347,7 +362,7 @@ function runWebSockets(resume=false) {
 
 // TODO: Surely, there's a prettier and more elegant way of doing this?
 function getExt(name) {
-	if(!name.indexOf('.' > -1)) throw("This file doesn't have an extension");
+	if(!name.indexOf('.') > -1) throw("This file doesn't have an extension");
 	return name.split('.').pop();
 }
 
@@ -439,9 +454,9 @@ function mainInit(){
 		ev.preventDefault();
 		let blocks = document.getElementsByClassName("more_topic_block_active");
 		for(let i=0; i<blocks.length; i++) {
-			let block = blocks[i];
-			block.classList.remove("more_topic_block_active");
-			block.classList.add("more_topic_block_initial");
+			let bl = blocks[i];
+			bl.classList.remove("more_topic_block_active");
+			bl.classList.add("more_topic_block_initial");
 		}
 		$(".ajax_topic_dupe").fadeOut("slow", function(){
 			$(this).remove();
@@ -646,6 +661,7 @@ function mainInit(){
 	});
 
 	bindPage();
+	runInitHook("after_init_bind_page");
 
 	$(".edit_field").click(function(ev) {
 		ev.preventDefault();
@@ -927,6 +943,7 @@ function bindPage() {
 	});
 	
 	bindTopic();
+	runHook("end_bind_page")
 }
 
 function unbindPage() {

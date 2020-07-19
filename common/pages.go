@@ -202,20 +202,25 @@ type TopicListSort struct {
 	Ascending bool
 }
 
+type QuickTools struct {
+	CanDelete bool
+	CanLock   bool
+	CanMove   bool
+}
+
 type TopicListPage struct {
 	*Header
-	TopicList    []*TopicsRow
+	TopicList    []TopicsRowMut
 	ForumList    []Forum
 	DefaultForum int
 	Sort         TopicListSort
-	CanLock      bool
-	CanMove      bool
+	QuickTools
 	Paginator
 }
 
 type ForumPage struct {
 	*Header
-	ItemList []*TopicsRow
+	ItemList []TopicsRowMut
 	Forum    *Forum
 	CanLock  bool
 	CanMove  bool

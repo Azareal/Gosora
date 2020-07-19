@@ -11,13 +11,13 @@ import (
 	p "github.com/Azareal/Gosora/common/phrases"
 )
 
-func Forums(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
-	basePage, ferr := buildBasePage(w, r, user, "forums", "forums")
+func Forums(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
+	basePage, ferr := buildBasePage(w, r, u, "forums", "forums")
 	if ferr != nil {
 		return ferr
 	}
-	if !user.Perms.ManageForums {
-		return c.NoPermissions(w, r, user)
+	if !u.Perms.ManageForums {
+		return c.NoPermissions(w, r, u)
 	}
 	basePage.Header.AddScript("Sortable-1.4.0/Sortable.min.js")
 	basePage.Header.AddScriptAsync("panel_forums.js")
@@ -52,26 +52,26 @@ func Forums(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "", "", "panel_forums", &pi})
 }
 
-func ForumsCreateSubmit(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
-	_, ferr := c.SimplePanelUserCheck(w, r, user)
+func ForumsCreateSubmit(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
+	_, ferr := c.SimplePanelUserCheck(w, r, u)
 	if ferr != nil {
 		return ferr
 	}
-	if !user.Perms.ManageForums {
-		return c.NoPermissions(w, r, user)
+	if !u.Perms.ManageForums {
+		return c.NoPermissions(w, r, u)
 	}
 
-	fname := r.PostFormValue("name")
-	fdesc := r.PostFormValue("desc")
-	fpreset := c.StripInvalidPreset(r.PostFormValue("preset"))
+	name := r.PostFormValue("name")
+	desc := r.PostFormValue("desc")
+	preset := c.StripInvalidPreset(r.PostFormValue("preset"))
 	factive := r.PostFormValue("active")
 	active := (factive == "on" || factive == "1")
 
-	fid, err := c.Forums.Create(fname, fdesc, active, fpreset)
+	fid, err := c.Forums.Create(name, desc, active, preset)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
-	err = c.AdminLogs.Create("create", fid, "forum", user.GetIP(), user.ID)
+	err = c.AdminLogs.Create("create", fid, "forum", u.GetIP(), u.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -81,22 +81,22 @@ func ForumsCreateSubmit(w http.ResponseWriter, r *http.Request, user *c.User) c.
 }
 
 // TODO: Revamp this
-func ForumsDelete(w http.ResponseWriter, r *http.Request, user *c.User, sfid string) c.RouteError {
-	basePage, ferr := buildBasePage(w, r, user, "delete_forum", "forums")
+func ForumsDelete(w http.ResponseWriter, r *http.Request, u *c.User, sfid string) c.RouteError {
+	basePage, ferr := buildBasePage(w, r, u, "delete_forum", "forums")
 	if ferr != nil {
 		return ferr
 	}
-	if !user.Perms.ManageForums {
-		return c.NoPermissions(w, r, user)
+	if !u.Perms.ManageForums {
+		return c.NoPermissions(w, r, u)
 	}
 
 	fid, err := strconv.Atoi(sfid)
 	if err != nil {
-		return c.LocalError("The provided Forum ID is not a valid number.", w, r, user)
+		return c.LocalError("The provided Forum ID is not a valid number.", w, r, u)
 	}
 	forum, err := c.Forums.Get(fid)
 	if err == sql.ErrNoRows {
-		return c.LocalError("The forum you're trying to delete doesn't exist.", w, r, user)
+		return c.LocalError("The forum you're trying to delete doesn't exist.", w, r, u)
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -105,32 +105,32 @@ func ForumsDelete(w http.ResponseWriter, r *http.Request, user *c.User, sfid str
 	youSure := c.AreYouSure{"/panel/forums/delete/submit/" + strconv.Itoa(fid), confirmMsg}
 
 	pi := c.PanelPage{basePage, tList, youSure}
-	if c.RunPreRenderHook("pre_render_panel_delete_forum", w, r, user, &pi) {
+	if c.RunPreRenderHook("pre_render_panel_delete_forum", w, r, u, &pi) {
 		return nil
 	}
 	return renderTemplate("panel_are_you_sure", w, r, basePage.Header, &pi)
 }
 
-func ForumsDeleteSubmit(w http.ResponseWriter, r *http.Request, user *c.User, sfid string) c.RouteError {
-	_, ferr := c.SimplePanelUserCheck(w, r, user)
+func ForumsDeleteSubmit(w http.ResponseWriter, r *http.Request, u *c.User, sfid string) c.RouteError {
+	_, ferr := c.SimplePanelUserCheck(w, r, u)
 	if ferr != nil {
 		return ferr
 	}
-	if !user.Perms.ManageForums {
-		return c.NoPermissions(w, r, user)
+	if !u.Perms.ManageForums {
+		return c.NoPermissions(w, r, u)
 	}
 
 	fid, err := strconv.Atoi(sfid)
 	if err != nil {
-		return c.LocalError("The provided Forum ID is not a valid number.", w, r, user)
+		return c.LocalError("The provided Forum ID is not a valid number.", w, r, u)
 	}
 	err = c.Forums.Delete(fid)
 	if err == sql.ErrNoRows {
-		return c.LocalError("The forum you're trying to delete doesn't exist.", w, r, user)
+		return c.LocalError("The forum you're trying to delete doesn't exist.", w, r, u)
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
-	err = c.AdminLogs.Create("delete", fid, "forum", user.GetIP(), user.ID)
+	err = c.AdminLogs.Create("delete", fid, "forum", u.GetIP(), u.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -139,14 +139,14 @@ func ForumsDeleteSubmit(w http.ResponseWriter, r *http.Request, user *c.User, sf
 	return nil
 }
 
-func ForumsOrderSubmit(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
-	_, ferr := c.SimplePanelUserCheck(w, r, user)
+func ForumsOrderSubmit(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
+	_, ferr := c.SimplePanelUserCheck(w, r, u)
 	if ferr != nil {
 		return ferr
 	}
 	js := r.PostFormValue("js") == "1"
-	if !user.Perms.ManageForums {
-		return c.NoPermissionsJSQ(w, r, user, js)
+	if !u.Perms.ManageForums {
+		return c.NoPermissionsJSQ(w, r, u, js)
 	}
 	sitems := strings.TrimSuffix(strings.TrimPrefix(r.PostFormValue("items"), "{"), "}")
 	//fmt.Printf("sitems: %+v\n", sitems)
@@ -155,13 +155,13 @@ func ForumsOrderSubmit(w http.ResponseWriter, r *http.Request, user *c.User) c.R
 	for index, sfid := range strings.Split(sitems, ",") {
 		fid, err := strconv.Atoi(sfid)
 		if err != nil {
-			return c.LocalErrorJSQ("Invalid integer in forum list", w, r, user, js)
+			return c.LocalErrorJSQ("Invalid integer in forum list", w, r, u, js)
 		}
 		updateMap[fid] = index
 	}
 	c.Forums.UpdateOrder(updateMap)
 
-	err := c.AdminLogs.Create("reorder", 0, "forum", user.GetIP(), user.ID)
+	err := c.AdminLogs.Create("reorder", 0, "forum", u.GetIP(), u.ID)
 	if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
@@ -169,13 +169,13 @@ func ForumsOrderSubmit(w http.ResponseWriter, r *http.Request, user *c.User) c.R
 	return successRedirect("/panel/forums/", w, r, js)
 }
 
-func ForumsEdit(w http.ResponseWriter, r *http.Request, user *c.User, sfid string) c.RouteError {
-	basePage, ferr := buildBasePage(w, r, user, "edit_forum", "forums")
+func ForumsEdit(w http.ResponseWriter, r *http.Request, u *c.User, sfid string) c.RouteError {
+	basePage, ferr := buildBasePage(w, r, u, "edit_forum", "forums")
 	if ferr != nil {
 		return ferr
 	}
-	if !user.Perms.ManageForums {
-		return c.NoPermissions(w, r, user)
+	if !u.Perms.ManageForums {
+		return c.NoPermissions(w, r, u)
 	}
 
 	fid, err := strconv.Atoi(sfid)
@@ -186,7 +186,7 @@ func ForumsEdit(w http.ResponseWriter, r *http.Request, user *c.User, sfid strin
 
 	forum, err := c.Forums.Get(fid)
 	if err == sql.ErrNoRows {
-		return c.LocalError("The forum you're trying to edit doesn't exist.", w, r, user)
+		return c.LocalError("The forum you're trying to edit doesn't exist.", w, r, u)
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -222,30 +222,30 @@ func ForumsEdit(w http.ResponseWriter, r *http.Request, user *c.User, sfid strin
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "", "", "panel_forum_edit", &pi})
 }
 
-func ForumsEditSubmit(w http.ResponseWriter, r *http.Request, user *c.User, sfid string) c.RouteError {
-	_, ferr := c.SimplePanelUserCheck(w, r, user)
+func ForumsEditSubmit(w http.ResponseWriter, r *http.Request, u *c.User, sfid string) c.RouteError {
+	_, ferr := c.SimplePanelUserCheck(w, r, u)
 	if ferr != nil {
 		return ferr
 	}
-	if !user.Perms.ManageForums {
-		return c.NoPermissions(w, r, user)
+	if !u.Perms.ManageForums {
+		return c.NoPermissions(w, r, u)
 	}
 	js := r.PostFormValue("js") == "1"
 
 	fid, err := strconv.Atoi(sfid)
 	if err != nil {
-		return c.LocalErrorJSQ("The provided Forum ID is not a valid number.", w, r, user, js)
+		return c.LocalErrorJSQ("The provided Forum ID is not a valid number.", w, r, u, js)
 	}
 	forum, err := c.Forums.Get(fid)
 	if err == sql.ErrNoRows {
-		return c.LocalErrorJSQ("The forum you're trying to edit doesn't exist.", w, r, user, js)
+		return c.LocalErrorJSQ("The forum you're trying to edit doesn't exist.", w, r, u, js)
 	} else if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
 
-	fname := r.PostFormValue("forum_name")
-	fdesc := r.PostFormValue("forum_desc")
-	fpreset := c.StripInvalidPreset(r.PostFormValue("forum_preset"))
+	name := r.PostFormValue("forum_name")
+	desc := r.PostFormValue("forum_desc")
+	preset := c.StripInvalidPreset(r.PostFormValue("forum_preset"))
 	factive := r.PostFormValue("forum_active")
 
 	active := false
@@ -255,11 +255,11 @@ func ForumsEditSubmit(w http.ResponseWriter, r *http.Request, user *c.User, sfid
 		active = true
 	}
 
-	err = forum.Update(fname, fdesc, active, fpreset)
+	err = forum.Update(name, desc, active, preset)
 	if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
-	err = c.AdminLogs.Create("edit", fid, "forum", user.GetIP(), user.ID)
+	err = c.AdminLogs.Create("edit", fid, "forum", u.GetIP(), u.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -268,29 +268,28 @@ func ForumsEditSubmit(w http.ResponseWriter, r *http.Request, user *c.User, sfid
 	return successRedirect("/panel/forums/", w, r, js)
 }
 
-func ForumsEditPermsSubmit(w http.ResponseWriter, r *http.Request, user *c.User, sfid string) c.RouteError {
-	_, ferr := c.SimplePanelUserCheck(w, r, user)
+func ForumsEditPermsSubmit(w http.ResponseWriter, r *http.Request, u *c.User, sfid string) c.RouteError {
+	_, ferr := c.SimplePanelUserCheck(w, r, u)
 	if ferr != nil {
 		return ferr
 	}
-	if !user.Perms.ManageForums {
-		return c.NoPermissions(w, r, user)
+	if !u.Perms.ManageForums {
+		return c.NoPermissions(w, r, u)
 	}
 	js := r.PostFormValue("js") == "1"
 
 	fid, err := strconv.Atoi(sfid)
 	if err != nil {
-		return c.LocalErrorJSQ("The provided Forum ID is not a valid number.", w, r, user, js)
+		return c.LocalErrorJSQ("The provided Forum ID is not a valid number.", w, r, u, js)
 	}
-
 	gid, err := strconv.Atoi(r.PostFormValue("gid"))
 	if err != nil {
-		return c.LocalErrorJSQ("Invalid Group ID", w, r, user, js)
+		return c.LocalErrorJSQ("Invalid Group ID", w, r, u, js)
 	}
 
 	forum, err := c.Forums.Get(fid)
 	if err == sql.ErrNoRows {
-		return c.LocalErrorJSQ("This forum doesn't exist", w, r, user, js)
+		return c.LocalErrorJSQ("This forum doesn't exist", w, r, u, js)
 	} else if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
@@ -298,9 +297,9 @@ func ForumsEditPermsSubmit(w http.ResponseWriter, r *http.Request, user *c.User,
 	permPreset := c.StripInvalidGroupForumPreset(r.PostFormValue("perm_preset"))
 	err = forum.SetPreset(permPreset, gid)
 	if err != nil {
-		return c.LocalErrorJSQ(err.Error(), w, r, user, js)
+		return c.LocalErrorJSQ(err.Error(), w, r, u, js)
 	}
-	err = c.AdminLogs.Create("edit", fid, "forum", user.GetIP(), user.ID)
+	err = c.AdminLogs.Create("edit", fid, "forum", u.GetIP(), u.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -328,23 +327,23 @@ func forumPermsExtractDash(paramList string) (fid, gid int, err error) {
 	return fid, gid, err
 }
 
-func ForumsEditPermsAdvance(w http.ResponseWriter, r *http.Request, user *c.User, paramList string) c.RouteError {
-	basePage, ferr := buildBasePage(w, r, user, "edit_forum", "forums")
+func ForumsEditPermsAdvance(w http.ResponseWriter, r *http.Request, u *c.User, paramList string) c.RouteError {
+	basePage, ferr := buildBasePage(w, r, u, "edit_forum", "forums")
 	if ferr != nil {
 		return ferr
 	}
-	if !user.Perms.ManageForums {
-		return c.NoPermissions(w, r, user)
+	if !u.Perms.ManageForums {
+		return c.NoPermissions(w, r, u)
 	}
 
 	fid, gid, err := forumPermsExtractDash(paramList)
 	if err != nil {
-		return c.LocalError(err.Error(), w, r, user)
+		return c.LocalError(err.Error(), w, r, u)
 	}
 
 	f, err := c.Forums.Get(fid)
 	if err == sql.ErrNoRows {
-		return c.LocalError("The forum you're trying to edit doesn't exist.", w, r, user)
+		return c.LocalError("The forum you're trying to edit doesn't exist.", w, r, u)
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -386,24 +385,24 @@ func ForumsEditPermsAdvance(w http.ResponseWriter, r *http.Request, user *c.User
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "", "", "panel_forum_edit_perms", &pi})
 }
 
-func ForumsEditPermsAdvanceSubmit(w http.ResponseWriter, r *http.Request, user *c.User, paramList string) c.RouteError {
-	_, ferr := c.SimplePanelUserCheck(w, r, user)
+func ForumsEditPermsAdvanceSubmit(w http.ResponseWriter, r *http.Request, u *c.User, paramList string) c.RouteError {
+	_, ferr := c.SimplePanelUserCheck(w, r, u)
 	if ferr != nil {
 		return ferr
 	}
-	if !user.Perms.ManageForums {
-		return c.NoPermissions(w, r, user)
+	if !u.Perms.ManageForums {
+		return c.NoPermissions(w, r, u)
 	}
 	js := r.PostFormValue("js") == "1"
 
 	fid, gid, err := forumPermsExtractDash(paramList)
 	if err != nil {
-		return c.LocalError(err.Error(), w, r, user)
+		return c.LocalError(err.Error(), w, r, u)
 	}
 
 	forum, err := c.Forums.Get(fid)
 	if err == sql.ErrNoRows {
-		return c.LocalError("The forum you're trying to edit doesn't exist.", w, r, user)
+		return c.LocalError("The forum you're trying to edit doesn't exist.", w, r, u)
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -435,9 +434,9 @@ func ForumsEditPermsAdvanceSubmit(w http.ResponseWriter, r *http.Request, user *
 
 	err = forum.SetPerms(&fp, "custom", gid)
 	if err != nil {
-		return c.LocalErrorJSQ(err.Error(), w, r, user, js)
+		return c.LocalErrorJSQ(err.Error(), w, r, u, js)
 	}
-	err = c.AdminLogs.Create("edit", fid, "forum", user.GetIP(), user.ID)
+	err = c.AdminLogs.Create("edit", fid, "forum", u.GetIP(), u.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}

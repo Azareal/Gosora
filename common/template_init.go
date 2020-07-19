@@ -226,9 +226,9 @@ func compileCommons(c *tmpl.CTemplateSet, head, head2 *Header, forumList []Forum
 		return head2
 	}*/
 
-	var topicsList []*TopicsRow
-	topicsList = append(topicsList, &TopicsRow{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, now, now, user3.ID, 1, 1, "", "::1", 1, 0, 1, 1, 0, "classname", 0, "", user2, "", 0, user3, "General", "/forum/general.2", nil})
-	topicListPage := TopicListPage{htitle("Topic List"), topicsList, forumList, Config.DefaultForum, TopicListSort{"lastupdated", false}, false, false, Paginator{[]int{1}, 1, 1}}
+	var topicsList []TopicsRowMut
+	topicsList = append(topicsList, TopicsRowMut{&TopicsRow{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, now, now, user3.ID, 1, 1, "", "::1", 1, 0, 1, 1, 0, "classname", 0, "", user2, "", 0, user3, "General", "/forum/general.2", nil}, false})
+	topicListPage := TopicListPage{htitle("Topic List"), topicsList, forumList, Config.DefaultForum, TopicListSort{"lastupdated", false}, QuickTools{false, false, false}, Paginator{[]int{1}, 1, 1}}
 	o.Add("topics", "c.TopicListPage", topicListPage)
 	o.Add("topics_mini", "c.TopicListPage", topicListPage)
 
@@ -309,9 +309,9 @@ func compileTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName string
 	ppage := ProfilePage{htitle("User 526"), replyList, *user, 0, 0, false, false, false, false} // TODO: Use the score from user to generate the currentScore and nextScore
 	t.Add("profile", "c.ProfilePage", ppage)
 
-	var topicsList []*TopicsRow
-	topicsList = append(topicsList, &TopicsRow{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, now, now, user3.ID, 1, 1, "", "127.0.0.1", 1, 0, 1, 1, 0, "classname", 0, "", user2, "", 0, user3, "General", "/forum/general.2", nil})
-	topicListPage := TopicListPage{htitle("Topic List"), topicsList, forumList, Config.DefaultForum, TopicListSort{"lastupdated", false}, false, false, Paginator{[]int{1}, 1, 1}}
+	var topicsList []TopicsRowMut
+	topicsList = append(topicsList, TopicsRowMut{&TopicsRow{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, now, now, user3.ID, 1, 1, "", "127.0.0.1", 1, 0, 1, 1, 0, "classname", 0, "", user2, "", 0, user3, "General", "/forum/general.2", nil}, false})
+	topicListPage := TopicListPage{htitle("Topic List"), topicsList, forumList, Config.DefaultForum, TopicListSort{"lastupdated", false}, QuickTools{false, false, false}, Paginator{[]int{1}, 1, 1}}
 
 	forumItem := BlankForum(1, "general-forum.1", "General Forum", "Where the general stuff happens", true, "all", 0, "", 0)
 	forumPage := ForumPage{htitle("General Forum"), topicsList, forumItem, false, false, Paginator{[]int{1}, 1, 1}}
@@ -538,8 +538,8 @@ func compileJSTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName stri
 
 	t := TItemHold(make(map[string]TItem))
 
-	topicsRow := &TopicsRow{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, now, now, user3.ID, 1, 1, "", "::1", 1, 0, 1, 0, 1, "classname", 0, "", user2, "", 0, user3, "General", "/forum/general.2", nil}
-	t.AddStd("topics_topic", "c.TopicsRow", topicsRow)
+	topicsRow := TopicsRowMut{&TopicsRow{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, now, now, user3.ID, 1, 1, "", "::1", 1, 0, 1, 0, 1, "classname", 0, "", user2, "", 0, user3, "General", "/forum/general.2", nil}, false}
+	t.AddStd("topics_topic", "c.TopicsRowMut", topicsRow)
 
 	poll := Poll{ID: 1, Type: 0, Options: map[int]string{0: "Nothing", 1: "Something"}, Results: map[int]int{0: 5, 1: 2}, QuickOptions: []PollOption{
 		PollOption{0, "Nothing"},

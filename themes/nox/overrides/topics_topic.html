@@ -1,4 +1,4 @@
-<div class="topic_row{{if .Sticky}} topic_sticky{{else if .IsClosed}} topic_closed{{end}}"data-tid={{.ID}}>
+<div class="topic_row{{if .Sticky}} topic_sticky{{else if .IsClosed}} topic_closed{{end}}{{if .CanMod}} can_mod{{end}}"data-tid={{.ID}}>
 	<div class="rowitem topic_left passive datarow">
 		<a href="{{.Creator.Link}}"><img src="{{.Creator.MicroAvatar}}"height=64 alt="Avatar"title="{{.Creator.Name}}'s Avatar"aria-hidden="true"></a>
 		<span class="topic_inner_left">

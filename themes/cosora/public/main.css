@@ -907,7 +907,11 @@ textarea {
 .topic_sticky .topic_left, .topic_sticky .topic_right {
 	border-bottom: 2px solid hsl(51, 60%, 70%);
 }
-.topics_moderate .topic_row:hover .topic_left, .topics_moderate .topic_row:hover .topic_right {
+.topics_moderate .topic_row:not(.can_mod) .topic_left,
+.topics_moderate .topic_row:not(.can_mod) .topic_right {
+	background-color: #EEEEEE;
+}
+.topics_moderate .can_mod:hover .topic_left, .topics_moderate .can_mod:hover .topic_right {
 	background-color: hsl(81, 60%, 97%);
 }
 .topic_selected .topic_left, .topic_selected .topic_right {

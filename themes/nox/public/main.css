@@ -228,7 +228,10 @@ li a {
 .sidebar .rowblock:not(.topic_list):not(.rowhead):not(.opthead) .rowitem, .sidebar .search {
 	margin-left: 12px;
 }
-.topics_moderate .topic_row:hover {
+.topics_moderate .can_mod {
+	background-color: #4d4d4d;
+}
+.topics_moderate .can_mod:hover {
 	background-color: rgb(78, 78, 98);
 }
 .widget_search:first-child {
@@ -552,7 +555,7 @@ h2 {
 .topic_closed {
 	background-color: #4b4b4b;
 }
-.topic_selected {
+.topic_row.topic_selected {
 	background-color: rgb(68, 68, 88);
 }
 .new_item .topic_left {

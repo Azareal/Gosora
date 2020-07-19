@@ -8,12 +8,12 @@ import (
 	"github.com/Azareal/Gosora/common/phrases"
 )
 
-func ForumList(w http.ResponseWriter, r *http.Request, user *c.User, h *c.Header) c.RouteError {
-	/*skip, rerr := h.Hooks.VhookSkippable("route_forum_list_start", w, r, user, h)
+func ForumList(w http.ResponseWriter, r *http.Request, u *c.User, h *c.Header) c.RouteError {
+	/*skip, rerr := h.Hooks.VhookSkippable("route_forum_list_start", w, r, u, h)
 	if skip || rerr != nil {
 		return rerr
 	}*/
-	skip, rerr := c.H_route_forum_list_start_hook(h.Hooks, w, r, user, h)
+	skip, rerr := c.H_route_forum_list_start_hook(h.Hooks, w, r, u, h)
 	if skip || rerr != nil {
 		return rerr
 	}
@@ -24,18 +24,18 @@ func ForumList(w http.ResponseWriter, r *http.Request, user *c.User, h *c.Header
 
 	var err error
 	var canSee []int
-	if user.IsSuperAdmin {
+	if u.IsSuperAdmin {
 		canSee, err = c.Forums.GetAllVisibleIDs()
 		if err != nil {
 			return c.InternalError(err, w, r)
 		}
 	} else {
-		group, err := c.Groups.Get(user.Group)
+		g, err := c.Groups.Get(u.Group)
 		if err != nil {
-			log.Printf("Group #%d doesn't exist despite being used by c.User #%d", user.Group, user.ID)
-			return c.LocalError("Something weird happened", w, r, user)
+			log.Printf("Group #%d doesn't exist despite being used by c.User #%d", u.Group, u.ID)
+			return c.LocalError("Something weird happened", w, r, u)
 		}
-		canSee = group.CanSee
+		canSee = g.CanSee
 	}
 
 	var forumList []c.Forum
