@@ -82,8 +82,8 @@ li a {
 	padding-right: 8px;
 }
 .alertItem:not(.withAvatar) {
-	padding-top: 0px;
-	padding-bottom: 0px;
+	padding-top: 6px;
+	padding-bottom: 6px;
 }
 .alertItem:not(.withAvatar) a {
 	padding-top: 14px;
@@ -497,6 +497,9 @@ h2 {
 }
 .topic_list_title_block .mod_opt a:before {
 	content: "{{lang "topic_list.moderate" . }}";
+}
+.topic_list_title_block .moderate_link.moderate_open:before {
+	content: "{{lang "topic_list.cancel_mod" . }}";
 }
 
 .filter_opt, .dummy_opt {

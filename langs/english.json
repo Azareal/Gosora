@@ -645,6 +645,7 @@
 		"topic_list.moderate_short":"Mod",
 		"topic_list.moderate_tooltip":"Moderate",
 		"topic_list.moderate_aria":"Moderate Posts",
+		"topic_list.cancel_mod":"Cancel Mod",
 		"topic_list.what_to_do":"What do you want to do with these {0} topics?",
 		"topic_list.what_to_do_single":"What do you want to do with this topic?",
 		"topic_list.moderate_delete":"Delete them",

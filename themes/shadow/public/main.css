@@ -782,6 +782,9 @@ input[type=checkbox]:checked + label.poll_option_label .sel {
 	content: "{{lang "topics_moderate" . }}";
 	padding-left: 1px;
 }
+.topic_list_title_block .moderate_link.moderate_open:after {
+	content: "{{lang "topic_list.cancel_mod" . }}";
+}
 .create_topic_opt {
 	order: 1;
 }

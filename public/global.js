@@ -375,6 +375,7 @@ function getExt(name) {
 		runInitHook("pre_global");
 		log("before notify on alert")
 		// We can only get away with this because template_alert has no phrases, otherwise it too would have to be part of the "dance", I miss Go concurrency :(
+		log("noAlerts:",noAlerts);
 		if(!noAlerts) {
 		notifyOnScriptW("tmpl_alert", e => {
 			if(e!=undefined) log("failed alert? why?",e)
@@ -383,6 +384,7 @@ function getExt(name) {
 			addInitHook("after_phrases", () => {
 				// TODO: The load part of loadAlerts could be done asynchronously while the update of the DOM could be deferred
 				$(document).ready(() => {
+					log("checking local storage cache");
 					alertsInitted = true;
 					let al = document.getElementsByClassName("menu_alerts");
 					let sAlertList = localStorage.getItem("alertList");
@@ -452,6 +454,7 @@ function Paginate(currentPage,lastPage,maxPages) {
 }
 
 function mainInit(){
+	log("enter mainInit");
 	runInitHook("start_init");
 
 	$(".more_topics").click(ev => {
@@ -613,6 +616,8 @@ function mainInit(){
 			});
 			that.classList.add("filter_selected");
 			$(".topic_list_title h1").text(that.innerText);
+			unbindPage();
+			bindPage();
 		}).catch(e => {
 			log("Unable to get script '"+url+"&js=1"+"'",e);
 			console.trace();
@@ -664,6 +669,7 @@ function mainInit(){
 		});
 	});
 
+	runInitHook("before_init_bind_page");
 	bindPage();
 	runInitHook("after_init_bind_page");
 
@@ -937,6 +943,7 @@ function mainInit(){
 }
 
 function bindPage() {
+	log("enter bindPage");
 	$(".create_topic_link").click(ev => {
 		ev.preventDefault();
 		$(".topic_create_form").removeClass("auto_hide");
@@ -947,16 +954,19 @@ function bindPage() {
 	});
 	
 	bindTopic();
-	runHook("end_bind_page")
+	runInitHook("end_bind_page")
 }
 
 function unbindPage() {
+	log("enter unbindPage");
 	$(".create_topic_link").unbind("click");
 	$(".topic_create_form .close_form").unbind("click");
 	unbindTopic();
+	runHook("end_unbind_page")
 }
 
 function bindTopic() {
+	log("enter bindTopic");
 	$(".open_edit").click(ev => {
 		ev.preventDefault();
 		$('.hide_on_edit').addClass("edit_opened");
@@ -1112,10 +1122,11 @@ function bindTopic() {
 		})
 	});
 
-	runHook("end_bind_topic");
+	runInitHook("end_bind_topic");
 }
 
 function unbindTopic() {
+	log("enter unbindTopic");
 	$(".open_edit").unbind("click");
 	$(".topic_item .submit_edit").unbind("click");
 	$(".delete_item").unbind("click");
