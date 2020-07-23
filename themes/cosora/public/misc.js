@@ -66,7 +66,7 @@
 
 		// TODO: Refactor this to use `each` less
 		$('.button_menu').click(function(){
-			console.log(".button_menu");
+			log(".button_menu");
 			// The outer container
 			let buttonPane = newElement("div","button_menu_pane");
 			let postItem = $(this).parents('.post_item');
@@ -103,13 +103,13 @@
 
 			// Fill in the placeholder grid nodes
 			let rowCount = 4;
-			console.log("rowCount",rowCount);
-			console.log("gridElementCount",gridElementCount);
+			log("rowCount",rowCount);
+			log("gridElementCount",gridElementCount);
 			if(gridElementCount%rowCount != 0) {
 				let fillerNodes = (rowCount - (gridElementCount%rowCount));
-				console.log("fillerNodes",fillerNodes);
+				log("fillerNodes",fillerNodes);
 				for(let i = 0; i < fillerNodes;i++ ) {
-					console.log("added a gridFiller");
+					log("added a gridFiller");
 					buttonGrid.appendChild(newElement("div","gridFiller"));
 				}
 			}

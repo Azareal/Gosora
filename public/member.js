@@ -20,7 +20,7 @@ var imageExts = ["png","jpg","jpe","jpeg","jif","jfi","jfif","svg","bmp","gif","
 	
 		let totalSize = 0;
 		for(let i=0; i<files.length; i++) {
-			console.log("file "+i,files[i]);
+			log("file "+i,files[i]);
 			totalSize += files[i]["size"];
 		}
 		if(totalSize > me.Site.MaxRequestSize) throw("You can't upload this much at once, max: "+me.Site.MaxRequestSize);
@@ -59,7 +59,7 @@ var imageExts = ["png","jpg","jpe","jpeg","jif","jfi","jfif","svg","bmp","gif","
 		try {
 			uploadFileHandler(this.files, 5, () => {},
 			(e,hash,fname) => {
-				console.log("hash",hash);
+				log("hash",hash);
 				let formData = new FormData();
 				formData.append("s",me.User.S);
 				for(let i=0; i<this.files.length; i++) formData.append("upload_files",this.files[i]);
@@ -68,7 +68,7 @@ var imageExts = ["png","jpg","jpe","jpeg","jif","jfi","jfif","svg","bmp","gif","
 				let req = new XMLHttpRequest();
 				req.addEventListener("load", () => {
 					let data = JSON.parse(req.responseText);
-					//console.log("rdata",data);
+					//log("rdata",data);
 					let fileItem = document.createElement("div");
 					let ext = getExt(fname);
 					// TODO: Push ImageFileExts to the client from the server in some sort of gen.js?
@@ -92,7 +92,7 @@ var imageExts = ["png","jpg","jpe","jpeg","jif","jfi","jfif","svg","bmp","gif","
 			});
 		} catch(e) {
 			// TODO: Use a notice instead
-			console.log("e",e);
+			log("e",e);
 			alert(e);
 		}
 	}
@@ -104,7 +104,7 @@ var imageExts = ["png","jpg","jpe","jpeg","jif","jfi","jfif","svg","bmp","gif","
 				// TODO: Use client templates here
 				let fileDock = document.getElementById("upload_file_dock");
 				let fileItem = document.createElement("label");
-				console.log("fileItem",fileItem);
+				log("fileItem",fileItem);
 
 				let ext = getExt(fname);
 				// TODO: Push ImageFileExts to the client from the server in some sort of gen.js?
@@ -116,23 +116,23 @@ var imageExts = ["png","jpg","jpe","jpeg","jif","jfi","jfif","svg","bmp","gif","
 
 				fileDock.appendChild(fileItem);
 			},(e,hash,fname) => {
-				console.log("hash",hash);
+				log("hash",hash);
 				let ext = getExt(fname)
 				let con = document.getElementById("input_content")
-				console.log("con.value",con.value);
+				log("con.value",con.value);
 				
 				let attachItem;
 				if(con.value=="") attachItem = "//"+window.location.host+"/attachs/"+hash+"."+ext;
 				else attachItem = "\r\n//"+window.location.host+"/attachs/"+hash+"."+ext;
 				con.value = con.value + attachItem;
-				console.log("con.value",con.value);
+				log("con.value",con.value);
 				
 				// For custom / third party text editors
 				attachItemCallback(attachItem);
 			});
 		} catch(e) {
 			// TODO: Use a notice instead
-			console.log("e",e);
+			log("e",e);
 			alert(e);
 		}
 	}
@@ -191,12 +191,12 @@ var imageExts = ["png","jpg","jpe","jpeg","jif","jfi","jfif","svg","bmp","gif","
 			
 		for(let i = 0; i < elems.length; i++) {
 			let pathNode = elems[i].querySelector(".attach_item_path");
-			console.log("pathNode",pathNode);
+			log("pathNode",pathNode);
 			aidList += pathNode.getAttribute("aid")+",";
 			elems[i].remove();
 		}
 		if(aidList.length > 0) aidList = aidList.slice(0, -1);
-		console.log("aidList",aidList)
+		log("aidList",aidList)
 		formData.append("aids",aidList);
 	
 		let ec = 0;
@@ -214,9 +214,9 @@ var imageExts = ["png","jpg","jpe","jpeg","jif","jfi","jfif","svg","bmp","gif","
 	});
 	
 	function addPollInput() {
-		console.log("clicked on pollinputinput");
+		log("clicked on pollinputinput");
 		let dataPollInput = $(this).parent().attr("data-pollinput");
-		console.log("dataPollInput",dataPollInput);
+		log("dataPollInput",dataPollInput);
 		if(dataPollInput==undefined) return;
 		if(dataPollInput!=(pollInputIndex-1)) return;
 		$(".poll_content_row .formitem").append(Tmpl_topic_c_poll_input({
@@ -224,7 +224,7 @@ var imageExts = ["png","jpg","jpe","jpeg","jif","jfi","jfif","svg","bmp","gif","
 			Place: phraseBox["topic"]["topic.reply_add_poll_option"].replace("%d",pollInputIndex),
 		}));
 		pollInputIndex++;
-		console.log("new pollInputIndex",pollInputIndex);
+		log("new pollInputIndex",pollInputIndex);
 		$(".pollinputinput").off("click");
 		$(".pollinputinput").click(addPollInput);
 	}
@@ -241,8 +241,11 @@ var imageExts = ["png","jpg","jpe","jpeg","jif","jfi","jfif","svg","bmp","gif","
 	});
 	//addInitHook("after_init_bind_page", () => {
 	addHook("end_bind_page", () => {
+		if(!$(".mod_floater").hasClass("auto_hide")) $(".mod_floater").addClass("auto_hide")
 		$(".moderate_link").unbind("click");
 		$(".mod_floater_submit").unbind("click");
+		selectedTopics=[];
+		$("topic_selected").removeClass("topic_selected");
 		$(".moderate_link").click(ev => {
 			ev.preventDefault();
 			$(".pre_opt").removeClass("auto_hide");
@@ -298,7 +301,7 @@ var imageExts = ["png","jpg","jpe","jpeg","jif","jfi","jfif","svg","bmp","gif","
 				// Handle these specially
 				switch(action) {
 					case "move":
-						console.log("move action");
+						log("move action");
 						let modTopicMover = $("#mod_topic_mover");
 						$("#mod_topic_mover").removeClass("auto_hide");
 						$("#mod_topic_mover .pane_row").click(function(){
@@ -306,7 +309,7 @@ var imageExts = ["png","jpg","jpe","jpeg","jif","jfi","jfif","svg","bmp","gif","
 							let fid = this.getAttribute("data-fid");
 							if(fid==null) return;
 							this.classList.add("pane_selected");
-							console.log("fid",fid);
+							log("fid",fid);
 							forumToMoveTo = fid;
 							
 							$("#mover_submit").unbind("click");

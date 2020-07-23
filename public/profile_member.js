@@ -8,7 +8,7 @@ function handle_profile_hashbit() {
 			hash_class = "delete_posts_hash";
 			break;
 		default:
-			console.log("Unknown hashbit");
+			log("Unknown hashbit");
 			return;
 	}
 	$(".hash_hide").hide();

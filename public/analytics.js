@@ -8,7 +8,7 @@ function memStuff(window, document, Chartist) {
     	if(!chart instanceof Chartist.Line) return;
 			
 		chart.on('created', function() {
-			console.log("running created")
+			log("running created")
 			const vbits = document.getElementsByClassName("ct-vertical");
 			if(vbits==null) return;
 
@@ -16,7 +16,7 @@ function memStuff(window, document, Chartist) {
 			for(let i = 0; i < vbits.length; i++) {
 				tbits[i] = vbits[i].innerHTML;
 			}
-			console.log("tbits",tbits);
+			log("tbits",tbits);
 			
 			const calc = (places) => {
 				if(places==3) return;
@@ -47,7 +47,7 @@ function perfStuff(window, document, Chartist) {
     	if(!chart instanceof Chartist.Line) return;
 			
 		chart.on('created', function() {
-			console.log("running created")
+			log("running created")
 			const vbits = document.getElementsByClassName("ct-vertical");
 			if(vbits==null) return;
 
@@ -55,7 +55,7 @@ function perfStuff(window, document, Chartist) {
 			for(let i = 0; i < vbits.length; i++) {
 				tbits[i] = vbits[i].innerHTML;
 			}
-			console.log("tbits:",tbits);
+			log("tbits:",tbits);
 			
 			const calc = (places) => {
 				if(places==3) return;
@@ -122,8 +122,8 @@ function convertPerfUnit(quan, places = 0) {
 // TODO: Fully localise this
 // TODO: Load rawLabels and seriesData dynamically rather than potentially fiddling with nonces for the CSP?
 function buildStatsChart(rawLabels, seriesData, timeRange, legendNames, typ=0) {
-	console.log("buildStatsChart");
-	console.log("seriesData",seriesData);
+	log("buildStatsChart");
+	log("seriesData",seriesData);
 	let labels = [];
 	let aphrases = phraseBox["analytics"];
 	if(timeRange=="one-year") {
@@ -156,19 +156,19 @@ function buildStatsChart(rawLabels, seriesData, timeRange, legendNames, typ=0) {
 				continue;
 			}
 			let date = new Date(rawLabels[i]*1000);
-			console.log("date", date);
+			log("date",date);
 			let minutes = "0" + date.getMinutes();
 			let label = date.getHours() + ":" + minutes.substr(-2);
-			console.log("label", label);
+			log("label",label);
 			labels.push(label);
 		}
 	} else {
 		for(const i in rawLabels) {
 			let date = new Date(rawLabels[i]*1000);
-			console.log("date", date);
+			log("date",date);
 			let minutes = "0" + date.getMinutes();
 			let label = date.getHours() + ":" + minutes.substr(-2);
-			console.log("label", label);
+			log("label",label);
 			labels.push(label);
 		}
 	}

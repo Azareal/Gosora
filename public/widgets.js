@@ -1,7 +1,7 @@
 "use strict";
 $(document).ready(() => {
 	let clickHandle = function(ev){
-		console.log("in clickHandle")
+		log("in clickHandle")
 		ev.preventDefault();
 		let ep = $(this).closest(".editable_parent");
 		ep.find(".hide_on_block_edit").addClass("edit_opened");
@@ -36,7 +36,7 @@ $(document).ready(() => {
 	$(".wtype_sel").change(changeHandle);
 
 	$(".widget_new a").click(function(ev){
-		console.log("clicked widget_new a")
+		log("clicked widget_new a")
 		let widgetList = this.closest(".panel_widgets");
 		let widgetNew = this.closest(".widget_new");
 		let widgetTmpl = document.getElementById("widgetTmpl").querySelector(".widget_item");
@@ -50,7 +50,7 @@ $(document).ready(() => {
 	});
 
 	$(".widget_save").click(function(ev){
-		console.log("in .widget_save")
+		log("in .widget_save")
 		ev.preventDefault();
 		ev.stopPropagation();
 		let pform = this.closest("form");

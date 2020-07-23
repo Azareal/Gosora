@@ -18,7 +18,7 @@
 			<span data-field="forum_preset" data-type="list" data-value="{{.Preset}}" class="panel_tag editable_block forum_preset forum_preset_{{.Preset}}" title="{{.PresetLang}}"></span>
 		</span>
 		<span class="panel_buttons">
-			<a class="panel_tag edit_fields hide_on_edit panel_right_button edit_button" title="{{lang "panel.forums_edit_button_tooltip"}}" aria-label="{{lang "panel.forums_edit_button_aria"}}"></a>
+			<a class="panel_tag edit_fields hide_on_edit panel_right_button edit_button"title="{{lang "panel.forums_edit_button_tooltip"}}" aria-label="{{lang "panel.forums_edit_button_aria"}}"></a>
 			<a class="panel_right_button has_inner_button show_on_edit" href="/panel/forums/edit/submit/{{.ID}}"><button class='panel_tag submit_edit' type='submit'>{{lang "panel.forums_update_button"}}</button></a>
 			{{if gt .ID 1}}<a href="/panel/forums/delete/{{.ID}}?s={{$.CurrentUser.Session}}" class="panel_tag panel_right_button hide_on_edit delete_button" title="{{lang "panel.forums_delete_button_tooltip"}}" aria-label="{{lang "panel.forums_delete_button_aria"}}"></a>{{end}}
 			<a href="/panel/forums/edit/{{.ID}}" class="panel_tag panel_right_button has_inner_button show_on_edit"><button>{{lang "panel.forums_full_edit_button"}}</button></a>

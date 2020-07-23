@@ -36,24 +36,24 @@ function noxMenuBind() {
 	
 	function moveAlerts() {
 		// Move the alerts above the first header
-		let colSel = $(".colstack_right .colstack_head:first");
-		let colSelAlt = $(".colstack_right .colstack_item:first");
-		let colSelAltAlt = $(".colstack_right .coldyn_block:first");
-		if(colSel.length > 0) $('.alert').insertBefore(colSel);
-		else if (colSelAlt.length > 0) $('.alert').insertBefore(colSelAlt);
-		else if (colSelAltAlt.length > 0) $('.alert').insertBefore(colSelAltAlt);
+		let cSel = $(".colstack_right .colstack_head:first");
+		let cSelAlt = $(".colstack_right .colstack_item:first");
+		let cSelAltAlt = $(".colstack_right .coldyn_block:first");
+		if(cSel.length > 0) $('.alert').insertBefore(cSel);
+		else if (cSelAlt.length > 0) $('.alert').insertBefore(cSelAlt);
+		else if (cSelAltAlt.length > 0) $('.alert').insertBefore(cSelAltAlt);
 		else $('.alert').insertAfter(".rowhead:first");
 	}
 	
-	addInitHook("after_update_alert_list", alertCount => {
-		console.log("misc.js");
-		console.log("alertCount",alertCount);
-		if(alertCount==0) {
+	addInitHook("after_update_alert_list", count => {
+		log("misc.js");
+		log("count",count);
+		if(count==0) {
 			$(".alerts").html(phraseBox["alerts"]["alerts.no_alerts_short"]);
 			$(".user_box").removeClass("has_alerts");
 		} else {
 			// TODO: Localise this
-			$(".alerts").html(alertCount + " new alerts");
+			$(".alerts").html(count+" new alerts");
 			$(".user_box").addClass("has_alerts");
 		}
 	});
@@ -63,7 +63,7 @@ function noxMenuBind() {
 	addInitHook("end_init", () => {
 		$(".alerts").click(ev => {
 			ev.stopPropagation();
-			var alerts = $(".menu_alerts")[0];
+			let alerts = $(".menu_alerts")[0];
 			if($(alerts).hasClass("selectedAlert")) return;
 			if(!conn) loadAlerts(alerts);
 			alerts.className += " selectedAlert";
