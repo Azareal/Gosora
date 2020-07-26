@@ -20,10 +20,18 @@ import (
 	"github.com/andybalholm/brotli"
 )
 
-type SFileList map[string]SFile
+//type SFileList map[string]*SFile
+//type SFileListShort map[string]*SFile
 
-var StaticFiles SFileList = make(map[string]SFile)
+var StaticFiles = SFileList{make(map[string]*SFile),make(map[string]*SFile)}
+//var StaticFilesShort SFileList = make(map[string]*SFile)
 var staticFileMutex sync.RWMutex
+
+// ? Is it efficient to have two maps for this?
+type SFileList struct {
+	Long map[string]*SFile
+	Short map[string]*SFile
+}
 
 type SFile struct {
 	// TODO: Move these to the end?
@@ -51,7 +59,7 @@ type CSSData struct {
 	Phrases map[string]string
 }
 
-func (list SFileList) JSTmplInit() error {
+func (l SFileList) JSTmplInit() error {
 	DebugLog("Initialising the client side templates")
 	return filepath.Walk("./tmpl_client", func(path string, f os.FileInfo, err error) error {
 		if f.IsDir() || strings.HasSuffix(path, "tmpl_list.go") || strings.HasSuffix(path, "stub.go") {
@@ -297,14 +305,14 @@ func (list SFileList) JSTmplInit() error {
 		hasher.Write(data)
 		checksum := hex.EncodeToString(hasher.Sum(nil))
 
-		list.Set("/s/"+path, SFile{data, gzipData, brData, checksum, path + "?h=" + checksum, 0, int64(len(data)), strconv.Itoa(len(data)), int64(len(gzipData)), strconv.Itoa(len(gzipData)), int64(len(brData)), strconv.Itoa(len(brData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)})
+		l.Set("/s/"+path, &SFile{data, gzipData, brData, checksum, path + "?h=" + checksum, 0, int64(len(data)), strconv.Itoa(len(data)), int64(len(gzipData)), strconv.Itoa(len(gzipData)), int64(len(brData)), strconv.Itoa(len(brData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)})
 
 		DebugLogf("Added the '%s' static file.", path)
 		return nil
 	})
 }
 
-func (list SFileList) Init() error {
+func (l SFileList) Init() error {
 	return filepath.Walk("./public", func(path string, f os.FileInfo, err error) error {
 		if f.IsDir() {
 			return nil
@@ -359,14 +367,14 @@ func (list SFileList) Init() error {
 			}
 		}
 
-		list.Set("/s/"+path, SFile{data, gzipData, brData, checksum, path + "?h=" + checksum, 0, int64(len(data)), strconv.Itoa(len(data)), int64(len(gzipData)), strconv.Itoa(len(gzipData)), int64(len(brData)), strconv.Itoa(len(brData)), mimetype, f, f.ModTime().UTC().Format(http.TimeFormat)})
+		l.Set("/s/"+path, &SFile{data, gzipData, brData, checksum, path + "?h=" + checksum, 0, int64(len(data)), strconv.Itoa(len(data)), int64(len(gzipData)), strconv.Itoa(len(gzipData)), int64(len(brData)), strconv.Itoa(len(brData)), mimetype, f, f.ModTime().UTC().Format(http.TimeFormat)})
 
 		DebugLogf("Added the '%s' static file.", path)
 		return nil
 	})
 }
 
-func (list SFileList) Add(path, prefix string) error {
+func (l SFileList) Add(path, prefix string) error {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
 		return err
@@ -416,23 +424,32 @@ func (list SFileList) Add(path, prefix string) error {
 	hasher.Write(data)
 	checksum := hex.EncodeToString(hasher.Sum(nil))
 
-	list.Set("/s/"+path, SFile{data, gzipData, brData, checksum, path + "?h=" + checksum, 0, int64(len(data)), strconv.Itoa(len(data)), int64(len(gzipData)), strconv.Itoa(len(gzipData)), int64(len(brData)), strconv.Itoa(len(brData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)})
+	l.Set("/s/"+path, &SFile{data, gzipData, brData, checksum, path + "?h=" + checksum, 0, int64(len(data)), strconv.Itoa(len(data)), int64(len(gzipData)), strconv.Itoa(len(gzipData)), int64(len(brData)), strconv.Itoa(len(brData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)})
 
 	DebugLogf("Added the '%s' static file", path)
 	return nil
 }
 
-func (list SFileList) Get(name string) (file SFile, exists bool) {
+func (l SFileList) Get(path string) (file *SFile, exists bool) {
 	staticFileMutex.RLock()
 	defer staticFileMutex.RUnlock()
-	file, exists = list[name]
+	file, exists = l.Long[path]
 	return file, exists
 }
 
-func (list SFileList) Set(name string, data SFile) {
+// fetch without /s/ to avoid allocing in pages.go
+func (l SFileList) GetShort(name string) (file *SFile, exists bool) {
+	staticFileMutex.RLock()
+	defer staticFileMutex.RUnlock()
+	file, exists = l.Short[name]
+	return file, exists
+}
+
+func (l SFileList) Set(name string, data *SFile) {
 	staticFileMutex.Lock()
 	defer staticFileMutex.Unlock()
-	list[name] = data
+	l.Long[name] = data
+	l.Short[strings.TrimPrefix("/s/",name)] = data
 }
 
 var gzipBestCompress sync.Pool

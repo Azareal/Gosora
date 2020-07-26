@@ -247,6 +247,8 @@ func PreparseMessage(msg string) string {
 		},
 	}
 	// TODO: Implement a less literal parser
+	// TODO: Use a string builder
+	// TODO: Implement faster emoji parser
 	for i := 0; i < len(runes); i++ {
 		char := runes[i]
 		// TODO: Make the slashes escapable too in case someone means to use a literaly slash, maybe as an example of how to escape elements?
@@ -480,6 +482,9 @@ func ParseMessage(msg string, sectionID int, sectionType string, settings *Parse
 	msg, _ = ParseMessage2(msg, sectionID, sectionType, settings, user)
 	return msg
 }
+var litRepPrefix = []byte{':',';'}
+//var litRep = [][]byte{':':[]byte{')','(','D','O','o','P','p'},';':[]byte{')'}}
+var litRep = [][]string{':':[]string{')':"😀",'(':"😞",'D':"😃",'O':"😲",'o':"😲",'P':"😛",'p':"😛"},';':[]string{')':"😉"}}
 
 // TODO: Write a test for this
 // TODO: We need a lot more hooks here. E.g. To add custom media types and handlers.
@@ -492,7 +497,7 @@ func ParseMessage2(msg string, sectionID int, sectionType string, settings *Pars
 		user = &GuestUser
 	}
 	// TODO: Word boundary detection for these to avoid mangling code
-	rep := func(find, replace string) {
+	/*rep := func(find, replace string) {
 		msg = strings.Replace(msg, find, replace, -1)
 	}
 	rep(":)", "😀")
@@ -502,18 +507,17 @@ func ParseMessage2(msg string, sectionID int, sectionType string, settings *Pars
 	rep(":O", "😲")
 	rep(":p", "😛")
 	rep(":o", "😲")
-	rep(";)", "😉")
+	rep(";)", "😉")*/
 
 	// Word filter list. E.g. Swear words and other things the admins don't like
-	wordFilters, err := WordFilters.GetAll()
+	filters, err := WordFilters.GetAll()
 	if err != nil {
 		LogError(err)
 		return "", false
 	}
-	for _, f := range wordFilters {
+	for _, f := range filters {
 		msg = strings.Replace(msg, f.Find, f.Replace, -1)
 	}
-
 	if len(msg) < 2 {
 		msg = strings.Replace(msg, "\n", "<br>", -1)
 		msg = GetHookTable().Sshook("parse_assign", msg)
@@ -539,6 +543,33 @@ func ParseMessage2(msg string, sectionID int, sectionType string, settings *Pars
 			}
 			//fmt.Println("s2")
 			ch := msg[i]
+
+			// Very short literal matcher
+			if len(litRep) > int(ch) {
+				sl := litRep[ch]
+				if sl != nil {
+					i++
+					ch := msg[i]
+					if len(sl) > int(ch) {
+						val := sl[ch]
+						if val != "" {
+							i--
+							sb.WriteString(msg[lastItem:i])
+							i++
+							sb.WriteString(val)
+							i++
+							lastItem = i
+							i--
+							continue
+						}
+					}
+					i--
+				}
+				//lastItem = i
+				//i--
+				//continue
+			}
+
 			switch ch {
 			case '#':
 				//fmt.Println("msg[i+1]:", msg[i+1])
