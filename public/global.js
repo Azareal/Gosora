@@ -366,7 +366,7 @@ function runWebSockets(resume=false) {
 
 // TODO: Surely, there's a prettier and more elegant way of doing this?
 function getExt(name) {
-	if(!name.indexOf('.') > -1) throw("This file doesn't have an extension");
+	if(!(name.indexOf('.') > -1)) throw("This file doesn't have an extension");
 	return name.split('.').pop();
 }
 
