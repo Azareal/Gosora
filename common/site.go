@@ -2,11 +2,13 @@ package common
 
 import (
 	"encoding/json"
-	"errors"
 	"io/ioutil"
 	"log"
+	"net/url"
 	"strconv"
 	"strings"
+
+	"github.com/pkg/errors"
 )
 
 // Site holds the basic settings which should be tweaked when setting up a site, we might move them to the settings table at some point
@@ -118,6 +120,9 @@ type config struct {
 	RefNoTrack bool
 	RefNoRef   bool
 	NoEmbed    bool
+
+	ExtraCSPOrigins string
+	StaticResBase   string // /s/
 
 	Noavatar            string // ? - Move this into the settings table?
 	ItemsPerPage        int    // ? - Move this into the settings table?
@@ -237,6 +242,21 @@ func ProcessConfig() (err error) {
 		log.Fatal("MaxRequestSize should not be zero or below")
 	}
 	Site.MaxRequestSize = Config.MaxRequestSize
+
+	local := func(h string) bool {
+		return h == "localhost" || h == "127.0.0.1" || h == "::1" || h == Site.URL
+	}
+	uurl, err := url.Parse(Config.StaticResBase)
+	if err != nil {
+		return errors.Wrap(err, "failed to parse Config.StaticResBase: ")
+	}
+	host := uurl.Hostname()
+	if !local(host) {
+		Config.ExtraCSPOrigins += " " + host
+	}
+	if Config.StaticResBase != "" {
+		StaticFiles.Prefix = Config.StaticResBase
+	}
 
 	if Config.PostIPCutoff == 0 {
 		Config.PostIPCutoff = 120 // Default cutoff

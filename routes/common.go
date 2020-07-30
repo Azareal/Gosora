@@ -139,15 +139,15 @@ func FootHeaders(w http.ResponseWriter, h *c.Header) {
 		he := w.Header()
 		if c.Config.SslSchema {
 			if h.ExternalMedia {
-				he.Set("Content-Security-Policy", "default-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-eval' 'unsafe-inline'; img-src * data: 'unsafe-eval' 'unsafe-inline'; connect-src * 'unsafe-eval' 'unsafe-inline'; frame-src 'self' www.youtube-nocookie.com embed.nicovideo.jp;upgrade-insecure-requests")
+				he.Set("Content-Security-Policy", "default-src 'self' 'unsafe-eval'"+c.Config.ExtraCSPOrigins+"; style-src 'self' 'unsafe-eval' 'unsafe-inline'; img-src * data: 'unsafe-eval' 'unsafe-inline'; connect-src * 'unsafe-eval' 'unsafe-inline'; frame-src 'self' www.youtube-nocookie.com embed.nicovideo.jp;upgrade-insecure-requests")
 			} else {
-				he.Set("Content-Security-Policy", "default-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-eval' 'unsafe-inline'; img-src * data: 'unsafe-eval' 'unsafe-inline'; connect-src * 'unsafe-eval' 'unsafe-inline'; frame-src 'self';upgrade-insecure-requests")
+				he.Set("Content-Security-Policy", "default-src 'self' 'unsafe-eval'"+c.Config.ExtraCSPOrigins+"; style-src 'self' 'unsafe-eval' 'unsafe-inline'; img-src * data: 'unsafe-eval' 'unsafe-inline'; connect-src * 'unsafe-eval' 'unsafe-inline'; frame-src 'self';upgrade-insecure-requests")
 			}
 		} else {
 			if h.ExternalMedia {
-				he.Set("Content-Security-Policy", "default-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-eval' 'unsafe-inline'; img-src * data: 'unsafe-eval' 'unsafe-inline'; connect-src * 'unsafe-eval' 'unsafe-inline'; frame-src 'self' www.youtube-nocookie.com embed.nicovideo.jp")
+				he.Set("Content-Security-Policy", "default-src 'self' 'unsafe-eval'"+c.Config.ExtraCSPOrigins+"; style-src 'self' 'unsafe-eval' 'unsafe-inline'; img-src * data: 'unsafe-eval' 'unsafe-inline'; connect-src * 'unsafe-eval' 'unsafe-inline'; frame-src 'self' www.youtube-nocookie.com embed.nicovideo.jp")
 			} else {
-				he.Set("Content-Security-Policy", "default-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-eval' 'unsafe-inline'; img-src * data: 'unsafe-eval' 'unsafe-inline'; connect-src * 'unsafe-eval' 'unsafe-inline'; frame-src 'self'")
+				he.Set("Content-Security-Policy", "default-src 'self' 'unsafe-eval'"+c.Config.ExtraCSPOrigins+"; style-src 'self' 'unsafe-eval' 'unsafe-inline'; img-src * data: 'unsafe-eval' 'unsafe-inline'; connect-src * 'unsafe-eval' 'unsafe-inline'; frame-src 'self'")
 			}
 		}
 	}

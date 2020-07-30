@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"mime"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -23,14 +24,16 @@ import (
 //type SFileList map[string]*SFile
 //type SFileListShort map[string]*SFile
 
-var StaticFiles = SFileList{make(map[string]*SFile),make(map[string]*SFile)}
+var StaticFiles = SFileList{"/s/", make(map[string]*SFile), make(map[string]*SFile)}
+
 //var StaticFilesShort SFileList = make(map[string]*SFile)
 var staticFileMutex sync.RWMutex
 
 // ? Is it efficient to have two maps for this?
 type SFileList struct {
-	Long map[string]*SFile
-	Short map[string]*SFile
+	Prefix string
+	Long   map[string]*SFile
+	Short  map[string]*SFile
 }
 
 type SFile struct {
@@ -305,7 +308,7 @@ func (l SFileList) JSTmplInit() error {
 		hasher.Write(data)
 		checksum := hex.EncodeToString(hasher.Sum(nil))
 
-		l.Set("/s/"+path, &SFile{data, gzipData, brData, checksum, path + "?h=" + checksum, 0, int64(len(data)), strconv.Itoa(len(data)), int64(len(gzipData)), strconv.Itoa(len(gzipData)), int64(len(brData)), strconv.Itoa(len(brData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)})
+		l.Set(l.Prefix+path, &SFile{data, gzipData, brData, checksum, l.Prefix + path + "?h=" + checksum, 0, int64(len(data)), strconv.Itoa(len(data)), int64(len(gzipData)), strconv.Itoa(len(gzipData)), int64(len(brData)), strconv.Itoa(len(brData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)})
 
 		DebugLogf("Added the '%s' static file.", path)
 		return nil
@@ -367,7 +370,7 @@ func (l SFileList) Init() error {
 			}
 		}
 
-		l.Set("/s/"+path, &SFile{data, gzipData, brData, checksum, path + "?h=" + checksum, 0, int64(len(data)), strconv.Itoa(len(data)), int64(len(gzipData)), strconv.Itoa(len(gzipData)), int64(len(brData)), strconv.Itoa(len(brData)), mimetype, f, f.ModTime().UTC().Format(http.TimeFormat)})
+		l.Set(l.Prefix+path, &SFile{data, gzipData, brData, checksum, l.Prefix + path + "?h=" + checksum, 0, int64(len(data)), strconv.Itoa(len(data)), int64(len(gzipData)), strconv.Itoa(len(gzipData)), int64(len(brData)), strconv.Itoa(len(brData)), mimetype, f, f.ModTime().UTC().Format(http.TimeFormat)})
 
 		DebugLogf("Added the '%s' static file.", path)
 		return nil
@@ -424,7 +427,7 @@ func (l SFileList) Add(path, prefix string) error {
 	hasher.Write(data)
 	checksum := hex.EncodeToString(hasher.Sum(nil))
 
-	l.Set("/s/"+path, &SFile{data, gzipData, brData, checksum, path + "?h=" + checksum, 0, int64(len(data)), strconv.Itoa(len(data)), int64(len(gzipData)), strconv.Itoa(len(gzipData)), int64(len(brData)), strconv.Itoa(len(brData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)})
+	l.Set(l.Prefix+path, &SFile{data, gzipData, brData, checksum, l.Prefix + path + "?h=" + checksum, 0, int64(len(data)), strconv.Itoa(len(data)), int64(len(gzipData)), strconv.Itoa(len(gzipData)), int64(len(brData)), strconv.Itoa(len(brData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)})
 
 	DebugLogf("Added the '%s' static file", path)
 	return nil
@@ -448,8 +451,13 @@ func (l SFileList) GetShort(name string) (file *SFile, exists bool) {
 func (l SFileList) Set(name string, data *SFile) {
 	staticFileMutex.Lock()
 	defer staticFileMutex.Unlock()
-	l.Long[name] = data
-	l.Short[strings.TrimPrefix("/s/",name)] = data
+	// TODO: Propagate errors back up
+	uurl, err := url.Parse(name)
+	if err != nil {
+		return
+	}
+	l.Long[uurl.Path] = data
+	l.Short[strings.TrimPrefix(strings.TrimPrefix(name, l.Prefix), "/")] = data
 }
 
 var gzipBestCompress sync.Pool

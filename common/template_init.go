@@ -878,6 +878,17 @@ func initDefaultTmplFuncMap() {
 		return nil
 	}
 
+	fmap["res"] = func(nameInt interface{}) interface{} {
+		n := nameInt.(string)
+		if n[0] == '/' && n[1] == '/' {
+		} else {
+			if f, ok := StaticFiles.GetShort(n); ok {
+				n = f.OName
+			}
+		}
+		return n
+	}
+
 	DefaultTemplateFuncMap = fmap
 }
 

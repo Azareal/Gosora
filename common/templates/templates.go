@@ -119,6 +119,7 @@ func NewCTemplateSet(in string) *CTemplateSet {
 			"js":         true,
 			"index":      true,
 			"flush":      true,
+			"res":        true,
 		},
 		logger:  log.New(f, "", log.LstdFlags),
 		loggerf: f,
@@ -683,8 +684,9 @@ func (c *CTemplateSet) compileSwitch(con CContext, node parse.Node) {
 		for _, cmd := range node.Pipe.Cmds {
 			c.detail("If Node Bit:", cmd)
 			c.detail("Bit Type:", reflect.ValueOf(cmd).Type().Name())
-			expr += c.compileExprSwitch(con, cmd)
-			c.detail("Expression Step:", c.compileExprSwitch(con, cmd))
+			exprStep := c.compileExprSwitch(con, cmd)
+			expr += exprStep
+			c.detail("Expression Step:", exprStep)
 		}
 
 		c.detail("Expression:", expr)
@@ -1031,8 +1033,7 @@ func (c *CTemplateSet) compileExprSwitch(con CContext, node *parse.CommandNode) 
 	case *parse.NilNode:
 		panic("Nil is not a command x.x")
 	case *parse.PipeNode:
-		c.detail("Pipe Node!")
-		c.detail(n)
+		c.detail("Pipe Node:", n)
 		c.detail("Node Args:", node.Args)
 		out += c.compileIdentSwitchN(con, node)
 	default:
@@ -1043,9 +1044,9 @@ func (c *CTemplateSet) compileExprSwitch(con CContext, node *parse.CommandNode) 
 }
 
 func (c *CTemplateSet) unknownNode(n parse.Node) {
-	elem := reflect.ValueOf(n).Elem()
-	c.logger.Println("Unknown Kind:", elem.Kind())
-	c.logger.Println("Unknown Type:", elem.Type().Name())
+	el := reflect.ValueOf(n).Elem()
+	c.logger.Println("Unknown Kind:", el.Kind())
+	c.logger.Println("Unknown Type:", el.Type().Name())
 	panic("I don't know what node this is! Grr...")
 }
 
@@ -1114,7 +1115,7 @@ func (c *CTemplateSet) compareJoin(con CContext, pos int, node *parse.CommandNod
 	return pos, out
 }
 
-func (c *CTemplateSet) compileIdentSwitch(con CContext, node *parse.CommandNode) (out string, val reflect.Value, literal, notident bool) {
+func (c *CTemplateSet) compileIdentSwitch(con CContext, node *parse.CommandNode) (out string, val reflect.Value, literal, notIdent bool) {
 	c.dumpCall("compileIdentSwitch", con, node)
 	litString := func(inner string, bytes bool) {
 		if !bytes {
@@ -1135,8 +1136,15 @@ ArgLoop:
 			var rout string
 			pos, rout = c.compareJoin(con, pos, node, c.funcMap[id.String()].(string)) // TODO: Test this
 			out += rout
-		case "le", "lt", "gt", "ge", "eq", "ne":
+		case "le", "lt", "gt", "ge":
 			out += c.compareFunc(con, pos, node, c.funcMap[id.String()].(string))
+			break ArgLoop
+		case "eq", "ne":
+			o := c.compareFunc(con, pos, node, c.funcMap[id.String()].(string))
+			if out == "!" {
+				o = "(" + o + ")"
+			}
+			out += o
 			break ArgLoop
 		case "add", "subtract", "divide", "multiply":
 			rout, rval := c.simpleMath(con, pos, node, c.funcMap[id.String()].(string))
@@ -1236,7 +1244,7 @@ ArgLoop:
 				// ! Slightly crude but it does the job
 				leftParam := strings.Replace(leftOp, "\"", "", -1)
 				c.langIndexToName = append(c.langIndexToName, leftParam)
-				notident = true
+				notIdent = true
 				con.PushPhrase(len(c.langIndexToName) - 1)
 			} else {
 				leftParam := leftOp
@@ -1386,17 +1394,37 @@ ArgLoop:
 
 			// TODO: Refactor this
 			// TODO: Call the template function directly rather than going through RunThemeTemplate to eliminate a round of indirection?
-			out = "{\nerr := " + headParam + ".Theme.RunTmpl(" + nameParam + "," + pageParam + ",w)\n"
-			out += "if err != nil {\nreturn err\n}\n}\n"
+			out = "{\ne := " + headParam + ".Theme.RunTmpl(" + nameParam + "," + pageParam + ",w)\n"
+			out += "if e != nil {\nreturn e\n}\n}\n"
 			literal = true
 			break ArgLoop
 		case "flush":
-			if c.lang == "js" {
-				continue
-			}
-			out = "if fl, ok := iw.(http.Flusher); ok {\nfl.Flush()\n}\n"
 			literal = true
-			c.importMap["net/http"] = "net/http"
+			break ArgLoop
+		/*if c.lang == "js" {
+			continue
+		}
+		out = "if fl, ok := iw.(http.Flusher); ok {\nfl.Flush()\n}\n"
+		literal = true
+		c.importMap["net/http"] = "net/http"
+		break ArgLoop*/
+		// TODO: Test this
+		case "res":
+			leftOp := node.Args[pos+1].String()
+			if len(leftOp) == 0 {
+				panic("The leftoperand for function res cannot be left blank")
+			}
+			leftParam, _ := c.compileIfVarSub(con, leftOp)
+			literal = true
+			if leftParam[0] == '"' {
+				if leftParam[1] == '/' && leftParam[2] == '/' {
+					litString(leftParam, false)
+					break ArgLoop
+				}
+				out = "{n := " + leftParam + "\nif f, ok := c.StaticFiles.GetShort(n); ok {\nw.Write(StringToBytes(f.OName))\n} else {\nw.Write(StringToBytes(n))\n}}\n"
+				break ArgLoop
+			}
+			out = "{n := " + leftParam + "\nif n[0] == '/' && n[1] == '/' {\n} else {\nif f, ok := c.StaticFiles.GetShort(n); ok {\nn = f.OName\n}\nw.Write(StringToBytes(n))\n}\n"
 			break ArgLoop
 		default:
 			c.detail("Variable!")
@@ -1410,7 +1438,7 @@ ArgLoop:
 		}
 	}
 	c.retCall("compileIdentSwitch", out, val, literal)
-	return out, val, literal, notident
+	return out, val, literal, notIdent
 }
 
 func (c *CTemplateSet) compileReflectSwitch(con CContext, node *parse.CommandNode) (out string, outVal reflect.Value) {
