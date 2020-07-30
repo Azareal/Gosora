@@ -23,7 +23,7 @@ var imageExts = ["png","jpg","jpe","jpeg","jif","jfi","jfif","svg","bmp","gif","
 			log("file "+i,files[i]);
 			totalSize += files[i]["size"];
 		}
-		if(totalSize > me.Site.MaxRequestSize) throw("You can't upload this much at once, max: "+me.Site.MaxRequestSize);
+		if(totalSize > me.Site.MaxReqSize) throw("You can't upload this much at once, max: "+me.Site.MaxReqSize);
 	
 		for(let i=0; i<files.length; i++) {
 			let fname = files[i]["name"];

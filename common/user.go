@@ -788,7 +788,7 @@ func buildNoavatar(uid, width int) string {
 		} else if width == 48 {
 			return noavatarCache48[uid]
 		}
-		return "/s/n" + strconv.Itoa(uid) + "-" + strconv.Itoa(width) + ".png?i=0"
+		return StaticFiles.Prefix + "n" + strconv.Itoa(uid) + "-" + strconv.Itoa(width) + ".png?i=0"
 	}
 	return strings.Replace(strings.Replace(Config.Noavatar, "{id}", strconv.Itoa(uid), 1), "{width}", strconv.Itoa(width), 1)
 }

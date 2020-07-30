@@ -229,7 +229,8 @@ type JsonMe struct {
 
 // We don't want to expose too much information about the site, so we'll make this a small subset of c.site
 type MeSite struct {
-	MaxRequestSize int
+	MaxReqSize   int
+	StaticPrefix string
 }
 
 // APIMe returns information about the current logged-in user
@@ -243,7 +244,7 @@ func APIMe(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
 	// TODO: Use this header anywhere with a user check?
 	h.Set("Cache-Control", "private")
 
-	me := JsonMe{u.Me(), MeSite{c.Site.MaxRequestSize}}
+	me := JsonMe{u.Me(), MeSite{c.Site.MaxRequestSize, c.StaticFiles.Prefix}}
 	jsonBytes, err := json.Marshal(me)
 	if err != nil {
 		return c.InternalErrorJS(err, w, r)

@@ -896,11 +896,11 @@ function mainInit(){
 				if(xr!=null) {
 					for(let res of xr.split(",")) {
 						let pro;
-						if(stripQ(getExt(res))=="css") pro = asyncGetSheet("/s/"+res)
-						else pro = asyncGetScript("/s/"+res)
+						if(stripQ(getExt(res))=="css") pro = asyncGetSheet(pre+res)
+						else pro = asyncGetScript(pre+res)
 							pro.then(() => log("Loaded "+res))
 							.catch(e => {
-								log("Unable to get '"+res+"'",e);
+								log("Unable to get "+res,e);
 								console.trace();
 							});
 					}

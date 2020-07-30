@@ -5,7 +5,8 @@ if(tmplInits===undefined) var tmplInits={};
 var tmplPhrases=[]; // [key] array of phrases indexed by order of use
 var hooks={};
 var ranInitHooks={}
-var log = console.log;
+var log=console.log;
+var pre="/s/";
 
 function runHook(name,...args) {
 	if(!(name in hooks)) {
@@ -16,7 +17,7 @@ function runHook(name,...args) {
 
 	let hook = hooks[name];
 	let o;
-	for (const index in hook) o = hook[index](...args);
+	for(const index in hook) o = hook[index](...args);
 	return o;
 }
 function addHook(name,h) {
@@ -32,7 +33,10 @@ function runInitHook(name,...args) {
 }
 function addInitHook(name,h) {
 	addHook(name,h);
-	if(name in ranInitHooks) h();
+	if(name in ranInitHooks) {
+		log("Delay running "+name);
+		h();
+	}
 }
 
 // Temporary hack for templates
@@ -52,7 +56,6 @@ function asyncGetScript(src) {
 				isAbort ? reject(e) : resolve();
 			}
 		}
-
 		script.onerror = e => {
 			reject(e);
 		};
@@ -66,9 +69,9 @@ function asyncGetScript(src) {
 }
 
 function notifyOnScript(src) {
-	src = "/s/"+src;
+	src = pre+src;
 	return new Promise((resolve,reject) => {
-		let ss = src.replace("/s/","");
+		let ss = src.replace(pre,"");
 		try {
 			let ssp = ss.charAt(0).toUpperCase() + ss.slice(1)
 			log("ssp",ssp)
@@ -119,8 +122,8 @@ function loadScript(name,h,fail) {
 	let parts = value.split("; current_theme=");
 	if(parts.length==2) fname += "_"+parts.pop().split(";").shift();
 	
-	let url = `/s/${fname}.js`
-	let iurl = `/s/${name}.js`
+	let url = pre+fname+".js"
+	let iurl = pre+name+".js"
 	asyncGetScript(url)
 		.then(h).catch(e => {
 			log("Unable to get "+url,e);
@@ -209,10 +212,11 @@ function fetchPhrases(plist) {
 		.then(d => {
 			log("me",d);
 			me=d;
+			pre=d.StaticPrefix;
 			runInitHook("pre_init");
 		});
 	} else {
-		me={User:{ID:0,S:""},Site:{"MaxRequestSize":0}};
+		me={User:{ID:0,S:""},Site:{"MaxReqSize":0}};
 		runInitHook("pre_init");
 	}
 })()

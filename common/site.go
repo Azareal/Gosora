@@ -182,17 +182,6 @@ var noavatarCache200 []string
 var noavatarCache48 []string
 
 func ProcessConfig() (err error) {
-	if !Config.DisableDefaultNoavatar {
-		noavatarCache200 = make([]string, 5)
-		noavatarCache48 = make([]string, 5)
-		for i := 0; i < 5; i++ {
-			noavatarCache200[i] = "/s/n" + strconv.Itoa(i) + "-" + strconv.Itoa(200) + ".png?i=0"
-			noavatarCache48[i] = "/s/n" + strconv.Itoa(i) + "-" + strconv.Itoa(48) + ".png?i=0"
-		}
-	}
-	Config.Noavatar = strings.Replace(Config.Noavatar, "{site_url}", Site.URL, -1)
-	guestAvatar = GuestAvatar{buildNoavatar(0, 200), buildNoavatar(0, 48)}
-
 	// Strip these unnecessary bits, if we find them.
 	Site.URL = strings.TrimPrefix(Site.URL, "http://")
 	Site.URL = strings.TrimPrefix(Site.URL, "https://")
@@ -257,6 +246,16 @@ func ProcessConfig() (err error) {
 	if Config.StaticResBase != "" {
 		StaticFiles.Prefix = Config.StaticResBase
 	}
+	if !Config.DisableDefaultNoavatar {
+		noavatarCache200 = make([]string, 5)
+		noavatarCache48 = make([]string, 5)
+		for i := 0; i < 5; i++ {
+			noavatarCache200[i] = StaticFiles.Prefix + "n" + strconv.Itoa(i) + "-" + strconv.Itoa(200) + ".png?i=0"
+			noavatarCache48[i] = StaticFiles.Prefix + "n" + strconv.Itoa(i) + "-" + strconv.Itoa(48) + ".png?i=0"
+		}
+	}
+	Config.Noavatar = strings.Replace(Config.Noavatar, "{site_url}", Site.URL, -1)
+	guestAvatar = GuestAvatar{buildNoavatar(0, 200), buildNoavatar(0, 48)}
 
 	if Config.PostIPCutoff == 0 {
 		Config.PostIPCutoff = 120 // Default cutoff
