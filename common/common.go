@@ -11,6 +11,7 @@ import (
 	"io"
 	"log"
 	"os"
+	//"sync"
 	"sync/atomic"
 	"time"
 
@@ -48,6 +49,8 @@ var IsDBDown int32 = 0                   // 0 = false, 1 = true. this is value w
 // ErrNoRows is an alias of sql.ErrNoRows, just in case we end up with non-database/sql datastores
 var ErrNoRows = sql.ErrNoRows
 
+//var StrSlicePool sync.Pool
+
 // ? - Make this more customisable?
 /*var ExternalSites = map[string]string{
 	"YT": "https://www.youtube.com/",
@@ -75,7 +78,7 @@ var AllowedFileExts = StringList{
 
 	"otf", "woff2", "woff", "ttf", "eot", // fonts
 
-	"bz2", "zip", "zipx", "gz", "7z", "tar", "cab", "rar", "kgb", "pea", "xz", "zz", // archives
+	"bz2", "zip", "zipx", "gz", "7z", "tar", "cab", "rar", "kgb", "pea", "xz", "zz", "tgz", // archives
 
 	//"docx", "pdf", // documents
 }
@@ -95,7 +98,7 @@ var WebAudioFileExts = StringList{
 	"wav", "mp3", "oga",
 }
 var ArchiveFileExts = StringList{
-	"bz2", "zip", "zipx", "gz", "7z", "tar", "cab", "rar", "kgb", "pea", "xz", "zz",
+	"bz2", "zip", "zipx", "gz", "7z", "tar", "cab", "rar", "kgb", "pea", "xz", "zz", "tgz",
 }
 var ExecutableFileExts = StringList{
 	"exe", "jar", "phar", "shar", "iso", "apk", "deb",
