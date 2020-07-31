@@ -130,6 +130,8 @@ ExtraCSPOrigins - Extra origins which may want whitelisted in the default Conten
 
 StaticResBase - The default prefix for static resource files. May be a path or an external domain like a CDN domain. Default: /s/
 
+AvatarResBase - The default prefix for avatar files. May be a path or an external domain like a CDN domain. Default: /uploads/
+
 NoAvatar - The default avatar to use for users when they don't have their own. The default for this may change in the near future to better utilise HTTP/2. Example: https://api.adorable.io/avatars/{width}/{id}.png
 
 ItemsPerPage - The number of posts, topics, etc. you want on each page.

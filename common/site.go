@@ -124,7 +124,7 @@ type config struct {
 	ExtraCSPOrigins string
 	StaticResBase   string // /s/
 	//DynStaticResBase string
-	//AvatarResBase string
+	AvatarResBase string // /uploads/
 
 	Noavatar            string // ? - Move this into the settings table?
 	ItemsPerPage        int    // ? - Move this into the settings table?
@@ -249,6 +249,20 @@ func ProcessConfig() (err error) {
 	if Config.StaticResBase != "" {
 		StaticFiles.Prefix = Config.StaticResBase
 	}
+
+	uurl, err = url.Parse(Config.AvatarResBase)
+	if err != nil {
+		return errors.Wrap(err, "failed to parse Config.AvatarResBase: ")
+	}
+	host2 := uurl.Hostname()
+	if host != host2 && !local(host) {
+		Config.ExtraCSPOrigins += " " + host
+		Config.RefNoRef = true // Avoid leaking origin data to the CDN
+	}
+	if Config.AvatarResBase == "" {
+		Config.AvatarResBase = "/uploads/"
+	}
+	
 	if !Config.DisableDefaultNoavatar {
 		noavatarCache200 = make([]string, 5)
 		noavatarCache48 = make([]string, 5)

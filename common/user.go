@@ -790,10 +790,11 @@ func buildNoavatar(uid, width int) string {
 		}
 		return StaticFiles.Prefix + "n" + strconv.Itoa(uid) + "-" + strconv.Itoa(width) + ".png?i=0"
 	}
+	// ? - Add a prefix setting to make this faster?
 	return strings.Replace(strings.Replace(Config.Noavatar, "{id}", strconv.Itoa(uid), 1), "{width}", strconv.Itoa(width), 1)
 }
 
-// ? Make this part of *User?
+// ? - Make this part of *User?
 // TODO: Write tests for this
 func BuildAvatar(uid int, avatar string) (normalAvatar, microAvatar string) {
 	if avatar == "" {
@@ -804,10 +805,10 @@ func BuildAvatar(uid int, avatar string) (normalAvatar, microAvatar string) {
 	}
 	if avatar[0] == '.' {
 		if avatar[1] == '.' {
-			normalAvatar = "/uploads/avatar_" + strconv.Itoa(uid) + "_tmp" + avatar[1:]
+			normalAvatar = Config.AvatarResBase+"avatar_" + strconv.Itoa(uid) + "_tmp" + avatar[1:]
 			return normalAvatar, normalAvatar
 		}
-		normalAvatar = "/uploads/avatar_" + strconv.Itoa(uid) + avatar
+		normalAvatar = Config.AvatarResBase+"avatar_" + strconv.Itoa(uid) + avatar
 		return normalAvatar, normalAvatar
 	}
 	return avatar, avatar
