@@ -123,6 +123,8 @@ type config struct {
 
 	ExtraCSPOrigins string
 	StaticResBase   string // /s/
+	//DynStaticResBase string
+	//AvatarResBase string
 
 	Noavatar            string // ? - Move this into the settings table?
 	ItemsPerPage        int    // ? - Move this into the settings table?
@@ -242,6 +244,7 @@ func ProcessConfig() (err error) {
 	host := uurl.Hostname()
 	if !local(host) {
 		Config.ExtraCSPOrigins += " " + host
+		Config.RefNoRef = true // Avoid leaking origin data to the CDN
 	}
 	if Config.StaticResBase != "" {
 		StaticFiles.Prefix = Config.StaticResBase
