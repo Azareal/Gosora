@@ -44,14 +44,14 @@ func doPush(w http.ResponseWriter, h *c.Header) {
 			sb.Reset()
 		}*/
 		sb.Grow((slen1 * (len(h.Scripts) + len(h.ScriptsAsync))) + ((slen2 + 7) * len(h.Stylesheets)))
-		push := func(in []string) {
-			for i, path := range in {
+		push := func(in []c.HScript) {
+			for i, s := range in {
 				if i != 0 {
 					sb.WriteString(",</s/")
 				} else {
 					sb.WriteString("</s/")
 				}
-				sb.WriteString(path)
+				sb.WriteString(s.Name)
 				sb.WriteString(">;rel=preload;as=script")
 			}
 		}
@@ -60,13 +60,13 @@ func doPush(w http.ResponseWriter, h *c.Header) {
 		push(h.ScriptsAsync)
 
 		if len(h.Stylesheets) > 0 {
-			for i, path := range h.Stylesheets {
+			for i, s := range h.Stylesheets {
 				if i != 0 {
 					sb.WriteString(",</s/")
 				} else {
 					sb.WriteString("</s/")
 				}
-				sb.WriteString(path)
+				sb.WriteString(s.Name)
 				sb.WriteString(">;rel=preload;as=style")
 			}
 		}
@@ -100,11 +100,11 @@ func doPush(w http.ResponseWriter, h *c.Header) {
 			sb.Reset()
 		}*/
 		sb.Grow(6 * (len(h.Scripts) + len(h.ScriptsAsync) + len(h.Stylesheets)))
-		push := func(in []string) {
-			for _, path := range in {
+		push := func(in []c.HScript) {
+			for _, s := range in {
 				//fmt.Println("pushing /s/" + path)
 				sb.WriteString("/s/")
-				sb.WriteString(path)
+				sb.WriteString(s.Name)
 				err := pusher.Push(sb.String(), nil)
 				if err != nil {
 					break

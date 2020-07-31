@@ -106,31 +106,31 @@ func tmplInitUsers() (*User, *User, *User) {
 	return &u, &u2, &u3
 }
 
-func tmplInitHeaders(user, user2, user3 *User) (*Header, *Header, *Header) {
+func tmplInitHeaders(u, u2, u3 *User) (*Header, *Header, *Header) {
 	header := &Header{
 		Site:            Site,
 		Settings:        SettingBox.Load().(SettingMap),
 		Themes:          Themes,
 		Theme:           Themes[DefaultThemeBox.Load().(string)],
-		CurrentUser:     user,
+		CurrentUser:     u,
 		NoticeList:      []string{"test"},
-		Stylesheets:     []string{"panel.css"},
-		Scripts:         []string{"whatever.js"},
-		PreScriptsAsync: []string{"whatever.js"},
-		ScriptsAsync:    []string{"whatever.js"},
+		Stylesheets:     []HScript{HScript{"panel.css",""}},
+		Scripts:         []HScript{HScript{"whatever.js",""}},
+		PreScriptsAsync: []HScript{HScript{"whatever.js",""}},
+		ScriptsAsync:    []HScript{HScript{"whatever.js",""}},
 		Widgets: PageWidgets{
 			LeftSidebar: template.HTML("lalala"),
 		},
 	}
 
-	buildHeader := func(user *User) *Header {
+	buildHeader := func(u *User) *Header {
 		head := &Header{Site: Site}
 		*head = *header
-		head.CurrentUser = user
+		head.CurrentUser = u
 		return head
 	}
 
-	return header, buildHeader(user2), buildHeader(user3)
+	return header, buildHeader(u2), buildHeader(u3)
 }
 
 type TmplLoggedin struct {

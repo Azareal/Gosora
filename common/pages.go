@@ -21,11 +21,11 @@ type Header struct {
 	Title string
 	//Title      []byte // Experimenting with []byte for increased efficiency, let's avoid converting too many things to []byte, as it involves a lot of extra boilerplate
 	NoticeList      []string
-	Scripts         []string
-	PreScriptsAsync []string
-	ScriptsAsync    []string
+	Scripts         []HScript
+	PreScriptsAsync []HScript
+	ScriptsAsync    []HScript
 	//Preload []string
-	Stylesheets []string
+	Stylesheets []HScript
 	Widgets     PageWidgets
 	Site        *site
 	Settings    SettingMap
@@ -52,38 +52,33 @@ type Header struct {
 	ExtData   ExtData
 }
 
-func (h *Header) AddScript(name string) {
+type HScript struct {
+	Name string
+	Hash string
+}
+
+func (h *Header) getScript(name string) HScript {
 	if name[0] == '/' && name[1] == '/' {
-	} else {
-		file, ok := StaticFiles.GetShort(name)
-		if ok {
-			name = file.OName
+		} else {
+			file, ok := StaticFiles.GetShort(name)
+			if ok {
+				return HScript{file.OName,file.Sha256I}
+			}
 		}
-	}
+		return HScript{name,""}
+}
+
+func (h *Header) AddScript(name string) {
 	//log.Print("name:", name)
-	h.Scripts = append(h.Scripts, name)
+	h.Scripts = append(h.Scripts, h.getScript(name))
 }
 
 func (h *Header) AddPreScriptAsync(name string) {
-	if name[0] == '/' && name[1] == '/' {
-	} else {
-		file, ok := StaticFiles.GetShort(name)
-		if ok {
-			name = file.OName
-		}
-	}
-	h.PreScriptsAsync = append(h.PreScriptsAsync, name)
+	h.PreScriptsAsync = append(h.PreScriptsAsync, h.getScript(name))
 }
 
 func (h *Header) AddScriptAsync(name string) {
-	if name[0] == '/' && name[1] == '/' {
-	} else {
-		file, ok := StaticFiles.GetShort(name)
-		if ok {
-			name = file.OName
-		}
-	}
-	h.ScriptsAsync = append(h.ScriptsAsync, name)
+	h.ScriptsAsync = append(h.ScriptsAsync, h.getScript(name))
 }
 
 /*func (h *Header) Preload(name string) {
@@ -91,14 +86,7 @@ func (h *Header) AddScriptAsync(name string) {
 }*/
 
 func (h *Header) AddSheet(name string) {
-	if name[0] == '/' && name[1] == '/' {
-	} else {
-		file, ok := StaticFiles.GetShort(name)
-		if ok {
-			name = file.OName
-		}
-	}
-	h.Stylesheets = append(h.Stylesheets, name)
+	h.Stylesheets = append(h.Stylesheets, h.getScript(name))
 }
 
 // ! Experimental

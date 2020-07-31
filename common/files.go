@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -43,6 +44,7 @@ type SFile struct {
 	BrData   []byte
 
 	Sha256 string
+	Sha256I string
 	OName  string
 	Pos    int64
 
@@ -306,9 +308,11 @@ func (l SFileList) JSTmplInit() error {
 		// Get a checksum for CSPs and cache busting
 		hasher := sha256.New()
 		hasher.Write(data)
-		checksum := hex.EncodeToString(hasher.Sum(nil))
+		sum := hasher.Sum(nil)
+		checksum := hex.EncodeToString(sum)
+		integrity := base64.StdEncoding.EncodeToString(sum)
 
-		l.Set(l.Prefix+path, &SFile{data, gzipData, brData, checksum, l.Prefix + path + "?h=" + checksum, 0, int64(len(data)), strconv.Itoa(len(data)), int64(len(gzipData)), strconv.Itoa(len(gzipData)), int64(len(brData)), strconv.Itoa(len(brData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)})
+		l.Set(l.Prefix+path, &SFile{data, gzipData, brData, checksum, integrity, l.Prefix + path + "?h=" + checksum, 0, int64(len(data)), strconv.Itoa(len(data)), int64(len(gzipData)), strconv.Itoa(len(gzipData)), int64(len(brData)), strconv.Itoa(len(brData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)})
 
 		DebugLogf("Added the '%s' static file.", path)
 		return nil
@@ -336,7 +340,9 @@ func (l SFileList) Init() error {
 		// Get a checksum for CSPs and cache busting
 		hasher := sha256.New()
 		hasher.Write(data)
-		checksum := hex.EncodeToString(hasher.Sum(nil))
+		sum := hasher.Sum(nil)
+		checksum := hex.EncodeToString(sum)
+		integrity := base64.StdEncoding.EncodeToString(sum)
 
 		// Avoid double-compressing images
 		var gzipData, brData []byte
@@ -370,7 +376,7 @@ func (l SFileList) Init() error {
 			}
 		}
 
-		l.Set(l.Prefix+path, &SFile{data, gzipData, brData, checksum, l.Prefix + path + "?h=" + checksum, 0, int64(len(data)), strconv.Itoa(len(data)), int64(len(gzipData)), strconv.Itoa(len(gzipData)), int64(len(brData)), strconv.Itoa(len(brData)), mimetype, f, f.ModTime().UTC().Format(http.TimeFormat)})
+		l.Set(l.Prefix+path, &SFile{data, gzipData, brData, checksum, integrity, l.Prefix + path + "?h=" + checksum, 0, int64(len(data)), strconv.Itoa(len(data)), int64(len(gzipData)), strconv.Itoa(len(gzipData)), int64(len(brData)), strconv.Itoa(len(brData)), mimetype, f, f.ModTime().UTC().Format(http.TimeFormat)})
 
 		DebugLogf("Added the '%s' static file.", path)
 		return nil
@@ -425,9 +431,11 @@ func (l SFileList) Add(path, prefix string) error {
 	// Get a checksum for CSPs and cache busting
 	hasher := sha256.New()
 	hasher.Write(data)
-	checksum := hex.EncodeToString(hasher.Sum(nil))
+	sum := hasher.Sum(nil)
+		checksum := hex.EncodeToString(sum)
+		integrity := base64.StdEncoding.EncodeToString(sum)
 
-	l.Set(l.Prefix+path, &SFile{data, gzipData, brData, checksum, l.Prefix + path + "?h=" + checksum, 0, int64(len(data)), strconv.Itoa(len(data)), int64(len(gzipData)), strconv.Itoa(len(gzipData)), int64(len(brData)), strconv.Itoa(len(brData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)})
+	l.Set(l.Prefix+path, &SFile{data, gzipData, brData, checksum, integrity, l.Prefix + path + "?h=" + checksum, 0, int64(len(data)), strconv.Itoa(len(data)), int64(len(gzipData)), strconv.Itoa(len(gzipData)), int64(len(brData)), strconv.Itoa(len(brData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)})
 
 	DebugLogf("Added the '%s' static file", path)
 	return nil

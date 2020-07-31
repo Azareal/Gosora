@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"database/sql"
+	"encoding/base64"
 	"encoding/hex"
 	"errors"
 	htmpl "html/template"
@@ -282,9 +283,11 @@ func (t *Theme) AddThemeStaticFiles() error {
 		// Get a checksum for CSPs and cache busting
 		hasher := sha256.New()
 		hasher.Write(data)
-		checksum := hex.EncodeToString(hasher.Sum(nil))
+		sum := hasher.Sum(nil)
+		checksum := hex.EncodeToString(sum)
+		integrity := base64.StdEncoding.EncodeToString(sum)
 
-		StaticFiles.Set(StaticFiles.Prefix+t.Name+path, &SFile{data, gzipData, brData, checksum, StaticFiles.Prefix + t.Name + path + "?h=" + checksum, 0, int64(len(data)), strconv.Itoa(len(data)), int64(len(gzipData)), strconv.Itoa(len(gzipData)), int64(len(brData)), strconv.Itoa(len(brData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)})
+		StaticFiles.Set(StaticFiles.Prefix+t.Name+path, &SFile{data, gzipData, brData, checksum, integrity, StaticFiles.Prefix + t.Name + path + "?h=" + checksum, 0, int64(len(data)), strconv.Itoa(len(data)), int64(len(gzipData)), strconv.Itoa(len(gzipData)), int64(len(brData)), strconv.Itoa(len(brData)), mime.TypeByExtension(ext), f, f.ModTime().UTC().Format(http.TimeFormat)})
 
 		DebugLog("Added the '/" + t.Name + path + "' static file for theme " + t.Name + ".")
 		return nil

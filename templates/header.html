@@ -3,16 +3,16 @@
 	<head>
 		<title>{{.Title}} | {{.Header.Site.Name}}</title>
 		{{range .Header.Stylesheets}}
-		<link href="{{.}}"rel="stylesheet"type="text/css">{{end}}
+		<link href="{{.Name}}"rel="stylesheet"type="text/css"{{if .Hash}}integrity="sha256-{{.Hash}}"{{end}}>{{end}}
 		{{range .Header.PreScriptsAsync}}
-		<script async src="{{.}}"></script>{{end}}
+		<script async src="{{.Name}}"{{if .Hash}}integrity="sha256-{{.Hash}}"{{end}}></script>{{end}}
 		{{if .CurrentUser.Loggedin}}<meta property="x-mem"content="1">{{end}}
 		<script src="{{res "init.js"}}"></script>
 		{{range .Header.ScriptsAsync}}
-		<script async src="{{.}}"></script>{{end}}
+		<script async src="{{.Name}}"{{if .Hash}}integrity="sha256-{{.Hash}}"{{end}}></script>{{end}}
 		<script src="{{res "jquery-3.1.1.min.js"}}"></script>
 		{{range .Header.Scripts}}
-		<script src="{{.}}"></script>{{end}}
+		<script src="{{.Name}}"{{if .Hash}}integrity="sha256-{{.Hash}}"{{end}}></script>{{end}}
 		<meta name="viewport"content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
 		{{if .Header.MetaDesc}}<meta name="description"content="{{.Header.MetaDesc}}">{{end}}
 		{{/** TODO: Have page / forum / topic level tags and descriptions below as-well **/}}
