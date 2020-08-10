@@ -16,7 +16,7 @@
 		{{end}}
 		</span>
 		<span class="forum_right shift_right">
-			{{if .LastReplyer.MicroAvatar}}<img class="extra_little_row_avatar"src="{{.LastReplyer.MicroAvatar}}"height=64 width=64 alt="Avatar"title="{{.LastReplyer.Name}}'s Avatar"aria-hidden="true">{{end}}
+			{{if .LastReplyer.MicroAvatar}}<a href="{{.LastReplyer.Link}}"><img class="extra_little_row_avatar"src="{{.LastReplyer.MicroAvatar}}"height=64 width=64 alt="Avatar"title="{{.LastReplyer.Name}}'s Avatar"aria-hidden="true"></a>{{end}}
 			<span>
 				<a {{if .LastTopic.Link}}class="forum_poster"href="{{.LastTopic.Link}}"{{else}}class="forum_no_poster"{{end}}>{{if .LastTopic.Title}}{{.LastTopic.Title}}{{else}}{{lang "forums_none"}}{{end}}</a>
 				{{if .LastTopicTime}}<br><span class="rowsmall"title="{{abstime .LastTopic.LastReplyAt}}">{{.LastTopicTime}}</span>{{end}}

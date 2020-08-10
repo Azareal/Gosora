@@ -166,6 +166,9 @@ li a {
 	padding-bottom: 10px;
 	border: 1px solid #444444;
 }
+a img:hover {
+	filter: brightness(92%);
+}
 .user_box img {
 	display: block;
 	width: 36px;
@@ -290,6 +293,9 @@ h1, h2, h3, h4, h5 {
 }
 .filter_selected {
 	background-color: #555555 !important;
+}
+.filter_selected a {
+	color: #CCCCCC;
 }
 /* new end */
 
@@ -571,6 +577,9 @@ h2 {
 	width: 38px;
 	margin-right: 10px;
 }
+.topic_left img:hover, .topic_right img:hover {
+	filter: brightness(95%);
+}
 .topic_inner_left {
 	display: flex;
 	flex-direction: column;
@@ -756,6 +765,9 @@ button, .formbutton, .panel_right_button:not(.has_inner_button) {
 	border-radius: 24px;
 	height: 36px;
 	width: 36px;
+}
+.extra_little_row_avatar:hover {
+	filter: brightness(92%);
 }
 
 .colstack, .topic_item {
