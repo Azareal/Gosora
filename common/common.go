@@ -72,7 +72,7 @@ var AllowedFileExts = StringList{
 
 	"txt", "xml", "json", "yaml", "toml", "ini", "md", "html", "rtf", "js", "py", "rb", "css", "scss", "less", "eqcss", "pcss", "java", "ts", "cs", "c", "cc", "cpp", "cxx", "C", "c++", "h", "hh", "hpp", "hxx", "h++", "rs", "rlib", "htaccess", "gitignore", /*"go","php",*/ // text
 
-	"wav", "mp3", "oga", // audio
+	"wav", "mp3", "oga", "m4a", // audio
 
 	"mp4", "avi", "ogg", "ogv", "ogx", "wmv", "webm", // video
 
@@ -95,7 +95,7 @@ var WebVideoFileExts = StringList{
 	"mp4", "avi", "ogg", "ogv", "webm",
 }
 var WebAudioFileExts = StringList{
-	"wav", "mp3", "oga",
+	"wav", "mp3", "oga","m4a",
 }
 var ArchiveFileExts = StringList{
 	"bz2", "zip", "zipx", "gz", "7z", "tar", "cab", "rar", "kgb", "pea", "xz", "zz", "tgz",
@@ -112,8 +112,8 @@ func init() {
 
 // TODO: Write a test for this
 func (sl StringList) Contains(needle string) bool {
-	for _, item := range sl {
-		if item == needle {
+	for _, it := range sl {
+		if it == needle {
 			return true
 		}
 	}
@@ -126,14 +126,14 @@ var IDToTable = make(map[int]string)
 
 func InitTables(acc *qgen.Accumulator) error {
 	stmt := acc.Select("tables").Columns("id,name").Prepare()
-	if err := acc.FirstError(); err != nil {
-		return err
+	if e := acc.FirstError(); e != nil {
+		return e
 	}
 	return eachall(stmt, func(r *sql.Rows) error {
 		var id int
 		var name string
-		if err := r.Scan(&id, &name); err != nil {
-			return err
+		if e := r.Scan(&id, &name); e != nil {
+			return e
 		}
 		TableToID[name] = id
 		IDToTable[id] = name
@@ -155,8 +155,8 @@ func (inits dbInits) Run() error {
 	return nil
 }
 
-func (inits dbInits) Add(init ...func(acc *qgen.Accumulator) error) {
-	DbInits = dbInits(append(DbInits, init...))
+func (inits dbInits) Add(i ...func(acc *qgen.Accumulator) error) {
+	DbInits = dbInits(append(DbInits, i...))
 }
 
 // TODO: Add a graceful shutdown function
@@ -210,14 +210,14 @@ func Countf(stmt *sql.Stmt, args ...interface{}) (count int) {
 }
 
 func eachall(stmt *sql.Stmt, f func(r *sql.Rows) error) error {
-	rows, err := stmt.Query()
-	if err != nil {
-		return err
+	rows, e := stmt.Query()
+	if e != nil {
+		return e
 	}
 	defer rows.Close()
 	for rows.Next() {
-		if err := f(rows); err != nil {
-			return err
+		if e := f(rows); e != nil {
+			return e
 		}
 	}
 	return rows.Err()
