@@ -199,6 +199,10 @@ func ProcessConfig() (err error) {
 		Site.URL = strings.TrimSuffix(Site.URL, ":")
 		Site.URL = Site.URL + ":" + Site.Port
 	}
+	uurl, err := url.Parse(Site.URL)
+	if err != nil {
+		return errors.Wrap(err, "failed to parse Site.URL: ")
+	}
 	if Site.EnableSsl {
 		Config.SslSchema = Site.EnableSsl
 	}
@@ -237,7 +241,7 @@ func ProcessConfig() (err error) {
 	local := func(h string) bool {
 		return h == "localhost" || h == "127.0.0.1" || h == "::1" || h == Site.URL
 	}
-	uurl, err := url.Parse(Config.StaticResBase)
+	uurl, err = url.Parse(Config.StaticResBase)
 	if err != nil {
 		return errors.Wrap(err, "failed to parse Config.StaticResBase: ")
 	}
