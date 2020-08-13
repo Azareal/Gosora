@@ -40,6 +40,7 @@ type Forum struct {
 	LastReplyer   *User
 	LastReplyerID int
 	LastTopicTime string // So that we can re-calculate the relative time on the spot in /forums/
+	LastPage int
 }
 
 // ? - What is this for?

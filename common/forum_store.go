@@ -130,6 +130,9 @@ func (s *MemoryForumStore) LoadForums() error {
 		f.Link = BuildForumURL(NameToSlug(f.Name), f.ID)
 		f.LastTopic = Topics.DirtyGet(f.LastTopicID)
 		f.LastReplyer = Users.DirtyGet(f.LastReplyerID)
+		// TODO: Create a specialised function with a bit less overhead for getting the last page for a post count
+		_, _, lastPage := PageOffset(f.LastTopic.PostCount, 1, Config.ItemsPerPage)
+		f.LastPage = lastPage
 		addForum(f)
 	}
 	s.forumView.Store(forumView)
@@ -211,6 +214,9 @@ func (s *MemoryForumStore) BypassGet(id int) (*Forum, error) {
 	f.Link = BuildForumURL(NameToSlug(f.Name), f.ID)
 	f.LastTopic = Topics.DirtyGet(f.LastTopicID)
 	f.LastReplyer = Users.DirtyGet(f.LastReplyerID)
+	// TODO: Create a specialised function with a bit less overhead for getting the last page for a post count
+	_, _, lastPage := PageOffset(f.LastTopic.PostCount, 1, Config.ItemsPerPage)
+	f.LastPage = lastPage
 	//TopicListThaw.Thaw()
 
 	return f, err
