@@ -1,0 +1,11 @@
+{{if .NoScript}}<noscript>{{end}}{{if .Image}}<div class="formrow">
+	<div class="formitem formlabel"><a id="verify_image_label">{{lang "register_account_verify_image"}}</a></div>
+	<div class="formitem">
+		<div class="vimage_box">
+			<div class="vimage_question">{{.Image.Question}}</div>
+			<div class="vimage_grid">
+				{{range .Image.Items}}<div class="vimage_image"><img src="{{.Src}}"></div>{{end}}
+			</div>
+		</div>
+	</div>
+</div>{{end}}{{if .NoScript}}</noscript>{{end}}

@@ -200,12 +200,12 @@ func AccountRegister(w http.ResponseWriter, r *http.Request, u *c.User, h *c.Hea
 		token = hex.EncodeToString(h.Sum(nil))
 	}
 
-	return renderTemplate("register", w, r, h, c.RegisterPage{h, h.Settings["activation_type"] != 2, token})
+	return renderTemplate("register", w, r, h, c.RegisterPage{h, h.Settings["activation_type"] != 2, token, nil})
 }
 
 func isNumeric(data string) (numeric bool) {
-	for _, char := range data {
-		if char < 48 || char > 57 {
+	for _, ch := range data {
+		if ch < 48 || ch > 57 {
 			return false
 		}
 	}
@@ -384,11 +384,12 @@ func accountEditHead(titlePhrase string, w http.ResponseWriter, r *http.Request,
 
 func AccountEdit(w http.ResponseWriter, r *http.Request, u *c.User, h *c.Header) c.RouteError {
 	accountEditHead("account", w, r, u, h)
-	if r.FormValue("avatar_updated") == "1" {
+	switch {
+	case r.FormValue("avatar_updated") == "1":
 		h.AddNotice("account_avatar_updated")
-	} else if r.FormValue("name_updated") == "1" {
+	case r.FormValue("name_updated") == "1":
 		h.AddNotice("account_name_updated")
-	} else if r.FormValue("mfa_setup_success") == "1" {
+	case r.FormValue("mfa_setup_success") == "1":
 		h.AddNotice("account_mfa_setup_success")
 	}
 
@@ -602,7 +603,6 @@ func AccountEditMFADisableSubmit(w http.ResponseWriter, r *http.Request, u *c.Us
 	} else if err == sql.ErrNoRows {
 		return c.LocalError("You don't have two-factor enabled on your account", w, r, u)
 	}
-
 	err = mfaItem.Delete()
 	if err != nil {
 		return c.InternalError(err, w, r)

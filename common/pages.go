@@ -59,13 +59,13 @@ type HScript struct {
 
 func (h *Header) getScript(name string) HScript {
 	if name[0] == '/' && name[1] == '/' {
-		} else {
-			file, ok := StaticFiles.GetShort(name)
-			if ok {
-				return HScript{file.OName,file.Sha256I}
-			}
+	} else {
+		file, ok := StaticFiles.GetShort(name)
+		if ok {
+			return HScript{file.OName, file.Sha256I}
 		}
-		return HScript{name,""}
+	}
+	return HScript{name, ""}
 }
 
 func (h *Header) AddScript(name string) {
@@ -243,10 +243,25 @@ type IPSearchPage struct {
 	IP       string
 }
 
+// WIP: Optional anti-bot methods
+type RegisterVerifyImageGridImage struct {
+	Src string
+}
+type RegisterVerifyImageGrid struct {
+	Question string
+	Items    []RegisterVerifyImageGridImage
+}
+type RegisterVerify struct {
+	NoScript bool
+
+	Image *RegisterVerifyImageGrid
+}
+
 type RegisterPage struct {
 	*Header
 	RequireEmail bool
 	Token        string
+	Verify       []RegisterVerify
 }
 
 type Account struct {

@@ -525,6 +525,7 @@
 		"register_account_password":"Password",
 		"register_account_confirm_password":"Confirm Password",
 		"register_account_anti_spam":"Ar​e y​ou a sp​am​bo​t?",
+		"register_account_verify_image":"Verify Image",
 		"register_submit_button":"Create Account",
 
 		"password_reset_head":"Password Reset",

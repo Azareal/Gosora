@@ -28,6 +28,7 @@
 					<option value="0">{{lang "option_no"}}</option>
 				</select></div>
 			</div>
+			{{range .Verify}}{{template "register_verify.html" .}}{{end}}
 			<div class="formrow register_button_row form_button_row">
 				<div class="formitem"><button name="register-button"class="formbutton">{{lang "register_submit_button"}}</button></div>
 			</div>
