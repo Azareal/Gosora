@@ -227,7 +227,8 @@ func compileCommons(c *tmpl.CTemplateSet, head, head2 *Header, forumList []Forum
 	}*/
 
 	var topicsList []TopicsRowMut
-	topicsList = append(topicsList, TopicsRowMut{&TopicsRow{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, now, now, user3.ID, 1, 1, "", "::1", 1, 0, 1, 1, 0, "classname", 0, "", user2, "", 0, user3, "General", "/forum/general.2", nil}, false})
+	topic := Topic{1, "/topic/topic-title.1","Topic Title", "The topic content.", 1, false, false, now, now, user3.ID, 1, 1, "", "::1", 1, 0, 1, 1, "classname",0,"",nil}
+	topicsList = append(topicsList, TopicsRowMut{&TopicsRow{topic,1, user2, "", 0, user3, "General", "/forum/general.2"}, false})
 	topicListPage := TopicListPage{htitle("Topic List"), topicsList, forumList, Config.DefaultForum, TopicListSort{"lastupdated", false}, QuickTools{false, false, false}, Paginator{[]int{1}, 1, 1}}
 	o.Add("topics", "c.TopicListPage", topicListPage)
 	o.Add("topics_mini", "c.TopicListPage", topicListPage)
@@ -243,14 +244,14 @@ func compileCommons(c *tmpl.CTemplateSet, head, head2 *Header, forumList []Forum
 	}, VoteCount: 7}
 	avatar, microAvatar := BuildAvatar(62, "")
 	miniAttach := []*MiniAttachment{&MiniAttachment{Path: "/"}}
-	topic := TopicUser{1, "blah", "Blah", "Hey there!", 0, false, false, now, now, 1, 1, 0, "", "127.0.0.1", 1, 0, 1, 0, "classname", poll.ID, "weird-data", BuildProfileURL("fake-user", 62), "Fake User", Config.DefaultGroup, avatar, microAvatar, 0, "", "", "", 58, false, miniAttach, nil, false}
+	tu := TopicUser{1, "blah", "Blah", "Hey there!", 0, false, false, now, now, 1, 1, 0, "", "127.0.0.1", 1, 0, 1, 0, "classname", poll.ID, "weird-data", BuildProfileURL("fake-user", 62), "Fake User", Config.DefaultGroup, avatar, microAvatar, 0, "", "", "", 58, false, miniAttach, nil, false}
 
 	var replyList []*ReplyUser
 	reply := Reply{1, 1, "Yo!", 1 /*, Config.DefaultGroup*/, now, 0, 0, 1, "::1", true, 1, 1, ""}
 	ru := &ReplyUser{ClassName: "", Reply: reply, CreatedByName: "Alice", Avatar: avatar, Group: Config.DefaultGroup, Level: 0, Attachments: miniAttach}
 	ru.Init(user2)
 	replyList = append(replyList, ru)
-	tpage := TopicPage{htitle("Topic Name"), replyList, topic, &Forum{ID: 1, Name: "Hahaha"}, &poll, Paginator{[]int{1}, 1, 1}}
+	tpage := TopicPage{htitle("Topic Name"), replyList, tu, &Forum{ID: 1, Name: "Hahaha"}, &poll, Paginator{[]int{1}, 1, 1}}
 	tpage.Forum.Link = BuildForumURL(NameToSlug(tpage.Forum.Name), tpage.Forum.ID)
 	o.Add("topic", "c.TopicPage", tpage)
 	o.Add("topic_mini", "c.TopicPage", tpage)
@@ -310,7 +311,8 @@ func compileTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName string
 	t.Add("profile", "c.ProfilePage", ppage)
 
 	var topicsList []TopicsRowMut
-	topicsList = append(topicsList, TopicsRowMut{&TopicsRow{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, now, now, user3.ID, 1, 1, "", "127.0.0.1", 1, 0, 1, 1, 0, "classname", 0, "", user2, "", 0, user3, "General", "/forum/general.2", nil}, false})
+	topic := Topic{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, now, now, user3.ID, 1, 1, "", "::1", 1, 0, 1, 1, "classname",0,"",nil}
+	topicsList = append(topicsList, TopicsRowMut{&TopicsRow{topic,0, user2, "", 0, user3, "General", "/forum/general.2"}, false})
 	topicListPage := TopicListPage{htitle("Topic List"), topicsList, forumList, Config.DefaultForum, TopicListSort{"lastupdated", false}, QuickTools{false, false, false}, Paginator{[]int{1}, 1, 1}}
 
 	forumItem := BlankForum(1, "general-forum.1", "General Forum", "Where the general stuff happens", true, "all", 0, "", 0)
@@ -349,7 +351,7 @@ func compileTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName string
 	}
 
 	t.AddStd("login", "c.Page", Page{htitle("Login Page"), tList, nil})
-	t.AddStd("register", "c.RegisterPage", RegisterPage{htitle("Registration Page"), false, ""})
+	t.AddStd("register", "c.RegisterPage", RegisterPage{htitle("Registration Page"), false, "",[]RegisterVerify{RegisterVerify{true,&RegisterVerifyImageGrid{"What?",[]RegisterVerifyImageGridImage{RegisterVerifyImageGridImage{"something.png"}}}}}})
 	t.AddStd("error", "c.ErrorPage", ErrorPage{htitle("Error"), "A problem has occurred in the system."})
 
 	ipSearchPage := IPSearchPage{htitle("IP Search"), map[int]*User{1: user2}, "::1"}
@@ -538,7 +540,8 @@ func compileJSTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName stri
 
 	t := TItemHold(make(map[string]TItem))
 
-	topicsRow := TopicsRowMut{&TopicsRow{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, now, now, user3.ID, 1, 1, "", "::1", 1, 0, 1, 0, 1, "classname", 0, "", user2, "", 0, user3, "General", "/forum/general.2", nil}, false}
+	topic := Topic{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, now, now, user3.ID, 1, 1, "", "::1", 1, 0, 1, 0, "classname",1,"",nil}
+	topicsRow := TopicsRowMut{&TopicsRow{topic, 0, user2, "", 0, user3, "General", "/forum/general.2"}, false}
 	t.AddStd("topics_topic", "c.TopicsRowMut", topicsRow)
 
 	poll := Poll{ID: 1, Type: 0, Options: map[int]string{0: "Nothing", 1: "Something"}, Results: map[int]int{0: 5, 1: 2}, QuickOptions: []PollOption{
@@ -547,7 +550,7 @@ func compileJSTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName stri
 	}, VoteCount: 7}
 	avatar, microAvatar := BuildAvatar(62, "")
 	miniAttach := []*MiniAttachment{&MiniAttachment{Path: "/"}}
-	topic := TopicUser{1, "blah", "Blah", "Hey there!", 62, false, false, now, now, 1, 1, 0, "", "::1", 1, 0, 1, 0, "classname", poll.ID, "weird-data", BuildProfileURL("fake-user", 62), "Fake User", Config.DefaultGroup, avatar, microAvatar, 0, "", "", "", 58, false, miniAttach, nil, false}
+	tu := TopicUser{1, "blah", "Blah", "Hey there!", 62, false, false, now, now, 1, 1, 0, "", "::1", 1, 0, 1, 0, "classname", poll.ID, "weird-data", BuildProfileURL("fake-user", 62), "Fake User", Config.DefaultGroup, avatar, microAvatar, 0, "", "", "", 58, false, miniAttach, nil, false}
 	var replyList []*ReplyUser
 	// TODO: Do we really want the UID here to be zero?
 	avatar, microAvatar = BuildAvatar(0, "")
@@ -558,7 +561,7 @@ func compileJSTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName stri
 
 	varList = make(map[string]tmpl.VarItem)
 	header.Title = "Topic Name"
-	tpage := TopicPage{header, replyList, topic, &Forum{ID: 1, Name: "Hahaha"}, &poll, Paginator{[]int{1}, 1, 1}}
+	tpage := TopicPage{header, replyList, tu, &Forum{ID: 1, Name: "Hahaha"}, &poll, Paginator{[]int{1}, 1, 1}}
 	tpage.Forum.Link = BuildForumURL(NameToSlug(tpage.Forum.Name), tpage.Forum.ID)
 	t.AddStd("topic_posts", "c.TopicPage", tpage)
 	t.AddStd("topic_alt_posts", "c.TopicPage", tpage)

@@ -39,7 +39,7 @@ type Topic struct {
 	LastReplyBy int
 	LastReplyID int
 	ParentID    int
-	Status      string // Deprecated. Marked for removal.
+	Status      string // Deprecated. Marked for removal. -Is there anything we could use it for?
 	IP          string
 	ViewCount   int64
 	PostCount   int
@@ -101,28 +101,8 @@ type TopicsRowMut struct {
 
 // TODO: Embed TopicUser to simplify this structure and it's related logic?
 type TopicsRow struct {
-	ID          int
-	Link        string
-	Title       string
-	Content     string
-	CreatedBy   int
-	IsClosed    bool
-	Sticky      bool
-	CreatedAt   time.Time
-	LastReplyAt time.Time
-	LastReplyBy int
-	LastReplyID int
-	ParentID    int
-	Status      string // Deprecated. Marked for removal. -Is there anything we could use it for?
-	IP          string
-	ViewCount   int64
-	PostCount   int
-	LikeCount   int
-	AttachCount int
-	LastPage    int
-	ClassName   string
-	Poll        int
-	Data        string // Used for report metadata
+	Topic
+	LastPage int
 
 	Creator      *User
 	CSS          template.CSS
@@ -131,7 +111,6 @@ type TopicsRow struct {
 
 	ForumName string //TopicsRow
 	ForumLink string
-	Rids      []int
 }
 
 type WsTopicsRow struct {
@@ -179,13 +158,15 @@ func (t *Topic) TopicsRow() *TopicsRow {
 	forumName := ""
 	forumLink := ""
 
-	return &TopicsRow{t.ID, t.Link, t.Title, t.Content, t.CreatedBy, t.IsClosed, t.Sticky, t.CreatedAt, t.LastReplyAt, t.LastReplyBy, t.LastReplyID, t.ParentID, t.Status, t.IP, t.ViewCount, t.PostCount, t.LikeCount, t.AttachCount, lastPage, t.ClassName, t.Poll, t.Data, creator, "", contentLines, lastUser, forumName, forumLink, t.Rids}
+	//return &TopicsRow{t.ID, t.Link, t.Title, t.Content, t.CreatedBy, t.IsClosed, t.Sticky, t.CreatedAt, t.LastReplyAt, t.LastReplyBy, t.LastReplyID, t.ParentID, t.Status, t.IP, t.ViewCount, t.PostCount, t.LikeCount, t.AttachCount, lastPage, t.ClassName, t.Poll, t.Data, creator, "", contentLines, lastUser, forumName, forumLink, t.Rids}
+	return &TopicsRow{*t, lastPage, creator, "", contentLines, lastUser, forumName, forumLink}
 }
 
 // ! Some data may be lost in the conversion
-func (t *TopicsRow) Topic() *Topic {
-	return &Topic{t.ID, t.Link, t.Title, t.Content, t.CreatedBy, t.IsClosed, t.Sticky, t.CreatedAt, t.LastReplyAt, t.LastReplyBy, t.LastReplyID, t.ParentID, t.Status, t.IP, t.ViewCount, t.PostCount, t.LikeCount, t.AttachCount, t.ClassName, t.Poll, t.Data, t.Rids}
-}
+/*func (t *TopicsRow) Topic() *Topic {
+	//return &Topic{t.ID, t.Link, t.Title, t.Content, t.CreatedBy, t.IsClosed, t.Sticky, t.CreatedAt, t.LastReplyAt, t.LastReplyBy, t.LastReplyID, t.ParentID, t.Status, t.IP, t.ViewCount, t.PostCount, t.LikeCount, t.AttachCount, t.ClassName, t.Poll, t.Data, t.Rids}
+	return &t.Topic
+}*/
 
 // ! Not quite safe as Topic doesn't contain all the data needed to constructs a WsTopicsRow
 /*func (t *Topic) WsTopicsRows() *WsTopicsRow {
@@ -864,6 +845,12 @@ func (t *TopicUser) Replies(offset int /*pFrag int, */, user *User) (rlist []*Re
 		//log.Printf("r: %d-%d", r.ID, len(rlist)-1)
 	} else {
 		//log.Print("reply query serve")
+		ap1 := func(r *ReplyUser) {
+			H_topic_reply_row_assign_hook(hTbl, r)
+			// TODO: Use a pointer instead to make it easier to abstract this loop? What impact would this have on escape analysis?
+			rlist = append(rlist, r)
+			//log.Printf("r: %d-%d", r.ID, len(rlist)-1)
+		}
 		rf2 := func(r *ReplyUser) {
 			if r.LikeCount > 0 && user.Liked > 0 {
 				if likedMap == nil {
@@ -883,31 +870,27 @@ func (t *TopicUser) Replies(offset int /*pFrag int, */, user *User) (rlist []*Re
 					attachQueryList = append(attachQueryList, r.ID)
 				}
 			}
-
-			H_topic_reply_row_assign_hook(hTbl, r)
-			// TODO: Use a pointer instead to make it easier to abstract this loop? What impact would this have on escape analysis?
-			rlist = append(rlist, r)
-			//log.Printf("r: %d-%d", r.ID, len(rlist)-1)
 		}
 		if !user.Perms.ViewIPs && ruser != nil {
-			rows, err := topicStmts.getReplies3.Query(t.ID, offset, Config.ItemsPerPage)
+			rows, e := topicStmts.getReplies3.Query(t.ID, offset, Config.ItemsPerPage)
 			if err != nil {
-				return nil, externalHead, err
+				return nil, externalHead, e
 			}
 			defer rows.Close()
 			for rows.Next() {
 				r := &ReplyUser{Avatar: ruser.Avatar, MicroAvatar: ruser.MicroAvatar, UserLink: ruser.Link, CreatedByName: ruser.Name, Group: ruser.Group, Level: ruser.Level}
-				err := rows.Scan(&r.ID, &r.Content, &r.CreatedBy, &r.CreatedAt, &r.LastEdit, &r.LastEditBy, &r.LikeCount, &r.AttachCount, &r.ActionType)
-				if err != nil {
-					return nil, externalHead, err
+				e := rows.Scan(&r.ID, &r.Content, &r.CreatedBy, &r.CreatedAt, &r.LastEdit, &r.LastEditBy, &r.LikeCount, &r.AttachCount, &r.ActionType)
+				if e != nil {
+					return nil, externalHead, e
 				}
-				if err = rf3(r); err != nil {
-					return nil, externalHead, err
+				if e = rf3(r); e != nil {
+					return nil, externalHead, e
 				}
 				rf2(r)
+				ap1(r)
 			}
-			if err = rows.Err(); err != nil {
-				return nil, externalHead, err
+			if e = rows.Err(); e != nil {
+				return nil, externalHead, e
 			}
 		} else if user.Perms.ViewIPs {
 			rows, err := topicStmts.getReplies.Query(t.ID, offset, Config.ItemsPerPage)
@@ -925,11 +908,13 @@ func (t *TopicUser) Replies(offset int /*pFrag int, */, user *User) (rlist []*Re
 					return nil, externalHead, err
 				}
 				rf2(r)
+				ap1(r)
 			}
 			if err = rows.Err(); err != nil {
 				return nil, externalHead, err
 			}
 		} else if t.PostCount >= 20 {
+			//log.Print("t.PostCount >= 20")
 			rows, err := topicStmts.getReplies3.Query(t.ID, offset, Config.ItemsPerPage)
 			if err != nil {
 				return nil, externalHead, err
@@ -945,12 +930,14 @@ func (t *TopicUser) Replies(offset int /*pFrag int, */, user *User) (rlist []*Re
 				if r.CreatedBy != t.CreatedBy && r.CreatedBy != user.ID {
 					reqUserList[r.CreatedBy] = true
 				}
+				ap1(r)
 			}
 			if err = rows.Err(); err != nil {
 				return nil, externalHead, err
 			}
 
 			if len(reqUserList) == 1 {
+				//log.Print("len(reqUserList) == 1: ", len(reqUserList) == 1)
 				var uitem *User
 				for uid, _ := range reqUserList {
 					uitem, err = Users.Get(uid)
@@ -984,8 +971,10 @@ func (t *TopicUser) Replies(offset int /*pFrag int, */, user *User) (rlist []*Re
 					rf2(r)
 				}
 			} else {
+				//log.Print("len(reqUserList) != 1: ", len(reqUserList) != 1)
 				var userList map[int]*User
 				if len(reqUserList) > 0 {
+					//log.Print("len(reqUserList) > 0: ", len(reqUserList) > 0)
 					// Convert the user ID map to a slice, then bulk load the users
 					idSlice := make([]int, len(reqUserList))
 					var i int
@@ -1026,6 +1015,7 @@ func (t *TopicUser) Replies(offset int /*pFrag int, */, user *User) (rlist []*Re
 				}
 			}
 		} else {
+			//log.Print("reply fallback")
 			rows, err := topicStmts.getReplies2.Query(t.ID, offset, Config.ItemsPerPage)
 			if err != nil {
 				return nil, externalHead, err
@@ -1041,6 +1031,7 @@ func (t *TopicUser) Replies(offset int /*pFrag int, */, user *User) (rlist []*Re
 					return nil, externalHead, err
 				}
 				rf2(r)
+				ap1(r)
 			}
 			if err = rows.Err(); err != nil {
 				return nil, externalHead, err

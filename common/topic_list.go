@@ -309,7 +309,7 @@ func (tList *DefaultTopicList) GetListByForum(f *Forum, page, orderby int) (topi
 	// TODO: Use something other than TopicsRow as we don't need to store the forum name and link on each and every topic item?
 	reqUserList := make(map[int]bool)
 	for rows.Next() {
-		t := TopicsRow{ID: 0}
+		t := TopicsRow{Topic:Topic{ID: 0}}
 		err := rows.Scan(&t.ID, &t.Title, &t.Content, &t.CreatedBy, &t.IsClosed, &t.Sticky, &t.CreatedAt, &t.LastReplyAt, &t.LastReplyBy, &t.LastReplyID, &t.ViewCount, &t.PostCount, &t.LikeCount)
 		if err != nil {
 			return nil, Paginator{nil, 1, 1}, err
@@ -391,7 +391,7 @@ func (tList *DefaultTopicList) GetListByCanSee(canSee []int, page, orderby int, 
 		f := Forums.DirtyGet(fid)
 		if f.Name != "" && f.Active && (f.ParentType == "" || f.ParentType == "forum") && f.TopicCount != 0 {
 			fcopy := f.Copy()
-			// TODO: Add a hook here for plugin_guilds
+			// TODO: Add a hook here for plugin_guilds !!
 			forumList = append(forumList, fcopy)
 		}
 	}
@@ -592,8 +592,9 @@ func (tList *DefaultTopicList) getList(page, orderby, topicCount int, argList []
 		}
 
 		if tc != nil {
-			if _, err := tc.Get(t.ID); err == sql.ErrNoRows {
-				_ = tc.Set(t.Topic())
+			if _, e := tc.Get(t.ID); e == sql.ErrNoRows {
+				//_ = tc.Set(t.Topic())
+				_ = tc.Set(&t.Topic)
 			}
 		}
 	}
@@ -601,25 +602,40 @@ func (tList *DefaultTopicList) getList(page, orderby, topicCount int, argList []
 		return nil, Paginator{nil, 1, 1}, err
 	}
 
-	// Convert the user ID map to a slice, then bulk load the users
-	idSlice := make([]int, len(reqUserList))
-	var i int
-	for userID := range reqUserList {
-		idSlice[i] = userID
-		i++
-	}
+	// TODO: specialcase for when reqUserList only has one or two items to avoid map alloc
+	if len(reqUserList) == 1 {
+		var u *User
+		for uid, _ := range reqUserList {
+			u, err = Users.Get(uid)
+			if err != nil {
+				return nil, Paginator{nil, 1, 1}, err
+			}
+		}
+		for _, t := range topicList {
+			t.Creator = u
+			t.LastUser = u
+		}
+	} else if len(reqUserList) > 0 {
+		// Convert the user ID map to a slice, then bulk load the users
+		idSlice := make([]int, len(reqUserList))
+		var i int
+		for userID := range reqUserList {
+			idSlice[i] = userID
+			i++
+		}
 
-	// TODO: What if a user is deleted via the Control Panel?
-	userList, err := Users.BulkGetMap(idSlice)
-	if err != nil {
-		return nil, Paginator{nil, 1, 1}, err
-	}
+		// TODO: What if a user is deleted via the Control Panel?
+		userList, err := Users.BulkGetMap(idSlice)
+		if err != nil {
+			return nil, Paginator{nil, 1, 1}, err
+		}
 
-	// Second pass to the add the user data
-	// TODO: Use a pointer to TopicsRow instead of TopicsRow itself?
-	for _, t := range topicList {
-		t.Creator = userList[t.CreatedBy]
-		t.LastUser = userList[t.LastReplyBy]
+		// Second pass to the add the user data
+		// TODO: Use a pointer to TopicsRow instead of TopicsRow itself?
+		for _, t := range topicList {
+			t.Creator = userList[t.CreatedBy]
+			t.LastUser = userList[t.LastReplyBy]
+		}
 	}
 
 	pageList := Paginate(page, lastPage, 5)
