@@ -153,10 +153,10 @@ var imageExts = ["png","jpg","jpe","jpeg","jif","jfi","jfif","svg","bmp","gif","
 	addInitHook("end_bind_topic", () => {
 	log("in member.js end_bind_topic")
 
-	let changeListener = (files,handler) => {
+	let changeListener = (files,h) => {
 		if(files!=null) {
-			files.removeEventListener("change", handler, false);
-			files.addEventListener("change", handler, false);
+			files.removeEventListener("change", h, false);
+			files.addEventListener("change", h, false);
 		}
 	};
 	let uploadFiles = document.getElementById("upload_files");
@@ -306,9 +306,7 @@ var imageExts = ["png","jpg","jpe","jpeg","jif","jfi","jfif","svg","bmp","gif","
 					data: JSON.stringify(selectedTopics),
 					contentType: "application/json",
 					error: ajaxError,
-					success: () => {
-						window.location.reload();
-					}
+					success: () => window.location.reload()
 				});
 			};
 			// TODO: Should we unbind this here to avoid binding multiple listeners to this accidentally?

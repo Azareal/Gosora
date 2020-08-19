@@ -110,8 +110,8 @@ func TopicListCommon(w http.ResponseWriter, r *http.Request, user *c.User, h *c.
 		var cfids []int
 		if len(fids) > 0 {
 			inSlice := func(haystack []int, needle int) bool {
-				for _, item := range haystack {
-					if needle == item {
+				for _, it := range haystack {
+					if needle == it {
 						return true
 					}
 				}
