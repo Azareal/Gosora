@@ -67,6 +67,9 @@
 	font-size: 17px;
 	line-height: 16px;
 }
+.userbit > a {
+	height: 40px;
+}
 .userbit img {
 	width: 40px;
 	height: 40px;
