@@ -201,6 +201,7 @@ type TopicListPage struct {
 	ForumList    []Forum
 	DefaultForum int
 	Sort         TopicListSort
+	SelectedFids []int
 	QuickTools
 	Paginator
 }
@@ -799,8 +800,8 @@ type AreYouSure struct {
 }
 
 // TODO: Write a test for this
-func DefaultHeader(w http.ResponseWriter, user *User) *Header {
-	return &Header{Site: Site, Theme: Themes[fallbackTheme], CurrentUser: user, Writer: w}
+func DefaultHeader(w http.ResponseWriter, u *User) *Header {
+	return &Header{Site: Site, Theme: Themes[fallbackTheme], CurrentUser: u, Writer: w}
 }
 func SimpleDefaultHeader(w http.ResponseWriter) *Header {
 	return &Header{Site: Site, Theme: Themes[fallbackTheme], CurrentUser: &GuestUser, Writer: w}

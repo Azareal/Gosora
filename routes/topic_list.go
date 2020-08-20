@@ -239,7 +239,8 @@ func TopicListCommon(w http.ResponseWriter, r *http.Request, user *c.User, h *c.
 		}
 
 		h.Title = phrases.GetTitlePhrase("topics_search")
-		pi := c.TopicListPage{h, topicList2, forumList, c.Config.DefaultForum, c.TopicListSort{torder, false}, c.QuickTools{canDelete, canLock, canMove}, pagi}
+		//log.Printf("cfids: %+v\n", cfids)
+		pi := c.TopicListPage{h, topicList2, forumList, c.Config.DefaultForum, c.TopicListSort{torder, false}, cfids, c.QuickTools{canDelete, canLock, canMove}, pagi}
 		return renderTemplate("topics", w, r, h, pi)
 	}
 
@@ -305,7 +306,7 @@ func TopicListCommon(w http.ResponseWriter, r *http.Request, user *c.User, h *c.
 		topicList2[i] = c.TopicsRowMut{t, canMod}
 	}
 
-	pi := c.TopicListPage{h, topicList2, forumList, c.Config.DefaultForum, c.TopicListSort{torder, false}, c.QuickTools{canDelete, canLock, canMove}, pagi}
+	pi := c.TopicListPage{h, topicList2, forumList, c.Config.DefaultForum, c.TopicListSort{torder, false}, fids, c.QuickTools{canDelete, canLock, canMove}, pagi}
 	if r.FormValue("i") == "1" {
 		return renderTemplate("topics_mini", w, r, h, pi)
 	}

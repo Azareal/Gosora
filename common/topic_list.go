@@ -309,7 +309,7 @@ func (tList *DefaultTopicList) GetListByForum(f *Forum, page, orderby int) (topi
 	// TODO: Use something other than TopicsRow as we don't need to store the forum name and link on each and every topic item?
 	reqUserList := make(map[int]bool)
 	for rows.Next() {
-		t := TopicsRow{Topic:Topic{ID: 0}}
+		t := TopicsRow{Topic: Topic{ID: 0}}
 		err := rows.Scan(&t.ID, &t.Title, &t.Content, &t.CreatedBy, &t.IsClosed, &t.Sticky, &t.CreatedAt, &t.LastReplyAt, &t.LastReplyBy, &t.LastReplyID, &t.ViewCount, &t.PostCount, &t.LikeCount)
 		if err != nil {
 			return nil, Paginator{nil, 1, 1}, err
@@ -389,7 +389,7 @@ func (tList *DefaultTopicList) GetListByCanSee(canSee []int, page, orderby int, 
 	// ? - Would it be useful, if we could post in social groups from /topics/?
 	for _, fid := range canSee {
 		f := Forums.DirtyGet(fid)
-		if f.Name != "" && f.Active && (f.ParentType == "" || f.ParentType == "forum") && f.TopicCount != 0 {
+		if f.Name != "" && f.Active && (f.ParentType == "" || f.ParentType == "forum") /*&& f.TopicCount != 0*/ {
 			fcopy := f.Copy()
 			// TODO: Add a hook here for plugin_guilds !!
 			forumList = append(forumList, fcopy)
@@ -397,8 +397,8 @@ func (tList *DefaultTopicList) GetListByCanSee(canSee []int, page, orderby int, 
 	}
 
 	inSlice := func(haystack []int, needle int) bool {
-		for _, item := range haystack {
-			if needle == item {
+		for _, it := range haystack {
+			if needle == it {
 				return true
 			}
 		}
@@ -443,10 +443,10 @@ func (tList *DefaultTopicList) GetList(page, orderby int, filterIDs []int) (topi
 	if err != nil {
 		return nil, nil, Paginator{nil, 1, 1}, err
 	}
-
+	//log.Printf("cCanSee: %+v\n", cCanSee)
 	inSlice := func(haystack []int, needle int) bool {
-		for _, item := range haystack {
-			if needle == item {
+		for _, it := range haystack {
+			if needle == it {
 				return true
 			}
 		}
@@ -463,13 +463,14 @@ func (tList *DefaultTopicList) GetList(page, orderby int, filterIDs []int) (topi
 	} else {
 		canSee = cCanSee
 	}
+	//log.Printf("canSee: %+v\n", canSee)
 
 	// We need a list of the visible forums for Quick Topic
 	// ? - Would it be useful, if we could post in social groups from /topics/?
 	var topicCount int
 	for _, fid := range canSee {
 		f := Forums.DirtyGet(fid)
-		if f.Name != "" && f.Active && (f.ParentType == "" || f.ParentType == "forum") && f.TopicCount != 0 {
+		if f.Name != "" && f.Active && (f.ParentType == "" || f.ParentType == "forum") /*&& f.TopicCount != 0*/ {
 			fcopy := f.Copy()
 			// TODO: Add a hook here for plugin_guilds
 			forumList = append(forumList, fcopy)
@@ -495,6 +496,9 @@ func (tList *DefaultTopicList) GetList(page, orderby int, filterIDs []int) (topi
 // TODO: Rename this to TopicListStore and pass back a TopicList instance holding the pagination data and topic list rather than passing them back one argument at a time
 // TODO: Make orderby an enum of sorts
 func (tList *DefaultTopicList) getList(page, orderby, topicCount int, argList []interface{}, qlist string) (topicList []*TopicsRow, paginator Paginator, err error) {
+	if topicCount == 0 {
+		return nil, Paginator{nil, 1, 1}, err
+	}
 	//log.Printf("argList: %+v\n",argList)
 	//log.Printf("qlist: %+v\n",qlist)
 	var orderq string

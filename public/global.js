@@ -554,12 +554,12 @@ function mainInit(){
 
 			// TODO: Try to de-duplicate some of these fetch calls
 			fetch(url+q+"&js=1",{credentials:"same-origin"})
-				.then(resp => {
-					if(!resp.ok) throw(url+q+"&js=1 failed to load");
-					return resp.json();
-				}).then(dat => {
-					if(!"Topics" in dat) throw("no Topics in data");
-					let topics = dat["Topics"];
+				.then(r => {
+					if(!r.ok) throw(url+q+"&js=1 failed to load");
+					return r.json();
+				}).then(d => {
+					if(!"Topics" in d) throw("no Topics in data");
+					let topics = d["Topics"];
 					log("ajax navigated to different page");
 
 					// TODO: Fix the data race where the function hasn't been loaded yet
@@ -569,10 +569,10 @@ function mainInit(){
 
 					let obj = {Title:document.title,Url:url+q};
 					history.pushState(obj,obj.Title,obj.Url);
-					rebuildPaginator(dat.LastPage);
+					rebuildPaginator(d.LastPage);
 					rebindPaginator();
 				}).catch(e => {
-					log("Unable to get script '"+url+q+"&js=1"+"'",e);
+					log("Unable to get script "+url+q+"&js=1",e);
 					console.trace();
 				});
 		});
@@ -587,14 +587,14 @@ function mainInit(){
 		// TODO: Take mostviewed into account
 		let url = "//"+window.location.host+"/topics/?fids="+fid;
 
-		fetch(url+"&js=1",{credentials: "same-origin"})
-		.then(resp => {
-			if(!resp.ok) throw(url+"&js=1 failed to load");
-			return resp.json();
-		}).then(dat => {
-			log("data",dat);
-			if(!"Topics" in dat) throw("no Topics in data");
-			let topics = dat["Topics"];
+		fetch(url+"&js=1",{credentials:"same-origin"})
+		.then(r => {
+			if(!r.ok) throw(url+"&js=1 failed to load");
+			return r.json();
+		}).then(d => {
+			log("data",d);
+			if(!"Topics" in d) throw("no Topics in data");
+			let topics = d["Topics"];
 			log("ajax navigated to "+that.innerText);
 			
 			// TODO: Fix the data race where the function hasn't been loaded yet
@@ -608,7 +608,7 @@ function mainInit(){
 			else document.title = baseTitle;
 			let obj = {Title:document.title,Url:url};
 			history.pushState(obj,obj.Title,obj.Url);
-			rebuildPaginator(dat.LastPage)
+			rebuildPaginator(d.LastPage)
 			rebindPaginator();
 
 			$(".filter_item").each(function(){
@@ -616,16 +616,18 @@ function mainInit(){
 			});
 			that.classList.add("filter_selected");
 			$(".topic_list_title h1").text(that.innerText);
+			$(".link_select .link_option .link_recent").attr("href","//"+window.location.host+"/topics/?fids="+fid);
+			$(".link_select .link_option .link_most_viewed").attr("href","//"+window.location.host+"/topics/most-viewed/?fids="+fid);
 			unbindPage();
 			bindPage();
 		}).catch(e => {
-			log("Unable to get script '"+url+"&js=1"+"'",e);
+			log("Unable to get script "+url+"&js=1",e);
 			console.trace();
 		});
 	});
 
-	if (document.getElementById("topicsItemList")!==null) rebindPaginator();
-	if (document.getElementById("forumItemList")!==null) rebindPaginator();
+	if(document.getElementById("topicsItemList")!==null) rebindPaginator();
+	if(document.getElementById("forumItemList")!==null) rebindPaginator();
 
 	// TODO: Show a search button when JS is disabled?
 	$(".widget_search_input").keypress(function(e) {
@@ -642,12 +644,12 @@ function mainInit(){
 
 		// TODO: Try to de-duplicate some of these fetch calls
 		fetch(url+q+"&js=1",{credentials:"same-origin"})
-			.then(resp => {
-				if(!resp.ok) throw(url+q+"&js=1 failed to load");
-				return resp.json();
-			}).then(data => {
-				if(!"Topics" in data) throw("no Topics in data");
-				let topics = data["Topics"];
+			.then(r => {
+				if(!r.ok) throw(url+q+"&js=1 failed to load");
+				return r.json();
+			}).then(d => {
+				if(!"Topics" in d) throw("no Topics in data");
+				let topics = d["Topics"];
 				log("ajax navigated to search page");
 
 				// TODO: Fix the data race where the function hasn't been loaded yet
@@ -661,10 +663,10 @@ function mainInit(){
 				else document.title = baseTitle;
 				let obj = {Title: document.title, Url: url+q};
 				history.pushState(obj,obj.Title,obj.Url);
-				rebuildPaginator(data.LastPage);
+				rebuildPaginator(d.LastPage);
 				rebindPaginator();
 		}).catch(e => {
-			log("Unable to get script '"+url+q+"&js=1"+"'",e);
+			log("Unable to get script "+url+q+"&js=1",e);
 			console.trace();
 		});
 	});
@@ -906,14 +908,14 @@ function mainInit(){
 					}
 				}
 				return resp.text();
-			}).then(dat => {
-				document.querySelector("#back").outerHTML = dat;
-				if(h!==null) h(dat);
+			}).then(d => {
+				document.querySelector("#back").outerHTML = d;
+				if(h!==null) h(d);
 				$(".elapsed").remove();
 				let obj = {Title:document.title,Url:base};
 				history.pushState(obj,obj.Title,obj.Url);
 			}).catch(e => {
-				log("Unable to get script '"+href+""+"'",e);
+				log("Unable to get script "+href,e);
 				console.trace();
 			});
 	}

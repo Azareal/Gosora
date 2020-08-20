@@ -114,10 +114,10 @@ func tmplInitHeaders(u, u2, u3 *User) (*Header, *Header, *Header) {
 		Theme:           Themes[DefaultThemeBox.Load().(string)],
 		CurrentUser:     u,
 		NoticeList:      []string{"test"},
-		Stylesheets:     []HScript{HScript{"panel.css",""}},
-		Scripts:         []HScript{HScript{"whatever.js",""}},
-		PreScriptsAsync: []HScript{HScript{"whatever.js",""}},
-		ScriptsAsync:    []HScript{HScript{"whatever.js",""}},
+		Stylesheets:     []HScript{HScript{"panel.css", ""}},
+		Scripts:         []HScript{HScript{"whatever.js", ""}},
+		PreScriptsAsync: []HScript{HScript{"whatever.js", ""}},
+		ScriptsAsync:    []HScript{HScript{"whatever.js", ""}},
 		Widgets: PageWidgets{
 			LeftSidebar: template.HTML("lalala"),
 		},
@@ -227,9 +227,9 @@ func compileCommons(c *tmpl.CTemplateSet, head, head2 *Header, forumList []Forum
 	}*/
 
 	var topicsList []TopicsRowMut
-	topic := Topic{1, "/topic/topic-title.1","Topic Title", "The topic content.", 1, false, false, now, now, user3.ID, 1, 1, "", "::1", 1, 0, 1, 1, "classname",0,"",nil}
-	topicsList = append(topicsList, TopicsRowMut{&TopicsRow{topic,1, user2, "", 0, user3, "General", "/forum/general.2"}, false})
-	topicListPage := TopicListPage{htitle("Topic List"), topicsList, forumList, Config.DefaultForum, TopicListSort{"lastupdated", false}, QuickTools{false, false, false}, Paginator{[]int{1}, 1, 1}}
+	topic := Topic{1, "/topic/topic-title.1", "Topic Title", "The topic content.", 1, false, false, now, now, user3.ID, 1, 1, "", "::1", 1, 0, 1, 1, "classname", 0, "", nil}
+	topicsList = append(topicsList, TopicsRowMut{&TopicsRow{topic, 1, user2, "", 0, user3, "General", "/forum/general.2"}, false})
+	topicListPage := TopicListPage{htitle("Topic List"), topicsList, forumList, Config.DefaultForum, TopicListSort{"lastupdated", false}, []int{1}, QuickTools{false, false, false}, Paginator{[]int{1}, 1, 1}}
 	o.Add("topics", "c.TopicListPage", topicListPage)
 	o.Add("topics_mini", "c.TopicListPage", topicListPage)
 
@@ -311,9 +311,9 @@ func compileTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName string
 	t.Add("profile", "c.ProfilePage", ppage)
 
 	var topicsList []TopicsRowMut
-	topic := Topic{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, now, now, user3.ID, 1, 1, "", "::1", 1, 0, 1, 1, "classname",0,"",nil}
-	topicsList = append(topicsList, TopicsRowMut{&TopicsRow{topic,0, user2, "", 0, user3, "General", "/forum/general.2"}, false})
-	topicListPage := TopicListPage{htitle("Topic List"), topicsList, forumList, Config.DefaultForum, TopicListSort{"lastupdated", false}, QuickTools{false, false, false}, Paginator{[]int{1}, 1, 1}}
+	topic := Topic{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, now, now, user3.ID, 1, 1, "", "::1", 1, 0, 1, 1, "classname", 0, "", nil}
+	topicsList = append(topicsList, TopicsRowMut{&TopicsRow{topic, 0, user2, "", 0, user3, "General", "/forum/general.2"}, false})
+	topicListPage := TopicListPage{htitle("Topic List"), topicsList, forumList, Config.DefaultForum, TopicListSort{"lastupdated", false}, []int{1}, QuickTools{false, false, false}, Paginator{[]int{1}, 1, 1}}
 
 	forumItem := BlankForum(1, "general-forum.1", "General Forum", "Where the general stuff happens", true, "all", 0, "", 0)
 	forumPage := ForumPage{htitle("General Forum"), topicsList, forumItem, false, false, Paginator{[]int{1}, 1, 1}}
@@ -351,7 +351,7 @@ func compileTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName string
 	}
 
 	t.AddStd("login", "c.Page", Page{htitle("Login Page"), tList, nil})
-	t.AddStd("register", "c.RegisterPage", RegisterPage{htitle("Registration Page"), false, "",[]RegisterVerify{RegisterVerify{true,&RegisterVerifyImageGrid{"What?",[]RegisterVerifyImageGridImage{RegisterVerifyImageGridImage{"something.png"}}}}}})
+	t.AddStd("register", "c.RegisterPage", RegisterPage{htitle("Registration Page"), false, "", []RegisterVerify{RegisterVerify{true, &RegisterVerifyImageGrid{"What?", []RegisterVerifyImageGridImage{RegisterVerifyImageGridImage{"something.png"}}}}}})
 	t.AddStd("error", "c.ErrorPage", ErrorPage{htitle("Error"), "A problem has occurred in the system."})
 
 	ipSearchPage := IPSearchPage{htitle("IP Search"), map[int]*User{1: user2}, "::1"}
@@ -540,7 +540,7 @@ func compileJSTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName stri
 
 	t := TItemHold(make(map[string]TItem))
 
-	topic := Topic{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, now, now, user3.ID, 1, 1, "", "::1", 1, 0, 1, 0, "classname",1,"",nil}
+	topic := Topic{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, now, now, user3.ID, 1, 1, "", "::1", 1, 0, 1, 0, "classname", 1, "", nil}
 	topicsRow := TopicsRowMut{&TopicsRow{topic, 0, user2, "", 0, user3, "General", "/forum/general.2"}, false}
 	t.AddStd("topics_topic", "c.TopicsRowMut", topicsRow)
 
