@@ -57,7 +57,7 @@ var ErrNoRows = sql.ErrNoRows
 }*/
 
 // TODO: Make this more customisable
-var SpammyDomainBits = []string{"porn", "sex", "lesbian", "acup", "nude", "milf", "tits", "vape", "busty", "kink", "lingerie", "strapon", "problog", "fet", "xblog", "blogin", "blognetwork", "relayblog"}
+var SpammyDomainBits = []string{"porn", "sex", "acup", "nude", "milf", "tits", "vape", "busty", "kink", "lingerie", "strapon", "problog", "fet", "xblog", "blogin", "blognetwork", "relayblog"}
 
 var Chrome, Firefox int // ! Temporary Hack for http push
 var SimpleBots []int    // ! Temporary hack to stop semrush, ahrefs, python bots and other from wasting resources
@@ -74,7 +74,7 @@ var AllowedFileExts = StringList{
 
 	"wav", "mp3", "oga", "m4a", // audio
 
-	"mp4", "avi", "ogg", "ogv", "ogx", "wmv", "webm", // video
+	"mp4", "avi", "ogg", "ogv", "ogx", "wmv", "webm", "flv", // video
 
 	"otf", "woff2", "woff", "ttf", "eot", // fonts
 
@@ -89,13 +89,13 @@ var TextFileExts = StringList{
 	"txt", "xml", "json", "yaml", "toml", "ini", "md", "html", "rtf", "js", "py", "rb", "css", "scss", "less", "eqcss", "pcss", "java", "ts", "cs", "c", "cc", "cpp", "cxx", "C", "c++", "h", "hh", "hpp", "hxx", "h++", "rs", "rlib", "htaccess", "gitignore", /*"go","php",*/
 }
 var VideoFileExts = StringList{
-	"mp4", "avi", "ogg", "ogv", "ogx", "wmv", "webm",
+	"mp4", "avi", "ogg", "ogv", "ogx", "wmv", "webm", "flv",
 }
 var WebVideoFileExts = StringList{
 	"mp4", "avi", "ogg", "ogv", "webm",
 }
 var WebAudioFileExts = StringList{
-	"wav", "mp3", "oga","m4a",
+	"wav", "mp3", "oga", "m4a",
 }
 var ArchiveFileExts = StringList{
 	"bz2", "zip", "zipx", "gz", "7z", "tar", "cab", "rar", "kgb", "pea", "xz", "zz", "tgz",
@@ -147,9 +147,8 @@ var DbInits dbInits
 
 func (inits dbInits) Run() error {
 	for _, i := range inits {
-		err := i(qgen.NewAcc())
-		if err != nil {
-			return err
+		if e := i(qgen.NewAcc()); e != nil {
+			return e
 		}
 	}
 	return nil
