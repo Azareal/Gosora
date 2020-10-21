@@ -68,28 +68,28 @@ type StringList []string
 // TODO: Let admins manage this from the Control Panel
 // apng is commented out for now, as we have no way of re-encoding it into a smaller file
 var AllowedFileExts = StringList{
-	"png", "jpg", "jpe", "jpeg", "jif", "jfi", "jfif", "svg", "bmp", "gif", "tiff", "tif", "webp", "apng", /*"bpg", "heif",*/ // images (encodable) + apng (browser support) + bpg
+	"png", "jpg", "jpe", "jpeg", "jif", "jfi", "jfif", "svg", "bmp", "gif", "tiff", "tif", "webp", "apng", "avif", /*"bpg", "heif", */ // images (encodable) + apng (browser support) + bpg + avif
 
 	"txt", "xml", "json", "yaml", "toml", "ini", "md", "html", "rtf", "js", "py", "rb", "css", "scss", "less", "eqcss", "pcss", "java", "ts", "cs", "c", "cc", "cpp", "cxx", "C", "c++", "h", "hh", "hpp", "hxx", "h++", "rs", "rlib", "htaccess", "gitignore", /*"go","php",*/ // text
 
-	"wav", "mp3", "oga", "m4a", // audio
+	"wav", "mp3", "oga", "m4a", "flac", "ac3", "aac", // audio
 
-	"mp4", "avi", "ogg", "ogv", "ogx", "wmv", "webm", "flv", // video
+	"mp4", "avi", "ogg", "ogv", "ogx", "wmv", "webm", "flv", "f4v", "xvid", "mov", "movie", "qt", // video
 
 	"otf", "woff2", "woff", "ttf", "eot", // fonts
 
-	"bz2", "zip", "zipx", "gz", "7z", "tar", "cab", "rar", "kgb", "pea", "xz", "zz", "tgz", // archives
+	"bz2", "zip", "zipx", "gz", "7z", "tar", "cab", "rar", "kgb", "pea", "xz", "zz", "tgz", "xpi", // archives
 
-	//"docx", "pdf", // documents
+	"docx", "pdf", // documents
 }
 var ImageFileExts = StringList{
-	"png", "jpg", "jpe", "jpeg", "jif", "jfi", "jfif", "svg", "bmp", "gif", "tiff", "tif", "webp", /* "apng", "bpg", */
+	"png", "jpg", "jpe", "jpeg", "jif", "jfi", "jfif", "svg", "bmp", "gif", "tiff", "tif", "webp", /* "apng", "bpg", "avif", */
 }
 var TextFileExts = StringList{
 	"txt", "xml", "json", "yaml", "toml", "ini", "md", "html", "rtf", "js", "py", "rb", "css", "scss", "less", "eqcss", "pcss", "java", "ts", "cs", "c", "cc", "cpp", "cxx", "C", "c++", "h", "hh", "hpp", "hxx", "h++", "rs", "rlib", "htaccess", "gitignore", /*"go","php",*/
 }
 var VideoFileExts = StringList{
-	"mp4", "avi", "ogg", "ogv", "ogx", "wmv", "webm", "flv",
+	"mp4", "avi", "ogg", "ogv", "ogx", "wmv", "webm", "flv", "f4v", "xvid", "mov", "movie", "qt",
 }
 var WebVideoFileExts = StringList{
 	"mp4", "avi", "ogg", "ogv", "webm",
@@ -98,7 +98,7 @@ var WebAudioFileExts = StringList{
 	"wav", "mp3", "oga", "m4a",
 }
 var ArchiveFileExts = StringList{
-	"bz2", "zip", "zipx", "gz", "7z", "tar", "cab", "rar", "kgb", "pea", "xz", "zz", "tgz",
+	"bz2", "zip", "zipx", "gz", "7z", "tar", "cab", "rar", "kgb", "pea", "xz", "zz", "tgz", "xpi",
 }
 var ExecutableFileExts = StringList{
 	"exe", "jar", "phar", "shar", "iso", "apk", "deb",
