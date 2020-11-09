@@ -782,7 +782,7 @@ func buildNoavatar(uid, width int) string {
 			uid -= 50
 		}
 	}
-	if !Config.DisableDefaultNoavatar && uid < 5 {
+	if !Config.DisableDefaultNoavatar && uid < 11 {
 		if width == 200 {
 			return noavatarCache200[uid]
 		} else if width == 48 {
