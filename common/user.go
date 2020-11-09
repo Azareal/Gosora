@@ -769,18 +769,16 @@ type GuestAvatar struct {
 func buildNoavatar(uid, width int) string {
 	if !Config.DisableNoavatarRange {
 		// TODO: Find a faster algorithm
-		if uid > 50000 {
-			uid -= 50000
+		l := func(max int) {
+			for uid > max {
+				uid -= max
+			}
 		}
-		if uid > 5000 {
-			uid -= 5000
-		}
-		if uid > 500 {
-			uid -= 500
-		}
-		for uid > 50 {
-			uid -= 50
-		}
+		l(50000)
+		l(5000)
+		l(500)
+		l(50)
+		l(10)
 	}
 	if !Config.DisableDefaultNoavatar && uid < 11 {
 		if width == 200 {
