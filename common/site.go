@@ -266,11 +266,11 @@ func ProcessConfig() (err error) {
 	if Config.AvatarResBase == "" {
 		Config.AvatarResBase = "/uploads/"
 	}
-	
+
 	if !Config.DisableDefaultNoavatar {
-		noavatarCache200 = make([]string, 5)
-		noavatarCache48 = make([]string, 5)
-		for i := 0; i < 5; i++ {
+		noavatarCache200 = make([]string, 10)
+		noavatarCache48 = make([]string, 10)
+		for i := 0; i < 11; i++ {
 			noavatarCache200[i] = StaticFiles.Prefix + "n" + strconv.Itoa(i) + "-" + strconv.Itoa(200) + ".png?i=0"
 			noavatarCache48[i] = StaticFiles.Prefix + "n" + strconv.Itoa(i) + "-" + strconv.Itoa(48) + ".png?i=0"
 		}

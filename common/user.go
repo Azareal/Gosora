@@ -235,8 +235,8 @@ func (u *User) CacheRemove() {
 	TopicListThaw.Thaw()
 }
 
-func (u *User) Ban(duration time.Duration, issuedBy int) error {
-	return u.ScheduleGroupUpdate(BanGroup, issuedBy, duration)
+func (u *User) Ban(dur time.Duration, issuedBy int) error {
+	return u.ScheduleGroupUpdate(BanGroup, issuedBy, dur)
 }
 
 func (u *User) Unban() error {
@@ -244,30 +244,30 @@ func (u *User) Unban() error {
 }
 
 func (u *User) deleteScheduleGroupTx(tx *sql.Tx) error {
-	deleteScheduleGroupStmt, err := qgen.Builder.SimpleDeleteTx(tx, "users_groups_scheduler", "uid=?")
-	if err != nil {
-		return err
+	deleteScheduleGroupStmt, e := qgen.Builder.SimpleDeleteTx(tx, "users_groups_scheduler", "uid=?")
+	if e != nil {
+		return e
 	}
-	_, err = deleteScheduleGroupStmt.Exec(u.ID)
-	return err
+	_, e = deleteScheduleGroupStmt.Exec(u.ID)
+	return e
 }
 
 func (u *User) setTempGroupTx(tx *sql.Tx, tempGroup int) error {
-	setTempGroupStmt, err := qgen.Builder.SimpleUpdateTx(tx, "users", "temp_group=?", "uid=?")
-	if err != nil {
-		return err
+	setTempGroupStmt, e := qgen.Builder.SimpleUpdateTx(tx, "users", "temp_group=?", "uid=?")
+	if e != nil {
+		return e
 	}
-	_, err = setTempGroupStmt.Exec(tempGroup, u.ID)
-	return err
+	_, e = setTempGroupStmt.Exec(tempGroup, u.ID)
+	return e
 }
 
 // Make this more stateless?
-func (u *User) ScheduleGroupUpdate(gid, issuedBy int, duration time.Duration) error {
+func (u *User) ScheduleGroupUpdate(gid, issuedBy int, dur time.Duration) error {
 	var temp bool
-	if duration.Nanoseconds() != 0 {
+	if dur.Nanoseconds() != 0 {
 		temp = true
 	}
-	revertAt := time.Now().Add(duration)
+	revertAt := time.Now().Add(dur)
 
 	tx, err := qgen.Builder.Begin()
 	if err != nil {
@@ -300,46 +300,46 @@ func (u *User) ScheduleGroupUpdate(gid, issuedBy int, duration time.Duration) er
 }
 
 func (u *User) RevertGroupUpdate() error {
-	tx, err := qgen.Builder.Begin()
-	if err != nil {
-		return err
+	tx, e := qgen.Builder.Begin()
+	if e != nil {
+		return e
 	}
 	defer tx.Rollback()
 
-	err = u.deleteScheduleGroupTx(tx)
-	if err != nil {
-		return err
+	e = u.deleteScheduleGroupTx(tx)
+	if e != nil {
+		return e
 	}
 
-	err = u.setTempGroupTx(tx, 0)
-	if err != nil {
-		return err
+	e = u.setTempGroupTx(tx, 0)
+	if e != nil {
+		return e
 	}
-	err = tx.Commit()
+	e = tx.Commit()
 
 	u.CacheRemove()
-	return err
+	return e
 }
 
 // TODO: Use a transaction here
 // ? - Add a Deactivate method? Not really needed, if someone's been bad you could do a ban, I guess it might be useful, if someone says that email x isn't actually owned by the user in question?
-func (u *User) Activate() (err error) {
-	_, err = userStmts.activate.Exec(u.ID)
-	if err != nil {
-		return err
+func (u *User) Activate() (e error) {
+	_, e = userStmts.activate.Exec(u.ID)
+	if e != nil {
+		return e
 	}
-	_, err = userStmts.changeGroup.Exec(Config.DefaultGroup, u.ID)
+	_, e = userStmts.changeGroup.Exec(Config.DefaultGroup, u.ID)
 	u.CacheRemove()
-	return err
+	return e
 }
 
 // TODO: Write tests for this
 // TODO: Delete this user's content too?
 // TODO: Expose this to the admin?
 func (u *User) Delete() error {
-	_, err := userStmts.delete.Exec(u.ID)
-	if err != nil {
-		return err
+	_, e := userStmts.delete.Exec(u.ID)
+	if e != nil {
+		return e
 	}
 	u.CacheRemove()
 	return nil
@@ -514,18 +514,18 @@ func (u *User) DeletePosts() error {
 	return rows.Err()
 }
 
-func (u *User) bindStmt(stmt *sql.Stmt, params ...interface{}) (err error) {
+func (u *User) bindStmt(stmt *sql.Stmt, params ...interface{}) (e error) {
 	params = append(params, u.ID)
-	_, err = stmt.Exec(params...)
+	_, e = stmt.Exec(params...)
 	u.CacheRemove()
-	return err
+	return e
 }
 
-func (u *User) ChangeName(name string) (err error) {
+func (u *User) ChangeName(name string) error {
 	return u.bindStmt(userStmts.setName, name)
 }
 
-func (u *User) ChangeAvatar(avatar string) (err error) {
+func (u *User) ChangeAvatar(avatar string) error {
 	return u.bindStmt(userStmts.setAvatar, avatar)
 }
 
@@ -546,7 +546,7 @@ func (u *User) ScheduleAvatarResize() (err error) {
 	return nil
 }
 
-func (u *User) ChangeGroup(group int) (err error) {
+func (u *User) ChangeGroup(group int) error {
 	return u.bindStmt(userStmts.changeGroup, group)
 }
 
@@ -623,9 +623,9 @@ func (u *User) IncreasePostStats(wcount int, topic bool) (err error) {
 }
 
 func (u *User) countf(stmt *sql.Stmt) (count int) {
-	err := stmt.QueryRow().Scan(&count)
-	if err != nil {
-		LogError(err)
+	e := stmt.QueryRow().Scan(&count)
+	if e != nil {
+		LogError(e)
 	}
 	return count
 }
@@ -684,8 +684,8 @@ func (u *User) DecreasePostStats(wcount int, topic bool) (err error) {
 	return err
 }
 
-func (u *User) ResetPostStats() (err error) {
-	_, err = userStmts.resetStats.Exec(u.ID)
+func (u *User) ResetPostStats() error {
+	_, err := userStmts.resetStats.Exec(u.ID)
 	u.CacheRemove()
 	return err
 }
@@ -805,10 +805,10 @@ func BuildAvatar(uid int, avatar string) (normalAvatar, microAvatar string) {
 	}
 	if avatar[0] == '.' {
 		if avatar[1] == '.' {
-			normalAvatar = Config.AvatarResBase+"avatar_" + strconv.Itoa(uid) + "_tmp" + avatar[1:]
+			normalAvatar = Config.AvatarResBase + "avatar_" + strconv.Itoa(uid) + "_tmp" + avatar[1:]
 			return normalAvatar, normalAvatar
 		}
-		normalAvatar = Config.AvatarResBase+"avatar_" + strconv.Itoa(uid) + avatar
+		normalAvatar = Config.AvatarResBase + "avatar_" + strconv.Itoa(uid) + avatar
 		return normalAvatar, normalAvatar
 	}
 	return avatar, avatar
