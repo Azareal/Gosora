@@ -240,6 +240,7 @@ func (s *DefaultTopicStore) Create(fid int, name, content string, uid int, ip st
 		return 0, err
 	}
 	tid = int(lastID)
+	TopicListThaw.Thaw()
 
 	return tid, Forums.AddTopic(tid, uid, fid)
 }
