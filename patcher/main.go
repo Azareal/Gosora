@@ -12,7 +12,7 @@ import (
 	"strconv"
 
 	c "github.com/Azareal/Gosora/common"
-	"github.com/Azareal/Gosora/query_gen"
+	qgen "github.com/Azareal/Gosora/query_gen"
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -27,7 +27,7 @@ func main() {
 
 	// Capture panics instead of closing the window at a superhuman speed before the user can read the message on Windows
 	defer func() {
-		if r := recover() r != nil {
+		if r := recover(); r != nil {
 			fmt.Println(r)
 			debug.PrintStack()
 			pressAnyKey(scanner)
@@ -129,10 +129,10 @@ func patcher(scanner *bufio.Scanner) error {
 		}
 		err := patch(scanner)
 		if err != nil {
-			fmt.Println("Failed to apply patch "+strconv.Itoa(index+1))
+			fmt.Println("Failed to apply patch " + strconv.Itoa(index+1))
 			return err
 		}
-		fmt.Println("Applied patch "+strconv.Itoa(index+1))
+		fmt.Println("Applied patch " + strconv.Itoa(index+1))
 		patched++
 	}
 
