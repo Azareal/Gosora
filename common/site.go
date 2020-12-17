@@ -183,6 +183,11 @@ func LoadConfig() error {
 var noavatarCache200 []string
 var noavatarCache48 []string
 
+/*var noavatarCache200Jpg []string
+var noavatarCache48Jpg []string
+var noavatarCache200Avif []string
+var noavatarCache48Avif []string*/
+
 func ProcessConfig() (err error) {
 	// Strip these unnecessary bits, if we find them.
 	Site.URL = strings.TrimPrefix(Site.URL, "http://")
@@ -268,11 +273,22 @@ func ProcessConfig() (err error) {
 	}
 
 	if !Config.DisableDefaultNoavatar {
-		noavatarCache200 = make([]string, 10)
-		noavatarCache48 = make([]string, 10)
-		for i := 0; i < 11; i++ {
+		cap := 11
+		noavatarCache200 = make([]string, cap)
+		noavatarCache48 = make([]string, cap)
+		/*noavatarCache200Jpg = make([]string, cap)
+		noavatarCache48Jpg = make([]string, cap)
+		noavatarCache200Avif = make([]string, cap)
+		noavatarCache48Avif = make([]string, cap)*/
+		for i := 0; i < cap; i++ {
 			noavatarCache200[i] = StaticFiles.Prefix + "n" + strconv.Itoa(i) + "-" + strconv.Itoa(200) + ".png?i=0"
 			noavatarCache48[i] = StaticFiles.Prefix + "n" + strconv.Itoa(i) + "-" + strconv.Itoa(48) + ".png?i=0"
+
+			/*noavatarCache200Jpg[i] = StaticFiles.Prefix + "n" + strconv.Itoa(i) + "-" + strconv.Itoa(200) + ".jpg?i=0"
+			noavatarCache48Jpg[i] = StaticFiles.Prefix + "n" + strconv.Itoa(i) + "-" + strconv.Itoa(48) + ".jpg?i=0"
+
+			noavatarCache200Avif[i] = StaticFiles.Prefix + "n" + strconv.Itoa(i) + "-" + strconv.Itoa(200) + ".avif?i=0"
+			noavatarCache48Avif[i] = StaticFiles.Prefix + "n" + strconv.Itoa(i) + "-" + strconv.Itoa(48) + ".avif?i=0"*/
 		}
 	}
 	Config.Noavatar = strings.Replace(Config.Noavatar, "{site_url}", Site.URL, -1)
