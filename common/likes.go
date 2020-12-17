@@ -29,27 +29,27 @@ func NewDefaultLikeStore(acc *qgen.Accumulator) (*DefaultLikeStore, error) {
 }
 
 // TODO: Write a test for this
-func (s *DefaultLikeStore) BulkExists(ids []int, sentBy int, targetType string) (eids []int, err error) {
+func (s *DefaultLikeStore) BulkExists(ids []int, sentBy int, targetType string) (eids []int, e error) {
 	if len(ids) == 0 {
 		return nil, nil
 	}
 	var rows *sql.Rows
 	if len(ids) == 1 {
-		rows, err = s.singleExists.Query(sentBy, targetType, ids[0])
+		rows, e = s.singleExists.Query(sentBy, targetType, ids[0])
 	} else {
-		rows, err = qgen.NewAcc().Select("likes").Columns("targetItem").Where("sentBy=? AND targetType=?").In("targetItem", ids).Query(sentBy, targetType)
+		rows, e = qgen.NewAcc().Select("likes").Columns("targetItem").Where("sentBy=? AND targetType=?").In("targetItem", ids).Query(sentBy, targetType)
 	}
-	if err == sql.ErrNoRows {
+	if e == sql.ErrNoRows {
 		return nil, nil
-	} else if err != nil {
-		return nil, err
+	} else if e != nil {
+		return nil, e
 	}
 	defer rows.Close()
 
 	var id int
 	for rows.Next() {
-		if err := rows.Scan(&id); err != nil {
-			return nil, err
+		if e := rows.Scan(&id); e != nil {
+			return nil, e
 		}
 		eids = append(eids, id)
 	}
@@ -64,9 +64,9 @@ func (s *DefaultLikeStore) Delete(targetID int, targetType string) error {
 // TODO: Write a test for this
 // Count returns the total number of likes globally
 func (s *DefaultLikeStore) Count() (count int) {
-	err := s.count.QueryRow().Scan(&count)
-	if err != nil {
-		LogError(err)
+	e := s.count.QueryRow().Scan(&count)
+	if e != nil {
+		LogError(e)
 	}
 	return count
 }
