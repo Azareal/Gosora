@@ -1,10 +1,10 @@
 package common
 
 import (
-	//"log"
 	"database/sql"
 	"strconv"
 	"sync"
+	"time"
 
 	qgen "github.com/Azareal/Gosora/query_gen"
 )
@@ -14,6 +14,7 @@ var TopicList TopicListInt
 const (
 	TopicListDefault = iota
 	TopicListMostViewed
+	TopicListWeekViews
 )
 
 type TopicListHolder struct {
@@ -256,13 +257,28 @@ func (tList *DefaultTopicList) Tick() error {
 		}
 	}
 
+	// TODO: Avoid rebuilding the entire list on every tick
 	fList := make(map[int]*ForumTopicListHolder)
 	for _, f := range fshort {
-		topicList, pagi, err := tList.GetListByForum(f, 1, 0)
+		topicList, pagi := []*TopicsRow{}, Paginator{}
+		if f.TopicCount == 0 {
+			page := 1
+			_, page, lastPage := PageOffset(f.TopicCount, page, Config.ItemsPerPage)
+			pageList := Paginate(page, lastPage, 5)
+			pagi = Paginator{pageList, page, lastPage}
+		} else {
+			topicList, pagi, err = tList.getListByForum(f, 1, 0)
+			if err != nil {
+				return err
+			}
+		}
+		fList[f.ID] = &ForumTopicListHolder{topicList, pagi}
+
+		/*topicList, pagi, err := tList.GetListByForum(f, 1, 0)
 		if err != nil {
 			return err
 		}
-		fList[f.ID] = &ForumTopicListHolder{topicList, pagi}
+		fList[f.ID] = &ForumTopicListHolder{topicList, pagi}*/
 	}
 
 	tList.forumLock.Lock()
@@ -274,6 +290,48 @@ func (tList *DefaultTopicList) Tick() error {
 
 	return nil
 }
+
+/*var reloadForumMutex sync.Mutex
+
+// TODO: Avoid firing this multiple times per sec tick
+// TODO: Shard the forum topic list map
+func (tList *DefaultTopicList) ReloadForum(id int) error {
+	reloadForumMutex.Lock()
+	defer reloadForumMutex.Unlock()
+
+	forum, err := Forums.Get(id)
+	if err != nil {
+		return err
+	}
+
+	ofList := make(map[int]*ForumTopicListHolder)
+	fList := make(map[int]*ForumTopicListHolder)
+	tList.forumLock.Lock()
+	ofList = tList.forums
+	for id, f := range ofList {
+		fList[id] = f
+	}
+	tList.forumLock.Unlock()
+
+	topicList, pagi := []*TopicsRow{}, Paginator{}
+	if forum.TopicCount == 0 {
+		page := 1
+		_, page, lastPage := PageOffset(forum.TopicCount, page, Config.ItemsPerPage)
+		pageList := Paginate(page, lastPage, 5)
+		pagi = Paginator{pageList, page, lastPage}
+	} else {
+		topicList, pagi, err = tList.getListByForum(forum, 1, 0)
+		if err != nil {
+			return err
+		}
+	}
+	fList[forum.ID] = &ForumTopicListHolder{topicList, pagi}
+
+	tList.forumLock.Lock()
+	tList.forums = fList
+	tList.forumLock.Unlock()
+	return nil
+}*/
 
 // TODO: Add Topics() method to *Forum?
 // TODO: Implement orderby
@@ -296,7 +354,10 @@ func (tList *DefaultTopicList) GetListByForum(f *Forum, page, orderby int) (topi
 			return h.List, h.Paginator, nil
 		}
 	}
+	return tList.getListByForum(f, page, orderby)
+}
 
+func (tList *DefaultTopicList) getListByForum(f *Forum, page, orderby int) (topicList []*TopicsRow, pagi Paginator, err error) {
 	// TODO: Does forum.TopicCount take the deleted items into consideration for guests? We don't have soft-delete yet, only hard-delete
 	offset, page, lastPage := PageOffset(f.TopicCount, page, Config.ItemsPerPage)
 
@@ -501,28 +562,56 @@ func (tList *DefaultTopicList) getList(page, orderby, topicCount int, argList []
 	}
 	//log.Printf("argList: %+v\n",argList)
 	//log.Printf("qlist: %+v\n",qlist)
-	var orderq string
+	var cols, orderq string
 	var stmt *sql.Stmt
-	if orderby == TopicListMostViewed {
+	switch orderby {
+	case TopicListWeekViews:
+		tList.qLock.RLock()
+		stmt = tList.qcounts[len(argList)-2]
+		tList.qLock.RUnlock()
+		if stmt == nil {
+			orderq = "weekViews DESC,lastReplyAt DESC,createdBy DESC"
+			now := time.Now()
+			_, week := now.ISOWeek()
+			day := int(now.Weekday()) + 1
+			if week%2 == 0 { // is even?
+				cols = "tid,title,content,createdBy,is_closed,sticky,createdAt,lastReplyAt,lastReplyBy,lastReplyID,parentID,views,postCount,likeCount,attachCount,poll,data,(weekEvenViews+((weekOddViews/7)*" + strconv.Itoa(day) + ")) AS weekViews"
+			} else {
+				cols = "tid,title,content,createdBy,is_closed,sticky,createdAt,lastReplyAt,lastReplyBy,lastReplyID,parentID,views,postCount,likeCount,attachCount,poll,data,(weekOddViews+((weekEvenViews/7)*" + strconv.Itoa(day) + ")) AS weekViews"
+			}
+			topicCount, err = ArgQToWeekViewTopicCount(argList, qlist)
+			if err != nil {
+				return nil, Paginator{nil, 1, 1}, err
+			}
+			acc := qgen.NewAcc()
+			stmt = acc.Select("topics").Columns(cols).Where("parentID IN(" + qlist + ") AND (weekEvenViews!=0 OR weekOddViews!=0)").Orderby(orderq).Limit("?,?").ComplexPrepare()
+			if e := acc.FirstError(); e != nil {
+				return nil, Paginator{nil, 1, 1}, e
+			}
+			defer stmt.Close()
+		}
+	case TopicListMostViewed:
 		tList.qLock.RLock()
 		stmt = tList.qcounts[len(argList)-2]
 		tList.qLock.RUnlock()
 		if stmt == nil {
 			orderq = "views DESC,lastReplyAt DESC,createdBy DESC"
+			cols = "tid,title,content,createdBy,is_closed,sticky,createdAt,lastReplyAt,lastReplyBy,lastReplyID,parentID,views,postCount,likeCount,attachCount,poll,data"
 		}
-	} else {
+	default:
 		tList.qLock2.RLock()
 		stmt = tList.qcounts2[len(argList)-2]
 		tList.qLock2.RUnlock()
 		if stmt == nil {
 			orderq = "sticky DESC,lastReplyAt DESC,createdBy DESC"
+			cols = "tid,title,content,createdBy,is_closed,sticky,createdAt,lastReplyAt,lastReplyBy,lastReplyID,parentID,views,postCount,likeCount,attachCount,poll,data"
 		}
 	}
 	offset, page, lastPage := PageOffset(topicCount, page, Config.ItemsPerPage)
 
 	// TODO: Prepare common qlist lengths to speed this up in common cases, prepared statements are prepared lazily anyway, so it probably doesn't matter if we do ten or so
 	if stmt == nil {
-		stmt, err = qgen.Builder.SimpleSelect("topics", "tid,title,content,createdBy,is_closed,sticky,createdAt,lastReplyAt,lastReplyBy,lastReplyID,parentID,views,postCount,likeCount,attachCount,poll,data", "parentID IN("+qlist+")", orderq, "?,?")
+		stmt, err = qgen.Builder.SimpleSelect("topics", cols, "parentID IN("+qlist+")", orderq, "?,?")
 		if err != nil {
 			return nil, Paginator{nil, 1, 1}, err
 		}
@@ -538,18 +627,20 @@ func (tList *DefaultTopicList) getList(page, orderby, topicCount int, argList []
 	}
 	defer rows.Close()
 
-	rcache := Rstore.GetCache()
-	rcap := rcache.GetCapacity()
-	rlen := rcache.Length()
+	rc := Rstore.GetCache()
+	rcap := rc.GetCapacity()
+	rlen := rc.Length()
 	tc := Topics.GetCache()
 	reqUserList := make(map[int]bool)
 	for rows.Next() {
 		// TODO: Embed Topic structs in TopicsRow to make it easier for us to reuse this work in the topic cache
 		t := TopicsRow{}
-		err := rows.Scan(&t.ID, &t.Title, &t.Content, &t.CreatedBy, &t.IsClosed, &t.Sticky, &t.CreatedAt, &t.LastReplyAt, &t.LastReplyBy, &t.LastReplyID, &t.ParentID, &t.ViewCount, &t.PostCount, &t.LikeCount, &t.AttachCount, &t.Poll, &t.Data)
+		//var weekViews []uint8
+		err := rows.Scan(&t.ID, &t.Title, &t.Content, &t.CreatedBy, &t.IsClosed, &t.Sticky, &t.CreatedAt, &t.LastReplyAt, &t.LastReplyBy, &t.LastReplyID, &t.ParentID, &t.ViewCount, &t.PostCount, &t.LikeCount, &t.AttachCount, &t.Poll, &t.Data /*, &weekViews*/)
 		if err != nil {
 			return nil, Paginator{nil, 1, 1}, err
 		}
+		//log.Printf("weekViews: %+v\n", weekViews)
 
 		t.Link = BuildTopicURL(NameToSlug(t.Title), t.ID)
 		// TODO: Pass forum to something like topicItem.Forum and use that instead of these two properties? Could be more flexible.
@@ -662,6 +753,21 @@ func ForumListToArgQ(forums []Forum) (argList []interface{}, qlist string) {
 // TODO: Check the TopicCount field on the forums instead? Make sure it's in sync first.
 func ArgQToTopicCount(argList []interface{}, qlist string) (topicCount int, err error) {
 	topicCountStmt, err := qgen.Builder.SimpleCount("topics", "parentID IN("+qlist+")", "")
+	if err != nil {
+		return 0, err
+	}
+	defer topicCountStmt.Close()
+
+	err = topicCountStmt.QueryRow(argList...).Scan(&topicCount)
+	if err != nil && err != ErrNoRows {
+		return 0, err
+	}
+	return topicCount, err
+}
+
+// Internal. Don't rely on it.
+func ArgQToWeekViewTopicCount(argList []interface{}, qlist string) (topicCount int, err error) {
+	topicCountStmt, err := qgen.Builder.SimpleCount("topics", "parentID IN("+qlist+") AND (weekEvenViews!=0 OR weekOddViews!=0)", "")
 	if err != nil {
 		return 0, err
 	}
