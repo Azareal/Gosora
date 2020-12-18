@@ -219,6 +219,11 @@ func (b *AccSelectBuilder) Prepare() *sql.Stmt {
 	return b.build.SimpleSelect(b.table, b.columns, b.where, b.orderby, b.limit)
 }
 
+func (b *AccSelectBuilder) ComplexPrepare() *sql.Stmt {
+	selectBuilder := b.build.GetAdapter().Builder().Select().FromAcc(b)
+	return b.build.prepare(b.build.GetAdapter().ComplexSelect(selectBuilder))
+}
+
 func (b *AccSelectBuilder) query() (string, error) {
 	// TODO: Phase out the procedural API and use the adapter's OO API? The OO API might need a bit more work before we do that and it needs to be rolled out to MSSQL.
 	if b.dateCutoff != nil || b.inChain != nil {
