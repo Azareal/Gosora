@@ -17,7 +17,7 @@ var ErrAlreadyReported = errors.New("This item has already been reported")
 
 // The report system mostly wraps around the topic system for simplicty
 type ReportStore interface {
-	Create(title, content string, user *User, itemType string, itemID int) (int, error)
+	Create(title, content string, u *User, itemType string, itemID int) (int, error)
 }
 
 type DefaultReportStore struct {

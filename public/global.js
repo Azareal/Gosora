@@ -665,6 +665,8 @@ function mainInit(){
 				history.pushState(obj,obj.Title,obj.Url);
 				rebuildPaginator(d.LastPage);
 				rebindPaginator();
+				$(".link_select .link_option .link_recent").attr("href",url+q);
+				$(".link_select .link_option .link_most_viewed").attr("href",url+q);
 		}).catch(e => {
 			log("Unable to get script "+url+q+"&js=1",e);
 			console.trace();

@@ -10,7 +10,7 @@ import (
 	qgen "github.com/Azareal/Gosora/query_gen"
 )
 
-func PollVote(w http.ResponseWriter, r *http.Request, user *c.User, sPollID string) c.RouteError {
+func PollVote(w http.ResponseWriter, r *http.Request, u *c.User, sPollID string) c.RouteError {
 	pollID, err := strconv.Atoi(sPollID)
 	if err != nil {
 		return c.PreError("The provided PollID is not a valid number.", w, r)
@@ -44,19 +44,19 @@ func PollVote(w http.ResponseWriter, r *http.Request, user *c.User, sPollID stri
 	}
 
 	// TODO: Add hooks to make use of headerLite
-	_, ferr := c.SimpleForumUserCheck(w, r, user, topic.ParentID)
+	_, ferr := c.SimpleForumUserCheck(w, r, u, topic.ParentID)
 	if ferr != nil {
 		return ferr
 	}
-	if !user.Perms.ViewTopic {
-		return c.NoPermissions(w, r, user)
+	if !u.Perms.ViewTopic {
+		return c.NoPermissions(w, r, u)
 	}
 
-	optionIndex, err := strconv.Atoi(r.PostFormValue("poll_option_input"))
+	optIndex, err := strconv.Atoi(r.PostFormValue("poll_option_input"))
 	if err != nil {
-		return c.LocalError("Malformed input", w, r, user)
+		return c.LocalError("Malformed input", w, r, u)
 	}
-	err = poll.CastVote(optionIndex, user.ID, user.GetIP())
+	err = poll.CastVote(optIndex, u.ID, u.GetIP())
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -65,7 +65,7 @@ func PollVote(w http.ResponseWriter, r *http.Request, user *c.User, sPollID stri
 	return nil
 }
 
-func PollResults(w http.ResponseWriter, r *http.Request, user *c.User, sPollID string) c.RouteError {
+func PollResults(w http.ResponseWriter, r *http.Request, u *c.User, sPollID string) c.RouteError {
 	//log.Print("in PollResults")
 	pollID, err := strconv.Atoi(sPollID)
 	if err != nil {
@@ -85,24 +85,23 @@ func PollResults(w http.ResponseWriter, r *http.Request, user *c.User, sPollID s
 	}
 	defer rows.Close()
 
-	optionList := ""
+	optList := ""
 	var votes int
 	for rows.Next() {
 		err := rows.Scan(&votes)
 		if err != nil {
 			return c.InternalError(err, w, r)
 		}
-		optionList += strconv.Itoa(votes) + ","
+		optList += strconv.Itoa(votes) + ","
 	}
-	err = rows.Err()
-	if err != nil {
+	if err = rows.Err(); err != nil {
 		return c.InternalError(err, w, r)
 	}
 
 	// TODO: Implement a version of this which doesn't rely so much on sequential order
-	if len(optionList) > 0 {
-		optionList = optionList[:len(optionList)-1]
+	if len(optList) > 0 {
+		optList = optList[:len(optList)-1]
 	}
-	w.Write([]byte("[" + optionList + "]"))
+	w.Write([]byte("[" + optList + "]"))
 	return nil
 }

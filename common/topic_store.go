@@ -240,7 +240,7 @@ func (s *DefaultTopicStore) Create(fid int, name, content string, uid int, ip st
 		return 0, err
 	}
 	tid = int(lastID)
-	TopicListThaw.Thaw()
+	//TopicListThaw.Thaw() // redundant
 
 	return tid, Forums.AddTopic(tid, uid, fid)
 }

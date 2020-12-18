@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	c "github.com/Azareal/Gosora/common"
-	"github.com/Azareal/Gosora/common/phrases"
+	p "github.com/Azareal/Gosora/common/phrases"
 )
 
 // A blank list to fill out that parameter in Page for routes which don't use it
@@ -43,12 +43,12 @@ func renderTemplate(tmplName string, w http.ResponseWriter, r *http.Request, h *
 	return nil
 }
 
-func buildBasePage(w http.ResponseWriter, r *http.Request, user *c.User, titlePhrase, zone string) (*c.BasePanelPage, c.RouteError) {
-	header, stats, ferr := c.PanelUserCheck(w, r, user)
+func buildBasePage(w http.ResponseWriter, r *http.Request, u *c.User, titlePhrase, zone string) (*c.BasePanelPage, c.RouteError) {
+	h, stats, ferr := c.PanelUserCheck(w, r, u)
 	if ferr != nil {
 		return nil, ferr
 	}
-	header.Title = phrases.GetTitlePhrase("panel_" + titlePhrase)
+	h.Title = p.GetTitlePhrase("panel_" + titlePhrase)
 
-	return &c.BasePanelPage{header, stats, zone, c.ReportForumID}, nil
+	return &c.BasePanelPage{h, stats, zone, c.ReportForumID}, nil
 }
