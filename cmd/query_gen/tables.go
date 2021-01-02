@@ -321,9 +321,12 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 			tC{"attachCount", "int", 0, false, false, "0"},
 			tC{"words", "int", 0, false, false, "0"},
 			tC{"views", "int", 0, false, false, "0"},
-			//tC{"dailyViews", "int", 0, false, false, "0"},
-			//tC{"weeklyViews", "int", 0, false, false, "0"},
-			//tC{"monthlyViews", "int", 0, false, false, "0"},
+			//tC{"dayViews", "int", 0, false, false, "0"},
+			tC{"weekEvenViews", "int", 0, false, false, "0"},
+			tC{"weekOddViews", "int", 0, false, false, "0"},
+			///tC{"weekViews", "int", 0, false, false, "0"},
+			///tC{"lastWeekViews", "int", 0, false, false, "0"},
+			//tC{"monthViews", "int", 0, false, false, "0"},
 			// ? - A little hacky, maybe we could do something less likely to bite us with huge numbers of topics?
 			// TODO: Add an index for this?
 			//tC{"lastMonth", "datetime", 0, false, false, ""},
