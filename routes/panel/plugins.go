@@ -17,12 +17,12 @@ func Plugins(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
 		return c.NoPermissions(w, r, u)
 	}
 
-	var pluginList []interface{}
-	for _, plugin := range c.Plugins {
-		pluginList = append(pluginList, plugin)
+	var plList []interface{}
+	for _, pl := range c.Plugins {
+		plList = append(plList, pl)
 	}
 
-	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "", "", "panel_plugins", c.PanelPage{basePage, pluginList, nil}})
+	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "", "", "panel_plugins", c.PanelPage{basePage, plList, nil}})
 }
 
 // TODO: Abstract more of the plugin activation / installation / deactivation logic, so we can test all that more reliably and easily

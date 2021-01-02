@@ -618,7 +618,9 @@ h2 {
 .topic_inner_left br,
 .topic_right_inside br,
 .topic_inner_right,
+.topic_list:not(.topic_list_weekviews) .topic_middle .weekViewCount,
 .topic_list:not(.topic_list_mostviewed) .topic_middle .viewCount,
+.topic_list_weekviews .topic_middle .likeCount,
 .topic_list_mostviewed .topic_middle .likeCount {
 	display: none;
 }

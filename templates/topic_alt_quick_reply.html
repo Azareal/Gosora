@@ -5,7 +5,7 @@
 			<a href="{{.CurrentUser.Link}}"class="the_name"rel="author">{{.CurrentUser.Name}}</a>
 			<div class="tag_block">
 				<div class="tag_pre"></div>
-				{{if .CurrentUser.Tag}}<div class="post_tag">{{.CurrentUser.Tag}}</div>{{else}}<div class="post_tag post_level">{{level .CurrentUser.Level}}</div>{{end}}
+				{{if .CurrentUser.Tag}}<div class="post_tag">{{.CurrentUser.Tag}}{{else}}<div class="post_tag post_level">{{level .CurrentUser.Level}}{{end}}</div>
 				<div class="tag_post"></div>
 			</div>
 		</div>

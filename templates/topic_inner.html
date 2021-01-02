@@ -56,7 +56,7 @@
 		{{if .CurrentUser.Perms.CloseTopic}}{{if .Topic.IsClosed}}<a class="mod_button" href='/topic/unlock/submit/{{.Topic.ID}}?s={{.CurrentUser.Session}}'title="{{lang "topic.unlock_tooltip"}}" aria-label="{{lang "topic.unlock_aria"}}"><button class="username unlock_label"></button></a>{{else}}<a href='/topic/lock/submit/{{.Topic.ID}}?s={{.CurrentUser.Session}}' class="mod_button"title="{{lang "topic.lock_tooltip"}}" aria-label="{{lang "topic.lock_aria"}}"><button class="username lock_label"></button></a>{{end}}{{end}}
 
 		{{if .CurrentUser.Perms.PinTopic}}{{if .Topic.Sticky}}<a class="mod_button" href='/topic/unstick/submit/{{.Topic.ID}}?s={{.CurrentUser.Session}}'title="{{lang "topic.unpin_tooltip"}}" aria-label="{{lang "topic.unpin_aria"}}"><button class="username unpin_label"></button></a>{{else}}<a href='/topic/stick/submit/{{.Topic.ID}}?s={{.CurrentUser.Session}}' class="mod_button"title="{{lang "topic.pin_tooltip"}}" aria-label="{{lang "topic.pin_aria"}}"><button class="username pin_label"></button></a>{{end}}{{end}}
-		{{if .CurrentUser.Perms.ViewIPs}}<a class="mod_button" href='/users/ips/?ip={{.Topic.IP}}' title="{{lang "topic.ip_tooltip"}}" aria-label="The poster's IP is {{.Topic.IP}}"><button class="username ip_label"></button></a>{{end}}
+		{{if .CurrentUser.Perms.ViewIPs}}<a class="mod_button"href='/users/ips/?ip={{.Topic.IP}}'title="{{lang "topic.ip_tooltip"}}" aria-label="The poster's IP is {{.Topic.IP}}"><button class="username ip_label"></button></a>{{end}}
 		{{end}}
 
 		<a href="/report/submit/{{.Topic.ID}}?s={{.CurrentUser.Session}}&type=topic" class="mod_button report_item"title="{{lang "topic.flag_tooltip"}}" aria-label="{{lang "topic.flag_aria"}}" rel="nofollow"><button class="username flag_label"></button></a>

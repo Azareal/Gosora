@@ -227,7 +227,7 @@ func compileCommons(c *tmpl.CTemplateSet, head, head2 *Header, forumList []Forum
 	}*/
 
 	var topicsList []TopicsRowMut
-	topic := Topic{1, "/topic/topic-title.1", "Topic Title", "The topic content.", 1, false, false, now, now, user3.ID, 1, 1, "", "::1", 1, 0, 1, 1, "classname", 0, "", nil}
+	topic := Topic{1, "/topic/topic-title.1", "Topic Title", "The topic content.", 1, false, false, now, now, user3.ID, 1, 1, "", "::1", 1, 0, 1, 1, 1, "classname", 0, "", nil}
 	topicsList = append(topicsList, TopicsRowMut{&TopicsRow{topic, 1, user2, "", 0, user3, "General", "/forum/general.2"}, false})
 	topicListPage := TopicListPage{htitle("Topic List"), topicsList, forumList, Config.DefaultForum, TopicListSort{"lastupdated", false}, []int{1}, QuickTools{false, false, false}, Paginator{[]int{1}, 1, 1}}
 	o.Add("topics", "c.TopicListPage", topicListPage)
@@ -311,7 +311,7 @@ func compileTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName string
 	t.Add("profile", "c.ProfilePage", ppage)
 
 	var topicsList []TopicsRowMut
-	topic := Topic{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, now, now, user3.ID, 1, 1, "", "::1", 1, 0, 1, 1, "classname", 0, "", nil}
+	topic := Topic{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, now, now, user3.ID, 1, 1, "", "::1", 1, 0, 1, 1, 1, "classname", 0, "", nil}
 	topicsList = append(topicsList, TopicsRowMut{&TopicsRow{topic, 0, user2, "", 0, user3, "General", "/forum/general.2"}, false})
 	topicListPage := TopicListPage{htitle("Topic List"), topicsList, forumList, Config.DefaultForum, TopicListSort{"lastupdated", false}, []int{1}, QuickTools{false, false, false}, Paginator{[]int{1}, 1, 1}}
 
@@ -375,7 +375,7 @@ func compileTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName string
 	convoListPage := ConvoListPage{header, cRows, Paginator{[]int{1}, 1, 1}}
 	t.AddStd("convos", "c.ConvoListPage", convoListPage)
 
-	basePage := &BasePanelPage{header, PanelStats{}, "dashboard", ReportForumID}
+	basePage := &BasePanelPage{header, PanelStats{}, "dashboard", ReportForumID, true}
 	t.AddStd("panel", "c.Panel", Panel{basePage, "panel_dashboard_right", "", "panel_dashboard", inter})
 	ges := []GridElement{GridElement{"", "", "", 1, "grid_istat", "", "", ""}}
 	t.AddStd("panel_dashboard", "c.DashGrids", DashGrids{ges, ges})
@@ -540,7 +540,7 @@ func compileJSTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName stri
 
 	t := TItemHold(make(map[string]TItem))
 
-	topic := Topic{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, now, now, user3.ID, 1, 1, "", "::1", 1, 0, 1, 0, "classname", 1, "", nil}
+	topic := Topic{1, "topic-title", "Topic Title", "The topic content.", 1, false, false, now, now, user3.ID, 1, 1, "", "::1", 1, 0, 1, 0, 1, "classname", 1, "", nil}
 	topicsRow := TopicsRowMut{&TopicsRow{topic, 0, user2, "", 0, user3, "General", "/forum/general.2"}, false}
 	t.AddStd("topics_topic", "c.TopicsRowMut", topicsRow)
 

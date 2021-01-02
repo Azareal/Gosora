@@ -52,7 +52,7 @@ func init() {
 	addPatch(32, patch32)
 	addPatch(33, patch33)
 	addPatch(34, patch34)
-	//addPatch(35, patch35)
+	addPatch(35, patch35)
 }
 
 func bcol(col string, val bool) qgen.DBTableColumn {
@@ -936,4 +936,12 @@ func patch34(scanner *bufio.Scanner) error {
 	}
 
 	return nil
+}
+
+func patch35(scanner *bufio.Scanner) error {
+	err := execStmt(qgen.Builder.AddColumn("topics", tC{"weekEvenViews", "int", 0, false, false, "0"}, nil))
+	if err != nil {
+		return err
+	}
+	return execStmt(qgen.Builder.AddColumn("topics", tC{"weekOddViews", "int", 0, false, false, "0"}, nil))
 }

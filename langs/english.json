@@ -658,6 +658,7 @@
 		"topic_list.changed_topics":"Click to see %d new or changed topics",
 		"topic_list.most_recent_filter":"Most Recent",
 		"topic_list.most_viewed_filter":"Most Viewed",
+		"topic_list.week_views_filter":"Week Views",
 		"topic_list.replies_suffix":"replies",
 		"topic_list.likes_suffix":"likes",
 		"topic_list.views_suffix":"views",
@@ -806,7 +807,7 @@
 
 		"error_head":"An error has occurred",
 		"footer_thingymawhatsit":"Can you please keep the powered by notice? ;)",
-		"footer_powered_by":"Powered by Gosora",
+		"footer_powered_by":"Powered by Gosora Forum Software",
 		"footer_made_with_love":"Made with love by Azareal",
 		"footer_theme_selector_aria":"Change the site's appearance",
 

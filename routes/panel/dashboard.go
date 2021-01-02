@@ -29,7 +29,7 @@ type dashStmts struct {
 // TODO: Stop hard-coding these queries
 func dashMySQLStmts() (stmts dashStmts, err error) {
 	db := qgen.Builder.GetConn()
-	prepareStmt := func(table string, ext string, dur string) *sql.Stmt {
+	prepStmt := func(table, ext, dur string) *sql.Stmt {
 		if err != nil {
 			return nil
 		}
@@ -38,11 +38,11 @@ func dashMySQLStmts() (stmts dashStmts, err error) {
 		return stmt
 	}
 
-	stmts.todaysPostCount = prepareStmt("replies", "", "day")
-	stmts.todaysTopicCount = prepareStmt("topics", "", "day")
-	stmts.todaysNewUserCount = prepareStmt("users", "", "day")
-	stmts.todaysTopicCountByForum = prepareStmt("topics", " and parentID = ?", "day")
-	stmts.weeklyTopicCountByForum = prepareStmt("topics", " and parentID = ?", "week")
+	stmts.todaysPostCount = prepStmt("replies", "", "day")
+	stmts.todaysTopicCount = prepStmt("topics", "", "day")
+	stmts.todaysNewUserCount = prepStmt("users", "", "day")
+	stmts.todaysTopicCountByForum = prepStmt("topics", " and parentID=?", "day")
+	stmts.weeklyTopicCountByForum = prepStmt("topics", " and parentID=?", "week")
 
 	return stmts, err
 }
@@ -50,7 +50,7 @@ func dashMySQLStmts() (stmts dashStmts, err error) {
 // TODO: Stop hard-coding these queries
 func dashMSSQLStmts() (stmts dashStmts, err error) {
 	db := qgen.Builder.GetConn()
-	prepareStmt := func(table string, ext string, dur string) *sql.Stmt {
+	prepStmt := func(table, ext, dur string) *sql.Stmt {
 		if err != nil {
 			return nil
 		}
@@ -59,11 +59,11 @@ func dashMSSQLStmts() (stmts dashStmts, err error) {
 		return stmt
 	}
 
-	stmts.todaysPostCount = prepareStmt("replies", "", "DAY")
-	stmts.todaysTopicCount = prepareStmt("topics", "", "DAY")
-	stmts.todaysNewUserCount = prepareStmt("users", "", "DAY")
-	stmts.todaysTopicCountByForum = prepareStmt("topics", " and parentID = ?", "DAY")
-	stmts.weeklyTopicCountByForum = prepareStmt("topics", " and parentID = ?", "WEEK")
+	stmts.todaysPostCount = prepStmt("replies", "", "DAY")
+	stmts.todaysTopicCount = prepStmt("topics", "", "DAY")
+	stmts.todaysNewUserCount = prepStmt("users", "", "DAY")
+	stmts.todaysTopicCountByForum = prepStmt("topics", " and parentID=?", "DAY")
+	stmts.weeklyTopicCountByForum = prepStmt("topics", " and parentID=?", "WEEK")
 
 	return stmts, err
 }
@@ -81,7 +81,7 @@ func Dashboard(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteErro
 	cpustr := unknown
 	var cpuColour string
 
-	lessThanSwitch := func(number int, lowerBound int, midBound int) string {
+	lessThanSwitch := func(number, lowerBound, midBound int) string {
 		switch {
 		case number < lowerBound:
 			return "stat_green"
@@ -120,7 +120,7 @@ func Dashboard(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteErro
 	runtime.ReadMemStats(&m)
 	memCount, memUnit := c.ConvertByteUnit(float64(m.Sys))
 
-	greaterThanSwitch := func(number int, lowerBound int, midBound int) string {
+	greaterThanSwitch := func(number, lowerBound, midBound int) string {
 		switch {
 		case number > midBound:
 			return "stat_green"
@@ -174,11 +174,11 @@ func Dashboard(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteErro
 	}
 
 	grid1 := []GE{}
-	addElem1 := func(id string, href string, body string, order int, class string, back string, textColour string, tooltip string) {
+	addElem1 := func(id, href, body string, order int, class, back, textColour, tooltip string) {
 		grid1 = append(grid1, GE{id, href, body, order, class, back, textColour, tooltip})
 	}
 	gridElements := []GE{}
-	addElem := func(id string, href string, body string, order int, class string, back string, textColour string, tooltip string) {
+	addElem := func(id, href, body string, order int, class, back, textColour, tooltip string) {
 		gridElements = append(gridElements, GE{id, href, body, order, class, back, textColour, tooltip})
 	}
 

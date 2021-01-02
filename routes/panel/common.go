@@ -49,6 +49,7 @@ func buildBasePage(w http.ResponseWriter, r *http.Request, u *c.User, titlePhras
 		return nil, ferr
 	}
 	h.Title = p.GetTitlePhrase("panel_" + titlePhrase)
+	debugAdmin := true
 
-	return &c.BasePanelPage{h, stats, zone, c.ReportForumID}, nil
+	return &c.BasePanelPage{h, stats, zone, c.ReportForumID, debugAdmin}, nil
 }

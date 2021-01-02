@@ -97,7 +97,12 @@
 	{{if .CurrentUser.IsSuperAdmin}}<div class="rowitem passive">
 		<a href="/panel/backups/">{{lang "panel_menu_backups"}}</a>
 	</div>{{end}}
-	{{if .CurrentUser.IsAdmin}}<div class="rowitem passive">
+	{{if .CurrentUser.IsAdmin}}
+	<div class="rowitem passive">
 		<a href="/panel/debug/">{{lang "panel_menu_debug"}}</a>
+	</div>
+	{{if .DebugAdmin}}<div class="rowitem passive">
+		<a href="/panel/debug/tasks/">{{lang "panel_menu_debug"}}</a>
 	</div>{{end}}
+	{{end}}
 </div>

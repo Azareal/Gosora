@@ -57,17 +57,17 @@ func NewDefaultPollStore(cache PollCache) (*DefaultPollStore, error) {
 		get:              acc.Select(p).Columns("parentID, parentTable, type, options, votes").Where("pollID=?").Prepare(),
 		exists:           acc.Select(p).Columns("pollID").Where("pollID=?").Prepare(),
 		createPoll:       acc.Insert(p).Columns("parentID, parentTable, type, options").Fields("?,?,?,?").Prepare(),
-		createPollOption: acc.Insert("polls_options").Columns("pollID, option, votes").Fields("?,?,0").Prepare(),
+		createPollOption: acc.Insert("polls_options").Columns("pollID,option,votes").Fields("?,?,0").Prepare(),
 		//count: acc.SimpleCount(p, "", ""),
 	}, acc.FirstError()
 }
 
 func (s *DefaultPollStore) Exists(id int) bool {
-	err := s.exists.QueryRow(id).Scan(&id)
-	if err != nil && err != ErrNoRows {
-		LogError(err)
+	e := s.exists.QueryRow(id).Scan(&id)
+	if e != nil && e != ErrNoRows {
+		LogError(e)
 	}
-	return err != ErrNoRows
+	return e != ErrNoRows
 }
 
 func (s *DefaultPollStore) Get(id int) (*Poll, error) {
@@ -198,33 +198,33 @@ func (s *DefaultPollStore) Reload(id int) error {
 }
 
 func (s *DefaultPollStore) unpackOptionsMap(rawOptions map[int]string) []PollOption {
-	options := make([]PollOption, len(rawOptions))
-	for id, option := range rawOptions {
-		options[id] = PollOption{id, option}
+	opts := make([]PollOption, len(rawOptions))
+	for id, opt := range rawOptions {
+		opts[id] = PollOption{id, opt}
 	}
-	return options
+	return opts
 }
 
 // TODO: Use a transaction for this
-func (s *DefaultPollStore) Create(parent Pollable, pollType int, pollOptions map[int]string) (id int, err error) {
+func (s *DefaultPollStore) Create(parent Pollable, pollType int, pollOptions map[int]string) (id int, e error) {
 	// TODO: Move the option names into the polls_options table and get rid of this json sludge?
-	pollOptionsTxt, err := json.Marshal(pollOptions)
-	if err != nil {
-		return 0, err
+	pollOptionsTxt, e := json.Marshal(pollOptions)
+	if e != nil {
+		return 0, e
 	}
-	res, err := s.createPoll.Exec(parent.GetID(), parent.GetTable(), pollType, pollOptionsTxt)
-	if err != nil {
-		return 0, err
+	res, e := s.createPoll.Exec(parent.GetID(), parent.GetTable(), pollType, pollOptionsTxt)
+	if e != nil {
+		return 0, e
 	}
-	lastID, err := res.LastInsertId()
-	if err != nil {
-		return 0, err
+	lastID, e := res.LastInsertId()
+	if e != nil {
+		return 0, e
 	}
 
 	for i := 0; i < len(pollOptions); i++ {
-		_, err := s.createPollOption.Exec(lastID, i)
-		if err != nil {
-			return 0, err
+		_, e := s.createPollOption.Exec(lastID, i)
+		if e != nil {
+			return 0, e
 		}
 	}
 

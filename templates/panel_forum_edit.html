@@ -2,7 +2,7 @@
 	<div class="rowitem"><h1>{{.Name}}{{lang "panel_forum_head_suffix"}}</h1></div>
 </div>
 <div id="panel_forum"class="colstack_item the_form">
-	<form action="/panel/forums/edit/submit/{{.ID}}?s={{.CurrentUser.Session}}" method="post">
+	<form action="/panel/forums/edit/submit/{{.ID}}?s={{.CurrentUser.Session}}"method="post">
 	<div class="formrow">
 		<div class="formitem formlabel"><a>{{lang "panel_forum_name"}}</a></div>
 		<div class="formitem"><input name="forum_name"type="text"value="{{.Name}}"placeholder="{{lang "panel_forum_name_placeholder"}}"></div>

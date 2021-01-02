@@ -370,13 +370,12 @@ func (tList *DefaultTopicList) getListByForum(f *Forum, page, orderby int) (topi
 	// TODO: Use something other than TopicsRow as we don't need to store the forum name and link on each and every topic item?
 	reqUserList := make(map[int]bool)
 	for rows.Next() {
-		t := TopicsRow{Topic: Topic{ID: 0}}
+		t := TopicsRow{Topic: Topic{ParentID: f.ID}}
 		err := rows.Scan(&t.ID, &t.Title, &t.Content, &t.CreatedBy, &t.IsClosed, &t.Sticky, &t.CreatedAt, &t.LastReplyAt, &t.LastReplyBy, &t.LastReplyID, &t.ViewCount, &t.PostCount, &t.LikeCount)
 		if err != nil {
 			return nil, Paginator{nil, 1, 1}, err
 		}
 
-		t.ParentID = f.ID
 		t.Link = BuildTopicURL(NameToSlug(t.Title), t.ID)
 		// TODO: Create a specialised function with a bit less overhead for getting the last page for a post count
 		_, _, lastPage := PageOffset(t.PostCount, 1, Config.ItemsPerPage)
@@ -575,9 +574,9 @@ func (tList *DefaultTopicList) getList(page, orderby, topicCount int, argList []
 			_, week := now.ISOWeek()
 			day := int(now.Weekday()) + 1
 			if week%2 == 0 { // is even?
-				cols = "tid,title,content,createdBy,is_closed,sticky,createdAt,lastReplyAt,lastReplyBy,lastReplyID,parentID,views,postCount,likeCount,attachCount,poll,data,(weekEvenViews+((weekOddViews/7)*" + strconv.Itoa(day) + ")) AS weekViews"
+				cols = "tid,title,content,createdBy,is_closed,sticky,createdAt,lastReplyAt,lastReplyBy,lastReplyID,parentID,views,postCount,likeCount,attachCount,poll,data,FLOOR(weekEvenViews+((weekOddViews/7)*" + strconv.Itoa(day) + ")) AS weekViews"
 			} else {
-				cols = "tid,title,content,createdBy,is_closed,sticky,createdAt,lastReplyAt,lastReplyBy,lastReplyID,parentID,views,postCount,likeCount,attachCount,poll,data,(weekOddViews+((weekEvenViews/7)*" + strconv.Itoa(day) + ")) AS weekViews"
+				cols = "tid,title,content,createdBy,is_closed,sticky,createdAt,lastReplyAt,lastReplyBy,lastReplyID,parentID,views,postCount,likeCount,attachCount,poll,data,FLOOR(weekOddViews+((weekEvenViews/7)*" + strconv.Itoa(day) + ")) AS weekViews"
 			}
 			topicCount, err = ArgQToWeekViewTopicCount(argList, qlist)
 			if err != nil {
@@ -596,7 +595,7 @@ func (tList *DefaultTopicList) getList(page, orderby, topicCount int, argList []
 		tList.qLock.RUnlock()
 		if stmt == nil {
 			orderq = "views DESC,lastReplyAt DESC,createdBy DESC"
-			cols = "tid,title,content,createdBy,is_closed,sticky,createdAt,lastReplyAt,lastReplyBy,lastReplyID,parentID,views,postCount,likeCount,attachCount,poll,data"
+			cols = "tid,title,content,createdBy,is_closed,sticky,createdAt,lastReplyAt,lastReplyBy,lastReplyID,parentID,views,postCount,likeCount,attachCount,poll,data,weekEvenViews"
 		}
 	default:
 		tList.qLock2.RLock()
@@ -604,7 +603,7 @@ func (tList *DefaultTopicList) getList(page, orderby, topicCount int, argList []
 		tList.qLock2.RUnlock()
 		if stmt == nil {
 			orderq = "sticky DESC,lastReplyAt DESC,createdBy DESC"
-			cols = "tid,title,content,createdBy,is_closed,sticky,createdAt,lastReplyAt,lastReplyBy,lastReplyID,parentID,views,postCount,likeCount,attachCount,poll,data"
+			cols = "tid,title,content,createdBy,is_closed,sticky,createdAt,lastReplyAt,lastReplyBy,lastReplyID,parentID,views,postCount,likeCount,attachCount,poll,data,weekEvenViews"
 		}
 	}
 	offset, page, lastPage := PageOffset(topicCount, page, Config.ItemsPerPage)
@@ -636,10 +635,12 @@ func (tList *DefaultTopicList) getList(page, orderby, topicCount int, argList []
 		// TODO: Embed Topic structs in TopicsRow to make it easier for us to reuse this work in the topic cache
 		t := TopicsRow{}
 		//var weekViews []uint8
-		err := rows.Scan(&t.ID, &t.Title, &t.Content, &t.CreatedBy, &t.IsClosed, &t.Sticky, &t.CreatedAt, &t.LastReplyAt, &t.LastReplyBy, &t.LastReplyID, &t.ParentID, &t.ViewCount, &t.PostCount, &t.LikeCount, &t.AttachCount, &t.Poll, &t.Data /*, &weekViews*/)
+		err := rows.Scan(&t.ID, &t.Title, &t.Content, &t.CreatedBy, &t.IsClosed, &t.Sticky, &t.CreatedAt, &t.LastReplyAt, &t.LastReplyBy, &t.LastReplyID, &t.ParentID, &t.ViewCount, &t.PostCount, &t.LikeCount, &t.AttachCount, &t.Poll, &t.Data, &t.WeekViews)
 		if err != nil {
 			return nil, Paginator{nil, 1, 1}, err
 		}
+		//t.WeekViews = int(weekViews[0])
+		//log.Printf("t: %+v\n", t)
 		//log.Printf("weekViews: %+v\n", weekViews)
 
 		t.Link = BuildTopicURL(NameToSlug(t.Title), t.ID)
@@ -666,7 +667,7 @@ func (tList *DefaultTopicList) getList(page, orderby, topicCount int, argList []
 		// Avoid the extra queries on topic list pages, if we already have what we want...
 		hRids := false
 		if tc != nil {
-			if t, err := tc.Get(t.ID); err == nil {
+			if t, e := tc.Get(t.ID); e == nil {
 				hRids = len(t.Rids) != 0
 			}
 		}

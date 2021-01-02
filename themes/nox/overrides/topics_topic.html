@@ -1,8 +1,8 @@
 <div class="topic_row{{if .Sticky}} topic_sticky{{else if .IsClosed}} topic_closed{{end}}{{if .CanMod}} can_mod{{end}}"data-tid={{.ID}}>
 	<div class="rowitem topic_left passive datarow">
-		<a href="{{.Creator.Link}}"><img src="{{.Creator.MicroAvatar}}"height=64 alt="Avatar"title="{{.Creator.Name}}'s Avatar"aria-hidden="true"></a>
+		<a href="{{.Creator.Link}}"><img src="{{.Creator.MicroAvatar}}"alt="Avatar"title="{{.Creator.Name}}'s Avatar"aria-hidden="true"height=64></a>
 		<span class="topic_inner_left">
-			<span class="rowtopic"itemprop="itemListElement"title="{{.Title}}"><a href="{{.Link}}">{{.Title}}</a>{{if .ForumName}}<a class="parent_forum_sep">-</a><a href="{{.ForumLink}}"title="{{.ForumName}}"class="rowsmall parent_forum">{{.ForumName}}</a>{{end}}</span>
+			<span class="rowtopic"itemprop="itemListElement"title="{{.Title}}"><a href="{{.Link}}">{{.Title}}{{if .ForumName}}</a><a class="parent_forum_sep">-</a><a href="{{.ForumLink}}"title="{{.ForumName}}"class="rowsmall parent_forum">{{.ForumName}}{{end}}</a></span>
 			<br><a class="rowsmall starter"href="{{.Creator.Link}}"title="{{.Creator.Name}}">{{.Creator.Name}}</a>
 		</span>
 	</div>
@@ -11,11 +11,12 @@
 			<span class="replyCount">{{.PostCount}}&nbsp;{{lang "topic_list.replies_suffix"}}</span>
 			<span class="likeCount">{{.LikeCount}}&nbsp;{{lang "topic_list.likes_suffix"}}</span>
 			<span class="viewCount">{{.ViewCount}}&nbsp;{{lang "topic_list.views_suffix"}}</span>
+			<span class="weekViewCount">{{.WeekViews}}&nbsp;{{lang "topic_list.views_suffix"}}</span>
 		</div>
 	</div>
 	<div class="rowitem topic_right passive datarow">
 		<div class="topic_right_inside">
-			<a href="{{.LastUser.Link}}"><img src="{{.LastUser.MicroAvatar}}"height=64 alt="Avatar"title="{{.LastUser.Name}}'s Avatar"aria-hidden="true"></a>
+			<a href="{{.LastUser.Link}}"><img src="{{.LastUser.MicroAvatar}}"alt="Avatar"title="{{.LastUser.Name}}'s Avatar"aria-hidden="true"height=64></a>
 			<span>
 				<a href="{{.LastUser.Link}}"class="lastName"title="{{.LastUser.Name}}">{{.LastUser.Name}}</a><br>
 				<a href="{{.Link}}?page={{.LastPage}}{{if .LastReplyID}}#post-{{.LastReplyID}}{{end}}"class="rowsmall lastReplyAt"title="{{abstime .LastReplyAt}}">{{reltime .LastReplyAt}}</a>

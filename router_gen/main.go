@@ -412,7 +412,7 @@ func main() {
 		"Slackbot":            "slackbot",
 		"Slack":               "slackbot",
 		"Discordbot":          "discord",
-		"TelegramBot":          "telegram",
+		"TelegramBot":         "telegram",
 		"Twitterbot":          "twitter",
 		"facebookexternalhit": "facebook",
 		"Facebot":             "facebook",
@@ -431,17 +431,17 @@ func main() {
 		"Cocolyzebot":         "cocolyze",
 		"Barkrowler":          "babbar",
 		"SurdotlyBot":         "surdotly",
-		"DomCopBot":"domcop",
+		"DomCopBot":           "domcop",
 		"NetcraftSurveyAgent": "netcraft",
 		"BLEXBot":             "blexbot",
 		"Burf":                "burf",
 		"AspiegelBot":         "aspiegel",
-		"PetalBot":         "aspiegel",
+		"PetalBot":            "aspiegel",
 		"RU_Bot":              "mail_ru", // Mail.RU_Bot
 		"CCBot":               "ccbot",
 		"zgrab":               "zgrab",
 		"Nimbostratus":        "cloudsystemnetworks",
-		"MauiBot":"maui",
+		"MauiBot":             "maui",
 		"curl":                "curl",
 		"python":              "python",
 		"Go":                  "go",
@@ -893,7 +893,11 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				agent = {{.AllAgentMap.internetexplorer}}
 			}
 		case {{.AllAgentMap.zgrab}}:
-			r.SuspiciousRequest(req,"Vuln Scanner")
+			w.WriteHeader(200) // 400
+			w.Write([]byte(""))
+			r.DumpRequest(req,"Blocked Scanner")
+			co.AgentViewCounter.Bump({{.AllAgentMap.zgrab}})
+			return
 		}
 		
 		if agent == 0 {

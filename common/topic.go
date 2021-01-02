@@ -45,6 +45,7 @@ type Topic struct {
 	PostCount   int
 	LikeCount   int
 	AttachCount int
+	WeekViews   int
 	ClassName   string // CSS Class Name
 	Poll        int
 	Data        string // Used for report metadata
@@ -1137,6 +1138,7 @@ func GetTopicUser(user *User, tid int) (tu TopicUser, err error) {
 	tu.Tag = Groups.DirtyGet(tu.Group).Tag
 
 	if tcache != nil {
+		// TODO: weekly views
 		theTopic := Topic{ID: tu.ID, Link: tu.Link, Title: tu.Title, Content: tu.Content, CreatedBy: tu.CreatedBy, IsClosed: tu.IsClosed, Sticky: tu.Sticky, CreatedAt: tu.CreatedAt, LastReplyAt: tu.LastReplyAt, LastReplyID: tu.LastReplyID, ParentID: tu.ParentID, IP: tu.IP, ViewCount: tu.ViewCount, PostCount: tu.PostCount, LikeCount: tu.LikeCount, AttachCount: tu.AttachCount, Poll: tu.Poll}
 		//log.Printf("theTopic: %+v\n", theTopic)
 		_ = tcache.Set(&theTopic)

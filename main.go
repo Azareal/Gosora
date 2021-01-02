@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"mime"
 	"net/http"
 	"os"
 	"os/signal"
@@ -278,6 +279,12 @@ func storeInit() (err error) {
 		return errors.WithStack(err)
 	}
 
+	log.Print("Initialising the meta store")
+	c.Meta, err = meta.NewDefaultMetaStore(acc)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
 	log.Print("Initialising the view counters")
 	if !c.Config.DisableAnalytics {
 		co.GlobalViewCounter, err = co.NewGlobalViewCounter(acc)
@@ -332,12 +339,6 @@ func storeInit() (err error) {
 		return errors.WithStack(err)
 	}
 
-	log.Print("Initialising the meta store")
-	c.Meta, err = meta.NewDefaultMetaStore(acc)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
 	return nil
 }
 
@@ -345,8 +346,7 @@ func storeInit() (err error) {
 func main() {
 	// TODO: Recover from panics
 	/*defer func() {
-		r := recover()
-		if r != nil {
+		if r := recover(); r != nil {
 			log.Print(r)
 			debug.PrintStack()
 			return
@@ -372,6 +372,11 @@ func main() {
 			log.Fatal(err)
 		}
 		pprof.StartCPUProfile(f)
+	}
+
+	err = mime.AddExtensionType(".avif", "image/avif")
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	jsToken, err := c.GenerateSafeString(80)
@@ -440,6 +445,7 @@ func main() {
 		defer watcher.Close()
 
 		go func() {
+			var ErrFileSkip = errors.New("skip mod file")
 			modifiedFileEvent := func(path string) error {
 				pathBits := strings.Split(path, "\\")
 				if len(pathBits) == 0 {
@@ -458,23 +464,27 @@ func main() {
 						}
 					}
 				}
-				return nil
+				return ErrFileSkip
 			}
 
 			// TODO: Expand this to more types of files
 			var err error
 			for {
 				select {
-				case event := <-watcher.Events:
+				case ev := <-watcher.Events:
 					// TODO: Handle file deletes (and renames more graciously by removing the old version of it)
-					if event.Op&fsnotify.Write == fsnotify.Write {
-						log.Println("modified file:", event.Name)
-						err = modifiedFileEvent(event.Name)
-					} else if event.Op&fsnotify.Create == fsnotify.Create {
-						log.Println("new file:", event.Name)
-						err = modifiedFileEvent(event.Name)
+					if ev.Op&fsnotify.Write == fsnotify.Write {
+						err = modifiedFileEvent(ev.Name)
+						if err != ErrFileSkip {
+							log.Println("modified file:", ev.Name)
+						} else {
+							err = nil
+						}
+					} else if ev.Op&fsnotify.Create == fsnotify.Create {
+						log.Println("new file:", ev.Name)
+						err = modifiedFileEvent(ev.Name)
 					} else {
-						log.Println("unknown event:", event)
+						log.Println("unknown event:", ev)
 						err = nil
 					}
 					if err != nil {
@@ -503,9 +513,12 @@ func main() {
 		}
 	}
 
+	/*if err = c.StaticFiles.GenJS(); err != nil {
+		c.LogError(err)
+	}*/
+
 	log.Print("Checking for init tasks")
-	err = sched()
-	if err != nil {
+	if err = sched(); err != nil {
 		c.LogError(err)
 	}
 
@@ -519,9 +532,9 @@ func main() {
 
 	// Resource Management Goroutine
 	go func() {
-		ucache := c.Users.GetCache()
-		tcache := c.Topics.GetCache()
-		if ucache == nil && tcache == nil {
+		uc := c.Users.GetCache()
+		tc := c.Topics.GetCache()
+		if uc == nil && tc == nil {
 			return
 		}
 
@@ -532,13 +545,13 @@ func main() {
 			select {
 			case <-secondTicker.C:
 				// TODO: Add a LastRequested field to cached User structs to avoid evicting the same things which wind up getting loaded again anyway?
-				if ucache != nil {
-					ucap := ucache.GetCapacity()
-					if ucache.Length() <= ucap || c.Users.Count() <= ucap {
+				if uc != nil {
+					ucap := uc.GetCapacity()
+					if uc.Length() <= ucap || c.Users.Count() <= ucap {
 						couldNotDealloc = false
 						continue
 					}
-					lastEvictedCount = ucache.DeallocOverflow(couldNotDealloc)
+					lastEvictedCount = uc.DeallocOverflow(couldNotDealloc)
 					couldNotDealloc = (lastEvictedCount == 0)
 				}
 			}

@@ -28,6 +28,7 @@ func routes(r *Router) {
 	topicGroup := newRouteGroup("/topics/",
 		View("routes.TopicList", "/topics/"),
 		View("routes.TopicListMostViewed", "/topics/most-viewed/"),
+		View("routes.TopicListWeekViews", "/topics/week-views/"),
 		MView("routes.CreateTopic", "/topics/create/", "extraData"),
 	)
 	r.AddGroup(topicGroup)
@@ -276,5 +277,6 @@ func panelRoutes() *RouteGroup {
 		View("panel.LogsMod", "/panel/logs/mod/"),
 		View("panel.LogsAdmin", "/panel/logs/admin/"),
 		View("panel.Debug", "/panel/debug/").Before("AdminOnly"),
+		View("panel.DebugTasks", "/panel/debug/tasks/").Before("AdminOnly"),
 	)
 }

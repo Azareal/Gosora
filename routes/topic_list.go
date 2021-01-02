@@ -54,6 +54,14 @@ func TopicListMostViewed(w http.ResponseWriter, r *http.Request, u *c.User, h *c
 	return TopicListCommon(w, r, u, h, "mostviewed", c.TopicListMostViewed)
 }
 
+func TopicListWeekViews(w http.ResponseWriter, r *http.Request, u *c.User, h *c.Header) c.RouteError {
+	skip, rerr := h.Hooks.VhookSkippable("route_topic_list_weekviews_start", w, r, u, h)
+	if skip || rerr != nil {
+		return rerr
+	}
+	return TopicListCommon(w, r, u, h, "weekviews", c.TopicListWeekViews)
+}
+
 // TODO: Implement search
 func TopicListCommon(w http.ResponseWriter, r *http.Request, user *c.User, h *c.Header, torder string, tsorder int) c.RouteError {
 	h.Title = phrases.GetTitlePhrase("topics")
@@ -67,6 +75,7 @@ func TopicListCommon(w http.ResponseWriter, r *http.Request, user *c.User, h *c.
 		return c.LocalError("Something weird happened", w, r, user)
 	}
 
+	var forumList []c.Forum
 	// Get the current page
 	page, _ := strconv.Atoi(r.FormValue("page"))
 	sfids := r.FormValue("fids")
@@ -80,19 +89,19 @@ func TopicListCommon(w http.ResponseWriter, r *http.Request, user *c.User, h *c.
 			fids = append(fids, fid)
 		}
 		if len(fids) == 1 {
-			forum, err := c.Forums.Get(fids[0])
+			f, err := c.Forums.Get(fids[0])
 			if err != nil {
 				return c.LocalError("Invalid fid forum", w, r, user)
 			}
-			h.Title = forum.Name
-			h.ZoneID = forum.ID
+			h.Title = f.Name
+			h.ZoneID = f.ID
+			forumList = append(forumList, *f)
 		}
 	}
 
 	// TODO: Allow multiple forums in searches
 	// TODO: Simplify this block after initially landing search
 	var topicList []*c.TopicsRow
-	var forumList []c.Forum
 	var pagi c.Paginator
 	var canDelete, ccanDelete, canLock, ccanLock, canMove, ccanMove bool
 	q := r.FormValue("q")
@@ -245,11 +254,14 @@ func TopicListCommon(w http.ResponseWriter, r *http.Request, user *c.User, h *c.
 	}
 
 	// TODO: Pass a struct back rather than passing back so many variables
+	//log.Printf("before forumList: %+v\n", forumList)
 	var fps map[int]c.QuickTools
 	if user.IsSuperAdmin {
+		//log.Print("user.IsSuperAdmin")
 		topicList, forumList, pagi, err = c.TopicList.GetList(page, tsorder, fids)
 		canLock, canMove = true, true
 	} else {
+		//log.Print("!user.IsSuperAdmin")
 		topicList, forumList, pagi, err = c.TopicList.GetListByGroup(group, page, tsorder, fids)
 		fps = make(map[int]c.QuickTools)
 		for _, f := range forumList {
@@ -283,6 +295,8 @@ func TopicListCommon(w http.ResponseWriter, r *http.Request, user *c.User, h *c.
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
+	//log.Printf("after forumList: %+v\n", forumList)
+	//log.Printf("after topicList: %+v\n", topicList)
 
 	// TODO: Reduce the amount of boilerplate here
 	if r.FormValue("js") == "1" {

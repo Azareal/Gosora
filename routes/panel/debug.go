@@ -129,3 +129,15 @@ func Debug(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
 	pi := c.PanelDebugPage{basePage, goVersion, dbVersion, uptime, openConnCount, qgen.Builder.GetAdapter().GetName(), goroutines, cpus, debugTasks, memStats, debugCache, debugDatabase, debugDisk}
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_dashboard_right", "debug_page", "panel_debug", pi})
 }
+
+func DebugTasks(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
+	basePage, ferr := buildBasePage(w, r, user, "debug", "debug")
+	if ferr != nil {
+		return ferr
+	}
+
+	var debugTasks []c.PanelDebugTaskTask
+
+	pi := c.PanelDebugTaskPage{basePage, debugTasks}
+	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_dashboard_right", "debug_page", "panel_debug_task", pi})
+}

@@ -419,6 +419,7 @@ type BasePanelPage struct {
 	Stats         PanelStats
 	Zone          string
 	ReportForumID int
+	DebugAdmin    bool
 }
 type PanelPage struct {
 	*BasePanelPage
@@ -787,6 +788,15 @@ type PanelDebugPage struct {
 	Cache    DebugPageCache
 	Database DebugPageDatabase
 	Disk     DebugPageDisk
+}
+
+type PanelDebugTaskTask struct {
+	Name string
+	Type int // 0 = halfsec, 1 = sec, 2 = fifteenmin, 3 = hour, 4 = shutdown
+}
+type PanelDebugTaskPage struct {
+	*BasePanelPage
+	Tasks []PanelDebugTaskTask
 }
 
 type PageSimple struct {
