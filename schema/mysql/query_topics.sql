@@ -17,6 +17,8 @@ CREATE TABLE `topics` (
 	`attachCount` int DEFAULT 0 not null,
 	`words` int DEFAULT 0 not null,
 	`views` int DEFAULT 0 not null,
+	`weekEvenViews` int DEFAULT 0 not null,
+	`weekOddViews` int DEFAULT 0 not null,
 	`css_class` varchar(100) DEFAULT '' not null,
 	`poll` int DEFAULT 0 not null,
 	`data` varchar(200) DEFAULT '' not null,
