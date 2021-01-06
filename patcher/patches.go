@@ -68,10 +68,10 @@ func ccol(col string, size int, sdefault string) qgen.DBTableColumn {
 func patch0(scanner *bufio.Scanner) (err error) {
 	err = createTable("menus", "", "",
 		[]tC{
-			tC{"mid", "int", 0, false, true, ""},
+			{"mid", "int", 0, false, true, ""},
 		},
 		[]tK{
-			tK{"mid", "primary", "", false},
+			{"mid", "primary", "", false},
 		},
 	)
 	if err != nil {
@@ -80,8 +80,8 @@ func patch0(scanner *bufio.Scanner) (err error) {
 
 	err = createTable("menu_items", "", "",
 		[]tC{
-			tC{"miid", "int", 0, false, true, ""},
-			tC{"mid", "int", 0, false, false, ""},
+			{"miid", "int", 0, false, true, ""},
+			{"mid", "int", 0, false, false, ""},
 			ccol("name", 200, ""),
 			ccol("htmlID", 200, "''"),
 			ccol("cssClass", 200, "''"),
@@ -90,7 +90,7 @@ func patch0(scanner *bufio.Scanner) (err error) {
 			ccol("aria", 200, "''"),
 			ccol("tooltip", 200, "''"),
 			ccol("tmplName", 200, "''"),
-			tC{"order", "int", 0, false, false, "0"},
+			{"order", "int", 0, false, false, "0"},
 
 			bcol("guestOnly", false),
 			bcol("memberOnly", false),
@@ -98,7 +98,7 @@ func patch0(scanner *bufio.Scanner) (err error) {
 			bcol("adminOnly", false),
 		},
 		[]tK{
-			tK{"miid", "primary", "", false},
+			{"miid", "primary", "", false},
 		},
 	)
 	if err != nil {
@@ -196,16 +196,16 @@ func patch2(scanner *bufio.Scanner) error {
 func patch3(scanner *bufio.Scanner) error {
 	return createTable("registration_logs", "", "",
 		[]tC{
-			tC{"rlid", "int", 0, false, true, ""},
+			{"rlid", "int", 0, false, true, ""},
 			ccol("username", 100, ""),
 			ccol("email", 100, ""),
 			ccol("failureReason", 100, ""),
 			bcol("success", false), // Did this attempt succeed?
 			ccol("ipaddress", 200, ""),
-			tC{"doneAt", "createdAt", 0, false, false, ""},
+			{"doneAt", "createdAt", 0, false, false, ""},
 		},
 		[]tK{
-			tK{"rlid", "primary", "", false},
+			{"rlid", "primary", "", false},
 		},
 	)
 }
@@ -258,24 +258,19 @@ func patch4(scanner *bufio.Scanner) error {
 		return err
 	}
 
-	err = createTable("pages", "utf8mb4", "utf8mb4_general_ci",
+	return createTable("pages", "utf8mb4", "utf8mb4_general_ci",
 		[]tC{
-			tC{"pid", "int", 0, false, true, ""},
+			{"pid", "int", 0, false, true, ""},
 			ccol("name", 200, ""),
 			ccol("title", 200, ""),
-			tC{"body", "text", 0, false, false, ""},
-			tC{"allowedGroups", "text", 0, false, false, ""},
-			tC{"menuID", "int", 0, false, false, "-1"},
+			{"body", "text", 0, false, false, ""},
+			{"allowedGroups", "text", 0, false, false, ""},
+			{"menuID", "int", 0, false, false, "-1"},
 		},
 		[]tK{
-			tK{"pid", "primary", "", false},
+			{"pid", "primary", "", false},
 		},
 	)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func patch5(scanner *bufio.Scanner) error {
@@ -298,7 +293,7 @@ func patch5(scanner *bufio.Scanner) error {
 
 	return createTable("users_2fa_keys", "utf8mb4", "utf8mb4_general_ci",
 		[]tC{
-			tC{"uid", "int", 0, false, false, ""},
+			{"uid", "int", 0, false, false, ""},
 			ccol("secret", 100, ""),
 			ccol("scratch1", 50, ""),
 			ccol("scratch2", 50, ""),
@@ -308,10 +303,10 @@ func patch5(scanner *bufio.Scanner) error {
 			ccol("scratch6", 50, ""),
 			ccol("scratch7", 50, ""),
 			ccol("scratch8", 50, ""),
-			tC{"createdAt", "createdAt", 0, false, false, ""},
+			{"createdAt", "createdAt", 0, false, false, ""},
 		},
 		[]tK{
-			tK{"uid", "primary", "", false},
+			{"uid", "primary", "", false},
 		},
 	)
 }
@@ -323,10 +318,10 @@ func patch6(scanner *bufio.Scanner) error {
 func patch7(scanner *bufio.Scanner) error {
 	return createTable("users_avatar_queue", "", "",
 		[]tC{
-			tC{"uid", "int", 0, false, false, ""}, // TODO: Make this a foreign key
+			{"uid", "int", 0, false, false, ""}, // TODO: Make this a foreign key
 		},
 		[]tK{
-			tK{"uid", "primary", "", false},
+			{"uid", "primary", "", false},
 		},
 	)
 }
@@ -382,7 +377,7 @@ func patch8(scanner *bufio.Scanner) error {
 
 	return createTable("updates", "", "",
 		[]tC{
-			tC{"dbVersion", "int", 0, false, false, "0"},
+			{"dbVersion", "int", 0, false, false, "0"},
 		}, nil,
 	)
 }
@@ -396,14 +391,14 @@ func patch9(scanner *bufio.Scanner) error {
 
 	return createTable("login_logs", "", "",
 		[]tC{
-			tC{"lid", "int", 0, false, true, ""},
-			tC{"uid", "int", 0, false, false, ""},
+			{"lid", "int", 0, false, true, ""},
+			{"uid", "int", 0, false, false, ""},
 			bcol("success", false), // Did this attempt succeed?
 			ccol("ipaddress", 200, ""),
-			tC{"doneAt", "createdAt", 0, false, false, ""},
+			{"doneAt", "createdAt", 0, false, false, ""},
 		},
 		[]tK{
-			tK{"lid", "primary", "", false},
+			{"lid", "primary", "", false},
 		},
 	)
 }
@@ -536,10 +531,10 @@ func patch16(scanner *bufio.Scanner) error {
 	return createTable("password_resets", "", "",
 		[]tC{
 			ccol("email", 200, ""),
-			tC{"uid", "int", 0, false, false, ""}, // TODO: Make this a foreign key
-			ccol("validated", 200, ""),            // Token given once the one-use token is consumed, used to prevent multiple people consuming the same one-use token
+			{"uid", "int", 0, false, false, ""}, // TODO: Make this a foreign key
+			ccol("validated", 200, ""),          // Token given once the one-use token is consumed, used to prevent multiple people consuming the same one-use token
 			ccol("token", 200, ""),
-			tC{"createdAt", "createdAt", 0, false, false, ""},
+			{"createdAt", "createdAt", 0, false, false, ""},
 		}, nil,
 	)
 }
@@ -585,8 +580,8 @@ func patch18(scanner *bufio.Scanner) error {
 func patch19(scanner *bufio.Scanner) error {
 	return createTable("memchunks", "", "",
 		[]tC{
-			tC{"count", "int", 0, false, false, "0"},
-			tC{"createdAt", "datetime", 0, false, false, ""},
+			{"count", "int", 0, false, false, "0"},
+			{"createdAt", "datetime", 0, false, false, ""},
 		}, nil,
 	)
 }
@@ -642,14 +637,14 @@ func patch22(scanner *bufio.Scanner) error {
 func patch23(scanner *bufio.Scanner) error {
 	err := createTable("conversations", "", "",
 		[]tC{
-			tC{"cid", "int", 0, false, true, ""},
-			tC{"createdBy", "int", 0, false, false, ""}, // TODO: Make this a foreign key
-			tC{"createdAt", "createdAt", 0, false, false, ""},
-			tC{"lastReplyAt", "datetime", 0, false, false, ""},
-			tC{"lastReplyBy", "int", 0, false, false, ""},
+			{"cid", "int", 0, false, true, ""},
+			{"createdBy", "int", 0, false, false, ""}, // TODO: Make this a foreign key
+			{"createdAt", "createdAt", 0, false, false, ""},
+			{"lastReplyAt", "datetime", 0, false, false, ""},
+			{"lastReplyBy", "int", 0, false, false, ""},
 		},
 		[]tK{
-			tK{"cid", "primary", "", false},
+			{"cid", "primary", "", false},
 		},
 	)
 	if err != nil {
@@ -658,14 +653,14 @@ func patch23(scanner *bufio.Scanner) error {
 
 	err = createTable("conversations_posts", "", "",
 		[]tC{
-			tC{"pid", "int", 0, false, true, ""},
-			tC{"cid", "int", 0, false, false, ""},
-			tC{"createdBy", "int", 0, false, false, ""},
+			{"pid", "int", 0, false, true, ""},
+			{"cid", "int", 0, false, false, ""},
+			{"createdBy", "int", 0, false, false, ""},
 			ccol("body", 50, ""),
 			ccol("post", 50, "''"),
 		},
 		[]tK{
-			tK{"pid", "primary", "", false},
+			{"pid", "primary", "", false},
 		},
 	)
 	if err != nil {
@@ -674,8 +669,8 @@ func patch23(scanner *bufio.Scanner) error {
 
 	return createTable("conversations_participants", "", "",
 		[]tC{
-			tC{"uid", "int", 0, false, false, ""},
-			tC{"cid", "int", 0, false, false, ""},
+			{"uid", "int", 0, false, false, ""},
+			{"cid", "int", 0, false, false, ""},
 		}, nil,
 	)
 }
@@ -683,17 +678,17 @@ func patch23(scanner *bufio.Scanner) error {
 func patch24(scanner *bufio.Scanner) error {
 	return createTable("users_groups_promotions", "", "",
 		[]tC{
-			tC{"pid", "int", 0, false, true, ""},
-			tC{"from_gid", "int", 0, false, false, ""},
-			tC{"to_gid", "int", 0, false, false, ""},
+			{"pid", "int", 0, false, true, ""},
+			{"from_gid", "int", 0, false, false, ""},
+			{"to_gid", "int", 0, false, false, ""},
 			bcol("two_way", false), // If a user no longer meets the requirements for this promotion then they will be demoted if this flag is set
 
 			// Requirements
-			tC{"level", "int", 0, false, false, ""},
-			tC{"minTime", "int", 0, false, false, ""}, // How long someone needs to have been in their current group before being promoted
+			{"level", "int", 0, false, false, ""},
+			{"minTime", "int", 0, false, false, ""}, // How long someone needs to have been in their current group before being promoted
 		},
 		[]tK{
-			tK{"pid", "primary", "", false},
+			{"pid", "primary", "", false},
 		},
 	)
 }
@@ -705,8 +700,8 @@ func patch25(scanner *bufio.Scanner) error {
 func patch26(scanner *bufio.Scanner) error {
 	return createTable("users_blocks", "", "",
 		[]tC{
-			tC{"blocker", "int", 0, false, false, ""},
-			tC{"blockedUser", "int", 0, false, false, ""},
+			{"blocker", "int", 0, false, false, ""},
+			{"blockedUser", "int", 0, false, false, ""},
 		}, nil,
 	)
 }
@@ -854,10 +849,10 @@ func createTable(tbl, charset, collation string, cols []tC, keys []tK) error {
 func patch32(scanner *bufio.Scanner) error {
 	return createTable("perfchunks", "", "",
 		[]tC{
-			tC{"low", "int", 0, false, false, "0"},
-			tC{"high", "int", 0, false, false, "0"},
-			tC{"avg", "int", 0, false, false, "0"},
-			tC{"createdAt", "datetime", 0, false, false, ""},
+			{"low", "int", 0, false, false, "0"},
+			{"high", "int", 0, false, false, "0"},
+			{"avg", "int", 0, false, false, "0"},
+			{"createdAt", "datetime", 0, false, false, ""},
 		}, nil,
 	)
 }
@@ -869,12 +864,12 @@ func patch33(scanner *bufio.Scanner) error {
 func patch34(scanner *bufio.Scanner) error {
 	/*err := createTable("tables", "", "",
 		[]tC{
-			tC{"id", "int", 0, false, true, ""},
+			{"id", "int", 0, false, true, ""},
 			ccol("name", 200, ""),
 		},
 		[]tK{
-			tK{"id", "primary", "", false},
-			tK{"name", "unique", "", false},
+			{"id", "primary", "", false},
+			{"name", "unique", "", false},
 		},
 	)
 	if err != nil {

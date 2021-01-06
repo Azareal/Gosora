@@ -114,10 +114,10 @@ func tmplInitHeaders(u, u2, u3 *User) (*Header, *Header, *Header) {
 		Theme:           Themes[DefaultThemeBox.Load().(string)],
 		CurrentUser:     u,
 		NoticeList:      []string{"test"},
-		Stylesheets:     []HScript{HScript{"panel.css", ""}},
-		Scripts:         []HScript{HScript{"whatever.js", ""}},
-		PreScriptsAsync: []HScript{HScript{"whatever.js", ""}},
-		ScriptsAsync:    []HScript{HScript{"whatever.js", ""}},
+		Stylesheets:     []HScript{{"panel.css", ""}},
+		Scripts:         []HScript{{"whatever.js", ""}},
+		PreScriptsAsync: []HScript{{"whatever.js", ""}},
+		ScriptsAsync:    []HScript{{"whatever.js", ""}},
 		Widgets: PageWidgets{
 			LeftSidebar: template.HTML("lalala"),
 		},
@@ -239,11 +239,11 @@ func compileCommons(c *tmpl.CTemplateSet, head, head2 *Header, forumList []Forum
 	o.Add("forums", "c.ForumsPage", ForumsPage{htitle("Forum List"), forumList})
 
 	poll := Poll{ID: 1, Type: 0, Options: map[int]string{0: "Nothing", 1: "Something"}, Results: map[int]int{0: 5, 1: 2}, QuickOptions: []PollOption{
-		PollOption{0, "Nothing"},
-		PollOption{1, "Something"},
+		{0, "Nothing"},
+		{1, "Something"},
 	}, VoteCount: 7}
 	avatar, microAvatar := BuildAvatar(62, "")
-	miniAttach := []*MiniAttachment{&MiniAttachment{Path: "/"}}
+	miniAttach := []*MiniAttachment{{Path: "/"}}
 	tu := TopicUser{1, "blah", "Blah", "Hey there!", 0, false, false, now, now, 1, 1, 0, "", "127.0.0.1", 1, 0, 1, 0, "classname", poll.ID, "weird-data", BuildProfileURL("fake-user", 62), "Fake User", Config.DefaultGroup, avatar, microAvatar, 0, "", "", "", 58, false, miniAttach, nil, false}
 
 	var replyList []*ReplyUser
@@ -272,7 +272,7 @@ func compileTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName string
 		PollOption{1, "Something"},
 	}, VoteCount: 7}*/
 	//avatar, microAvatar := BuildAvatar(62, "")
-	miniAttach := []*MiniAttachment{&MiniAttachment{Path: "/"}}
+	miniAttach := []*MiniAttachment{{Path: "/"}}
 	var replyList []*ReplyUser
 	//topic := TopicUser{1, "blah", "Blah", "Hey there!", 0, false, false, now, now, 1, 1, 0, "", "127.0.0.1", 1, 0, 1, 0, "classname", poll.ID, "weird-data", BuildProfileURL("fake-user", 62), "Fake User", Config.DefaultGroup, avatar, microAvatar, 0, "", "", "", "", "", 58, false, miniAttach, nil}
 	// TODO: Do we want the UID on this to be 0?
@@ -351,7 +351,7 @@ func compileTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName string
 	}
 
 	t.AddStd("login", "c.Page", Page{htitle("Login Page"), tList, nil})
-	t.AddStd("register", "c.RegisterPage", RegisterPage{htitle("Registration Page"), false, "", []RegisterVerify{RegisterVerify{true, &RegisterVerifyImageGrid{"What?", []RegisterVerifyImageGridImage{RegisterVerifyImageGridImage{"something.png"}}}}}})
+	t.AddStd("register", "c.RegisterPage", RegisterPage{htitle("Registration Page"), false, "", []RegisterVerify{{true, &RegisterVerifyImageGrid{"What?", []RegisterVerifyImageGridImage{{"something.png"}}}}}})
 	t.AddStd("error", "c.ErrorPage", ErrorPage{htitle("Error"), "A problem has occurred in the system."})
 
 	ipSearchPage := IPSearchPage{htitle("IP Search"), map[int]*User{1: user2}, "::1"}
@@ -363,11 +363,11 @@ func compileTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName string
 
 	parti := []*User{user}
 	convo := &Conversation{1, BuildConvoURL(1), user.ID, time.Now(), 0, time.Now()}
-	convoItems := []ConvoViewRow{ConvoViewRow{&ConversationPost{1, 1, "hey", "", user.ID}, user, "", 4, true}}
+	convoItems := []ConvoViewRow{{&ConversationPost{1, 1, "hey", "", user.ID}, user, "", 4, true}}
 	convoPage := ConvoViewPage{header, convo, convoItems, parti, true, Paginator{[]int{1}, 1, 1}}
 	t.AddStd("convo", "c.ConvoViewPage", convoPage)
 
-	convos := []*ConversationExtra{&ConversationExtra{&Conversation{}, []*User{user}}}
+	convos := []*ConversationExtra{{&Conversation{}, []*User{user}}}
 	var cRows []ConvoListRow
 	for _, convo := range convos {
 		cRows = append(cRows, ConvoListRow{convo, convo.Users, false})
@@ -377,7 +377,7 @@ func compileTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName string
 
 	basePage := &BasePanelPage{header, PanelStats{}, "dashboard", ReportForumID, true}
 	t.AddStd("panel", "c.Panel", Panel{basePage, "panel_dashboard_right", "", "panel_dashboard", inter})
-	ges := []GridElement{GridElement{"", "", "", 1, "grid_istat", "", "", ""}}
+	ges := []GridElement{{"", "", "", 1, "grid_istat", "", "", ""}}
 	t.AddStd("panel_dashboard", "c.DashGrids", DashGrids{ges, ges})
 
 	goVersion := runtime.Version()
@@ -545,11 +545,11 @@ func compileJSTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName stri
 	t.AddStd("topics_topic", "c.TopicsRowMut", topicsRow)
 
 	poll := Poll{ID: 1, Type: 0, Options: map[int]string{0: "Nothing", 1: "Something"}, Results: map[int]int{0: 5, 1: 2}, QuickOptions: []PollOption{
-		PollOption{0, "Nothing"},
-		PollOption{1, "Something"},
+		{0, "Nothing"},
+		{1, "Something"},
 	}, VoteCount: 7}
 	avatar, microAvatar := BuildAvatar(62, "")
-	miniAttach := []*MiniAttachment{&MiniAttachment{Path: "/"}}
+	miniAttach := []*MiniAttachment{{Path: "/"}}
 	tu := TopicUser{1, "blah", "Blah", "Hey there!", 62, false, false, now, now, 1, 1, 0, "", "::1", 1, 0, 1, 0, "classname", poll.ID, "weird-data", BuildProfileURL("fake-user", 62), "Fake User", Config.DefaultGroup, avatar, microAvatar, 0, "", "", "", 58, false, miniAttach, nil, false}
 	var replyList []*ReplyUser
 	// TODO: Do we really want the UID here to be zero?
@@ -577,7 +577,7 @@ func compileJSTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName stri
 
 	parti := []*User{user}
 	convo := &Conversation{1, BuildConvoURL(1), user.ID, time.Now(), 0, time.Now()}
-	convoItems := []ConvoViewRow{ConvoViewRow{&ConversationPost{1, 1, "hey", "", user.ID}, user, "", 4, true}}
+	convoItems := []ConvoViewRow{{&ConversationPost{1, 1, "hey", "", user.ID}, user, "", 4, true}}
 	convoPage := ConvoViewPage{header, convo, convoItems, parti, true, Paginator{[]int{1}, 1, 1}}
 	t.AddStd("convo", "c.ConvoViewPage", convoPage)
 

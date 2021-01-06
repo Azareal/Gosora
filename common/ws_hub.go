@@ -441,7 +441,7 @@ func (h *WsHubImpl) AddConn(user *User, conn *websocket.Conn) (*WSUser, error) {
 	if !ok {
 		wsUser = new(WSUser)
 		wsUser.User = userptr
-		wsUser.Sockets = []*WSUserSocket{&WSUserSocket{conn, ""}}
+		wsUser.Sockets = []*WSUserSocket{{conn, ""}}
 		theMap[user.ID] = wsUser
 		mutex.Unlock()
 		return wsUser, nil

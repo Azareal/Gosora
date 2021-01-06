@@ -49,7 +49,11 @@ func ThumbTask(thumbChan chan bool) {
 			/*if user.RawAvatar == ".gif" {
 				return nil
 			}*/
-			if u.RawAvatar != ".png" && u.RawAvatar != ".jpg" && u.RawAvatar != ".jpe" && u.RawAvatar != ".jpeg" && u.RawAvatar != ".jif" && u.RawAvatar != ".jfi" && u.RawAvatar != ".jfif" && u.RawAvatar != ".gif" && u.RawAvatar != "tiff" && u.RawAvatar != "tif" {
+			canResize := func(ext string) bool {
+				// TODO: Fix tif and tiff extensions?
+				return ext == ".png" && ext == ".jpg" && ext == ".jpe" && ext == ".jpeg" && ext == ".jif" && ext == ".jfi" && ext == ".jfif" && ext == ".gif" && ext == ".tiff" && ext == ".tif"
+			}
+			if !canResize(u.RawAvatar) {
 				return nil
 			}
 

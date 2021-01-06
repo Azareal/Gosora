@@ -163,15 +163,15 @@ func PreparseMessage(msg string) string {
 	// TODO: We can maybe reduce the size of this by using an offset?
 	// TODO: Move some of these closures out of this function to make things a little more efficient
 	allowedTags := [][]string{
-		'e': []string{"m"},
-		's': []string{"", "trong", "poiler", "pan"},
-		'd': []string{"el"},
-		'u': []string{""},
-		'b': []string{"", "lockquote"},
-		'i': []string{""},
-		'h': []string{"1", "2", "3"},
-		//'p': []string{""},
-		'g': []string{""}, // Quick and dirty fix for Grammarly
+		'e': {"m"},
+		's': {"", "trong", "poiler", "pan"},
+		'd': {"el"},
+		'u': {""},
+		'b': {"", "lockquote"},
+		'i': {""},
+		'h': {"1", "2", "3"},
+		//'p': {""},
+		'g': {""}, // Quick and dirty fix for Grammarly
 	}
 	buildLitMatch := func(tag string) func(*TagToAction, bool, int, []rune) (int, string) {
 		return func(action *TagToAction, open bool, _ int, _ []rune) (int, string) {
@@ -187,13 +187,13 @@ func PreparseMessage(msg string) string {
 		}
 	}
 	tagToAction := [][]*TagToAction{
-		'e': []*TagToAction{&TagToAction{"m", buildLitMatch("em"), 0, false}},
-		's': []*TagToAction{
-			&TagToAction{"", buildLitMatch("del"), 0, false},
-			&TagToAction{"trong", buildLitMatch("strong"), 0, false},
-			&TagToAction{"poiler", buildLitMatch("spoiler"), 0, false},
+		'e': {{"m", buildLitMatch("em"), 0, false}},
+		's': {
+			{"", buildLitMatch("del"), 0, false},
+			{"trong", buildLitMatch("strong"), 0, false},
+			{"poiler", buildLitMatch("spoiler"), 0, false},
 			// Hides the span tags Trumbowyg loves blasting out randomly
-			&TagToAction{"pan", func(act *TagToAction, open bool, i int, runes []rune) (int, string) {
+			{"pan", func(act *TagToAction, open bool, i int, runes []rune) (int, string) {
 				if open {
 					act.Depth++
 					//fmt.Println("skipping attributes")
@@ -212,21 +212,21 @@ func PreparseMessage(msg string) string {
 				return -1, " "
 			}, 0, true},
 		},
-		'd': []*TagToAction{&TagToAction{"el", buildLitMatch("del"), 0, false}},
-		'u': []*TagToAction{&TagToAction{"", buildLitMatch("u"), 0, false}},
-		'b': []*TagToAction{
-			&TagToAction{"", buildLitMatch("strong"), 0, false},
-			&TagToAction{"lockquote", buildLitMatch("blockquote"), 0, false},
+		'd': {{"el", buildLitMatch("del"), 0, false}},
+		'u': {{"", buildLitMatch("u"), 0, false}},
+		'b': {
+			{"", buildLitMatch("strong"), 0, false},
+			{"lockquote", buildLitMatch("blockquote"), 0, false},
 		},
-		'i': []*TagToAction{&TagToAction{"", buildLitMatch("em"), 0, false}},
-		'h': []*TagToAction{
-			&TagToAction{"1", buildLitMatch("h2"), 0, false},
-			&TagToAction{"2", buildLitMatch("h3"), 0, false},
-			&TagToAction{"3", buildLitMatch("h4"), 0, false},
+		'i': {{"", buildLitMatch("em"), 0, false}},
+		'h': {
+			{"1", buildLitMatch("h2"), 0, false},
+			{"2", buildLitMatch("h3"), 0, false},
+			{"3", buildLitMatch("h4"), 0, false},
 		},
-		//'p': []*TagToAction{&TagToAction{"", buildLitMatch2("\n\n", ""), 0, false}},
-		'g': []*TagToAction{
-			&TagToAction{"", func(act *TagToAction, open bool, i int, runes []rune) (int, string) {
+		//'p': {{"", buildLitMatch2("\n\n", ""), 0, false}},
+		'g': {
+			{"", func(act *TagToAction, open bool, i int, runes []rune) (int, string) {
 				if open {
 					act.Depth++
 					//fmt.Println("skipping attributes")
@@ -482,9 +482,11 @@ func ParseMessage(msg string, sectionID int, sectionType string, settings *Parse
 	msg, _ = ParseMessage2(msg, sectionID, sectionType, settings, user)
 	return msg
 }
-var litRepPrefix = []byte{':',';'}
-//var litRep = [][]byte{':':[]byte{')','(','D','O','o','P','p'},';':[]byte{')'}}
-var litRep = [][]string{':':[]string{')':"😀",'(':"😞",'D':"😃",'O':"😲",'o':"😲",'P':"😛",'p':"😛"},';':[]string{')':"😉"}}
+
+var litRepPrefix = []byte{':', ';'}
+
+//var litRep = [][]byte{':':{')','(','D','O','o','P','p'},';':{')'}}
+var litRep = [][]string{':': {')': "😀", '(': "😞", 'D': "😃", 'O': "😲", 'o': "😲", 'P': "😛", 'p': "😛"}, ';': {')': "😉"}}
 
 // TODO: Write a test for this
 // TODO: We need a lot more hooks here. E.g. To add custom media types and handlers.

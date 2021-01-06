@@ -159,9 +159,12 @@ func ForumsOrderSubmit(w http.ResponseWriter, r *http.Request, u *c.User) c.Rout
 		}
 		updateMap[fid] = index
 	}
-	c.Forums.UpdateOrder(updateMap)
+	err := c.Forums.UpdateOrder(updateMap)
+	if err != nil {
+		return c.InternalErrorJSQ(err, w, r, js)
+	}
 
-	err := c.AdminLogs.Create("reorder", 0, "forum", u.GetIP(), u.ID)
+	err = c.AdminLogs.Create("reorder", 0, "forum", u.GetIP(), u.ID)
 	if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}

@@ -1,8 +1,8 @@
-function memStuff(window, document, Chartist) {
+function memStuff(window,document,Chartist) {
 	'use strict';
 	Chartist.plugins = Chartist.plugins || {};
 	Chartist.plugins.byteUnits = function(options) {
-	options = Chartist.extend({}, {}, options);
+	options = Chartist.extend({},{},options);
 
     return function byteUnits(chart) {
     	if(!chart instanceof Chartist.Line) return;
@@ -13,7 +13,7 @@ function memStuff(window, document, Chartist) {
 			if(vbits==null) return;
 
 			let tbits = [];
-			for(let i = 0; i < vbits.length; i++) {
+			for(let i=0; i<vbits.length; i++) {
 				tbits[i] = vbits[i].innerHTML;
 			}
 			log("tbits",tbits);
@@ -23,12 +23,11 @@ function memStuff(window, document, Chartist) {
 			
 				const matcher = vbits[0].innerHTML;
 				let allMatch = true;
-       			for(let i = 0; i < tbits.length; i++) {
+       			for(let i=0; i<tbits.length; i++) {
 					let val = convertByteUnit(tbits[i], places);
 					if(val!=matcher) allMatch = false;
 					vbits[i].innerHTML = val;
 				}
-					
 				if(allMatch) calc(places + 1);
 			}
 			calc(0);
@@ -37,11 +36,11 @@ function memStuff(window, document, Chartist) {
   };
 }
 
-function perfStuff(window, document, Chartist) {
+function perfStuff(window,document,Chartist) {
 	'use strict';
 	Chartist.plugins = Chartist.plugins || {};
 	Chartist.plugins.perfUnits = function(options) {
-	options = Chartist.extend({}, {}, options);
+	options = Chartist.extend({},{},options);
 
     return function perfUnits(chart) {
     	if(!chart instanceof Chartist.Line) return;
@@ -52,7 +51,7 @@ function perfStuff(window, document, Chartist) {
 			if(vbits==null) return;
 
 			let tbits = [];
-			for(let i = 0; i < vbits.length; i++) {
+			for(let i=0; i<vbits.length; i++) {
 				tbits[i] = vbits[i].innerHTML;
 			}
 			log("tbits:",tbits);
@@ -62,12 +61,11 @@ function perfStuff(window, document, Chartist) {
 			
 				const matcher = vbits[0].innerHTML;
 				let allMatch = true;
-       			for(let i = 0; i < tbits.length; i++) {
+       			for(let i=0; i<tbits.length; i++) {
 					let val = convertPerfUnit(tbits[i], places);
 					if(val!=matcher) allMatch = false;
 					vbits[i].innerHTML = val;
 				}
-					
 				if(allMatch) calc(places + 1);
 			}
 			calc(0);

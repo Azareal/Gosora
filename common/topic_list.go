@@ -138,8 +138,8 @@ func (tList *DefaultTopicList) Tick() error {
 			return err
 		}
 		canSeeHolders[name] = [2]*TopicListHolder{
-			&TopicListHolder{topicList, forumList, pagi},
-			&TopicListHolder{topicList2, forumList2, pagi2},
+			{topicList, forumList, pagi},
+			{topicList2, forumList2, pagi2},
 		}
 		if len(canSee) > 1 {
 			forumCounts[len(canSee)] += 1

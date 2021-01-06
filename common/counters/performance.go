@@ -28,7 +28,7 @@ type DefaultPerfCounter struct {
 func NewDefaultPerfCounter(acc *qgen.Accumulator) (*DefaultPerfCounter, error) {
 	co := &DefaultPerfCounter{
 		buckets: []*PerfCounterBucket{
-			&PerfCounterBucket{
+			{
 				low:  &MutexCounter64Bucket{counter: math.MaxInt64},
 				high: &MutexCounter64Bucket{counter: 0},
 				avg:  &MutexCounter64Bucket{counter: 0},

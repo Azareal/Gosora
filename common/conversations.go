@@ -238,7 +238,7 @@ func (s *DefaultConversationStore) GetUserExtra(uid, offset int) (cos []*Convers
 			users[i] = user
 			i++
 		}
-		return []*ConversationExtra{&ConversationExtra{raw[0], users}}, nil
+		return []*ConversationExtra{{raw[0], users}}, nil
 	}
 	//log.Println("1")
 

@@ -79,7 +79,7 @@ type DefaultRateLimiter struct {
 
 func NewDefaultRateLimiter() *DefaultRateLimiter {
 	return &DefaultRateLimiter{map[string]*RateLimit{
-		"register": NewRateLimit([]RateFence{RateFence{int(time.Hour / 2), 1}}),
+		"register": NewRateLimit([]RateFence{{int(time.Hour / 2), 1}}),
 	}}
 }
 

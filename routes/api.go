@@ -68,7 +68,7 @@ var sitemapRoutes = map[string]func(http.ResponseWriter, *http.Request) c.RouteE
 
 // TODO: Use a router capable of parsing this rather than hard-coding the logic in
 var fuzzySitemapRoutes = map[string]FuzzyRoute{
-	"topics_page_": FuzzyRoute{"topics_page_(%d).xml", SitemapTopic},
+	"topics_page_": {"topics_page_(%d).xml", SitemapTopic},
 }
 
 func sitemapSwitch(w http.ResponseWriter, r *http.Request) c.RouteError {
