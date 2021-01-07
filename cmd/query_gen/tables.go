@@ -532,21 +532,21 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 			// replacement for elementType
 			tC{"elementTable", "int", 0, false, false, "0"},
 
-			tC{"elementID", "int", 0, false, false, ""}, /* the ID of the element being acted upon */
+			{"elementID", "int", 0, false, false, ""}, /* the ID of the element being acted upon */
 			createdAt(),
 			ccol("extra", 200, "''"),
 		},
 		[]tK{
-			tK{"asid", "primary", "", false},
+			{"asid", "primary", "", false},
 		},
 	)
 
 	createTable("activity_subscriptions", "", "",
 		[]tC{
-			tC{"user", "int", 0, false, false, ""},     // TODO: Make this a foreign key
-			tC{"targetID", "int", 0, false, false, ""}, /* the ID of the element being acted upon */
-			ccol("targetType", 50, ""),                 /* topic, post (calling it post here to differentiate it from the 'reply' event), forum, user */
-			tC{"level", "int", 0, false, false, "0"},   /* 0: Mentions (aka the global default for any post), 1: Replies To You, 2: All Replies*/
+			{"user", "int", 0, false, false, ""},     // TODO: Make this a foreign key
+			{"targetID", "int", 0, false, false, ""}, /* the ID of the element being acted upon */
+			ccol("targetType", 50, ""),               /* topic, post (calling it post here to differentiate it from the 'reply' event), forum, user */
+			{"level", "int", 0, false, false, "0"},   /* 0: Mentions (aka the global default for any post), 1: Replies To You, 2: All Replies*/
 		}, nil,
 	)
 
@@ -558,19 +558,19 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 			ccol("type", 50, ""),
 			ccol("constraints", 200, "''"),
 		},
-		[]tblKey{
-			tblKey{"name", "unique", "", false},
+		[]tK{
+			{"name", "unique", "", false},
 		},
 	)
 
 	createTable("word_filters", "", "",
 		[]tC{
-			tC{"wfid", "int", 0, false, true, ""},
+			{"wfid", "int", 0, false, true, ""},
 			ccol("find", 200, ""),
 			ccol("replacement", 200, ""),
 		},
-		[]tblKey{
-			tblKey{"wfid", "primary", "", false},
+		[]tK{
+			{"wfid", "primary", "", false},
 		},
 	)
 
@@ -580,8 +580,8 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 			bcol("active", false),
 			bcol("installed", false),
 		},
-		[]tblKey{
-			tblKey{"uname", "unique", "", false},
+		[]tK{
+			{"uname", "unique", "", false},
 		},
 	)
 
@@ -591,39 +591,39 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 			bcol("default", false),
 			//text("profileUserVars"),
 		},
-		[]tblKey{
-			tblKey{"uname", "unique", "", false},
+		[]tK{
+			{"uname", "unique", "", false},
 		},
 	)
 
 	createTable("widgets", "", "",
 		[]tC{
-			tC{"wid", "int", 0, false, true, ""},
-			tC{"position", "int", 0, false, false, ""},
+			{"wid", "int", 0, false, true, ""},
+			{"position", "int", 0, false, false, ""},
 			ccol("side", 100, ""),
 			ccol("type", 100, ""),
 			bcol("active", false),
 			ccol("location", 100, ""),
 			text("data"),
 		},
-		[]tblKey{
-			tblKey{"wid", "primary", "", false},
+		[]tK{
+			{"wid", "primary", "", false},
 		},
 	)
 
 	createTable("menus", "", "",
 		[]tC{
-			tC{"mid", "int", 0, false, true, ""},
+			{"mid", "int", 0, false, true, ""},
 		},
-		[]tblKey{
-			tblKey{"mid", "primary", "", false},
+		[]tK{
+			{"mid", "primary", "", false},
 		},
 	)
 
 	createTable("menu_items", "", "",
 		[]tC{
-			tC{"miid", "int", 0, false, true, ""},
-			tC{"mid", "int", 0, false, false, ""},
+			{"miid", "int", 0, false, true, ""},
+			{"mid", "int", 0, false, false, ""},
 			ccol("name", 200, "''"),
 			ccol("htmlID", 200, "''"),
 			ccol("cssClass", 200, "''"),
@@ -632,7 +632,7 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 			ccol("aria", 200, "''"),
 			ccol("tooltip", 200, "''"),
 			ccol("tmplName", 200, "''"),
-			tC{"order", "int", 0, false, false, "0"},
+			{"order", "int", 0, false, false, "0"},
 
 			bcol("guestOnly", false),
 			bcol("memberOnly", false),
@@ -640,62 +640,63 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 			bcol("adminOnly", false),
 		},
 		[]tK{
-			tK{"miid", "primary", "", false},
+			{"miid", "primary", "", false},
 		},
 	)
 
 	createTable("pages", mysqlPre, mysqlCol,
 		[]tC{
-			tC{"pid", "int", 0, false, true, ""},
+			{"pid", "int", 0, false, true, ""},
 			//ccol("path", 200, ""),
 			ccol("name", 200, ""),
 			ccol("title", 200, ""),
 			text("body"),
 			// TODO: Make this a table?
 			text("allowedGroups"),
-			tC{"menuID", "int", 0, false, false, "-1"}, // simple sidebar menu
+			{"menuID", "int", 0, false, false, "-1"}, // simple sidebar menu
 		},
 		[]tK{
-			tK{"pid", "primary", "", false},
+			{"pid", "primary", "", false},
 		},
 	)
 
 	createTable("registration_logs", "", "",
 		[]tC{
-			tC{"rlid", "int", 0, false, true, ""},
+			{"rlid", "int", 0, false, true, ""},
 			ccol("username", 100, ""),
-			tC{"email", "varchar", 100, false, false, ""},
+			{"email", "varchar", 100, false, false, ""},
 			ccol("failureReason", 100, ""),
 			bcol("success", false), // Did this attempt succeed?
 			ccol("ipaddress", 200, ""),
 			createdAt("doneAt"),
 		},
 		[]tblKey{
-			tblKey{"rlid", "primary", "", false},
+			{"rlid", "primary", "", false},
 		},
 	)
 
 	createTable("login_logs", "", "",
 		[]tC{
-			tC{"lid", "int", 0, false, true, ""},
-			tC{"uid", "int", 0, false, false, ""},
+			{"lid", "int", 0, false, true, ""},
+			{"uid", "int", 0, false, false, ""},
+
 			bcol("success", false), // Did this attempt succeed?
 			ccol("ipaddress", 200, ""),
 			createdAt("doneAt"),
 		},
 		[]tblKey{
-			tblKey{"lid", "primary", "", false},
+			{"lid", "primary", "", false},
 		},
 	)
 
 	createTable("moderation_logs", "", "",
 		[]tC{
 			ccol("action", 100, ""),
-			tC{"elementID", "int", 0, false, false, ""},
+			{"elementID", "int", 0, false, false, ""},
 			ccol("elementType", 100, ""),
 			ccol("ipaddress", 200, ""),
-			tC{"actorID", "int", 0, false, false, ""}, // TODO: Make this a foreign key
-			tC{"doneAt", "datetime", 0, false, false, ""},
+			{"actorID", "int", 0, false, false, ""}, // TODO: Make this a foreign key
+			{"doneAt", "datetime", 0, false, false, ""},
 			text("extra"),
 		}, nil,
 	)
@@ -703,28 +704,28 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 	createTable("administration_logs", "", "",
 		[]tC{
 			ccol("action", 100, ""),
-			tC{"elementID", "int", 0, false, false, ""},
+			{"elementID", "int", 0, false, false, ""},
 			ccol("elementType", 100, ""),
 			ccol("ipaddress", 200, ""),
-			tC{"actorID", "int", 0, false, false, ""}, // TODO: Make this a foreign key
-			tC{"doneAt", "datetime", 0, false, false, ""},
+			{"actorID", "int", 0, false, false, ""}, // TODO: Make this a foreign key
+			{"doneAt", "datetime", 0, false, false, ""},
 			text("extra"),
 		}, nil,
 	)
 
 	createTable("viewchunks", "", "",
 		[]tC{
-			tC{"count", "int", 0, false, false, "0"},
-			tC{"avg", "int", 0, false, false, "0"},
-			tC{"createdAt", "datetime", 0, false, false, ""},
+			{"count", "int", 0, false, false, "0"},
+			{"avg", "int", 0, false, false, "0"},
+			{"createdAt", "datetime", 0, false, false, ""},
 			ccol("route", 200, ""), // TODO: set a default empty here
 		}, nil,
 	)
 
 	createTable("viewchunks_agents", "", "",
 		[]tC{
-			tC{"count", "int", 0, false, false, "0"},
-			tC{"createdAt", "datetime", 0, false, false, ""},
+			{"count", "int", 0, false, false, "0"},
+			{"createdAt", "datetime", 0, false, false, ""},
 			ccol("browser", 200, ""), // googlebot, firefox, opera, etc.
 			//ccol("version",0,""), // the version of the browser or bot
 		}, nil,
@@ -732,79 +733,79 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 
 	createTable("viewchunks_systems", "", "",
 		[]tC{
-			tC{"count", "int", 0, false, false, "0"},
-			tC{"createdAt", "datetime", 0, false, false, ""},
+			{"count", "int", 0, false, false, "0"},
+			{"createdAt", "datetime", 0, false, false, ""},
 			ccol("system", 200, ""), // windows, android, unknown, etc.
 		}, nil,
 	)
 
 	createTable("viewchunks_langs", "", "",
 		[]tC{
-			tC{"count", "int", 0, false, false, "0"},
-			tC{"createdAt", "datetime", 0, false, false, ""},
+			{"count", "int", 0, false, false, "0"},
+			{"createdAt", "datetime", 0, false, false, ""},
 			ccol("lang", 200, ""), // en, ru, etc.
 		}, nil,
 	)
 
 	createTable("viewchunks_referrers", "", "",
 		[]tC{
-			tC{"count", "int", 0, false, false, "0"},
-			tC{"createdAt", "datetime", 0, false, false, ""},
+			{"count", "int", 0, false, false, "0"},
+			{"createdAt", "datetime", 0, false, false, ""},
 			ccol("domain", 200, ""),
 		}, nil,
 	)
 
 	createTable("viewchunks_forums", "", "",
 		[]tC{
-			tC{"count", "int", 0, false, false, "0"},
-			tC{"createdAt", "datetime", 0, false, false, ""},
-			tC{"forum", "int", 0, false, false, ""},
+			{"count", "int", 0, false, false, "0"},
+			{"createdAt", "datetime", 0, false, false, ""},
+			{"forum", "int", 0, false, false, ""},
 		}, nil,
 	)
 
 	createTable("topicchunks", "", "",
 		[]tC{
-			tC{"count", "int", 0, false, false, "0"},
-			tC{"createdAt", "datetime", 0, false, false, ""},
+			{"count", "int", 0, false, false, "0"},
+			{"createdAt", "datetime", 0, false, false, ""},
 			// TODO: Add a column for the parent forum?
 		}, nil,
 	)
 
 	createTable("postchunks", "", "",
 		[]tC{
-			tC{"count", "int", 0, false, false, "0"},
-			tC{"createdAt", "datetime", 0, false, false, ""},
+			{"count", "int", 0, false, false, "0"},
+			{"createdAt", "datetime", 0, false, false, ""},
 			// TODO: Add a column for the parent topic / profile?
 		}, nil,
 	)
 
 	createTable("memchunks", "", "",
 		[]tC{
-			tC{"count", "int", 0, false, false, "0"},
-			tC{"stack", "int", 0, false, false, "0"},
-			tC{"heap", "int", 0, false, false, "0"},
-			tC{"createdAt", "datetime", 0, false, false, ""},
+			{"count", "int", 0, false, false, "0"},
+			{"stack", "int", 0, false, false, "0"},
+			{"heap", "int", 0, false, false, "0"},
+			{"createdAt", "datetime", 0, false, false, ""},
 		}, nil,
 	)
 
 	createTable("perfchunks", "", "",
 		[]tC{
-			tC{"low", "int", 0, false, false, "0"},
-			tC{"high", "int", 0, false, false, "0"},
-			tC{"avg", "int", 0, false, false, "0"},
-			tC{"createdAt", "datetime", 0, false, false, ""},
+			{"low", "int", 0, false, false, "0"},
+			{"high", "int", 0, false, false, "0"},
+			{"avg", "int", 0, false, false, "0"},
+			{"createdAt", "datetime", 0, false, false, ""},
 		}, nil,
 	)
 
 	createTable("sync", "", "",
 		[]tC{
-			tC{"last_update", "datetime", 0, false, false, ""},
+			{"last_update", "datetime", 0, false, false, ""},
 		}, nil,
 	)
 
 	createTable("updates", "", "",
 		[]tC{
-			tC{"dbVersion", "int", 0, false, false, "0"},
+			{"dbVersion", "int", 0, false, false, "0"},
 		}, nil,
 	)
 
@@ -817,12 +818,12 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 
 	/*createTable("tables", "", "",
 		[]tC{
-			tC{"id", "int", 0, false, true, ""},
+			{"id", "int", 0, false, true, ""},
 			ccol("name", 200, ""),
 		},
 		[]tK{
-			tK{"id", "primary", "", false},
-			tK{"name", "unique", "", false},
+			{"id", "primary", "", false},
+			{"name", "unique", "", false},
 		},
 	)*/
 
