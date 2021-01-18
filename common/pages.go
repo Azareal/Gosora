@@ -154,6 +154,13 @@ type Paginator struct {
 	LastPage int
 }
 
+type PaginatorMod struct {
+	Params   template.URL
+	PageList []int
+	Page     int
+	LastPage int
+}
+
 type CustomPagePage struct {
 	*Header
 	Page *CustomPage
@@ -604,10 +611,15 @@ type PanelMenuItemPage struct {
 	Item MenuItem
 }
 
+type PanelUserPageSearch struct {
+	Name string
+	Email string
+}
 type PanelUserPage struct {
 	*BasePanelPage
 	ItemList []*User
-	Paginator
+	Search PanelUserPageSearch
+	PaginatorMod
 }
 
 type PanelGroupPage struct {

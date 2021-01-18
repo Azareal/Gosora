@@ -2,7 +2,9 @@ package panel
 
 import (
 	"database/sql"
+	"html/template"
 	"net/http"
+	"net/url"
 	"strconv"
 
 	c "github.com/Azareal/Gosora/common"
@@ -13,17 +15,45 @@ func Users(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
 	if ferr != nil {
 		return ferr
 	}
+
+	name := r.FormValue("s-name")
+	email := r.FormValue("s-email")
+	hasParam := name != "" || email != ""
+
 	page, _ := strconv.Atoi(r.FormValue("page"))
 	perPage := 15
-	offset, page, lastPage := c.PageOffset(basePage.Stats.Users, page, perPage)
+	userCount := basePage.Stats.Users
+	if hasParam {
+		userCount = c.Users.CountSearch(name, email)
+	}
+	offset, page, lastPage := c.PageOffset(userCount, page, perPage)
 
-	users, err := c.Users.GetOffset(offset, perPage)
-	if err != nil {
-		return c.InternalError(err, w, r)
+	var users []*c.User
+	var e error
+	if hasParam {
+		users, e = c.Users.SearchOffset(name, email, offset, perPage)
+	} else {
+		users, e = c.Users.GetOffset(offset, perPage)
+	}
+	if e != nil {
+		return c.InternalError(e, w, r)
 	}
 
+	name = url.QueryEscape(name)
+	email = url.QueryEscape(email)
+	search := c.PanelUserPageSearch{name, email}
+
+	var params string
+	if hasParam {
+		if name != "" {
+			params += "s-name=" + name + "&"
+		}
+		if email != "" {
+			params += "s-email=" + email + "&"
+		}
+	}
 	pageList := c.Paginate(page, lastPage, 5)
-	pi := c.PanelUserPage{basePage, users, c.Paginator{pageList, page, lastPage}}
+	pi := c.PanelUserPage{basePage, users, search, c.PaginatorMod{template.URL(params), pageList, page, lastPage}}
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "", "", "panel_users", &pi})
 }
 

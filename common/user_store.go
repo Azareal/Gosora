@@ -21,6 +21,7 @@ type UserStore interface {
 	Getn(id int) *User
 	GetByName(name string) (*User, error)
 	Exists(id int) bool
+	SearchOffset(name, email string, offset, perPage int) (users []*User, err error)
 	GetOffset(offset, perPage int) ([]*User, error)
 	Each(f func(*User) error) error
 	//BulkGet(ids []int) ([]*User, error)
@@ -29,6 +30,7 @@ type UserStore interface {
 	Create(name, password, email string, group int, active bool) (int, error)
 	Reload(id int) error
 	Count() int
+	CountSearch(name, email string) int
 
 	SetCache(cache UserCache)
 	GetCache() UserCache
@@ -37,14 +39,17 @@ type UserStore interface {
 type DefaultUserStore struct {
 	cache UserCache
 
-	get        *sql.Stmt
-	getByName  *sql.Stmt
-	getOffset  *sql.Stmt
-	getAll     *sql.Stmt
-	exists     *sql.Stmt
-	register   *sql.Stmt
-	nameExists *sql.Stmt
-	count      *sql.Stmt
+	get          *sql.Stmt
+	getByName    *sql.Stmt
+	searchOffset *sql.Stmt
+	getOffset    *sql.Stmt
+	getAll       *sql.Stmt
+	exists       *sql.Stmt
+	register     *sql.Stmt
+	nameExists   *sql.Stmt
+
+	count       *sql.Stmt
+	countSearch *sql.Stmt
 }
 
 // NewDefaultUserStore gives you a new instance of DefaultUserStore
@@ -57,15 +62,20 @@ func NewDefaultUserStore(cache UserCache) (*DefaultUserStore, error) {
 	allCols := "uid,name,group,active,is_super_admin,session,email,avatar,message,level,score,posts,liked,last_ip,temp_group,createdAt,enable_embeds,profile_comments,who_can_convo"
 	// TODO: Add an admin version of registerStmt with more flexibility?
 	return &DefaultUserStore{
-		cache:      cache,
-		get:        acc.Select(u).Columns("name,group,active,is_super_admin,session,email,avatar,message,level,score,posts,liked,last_ip,temp_group,createdAt,enable_embeds,profile_comments,who_can_convo").Where("uid=?").Prepare(),
-		getByName:  acc.Select(u).Columns(allCols).Where("name=?").Prepare(),
-		getOffset:  acc.Select(u).Columns(allCols).Orderby("uid ASC").Limit("?,?").Prepare(),
-		getAll:     acc.Select(u).Columns(allCols).Prepare(),
+		cache: cache,
+
+		get:          acc.Select(u).Columns("name,group,active,is_super_admin,session,email,avatar,message,level,score,posts,liked,last_ip,temp_group,createdAt,enable_embeds,profile_comments,who_can_convo").Where("uid=?").Prepare(),
+		getByName:    acc.Select(u).Columns(allCols).Where("name=?").Prepare(),
+		searchOffset: acc.Select(u).Columns(allCols).Where("(name=? OR ?='') AND (email=? OR ?='')").Orderby("uid ASC").Limit("?,?").Prepare(),
+		getOffset:    acc.Select(u).Columns(allCols).Orderby("uid ASC").Limit("?,?").Prepare(),
+		getAll:       acc.Select(u).Columns(allCols).Prepare(),
+
 		exists:     acc.Exists(u, "uid").Prepare(),
 		register:   acc.Insert(u).Columns("name,email,password,salt,group,is_super_admin,session,active,message,createdAt,lastActiveAt,lastLiked,oldestItemLikedCreatedAt").Fields("?,?,?,?,?,0,'',?,'',UTC_TIMESTAMP(),UTC_TIMESTAMP(),UTC_TIMESTAMP(),UTC_TIMESTAMP()").Prepare(), // TODO: Implement user_count on users_groups here
 		nameExists: acc.Exists(u, "name").Prepare(),
-		count:      acc.Count(u).Prepare(),
+
+		count:       acc.Count(u).Prepare(),
+		countSearch: acc.Count(u).Where("(name=? OR ?='') AND (email=? OR ?='')").Prepare(),
 	}, acc.FirstError()
 }
 
@@ -148,6 +158,30 @@ func (s *DefaultUserStore) GetByName(name string) (*User, error) {
 // TODO: Make this a little more consistent with DefaultGroupStore's GetRange method
 func (s *DefaultUserStore) GetOffset(offset, perPage int) (users []*User, err error) {
 	rows, err := s.getOffset.Query(offset, perPage)
+	if err != nil {
+		return users, err
+	}
+	defer rows.Close()
+
+	var embeds int
+	for rows.Next() {
+		u := &User{Loggedin: true}
+		err := rows.Scan(&u.ID, &u.Name, &u.Group, &u.Active, &u.IsSuperAdmin, &u.Session, &u.Email, &u.RawAvatar, &u.Message, &u.Level, &u.Score, &u.Posts, &u.Liked, &u.LastIP, &u.TempGroup, &u.CreatedAt, &embeds, &u.Privacy.ShowComments, &u.Privacy.AllowMessage)
+		if err != nil {
+			return nil, err
+		}
+		if embeds != -1 {
+			u.ParseSettings = DefaultParseSettings.CopyPtr()
+			u.ParseSettings.NoEmbed = embeds == 0
+		}
+		u.Init()
+		s.cache.Set(u)
+		users = append(users, u)
+	}
+	return users, rows.Err()
+}
+func (s *DefaultUserStore) SearchOffset(name, email string, offset, perPage int) (users []*User, err error) {
+	rows, err := s.searchOffset.Query(name, name, email, email, offset, perPage)
 	if err != nil {
 		return users, err
 	}
@@ -348,6 +382,10 @@ func (s *DefaultUserStore) Create(name, password, email string, group int, activ
 // Count returns the total number of users registered on the forums
 func (s *DefaultUserStore) Count() (count int) {
 	return Countf(s.count)
+}
+
+func (s *DefaultUserStore) CountSearch(name, email string) (count int) {
+	return Countf(s.countSearch, name, name, email, email)
 }
 
 func (s *DefaultUserStore) SetCache(cache UserCache) {
