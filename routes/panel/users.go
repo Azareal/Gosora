@@ -18,6 +18,9 @@ func Users(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
 
 	name := r.FormValue("s-name")
 	email := r.FormValue("s-email")
+	if !u.Perms.EditUserEmail && email != "" {
+		email = ""
+	}
 	hasParam := name != "" || email != ""
 
 	page, _ := strconv.Atoi(r.FormValue("page"))
