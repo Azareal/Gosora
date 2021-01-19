@@ -612,13 +612,17 @@ type PanelMenuItemPage struct {
 }
 
 type PanelUserPageSearch struct {
-	Name string
+	Name  string
 	Email string
+	Group int
+
+	Any bool
 }
 type PanelUserPage struct {
 	*BasePanelPage
 	ItemList []*User
-	Search PanelUserPageSearch
+	Groups   []*Group
+	Search   PanelUserPageSearch
 	PaginatorMod
 }
 

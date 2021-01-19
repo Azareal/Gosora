@@ -21,20 +21,38 @@ func Users(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
 	if !u.Perms.EditUserEmail && email != "" {
 		return c.LocalError("Only users with the EditUserEmail permission can search by email.", w, r, u)
 	}
-	hasParam := name != "" || email != ""
+	group := r.FormValue("s-group")
+	f := func(l ...string) bool {
+		for _, ll := range l {
+			if ll != "" {
+				return true
+			}
+		}
+		return false
+	}
+	hasParam := f(name, email, group)
+	gid, _ := strconv.Atoi(group)
+	/*if group == "" {
+		gid = -1
+	}*/
+	hasParam = hasParam && gid > 0
 
 	page, _ := strconv.Atoi(r.FormValue("page"))
 	perPage := 15
 	userCount := basePage.Stats.Users
 	if hasParam {
-		userCount = c.Users.CountSearch(name, email)
+		userCount = c.Users.CountSearch(name, email, gid)
 	}
 	offset, page, lastPage := c.PageOffset(userCount, page, perPage)
 
+	allGroups, e := c.Groups.GetAll()
+	if e != nil {
+		return c.InternalError(e, w, r)
+	}
+
 	var users []*c.User
-	var e error
 	if hasParam {
-		users, e = c.Users.SearchOffset(name, email, offset, perPage)
+		users, e = c.Users.SearchOffset(name, email, gid, offset, perPage)
 	} else {
 		users, e = c.Users.GetOffset(offset, perPage)
 	}
@@ -44,7 +62,7 @@ func Users(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
 
 	name = url.QueryEscape(name)
 	email = url.QueryEscape(email)
-	search := c.PanelUserPageSearch{name, email}
+	search := c.PanelUserPageSearch{name, email, gid, hasParam}
 
 	var params string
 	if hasParam {
@@ -56,7 +74,7 @@ func Users(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
 		}
 	}
 	pageList := c.Paginate(page, lastPage, 5)
-	pi := c.PanelUserPage{basePage, users, search, c.PaginatorMod{template.URL(params), pageList, page, lastPage}}
+	pi := c.PanelUserPage{basePage, users, allGroups, search, c.PaginatorMod{template.URL(params), pageList, page, lastPage}}
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "", "", "panel_users", &pi})
 }
 

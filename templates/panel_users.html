@@ -1,5 +1,5 @@
 <div class="colstack_item colstack_head">
-	<div class="rowitem"><h1>{{lang "panel_users_head"}}</h1></div>
+	<div class="rowitem"><h1>{{if .Search.Any}}{{lang "panel_users_search_title"}}{{else}}{{lang "panel_users_head"}}{{end}}</h1></div>
 </div>
 <div id="panel_users"class="colstack_item rowlist bgavatars">
 	{{range .ItemList}}
@@ -31,6 +31,14 @@
 		{{if .CurrentUser.Perms.EditUserEmail}}<div class="formrow">
 			<div class="formitem formlabel"><a>{{lang "panel_users_search_email"}}</a></div>
 			<div class="formitem"><input name="s-email"type="email"{{if .Search.Email}}value="{{.Search.Email}}"{{end}}placeholder="{{lang "panel_users_search_email_placeholder"}}"></div>
+		</div>{{end}}
+		{{if .CurrentUser.Perms.EditUserGroup}}<div class="formrow">
+			<div class="formitem formlabel"><a>{{lang "panel_users_search_group"}}</a></div>
+			<div class="formitem"><select name="s-group">
+				<option value="0"{{if eq $.Search.Group 0}}selected{{end}}>{{lang "panel_users_search_group_none"}}</option>
+			{{range .Groups}}{{if ne .ID 0}}
+				<option value="{{.ID}}"{{if eq $.Search.Group .ID}}selected{{end}}>{{.Name}}</option>
+			{{end}}{{end}}</select></div>
 		</div>{{end}}
 		<div class="formrow form_button_row">
 			<div class="formitem"><button class="formbutton">{{lang "panel_users_search_button"}}</button></div>

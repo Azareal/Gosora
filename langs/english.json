@@ -900,7 +900,10 @@
 		"panel_users_search_name_placeholder":"John Doe",
 		"panel_users_search_email":"Email",
 		"panel_users_search_email_placeholder":"john.doe@example.com",
+		"panel_users_search_group":"Group",
+		"panel_users_search_group_none":"None",
 		"panel_users_search_button":"Search",
+		"panel_users_search_title":"Search Users",
 
 		"panel_user_head":"User Editor",
 		"panel_user_avatar":"Avatar",

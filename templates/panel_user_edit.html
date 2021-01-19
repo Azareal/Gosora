@@ -10,7 +10,7 @@
 		<div class="formitem avataritem">
 			{{if .User.RawAvatar}}<img src="{{.User.Avatar}}"height=56 width=56>{{end}}
 			<div class="avatarbuttons">
-				<input form="avatar_form"id="select_avatar"name="avatar_file"type="file" required class="auto_hide">
+				<input form="avatar_form"id="select_avatar"name="avatar_file"type="file"required class="auto_hide">
 				<label for="select_avatar"class="formbutton">{{lang "panel_user_avatar_select"}}</label>
 				<button form="avatar_form"name="avatar_action"value=0>{{lang "panel_user_avatar_upload"}}</button>
 				{{if .User.RawAvatar}}<button form="remove_avatar_form"name="avatar_action"value=1>{{lang "panel_user_avatar_remove"}}</button>{{end}}

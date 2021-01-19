@@ -21,7 +21,7 @@ type UserStore interface {
 	Getn(id int) *User
 	GetByName(name string) (*User, error)
 	Exists(id int) bool
-	SearchOffset(name, email string, offset, perPage int) (users []*User, err error)
+	SearchOffset(name, email string, gid, offset, perPage int) (users []*User, err error)
 	GetOffset(offset, perPage int) ([]*User, error)
 	Each(f func(*User) error) error
 	//BulkGet(ids []int) ([]*User, error)
@@ -30,7 +30,7 @@ type UserStore interface {
 	Create(name, password, email string, group int, active bool) (int, error)
 	Reload(id int) error
 	Count() int
-	CountSearch(name, email string) int
+	CountSearch(name, email string, gid int) int
 
 	SetCache(cache UserCache)
 	GetCache() UserCache
@@ -66,7 +66,7 @@ func NewDefaultUserStore(cache UserCache) (*DefaultUserStore, error) {
 
 		get:          acc.Select(u).Columns("name,group,active,is_super_admin,session,email,avatar,message,level,score,posts,liked,last_ip,temp_group,createdAt,enable_embeds,profile_comments,who_can_convo").Where("uid=?").Prepare(),
 		getByName:    acc.Select(u).Columns(allCols).Where("name=?").Prepare(),
-		searchOffset: acc.Select(u).Columns(allCols).Where("(name=? OR ?='') AND (email=? OR ?='')").Orderby("uid ASC").Limit("?,?").Prepare(),
+		searchOffset: acc.Select(u).Columns(allCols).Where("(name=? OR ?='') AND (email=? OR ?='') AND (group=? OR ?='')").Orderby("uid ASC").Limit("?,?").Prepare(),
 		getOffset:    acc.Select(u).Columns(allCols).Orderby("uid ASC").Limit("?,?").Prepare(),
 		getAll:       acc.Select(u).Columns(allCols).Prepare(),
 
@@ -75,7 +75,7 @@ func NewDefaultUserStore(cache UserCache) (*DefaultUserStore, error) {
 		nameExists: acc.Exists(u, "name").Prepare(),
 
 		count:       acc.Count(u).Prepare(),
-		countSearch: acc.Count(u).Where("(name=? OR ?='') AND (email=? OR ?='')").Prepare(),
+		countSearch: acc.Count(u).Where("(name=? OR ?='') AND (email=? OR ?='') AND (group=? OR ?='')").Prepare(),
 	}, acc.FirstError()
 }
 
@@ -180,8 +180,8 @@ func (s *DefaultUserStore) GetOffset(offset, perPage int) (users []*User, err er
 	}
 	return users, rows.Err()
 }
-func (s *DefaultUserStore) SearchOffset(name, email string, offset, perPage int) (users []*User, err error) {
-	rows, err := s.searchOffset.Query(name, name, email, email, offset, perPage)
+func (s *DefaultUserStore) SearchOffset(name, email string, gid, offset, perPage int) (users []*User, err error) {
+	rows, err := s.searchOffset.Query(name, name, email, email, gid, gid, offset, perPage)
 	if err != nil {
 		return users, err
 	}
@@ -384,8 +384,8 @@ func (s *DefaultUserStore) Count() (count int) {
 	return Countf(s.count)
 }
 
-func (s *DefaultUserStore) CountSearch(name, email string) (count int) {
-	return Countf(s.countSearch, name, name, email, email)
+func (s *DefaultUserStore) CountSearch(name, email string, gid int) (count int) {
+	return Countf(s.countSearch, name, name, email, email, gid, gid)
 }
 
 func (s *DefaultUserStore) SetCache(cache UserCache) {
