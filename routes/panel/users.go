@@ -19,7 +19,7 @@ func Users(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
 	name := r.FormValue("s-name")
 	email := r.FormValue("s-email")
 	if !u.Perms.EditUserEmail && email != "" {
-		email = ""
+		return c.LocalError("Only users with the EditUserEmail permission can search by email.", w, r, u)
 	}
 	hasParam := name != "" || email != ""
 
