@@ -35,7 +35,7 @@ func Users(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
 	/*if group == "" {
 		gid = -1
 	}*/
-	hasParam = hasParam && gid > 0
+	hasParam = hasParam || gid > 0
 
 	page, _ := strconv.Atoi(r.FormValue("page"))
 	perPage := 15
@@ -71,6 +71,9 @@ func Users(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
 		}
 		if email != "" {
 			params += "s-email=" + email + "&"
+		}
+		if gid > 0 {
+			params += "s-group=" + strconv.Itoa(gid) + "&"
 		}
 	}
 	pageList := c.Paginate(page, lastPage, 5)
