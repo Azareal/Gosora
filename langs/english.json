@@ -363,6 +363,10 @@
 		"password_reset_token_token_verified":"Your password was successfully updated.",
 
 		"convo_dev":"Conversations are currently under development. Some features may not work yet and your messages may be purged every now and then.",
+		"convo_rand_0":"Remember that the person on the other end has thoughts and emotions just like you.",
+		"convo_rand_1":"Try to look at things from the other person's perspective.",
+		"convo_rand_2":"Treat others how you'd like to be treated.",
+		"convo_rand_3":"Having a differing opinion isn't an attack on you.",
 
 		"panel_forum_created":"The forum was successfully created.",
 		"panel_forum_deleted":"The forum was successfully deleted.",

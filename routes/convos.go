@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"html"
+	"math/rand"
 	"net/http"
 	"strconv"
 	"strings"
@@ -14,11 +15,17 @@ import (
 	p "github.com/Azareal/Gosora/common/phrases"
 )
 
+func convoNotice(h *c.Header) {
+	//h.AddNotice("convo_dev")
+	c := rand.Intn(3)
+	h.AddNotice("convo_rand_" + strconv.Itoa(c))
+}
+
 func Convos(w http.ResponseWriter, r *http.Request, user *c.User, h *c.Header) c.RouteError {
 	accountEditHead("convos", w, r, user, h)
 	h.AddScript("convo.js")
 	h.AddSheet(h.Theme.Name + "/convo.css")
-	h.AddNotice("convo_dev")
+	convoNotice(h)
 	ccount := c.Convos.GetUserCount(user.ID)
 	page, _ := strconv.Atoi(r.FormValue("page"))
 	offset, page, lastPage := c.PageOffset(ccount, page, c.Config.ItemsPerPage)
@@ -51,24 +58,23 @@ func Convos(w http.ResponseWriter, r *http.Request, user *c.User, h *c.Header) c
 	return renderTemplate("account", w, r, h, pi)
 }
 
-func Convo(w http.ResponseWriter, r *http.Request, user *c.User, header *c.Header, scid string) c.RouteError {
-	accountEditHead("convo", w, r, user, header)
-	header.AddSheet(header.Theme.Name + "/convo.css")
-	header.AddNotice("convo_dev")
+func Convo(w http.ResponseWriter, r *http.Request, user *c.User, h *c.Header, scid string) c.RouteError {
+	accountEditHead("convo", w, r, user, h)
+	h.AddSheet(h.Theme.Name + "/convo.css")
+	convoNotice(h)
 	cid, err := strconv.Atoi(scid)
 	if err != nil {
 		return c.LocalError(p.GetErrorPhrase("id_must_be_integer"), w, r, user)
 	}
-
 	convo, err := c.Convos.Get(cid)
 	if err == sql.ErrNoRows {
-		return c.NotFound(w, r, header)
+		return c.NotFound(w, r, h)
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
 	pcount := convo.PostsCount()
 	if pcount == 0 {
-		return c.NotFound(w, r, header)
+		return c.NotFound(w, r, h)
 	}
 
 	page, _ := strconv.Atoi(r.FormValue("page"))
@@ -78,20 +84,20 @@ func Convo(w http.ResponseWriter, r *http.Request, user *c.User, header *c.Heade
 	posts, err := convo.Posts(offset, c.Config.ItemsPerPage)
 	// TODO: Report a better error for no posts
 	if err == sql.ErrNoRows {
-		return c.NotFound(w, r, header)
+		return c.NotFound(w, r, h)
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
 
 	uids, err := convo.Uids()
 	if err == sql.ErrNoRows {
-		return c.NotFound(w, r, header)
+		return c.NotFound(w, r, h)
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
 	umap, err := c.Users.BulkGetMap(uids)
 	if err == sql.ErrNoRows {
-		return c.NotFound(w, r, header)
+		return c.NotFound(w, r, h)
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -123,8 +129,8 @@ func Convo(w http.ResponseWriter, r *http.Request, user *c.User, header *c.Heade
 		}
 	}
 
-	pi := c.Account{header, "dashboard", "convo", c.ConvoViewPage{header, convo, pitems, users, canReply, c.Paginator{pageList, page, lastPage}}}
-	return renderTemplate("account", w, r, header, pi)
+	pi := c.Account{h, "dashboard", "convo", c.ConvoViewPage{h, convo, pitems, users, canReply, c.Paginator{pageList, page, lastPage}}}
+	return renderTemplate("account", w, r, h, pi)
 }
 
 func ConvosCreate(w http.ResponseWriter, r *http.Request, user *c.User, h *c.Header) c.RouteError {
@@ -132,17 +138,17 @@ func ConvosCreate(w http.ResponseWriter, r *http.Request, user *c.User, h *c.Hea
 	if !user.Perms.UseConvos && !user.Perms.UseConvosOnlyWithMod {
 		return c.NoPermissions(w, r, user)
 	}
-	h.AddNotice("convo_dev")
+	convoNotice(h)
 	uid, err := strconv.Atoi(r.FormValue("with"))
 	if err != nil {
 		return c.LocalError("invalid integer in parameter with", w, r, user)
 	}
-	u, err := c.Users.Get(uid)
+	recp, err := c.Users.Get(uid)
 	if err != nil {
 		return c.LocalError("Unable to fetch user", w, r, user)
 	}
 	// TODO: Avoid potential double escape?
-	pi := c.Account{h, "dashboard", "create_convo", c.ConvoCreatePage{h, html.EscapeString(u.Name)}}
+	pi := c.Account{h, "dashboard", "create_convo", c.ConvoCreatePage{h, html.EscapeString(recp.Name)}}
 	return renderTemplate("account", w, r, h, pi)
 }
 
@@ -302,14 +308,14 @@ func ConvosCreateReplySubmit(w http.ResponseWriter, r *http.Request, user *c.Use
 	return nil
 }
 
-func ConvosDeleteReplySubmit(w http.ResponseWriter, r *http.Request, user *c.User, scpid string) c.RouteError {
-	_, ferr := c.SimpleUserCheck(w, r, user)
+func ConvosDeleteReplySubmit(w http.ResponseWriter, r *http.Request, u *c.User, scpid string) c.RouteError {
+	_, ferr := c.SimpleUserCheck(w, r, u)
 	if ferr != nil {
 		return ferr
 	}
 	cpid, err := strconv.Atoi(scpid)
 	if err != nil {
-		return c.LocalError(p.GetErrorPhrase("id_must_be_integer"), w, r, user)
+		return c.LocalError(p.GetErrorPhrase("id_must_be_integer"), w, r, u)
 	}
 
 	post := &c.ConversationPost{ID: cpid}
@@ -330,8 +336,8 @@ func ConvosDeleteReplySubmit(w http.ResponseWriter, r *http.Request, user *c.Use
 	if pcount == 0 {
 		return c.NotFound(w, r, nil)
 	}
-	if user.ID != post.CreatedBy && !user.IsSuperMod {
-		return c.NoPermissions(w, r, user)
+	if u.ID != post.CreatedBy && !u.IsSuperMod {
+		return c.NoPermissions(w, r, u)
 	}
 
 	posts, err := convo.Posts(0, c.Config.ItemsPerPage)
