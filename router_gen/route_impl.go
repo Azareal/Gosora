@@ -60,11 +60,7 @@ func (r *RouteImpl) hasBeforeItem(item string) bool {
 }
 
 func (r *RouteImpl) NoGzip() *RouteImpl {
-	return r.LitBeforeMultiline(`gzw, ok := w.(c.GzipResponseWriter)
-	if ok {
-		w = gzw.ResponseWriter
-		w.Header().Del("Content-Encoding")
-	}`)
+	return r.LitBefore("w = r.responseWriter(w)")
 }
 
 func (r *RouteImpl) NoHeader() *RouteImpl {

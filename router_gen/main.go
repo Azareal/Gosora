@@ -230,9 +230,9 @@ func main() {
 
 	tmplVars.AllAgentNames = []string{
 		"unknown",
-		"firefox",
-		"chrome",
 		"opera",
+		"chrome",
+		"firefox",
 		"safari",
 		"edge",
 		"internetexplorer",
@@ -285,16 +285,18 @@ func main() {
 		"domcop",
 		"netcraft",
 		"blexbot",
+		"wappalyzer",
 		"burf",
 		"aspiegel",
 		"mail_ru",
 		"ccbot",
+		"yacy",
 		"zgrab",
 		"cloudsystemnetworks",
 		"maui",
 		"curl",
 		"python",
-		"go",
+		//"go",
 		"headlesschrome",
 		"awesome_bot",
 	}
@@ -369,17 +371,19 @@ func main() {
 	a("DomCopBot", "domcop")
 	a("NetcraftSurveyAgent", "netcraft")
 	a("BLEXBot", "blexbot")
+	a("Wappalyzer", "wappalyzer")
 	a("Burf", "burf")
 	a("AspiegelBot", "aspiegel")
 	a("PetalBot", "aspiegel")
 	a("RU_Bot", "mail_ru") // Mail.RU_Bot
 	a("CCBot", "ccbot")
+	a("yacybot", "yacy")
 	a("zgrab", "zgrab")
 	a("Nimbostratus", "cloudsystemnetworks")
 	a("MauiBot", "maui")
 	a("curl", "curl")
 	a("python", "python")
-	a("Go", "go")
+	//a("Go", "go") // yacy has java as part of it's UA, try to avoid hitting crawlers written in go
 	a("HeadlessChrome", "headlesschrome")
 	a("awesome_bot", "awesome_bot")
 	// TODO: Detect Adsbot/3.1, it has a similar user agent to Google's Adsbot, but it is different. No Google fragments.
@@ -732,6 +736,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	// Track the user agents. Unfortunately, everyone pretends to be Mozilla, so this'll be a little less efficient than I would like.
 	// TODO: Add a setting to disable this?
 	// TODO: Use a more efficient detector instead of smashing every possible combination in
+	// TODO: Make this testable
 	var agent int
 	if !c.Config.DisableAnalytics {
 	
@@ -755,10 +760,12 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		var items []string
 		var os int
 		for _, it := range uutils.StringToBytes(ua) {
-			if (it > 64 && it < 91) || (it > 96 && it < 123) || it == '_' {
+			if (it > 64 && it < 91) || (it > 96 && it < 123) || (it > 47 && it < 58) || it == '_' {
 				// TODO: Store an index and slice that instead?
 				buf = append(buf, it)
-			} else if it == ' ' || it == '(' || it == ')' || it == '-' || (it > 47 && it < 58) || it == ';' || it == ':' || it == '.' || it == '+' || it == '~' || it == '@' /*|| (it == ':' && bytes.Equal(buf,[]byte("http")))*/ || it == ',' || it == '/' {
+			} else if it == ' ' || it == '(' || it == ')' || it == '-' || it == ';' || it == ':' || it == '.' || it == '+' || it == '~' || it == '@' /*|| (it == ':' && bytes.Equal(buf,[]byte("http")))*/ || it == ',' || it == '/' {
+				//log.Print("buf: ",string(buf))
+				//log.Print("it: ",string(it))
 				if len(buf) != 0 {
 					if len(buf) > 2 {
 						// Use an unsafe zero copy conversion here just to use the switch, it's not safe for this string to escape from here, as it will get mutated, so do a regular string conversion in append
@@ -773,12 +780,14 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 							os = {{.AllOSMap.iphone}}
 						case "Android":
 							os = {{.AllOSMap.android}}
-						case "like","compatible","NT","X","KHTML":
+						case "like","compatible","NT","X","com","KHTML":
 							// Skip these words
 						default:
+							//log.Print("append buf")
 							items = append(items, string(buf))
 						}
 					}
+					//log.Print("reset buf")
 					buf = buf[:0]
 				}
 			} else {
@@ -844,7 +853,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				}
 				r.DumpRequest(req,"Blank UA: " + pre)
 			} else {
-				r.requestLogger.Print("unknown ua: ", c.SanitiseSingleLine(ua))
+				r.requestLogger.Print("unknown ua: ", c.SanitiseSingleLine(req.UserAgent()))
 			}
 		}// else {
 			//co.AgentViewCounter.Bump(agentMapEnum[agent])
@@ -1001,13 +1010,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 				co.RouteViewCounter.Bump3({{index .AllRouteMap "routes.UploadedFile"}}, cn)
 				return c.NotFound(w,req,nil)
 			}
-			/*if bzw, ok := w.(c.BrResponseWriter); ok {
-				w = bzw.ResponseWriter
-				w.Header().Del("Content-Encoding")
-			} else */if gzw, ok := w.(c.GzipResponseWriter); ok {
-				w = gzw.ResponseWriter
-				w.Header().Del("Content-Encoding")
-			}
+			w = r.responseWriter(w)
 			req.URL.Path += extraData
 			// TODO: Find a way to propagate errors up from this?
 			r.UploadHandler(w,req) // TODO: Count these views
@@ -1021,13 +1024,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 					co.RouteViewCounter.Bump3({{index .AllRouteMap "routes.RobotsTxt"}}, cn)
 					return routes.RobotsTxt(w,req)
 				case "favicon.ico":
-					/*if bzw, ok := w.(c.BrResponseWriter); ok {
-						w = bzw.ResponseWriter
-						w.Header().Del("Content-Encoding")
-					} else */if gzw, ok := w.(c.GzipResponseWriter); ok {
-						w = gzw.ResponseWriter
-						w.Header().Del("Content-Encoding")
-					}
+					w = r.responseWriter(w)
 					req.URL.Path = "/s/favicon.ico"
 					routes.StaticFile(w,req)
 					co.RouteViewCounter.Bump3({{index .AllRouteMap "routes.Favicon"}}, cn)
@@ -1070,6 +1067,17 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 			return c.NotFound(w,req,nil)
 	}
 	return err
+}
+
+func (r *GenRouter) responseWriter(w http.ResponseWriter) http.ResponseWriter {
+	/*if bzw, ok := w.(c.BrResponseWriter); ok {
+		w = bzw.ResponseWriter
+		w.Header().Del("Content-Encoding")
+	} else */if gzw, ok := w.(c.GzipResponseWriter); ok {
+		w = gzw.ResponseWriter
+		w.Header().Del("Content-Encoding")
+	}
+	return w
 }
 `
 	tmpl := template.Must(template.New("router").Parse(fileData))
