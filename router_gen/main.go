@@ -465,15 +465,22 @@ func init() {
 	co.SetReverseAgentMapEnum(reverseAgentMapEnum)
 	co.SetOSMapEnum(osMapEnum)
 	co.SetReverseOSMapEnum(reverseOSMapEnum)
-	c.Chrome = agentMapEnum["chrome"]
-	c.Firefox = agentMapEnum["firefox"]
-	ame := agentMapEnum
+
+	g := func(n string) int {
+		a, ok := agentMapEnum[n]
+		if !ok {
+			panic("name not found in agentMapEnum")
+		}
+		return a
+	}
+	c.Chrome = g("chrome")
+	c.Firefox = g("firefox")
 	c.SimpleBots = []int{
-		ame["semrush"],
-		ame["ahrefs"],
-		ame["python"],
-		ame["go"],
-		ame["curl"],
+		g("semrush"),
+		g("ahrefs"),
+		g("python"),
+		//g("go"),
+		g("curl"),
 	}
 }
 
