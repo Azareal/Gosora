@@ -772,6 +772,7 @@ var markToAgent = map[string]string{
 	"BLEXBot": "blexbot",
 	"Burf": "burf",
 	"AspiegelBot": "aspiegel",
+	"PetalBot": "aspiegel",
 	"RU_Bot": "mail_ru",
 	"CCBot": "ccbot",
 	"zgrab": "zgrab",
@@ -841,6 +842,7 @@ var markToID = map[string]int{
 	"BLEXBot": 53,
 	"Burf": 54,
 	"AspiegelBot": 55,
+	"PetalBot": 55,
 	"RU_Bot": 56,
 	"CCBot": 57,
 	"zgrab": 58,
@@ -1437,8 +1439,8 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 					return err
 				}
 				
-					
-					if gzw, ok := w.(c.GzipResponseWriter); ok {
+					gzw, ok := w.(c.GzipResponseWriter)
+					if ok {
 					w = gzw.ResponseWriter
 					w.Header().Del("Content-Encoding")
 					}
@@ -2010,8 +2012,8 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 						return err
 					}
 					
-					
-					if gzw, ok := w.(c.GzipResponseWriter); ok {
+					gzw, ok := w.(c.GzipResponseWriter)
+					if ok {
 					w = gzw.ResponseWriter
 					w.Header().Del("Content-Encoding")
 					}

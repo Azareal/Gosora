@@ -304,150 +304,85 @@ func main() {
 		tmplVars.AllAgentMap[agent] = id
 	}
 
-	tmplVars.AllAgentMarkNames = []string{
-		"OPR",
-		"Chrome",
-		"Firefox",
-		"Safari",
-		"MSIE",
-		"Trident",
-		"Edge",
-		"Lynx",
-		"SamsungBrowser",
-		"UCBrowser",
+	tmplVars.AllAgentMarkNames = []string{}
+	tmplVars.AllAgentMarks = map[string]string{}
 
-		"Google",
-		"Googlebot",
-		"yandex",
-		"DuckDuckBot",
-		"DuckDuckGo",
-		"Baiduspider",
-		"Sogou",
-		"ToutiaoSpider",
-		"360Spider",
-		"bingbot",
-		"BingPreview",
-		"msnbot",
-		"Slurp",
-		"Exabot",
-		"MojeekBot",
-		"Cliqzbot",
-		"netEstate",
-		"SeznamBot",
-		"CloudFlare",
-		"archive", //archive.org_bot
-		"Uptimebot",
-		"Slackbot",
-		"Slack",
-		"Discordbot",
-		"TelegramBot",
-		"Twitterbot",
-		"facebookexternalhit",
-		"Facebot",
-		"Applebot",
-		"Discourse",
-		"mattermost",
-		"ia_archiver",
-
-		"SemrushBot",
-		"DotBot",
-		"AhrefsBot",
-		"proximic",
-		"MegaIndex",
-		"MJ12bot",
-		"mj12bot",
-		"Cocolyzebot",
-		"Barkrowler",
-		"SurdotlyBot",
-		"DomCopBot",
-		"NetcraftSurveyAgent",
-		"BLEXBot",
-		"Burf",
-		"AspiegelBot",
-		"RU_Bot", // Mail.RU_Bot
-		"CCBot",
-		"zgrab",
-		"Nimbostratus",
-		"MauiBot",
-		"curl",
-		"python",
-		"Go",
-		"HeadlessChrome",
-		"awesome_bot",
+	// Add agent marks
+	a := func(mark, agent string) {
+		tmplVars.AllAgentMarkNames = append(tmplVars.AllAgentMarkNames, mark)
+		tmplVars.AllAgentMarks[mark] = agent
 	}
+	a("OPR", "opera")
+	a("Chrome", "chrome")
+	a("Firefox", "firefox")
+	a("Safari", "safari")
+	a("MSIE", "internetexplorer")
+	a("Trident", "trident") // Hack to support IE11
+	a("Edge", "edge")
+	a("Lynx", "lynx") // There's a rare android variant of lynx which isn't covered by this
+	a("SamsungBrowser", "samsung")
+	a("UCBrowser", "ucbrowser")
 
-	tmplVars.AllAgentMarks = map[string]string{
-		"OPR":            "opera",
-		"Chrome":         "chrome",
-		"Firefox":        "firefox",
-		"Safari":         "safari",
-		"MSIE":           "internetexplorer",
-		"Trident":        "trident", // Hack to support IE11
-		"Edge":           "edge",
-		"Lynx":           "lynx", // There's a rare android variant of lynx which isn't covered by this
-		"SamsungBrowser": "samsung",
-		"UCBrowser":      "ucbrowser",
+	a("Google", "googlebot")
+	a("Googlebot", "googlebot")
+	a("yandex", "yandex") // from the URL
+	a("DuckDuckBot", "duckduckgo")
+	a("DuckDuckGo", "duckduckgo")
+	a("Baiduspider", "baidu")
+	a("Sogou", "sogou")
+	a("ToutiaoSpider", "toutiao")
+	a("360Spider", "haosou")
+	a("bingbot", "bing")
+	a("BingPreview", "bing")
+	a("msnbot", "bing")
+	a("Slurp", "slurp")
+	a("Exabot", "exabot")
+	a("MojeekBot", "mojeek")
+	a("Cliqzbot", "cliqz")
+	a("netEstate", "datenbank")
+	a("SeznamBot", "seznambot")
+	a("CloudFlare", "cloudflare") // Track alwayson specifically in case there are other bots?
+	a("archive", "archive_org")   //archive.org_bot
+	a("Uptimebot", "uptimebot")
+	a("Slackbot", "slackbot")
+	a("Slack", "slackbot")
+	a("Discordbot", "discord")
+	a("TelegramBot", "telegram")
+	a("Twitterbot", "twitter")
+	a("facebookexternalhit", "facebook")
+	a("Facebot", "facebook")
+	a("Applebot", "apple")
+	a("Discourse", "discourse")
+	a("mattermost", "mattermost")
+	a("ia_archiver", "alexa")
 
-		"Google":              "googlebot",
-		"Googlebot":           "googlebot",
-		"yandex":              "yandex", // from the URL
-		"DuckDuckBot":         "duckduckgo",
-		"DuckDuckGo":          "duckduckgo",
-		"Baiduspider":         "baidu",
-		"Sogou":               "sogou",
-		"ToutiaoSpider":       "toutiao",
-		"360Spider":           "haosou",
-		"bingbot":             "bing",
-		"BingPreview":         "bing",
-		"msnbot":              "bing",
-		"Slurp":               "slurp",
-		"Exabot":              "exabot",
-		"MojeekBot":           "mojeek",
-		"Cliqzbot":            "cliqz",
-		"netEstate":           "datenbank",
-		"SeznamBot":           "seznambot",
-		"CloudFlare":          "cloudflare",  // Track alwayson specifically in case there are other bots?
-		"archive":             "archive_org", //archive.org_bot
-		"Uptimebot":           "uptimebot",
-		"Slackbot":            "slackbot",
-		"Slack":               "slackbot",
-		"Discordbot":          "discord",
-		"TelegramBot":         "telegram",
-		"Twitterbot":          "twitter",
-		"facebookexternalhit": "facebook",
-		"Facebot":             "facebook",
-		"Applebot":            "apple",
-		"Discourse":           "discourse",
-		"mattermost":          "mattermost",
-		"ia_archiver":         "alexa",
-
-		"SemrushBot":          "semrush",
-		"DotBot":              "dotbot",
-		"AhrefsBot":           "ahrefs",
-		"proximic":            "proximic",
-		"MegaIndex":           "megaindex",
-		"MJ12bot":             "majestic",
-		"mj12bot":             "majestic",
-		"Cocolyzebot":         "cocolyze",
-		"Barkrowler":          "babbar",
-		"SurdotlyBot":         "surdotly",
-		"DomCopBot":           "domcop",
-		"NetcraftSurveyAgent": "netcraft",
-		"BLEXBot":             "blexbot",
-		"Burf":                "burf",
-		"AspiegelBot":         "aspiegel",
-		"PetalBot":            "aspiegel",
-		"RU_Bot":              "mail_ru", // Mail.RU_Bot
-		"CCBot":               "ccbot",
-		"zgrab":               "zgrab",
-		"Nimbostratus":        "cloudsystemnetworks",
-		"MauiBot":             "maui",
-		"curl":                "curl",
-		"python":              "python",
-		"Go":                  "go",
-		"HeadlessChrome":      "headlesschrome",
-		"awesome_bot":         "awesome_bot",
-	}
+	a("SemrushBot", "semrush")
+	a("DotBot", "dotbot")
+	a("AhrefsBot", "ahrefs")
+	a("proximic", "proximic")
+	a("MegaIndex", "megaindex")
+	a("MJ12bot", "majestic") // TODO: This isn't matching bots out in the wild
+	a("mj12bot", "majestic")
+	a("Cocolyzebot", "cocolyze")
+	a("Barkrowler", "babbar")
+	a("SurdotlyBot", "surdotly")
+	a("DomCopBot", "domcop")
+	a("NetcraftSurveyAgent", "netcraft")
+	a("BLEXBot", "blexbot")
+	a("Burf", "burf")
+	a("AspiegelBot", "aspiegel")
+	a("PetalBot", "aspiegel")
+	a("RU_Bot", "mail_ru") // Mail.RU_Bot
+	a("CCBot", "ccbot")
+	a("zgrab", "zgrab")
+	a("Nimbostratus", "cloudsystemnetworks")
+	a("MauiBot", "maui")
+	a("curl", "curl")
+	a("python", "python")
+	a("Go", "go")
+	a("HeadlessChrome", "headlesschrome")
+	a("awesome_bot", "awesome_bot")
+	// TODO: Detect Adsbot/3.1, it has a similar user agent to Google's Adsbot, but it is different. No Google fragments.
 
 	tmplVars.AllAgentMarkIDs = make(map[string]int)
 	for mark, agent := range tmplVars.AllAgentMarks {
