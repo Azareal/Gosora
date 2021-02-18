@@ -183,58 +183,58 @@ func groupCheck(w http.ResponseWriter, r *http.Request, u *c.User, g *c.Group, e
 	return nil
 }
 
-func GroupsPromotionsCreateSubmit(w http.ResponseWriter, r *http.Request, user *c.User, sgid string) c.RouteError {
-	if !user.Perms.EditGroup {
-		return c.NoPermissions(w, r, user)
+func GroupsPromotionsCreateSubmit(w http.ResponseWriter, r *http.Request, u *c.User, sgid string) c.RouteError {
+	if !u.Perms.EditGroup {
+		return c.NoPermissions(w, r, u)
 	}
 	gid, err := strconv.Atoi(sgid)
 	if err != nil {
-		return c.LocalError(p.GetErrorPhrase("url_id_must_be_integer"), w, r, user)
+		return c.LocalError(p.GetErrorPhrase("url_id_must_be_integer"), w, r, u)
 	}
 
 	from, err := strconv.Atoi(r.FormValue("from"))
 	if err != nil {
-		return c.LocalError("from must be integer", w, r, user)
+		return c.LocalError("from must be integer", w, r, u)
 	}
 	to, err := strconv.Atoi(r.FormValue("to"))
 	if err != nil {
-		return c.LocalError("to must be integer", w, r, user)
+		return c.LocalError("to must be integer", w, r, u)
 	}
 	if from == to {
-		return c.LocalError("the from group and to group cannot be the same", w, r, user)
+		return c.LocalError("the from group and to group cannot be the same", w, r, u)
 	}
 	twoWay := r.FormValue("two-way") == "1"
 
 	level, err := strconv.Atoi(r.FormValue("level"))
 	if err != nil {
-		return c.LocalError("level must be integer", w, r, user)
+		return c.LocalError("level must be integer", w, r, u)
 	}
 	posts, err := strconv.Atoi(r.FormValue("posts"))
 	if err != nil {
-		return c.LocalError("posts must be integer", w, r, user)
+		return c.LocalError("posts must be integer", w, r, u)
 	}
 
-	regHours, err := strconv.Atoi(r.FormValue("registered_hours"))
+	regHours, err := strconv.Atoi(r.FormValue("reg_hours"))
 	if err != nil {
-		return c.LocalError("registered_hours must be integer", w, r, user)
+		return c.LocalError("reg_hours must be integer", w, r, u)
 	}
-	regDays, err := strconv.Atoi(r.FormValue("registered_days"))
+	regDays, err := strconv.Atoi(r.FormValue("reg_days"))
 	if err != nil {
-		return c.LocalError("registered_days must be integer", w, r, user)
+		return c.LocalError("reg_days must be integer", w, r, u)
 	}
-	regMonths, err := strconv.Atoi(r.FormValue("registered_months"))
+	regMonths, err := strconv.Atoi(r.FormValue("reg_months"))
 	if err != nil {
-		return c.LocalError("registered_months must be integer", w, r, user)
+		return c.LocalError("reg_months must be integer", w, r, u)
 	}
 	regMinutes := (regHours * 60) + (regDays * 24 * 60) + (regMonths * 30 * 24 * 60)
 
 	g, err := c.Groups.Get(from)
-	ferr := groupCheck(w, r, user, g, err)
+	ferr := groupCheck(w, r, u, g, err)
 	if err != nil {
 		return ferr
 	}
 	g, err = c.Groups.Get(to)
-	ferr = groupCheck(w, r, user, g, err)
+	ferr = groupCheck(w, r, u, g, err)
 	if err != nil {
 		return ferr
 	}
@@ -242,7 +242,7 @@ func GroupsPromotionsCreateSubmit(w http.ResponseWriter, r *http.Request, user *
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
-	err = c.AdminLogs.Create("create", pid, "group_promotion", user.GetIP(), user.ID)
+	err = c.AdminLogs.Create("create", pid, "group_promotion", u.GetIP(), u.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -251,37 +251,37 @@ func GroupsPromotionsCreateSubmit(w http.ResponseWriter, r *http.Request, user *
 	return nil
 }
 
-func GroupsPromotionsDeleteSubmit(w http.ResponseWriter, r *http.Request, user *c.User, sspl string) c.RouteError {
-	if !user.Perms.EditGroup {
-		return c.NoPermissions(w, r, user)
+func GroupsPromotionsDeleteSubmit(w http.ResponseWriter, r *http.Request, u *c.User, sspl string) c.RouteError {
+	if !u.Perms.EditGroup {
+		return c.NoPermissions(w, r, u)
 	}
 	spl := strings.Split(sspl, "-")
 	if len(spl) < 2 {
-		return c.LocalError("need two params", w, r, user)
+		return c.LocalError("need two params", w, r, u)
 	}
 	gid, err := strconv.Atoi(spl[0])
 	if err != nil {
-		return c.LocalError(p.GetErrorPhrase("url_id_must_be_integer"), w, r, user)
+		return c.LocalError(p.GetErrorPhrase("url_id_must_be_integer"), w, r, u)
 	}
 	pid, err := strconv.Atoi(spl[1])
 	if err != nil {
-		return c.LocalError(p.GetErrorPhrase("url_id_must_be_integer"), w, r, user)
+		return c.LocalError(p.GetErrorPhrase("url_id_must_be_integer"), w, r, u)
 	}
 
 	pro, err := c.GroupPromotions.Get(pid)
 	if err == sql.ErrNoRows {
-		return c.LocalError("That group promotion doesn't exist", w, r, user)
+		return c.LocalError("That group promotion doesn't exist", w, r, u)
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
 
 	g, err := c.Groups.Get(pro.From)
-	ferr := groupCheck(w, r, user, g, err)
+	ferr := groupCheck(w, r, u, g, err)
 	if err != nil {
 		return ferr
 	}
 	g, err = c.Groups.Get(pro.To)
-	ferr = groupCheck(w, r, user, g, err)
+	ferr = groupCheck(w, r, u, g, err)
 	if err != nil {
 		return ferr
 	}
@@ -289,7 +289,7 @@ func GroupsPromotionsDeleteSubmit(w http.ResponseWriter, r *http.Request, user *
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
-	err = c.AdminLogs.Create("delete", pid, "group_promotion", user.GetIP(), user.ID)
+	err = c.AdminLogs.Create("delete", pid, "group_promotion", u.GetIP(), u.ID)
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}
@@ -298,17 +298,17 @@ func GroupsPromotionsDeleteSubmit(w http.ResponseWriter, r *http.Request, user *
 	return nil
 }
 
-func GroupsEditPerms(w http.ResponseWriter, r *http.Request, user *c.User, sgid string) c.RouteError {
-	basePage, ferr := buildBasePage(w, r, user, "edit_group", "groups")
+func GroupsEditPerms(w http.ResponseWriter, r *http.Request, u *c.User, sgid string) c.RouteError {
+	basePage, ferr := buildBasePage(w, r, u, "edit_group", "groups")
 	if ferr != nil {
 		return ferr
 	}
-	if !user.Perms.EditGroup {
-		return c.NoPermissions(w, r, user)
+	if !u.Perms.EditGroup {
+		return c.NoPermissions(w, r, u)
 	}
 	gid, err := strconv.Atoi(sgid)
 	if err != nil {
-		return c.LocalError(p.GetErrorPhrase("url_id_must_be_integer"), w, r, user)
+		return c.LocalError(p.GetErrorPhrase("url_id_must_be_integer"), w, r, u)
 	}
 
 	g, err := c.Groups.Get(gid)
@@ -318,11 +318,11 @@ func GroupsEditPerms(w http.ResponseWriter, r *http.Request, user *c.User, sgid 
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
-	if g.IsAdmin && !user.Perms.EditGroupAdmin {
-		return c.LocalError(p.GetErrorPhrase("panel_groups_cannot_edit_admin"), w, r, user)
+	if g.IsAdmin && !u.Perms.EditGroupAdmin {
+		return c.LocalError(p.GetErrorPhrase("panel_groups_cannot_edit_admin"), w, r, u)
 	}
-	if g.IsMod && !user.Perms.EditGroupSuperMod {
-		return c.LocalError(p.GetErrorPhrase("panel_groups_cannot_edit_supermod"), w, r, user)
+	if g.IsMod && !u.Perms.EditGroupSuperMod {
+		return c.LocalError(p.GetErrorPhrase("panel_groups_cannot_edit_supermod"), w, r, u)
 	}
 
 	// TODO: Load the phrases in bulk for efficiency?
@@ -355,6 +355,7 @@ func GroupsEditPerms(w http.ResponseWriter, r *http.Request, user *c.User, sgid 
 	addPerm("UseConvosOnlyWithMod", g.Perms.UseConvosOnlyWithMod)
 	addPerm("CreateProfileReply", g.Perms.CreateProfileReply)
 	addPerm("AutoEmbed", g.Perms.AutoEmbed)
+	addPerm("AutoLink", g.Perms.AutoLink)
 
 	var modPerms []c.NameLangToggle
 	addPerm = func(permStr string, perm bool) {

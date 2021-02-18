@@ -34,6 +34,7 @@
 		"UseConvosOnlyWithMod":"Can use conversations only to contact global mods",
 		"CreateProfileReply": "Can create profile replies",
 		"AutoEmbed":"Automatically embed media they post",
+		"AutoLink":"Linkify their links",
 		
 		"ViewTopic":   "Can view topics",
 		"LikeItem":    "Can like items",

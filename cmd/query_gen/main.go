@@ -127,6 +127,7 @@ func seedTables(a qgen.Adapter) error {
 		UseConvosOnlyWithMod
 		CreateProfileReply
 		AutoEmbed
+		AutoLink
 		// CreateConvo ?
 		// CreateConvoReply ?
 
@@ -144,7 +145,7 @@ func seedTables(a qgen.Adapter) error {
 		MoveTopic
 	*/
 
-	p := func(perms c.Perms) string {
+	p := func(perms *c.Perms) string {
 		jBytes, err := json.Marshal(perms)
 		if err != nil {
 			panic(err)
@@ -162,7 +163,7 @@ func seedTables(a qgen.Adapter) error {
 		if banned {
 			bi = "1"
 		}
-		qgen.Install.SimpleInsert("users_groups", "name, permissions, plugin_perms, is_mod, is_admin, is_banned, tag", `'`+name+`','`+p(perms)+`','{}',`+mi+`,`+ai+`,`+bi+`,"`+tag+`"`)
+		qgen.Install.SimpleInsert("users_groups", "name, permissions, plugin_perms, is_mod, is_admin, is_banned, tag", `'`+name+`','`+p(&perms)+`','{}',`+mi+`,`+ai+`,`+bi+`,"`+tag+`"`)
 	}
 
 	perms := c.AllPerms
@@ -170,10 +171,10 @@ func seedTables(a qgen.Adapter) error {
 	perms.EditGroupAdmin = false
 	addGroup("Administrator", perms, true, true, false, "Admin")
 
-	perms = c.Perms{BanUsers: true, ActivateUsers: true, EditUser: true, EditUserEmail: false, EditUserGroup: true, ViewIPs: true, UploadFiles: true, UploadAvatars: true, UseConvos: true, UseConvosOnlyWithMod: true, CreateProfileReply: true, AutoEmbed: true, ViewTopic: true, LikeItem: true, CreateTopic: true, EditTopic: true, DeleteTopic: true, CreateReply: true, EditReply: true, DeleteReply: true, PinTopic: true, CloseTopic: true, MoveTopic: true}
+	perms = c.Perms{BanUsers: true, ActivateUsers: true, EditUser: true, EditUserEmail: false, EditUserGroup: true, ViewIPs: true, UploadFiles: true, UploadAvatars: true, UseConvos: true, UseConvosOnlyWithMod: true, CreateProfileReply: true, AutoEmbed: true, AutoLink: true, ViewTopic: true, LikeItem: true, CreateTopic: true, EditTopic: true, DeleteTopic: true, CreateReply: true, EditReply: true, DeleteReply: true, PinTopic: true, CloseTopic: true, MoveTopic: true}
 	addGroup("Moderator", perms, true, false, false, "Mod")
 
-	perms = c.Perms{UploadFiles: true, UploadAvatars: true, UseConvos: true, UseConvosOnlyWithMod: true, CreateProfileReply: true, AutoEmbed: true, ViewTopic: true, LikeItem: true, CreateTopic: true, CreateReply: true}
+	perms = c.Perms{UploadFiles: true, UploadAvatars: true, UseConvos: true, UseConvosOnlyWithMod: true, CreateProfileReply: true, AutoEmbed: true, AutoLink: true, ViewTopic: true, LikeItem: true, CreateTopic: true, CreateReply: true}
 	addGroup("Member", perms, false, false, false, "")
 
 	perms = c.Perms{ViewTopic: true}
@@ -189,6 +190,10 @@ func seedTables(a qgen.Adapter) error {
 	qgen.Install.SimpleInsert("forums", "name, lastTopicID, lastReplyerID, desc, tmpl", "'General',1,1,'A place for general discussions which don't fit elsewhere',''")
 
 	//
+
+	/*var addForumPerm = func(gid, fid int, permStr string) {
+		qgen.Install.SimpleInsert("forums_permissions", "gid, fid, permissions", strconv.Itoa(gid)+`,`+strconv.Itoa(fid)+`,'`+permStr+`'`)
+	}*/
 
 	qgen.Install.SimpleInsert("forums_permissions", "gid, fid, permissions", `1,1,'{"ViewTopic":true,"CreateReply":true,"CreateTopic":true,"PinTopic":true,"CloseTopic":true}'`)
 	qgen.Install.SimpleInsert("forums_permissions", "gid, fid, permissions", `2,1,'{"ViewTopic":true,"CreateReply":true,"CloseTopic":true}'`)
@@ -257,9 +262,6 @@ func seedTables(a qgen.Adapter) error {
 		fSet = append(fSet, "'"+table+"'")
 	}
 	qgen.Install.SimpleBulkInsert("tables", "name", fSet)*/
-	/*for _, table := range tables {
-		qgen.Install.SimpleInsert("tables", "name", "'"+table+"'")
-	}*/
 
 	return nil
 }
@@ -324,7 +326,7 @@ func writeDeletes(a qgen.Adapter) error {
 
 	//b.Delete("deleteForumPermsByForum").Table("forums_permissions").Where("fid=?").Parse()
 
-	b.Delete("deleteActivityStreamMatch").Table("activity_stream_matches").Where("watcher = ? AND asid = ?").Parse()
+	b.Delete("deleteActivityStreamMatch").Table("activity_stream_matches").Where("watcher=? AND asid=?").Parse()
 	//b.Delete("deleteActivityStreamMatchesByWatcher").Table("activity_stream_matches").Where("watcher=?").Parse()
 
 	return nil
