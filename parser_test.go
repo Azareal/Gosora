@@ -192,9 +192,21 @@ func TestParser(t *testing.T) {
 	l.Add("git:// ", "<red>[Invalid URL]</red> ")
 	l.Add("ssh:// ", "ssh:// ")
 
+	l.Add("//t", "<a rel='ugc'href='//t'>t</a>")
 	l.Add("// t", "// t")
 	l.Add("http:// t", "<red>[Invalid URL]</red> t")
 
+	l.Add("g", "g")
+	l.Add("g/", "//") // todo: fix this
+	l.Add("/g", "/g")
+	l.Add("/gg", "/gg")
+	l.Add("/g/", "/g/")
+	l.Add("hi", "hi")
+	l.Add("hit", "hit")
+	l.Add("hit:", "hit:")
+	l.Add("hit:/", "<a rel='ugc'href='hit:///'>/</a>")   // todo: fix this
+	l.Add("hit://", "<a rel='ugc'href='hit://'></a>")    // todo: fix this
+	l.Add("hit://t", "<a rel='ugc'href='hit://t'>t</a>") // todo: fix this
 	l.Add("h", "h")
 	l.Add("ht", "ht")
 	l.Add("htt", "htt")
@@ -242,7 +254,7 @@ func TestParser(t *testing.T) {
 	//l.Add("//"+url+"//"+url, eurl+""+eurl)
 	//l.Add("//"+url+"|//"+url, eurl+"|"+eurl)
 	l.Add("//"+url+"|//"+url, "<red>[Invalid URL]</red>|//"+url)
-	l.Add("//"+url+"//"+url, "<a rel='ugc'href='//" + url + "//"+url+ "'>" + url +"//"+url+ "</a>")
+	l.Add("//"+url+"//"+url, "<a rel='ugc'href='//"+url+"//"+url+"'>"+url+"//"+url+"</a>")
 	l.Add("//"+url+"\n\n//"+url, eurl+"<br><br>"+eurl)
 
 	pre2 := c.Config.SslSchema
@@ -376,6 +388,7 @@ func TestParser(t *testing.T) {
 	l.Add("@-1", "<red>[Invalid Profile]</red>1")
 
 	// TODO: Fix this hack and make the results a bit more reproducible, push the tests further in the process.
+	c.GuestUser.Perms.AutoLink = true
 	for _, item := range l.Items {
 		if res := c.ParseMessage(item.Msg, 1, "forums", nil, nil); res != item.Expects {
 			if item.Name != "" {

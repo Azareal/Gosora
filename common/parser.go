@@ -633,7 +633,7 @@ func ParseMessage2(msg string, sectionID int, sectionType string, settings *Pars
 			case 'h', 'f', 'g', '/':
 				//fmt.Println("s3")
 				fch := msg[i+1]
-				if len(msg) > i+5 && fch == 't' && msg[i+2] == 't' && msg[i+3] == 'p' {
+				if fch == 't' && len(msg) > i+5 && msg[i+2] == 't' && msg[i+3] == 'p' {
 					if len(msg) > i+6 && msg[i+4] == 's' && msg[i+5] == ':' && msg[i+6] == '/' {
 						// Do nothing
 					} else if msg[i+4] == ':' && msg[i+5] == '/' {
