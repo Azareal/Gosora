@@ -11,6 +11,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"strconv"
 	//"sync"
 	"sync/atomic"
 	"time"
@@ -68,11 +69,11 @@ type StringList []string
 // TODO: Let admins manage this from the Control Panel
 // apng is commented out for now, as we have no way of re-encoding it into a smaller file
 var AllowedFileExts = StringList{
-	"png", "jpg", "jpe", "jpeg", "jif", "jfi", "jfif", "svg", "bmp", "gif", "tiff", "tif", "webp", "apng", "avif", /*"bpg", "heif", */ // images (encodable) + apng (browser support) + bpg + avif
+	"png", "jpg", "jpe", "jpeg", "jif", "jfi", "jfif", "svg", "bmp", "gif", "tiff", "tif", "webp", "apng", "avif", "flif", "heif", "heic", "bpg", // images (encodable) + apng (browser support) + bpg + avif + flif + heif / heic
 
 	"txt", "xml", "json", "yaml", "toml", "ini", "md", "html", "rtf", "js", "py", "rb", "css", "scss", "less", "eqcss", "pcss", "java", "ts", "cs", "c", "cc", "cpp", "cxx", "C", "c++", "h", "hh", "hpp", "hxx", "h++", "rs", "rlib", "htaccess", "gitignore", /*"go","php",*/ // text
 
-	"wav", "mp3", "oga", "m4a", "flac", "ac3", "aac", // audio
+	"wav", "mp3", "oga", "m4a", "flac", "ac3", "aac", "opus", // audio
 
 	"mp4", "avi", "ogg", "ogv", "ogx", "wmv", "webm", "flv", "f4v", "xvid", "mov", "movie", "qt", // video
 
@@ -95,7 +96,7 @@ var WebVideoFileExts = StringList{
 	"mp4", "avi", "ogg", "ogv", "webm",
 }
 var WebAudioFileExts = StringList{
-	"wav", "mp3", "oga", "m4a",
+	"wav", "mp3", "oga", "m4a", "flac",
 }
 var ArchiveFileExts = StringList{
 	"bz2", "zip", "zipx", "gz", "7z", "tar", "cab", "rar", "kgb", "pea", "xz", "zz", "tgz", "xpi",
@@ -220,4 +221,50 @@ func eachall(stmt *sql.Stmt, f func(r *sql.Rows) error) error {
 		}
 	}
 	return rows.Err()
+}
+
+var qcache = []string{0: "?", 1: "?,?", 2: "?,?,?", 3: "?,?,?,?", 4: "?,?,?,?,?", 5: "?,?,?,?,?,?"}
+
+func inqbuild(ids []int) ([]interface{}, string) {
+	if len(ids) < 5 {
+		idList := make([]interface{}, len(ids))
+		for i, id := range ids {
+			idList[i] = strconv.Itoa(id)
+		}
+		return idList, qcache[len(ids)-1]
+	}
+
+	var q string
+	idList := make([]interface{}, len(ids))
+	for i, id := range ids {
+		idList[i] = strconv.Itoa(id)
+		if i == 0 {
+			q = "?"
+		} else {
+			q += ",?"
+		}
+	}
+	return idList, q
+}
+
+func inqbuildstr(strs []string) ([]interface{}, string) {
+	if len(strs) < 5 {
+		idList := make([]interface{}, len(strs))
+		for i, id := range strs {
+			idList[i] = id
+		}
+		return idList, qcache[len(strs)-1]
+	}
+
+	var q string
+	idList := make([]interface{}, len(strs))
+	for i, id := range strs {
+		idList[i] = id
+		if i == 0 {
+			q = "?"
+		} else {
+			q += ",?"
+		}
+	}
+	return idList, q
 }

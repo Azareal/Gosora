@@ -151,15 +151,7 @@ func (s *DefaultTopicStore) BulkGetMap(ids []int) (list map[int]*Topic, err erro
 		return list, nil
 	}
 
-	// TODO: Add a function for the qlist stuff
-	var q string
-	idList := make([]interface{}, len(ids))
-	for i, id := range ids {
-		idList[i] = strconv.Itoa(id)
-		q += "?,"
-	}
-	q = q[0 : len(q)-1]
-
+	idList, q := inqbuild(ids)
 	rows, err := qgen.NewAcc().Select("topics").Columns("tid,title,content,createdBy,createdAt,lastReplyBy,lastReplyAt,lastReplyID,is_closed,sticky,parentID,ip,views,postCount,likeCount,attachCount,poll,data").Where("tid IN(" + q + ")").Query(idList...)
 	if err != nil {
 		return list, err
