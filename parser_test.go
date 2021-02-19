@@ -197,16 +197,17 @@ func TestParser(t *testing.T) {
 	l.Add("http:// t", "<red>[Invalid URL]</red> t")
 
 	l.Add("g", "g")
-	l.Add("g/", "//") // todo: fix this
+	l.Add("g/", "g/")
+	l.Add("g//", "g//")
 	l.Add("/g", "/g")
 	l.Add("/gg", "/gg")
 	l.Add("/g/", "/g/")
 	l.Add("hi", "hi")
 	l.Add("hit", "hit")
 	l.Add("hit:", "hit:")
-	l.Add("hit:/", "<a rel='ugc'href='hit:///'>/</a>")   // todo: fix this
-	l.Add("hit://", "<a rel='ugc'href='hit://'></a>")    // todo: fix this
-	l.Add("hit://t", "<a rel='ugc'href='hit://t'>t</a>") // todo: fix this
+	l.Add("hit:/", "hit:/")
+	l.Add("hit://", "hit://")
+	l.Add("hit://t", "hit://t")
 	l.Add("h", "h")
 	l.Add("ht", "ht")
 	l.Add("htt", "htt")
@@ -216,6 +217,9 @@ func TestParser(t *testing.T) {
 	//t l.Add("http:/d", "http:/d")
 	l.Add("http:d", "http:d")
 	l.Add("https:", "https:")
+	l.Add("gttps:", "gttps:")
+	l.Add("gttps:/", "gttps:/")
+	l.Add("gttps://", "gttps://")
 	l.Add("ftp:", "ftp:")
 	l.Add("git:", "git:")
 	l.Add("ssh:", "ssh:")
@@ -423,6 +427,25 @@ func TestParser(t *testing.T) {
 	}
 	c.Site.URL = pre
 	c.Config.SslSchema = pre2
+
+	l = &METriList{nil}
+	l.Add("//", "//")
+	l.Add("//z", "//z")
+	l.Add("//"+url, "//"+url)
+	l.Add("https://www.youtube.com/watch?v=lalalalala&t=1", "https://www.youtube.com/watch?v=lalalalala&t=1")
+	l.Add("#tid-1", "<a href='/topic/1'>#tid-1</a>")
+	c.GuestUser.Perms.AutoLink = false
+	for _, item := range l.Items {
+		if res := c.ParseMessage(item.Msg, 1, "forums", nil, nil); res != item.Expects {
+			if item.Name != "" {
+				t.Error("Name: ", item.Name)
+			}
+			t.Error("Testing string '" + item.Msg + "'")
+			t.Error("Bad output:", "'"+res+"'")
+			t.Error("Expected:", "'"+item.Expects+"'")
+			break
+		}
+	}
 
 	c.AddHashLinkType("nnid-", func(sb *strings.Builder, msg string, i *int) {
 		tid, intLen := c.CoerceIntString(msg[*i:])
