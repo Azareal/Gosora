@@ -924,12 +924,17 @@ type GenRouter struct {
 	UploadHandler func(http.ResponseWriter, *http.Request)
 	extraRoutes map[string]func(http.ResponseWriter, *http.Request, *c.User) c.RouteError
 	requestLogger *log.Logger
+	suspReqLogger *log.Logger
 	
 	sync.RWMutex
 }
 
 func NewGenRouter(uploads http.Handler) (*GenRouter, error) {
 	f, err := os.OpenFile("./logs/reqs-"+strconv.FormatInt(c.StartTime.Unix(),10)+".log", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0755)
+	if err != nil {
+		return nil, err
+	}
+	f2, err := os.OpenFile("./logs/reqs-susp-"+strconv.FormatInt(c.StartTime.Unix(),10)+".log", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0755)
 	if err != nil {
 		return nil, err
 	}
@@ -940,6 +945,7 @@ func NewGenRouter(uploads http.Handler) (*GenRouter, error) {
 		},
 		extraRoutes: make(map[string]func(http.ResponseWriter, *http.Request, *c.User) c.RouteError),
 		requestLogger: log.New(f, "", log.LstdFlags),
+		suspReqLogger: log.New(f2, "", log.LstdFlags),
 	}, nil
 }
 
@@ -974,30 +980,48 @@ func (r *GenRouter) RemoveFunc(pattern string) error {
 	return nil
 }
 
-// TODO: Use strings builder?
-func (r *GenRouter) DumpRequest(req *http.Request, pre string) {
-	var heads string
+// TODO: Some of these sanitisations may be redundant
+func (r *GenRouter) dumpRequest(req *http.Request, pre string,log *log.Logger) {
+	var sb strings.Builder
+	sb.WriteString(pre)
+	nfield := func(label, val string) {
+		sb.WriteString(label)
+		sb.WriteString(val)
+	}
+	field := func(label, val string) {
+		nfield(label,c.SanitiseSingleLine(val))
+	}
+	field("\nUA: ",req.UserAgent())
+	field("\nMethod: ",req.Method)
 	for key, value := range req.Header {
 		for _, vvalue := range value {
-			heads += "Head " + c.SanitiseSingleLine(key) + ": " + c.SanitiseSingleLine(vvalue) + "\n"
+			sb.WriteString("\nHead ")
+			sb.WriteString(c.SanitiseSingleLine(key))
+			sb.WriteString(": ")
+			sb.WriteString(c.SanitiseSingleLine(vvalue))
 		}
 	}
+	field("\nHost: ",req.Host)
+	field("\nURL.Path: ",req.URL.Path)
+	field("\nURL.RawQuery: ",req.URL.RawQuery)
+	field("\nRef: ",req.Referer())
+	nfield("\nIP: ",req.RemoteAddr)
+	sb.WriteString("\n")
 
-	r.requestLogger.Print(pre + 
-		"\nUA: " + c.SanitiseSingleLine(req.UserAgent()) + "\n" +
-		"Method: " + c.SanitiseSingleLine(req.Method) + "\n" + heads + 
-		"Host: " + c.SanitiseSingleLine(req.Host) + "\n" + 
-		"URL.Path: " + c.SanitiseSingleLine(req.URL.Path) + "\n" + 
-		"URL.RawQuery: " + c.SanitiseSingleLine(req.URL.RawQuery) + "\n" + 
-		"Ref: " + c.SanitiseSingleLine(req.Referer()) + "\n" + 
-		"IP: " + req.RemoteAddr + "\n")
+	log.Print(sb.String())
+}
+
+func (r *GenRouter) DumpRequest(req *http.Request, pre string) {
+	r.dumpRequest(req,pre,r.requestLogger)
 }
 
 func (r *GenRouter) SuspiciousRequest(req *http.Request, pre string) {
 	if pre != "" {
-		pre += "\n"
+		pre += "\nSuspicious Request"
+	} else {
+		pre = "Suspicious Request"
 	}
-	r.DumpRequest(req,pre+"Suspicious Request")
+	r.dumpRequest(req,pre,r.suspReqLogger)
 	co.AgentViewCounter.Bump(41)
 }
 
