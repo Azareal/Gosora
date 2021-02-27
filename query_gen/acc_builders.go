@@ -51,12 +51,10 @@ func (b *accDeleteBuilder) Run(args ...interface{}) (int, error) {
 	if stmt == nil {
 		return 0, b.build.FirstError()
 	}
-
 	res, err := stmt.Exec(args...)
 	if err != nil {
 		return 0, err
 	}
-
 	lastID, err := res.LastInsertId()
 	return int(lastID), err
 }
@@ -246,11 +244,11 @@ type AccRowWrap struct {
 	err error
 }
 
-func (wrap *AccRowWrap) Scan(dest ...interface{}) error {
-	if wrap.err != nil {
-		return wrap.err
+func (w *AccRowWrap) Scan(dest ...interface{}) error {
+	if w.err != nil {
+		return w.err
 	}
-	return wrap.row.Scan(dest...)
+	return w.row.Scan(dest...)
 }
 
 // TODO: Test to make sure the errors are passed up properly
@@ -264,42 +262,56 @@ func (b *AccSelectBuilder) QueryRow(args ...interface{}) *AccRowWrap {
 
 // Experimental, reduces lines
 func (b *AccSelectBuilder) Each(h func(*sql.Rows) error) error {
-	query, err := b.query()
-	if err != nil {
-		return err
+	query, e := b.query()
+	if e != nil {
+		return e
 	}
-	rows, err := b.build.query(query)
-	if err != nil {
-		return err
+	rows, e := b.build.query(query)
+	if e != nil {
+		return e
 	}
 	defer rows.Close()
-
 	for rows.Next() {
-		if err = h(rows); err != nil {
-			return err
+		if e = h(rows); e != nil {
+			return e
+		}
+	}
+	return rows.Err()
+}
+func (b *AccSelectBuilder) EachP(h func(*sql.Rows) error, p ...interface{}) error {
+	query, e := b.query()
+	if e != nil {
+		return e
+	}
+	rows, e := b.build.query(query, p)
+	if e != nil {
+		return e
+	}
+	defer rows.Close()
+	for rows.Next() {
+		if e = h(rows); e != nil {
+			return e
 		}
 	}
 	return rows.Err()
 }
 func (b *AccSelectBuilder) EachInt(h func(int) error) error {
-	query, err := b.query()
-	if err != nil {
-		return err
+	query, e := b.query()
+	if e != nil {
+		return e
 	}
-	rows, err := b.build.query(query)
-	if err != nil {
-		return err
+	rows, e := b.build.query(query)
+	if e != nil {
+		return e
 	}
 	defer rows.Close()
-
 	for rows.Next() {
 		var theInt int
-		err = rows.Scan(&theInt)
-		if err != nil {
-			return err
+		if e = rows.Scan(&theInt); e != nil {
+			return e
 		}
-		if err = h(theInt); err != nil {
-			return err
+		if e = h(theInt); e != nil {
+			return e
 		}
 	}
 	return rows.Err()
@@ -348,10 +360,9 @@ func (b *accInsertBuilder) Run(args ...interface{}) (int, error) {
 	return int(lastID), err
 }
 
-
 type accBulkInsertBuilder struct {
-	table   string
-	columns string
+	table    string
+	columns  string
 	fieldSet []string
 
 	build *Accumulator
@@ -438,6 +449,15 @@ func (b *accCountBuilder) Total() (total int, err error) {
 		return 0, b.build.FirstError()
 	}
 	err = stmt.QueryRow().Scan(&total)
+	return total, err
+}
+
+func (b *accCountBuilder) TotalP(params ...interface{}) (total int, err error) {
+	stmt := b.Prepare()
+	if stmt == nil {
+		return 0, b.build.FirstError()
+	}
+	err = stmt.QueryRow(params).Scan(&total)
 	return total, err
 }
 

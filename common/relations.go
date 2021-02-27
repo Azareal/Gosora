@@ -12,6 +12,7 @@ var UserBlocks BlockStore
 
 type BlockStore interface {
 	IsBlockedBy(blocker, blockee int) (bool, error)
+	BulkIsBlockedBy(blockers []int, blockee int) (bool, error)
 	Add(blocker, blockee int) error
 	Remove(blocker, blockee int) error
 	BlockedByOffset(blocker, offset, perPage int) ([]int, error)
@@ -45,6 +46,22 @@ func (s *DefaultBlockStore) IsBlockedBy(blocker, blockee int) (bool, error) {
 	return err == nil, err
 }
 
+// TODO: Optimise the query to avoid preparing it on the spot? Maybe, use knowledge of the most common IN() parameter counts?
+func (s *DefaultBlockStore) BulkIsBlockedBy(blockers []int, blockee int) (bool, error) {
+	if len(blockers) == 0 {
+		return false, nil
+	}
+	if len(blockers) == 1 {
+		return s.IsBlockedBy(blockers[0], blockee)
+	}
+	idList, q := inqbuild(blockers)
+	count, err := qgen.NewAcc().Count("users_blocks").Where("blocker IN(" + q + ") AND blockedUser=?").TotalP(idList...)
+	if err == ErrNoRows {
+		return false, nil
+	}
+	return count == 0, err
+}
+
 func (s *DefaultBlockStore) Add(blocker, blockee int) error {
 	_, err := s.add.Exec(blocker, blockee)
 	return err
@@ -61,7 +78,6 @@ func (s *DefaultBlockStore) BlockedByOffset(blocker, offset, perPage int) (uids 
 		return nil, err
 	}
 	defer rows.Close()
-
 	for rows.Next() {
 		var uid int
 		err := rows.Scan(&uid)
@@ -70,7 +86,6 @@ func (s *DefaultBlockStore) BlockedByOffset(blocker, offset, perPage int) (uids 
 		}
 		uids = append(uids, uid)
 	}
-
 	return uids, rows.Err()
 }
 

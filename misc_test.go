@@ -383,6 +383,13 @@ func expect(t *testing.T, item bool, errmsg string) {
 	}
 }
 
+func expectf(t *testing.T, item bool, errmsg string, args ...interface{}) {
+	if !item {
+		debug.PrintStack()
+		t.Fatalf(errmsg, args...)
+	}
+}
+
 func TestPermsMiddleware(t *testing.T) {
 	miscinit(t)
 	if !c.PluginsInited {
@@ -1434,37 +1441,64 @@ func TestConvos(t *testing.T) {
 		c.InitPlugins()
 	}
 
-	_, err := c.Convos.Get(-1)
-	recordMustNotExist(t, err, "convo -1 should not exist")
-	_, err = c.Convos.Get(0)
-	recordMustNotExist(t, err, "convo 0 should not exist")
-	_, err = c.Convos.Get(1)
-	recordMustNotExist(t, err, "convo 1 should not exist")
+	sf := func(i interface{}, e error) error {
+		return e
+	}
+	mf := func(e error, msg string, exists bool) {
+		if !exists {
+			recordMustNotExist(t, e, msg)
+		} else {
+			recordMustExist(t, e, msg)
+		}
+	}
+	gu := func(uid, offset int, exists bool) {
+		s := ""
+		if !exists {
+			s = " not"
+		}
+		mf(sf(c.Convos.GetUser(uid, offset)), fmt.Sprintf("convo getuser %d %d should%s exist", uid, offset, s), exists)
+	}
+	gue := func(uid, offset int, exists bool) {
+		s := ""
+		if !exists {
+			s = " not"
+		}
+		mf(sf(c.Convos.GetUserExtra(uid, offset)), fmt.Sprintf("convo getuserextra %d %d should%s exist", uid, offset, s), exists)
+	}
 
-	_, err = c.Convos.GetUser(-1, -1)
-	recordMustNotExist(t, err, "convo getuser -1 -1 should not exist")
-	_, err = c.Convos.GetUser(-1, 0)
-	recordMustNotExist(t, err, "convo getuser -1 0 should not exist")
-	_, err = c.Convos.GetUser(0, 0)
-	recordMustNotExist(t, err, "convo getuser 0 0 should not exist")
-	_, err = c.Convos.GetUser(1, 0)
-	recordMustNotExist(t, err, "convos getuser 1 0 should not exist")
 	expect(t, c.Convos.GetUserCount(-1) == 0, "getusercount should be zero")
 	expect(t, c.Convos.GetUserCount(0) == 0, "getusercount should be zero")
-	expect(t, c.Convos.GetUserCount(1) == 0, "getusercount should be zero")
+	mf(sf(c.Convos.Get(-1)), "convo -1 should not exist", false)
+	mf(sf(c.Convos.Get(0)), "convo 0 should not exist", false)
+	gu(-1, -1, false)
+	gu(-1, 0, false)
+	gu(0, 0, false)
+	gue(-1, -1, false)
+	gue(-1, 0, false)
+	gue(0, 0, false)
 
-	_, err = c.Convos.GetUserExtra(-1, -1)
-	recordMustNotExist(t, err, "convos getuserextra -1 -1 should not exist")
-	_, err = c.Convos.GetUserExtra(-1, 0)
-	recordMustNotExist(t, err, "convos getuserextra -1 0 should not exist")
-	_, err = c.Convos.GetUserExtra(0, 0)
-	recordMustNotExist(t, err, "convos getuserextra 0 0 should not exist")
-	_, err = c.Convos.GetUserExtra(1, 0)
-	recordMustNotExist(t, err, "convos getuserextra 1 0 should not exist")
+	nf := func(cid int, count int) {
+		ex := count > 0
+		s := ""
+		if !ex {
+			s = " not"
+		}
+		mf(sf(c.Convos.Get(cid)), fmt.Sprintf("convo %d should%s exist", cid, s), ex)
+		gu(1, 0, ex)
+		gu(1, 5, false) // invariant may change in future tests
 
-	expect(t, c.Convos.Count() == 0, "convos count should be 0")
+		expectf(t, c.Convos.GetUserCount(1) == count, "getusercount should be %d", count)
+		gue(1, 0, ex)
+		gue(1, 5, false) // invariant may change in future tests
+		expectf(t, c.Convos.Count() == count, "convos count should be %d", count)
+	}
+	nf(1, 0)
 
-	cid, err := c.Convos.Create("hehe", 1, []int{2})
+	awaitingActivation := 5
+	uid, err := c.Users.Create("Saturn", "ReallyBadPassword", "", awaitingActivation, false)
+	expectNilErr(t, err)
+
+	cid, err := c.Convos.Create("hehe", 1, []int{uid})
 	expectNilErr(t, err)
 	expect(t, cid == 1, "cid should be 1")
 	expect(t, c.Convos.Count() == 1, "convos count should be 1")
@@ -1476,8 +1510,87 @@ func TestConvos(t *testing.T) {
 	// TODO: CreatedAt test
 	expect(t, co.LastReplyBy == 1, "co.LastReplyBy should be 1")
 	// TODO: LastReplyAt test
+	expectIntToBeX(t, co.PostsCount(), 1, "postscount should be 1, not %d")
+	expect(t, co.Has(uid), "saturn should be in the conversation")
+	expect(t, !co.Has(9999), "uid 9999 should not be in the conversation")
+	uids, err := co.Uids()
+	expectNilErr(t, err)
+	expectIntToBeX(t, len(uids), 2, "uids length should be 2, not %d")
+	expect(t, uids[0] == uid, fmt.Sprintf("uids[0] should be %d, not %d", uid, uids[0]))
+	expect(t, uids[1] == 1, fmt.Sprintf("uids[1] should be %d, not %d", 1, uids[1]))
+	nf(cid, 1)
+
+	expectNilErr(t, c.Convos.Delete(cid))
+	expectIntToBeX(t, co.PostsCount(), 0, "postscount should be 0, not %d")
+	expect(t, !co.Has(uid), "saturn should not be in a deleted conversation")
+	uids, err = co.Uids()
+	expectNilErr(t, err)
+	expectIntToBeX(t, len(uids), 0, "uids length should be 0, not %d")
+	nf(cid, 0)
 
 	// TODO: More tests
+
+	// Block tests
+
+	ok, err := c.UserBlocks.IsBlockedBy(1, 1)
+	expectNilErr(t, err)
+	expect(t, !ok, "there shouldn't be any blocks")
+	ok, err = c.UserBlocks.BulkIsBlockedBy([]int{1}, 1)
+	expectNilErr(t, err)
+	expect(t, !ok, "there shouldn't be any blocks")
+	bf := func(blocker, offset, perPage, expectLen, blockee int) {
+		l, err := c.UserBlocks.BlockedByOffset(blocker, offset, perPage)
+		expectNilErr(t, err)
+		expect(t, len(l) == expectLen, fmt.Sprintf("there should be %d users blocked by %d not %d", expectLen, blocker, len(l)))
+		if len(l) > 0 {
+			expectf(t, l[0] == blockee, "blocked uid should be %d not %d", blockee, l[0])
+		}
+	}
+	nbf := func(blocker, blockee int) {
+		ok, err := c.UserBlocks.IsBlockedBy(1, 2)
+		expectNilErr(t, err)
+		expect(t, !ok, "there shouldn't be any blocks")
+		ok, err = c.UserBlocks.BulkIsBlockedBy([]int{1}, 2)
+		expectNilErr(t, err)
+		expect(t, !ok, "there shouldn't be any blocks")
+		expectIntToBeX(t, c.UserBlocks.BlockedByCount(1), 0, "blockedbycount for 1 should be 1, not %d")
+		bf(1, 0, 1, 0, 0)
+		bf(1, 0, 15, 0, 0)
+		bf(1, 1, 15, 0, 0)
+		bf(1, 5, 15, 0, 0)
+	}
+	nbf(1, 2)
+
+	expectNilErr(t, c.UserBlocks.Add(1, 2))
+	ok, err = c.UserBlocks.IsBlockedBy(1, 2)
+	expectNilErr(t, err)
+	expect(t, ok, "2 should be blocked by 1")
+	expectIntToBeX(t, c.UserBlocks.BlockedByCount(1), 1, "blockedbycount for 1 should be 1, not %d")
+	bf(1, 0, 1, 1, 2)
+	bf(1, 0, 15, 1, 2)
+	bf(1, 1, 15, 0, 0)
+	bf(1, 5, 15, 0, 0)
+
+	// Double add test
+	expectNilErr(t, c.UserBlocks.Add(1, 2))
+	ok, err = c.UserBlocks.IsBlockedBy(1, 2)
+	expectNilErr(t, err)
+	expect(t, ok, "2 should be blocked by 1")
+	//expectIntToBeX(t, c.UserBlocks.BlockedByCount(1), 1, "blockedbycount for 1 should be 1, not %d") // todo: fix this
+	//bf(1, 0, 1, 1, 2) // todo: fix this
+	//bf(1, 0, 15, 1, 2) // todo: fix this
+	//bf(1, 1, 15, 0, 0) // todo: fix this
+	bf(1, 5, 15, 0, 0)
+
+	expectNilErr(t, c.UserBlocks.Remove(1, 2))
+	nbf(1, 2)
+	// Double remove test
+	expectNilErr(t, c.UserBlocks.Remove(1, 2))
+	nbf(1, 2)
+
+	// TODO: Self-block test
+
+	// TODO: More Block tests
 }
 
 func TestActivityStream(t *testing.T) {
