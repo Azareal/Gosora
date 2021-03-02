@@ -250,6 +250,7 @@ func main() {
 		"exabot",
 		"mojeek",
 		"cliqz",
+		"qwant",
 		"datenbank",
 		"baidu",
 		"sogou",
@@ -267,6 +268,7 @@ func main() {
 		"slackbot",
 		"apple",
 		"discourse",
+		"xenforo",
 		"mattermost",
 		"alexa",
 		"lynx",
@@ -286,6 +288,8 @@ func main() {
 		"netcraft",
 		"blexbot",
 		"wappalyzer",
+		"twingly",
+		"linkfluence",
 		"burf",
 		"aspiegel",
 		"mail_ru",
@@ -333,6 +337,7 @@ func main() {
 	a("Baiduspider", "baidu")
 	a("Sogou", "sogou")
 	a("ToutiaoSpider", "toutiao")
+	a("Bytespider", "toutiao")
 	a("360Spider", "haosou")
 	a("bingbot", "bing")
 	a("BingPreview", "bing")
@@ -341,6 +346,7 @@ func main() {
 	a("Exabot", "exabot")
 	a("MojeekBot", "mojeek")
 	a("Cliqzbot", "cliqz")
+	a("Qwantify", "qwant")
 	a("netEstate", "datenbank")
 	a("SeznamBot", "seznambot")
 	a("CloudFlare", "cloudflare") // Track alwayson specifically in case there are other bots?
@@ -355,6 +361,7 @@ func main() {
 	a("Facebot", "facebook")
 	a("Applebot", "apple")
 	a("Discourse", "discourse")
+	a("XenForo", "xenforo")
 	a("mattermost", "mattermost")
 	a("ia_archiver", "alexa")
 
@@ -372,6 +379,8 @@ func main() {
 	a("NetcraftSurveyAgent", "netcraft")
 	a("BLEXBot", "blexbot")
 	a("Wappalyzer", "wappalyzer")
+	a("Twingly", "twingly")
+	a("linkfluence", "linkfluence")
 	a("Burf", "burf")
 	a("AspiegelBot", "aspiegel")
 	a("PetalBot", "aspiegel")

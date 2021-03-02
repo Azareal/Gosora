@@ -78,7 +78,7 @@ func NewDefaultUserStore(cache UserCache) (*DefaultUserStore, error) {
 		nameExists: acc.Exists(u, "name").Prepare(),
 
 		count:       acc.Count(u).Prepare(),
-		countSearch: acc.Count(u).Where("(name LIKE ('%'+?+'%') OR ?='') AND (email=? OR ?='') AND (group=? OR ?=0)").Prepare(),
+		countSearch: acc.Count(u).Where("(name=? OR ?='') AND (email=? OR ?='') AND (group=? OR ?=0)").Prepare(),
 	}, acc.FirstError()
 }
 
@@ -193,7 +193,7 @@ func (s *DefaultUserStore) BulkGetByName(names []string) (list []*User, err erro
 		}
 		u.Init()
 		s.cache.Set(u)
-		list[u.ID] = u
+		list = append(list, u)
 	}
 	if err = rows.Err(); err != nil {
 		return list, err

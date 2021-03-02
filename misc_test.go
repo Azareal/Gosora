@@ -139,18 +139,16 @@ func userStoreTest(t *testing.T, newUserID int) {
 	}
 
 	// TODO: Lock onto the specific error type. Is this even possible without sacrificing the detailed information in the error message?
-	var userList map[int]*c.User
-	userList, _ = c.Users.BulkGetMap([]int{-1})
-	expectf(t, len(userList) == 0, "The userList length should be 0, not %d", len(userList))
-	expectf(t, isCacheLengthZero(uc), "User cache length should be 0, not %d", cacheLength(uc))
+	bulkGetMapEmpty := func(id int) {
+		userList, _ := c.Users.BulkGetMap([]int{id})
+		expectf(t, len(userList) == 0, "The userList length should be 0, not %d", len(userList))
+		expectf(t, isCacheLengthZero(uc), "User cache length should be 0, not %d", cacheLength(uc))
+	}
+	bulkGetMapEmpty(-1)
+	bulkGetMapEmpty(0)
 
-	userList, _ = c.Users.BulkGetMap([]int{0})
-	expectf(t, len(userList) == 0, "The userList length should be 0, not %d", len(userList))
-	expectf(t, isCacheLengthZero(uc), "User cache length should be 0, not %d", cacheLength(uc))
-
-	userList, _ = c.Users.BulkGetMap([]int{1})
+	userList, _ := c.Users.BulkGetMap([]int{1})
 	expectf(t, len(userList) == 1, "Returned map should have one result (UID #1), not %d", len(userList))
-
 	user, ok := userList[1]
 	if !ok {
 		t.Error("We couldn't find UID #1 in the returned map")
@@ -174,7 +172,39 @@ func userStoreTest(t *testing.T, newUserID int) {
 	expectf(t, !c.Users.Exists(newUserID), "UID #%d shouldn't exist", newUserID)
 
 	expectf(t, isCacheLengthZero(uc), "User cache length should be 0, not %d", cacheLength(uc))
-	expectIntToBeX(t, c.Users.Count(), 1, "The number of users should be one, not %d")
+	expectIntToBeX(t, c.Users.Count(), 1, "The number of users should be 1, not %d")
+	searchUser := func(name, email string, gid, count int) {
+		f := func(name, email string, gid, count int, m string) {
+			expectIntToBeX(t, c.Users.CountSearch(name, email, gid), count, "The number of users for "+m+", not %d")
+		}
+		f(name, email, 0, count, fmt.Sprintf("name '%s' and email '%s' should be %d", name, email, count))
+		f(name, "", 0, count, fmt.Sprintf("name '%s' should be %d", name, count))
+		f("", email, 0, count, fmt.Sprintf("email '%s' should be %d", email, count))
+
+		f2 := func(name, email string, gid, offset int, m string, args ...interface{}) {
+			ulist, err := c.Users.SearchOffset(name, email, gid, offset, 15)
+			expectNilErr(t, err)
+			expectIntToBeX(t, len(ulist), count, "The number of users for "+fmt.Sprintf(m, args...)+", not %d")
+		}
+		f2(name, email, 0, 0, "name '%s' and email '%s' should be %d", name, email, count)
+		f2(name, "", 0, 0, "name '%s' should be %d", name, count)
+		f2("", email, 0, 0, "email '%s' should be %d", email, count)
+
+		count = 0
+		f2(name, email, 0, 10, "name '%s' and email '%s' should be %d", name, email, count)
+		f2(name, "", 0, 10, "name '%s' should be %d", name, count)
+		f2("", email, 0, 10, "email '%s' should be %d", email, count)
+
+		f2(name, email, 999, 0, "name '%s' and email '%s' should be %d", name, email, 0)
+		f2(name, "", 999, 0, "name '%s' should be %d", name, 0)
+		f2("", email, 999, 0, "email '%s' should be %d", email, 0)
+
+		f2(name, email, 999, 10, "name '%s' and email '%s' should be %d", name, email, 0)
+		f2(name, "", 999, 10, "name '%s' should be %d", name, 0)
+		f2("", email, 999, 10, "email '%s' should be %d", email, 0)
+	}
+	searchUser("Sam", "sam@localhost.loc", 0, 0)
+	// TODO: CountSearch gid test
 
 	awaitingActivation := 5
 	// TODO: Write tests for the registration validators
@@ -182,6 +212,9 @@ func userStoreTest(t *testing.T, newUserID int) {
 	expectNilErr(t, err)
 	expectf(t, uid == newUserID, "The UID of the new user should be %d not %d", newUserID, uid)
 	expectf(t, c.Users.Exists(newUserID), "UID #%d should exist", newUserID)
+	expectIntToBeX(t, c.Users.Count(), 2, "The number of users should be 2, not %d")
+	searchUser("Sam", "sam@localhost.loc", 0, 1)
+	// TODO: CountSearch gid test
 
 	user, err = c.Users.Get(newUserID)
 	recordMustExist(t, err, "Couldn't find UID #%d", newUserID)
@@ -195,7 +228,13 @@ func userStoreTest(t *testing.T, newUserID int) {
 	}
 
 	userList, _ = c.Users.BulkGetMap([]int{1, uid})
-	expectf(t, len(userList) == 2, "Returned map should have two results, not %d", len(userList))
+	expectf(t, len(userList) == 2, "Returned map should have 2 results, not %d", len(userList))
+	// TODO: More tests on userList
+
+	{
+		userList, _ := c.Users.BulkGetByName([]string{"Admin", "Sam"})
+		expectf(t, len(userList) == 2, "Returned list should have 2 results, not %d", len(userList))
+	}
 
 	if uc != nil {
 		expectIntToBeX(t, uc.Length(), 2, "User cache length should be 2, not %d")
@@ -327,10 +366,12 @@ func userStoreTest(t *testing.T, newUserID int) {
 	expectNilErr(t, err)
 	expect(t, user.Group == 6, "Someone's mutated this pointer elsewhere")
 
-	err = user.Delete()
-	expectNilErr(t, err)
+	expectNilErr(t, user.Delete())
 	expectf(t, !c.Users.Exists(newUserID), "UID #%d should no longer exist", newUserID)
 	afterUserFlush(newUserID)
+	expectIntToBeX(t, c.Users.Count(), 1, "The number of users should be 1, not %d")
+	searchUser("Sam", "sam@localhost.loc", 0, 0)
+	// TODO: CountSearch gid test
 
 	_, err = c.Users.Get(newUserID)
 	recordMustNotExist(t, err, "UID #%d shouldn't exist", newUserID)
@@ -1836,15 +1877,13 @@ func TestMetaStore(t *testing.T) {
 	expect(t, m == "", "meta var magic should be empty")
 	recordMustNotExist(t, err, "meta var magic should not exist")
 
-	err = c.Meta.Set("magic", "lol")
-	expectNilErr(t, err)
+	expectNilErr(t, c.Meta.Set("magic", "lol"))
 
 	m, err = c.Meta.Get("magic")
 	expectNilErr(t, err)
 	expect(t, m == "lol", "meta var magic should be lol")
 
-	err = c.Meta.Set("magic", "wha")
-	expectNilErr(t, err)
+	expectNilErr(t, c.Meta.Set("magic", "wha"))
 
 	m, err = c.Meta.Get("magic")
 	expectNilErr(t, err)
@@ -1925,19 +1964,20 @@ func TestWordFilters(t *testing.T) {
 	expect(t, c.WordFilters.EstCount() == 1, "Word filter list should not be empty")
 	expect(t, c.WordFilters.Count() == 1, "Word filter list should not be empty")
 
+	ftest := func(f *c.WordFilter, id int, find, replace string) {
+		expectf(t, f.ID == id, "Word filter ID should be %d, not %d", id, f.ID)
+		expectf(t, f.Find == find, "Word filter needle should be '%s', not '%s'", find, f.Find)
+		expectf(t, f.Replace == replace, "Word filter replacement should be '%s', not '%s'", replace, f.Replace)
+	}
+
 	filters, err = c.WordFilters.GetAll()
 	expectNilErr(t, err)
 	expect(t, len(filters) == 1, "Word filter map should not be empty")
-	filter := filters[1]
-	expect(t, filter.ID == 1, "Word filter ID should be 1")
-	expect(t, filter.Find == "imbecile", "Word filter needle should be imbecile")
-	expect(t, filter.Replace == "lovely", "Word filter replacement should be lovely")
+	ftest(filters[1], 1, "imbecile", "lovely")
 
-	filter, err = c.WordFilters.Get(1)
+	filter, err := c.WordFilters.Get(1)
 	expectNilErr(t, err)
-	expect(t, filter.ID == 1, "Word filter ID should be 1")
-	expect(t, filter.Find == "imbecile", "Word filter needle should be imbecile")
-	expect(t, filter.Replace == "lovely", "Word filter replacement should be lovely")
+	ftest(filter, 1, "imbecile", "lovely")
 
 	// Update
 	expectNilErr(t, c.WordFilters.Update(1, "b", "a"))
@@ -1949,21 +1989,15 @@ func TestWordFilters(t *testing.T) {
 	filters, err = c.WordFilters.GetAll()
 	expectNilErr(t, err)
 	expect(t, len(filters) == 1, "Word filter map should not be empty")
-	filter = filters[1]
-	expect(t, filter.ID == 1, "Word filter ID should be 1")
-	expect(t, filter.Find == "b", "Word filter needle should be b")
-	expect(t, filter.Replace == "a", "Word filter replacement should be a")
+	ftest(filters[1], 1, "b", "a")
 
 	filter, err = c.WordFilters.Get(1)
 	expectNilErr(t, err)
-	expect(t, filter.ID == 1, "Word filter ID should be 1")
-	expect(t, filter.Find == "b", "Word filter needle should be imbecile")
-	expect(t, filter.Replace == "a", "Word filter replacement should be a")
+	ftest(filter, 1, "b", "a")
 
 	// TODO: Add a test for ParseMessage relating to word filters
 
-	err = c.WordFilters.Delete(1)
-	expectNilErr(t, err)
+	expectNilErr(t, c.WordFilters.Delete(1))
 
 	expect(t, c.WordFilters.Length() == 0, "Word filter list should be empty")
 	expect(t, c.WordFilters.EstCount() == 0, "Word filter list should be empty")
@@ -2095,8 +2129,7 @@ func TestWidgets(t *testing.T) {
 
 	widget2.Enabled = false
 	ewidget = &c.WidgetEdit{widget2, map[string]string{"Name": "Test", "Text": "Testing"}}
-	err = ewidget.Commit()
-	expectNilErr(t, err)
+	expectNilErr(t, ewidget.Commit())
 
 	widget2, err = c.Widgets.Get(1)
 	expectNilErr(t, err)
