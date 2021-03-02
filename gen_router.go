@@ -1012,6 +1012,10 @@ func (r *GenRouter) dumpRequest(req *http.Request, pre string,log *log.Logger) {
 	field("\nUA: ",req.UserAgent())
 	field("\nMethod: ",req.Method)
 	for key, value := range req.Header {
+		// Avoid logging this for security reasons
+		if key == "Cookie" {
+			continue
+		}
 		for _, vvalue := range value {
 			sb.WriteString("\nHead ")
 			sb.WriteString(c.SanitiseSingleLine(key))
@@ -1348,7 +1352,8 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		likelyBot := ae == "gzip" || ae == ""
 		if !likelyBot {
 			ref := req.Header.Get("Referer") // Check the 'referrer' header too? :P
-			if ref != "" {
+			// TODO: Extend the effects of DNT elsewhere?
+			if ref != "" && req.Header.Get("DNT") != "1" {
 				// ? Optimise this a little?
 				ref = strings.TrimPrefix(strings.TrimPrefix(ref,"http://"),"https://")
 				ref = strings.Split(ref,"/")[0]
