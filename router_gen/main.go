@@ -49,65 +49,119 @@ func main() {
 		allRouteMap[name] = len(allRouteNames) - 1
 	}
 	mapIt("routes.Error")
-	countToIndents := func(indent int) (indentor string) {
-		for i := 0; i < indent; i++ {
-			indentor += "\t"
+
+	var indentCache [20]string
+	countToIndents := func(ind int) string {
+		out := indentCache[ind]
+		if out != "" {
+			return out
 		}
-		return indentor
+		for i := 0; i < ind; i++ {
+			out += "\t"
+		}
+		if ind < 20 {
+			indentCache[ind] = out
+		}
+		return out
 	}
+	/*o := func(indent int, str string) {
+		out += countToIndents(indent) + str
+	}*/
+	on := func(indent int, str string) {
+		out += "\n" + countToIndents(indent) + str
+	}
+	iferrn := func(indent int) {
+		ind := countToIndents(indent)
+		ind2 := countToIndents(indent + 1)
+		out += "\n" + ind + "if err != nil {"
+		out += "\n" + ind2 + "return err\n" + ind + "}"
+	}
+
 	runBefore := func(runnables []Runnable, indentCount int) (out string) {
-		indent := countToIndents(indentCount)
+		ind := countToIndents(indentCount)
 		if len(runnables) > 0 {
 			for _, runnable := range runnables {
 				if runnable.Literal {
-					out += "\n\t" + indent + runnable.Contents
+					out += "\n\t" + ind + runnable.Contents
 				} else {
-					out += "\n" + indent + "err = c." + runnable.Contents + "(w,req,user)\n" +
-						indent + "if err != nil {\n" +
-						indent + "\treturn err\n" +
-						indent + "}\n" + indent
+					out += "\n" + ind + "err = c." + runnable.Contents + "(w,req,user)\n" +
+						ind + "if err != nil {\n" +
+						ind + "\treturn err\n" +
+						ind + "}\n" + ind
 				}
 			}
 		}
 		return out
 	}
+	userCheckNano := func(indent int, route *RouteImpl) {
+		on(indent, "h, err := c.UserCheckNano(w,req,user,cn)")
+		iferrn(indent)
+		vcpy := route.Vars
+		route.Vars = []string{"h"}
+		route.Vars = append(route.Vars, vcpy...)
+	}
+	writeRoute := func(indent int, r *RouteImpl) {
+		on(indent, "err = "+strings.Replace(r.Name, "common.", "c.", -1)+"(w,req,user")
+		for _, item := range r.Vars {
+			out += "," + item
+		}
+		out += `)`
+	}
 
 	for _, route := range r.routeList {
 		mapIt(route.Name)
 		end := len(route.Path) - 1
-		out += "\n\t\tcase \"" + route.Path[0:end] + "\":"
-		//out += "\n\t\t\tid = " + strconv.Itoa(allRouteMap[route.Name])
-		out += runBefore(route.RunBefore, 4)
+		on(2, "case \""+route.Path[0:end]+"\":")
+		//on(3,"id = " + strconv.Itoa(allRouteMap[route.Name]))
+		out += runBefore(route.RunBefore, 3)
 		if !route.Action && !route.NoHead {
-			//out += "\n\t\t\th, err := c.UserCheck(w,req,user)"
-			out += "\n\t\t\th, err := c.UserCheckNano(w,req,user,cn)"
-			out += "\n\t\t\tif err != nil {\n\t\t\t\treturn err\n\t\t\t}"
-			vcpy := route.Vars
-			route.Vars = []string{"h"}
-			route.Vars = append(route.Vars, vcpy...)
+			//on(3,"h, err := c.UserCheck(w,req,user)")
+			userCheckNano(3, route)
 		} /* else if route.Name != "common.RouteWebsockets" {
-			//out += "\n\t\t\tsa := time.Now()"
-			//out += "\n\t\t\tcn := uutils.Nanotime()"
+			//on(3,"sa := time.Now()")
+			//on(3,"cn := uutils.Nanotime()")
 		}*/
-		out += "\n\t\t\terr = " + strings.Replace(route.Name, "common.", "c.", -1) + "(w,req,user"
-		for _, item := range route.Vars {
-			out += "," + item
-		}
-		out += `)`
+		writeRoute(3, route)
 		/*if !route.Action && !route.NoHead {
-			out += "\n\t\t\tco.RouteViewCounter.Bump2(" + strconv.Itoa(allRouteMap[route.Name]) + ", h.StartedAt)"
+			on(3,"co.RouteViewCounter.Bump2(" + strconv.Itoa(allRouteMap[route.Name]) + ", h.StartedAt)")
 		} else */if route.Name != "common.RouteWebsockets" {
-			//out += "\n\t\t\tco.RouteViewCounter.Bump(" + strconv.Itoa(allRouteMap[route.Name]) + ")"
-			//out += "\n\t\t\tco.RouteViewCounter.Bump2(" + strconv.Itoa(allRouteMap[route.Name]) + ", sa)"
-			out += "\n\t\t\tco.RouteViewCounter.Bump3(" + strconv.Itoa(allRouteMap[route.Name]) + ", cn)"
+			//on(3,"co.RouteViewCounter.Bump(" + strconv.Itoa(allRouteMap[route.Name]) + ")")
+			//on(3,"co.RouteViewCounter.Bump2(" + strconv.Itoa(allRouteMap[route.Name]) + ", sa)")
+			on(3, "co.RouteViewCounter.Bump3("+strconv.Itoa(allRouteMap[route.Name])+", cn)")
+		}
+	}
+
+	// Hoist runnables which appear on every route to the route group to avoid code duplication
+skipRunnableAntiDupe:
+	for _, g := range r.routeGroups {
+		dupeMap := make(map[string]int)
+		for _, route := range g.RouteList {
+			if len(route.RunBefore) == 0 {
+				continue skipRunnableAntiDupe
+			}
+			// TODO: What if there are duplicates of the same runnable on this route?
+			for _, runnable := range route.RunBefore {
+				dupeMap[runnable.Contents] += 1
+			}
+		}
+
+		// Unset entries which are already set on the route group
+		for _, gRunnable := range g.RunBefore {
+			delete(dupeMap, gRunnable.Contents)
+		}
+
+		for runnable, count := range dupeMap {
+			if count == len(g.RouteList) {
+				g.Before(runnable)
+			}
 		}
 	}
 
 	for _, group := range r.routeGroups {
 		end := len(group.Path) - 1
-		out += "\n\t\tcase \"" + group.Path[0:end] + "\":"
+		on(2, "case \""+group.Path[0:end]+"\":")
 		out += runBefore(group.RunBefore, 3)
-		out += "\n\t\t\tswitch(req.URL.Path) {"
+		on(3, "switch(req.URL.Path) {")
 
 		defaultRoute := blankRoute()
 		for _, route := range group.RouteList {
@@ -117,89 +171,72 @@ func main() {
 			}
 			mapIt(route.Name)
 
-			out += "\n\t\t\t\tcase \"" + route.Path + "\":"
-			//out += "\n\t\t\t\t\tid = " + strconv.Itoa(allRouteMap[route.Name])
+			on(4, "case \""+route.Path+"\":")
+			//on(5,"id = " + strconv.Itoa(allRouteMap[route.Name]))
 			if len(route.RunBefore) > 0 {
 			skipRunnable:
 				for _, runnable := range route.RunBefore {
 					for _, gRunnable := range group.RunBefore {
 						if gRunnable.Contents == runnable.Contents {
-							continue
+							continue skipRunnable
+						}
+						f := func(e1, e2 string) bool {
+							return gRunnable.Contents == e1 && runnable.Contents == e2
 						}
 						// TODO: Stop hard-coding these
-						if gRunnable.Contents == "AdminOnly" && runnable.Contents == "MemberOnly" {
+						if f("AdminOnly", "MemberOnly") {
 							continue skipRunnable
 						}
-						if gRunnable.Contents == "AdminOnly" && runnable.Contents == "SuperModOnly" {
+						if f("AdminOnly", "SuperModOnly") {
 							continue skipRunnable
 						}
-						if gRunnable.Contents == "SuperModOnly" && runnable.Contents == "MemberOnly" {
+						if f("SuperModOnly", "MemberOnly") {
 							continue skipRunnable
 						}
 					}
 
 					if runnable.Literal {
-						out += "\n\t\t\t\t\t" + runnable.Contents
+						on(5, runnable.Contents)
 					} else {
-						out += `
-					err = c.` + runnable.Contents + `(w,req,user)
-					if err != nil {
-						return err
-					}
-					`
+						on(5, "err = c."+runnable.Contents+"(w,req,user)")
+						iferrn(5)
+						on(5, "")
 					}
 				}
 			}
 			if !route.Action && !route.NoHead && !group.NoHead {
-				//out += "\n\t\t\t\th, err := c.UserCheck(w,req,user)"
-				out += "\n\t\t\t\th, err := c.UserCheckNano(w,req,user,cn)"
-				out += "\n\t\t\t\tif err != nil {\n\t\t\t\t\treturn err\n\t\t\t\t}"
-				vcpy := route.Vars
-				route.Vars = []string{"h"}
-				route.Vars = append(route.Vars, vcpy...)
+				//on(5,"h, err := c.UserCheck(w,req,user)")
+				userCheckNano(5, route)
 			} else {
-				//out += "\n\t\t\t\t\tcn := uutils.Nanotime()"
+				//on(5, "cn := uutils.Nanotime()")
 			}
-			out += "\n\t\t\t\t\terr = " + strings.Replace(route.Name, "common.", "c.", -1) + "(w,req,user"
-			for _, item := range route.Vars {
-				out += "," + item
-			}
-			out += ")"
+			writeRoute(5, route)
 			/*if !route.Action && !route.NoHead && !group.NoHead {
-				out += "\n\t\t\t\t\tco.RouteViewCounter.Bump2(" + strconv.Itoa(allRouteMap[route.Name]) + ", h.StartedAt)"
+				on(5,"co.RouteViewCounter.Bump2(" + strconv.Itoa(allRouteMap[route.Name]) + ", h.StartedAt)")
 			} else {*/
-			//out += "\n\t\t\t\t\tco.RouteViewCounter.Bump(" + strconv.Itoa(allRouteMap[route.Name]) + ")"
-			out += "\n\t\t\t\t\tco.RouteViewCounter.Bump3(" + strconv.Itoa(allRouteMap[route.Name]) + ", cn)"
+			//on(5,"co.RouteViewCounter.Bump(" + strconv.Itoa(allRouteMap[route.Name]) + ")")
+			on(5, "co.RouteViewCounter.Bump3("+strconv.Itoa(allRouteMap[route.Name])+", cn)")
 			//}
 		}
 
 		if defaultRoute.Name != "" {
 			mapIt(defaultRoute.Name)
-			out += "\n\t\t\t\tdefault:"
-			//out += "\n\t\t\t\t\tid = " + strconv.Itoa(allRouteMap[defaultRoute.Name])
+			on(4, "default:")
+			//on(5,"id = " + strconv.Itoa(allRouteMap[defaultRoute.Name]))
 			out += runBefore(defaultRoute.RunBefore, 4)
 			if !defaultRoute.Action && !defaultRoute.NoHead && !group.NoHead {
-				//out += "\n\t\t\t\t\th, err := c.UserCheck(w,req,user)"
-				out += "\n\t\t\t\t\th, err := c.UserCheckNano(w,req,user,cn)"
-				out += "\n\t\t\t\t\tif err != nil {\n\t\t\t\t\t\treturn err\n\t\t\t\t\t}"
-				vcpy := defaultRoute.Vars
-				defaultRoute.Vars = []string{"h"}
-				defaultRoute.Vars = append(defaultRoute.Vars, vcpy...)
+				//on(5, "h, err := c.UserCheck(w,req,user)"
+				userCheckNano(5, defaultRoute)
 			}
-			out += "\n\t\t\t\t\terr = " + strings.Replace(defaultRoute.Name, "common.", "c.", -1) + "(w,req,user"
-			for _, item := range defaultRoute.Vars {
-				out += ", " + item
-			}
-			out += ")"
+			writeRoute(5, defaultRoute)
 			/*if !defaultRoute.Action && !defaultRoute.NoHead && !group.NoHead {
-				out += "\n\t\t\t\t\tco.RouteViewCounter.Bump2(" + strconv.Itoa(allRouteMap[defaultRoute.Name]) + ", h.StartedAt)"
+				on(5,"co.RouteViewCounter.Bump2(" + strconv.Itoa(allRouteMap[defaultRoute.Name]) + ", h.StartedAt)")
 			} else {*/
-			//out += "\n\t\t\t\t\tco.RouteViewCounter.Bump(" + strconv.Itoa(allRouteMap[defaultRoute.Name]) + ")"
-			out += "\n\t\t\tco.RouteViewCounter.Bump3(" + strconv.Itoa(allRouteMap[defaultRoute.Name]) + ", cn)"
+			//on(5,co.RouteViewCounter.Bump(" + strconv.Itoa(allRouteMap[defaultRoute.Name]) + ")")
+			on(5, "co.RouteViewCounter.Bump3("+strconv.Itoa(allRouteMap[defaultRoute.Name])+", cn)")
 			//}
 		}
-		out += `
-			}`
+		on(3, "}")
 	}
 
 	// Stubs for us to refer to these routes through

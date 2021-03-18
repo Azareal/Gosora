@@ -184,6 +184,7 @@ func accountRoutes() *RouteGroup {
 }
 
 func panelRoutes() *RouteGroup {
+	// TODO: Implement subgroups
 	return newRouteGroup("/panel/").Before("SuperModOnly").NoHeader().Routes(
 		View("panel.Dashboard", "/panel/"),
 		//View("panel.StatsDisk", "/panel/stats/disk/"),

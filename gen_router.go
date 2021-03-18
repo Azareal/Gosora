@@ -1489,24 +1489,24 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 			err = routes.ViewForum(w,req,user,h,extraData)
 			co.RouteViewCounter.Bump3(4, cn)
 		case "/theme":
-				err = c.ParseForm(w,req,user)
-				if err != nil {
-					return err
-				}
-				
+			err = c.ParseForm(w,req,user)
+			if err != nil {
+				return err
+			}
+			
 			err = routes.ChangeTheme(w,req,user)
 			co.RouteViewCounter.Bump3(5, cn)
 		case "/attachs":
-				err = c.ParseForm(w,req,user)
-				if err != nil {
-					return err
-				}
-				
-					w = r.responseWriter(w)
+			err = c.ParseForm(w,req,user)
+			if err != nil {
+				return err
+			}
+			
+				w = r.responseWriter(w)
 			err = routes.ShowAttachment(w,req,user,extraData)
 			co.RouteViewCounter.Bump3(6, cn)
 		case "/ws":
-					req.URL.Path += extraData
+				req.URL.Path += extraData
 			err = c.RouteWebsockets(w,req,user)
 		case "/api":
 			switch(req.URL.Path) {
@@ -1521,7 +1521,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 					co.RouteViewCounter.Bump3(10, cn)
 				default:
 					err = routeAPI(w,req,user)
-			co.RouteViewCounter.Bump3(11, cn)
+					co.RouteViewCounter.Bump3(11, cn)
 			}
 		case "/report":
 			err = c.NoBanned(w,req,user)
@@ -1529,35 +1529,35 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 				return err
 			}
 			
+			err = c.NoSessionMismatch(w,req,user)
+			if err != nil {
+				return err
+			}
+			
+			err = c.MemberOnly(w,req,user)
+			if err != nil {
+				return err
+			}
+			
 			switch(req.URL.Path) {
 				case "/report/submit/":
-					err = c.NoSessionMismatch(w,req,user)
-					if err != nil {
-						return err
-					}
-					
-					err = c.MemberOnly(w,req,user)
-					if err != nil {
-						return err
-					}
-					
 					err = routes.ReportSubmit(w,req,user,extraData)
 					co.RouteViewCounter.Bump3(12, cn)
 			}
 		case "/topics":
 			switch(req.URL.Path) {
 				case "/topics/most-viewed/":
-				h, err := c.UserCheckNano(w,req,user,cn)
-				if err != nil {
-					return err
-				}
+					h, err := c.UserCheckNano(w,req,user,cn)
+					if err != nil {
+						return err
+					}
 					err = routes.TopicListMostViewed(w,req,user,h)
 					co.RouteViewCounter.Bump3(13, cn)
 				case "/topics/week-views/":
-				h, err := c.UserCheckNano(w,req,user,cn)
-				if err != nil {
-					return err
-				}
+					h, err := c.UserCheckNano(w,req,user,cn)
+					if err != nil {
+						return err
+					}
 					err = routes.TopicListWeekViews(w,req,user,h)
 					co.RouteViewCounter.Bump3(14, cn)
 				case "/topics/create/":
@@ -1566,10 +1566,10 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 						return err
 					}
 					
-				h, err := c.UserCheckNano(w,req,user,cn)
-				if err != nil {
-					return err
-				}
+					h, err := c.UserCheckNano(w,req,user,cn)
+					if err != nil {
+						return err
+					}
 					err = routes.CreateTopic(w,req,user,h,extraData)
 					co.RouteViewCounter.Bump3(15, cn)
 				default:
@@ -1577,8 +1577,8 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 					if err != nil {
 						return err
 					}
-					err = routes.TopicList(w,req,user, h)
-			co.RouteViewCounter.Bump3(16, cn)
+					err = routes.TopicList(w,req,user,h)
+					co.RouteViewCounter.Bump3(16, cn)
 			}
 		case "/panel":
 			err = c.SuperModOnly(w,req,user)
@@ -2101,7 +2101,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 					co.RouteViewCounter.Bump3(95, cn)
 				default:
 					err = panel.Dashboard(w,req,user)
-			co.RouteViewCounter.Bump3(96, cn)
+					co.RouteViewCounter.Bump3(96, cn)
 			}
 		case "/user":
 			switch(req.URL.Path) {
@@ -2111,10 +2111,10 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 						return err
 					}
 					
-				h, err := c.UserCheckNano(w,req,user,cn)
-				if err != nil {
-					return err
-				}
+					h, err := c.UserCheckNano(w,req,user,cn)
+					if err != nil {
+						return err
+					}
 					err = routes.AccountEdit(w,req,user,h)
 					co.RouteViewCounter.Bump3(97, cn)
 				case "/user/edit/password/":
@@ -2123,10 +2123,10 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 						return err
 					}
 					
-				h, err := c.UserCheckNano(w,req,user,cn)
-				if err != nil {
-					return err
-				}
+					h, err := c.UserCheckNano(w,req,user,cn)
+					if err != nil {
+						return err
+					}
 					err = routes.AccountEditPassword(w,req,user,h)
 					co.RouteViewCounter.Bump3(98, cn)
 				case "/user/edit/password/submit/":
@@ -2191,10 +2191,10 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 						return err
 					}
 					
-				h, err := c.UserCheckNano(w,req,user,cn)
-				if err != nil {
-					return err
-				}
+					h, err := c.UserCheckNano(w,req,user,cn)
+					if err != nil {
+						return err
+					}
 					err = routes.AccountEditPrivacy(w,req,user,h)
 					co.RouteViewCounter.Bump3(103, cn)
 				case "/user/edit/privacy/submit/":
@@ -2216,10 +2216,10 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 						return err
 					}
 					
-				h, err := c.UserCheckNano(w,req,user,cn)
-				if err != nil {
-					return err
-				}
+					h, err := c.UserCheckNano(w,req,user,cn)
+					if err != nil {
+						return err
+					}
 					err = routes.AccountEditMFA(w,req,user,h)
 					co.RouteViewCounter.Bump3(105, cn)
 				case "/user/edit/mfa/setup/":
@@ -2228,10 +2228,10 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 						return err
 					}
 					
-				h, err := c.UserCheckNano(w,req,user,cn)
-				if err != nil {
-					return err
-				}
+					h, err := c.UserCheckNano(w,req,user,cn)
+					if err != nil {
+						return err
+					}
 					err = routes.AccountEditMFASetup(w,req,user,h)
 					co.RouteViewCounter.Bump3(106, cn)
 				case "/user/edit/mfa/setup/submit/":
@@ -2266,10 +2266,10 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 						return err
 					}
 					
-				h, err := c.UserCheckNano(w,req,user,cn)
-				if err != nil {
-					return err
-				}
+					h, err := c.UserCheckNano(w,req,user,cn)
+					if err != nil {
+						return err
+					}
 					err = routes.AccountEditEmail(w,req,user,h)
 					co.RouteViewCounter.Bump3(109, cn)
 				case "/user/edit/token/":
@@ -2281,10 +2281,10 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 						return err
 					}
 					
-				h, err := c.UserCheckNano(w,req,user,cn)
-				if err != nil {
-					return err
-				}
+					h, err := c.UserCheckNano(w,req,user,cn)
+					if err != nil {
+						return err
+					}
 					err = routes.AccountLogins(w,req,user,h)
 					co.RouteViewCounter.Bump3(111, cn)
 				case "/user/edit/blocked/":
@@ -2293,10 +2293,10 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 						return err
 					}
 					
-				h, err := c.UserCheckNano(w,req,user,cn)
-				if err != nil {
-					return err
-				}
+					h, err := c.UserCheckNano(w,req,user,cn)
+					if err != nil {
+						return err
+					}
 					err = routes.AccountBlocked(w,req,user,h)
 					co.RouteViewCounter.Bump3(112, cn)
 				case "/user/levels/":
@@ -2305,10 +2305,10 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 						return err
 					}
 					
-				h, err := c.UserCheckNano(w,req,user,cn)
-				if err != nil {
-					return err
-				}
+					h, err := c.UserCheckNano(w,req,user,cn)
+					if err != nil {
+						return err
+					}
 					err = routes.LevelList(w,req,user,h)
 					co.RouteViewCounter.Bump3(113, cn)
 				case "/user/convos/":
@@ -2317,10 +2317,10 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 						return err
 					}
 					
-				h, err := c.UserCheckNano(w,req,user,cn)
-				if err != nil {
-					return err
-				}
+					h, err := c.UserCheckNano(w,req,user,cn)
+					if err != nil {
+						return err
+					}
 					err = routes.Convos(w,req,user,h)
 					co.RouteViewCounter.Bump3(114, cn)
 				case "/user/convos/create/":
@@ -2329,10 +2329,10 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 						return err
 					}
 					
-				h, err := c.UserCheckNano(w,req,user,cn)
-				if err != nil {
-					return err
-				}
+					h, err := c.UserCheckNano(w,req,user,cn)
+					if err != nil {
+						return err
+					}
 					err = routes.ConvosCreate(w,req,user,h)
 					co.RouteViewCounter.Bump3(115, cn)
 				case "/user/convo/":
@@ -2341,10 +2341,10 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 						return err
 					}
 					
-				h, err := c.UserCheckNano(w,req,user,cn)
-				if err != nil {
-					return err
-				}
+					h, err := c.UserCheckNano(w,req,user,cn)
+					if err != nil {
+						return err
+					}
 					err = routes.Convo(w,req,user,h,extraData)
 					co.RouteViewCounter.Bump3(116, cn)
 				case "/user/convos/create/submit/":
@@ -2405,10 +2405,10 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 						return err
 					}
 					
-				h, err := c.UserCheckNano(w,req,user,cn)
-				if err != nil {
-					return err
-				}
+					h, err := c.UserCheckNano(w,req,user,cn)
+					if err != nil {
+						return err
+					}
 					err = routes.RelationsBlockCreate(w,req,user,h,extraData)
 					co.RouteViewCounter.Bump3(121, cn)
 				case "/user/block/create/submit/":
@@ -2430,10 +2430,10 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 						return err
 					}
 					
-				h, err := c.UserCheckNano(w,req,user,cn)
-				if err != nil {
-					return err
-				}
+					h, err := c.UserCheckNano(w,req,user,cn)
+					if err != nil {
+						return err
+					}
 					err = routes.RelationsBlockRemove(w,req,user,h,extraData)
 					co.RouteViewCounter.Bump3(123, cn)
 				case "/user/block/remove/submit/":
@@ -2455,18 +2455,18 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 					if err != nil {
 						return err
 					}
-					err = routes.ViewProfile(w,req,user, h)
-			co.RouteViewCounter.Bump3(125, cn)
+					err = routes.ViewProfile(w,req,user,h)
+					co.RouteViewCounter.Bump3(125, cn)
 			}
 		case "/users":
+			err = c.MemberOnly(w,req,user)
+			if err != nil {
+				return err
+			}
+			
 			switch(req.URL.Path) {
 				case "/users/ban/submit/":
 					err = c.NoSessionMismatch(w,req,user)
-					if err != nil {
-						return err
-					}
-					
-					err = c.MemberOnly(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -2479,11 +2479,6 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 						return err
 					}
 					
-					err = c.MemberOnly(w,req,user)
-					if err != nil {
-						return err
-					}
-					
 					err = routes.UnbanUser(w,req,user,extraData)
 					co.RouteViewCounter.Bump3(127, cn)
 				case "/users/activate/":
@@ -2492,32 +2487,17 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 						return err
 					}
 					
-					err = c.MemberOnly(w,req,user)
-					if err != nil {
-						return err
-					}
-					
 					err = routes.ActivateUser(w,req,user,extraData)
 					co.RouteViewCounter.Bump3(128, cn)
 				case "/users/ips/":
-					err = c.MemberOnly(w,req,user)
+					h, err := c.UserCheckNano(w,req,user,cn)
 					if err != nil {
 						return err
 					}
-					
-				h, err := c.UserCheckNano(w,req,user,cn)
-				if err != nil {
-					return err
-				}
 					err = routes.IPSearch(w,req,user,h)
 					co.RouteViewCounter.Bump3(129, cn)
 				case "/users/delete-posts/submit/":
 					err = c.NoSessionMismatch(w,req,user)
-					if err != nil {
-						return err
-					}
-					
-					err = c.MemberOnly(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -2698,17 +2678,17 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 					if err != nil {
 						return err
 					}
-					err = routes.ViewTopic(w,req,user, h, extraData)
-			co.RouteViewCounter.Bump3(143, cn)
+					err = routes.ViewTopic(w,req,user,h,extraData)
+					co.RouteViewCounter.Bump3(143, cn)
 			}
 		case "/reply":
+			err = c.MemberOnly(w,req,user)
+			if err != nil {
+				return err
+			}
+			
 			switch(req.URL.Path) {
 				case "/reply/create/":
-					err = c.MemberOnly(w,req,user)
-					if err != nil {
-						return err
-					}
-					
 					err = c.HandleUploadRoute(w,req,user,int(c.Config.MaxRequestSize))
 					if err != nil {
 					return err
@@ -2726,20 +2706,10 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 						return err
 					}
 					
-					err = c.MemberOnly(w,req,user)
-					if err != nil {
-						return err
-					}
-					
 					err = routes.ReplyEditSubmit(w,req,user,extraData)
 					co.RouteViewCounter.Bump3(145, cn)
 				case "/reply/delete/submit/":
 					err = c.NoSessionMismatch(w,req,user)
-					if err != nil {
-						return err
-					}
-					
-					err = c.MemberOnly(w,req,user)
 					if err != nil {
 						return err
 					}
@@ -2752,11 +2722,6 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 						return err
 					}
 					
-					err = c.MemberOnly(w,req,user)
-					if err != nil {
-						return err
-					}
-					
 					err = routes.ReplyLikeSubmit(w,req,user,extraData)
 					co.RouteViewCounter.Bump3(147, cn)
 				case "/reply/unlike/submit/":
@@ -2765,19 +2730,9 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 						return err
 					}
 					
-					err = c.MemberOnly(w,req,user)
-					if err != nil {
-						return err
-					}
-					
 					err = routes.ReplyUnlikeSubmit(w,req,user,extraData)
 					co.RouteViewCounter.Bump3(148, cn)
 				case "/reply/attach/add/submit/":
-					err = c.MemberOnly(w,req,user)
-					if err != nil {
-						return err
-					}
-					
 					err = c.HandleUploadRoute(w,req,user,int(c.Config.MaxRequestSize))
 					if err != nil {
 					return err
@@ -2795,53 +2750,28 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 						return err
 					}
 					
-					err = c.MemberOnly(w,req,user)
-					if err != nil {
-						return err
-					}
-					
 					err = routes.RemoveAttachFromReplySubmit(w,req,user,extraData)
 					co.RouteViewCounter.Bump3(150, cn)
 			}
 		case "/profile":
+			err = c.NoSessionMismatch(w,req,user)
+			if err != nil {
+				return err
+			}
+			
+			err = c.MemberOnly(w,req,user)
+			if err != nil {
+				return err
+			}
+			
 			switch(req.URL.Path) {
 				case "/profile/reply/create/":
-					err = c.NoSessionMismatch(w,req,user)
-					if err != nil {
-						return err
-					}
-					
-					err = c.MemberOnly(w,req,user)
-					if err != nil {
-						return err
-					}
-					
 					err = routes.ProfileReplyCreateSubmit(w,req,user)
 					co.RouteViewCounter.Bump3(151, cn)
 				case "/profile/reply/edit/submit/":
-					err = c.NoSessionMismatch(w,req,user)
-					if err != nil {
-						return err
-					}
-					
-					err = c.MemberOnly(w,req,user)
-					if err != nil {
-						return err
-					}
-					
 					err = routes.ProfileReplyEditSubmit(w,req,user,extraData)
 					co.RouteViewCounter.Bump3(152, cn)
 				case "/profile/reply/delete/submit/":
-					err = c.NoSessionMismatch(w,req,user)
-					if err != nil {
-						return err
-					}
-					
-					err = c.MemberOnly(w,req,user)
-					if err != nil {
-						return err
-					}
-					
 					err = routes.ProfileReplyDeleteSubmit(w,req,user,extraData)
 					co.RouteViewCounter.Bump3(153, cn)
 			}
@@ -2867,17 +2797,17 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 		case "/accounts":
 			switch(req.URL.Path) {
 				case "/accounts/login/":
-				h, err := c.UserCheckNano(w,req,user,cn)
-				if err != nil {
-					return err
-				}
+					h, err := c.UserCheckNano(w,req,user,cn)
+					if err != nil {
+						return err
+					}
 					err = routes.AccountLogin(w,req,user,h)
 					co.RouteViewCounter.Bump3(156, cn)
 				case "/accounts/create/":
-				h, err := c.UserCheckNano(w,req,user,cn)
-				if err != nil {
-					return err
-				}
+					h, err := c.UserCheckNano(w,req,user,cn)
+					if err != nil {
+						return err
+					}
 					err = routes.AccountRegister(w,req,user,h)
 					co.RouteViewCounter.Bump3(157, cn)
 				case "/accounts/logout/":
@@ -2902,10 +2832,10 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 					err = routes.AccountLoginSubmit(w,req,user)
 					co.RouteViewCounter.Bump3(159, cn)
 				case "/accounts/mfa_verify/":
-				h, err := c.UserCheckNano(w,req,user,cn)
-				if err != nil {
-					return err
-				}
+					h, err := c.UserCheckNano(w,req,user,cn)
+					if err != nil {
+						return err
+					}
 					err = routes.AccountLoginMFAVerify(w,req,user,h)
 					co.RouteViewCounter.Bump3(160, cn)
 				case "/accounts/mfa_verify/submit/":
@@ -2925,10 +2855,10 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 					err = routes.AccountRegisterSubmit(w,req,user)
 					co.RouteViewCounter.Bump3(162, cn)
 				case "/accounts/password-reset/":
-				h, err := c.UserCheckNano(w,req,user,cn)
-				if err != nil {
-					return err
-				}
+					h, err := c.UserCheckNano(w,req,user,cn)
+					if err != nil {
+						return err
+					}
 					err = routes.AccountPasswordReset(w,req,user,h)
 					co.RouteViewCounter.Bump3(163, cn)
 				case "/accounts/password-reset/submit/":
@@ -2940,10 +2870,10 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 					err = routes.AccountPasswordResetSubmit(w,req,user)
 					co.RouteViewCounter.Bump3(164, cn)
 				case "/accounts/password-reset/token/":
-				h, err := c.UserCheckNano(w,req,user,cn)
-				if err != nil {
-					return err
-				}
+					h, err := c.UserCheckNano(w,req,user,cn)
+					if err != nil {
+						return err
+					}
 					err = routes.AccountPasswordResetToken(w,req,user,h)
 					co.RouteViewCounter.Bump3(165, cn)
 				case "/accounts/password-reset/token/submit/":
