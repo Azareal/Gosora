@@ -64,9 +64,9 @@ func main() {
 		}
 		return out
 	}
-	/*o := func(indent int, str string) {
+	o := func(indent int, str string) {
 		out += countToIndents(indent) + str
-	}*/
+	}
 	on := func(indent int, str string) {
 		out += "\n" + countToIndents(indent) + str
 	}
@@ -77,21 +77,18 @@ func main() {
 		out += "\n" + ind2 + "return err\n" + ind + "}"
 	}
 
-	runBefore := func(runnables []Runnable, indentCount int) (out string) {
-		ind := countToIndents(indentCount)
+	runBefore := func(runnables []Runnable, ind int) {
 		if len(runnables) > 0 {
 			for _, runnable := range runnables {
 				if runnable.Literal {
-					out += "\n\t" + ind + runnable.Contents
+					on(ind, runnable.Contents)
 				} else {
-					out += "\n" + ind + "err = c." + runnable.Contents + "(w,req,user)\n" +
-						ind + "if err != nil {\n" +
-						ind + "\treturn err\n" +
-						ind + "}\n" + ind
+					on(ind, "err = c."+runnable.Contents+"(w,req,user)")
+					iferrn(ind)
+					o(ind, "\n")
 				}
 			}
 		}
-		return out
 	}
 	userCheckNano := func(indent int, route *RouteImpl) {
 		on(indent, "h, err := c.UserCheckNano(w,req,user,cn)")
@@ -113,31 +110,26 @@ func main() {
 		end := len(route.Path) - 1
 		on(2, "case \""+route.Path[0:end]+"\":")
 		//on(3,"id = " + strconv.Itoa(allRouteMap[route.Name]))
-		out += runBefore(route.RunBefore, 3)
+		runBefore(route.RunBefore, 3)
 		if !route.Action && !route.NoHead {
-			//on(3,"h, err := c.UserCheck(w,req,user)")
 			userCheckNano(3, route)
-		} /* else if route.Name != "common.RouteWebsockets" {
-			//on(3,"sa := time.Now()")
-			//on(3,"cn := uutils.Nanotime()")
-		}*/
+		}
 		writeRoute(3, route)
-		/*if !route.Action && !route.NoHead {
-			on(3,"co.RouteViewCounter.Bump2(" + strconv.Itoa(allRouteMap[route.Name]) + ", h.StartedAt)")
-		} else */if route.Name != "common.RouteWebsockets" {
-			//on(3,"co.RouteViewCounter.Bump(" + strconv.Itoa(allRouteMap[route.Name]) + ")")
-			//on(3,"co.RouteViewCounter.Bump2(" + strconv.Itoa(allRouteMap[route.Name]) + ", sa)")
+		if route.Name != "common.RouteWebsockets" {
 			on(3, "co.RouteViewCounter.Bump3("+strconv.Itoa(allRouteMap[route.Name])+", cn)")
 		}
 	}
 
+	prec := NewPrec()
+	prec.AddSet("MemberOnly", "SuperModOnly", "AdminOnly", "SuperAdminOnly")
+
 	// Hoist runnables which appear on every route to the route group to avoid code duplication
-skipRunnableAntiDupe:
+	dupeMap := make(map[string]int)
+	//skipRunnableAntiDupe:
 	for _, g := range r.routeGroups {
-		dupeMap := make(map[string]int)
 		for _, route := range g.RouteList {
 			if len(route.RunBefore) == 0 {
-				continue skipRunnableAntiDupe
+				continue //skipRunnableAntiDupe
 			}
 			// TODO: What if there are duplicates of the same runnable on this route?
 			for _, runnable := range route.RunBefore {
@@ -148,6 +140,9 @@ skipRunnableAntiDupe:
 		// Unset entries which are already set on the route group
 		for _, gRunnable := range g.RunBefore {
 			delete(dupeMap, gRunnable.Contents)
+			for _, item := range prec.LessThanItem(gRunnable.Contents) {
+				delete(dupeMap, item)
+			}
 		}
 
 		for runnable, count := range dupeMap {
@@ -155,12 +150,16 @@ skipRunnableAntiDupe:
 				g.Before(runnable)
 			}
 		}
+		// This method is optimised in the compiler to do a bulk delete
+		for name, _ := range dupeMap {
+			delete(dupeMap, name)
+		}
 	}
 
 	for _, group := range r.routeGroups {
 		end := len(group.Path) - 1
 		on(2, "case \""+group.Path[0:end]+"\":")
-		out += runBefore(group.RunBefore, 3)
+		runBefore(group.RunBefore, 3)
 		on(3, "switch(req.URL.Path) {")
 
 		defaultRoute := blankRoute()
@@ -180,17 +179,7 @@ skipRunnableAntiDupe:
 						if gRunnable.Contents == runnable.Contents {
 							continue skipRunnable
 						}
-						f := func(e1, e2 string) bool {
-							return gRunnable.Contents == e1 && runnable.Contents == e2
-						}
-						// TODO: Stop hard-coding these
-						if f("AdminOnly", "MemberOnly") {
-							continue skipRunnable
-						}
-						if f("AdminOnly", "SuperModOnly") {
-							continue skipRunnable
-						}
-						if f("SuperModOnly", "MemberOnly") {
+						if prec.GreaterThan(gRunnable.Contents, runnable.Contents) {
 							continue skipRunnable
 						}
 					}
@@ -205,36 +194,22 @@ skipRunnableAntiDupe:
 				}
 			}
 			if !route.Action && !route.NoHead && !group.NoHead {
-				//on(5,"h, err := c.UserCheck(w,req,user)")
 				userCheckNano(5, route)
-			} else {
-				//on(5, "cn := uutils.Nanotime()")
 			}
 			writeRoute(5, route)
-			/*if !route.Action && !route.NoHead && !group.NoHead {
-				on(5,"co.RouteViewCounter.Bump2(" + strconv.Itoa(allRouteMap[route.Name]) + ", h.StartedAt)")
-			} else {*/
-			//on(5,"co.RouteViewCounter.Bump(" + strconv.Itoa(allRouteMap[route.Name]) + ")")
 			on(5, "co.RouteViewCounter.Bump3("+strconv.Itoa(allRouteMap[route.Name])+", cn)")
-			//}
 		}
 
 		if defaultRoute.Name != "" {
 			mapIt(defaultRoute.Name)
 			on(4, "default:")
 			//on(5,"id = " + strconv.Itoa(allRouteMap[defaultRoute.Name]))
-			out += runBefore(defaultRoute.RunBefore, 4)
+			runBefore(defaultRoute.RunBefore, 4)
 			if !defaultRoute.Action && !defaultRoute.NoHead && !group.NoHead {
-				//on(5, "h, err := c.UserCheck(w,req,user)"
 				userCheckNano(5, defaultRoute)
 			}
 			writeRoute(5, defaultRoute)
-			/*if !defaultRoute.Action && !defaultRoute.NoHead && !group.NoHead {
-				on(5,"co.RouteViewCounter.Bump2(" + strconv.Itoa(allRouteMap[defaultRoute.Name]) + ", h.StartedAt)")
-			} else {*/
-			//on(5,co.RouteViewCounter.Bump(" + strconv.Itoa(allRouteMap[defaultRoute.Name]) + ")")
 			on(5, "co.RouteViewCounter.Bump3("+strconv.Itoa(allRouteMap[defaultRoute.Name])+", cn)")
-			//}
 		}
 		on(3, "}")
 	}
@@ -618,10 +593,15 @@ func (r *GenRouter) RemoveFunc(pattern string) error {
 	return nil
 }
 
-// TODO: Some of these sanitisations may be redundant
-func (r *GenRouter) dumpRequest(req *http.Request, pre string,log *log.Logger) {
+func (r *GenRouter) dumpRequest(req *http.Request, pre string, log *log.Logger) {
 	var sb strings.Builder
-	sb.WriteString(pre)
+	r.ddumpRequest(req,pre,log,&sb)
+}
+
+// TODO: Some of these sanitisations may be redundant
+var dumpReqLen = len("\nUA: \nMethod: \nHost: \nURL.Path: \nURL.RawQuery: \nIP: \n") + 3
+var dumpReqLen2 = len("\nHead : ") + 2
+func (r *GenRouter) ddumpRequest(req *http.Request, pre string,log *log.Logger, sb *strings.Builder) {
 	nfield := func(label, val string) {
 		sb.WriteString(label)
 		sb.WriteString(val)
@@ -629,7 +609,10 @@ func (r *GenRouter) dumpRequest(req *http.Request, pre string,log *log.Logger) {
 	field := func(label, val string) {
 		nfield(label,c.SanitiseSingleLine(val))
 	}
-	field("\nUA: ",req.UserAgent())
+	ua := req.UserAgent()
+	sb.Grow(dumpReqLen + len(pre) + len(ua) + len(req.Method) + len(req.Host) + (dumpReqLen2 * len(req.Header)))
+	sb.WriteString(pre)
+	field("\nUA: ",ua)
 	field("\nMethod: ",req.Method)
 	for key, value := range req.Header {
 		// Avoid logging this for security reasons
@@ -646,7 +629,10 @@ func (r *GenRouter) dumpRequest(req *http.Request, pre string,log *log.Logger) {
 	field("\nHost: ",req.Host)
 	field("\nURL.Path: ",req.URL.Path)
 	field("\nURL.RawQuery: ",req.URL.RawQuery)
-	field("\nRef: ",req.Referer())
+	ref := req.Referer()
+	if ref != "" {
+		field("\nRef: ",req.Referer())
+	}
 	nfield("\nIP: ",req.RemoteAddr)
 	sb.WriteString("\n")
 
@@ -658,13 +644,28 @@ func (r *GenRouter) DumpRequest(req *http.Request, pre string) {
 }
 
 func (r *GenRouter) SuspiciousRequest(req *http.Request, pre string) {
+	var sb strings.Builder
 	if pre != "" {
-		pre += "\nSuspicious Request"
+		sb.WriteString("Suspicious Request")
 	} else {
 		pre = "Suspicious Request"
 	}
-	r.dumpRequest(req,pre,r.suspReqLogger)
+	r.ddumpRequest(req,pre,r.suspReqLogger,&sb)
 	co.AgentViewCounter.Bump({{.AllAgentMap.suspicious}})
+}
+
+func (r *GenRouter) unknownUA(req *http.Request) {
+	if c.Dev.DebugMode {
+		var presb strings.Builder
+		presb.WriteString("Unknown UA: ")
+		for _, ch := range req.UserAgent() {
+			presb.WriteString(strconv.Itoa(int(ch)))
+			presb.WriteRune(' ')
+		}
+		r.ddumpRequest(req, "", r.requestLogger, &presb)
+	} else {
+		r.requestLogger.Print("unknown ua: ", c.SanitiseSingleLine(req.UserAgent()))
+	}
 }
 
 func isLocalHost(h string) bool {
@@ -811,7 +812,8 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	/*if c.Dev.QuicPort != 0 {
-		w.Header().Set("Alt-Svc", "quic=\":"+strconv.Itoa(c.Dev.QuicPort)+"\"; ma=2592000; v=\"44,43,39\", h3-23=\":"+strconv.Itoa(c.Dev.QuicPort)+"\"; ma=3600, h3-24=\":"+strconv.Itoa(c.Dev.QuicPort)+"\"; ma=3600, h2=\":443\"; ma=3600")
+		sQuicPort := strconv.Itoa(c.Dev.QuicPort)
+		w.Header().Set("Alt-Svc", "quic=\":"+sQuicPort+"\"; ma=2592000; v=\"44,43,39\", h3-23=\":"+sQuicPort+"\"; ma=3600, h3-24=\":"+sQuicPort+"\"; ma=3600, h2=\":443\"; ma=3600")
 	}*/
 
 	// Track the user agents. Unfortunately, everyone pretends to be Mozilla, so this'll be a little less efficient than I would like.
@@ -824,13 +826,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	ua := strings.TrimSpace(strings.Replace(strings.TrimPrefix(req.UserAgent(),"Mozilla/5.0 ")," Safari/537.36","",-1)) // Noise, no one's going to be running this and it would require some sort of agent ranking system to determine which identifier should be prioritised over another
 	if ua == "" {
 		co.AgentViewCounter.Bump({{.AllAgentMap.blank}})
-		if c.Dev.DebugMode {
-			var pre string
-			for _, char := range req.UserAgent() {
-				pre += strconv.Itoa(int(char)) + " "
-			}
-			r.DumpRequest(req,"Blank UA: " + pre)
-		}
+		r.unknownUA(req)
 	} else {		
 		// WIP UA Parser
 		//var ii = uaBufPool.Get()
@@ -927,15 +923,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		
 		if agent == 0 {
 			//co.AgentViewCounter.Bump({{.AllAgentMap.unknown}})
-			if c.Dev.DebugMode {
-				var pre string
-				for _, char := range req.UserAgent() {
-					pre += strconv.Itoa(int(char)) + " "
-				}
-				r.DumpRequest(req,"Blank UA: " + pre)
-			} else {
-				r.requestLogger.Print("unknown ua: ", c.SanitiseSingleLine(req.UserAgent()))
-			}
+			r.unknownUA(req)
 		}// else {
 			//co.AgentViewCounter.Bump(agentMapEnum[agent])
 			co.AgentViewCounter.Bump(agent)

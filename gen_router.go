@@ -998,10 +998,15 @@ func (r *GenRouter) RemoveFunc(pattern string) error {
 	return nil
 }
 
-// TODO: Some of these sanitisations may be redundant
-func (r *GenRouter) dumpRequest(req *http.Request, pre string,log *log.Logger) {
+func (r *GenRouter) dumpRequest(req *http.Request, pre string, log *log.Logger) {
 	var sb strings.Builder
-	sb.WriteString(pre)
+	r.ddumpRequest(req,pre,log,&sb)
+}
+
+// TODO: Some of these sanitisations may be redundant
+var dumpReqLen = len("\nUA: \nMethod: \nHost: \nURL.Path: \nURL.RawQuery: \nIP: \n") + 3
+var dumpReqLen2 = len("\nHead : ") + 2
+func (r *GenRouter) ddumpRequest(req *http.Request, pre string,log *log.Logger, sb *strings.Builder) {
 	nfield := func(label, val string) {
 		sb.WriteString(label)
 		sb.WriteString(val)
@@ -1009,7 +1014,10 @@ func (r *GenRouter) dumpRequest(req *http.Request, pre string,log *log.Logger) {
 	field := func(label, val string) {
 		nfield(label,c.SanitiseSingleLine(val))
 	}
-	field("\nUA: ",req.UserAgent())
+	ua := req.UserAgent()
+	sb.Grow(dumpReqLen + len(pre) + len(ua) + len(req.Method) + len(req.Host) + (dumpReqLen2 * len(req.Header)))
+	sb.WriteString(pre)
+	field("\nUA: ",ua)
 	field("\nMethod: ",req.Method)
 	for key, value := range req.Header {
 		// Avoid logging this for security reasons
@@ -1026,7 +1034,10 @@ func (r *GenRouter) dumpRequest(req *http.Request, pre string,log *log.Logger) {
 	field("\nHost: ",req.Host)
 	field("\nURL.Path: ",req.URL.Path)
 	field("\nURL.RawQuery: ",req.URL.RawQuery)
-	field("\nRef: ",req.Referer())
+	ref := req.Referer()
+	if ref != "" {
+		field("\nRef: ",req.Referer())
+	}
 	nfield("\nIP: ",req.RemoteAddr)
 	sb.WriteString("\n")
 
@@ -1038,13 +1049,28 @@ func (r *GenRouter) DumpRequest(req *http.Request, pre string) {
 }
 
 func (r *GenRouter) SuspiciousRequest(req *http.Request, pre string) {
+	var sb strings.Builder
 	if pre != "" {
-		pre += "\nSuspicious Request"
+		sb.WriteString("Suspicious Request")
 	} else {
 		pre = "Suspicious Request"
 	}
-	r.dumpRequest(req,pre,r.suspReqLogger)
+	r.ddumpRequest(req,pre,r.suspReqLogger,&sb)
 	co.AgentViewCounter.Bump(43)
+}
+
+func (r *GenRouter) unknownUA(req *http.Request) {
+	if c.Dev.DebugMode {
+		var presb strings.Builder
+		presb.WriteString("Unknown UA: ")
+		for _, ch := range req.UserAgent() {
+			presb.WriteString(strconv.Itoa(int(ch)))
+			presb.WriteRune(' ')
+		}
+		r.ddumpRequest(req, "", r.requestLogger, &presb)
+	} else {
+		r.requestLogger.Print("unknown ua: ", c.SanitiseSingleLine(req.UserAgent()))
+	}
 }
 
 func isLocalHost(h string) bool {
@@ -1191,7 +1217,8 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	/*if c.Dev.QuicPort != 0 {
-		w.Header().Set("Alt-Svc", "quic=\":"+strconv.Itoa(c.Dev.QuicPort)+"\"; ma=2592000; v=\"44,43,39\", h3-23=\":"+strconv.Itoa(c.Dev.QuicPort)+"\"; ma=3600, h3-24=\":"+strconv.Itoa(c.Dev.QuicPort)+"\"; ma=3600, h2=\":443\"; ma=3600")
+		sQuicPort := strconv.Itoa(c.Dev.QuicPort)
+		w.Header().Set("Alt-Svc", "quic=\":"+sQuicPort+"\"; ma=2592000; v=\"44,43,39\", h3-23=\":"+sQuicPort+"\"; ma=3600, h3-24=\":"+sQuicPort+"\"; ma=3600, h2=\":443\"; ma=3600")
 	}*/
 
 	// Track the user agents. Unfortunately, everyone pretends to be Mozilla, so this'll be a little less efficient than I would like.
@@ -1204,13 +1231,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	ua := strings.TrimSpace(strings.Replace(strings.TrimPrefix(req.UserAgent(),"Mozilla/5.0 ")," Safari/537.36","",-1)) // Noise, no one's going to be running this and it would require some sort of agent ranking system to determine which identifier should be prioritised over another
 	if ua == "" {
 		co.AgentViewCounter.Bump(41)
-		if c.Dev.DebugMode {
-			var pre string
-			for _, char := range req.UserAgent() {
-				pre += strconv.Itoa(int(char)) + " "
-			}
-			r.DumpRequest(req,"Blank UA: " + pre)
-		}
+		r.unknownUA(req)
 	} else {		
 		// WIP UA Parser
 		//var ii = uaBufPool.Get()
@@ -1307,15 +1328,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		
 		if agent == 0 {
 			//co.AgentViewCounter.Bump(0)
-			if c.Dev.DebugMode {
-				var pre string
-				for _, char := range req.UserAgent() {
-					pre += strconv.Itoa(int(char)) + " "
-				}
-				r.DumpRequest(req,"Blank UA: " + pre)
-			} else {
-				r.requestLogger.Print("unknown ua: ", c.SanitiseSingleLine(req.UserAgent()))
-			}
+			r.unknownUA(req)
 		}// else {
 			//co.AgentViewCounter.Bump(agentMapEnum[agent])
 			co.AgentViewCounter.Bump(agent)
@@ -1492,21 +1505,21 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 			err = c.ParseForm(w,req,user)
 			if err != nil {
 				return err
-			}
-			
+			}			
+
 			err = routes.ChangeTheme(w,req,user)
 			co.RouteViewCounter.Bump3(5, cn)
 		case "/attachs":
 			err = c.ParseForm(w,req,user)
 			if err != nil {
 				return err
-			}
-			
-				w = r.responseWriter(w)
+			}			
+
+			w = r.responseWriter(w)
 			err = routes.ShowAttachment(w,req,user,extraData)
 			co.RouteViewCounter.Bump3(6, cn)
 		case "/ws":
-				req.URL.Path += extraData
+			req.URL.Path += extraData
 			err = c.RouteWebsockets(w,req,user)
 		case "/api":
 			switch(req.URL.Path) {
@@ -1527,18 +1540,18 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 			err = c.NoBanned(w,req,user)
 			if err != nil {
 				return err
-			}
-			
+			}			
+
 			err = c.NoSessionMismatch(w,req,user)
 			if err != nil {
 				return err
-			}
-			
+			}			
+
 			err = c.MemberOnly(w,req,user)
 			if err != nil {
 				return err
-			}
-			
+			}			
+
 			switch(req.URL.Path) {
 				case "/report/submit/":
 					err = routes.ReportSubmit(w,req,user,extraData)
@@ -1584,8 +1597,8 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 			err = c.SuperModOnly(w,req,user)
 			if err != nil {
 				return err
-			}
-			
+			}			
+
 			switch(req.URL.Path) {
 				case "/panel/forums/":
 					err = panel.Forums(w,req,user)
@@ -2450,7 +2463,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 					err = routes.RelationsBlockRemoveSubmit(w,req,user,extraData)
 					co.RouteViewCounter.Bump3(124, cn)
 				default:
-					req.URL.Path += extraData
+				req.URL.Path += extraData
 					h, err := c.UserCheckNano(w,req,user,cn)
 					if err != nil {
 						return err
@@ -2462,8 +2475,8 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 			err = c.MemberOnly(w,req,user)
 			if err != nil {
 				return err
-			}
-			
+			}			
+
 			switch(req.URL.Path) {
 				case "/users/ban/submit/":
 					err = c.NoSessionMismatch(w,req,user)
@@ -2685,8 +2698,8 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 			err = c.MemberOnly(w,req,user)
 			if err != nil {
 				return err
-			}
-			
+			}			
+
 			switch(req.URL.Path) {
 				case "/reply/create/":
 					err = c.HandleUploadRoute(w,req,user,int(c.Config.MaxRequestSize))
@@ -2757,13 +2770,13 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 			err = c.NoSessionMismatch(w,req,user)
 			if err != nil {
 				return err
-			}
-			
+			}			
+
 			err = c.MemberOnly(w,req,user)
 			if err != nil {
 				return err
-			}
-			
+			}			
+
 			switch(req.URL.Path) {
 				case "/profile/reply/create/":
 					err = routes.ProfileReplyCreateSubmit(w,req,user)
