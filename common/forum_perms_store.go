@@ -49,6 +49,7 @@ func (s *MemoryForumPermsStore) Init() error {
 	return s.ReloadAll()
 }
 
+// TODO: Optimise this?
 func (s *MemoryForumPermsStore) ReloadAll() error {
 	DebugLog("Reloading the forum perms")
 	fids, err := Forums.GetAllIDs()
@@ -56,11 +57,14 @@ func (s *MemoryForumPermsStore) ReloadAll() error {
 		return err
 	}
 	for _, fid := range fids {
-		err := s.Reload(fid)
-		if err != nil {
-			return err
+		if e := s.reload(fid); e != nil {
+			return e
 		}
 	}
+	if e := s.recalcCanSeeAll(); e != nil {
+		return e
+	}
+	TopicListThaw.Thaw()
 	return nil
 }
 
@@ -73,8 +77,20 @@ func (s *MemoryForumPermsStore) parseForumPerm(perms []byte) (pperms *ForumPerms
 	return pperms, err
 }
 
-// TODO: Need a more thread-safe way of doing this. Possibly with sync.Map?
 func (s *MemoryForumPermsStore) Reload(fid int) error {
+	e := s.reload(fid)
+	if e != nil {
+		return e
+	}
+	if e = s.recalcCanSeeAll(); e != nil {
+		return e
+	}
+	TopicListThaw.Thaw()
+	return nil
+}
+
+// TODO: Need a more thread-safe way of doing this. Possibly with sync.Map?
+func (s *MemoryForumPermsStore) reload(fid int) error {
 	DebugLogf("Reloading the forum permissions for forum #%d", fid)
 	rows, err := s.getByForum.Query(fid)
 	if err != nil {
@@ -111,7 +127,10 @@ func (s *MemoryForumPermsStore) Reload(fid int) error {
 		s.oddForums[fid] = forumPerms
 		s.oddLock.Unlock()
 	}
+	return nil
+}
 
+func (s *MemoryForumPermsStore) recalcCanSeeAll() error {
 	groups, err := Groups.GetAll()
 	if err != nil {
 		return err
@@ -121,56 +140,64 @@ func (s *MemoryForumPermsStore) Reload(fid int) error {
 		return err
 	}
 
-	gcache, ok := Groups.(GroupCache)
+	gc, ok := Groups.(GroupCache)
 	if !ok {
 		TopicListThaw.Thaw()
 		return nil
 	}
 
-	for _, group := range groups {
-		DebugLogf("Updating the forum permissions for Group #%d", group.ID)
+	// A separate loop to avoid contending on the odd-even locks as much
+	fForumPerms := make(map[int]map[int]*ForumPerms)
+	for _, fid := range fids {
+		var forumPerms map[int]*ForumPerms
+		var ok bool
+		if fid%2 == 0 {
+			s.evenLock.RLock()
+			forumPerms, ok = s.evenForums[fid]
+			s.evenLock.RUnlock()
+		} else {
+			s.oddLock.RLock()
+			forumPerms, ok = s.oddForums[fid]
+			s.oddLock.RUnlock()
+		}
+		if ok {
+			fForumPerms[fid] = forumPerms
+		}
+	}
+
+	// TODO: Can we recalculate CanSee without calculating every other forum?
+	for _, g := range groups {
+		DebugLogf("Updating the forum permissions for Group #%d", g.ID)
 		canSee := []int{}
 		for _, fid := range fids {
 			DebugDetailf("Forum #%+v\n", fid)
-			var forumPerms map[int]*ForumPerms
-			var ok bool
-			if fid%2 == 0 {
-				s.evenLock.RLock()
-				forumPerms, ok = s.evenForums[fid]
-				s.evenLock.RUnlock()
-			} else {
-				s.oddLock.RLock()
-				forumPerms, ok = s.oddForums[fid]
-				s.oddLock.RUnlock()
-			}
-
-			var forumPerm *ForumPerms
+			forumPerms, ok := fForumPerms[fid]
 			if !ok {
 				continue
 			}
-			forumPerm, ok = forumPerms[group.ID]
+			fp, ok := forumPerms[g.ID]
 			if !ok {
-				if group.Perms.ViewTopic {
+				if g.Perms.ViewTopic {
 					canSee = append(canSee, fid)
 				}
 				continue
 			}
 
-			if forumPerm.Overrides {
-				if forumPerm.ViewTopic {
+			if fp.Overrides {
+				if fp.ViewTopic {
 					canSee = append(canSee, fid)
 				}
-			} else if group.Perms.ViewTopic {
+			} else if g.Perms.ViewTopic {
 				canSee = append(canSee, fid)
 			}
-			DebugDetail("group.ID: ", group.ID)
-			DebugDetailf("forumPerm: %+v\n", forumPerm)
+			//DebugDetail("g.ID: ", g.ID)
+			DebugDetailf("forumPerm: %+v\n", fp)
 			DebugDetail("canSee: ", canSee)
 		}
 		DebugDetailf("canSee (length %d): %+v \n", len(canSee), canSee)
-		gcache.SetCanSee(group.ID, canSee)
+		gc.SetCanSee(g.ID, canSee)
 	}
-	TopicListThaw.Thaw()
+
 	return nil
 }
 
@@ -193,6 +220,7 @@ func (s *MemoryForumPermsStore) GetAllMap() (bigMap map[int]map[int]*ForumPerms)
 // TODO: Add a hook here and have plugin_guilds use it
 // TODO: Check if the forum exists?
 // TODO: Fix the races
+// TODO: Return BlankForumPerms() when the forum permission set doesn't exist?
 func (s *MemoryForumPermsStore) Get(fid, gid int) (fp *ForumPerms, err error) {
 	var fmap map[int]*ForumPerms
 	var ok bool

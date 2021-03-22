@@ -32,6 +32,7 @@ type GroupStore interface {
 type GroupCache interface {
 	CacheSet(g *Group) error
 	SetCanSee(gid int, canSee []int) error
+	CacheAdd(g *Group) error
 	Length() int
 }
 
@@ -85,8 +86,7 @@ func (s *MemoryGroupStore) LoadGroups() error {
 		}
 		s.groups[g.ID] = g
 	}
-	err = rows.Err()
-	if err != nil {
+	if err = rows.Err(); err != nil {
 		return err
 	}
 	s.groupCount = i
@@ -256,14 +256,14 @@ func (s *MemoryGroupStore) Create(name, tag string, isAdmin, isMod, isBanned boo
 	GetHookTable().Vhook("create_group_preappend", &pluginPerms, &pluginPermsBytes)
 
 	// Generate the forum permissions based on the presets...
-	fdata, err := Forums.GetAll()
+	forums, err := Forums.GetAll()
 	if err != nil {
 		return 0, err
 	}
 
 	presetSet := make(map[int]string)
 	permSet := make(map[int]*ForumPerms)
-	for _, forum := range fdata {
+	for _, f := range forums {
 		var thePreset string
 		switch {
 		case isAdmin:
@@ -276,12 +276,12 @@ func (s *MemoryGroupStore) Create(name, tag string, isAdmin, isMod, isBanned boo
 			thePreset = "members"
 		}
 
-		permmap := PresetToPermmap(forum.Preset)
+		permmap := PresetToPermmap(f.Preset)
 		permItem := permmap[thePreset]
 		permItem.Overrides = true
 
-		permSet[forum.ID] = permItem
-		presetSet[forum.ID] = forum.Preset
+		permSet[f.ID] = permItem
+		presetSet[f.ID] = f.Preset
 	}
 
 	err = ReplaceForumPermsForGroupTx(tx, gid, presetSet, permSet)
@@ -298,14 +298,19 @@ func (s *MemoryGroupStore) Create(name, tag string, isAdmin, isMod, isBanned boo
 		isBanned = false
 	}
 
-	s.Lock()
-	s.groups[gid] = &Group{gid, name, isMod, isAdmin, isBanned, tag, perms, []byte(permstr), pluginPerms, pluginPermsBytes, blankIntList, 0}
-	s.groupCount++
-	s.Unlock()
+	s.CacheAdd(&Group{gid, name, isMod, isAdmin, isBanned, tag, perms, []byte(permstr), pluginPerms, pluginPermsBytes, blankIntList, 0})
 
 	TopicListThaw.Thaw()
 	return gid, FPStore.ReloadAll()
 	//return gid, TopicList.RebuildPermTree()
+}
+
+func (s *MemoryGroupStore) CacheAdd(g *Group) error {
+	s.Lock()
+	s.groups[g.ID] = g
+	s.groupCount++
+	s.Unlock()
+	return nil
 }
 
 func (s *MemoryGroupStore) GetAll() (results []*Group, err error) {
