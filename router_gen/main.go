@@ -298,10 +298,13 @@ func main() {
 		"surdotly",
 		"domcop",
 		"netcraft",
+		"seostar",
+		"pandalytics",
 		"blexbot",
 		"wappalyzer",
 		"twingly",
 		"linkfluence",
+		"pagething",
 		"burf",
 		"aspiegel",
 		"mail_ru",
@@ -389,10 +392,13 @@ func main() {
 	a("SurdotlyBot", "surdotly")
 	a("DomCopBot", "domcop")
 	a("NetcraftSurveyAgent", "netcraft")
+	a("seostar", "seostar")
+	a("Pandalytics", "pandalytics")
 	a("BLEXBot", "blexbot")
 	a("Wappalyzer", "wappalyzer")
 	a("Twingly", "twingly")
 	a("linkfluence", "linkfluence")
+	a("PageThing", "pagething")
 	a("Burf", "burf")
 	a("AspiegelBot", "aspiegel")
 	a("PetalBot", "aspiegel")

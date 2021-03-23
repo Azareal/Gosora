@@ -52,6 +52,7 @@ var langCodes = []string{
 	"kn",
 	"ko",
 	"kok",
+	"kw",
 	"ky",
 	"lt",
 	"lv",

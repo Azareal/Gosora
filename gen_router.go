@@ -631,22 +631,25 @@ var agentMapEnum = map[string]int{
 	"surdotly": 52,
 	"domcop": 53,
 	"netcraft": 54,
-	"blexbot": 55,
-	"wappalyzer": 56,
-	"twingly": 57,
-	"linkfluence": 58,
-	"burf": 59,
-	"aspiegel": 60,
-	"mail_ru": 61,
-	"ccbot": 62,
-	"yacy": 63,
-	"zgrab": 64,
-	"cloudsystemnetworks": 65,
-	"maui": 66,
-	"curl": 67,
-	"python": 68,
-	"headlesschrome": 69,
-	"awesome_bot": 70,
+	"seostar": 55,
+	"pandalytics": 56,
+	"blexbot": 57,
+	"wappalyzer": 58,
+	"twingly": 59,
+	"linkfluence": 60,
+	"pagething": 61,
+	"burf": 62,
+	"aspiegel": 63,
+	"mail_ru": 64,
+	"ccbot": 65,
+	"yacy": 66,
+	"zgrab": 67,
+	"cloudsystemnetworks": 68,
+	"maui": 69,
+	"curl": 70,
+	"python": 71,
+	"headlesschrome": 72,
+	"awesome_bot": 73,
 }
 var reverseAgentMapEnum = map[int]string{ 
 	0: "unknown",
@@ -704,22 +707,25 @@ var reverseAgentMapEnum = map[int]string{
 	52: "surdotly",
 	53: "domcop",
 	54: "netcraft",
-	55: "blexbot",
-	56: "wappalyzer",
-	57: "twingly",
-	58: "linkfluence",
-	59: "burf",
-	60: "aspiegel",
-	61: "mail_ru",
-	62: "ccbot",
-	63: "yacy",
-	64: "zgrab",
-	65: "cloudsystemnetworks",
-	66: "maui",
-	67: "curl",
-	68: "python",
-	69: "headlesschrome",
-	70: "awesome_bot",
+	55: "seostar",
+	56: "pandalytics",
+	57: "blexbot",
+	58: "wappalyzer",
+	59: "twingly",
+	60: "linkfluence",
+	61: "pagething",
+	62: "burf",
+	63: "aspiegel",
+	64: "mail_ru",
+	65: "ccbot",
+	66: "yacy",
+	67: "zgrab",
+	68: "cloudsystemnetworks",
+	69: "maui",
+	70: "curl",
+	71: "python",
+	72: "headlesschrome",
+	73: "awesome_bot",
 }
 var markToAgent = map[string]string{ 
 	"OPR": "opera",
@@ -779,10 +785,13 @@ var markToAgent = map[string]string{
 	"SurdotlyBot": "surdotly",
 	"DomCopBot": "domcop",
 	"NetcraftSurveyAgent": "netcraft",
+	"seostar": "seostar",
+	"Pandalytics": "pandalytics",
 	"BLEXBot": "blexbot",
 	"Wappalyzer": "wappalyzer",
 	"Twingly": "twingly",
 	"linkfluence": "linkfluence",
+	"PageThing": "pagething",
 	"Burf": "burf",
 	"AspiegelBot": "aspiegel",
 	"PetalBot": "aspiegel",
@@ -855,23 +864,26 @@ var markToID = map[string]int{
 	"SurdotlyBot": 52,
 	"DomCopBot": 53,
 	"NetcraftSurveyAgent": 54,
-	"BLEXBot": 55,
-	"Wappalyzer": 56,
-	"Twingly": 57,
-	"linkfluence": 58,
-	"Burf": 59,
-	"AspiegelBot": 60,
-	"PetalBot": 60,
-	"RU_Bot": 61,
-	"CCBot": 62,
-	"yacybot": 63,
-	"zgrab": 64,
-	"Nimbostratus": 65,
-	"MauiBot": 66,
-	"curl": 67,
-	"python": 68,
-	"HeadlessChrome": 69,
-	"awesome_bot": 70,
+	"seostar": 55,
+	"Pandalytics": 56,
+	"BLEXBot": 57,
+	"Wappalyzer": 58,
+	"Twingly": 59,
+	"linkfluence": 60,
+	"PageThing": 61,
+	"Burf": 62,
+	"AspiegelBot": 63,
+	"PetalBot": 63,
+	"RU_Bot": 64,
+	"CCBot": 65,
+	"yacybot": 66,
+	"zgrab": 67,
+	"Nimbostratus": 68,
+	"MauiBot": 69,
+	"curl": 70,
+	"python": 71,
+	"HeadlessChrome": 72,
+	"awesome_bot": 73,
 }
 /*var agentRank = map[string]int{
 	"opera":9,
@@ -920,7 +932,7 @@ func (red *HTTPSRedirect) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 func (r *GenRouter) SuspiciousRequest(req *http.Request, pre string) {
 	var sb strings.Builder
 	if pre != "" {
-		sb.WriteString("Suspicious Request")
+		sb.WriteString("Suspicious Request\n")
 	} else {
 		pre = "Suspicious Request"
 	}
@@ -1146,11 +1158,11 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			if strings.Contains(ua,"rv:11") {
 				agent = 6
 			}
-		case 64:
+		case 67:
 			w.WriteHeader(200) // 400
 			w.Write([]byte(""))
 			r.DumpRequest(req,"Blocked Scanner")
-			co.AgentViewCounter.Bump(64)
+			co.AgentViewCounter.Bump(67)
 			return
 		}
 		
@@ -2595,12 +2607,12 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 					co.RouteViewCounter.Bump3(150, cn)
 			}
 		case "/profile":
-			err = c.MemberOnly(w,req,user)
+			err = c.NoSessionMismatch(w,req,user)
 			if err != nil {
 				return err
 			}			
 
-			err = c.NoSessionMismatch(w,req,user)
+			err = c.MemberOnly(w,req,user)
 			if err != nil {
 				return err
 			}			
