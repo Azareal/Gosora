@@ -3,15 +3,12 @@
 package main
 
 import (
-	"log"
 	"strings"
 	//"bytes"
 	"strconv"
 	"compress/gzip"
-	"sync"
 	"sync/atomic"
 	"errors"
-	"os"
 	"net/http"
 	"time"
 
@@ -910,24 +907,6 @@ func init() {
 	}
 }
 
-type WriterIntercept struct {
-	http.ResponseWriter
-}
-
-func NewWriterIntercept(w http.ResponseWriter) *WriterIntercept {
-	return &WriterIntercept{w}
-}
-
-var wiMaxAge = "max-age=" + strconv.Itoa(int(c.Day))
-func (wi *WriterIntercept) WriteHeader(code int) {
-	if code == 200 {
-		h := wi.ResponseWriter.Header()
-		h.Set("Cache-Control", wiMaxAge)
-		h.Set("Vary", "Accept-Encoding")
-	}
-	wi.ResponseWriter.WriteHeader(code)
-}
-
 // HTTPSRedirect is a connection handler which redirects all HTTP requests to HTTPS
 type HTTPSRedirect struct {}
 
@@ -938,116 +917,6 @@ func (red *HTTPSRedirect) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	http.Redirect(w, req, dest, http.StatusTemporaryRedirect)
 }
 
-type GenRouter struct {
-	UploadHandler func(http.ResponseWriter, *http.Request)
-	extraRoutes map[string]func(http.ResponseWriter, *http.Request, *c.User) c.RouteError
-	requestLogger *log.Logger
-	suspReqLogger *log.Logger
-	
-	sync.RWMutex
-}
-
-func NewGenRouter(uploads http.Handler) (*GenRouter, error) {
-	f, err := os.OpenFile("./logs/reqs-"+strconv.FormatInt(c.StartTime.Unix(),10)+".log", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0755)
-	if err != nil {
-		return nil, err
-	}
-	f2, err := os.OpenFile("./logs/reqs-susp-"+strconv.FormatInt(c.StartTime.Unix(),10)+".log", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0755)
-	if err != nil {
-		return nil, err
-	}
-	return &GenRouter{
-		UploadHandler: func(w http.ResponseWriter, r *http.Request) {
-			writ := NewWriterIntercept(w)
-			http.StripPrefix("/uploads/",uploads).ServeHTTP(writ,r)
-		},
-		extraRoutes: make(map[string]func(http.ResponseWriter, *http.Request, *c.User) c.RouteError),
-		requestLogger: log.New(f, "", log.LstdFlags),
-		suspReqLogger: log.New(f2, "", log.LstdFlags),
-	}, nil
-}
-
-func (r *GenRouter) handleError(err c.RouteError, w http.ResponseWriter, req *http.Request, u *c.User) {
-	if err.Handled() {
-		return
-	}
-	if err.Type() == "system" {
-		c.InternalErrorJSQ(err, w, req, err.JSON())
-		return
-	}
-	c.LocalErrorJSQ(err.Error(), w, req, u, err.JSON())
-}
-
-func (r *GenRouter) Handle(_ string, _ http.Handler) {
-}
-
-func (r *GenRouter) HandleFunc(pattern string, h func(http.ResponseWriter, *http.Request, *c.User) c.RouteError) {
-	r.Lock()
-	defer r.Unlock()
-	r.extraRoutes[pattern] = h
-}
-
-func (r *GenRouter) RemoveFunc(pattern string) error {
-	r.Lock()
-	defer r.Unlock()
-	_, ok := r.extraRoutes[pattern]
-	if !ok {
-		return ErrNoRoute
-	}
-	delete(r.extraRoutes, pattern)
-	return nil
-}
-
-func (r *GenRouter) dumpRequest(req *http.Request, pre string, log *log.Logger) {
-	var sb strings.Builder
-	r.ddumpRequest(req,pre,log,&sb)
-}
-
-// TODO: Some of these sanitisations may be redundant
-var dumpReqLen = len("\nUA: \nMethod: \nHost: \nURL.Path: \nURL.RawQuery: \nIP: \n") + 3
-var dumpReqLen2 = len("\nHead : ") + 2
-func (r *GenRouter) ddumpRequest(req *http.Request, pre string,log *log.Logger, sb *strings.Builder) {
-	nfield := func(label, val string) {
-		sb.WriteString(label)
-		sb.WriteString(val)
-	}
-	field := func(label, val string) {
-		nfield(label,c.SanitiseSingleLine(val))
-	}
-	ua := req.UserAgent()
-	sb.Grow(dumpReqLen + len(pre) + len(ua) + len(req.Method) + len(req.Host) + (dumpReqLen2 * len(req.Header)))
-	sb.WriteString(pre)
-	field("\nUA: ",ua)
-	field("\nMethod: ",req.Method)
-	for key, value := range req.Header {
-		// Avoid logging this for security reasons
-		if key == "Cookie" {
-			continue
-		}
-		for _, vvalue := range value {
-			sb.WriteString("\nHead ")
-			sb.WriteString(c.SanitiseSingleLine(key))
-			sb.WriteString(": ")
-			sb.WriteString(c.SanitiseSingleLine(vvalue))
-		}
-	}
-	field("\nHost: ",req.Host)
-	field("\nURL.Path: ",req.URL.Path)
-	field("\nURL.RawQuery: ",req.URL.RawQuery)
-	ref := req.Referer()
-	if ref != "" {
-		field("\nRef: ",req.Referer())
-	}
-	nfield("\nIP: ",req.RemoteAddr)
-	sb.WriteString("\n")
-
-	log.Print(sb.String())
-}
-
-func (r *GenRouter) DumpRequest(req *http.Request, pre string) {
-	r.dumpRequest(req,pre,r.requestLogger)
-}
-
 func (r *GenRouter) SuspiciousRequest(req *http.Request, pre string) {
 	var sb strings.Builder
 	if pre != "" {
@@ -1055,31 +924,9 @@ func (r *GenRouter) SuspiciousRequest(req *http.Request, pre string) {
 	} else {
 		pre = "Suspicious Request"
 	}
-	r.ddumpRequest(req,pre,r.suspReqLogger,&sb)
+	r.ddumpRequest(req,pre,r.suspLog,&sb)
 	co.AgentViewCounter.Bump(43)
 }
-
-func (r *GenRouter) unknownUA(req *http.Request) {
-	if c.Dev.DebugMode {
-		var presb strings.Builder
-		presb.WriteString("Unknown UA: ")
-		for _, ch := range req.UserAgent() {
-			presb.WriteString(strconv.Itoa(int(ch)))
-			presb.WriteRune(' ')
-		}
-		r.ddumpRequest(req, "", r.requestLogger, &presb)
-	} else {
-		r.requestLogger.Print("unknown ua: ", c.SanitiseSingleLine(req.UserAgent()))
-	}
-}
-
-func isLocalHost(h string) bool {
-	return h=="localhost" || h=="127.0.0.1" || h=="::1"
-}
-
-//var brPool = sync.Pool{}
-var gzipPool = sync.Pool{}
-//var uaBufPool = sync.Pool{}
 
 // TODO: Pass the default path or config struct to the router rather than accessing it via a package global
 // TODO: SetDefaultPath
@@ -1126,11 +973,10 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if shost == "www." + c.Site.Host || (c.Site.LocalHost && shost != c.Site.Host && isLocalHost(shost)) {
 		// TODO: Abstract the redirect logic?
 		w.Header().Set("Connection", "close")
-		var s string
+		var s, p string
 		if c.Config.SslSchema {
 			s = "s"
 		}
-		var p string
 		if c.Site.PortInt != 80 && c.Site.PortInt != 443 {
 			p = ":"+c.Site.Port
 		}
@@ -1148,23 +994,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		malformedRequest(3)
 		return
 	}
-	if c.Dev.FullReqLog {
-		r.DumpRequest(req,"")
-	}
-
-	// TODO: Cover more suspicious strings and at a lower layer than this
-	for _, ch := range req.URL.Path { //char
-		if ch != '&' && !(ch > 44 && ch < 58) && ch != '=' && ch != '?' && !(ch > 64 && ch < 91) && ch != '\\' && ch != '_' && !(ch > 96 && ch < 123) {
-			r.SuspiciousRequest(req,"Bad char '"+string(ch)+"' in path")
-			break
-		}
-	}
-	lp := strings.ToLower(req.URL.Path)
-	// TODO: Flag any requests which has a dot with anything but a number after that
-	// TODO: Use HasSuffix to avoid over-scanning?
-	if strings.Contains(lp,"..")/* || strings.Contains(lp,"--")*/ || strings.Contains(lp,".php") || strings.Contains(lp,".asp") || strings.Contains(lp,".cgi") || strings.Contains(lp,".py") || strings.Contains(lp,".sql") || strings.Contains(lp,".act") { //.action
-		r.SuspiciousRequest(req,"Bad snippet in path")
-	}
+	r.suspScan(req)
 
 	// Indirect the default route onto a different one
 	if req.URL.Path == "/" {
@@ -1213,7 +1043,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	if c.Dev.SuperDebug {
-		r.requestLogger.Print("before PreRoute")
+		r.reqLogger.Print("before PreRoute")
 	}
 
 	/*if c.Dev.QuicPort != 0 {
@@ -1276,8 +1106,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 				// TODO: Test this
 				items = items[:0]
 				r.SuspiciousRequest(req,"Illegal char "+strconv.Itoa(int(it))+" in UA")
-				r.requestLogger.Print("UA Buf: ", buf)
-				r.requestLogger.Print("UA Buf String: ", string(buf))
+				r.reqLogger.Print("UA Buf: ", buf,"\nUA Buf String: ", string(buf))
 				break
 			}
 		}
@@ -1295,11 +1124,10 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			}
 		}
 		if c.Dev.SuperDebug {
-			r.requestLogger.Print("parsed agent: ", agent)
-			r.requestLogger.Print("os: ", os)
-			r.requestLogger.Printf("items: %+v\n",items)
+			r.reqLogger.Print("parsed agent: ", agent,"\nos: ", os)
+			r.reqLogger.Printf("items: %+v\n",items)
 			/*for _, it := range items {
-				r.requestLogger.Printf("it: %+v\n",string(it))
+				r.reqLogger.Printf("it: %+v\n",string(it))
 			}*/
 		}
 		
@@ -1390,7 +1218,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	user := &ucpy
 	user.LastAgent = agent
 	if c.Dev.SuperDebug {
-		r.requestLogger.Print(
+		r.reqLogger.Print(
 			"after PreRoute\n" +
 			"routeMapEnum: ", routeMapEnum)
 	}
@@ -2767,12 +2595,12 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 					co.RouteViewCounter.Bump3(150, cn)
 			}
 		case "/profile":
-			err = c.NoSessionMismatch(w,req,user)
+			err = c.MemberOnly(w,req,user)
 			if err != nil {
 				return err
 			}			
 
-			err = c.MemberOnly(w,req,user)
+			err = c.NoSessionMismatch(w,req,user)
 			if err != nil {
 				return err
 			}			
@@ -2926,8 +2754,8 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 				case "favicon.ico":
 					w = r.responseWriter(w)
 					req.URL.Path = "/s/favicon.ico"
-					routes.StaticFile(w,req)
 					co.RouteViewCounter.Bump3(173, cn)
+					routes.StaticFile(w,req)
 					return nil
 				case "opensearch.xml":
 					co.RouteViewCounter.Bump3(172, cn)
@@ -2953,7 +2781,13 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 			co.RouteViewCounter.Bump3(174, cn)
 
 			lp := strings.ToLower(req.URL.Path)
-			if strings.Contains(lp,"admin") || strings.Contains(lp,"sql") || strings.Contains(lp,"manage") || strings.Contains(lp,"//") || strings.Contains(lp,"\\\\") || strings.Contains(lp,"wp") || strings.Contains(lp,"wordpress") || strings.Contains(lp,"config") || strings.Contains(lp,"setup") || strings.Contains(lp,"install") || strings.Contains(lp,"update") || strings.Contains(lp,"php") || strings.Contains(lp,"pl") || strings.Contains(lp,"wget") || strings.Contains(lp,"wp-") || strings.Contains(lp,"include") || strings.Contains(lp,"vendor") || strings.Contains(lp,"bin") || strings.Contains(lp,"system") || strings.Contains(lp,"eval") || strings.Contains(lp,"config") {
+			if strings.Contains(lp,"w") {
+				if strings.Contains(lp,"wp") || strings.Contains(lp,"wordpress") || strings.Contains(lp,"wget") || strings.Contains(lp,"wp-") {
+					r.SuspiciousRequest(req,"Bad Route")
+					return c.MicroNotFound(w,req)
+				}
+			}
+			if strings.Contains(lp,"admin") || strings.Contains(lp,"sql") || strings.Contains(lp,"manage") || strings.Contains(lp,"//") || strings.Contains(lp,"\\\\") || strings.Contains(lp,"config") || strings.Contains(lp,"setup") || strings.Contains(lp,"install") || strings.Contains(lp,"update") || strings.Contains(lp,"php") || strings.Contains(lp,"pl") || strings.Contains(lp,"include") || strings.Contains(lp,"vendor") || strings.Contains(lp,"bin") || strings.Contains(lp,"system") || strings.Contains(lp,"eval") || strings.Contains(lp,"config") {
 				r.SuspiciousRequest(req,"Bad Route")
 				return c.MicroNotFound(w,req)
 			}
@@ -2967,15 +2801,4 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 			return c.NotFound(w,req,nil)
 	}
 	return err
-}
-
-func (r *GenRouter) responseWriter(w http.ResponseWriter) http.ResponseWriter {
-	/*if bzw, ok := w.(c.BrResponseWriter); ok {
-		w = bzw.ResponseWriter
-		w.Header().Del("Content-Encoding")
-	} else */if gzw, ok := w.(c.GzipResponseWriter); ok {
-		w = gzw.ResponseWriter
-		w.Header().Del("Content-Encoding")
-	}
-	return w
 }
