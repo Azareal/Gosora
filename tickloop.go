@@ -15,8 +15,8 @@ import (
 // TODO: Name the tasks so we can figure out which one it was when something goes wrong? Or maybe toss it up WithStack down there?
 func runTasks(tasks []func() error) {
 	for _, task := range tasks {
-		if err := task(); err != nil {
-			c.LogError(err)
+		if e := task(); e != nil {
+			c.LogError(e)
 		}
 	}
 }
@@ -43,8 +43,8 @@ func startTick() (abort bool) {
 }
 
 func runHook(name string) {
-	if err := c.RunTaskHook(name); err != nil {
-		c.LogError(err, "Failed at task '"+name+"'")
+	if e := c.RunTaskHook(name); e != nil {
+		c.LogError(e, "Failed at task '"+name+"'")
 	}
 }
 
@@ -67,15 +67,21 @@ func tickLoop(thumbChan chan bool) {
 	fifteenMinuteTicker := time.NewTicker(15 * time.Minute)
 	hourTicker := time.NewTicker(time.Hour)
 	dailyTicker := time.NewTicker(time.Hour * 24)
+	tick := func(name string, tasks []func() error) bool {
+		if startTick() {
+			return true
+		}
+		runHook("before_" + name + "_tick")
+		runTasks(tasks)
+		runHook("after_" + name + "_tick")
+		return false
+	}
 	for {
 		select {
 		case <-halfSecondTicker.C:
-			if startTick() {
+			if tick("half_second", c.ScheduledHalfSecondTasks) {
 				continue
 			}
-			runHook("before_half_second_tick")
-			runTasks(c.ScheduledHalfSecondTasks)
-			runHook("after_half_second_tick")
 		case <-secondTicker.C:
 			if startTick() {
 				continue
@@ -241,6 +247,11 @@ func dailies() {
 		if err != nil {
 			c.LogError(err)
 		}
+	}
+
+	err := router.DailyTick()
+	if err != nil {
+		c.LogError(err)
 	}
 
 	{
