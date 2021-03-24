@@ -930,6 +930,9 @@ func (red *HTTPSRedirect) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 }
 
 func (r *GenRouter) SuspiciousRequest(req *http.Request, pre string) {
+	if c.Config.DisableSuspLog {
+		return
+	}
 	var sb strings.Builder
 	if pre != "" {
 		sb.WriteString("Suspicious Request\n")
@@ -2792,6 +2795,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 			}
 			co.RouteViewCounter.Bump3(174, cn)
 
+			if !c.Config.DisableSuspLog {
 			lp := strings.ToLower(req.URL.Path)
 			if strings.Contains(lp,"w") {
 				if strings.Contains(lp,"wp") || strings.Contains(lp,"wordpress") || strings.Contains(lp,"wget") || strings.Contains(lp,"wp-") {
@@ -2802,6 +2806,7 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 			if strings.Contains(lp,"admin") || strings.Contains(lp,"sql") || strings.Contains(lp,"manage") || strings.Contains(lp,"//") || strings.Contains(lp,"\\\\") || strings.Contains(lp,"config") || strings.Contains(lp,"setup") || strings.Contains(lp,"install") || strings.Contains(lp,"update") || strings.Contains(lp,"php") || strings.Contains(lp,"pl") || strings.Contains(lp,"include") || strings.Contains(lp,"vendor") || strings.Contains(lp,"bin") || strings.Contains(lp,"system") || strings.Contains(lp,"eval") || strings.Contains(lp,"config") {
 				r.SuspiciousRequest(req,"Bad Route")
 				return c.MicroNotFound(w,req)
+			}
 			}
 
 			r.DumpRequest(req,"Bad Route")

@@ -88,7 +88,7 @@ ServerCount - The number of instances you're running. This setting is currently 
 
 LastIPCutoff - The number of months which need to pass before the last IP stored for a user is automatically deleted. Capped at 12. 0 defaults to whatever the current default is, currently 3 and -1 disables this feature.
 
-PostIPCutoff - The number of days which need to pass before the IP data for a post is automatically deleted. 0 defaults to whatever the current default is, currently 120 and -1 disables this feature.
+PostIPCutoff - The number of days which need to pass before the IP data for a post is automatically deleted. 0 defaults to whatever the current default is, currently 90 and -1 disables this feature.
 
 PollIPCutoff - The number of days which need to pass before the IP data for a poll is automatically deleted. 0 defaults to whatever the current default is, currently 90 and -1 disables this feature.
 
@@ -145,6 +145,10 @@ ReadTimeout - The number of seconds that we are allowed to take to fully read a 
 WriteTimeout - The number of seconds that a route is allowed to run for before the request is automatically terminated. Defaults to 10.
 
 IdleTimeout - The number of seconds that a Keep-Alive connection will be kept open before being closed. You might to tweak this, if you use Cloudflare or similar. Defaults to 120.
+
+LogDir - The directory in which logs are stored. Default: ./logs/
+
+DisableSuspLog - Whether suspicious requests are logged in the suspicious request logs. Enabling this may make a site faster. Defaults to false.
 
 Related: https://support.cloudflare.com/hc/en-us/articles/212794707-General-Best-Practices-for-Load-Balancing-at-your-origin-with-Cloudflare
 

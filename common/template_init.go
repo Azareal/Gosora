@@ -177,7 +177,7 @@ func CompileTemplates() error {
 		SuperDebug: Dev.TemplateDebug,
 		DockToID:   DockToID,
 	}
-	c := tmpl.NewCTemplateSet("normal")
+	c := tmpl.NewCTemplateSet("normal", "./logs/")
 	c.SetConfig(config)
 	c.SetBaseImportMap(map[string]string{
 		"io":                               "io",
@@ -482,7 +482,7 @@ func CompileJSTemplates() error {
 		PackageName:    "tmpl",
 		DockToID:       DockToID,
 	}
-	c := tmpl.NewCTemplateSet("js")
+	c := tmpl.NewCTemplateSet("js", "./logs/")
 	c.SetConfig(config)
 	c.SetBuildTags("!no_templategen")
 	c.SetOverrideTrack(overriden)

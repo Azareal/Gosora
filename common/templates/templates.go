@@ -49,6 +49,7 @@ type CTemplateConfig struct {
 type CTemplateSet struct {
 	templateList map[string]*parse.Tree
 	fileDir      string
+	logDir       string
 	funcMap      map[string]interface{}
 	importMap    map[string]string
 	//templateFragmentCount map[string]int
@@ -79,8 +80,12 @@ type CTemplateSet struct {
 	lang    string
 }
 
-func NewCTemplateSet(in string) *CTemplateSet {
-	f, err := os.OpenFile("./logs/tmpls-"+in+"-"+strconv.FormatInt(time.Now().Unix(), 10)+".log", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0755)
+func NewCTemplateSet(in string, logDir ...string) *CTemplateSet {
+	var llogDir string
+	if len(logDir) > 0 {
+		llogDir = logDir[0]
+	}
+	f, err := os.OpenFile(llogDir+"tmpls-"+in+"-"+strconv.FormatInt(time.Now().Unix(), 10)+".log", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0755)
 	if err != nil {
 		panic(err)
 	}
@@ -88,6 +93,7 @@ func NewCTemplateSet(in string) *CTemplateSet {
 		config: CTemplateConfig{
 			PackageName: "main",
 		},
+		logDir:         llogDir,
 		baseImportMap:  map[string]string{},
 		overridenRoots: map[string]map[string]bool{},
 		funcMap: map[string]interface{}{
@@ -163,7 +169,7 @@ func (c *CTemplateSet) SetPerThemeTmpls(perThemeTmpls map[string]bool) {
 }
 
 func (c *CTemplateSet) ResetLogs(in string) {
-	f, err := os.OpenFile("./logs/tmpls-"+in+"-"+strconv.FormatInt(time.Now().Unix(), 10)+".log", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0755)
+	f, err := os.OpenFile(c.logDir+"tmpls-"+in+"-"+strconv.FormatInt(time.Now().Unix(), 10)+".log", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0755)
 	if err != nil {
 		panic(err)
 	}

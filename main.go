@@ -64,6 +64,7 @@ func afterDBInit() (err error) {
 	var uids []int
 	tc := c.Topics.GetCache()
 	if tc != nil {
+		log.Print("Preloading topics")
 		// Preload ten topics to get the wheels going
 		var count = 10
 		if tc.GetCapacity() <= 10 {
@@ -356,7 +357,7 @@ func main() {
 
 	// TODO: Have a file for each run with the time/date the server started as the file name?
 	// TODO: Log panics with recover()
-	f, err := os.OpenFile("./logs/ops-"+strconv.FormatInt(c.StartTime.Unix(), 10)+".log", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0755)
+	f, err := os.OpenFile(c.Config.LogDir+"ops-"+strconv.FormatInt(c.StartTime.Unix(), 10)+".log", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0755)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -367,7 +368,7 @@ func main() {
 
 	// TODO: Add a flag for enabling the profiler
 	if false {
-		f, err := os.Create("./logs/cpu.prof")
+		f, err := os.Create(c.Config.LogDir + "cpu.prof")
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -581,7 +582,7 @@ func main() {
 	c.WsHub.Start()
 
 	if false {
-		f, err := os.Create("./logs/cpu.prof")
+		f, err := os.Create(c.Config.LogDir + "cpu.prof")
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -595,7 +596,7 @@ func main() {
 	args := <-c.StopServerChan
 	if false {
 		pprof.StopCPUProfile()
-		f, err := os.Create("./logs/mem.prof")
+		f, err := os.Create(c.Config.LogDir + "mem.prof")
 		if err != nil {
 			log.Fatal(err)
 		}

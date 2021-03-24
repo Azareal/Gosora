@@ -73,7 +73,7 @@ func (r *GenRouter) DailyTick() error {
 	}
 
 	stimestr := strconv.FormatInt(c.StartTime.Unix(), 10)
-	f, err = os.OpenFile("./logs/reqs-susp-"+stimestr+".log", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0755)
+	f, err = os.OpenFile(c.Config.LogDir+"reqs-susp-"+stimestr+".log", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0755)
 	if err != nil {
 		return err
 	}
@@ -87,7 +87,7 @@ func (r *GenRouter) DailyTick() error {
 func NewGenRouter(uploads http.Handler) (*GenRouter, error) {
 	stimestr := strconv.FormatInt(c.StartTime.Unix(), 10)
 	createLog := func(name, stimestr string) (*RouterLog, error) {
-		f, err := os.OpenFile("./logs/"+name+"-"+stimestr+".log", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0755)
+		f, err := os.OpenFile(c.Config.LogDir+name+"-"+stimestr+".log", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0755)
 		if err != nil {
 			return nil, err
 		}
@@ -106,7 +106,7 @@ func NewGenRouter(uploads http.Handler) (*GenRouter, error) {
 	if err != nil {
 		return nil, err
 	}
-	f3, err := os.OpenFile("./logs/reqs-misc-"+stimestr+".log", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0755)
+	f3, err := os.OpenFile(c.Config.LogDir+"reqs-misc-"+stimestr+".log", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0755)
 	if err != nil {
 		return nil, err
 	}
@@ -243,6 +243,13 @@ func (r *GenRouter) susp1(req *http.Request) bool {
 }
 
 func (r *GenRouter) suspScan(req *http.Request) {
+	if c.Config.DisableSuspLog {
+		if c.Dev.FullReqLog {
+			r.DumpRequest(req, "")
+		}
+		return
+	}
+
 	// TODO: Cover more suspicious strings and at a lower layer than this
 	var ch rune
 	var susp bool

@@ -134,6 +134,9 @@ type config struct {
 	ReadTimeout  int
 	WriteTimeout int
 	IdleTimeout  int
+
+	LogDir         string
+	DisableSuspLog bool
 }
 
 type devConfig struct {
@@ -295,7 +298,7 @@ func ProcessConfig() (err error) {
 	guestAvatar = GuestAvatar{buildNoavatar(0, 200), buildNoavatar(0, 48)}
 
 	if Config.PostIPCutoff == 0 {
-		Config.PostIPCutoff = 120 // Default cutoff
+		Config.PostIPCutoff = 90 // Default cutoff
 	}
 	if Config.LogPruneCutoff == 0 {
 		Config.LogPruneCutoff = 180 // Default cutoff
@@ -324,6 +327,10 @@ func ProcessConfig() (err error) {
 
 	if Config.HashAlgo != "" {
 		// TODO: Set the alternate hash algo, e.g. argon2
+	}
+
+	if Config.LogDir == "" {
+		Config.LogDir = "./logs/"
 	}
 
 	// We need this in here rather than verifyConfig as switchToTestDB() currently overwrites the values it verifies

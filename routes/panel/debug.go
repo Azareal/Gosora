@@ -116,7 +116,7 @@ func Debug(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
 	staticSize := dirSize("./public/")
 	attachSize := dirSize("./attachs/")
 	uploadsSize := dirSize("./uploads/")
-	logsSize := dirSize("./logs/")
+	logsSize := dirSize(c.Config.LogDir)
 	backupsSize := dirSize("./backups/")
 	if fErr != nil {
 		return c.InternalError(fErr, w, r)
