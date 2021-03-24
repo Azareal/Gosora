@@ -216,7 +216,7 @@ func init() {
 			getReplies2:         acc.SimpleLeftJoin("replies AS r", "users AS u", "r.rid, r.content, r.createdBy, r.createdAt, r.lastEdit, r.lastEditBy, u.avatar, u.name, u.group, u.level, r.likeCount, r.attachCount, r.actionType", "r.createdBy=u.uid", "r.tid=?", "r.rid ASC", "?,?"),
 			getReplies3:         acc.Select("replies").Columns("rid, content, createdBy, createdAt, lastEdit, lastEditBy, likeCount, attachCount, actionType").Where("tid=?").Orderby("rid ASC").Limit("?,?").Prepare(),
 			addReplies:          acc.Update(t).Set("postCount=postCount+?, lastReplyBy=?, lastReplyAt=UTC_TIMESTAMP()").Where("tid=?").Prepare(),
-			updateLastReply:     acc.Update(t).Set("lastReplyID=?").Where("lastReplyID > ? AND tid=?").Prepare(),
+			updateLastReply:     acc.Update(t).Set("lastReplyID=?").Where("lastReplyID < ? AND tid=?").Prepare(),
 			lock:                acc.Update(t).Set("is_closed=1").Where("tid=?").Prepare(),
 			unlock:              acc.Update(t).Set("is_closed=0").Where("tid=?").Prepare(),
 			moveTo:              acc.Update(t).Set("parentID=?").Where("tid=?").Prepare(),
@@ -766,6 +766,13 @@ func (t *TopicUser) Replies(offset int /*pFrag int, */, user *User) (rlist []*Re
 		} else {
 			parseSettings = user.ParseSettings
 		}
+		/*if user.ParseSettings == nil {
+			parseSettings = DefaultParseSettings.CopyPtr()
+			parseSettings.NoEmbed = Config.NoEmbed || !postGroup.Perms.AutoEmbed
+			parseSettings.NoLink = !postGroup.Perms.AutoLink
+		} else {
+			parseSettings = user.ParseSettings
+		}*/
 
 		var eh bool
 		r.ContentHtml, eh = ParseMessage2(r.Content, t.ParentID, "forums", parseSettings, user)

@@ -1170,6 +1170,7 @@ func testReplyStore(t *testing.T, newID, newPostCount int, ip string) {
 	topic, err = c.Topics.Get(1)
 	expectNilErr(t, err)
 	exf(topic.PostCount == newPostCount+1, "TID #1's post count should be %d, not %d", newPostCount+1, topic.PostCount)
+	exf(topic.LastReplyID == rid, "TID #1's LastReplyID should be %d not %d", rid, topic.LastReplyID)
 
 	err = topic.CreateActionReply("destroy", ip, 1)
 	expectNilErr(t, err)
