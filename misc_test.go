@@ -1121,12 +1121,12 @@ func TestReplyStore(t *testing.T) {
 	recordMustNotExist(t, err, "RID #0 shouldn't exist")
 
 	c.Config.DisablePostIP = false
-	testReplyStore(t, 2, 1, "::1")
+	testReplyStore(t, 2, "::1")
 	c.Config.DisablePostIP = true
-	testReplyStore(t, 5, 3, "")
+	testReplyStore(t, 5, "")
 }
 
-func testReplyStore(t *testing.T, newID, newPostCount int, ip string) {
+func testReplyStore(t *testing.T, newID int, ip string) {
 	ex, exf := exp(t), expf(t)
 	replyTest2 := func(r *c.Reply, err error, rid, parentID, createdBy int, content, ip string) {
 		expectNilErr(t, err)
@@ -1152,35 +1152,49 @@ func testReplyStore(t *testing.T, newID, newPostCount int, ip string) {
 	_, err := c.Rstore.Get(newID)
 	recordMustNotExist(t, err, "RID #2 shouldn't exist")
 
-	topic, err := c.Topics.Get(1)
+	newPostCount := 1
+	tid, err := c.Topics.Create(2, "Reply Test Topic", "Reply Test Topic", 1, "")
 	expectNilErr(t, err)
-	exf(topic.PostCount == newPostCount, "TID #%d's post count should be %d, not %d", topic.ID, newPostCount, topic.PostCount)
+
+	topic, err := c.Topics.Get(tid)
+	expectNilErr(t, err)
+	exf(topic.PostCount == newPostCount, "topic.PostCount should be %d, not %d", newPostCount, topic.PostCount)
+	exf(topic.LastReplyID == 0, "topic.LastReplyID should be %d not %d", 0, topic.LastReplyID)
+	ex(topic.CreatedAt == topic.LastReplyAt, "topic.LastReplyAt should equal it's topic.CreatedAt")
+	exf(topic.LastReplyBy == 1, "topic.LastReplyBy should be %d not %d", 1, topic.LastReplyBy)
 
 	_, err = c.Rstore.GetCache().Get(newID)
 	recordMustNotExist(t, err, "RID #%d shouldn't be in the cache", newID)
 
-	rid, err := c.Rstore.Create(topic, "Fofofo", ip, 1)
+	time.Sleep(2 * time.Second)
+
+	uid, err := c.Users.Create("Reply Topic Test User"+strconv.Itoa(newID), "testpassword", "", 2, true)
+	expectNilErr(t, err)
+	rid, err := c.Rstore.Create(topic, "Fofofo", ip, uid)
 	expectNilErr(t, err)
 	exf(rid == newID, "The next reply ID should be %d not %d", newID, rid)
-	exf(topic.PostCount == newPostCount, "The old TID #1 in memory's post count should be %d, not %d", newPostCount+1, topic.PostCount)
+	exf(topic.PostCount == newPostCount, "The old topic in memory's post count should be %d, not %d", newPostCount+1, topic.PostCount)
 	// TODO: Test the reply count on the topic
+	exf(topic.LastReplyID == 0, "topic.LastReplyID should be %d not %d", 0, topic.LastReplyID)
+	ex(topic.CreatedAt == topic.LastReplyAt, "topic.LastReplyAt should equal it's topic.CreatedAt")
 
-	replyTest(newID, 1, 1, "Fofofo", ip)
+	replyTest(newID, tid, uid, "Fofofo", ip)
 
-	topic, err = c.Topics.Get(1)
+	topic, err = c.Topics.Get(tid)
 	expectNilErr(t, err)
-	exf(topic.PostCount == newPostCount+1, "TID #1's post count should be %d, not %d", newPostCount+1, topic.PostCount)
-	exf(topic.LastReplyID == rid, "TID #1's LastReplyID should be %d not %d", rid, topic.LastReplyID)
+	exf(topic.PostCount == newPostCount+1, "topic.PostCount should be %d, not %d", newPostCount+1, topic.PostCount)
+	exf(topic.LastReplyID == rid, "topic.LastReplyID should be %d not %d", rid, topic.LastReplyID)
+	ex(topic.CreatedAt != topic.LastReplyAt, "topic.LastReplyAt should not equal it's topic.CreatedAt")
+	exf(topic.LastReplyBy == uid, "topic.LastReplyBy should be %d not %d", uid, topic.LastReplyBy)
 
-	err = topic.CreateActionReply("destroy", ip, 1)
-	expectNilErr(t, err)
-	exf(topic.PostCount == newPostCount+1, "The old TID #1 in memory's post count should be %d, not %d", newPostCount+1, topic.PostCount)
-	replyTest(newID+1, 1, 1, "", ip)
+	expectNilErr(t, topic.CreateActionReply("destroy", ip, 1))
+	exf(topic.PostCount == newPostCount+1, "The old topic in memory's post count should be %d, not %d", newPostCount+1, topic.PostCount)
+	replyTest(newID+1, tid, 1, "", ip)
 	// TODO: Check the actionType field of the reply, this might not be loaded by TopicStore, maybe we should add it there?
 
-	topic, err = c.Topics.Get(1)
+	topic, err = c.Topics.Get(tid)
 	expectNilErr(t, err)
-	exf(topic.PostCount == newPostCount+2, "TID #1's post count should be %d, not %d", newPostCount+2, topic.PostCount)
+	exf(topic.PostCount == newPostCount+2, "topic.PostCount should be %d, not %d", newPostCount+2, topic.PostCount)
 
 	// TODO: Expand upon this
 	rid, err = c.Rstore.Create(topic, "hiii", ip, 1)
