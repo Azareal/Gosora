@@ -76,7 +76,7 @@ func gloinit() (err error) {
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	c.TopicListThaw = c.NewSingleServerThaw()
+	c.TopicListThaw = c.NewTestThaw()
 	c.SwitchToTestDB()
 
 	var ok bool
@@ -115,8 +115,8 @@ func init() {
 	}
 }
 
-const benchTidI = 1
-const benchTid = "1"
+var benchTidI = 1
+var benchTid = "1"
 
 // TODO: Swap out LocalError for a panic for this?
 func BenchmarkTopicAdminRouteParallel(b *testing.B) {
@@ -364,6 +364,353 @@ func BenchmarkTopicGuestRouteParallel(b *testing.B) {
 	cfg.Restore()
 }
 
+//before
+
+func BenchmarkForumsRouteAdminParallelWithRouterGC2Pre(b *testing.B) {
+	runtime.GC()
+}
+
+func BenchmarkForumsRouteAdminParallelWithRouterGC2(b *testing.B) {
+	binit(b)
+	router, err := NewGenRouter(http.FileServer(http.Dir("./uploads")))
+	if err != nil {
+		b.Fatal(err)
+	}
+	cfg := NewStashConfig()
+	c.Dev.DebugMode = false
+	c.Dev.SuperDebug = false
+
+	admin, err := c.Users.Get(1)
+	if err != nil {
+		b.Fatal(err)
+	}
+	if !admin.IsAdmin {
+		b.Fatal("UID1 is not an admin")
+	}
+	uidCookie := http.Cookie{Name: "uid", Value: "1", Path: "/", MaxAge: c.Year}
+	sessionCookie := http.Cookie{Name: "session", Value: admin.Session, Path: "/", MaxAge: c.Year}
+	path := "/forums/"
+	//runtime.GC()
+
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			w := httptest.NewRecorder()
+			reqAdmin := httptest.NewRequest("get", path, bytes.NewReader(nil))
+			reqAdmin.AddCookie(&uidCookie)
+			reqAdmin.AddCookie(&sessionCookie)
+			reqAdmin.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36")
+			reqAdmin.Header.Set("Host", "localhost")
+			reqAdmin.Host = "localhost"
+			router.ServeHTTP(w, reqAdmin)
+			if w.Code != 200 {
+				b.Log(w.Body)
+				b.Fatal("HTTP Error!")
+			}
+		}
+
+		runtime.GC()
+	})
+
+	cfg.Restore()
+}
+
+func BenchmarkForumsRouteAdminParallelWithRouterGCBrotliPre(b *testing.B) {
+	runtime.GC()
+}
+
+func BenchmarkForumsRouteAdminParallelWithRouterGCBrotli(b *testing.B) {
+	binit(b)
+	router, err := NewGenRouter(http.FileServer(http.Dir("./uploads")))
+	if err != nil {
+		b.Fatal(err)
+	}
+	cfg := NewStashConfig()
+	c.Dev.DebugMode = false
+	c.Dev.SuperDebug = false
+
+	admin, err := c.Users.Get(1)
+	if err != nil {
+		b.Fatal(err)
+	}
+	if !admin.IsAdmin {
+		b.Fatal("UID1 is not an admin")
+	}
+	uidCookie := http.Cookie{Name: "uid", Value: "1", Path: "/", MaxAge: c.Year}
+	sessionCookie := http.Cookie{Name: "session", Value: admin.Session, Path: "/", MaxAge: c.Year}
+	path := "/forums/"
+	//runtime.GC()
+
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			w := httptest.NewRecorder()
+			reqAdmin := httptest.NewRequest("get", path, bytes.NewReader(nil))
+			reqAdmin.AddCookie(&uidCookie)
+			reqAdmin.AddCookie(&sessionCookie)
+			reqAdmin.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36")
+			reqAdmin.Header.Set("Accept-Encoding", "br")
+			reqAdmin.Header.Set("Host", "localhost")
+			reqAdmin.Host = "localhost"
+			router.ServeHTTP(w, reqAdmin)
+			if w.Code != 200 {
+				b.Log(w.Body)
+				b.Fatal("HTTP Error!")
+			}
+		}
+
+		runtime.GC()
+	})
+
+	cfg.Restore()
+}
+
+//end
+//before
+
+func BenchmarkTopicRouteAdminParallelWithRouterGC2Pre(b *testing.B) {
+	runtime.GC()
+}
+
+func BenchmarkTopicRouteAdminParallelWithRouterGC2(b *testing.B) {
+	binit(b)
+	router, err := NewGenRouter(http.FileServer(http.Dir("./uploads")))
+	if err != nil {
+		b.Fatal(err)
+	}
+	cfg := NewStashConfig()
+	c.Dev.DebugMode = false
+	c.Dev.SuperDebug = false
+
+	admin, err := c.Users.Get(1)
+	if err != nil {
+		b.Fatal(err)
+	}
+	if !admin.IsAdmin {
+		b.Fatal("UID1 is not an admin")
+	}
+	uidCookie := http.Cookie{Name: "uid", Value: "1", Path: "/", MaxAge: c.Year}
+	sessionCookie := http.Cookie{Name: "session", Value: admin.Session, Path: "/", MaxAge: c.Year}
+	path := "/topic/1"
+	//runtime.GC()
+
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			w := httptest.NewRecorder()
+			reqAdmin := httptest.NewRequest("get", path, bytes.NewReader(nil))
+			reqAdmin.AddCookie(&uidCookie)
+			reqAdmin.AddCookie(&sessionCookie)
+			reqAdmin.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36")
+			reqAdmin.Header.Set("Host", "localhost")
+			reqAdmin.Host = "localhost"
+			router.ServeHTTP(w, reqAdmin)
+			if w.Code != 200 {
+				b.Log(w.Body)
+				b.Fatal("HTTP Error!")
+			}
+		}
+
+		runtime.GC()
+	})
+
+	cfg.Restore()
+}
+
+func BenchmarkTopicRouteAdminParallelWithRouterGCBrotliPre(b *testing.B) {
+	runtime.GC()
+}
+
+func BenchmarkTopicRouteAdminParallelWithRouterGCBrotli(b *testing.B) {
+	binit(b)
+	router, err := NewGenRouter(http.FileServer(http.Dir("./uploads")))
+	if err != nil {
+		b.Fatal(err)
+	}
+	cfg := NewStashConfig()
+	c.Dev.DebugMode = false
+	c.Dev.SuperDebug = false
+
+	admin, err := c.Users.Get(1)
+	if err != nil {
+		b.Fatal(err)
+	}
+	if !admin.IsAdmin {
+		b.Fatal("UID1 is not an admin")
+	}
+	uidCookie := http.Cookie{Name: "uid", Value: "1", Path: "/", MaxAge: c.Year}
+	sessionCookie := http.Cookie{Name: "session", Value: admin.Session, Path: "/", MaxAge: c.Year}
+	path := "/topic/1"
+	//runtime.GC()
+
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			w := httptest.NewRecorder()
+			reqAdmin := httptest.NewRequest("get", path, bytes.NewReader(nil))
+			reqAdmin.AddCookie(&uidCookie)
+			reqAdmin.AddCookie(&sessionCookie)
+			reqAdmin.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36")
+			reqAdmin.Header.Set("Accept-Encoding", "br")
+			reqAdmin.Header.Set("Host", "localhost")
+			reqAdmin.Host = "localhost"
+			router.ServeHTTP(w, reqAdmin)
+			if w.Code != 200 {
+				b.Log(w.Body)
+				b.Fatal("HTTP Error!")
+			}
+		}
+
+		runtime.GC()
+	})
+
+	cfg.Restore()
+}
+
+//end
+
+func BenchmarkTopicsRouteAdminParallelWithRouterGC2Pre(b *testing.B) {
+	runtime.GC()
+}
+
+func BenchmarkTopicsRouteAdminParallelWithRouterGC2(b *testing.B) {
+	binit(b)
+	router, err := NewGenRouter(http.FileServer(http.Dir("./uploads")))
+	if err != nil {
+		b.Fatal(err)
+	}
+	cfg := NewStashConfig()
+	c.Dev.DebugMode = false
+	c.Dev.SuperDebug = false
+
+	admin, err := c.Users.Get(1)
+	if err != nil {
+		b.Fatal(err)
+	}
+	if !admin.IsAdmin {
+		b.Fatal("UID1 is not an admin")
+	}
+	uidCookie := http.Cookie{Name: "uid", Value: "1", Path: "/", MaxAge: c.Year}
+	sessionCookie := http.Cookie{Name: "session", Value: admin.Session, Path: "/", MaxAge: c.Year}
+	path := "/topics/"
+	//runtime.GC()
+
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			w := httptest.NewRecorder()
+			reqAdmin := httptest.NewRequest("get", path, bytes.NewReader(nil))
+			reqAdmin.AddCookie(&uidCookie)
+			reqAdmin.AddCookie(&sessionCookie)
+			reqAdmin.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36")
+			reqAdmin.Header.Set("Host", "localhost")
+			reqAdmin.Host = "localhost"
+			router.ServeHTTP(w, reqAdmin)
+			if w.Code != 200 {
+				b.Log(w.Body)
+				b.Fatal("HTTP Error!")
+			}
+		}
+
+		runtime.GC()
+	})
+
+	cfg.Restore()
+}
+
+func BenchmarkTopicsRouteAdminParallelWithRouterGCBrotliPre(b *testing.B) {
+	runtime.GC()
+}
+
+func BenchmarkTopicsRouteAdminParallelWithRouterGCBrotli(b *testing.B) {
+	binit(b)
+	router, err := NewGenRouter(http.FileServer(http.Dir("./uploads")))
+	if err != nil {
+		b.Fatal(err)
+	}
+	cfg := NewStashConfig()
+	c.Dev.DebugMode = false
+	c.Dev.SuperDebug = false
+
+	admin, err := c.Users.Get(1)
+	if err != nil {
+		b.Fatal(err)
+	}
+	if !admin.IsAdmin {
+		b.Fatal("UID1 is not an admin")
+	}
+	uidCookie := http.Cookie{Name: "uid", Value: "1", Path: "/", MaxAge: c.Year}
+	sessionCookie := http.Cookie{Name: "session", Value: admin.Session, Path: "/", MaxAge: c.Year}
+	path := "/topics/"
+	//runtime.GC()
+
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			w := httptest.NewRecorder()
+			reqAdmin := httptest.NewRequest("get", path, bytes.NewReader(nil))
+			reqAdmin.AddCookie(&uidCookie)
+			reqAdmin.AddCookie(&sessionCookie)
+			reqAdmin.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36")
+			reqAdmin.Header.Set("Accept-Encoding", "br")
+			reqAdmin.Header.Set("Host", "localhost")
+			reqAdmin.Host = "localhost"
+			router.ServeHTTP(w, reqAdmin)
+			if w.Code != 200 {
+				b.Log(w.Body)
+				b.Fatal("HTTP Error!")
+			}
+		}
+
+		runtime.GC()
+	})
+
+	cfg.Restore()
+}
+
+func BenchmarkTopicsRouteAdminParallelWithRouterGCGzipPre(b *testing.B) {
+	runtime.GC()
+}
+
+func BenchmarkTopicsRouteAdminParallelWithRouterGCGzip(b *testing.B) {
+	binit(b)
+	router, err := NewGenRouter(http.FileServer(http.Dir("./uploads")))
+	if err != nil {
+		b.Fatal(err)
+	}
+	cfg := NewStashConfig()
+	c.Dev.DebugMode = false
+	c.Dev.SuperDebug = false
+
+	admin, err := c.Users.Get(1)
+	if err != nil {
+		b.Fatal(err)
+	}
+	if !admin.IsAdmin {
+		b.Fatal("UID1 is not an admin")
+	}
+	uidCookie := http.Cookie{Name: "uid", Value: "1", Path: "/", MaxAge: c.Year}
+	sessionCookie := http.Cookie{Name: "session", Value: admin.Session, Path: "/", MaxAge: c.Year}
+	path := "/topics/"
+	//runtime.GC()
+
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			w := httptest.NewRecorder()
+			reqAdmin := httptest.NewRequest("get", path, bytes.NewReader(nil))
+			reqAdmin.AddCookie(&uidCookie)
+			reqAdmin.AddCookie(&sessionCookie)
+			reqAdmin.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36")
+			reqAdmin.Header.Set("Accept-Encoding", "gzip")
+			reqAdmin.Header.Set("Host", "localhost")
+			reqAdmin.Host = "localhost"
+			router.ServeHTTP(w, reqAdmin)
+			if w.Code != 200 {
+				b.Log(w.Body)
+				b.Fatal("HTTP Error!")
+			}
+		}
+
+		runtime.GC()
+	})
+
+	cfg.Restore()
+}
+
 func BenchmarkTopicGuestRouteParallelDebugMode(b *testing.B) {
 	binit(b)
 	cfg := NewStashConfig()
@@ -566,7 +913,7 @@ func BenchmarkPopulateTopicWithRouter(b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			for i := 0; i < 25; i++ {
-				_, err := c.Rstore.Create(topic, "hiii", "::1", 1)
+				_, err := c.Rstore.Create(topic, "hiii", "", 1)
 				if err != nil {
 					debug.PrintStack()
 					b.Fatal(err)
@@ -603,6 +950,254 @@ func BenchmarkTopicGuestFullPageRouteParallelWithRouter(b *testing.B) {
 	}*/
 	obRoute(b, "/topic/hm."+benchTid)
 }
+
+var benchTidI2 int
+var benchTid2 string
+
+func BenchmarkPopulateTopicMentionWithRouter(b *testing.B) {
+	b.ReportAllocs()
+	tid, err := c.Topics.Create(2, "test topic", "@1", 1, "")
+	if err != nil {
+		debug.PrintStack()
+		b.Fatal(err)
+	}
+	benchTidI2 = tid
+	benchTid2 = strconv.Itoa(tid)
+	topic, err := c.Topics.Get(tid)
+	if err != nil {
+		debug.PrintStack()
+		b.Fatal(err)
+	}
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			for i := 0; i < 25; i++ {
+				_, err := c.Rstore.Create(topic, "@1", "", 1)
+				if err != nil {
+					debug.PrintStack()
+					b.Fatal(err)
+				}
+			}
+		}
+	})
+}
+
+func BenchmarkTopicMentionAdminFullPageRouteParallelWithRouter(b *testing.B) {
+	tI := benchTidI
+	t := benchTid
+	benchTidI = benchTidI2
+	benchTid = benchTid2
+	BenchmarkTopicAdminRouteParallel(b)
+	benchTidI = tI
+	benchTid = t
+}
+
+func BenchmarkTopicMentionGuestFullPageRouteParallelWithRouter(b *testing.B) {
+	obRoute(b, "/topic/hm."+benchTid2)
+}
+
+var benchTidI3 int
+var benchTid3 string
+
+func BenchmarkPopulateTopic10MentionWithRouter(b *testing.B) {
+	b.ReportAllocs()
+	tid, err := c.Topics.Create(2, "test topic", "@1 @1 @1 @1 @1 @1 @1 @1 @1 @1", 1, "")
+	if err != nil {
+		debug.PrintStack()
+		b.Fatal(err)
+	}
+	benchTidI3 = tid
+	benchTid3 = strconv.Itoa(tid)
+	topic, err := c.Topics.Get(tid)
+	if err != nil {
+		debug.PrintStack()
+		b.Fatal(err)
+	}
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			for i := 0; i < 25; i++ {
+				_, err := c.Rstore.Create(topic, "@1 @1 @1 @1 @1 @1 @1 @1 @1 @1", "", 1)
+				if err != nil {
+					debug.PrintStack()
+					b.Fatal(err)
+				}
+			}
+		}
+	})
+}
+
+func BenchmarkTopic10MentionAdminFullPageRouteParallelWithRouter(b *testing.B) {
+	tI := benchTidI
+	t := benchTid
+	benchTidI = benchTidI3
+	benchTid = benchTid3
+	BenchmarkTopicAdminRouteParallel(b)
+	benchTidI = tI
+	benchTid = t
+}
+
+func BenchmarkTopic10MentionGuestFullPageRouteParallelWithRouter(b *testing.B) {
+	obRoute(b, "/topic/hm."+benchTid3)
+}
+
+var benchTidI4 int
+var benchTid4 string
+
+func BenchmarkPopulateTopic1ReplyWithRouter(b *testing.B) {
+	b.ReportAllocs()
+	tid, err := c.Topics.Create(2, "test topic", "hiii", 1, "")
+	if err != nil {
+		debug.PrintStack()
+		b.Fatal(err)
+	}
+	benchTidI4 = tid
+	benchTid4 = strconv.Itoa(tid)
+	topic, err := c.Topics.Get(tid)
+	if err != nil {
+		debug.PrintStack()
+		b.Fatal(err)
+	}
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			_, err := c.Rstore.Create(topic, "hiii", "", 1)
+			if err != nil {
+				debug.PrintStack()
+				b.Fatal(err)
+			}
+		}
+	})
+}
+
+func BenchmarkTopic1ReplyAdminRouteParallelWithRouter(b *testing.B) {
+	tI := benchTidI
+	t := benchTid
+	benchTidI = benchTidI4
+	benchTid = benchTid4
+	BenchmarkTopicAdminRouteParallel(b)
+	benchTidI = tI
+	benchTid = t
+}
+
+func BenchmarkTopic1ReplyGuestRouteParallelWithRouter(b *testing.B) {
+	obRoute(b, "/topic/hm."+benchTid4)
+}
+
+var benchTidI5 int
+var benchTid5 string
+var benchUidI int
+
+func BenchmarkPopulateTopic2UserWithRouter(b *testing.B) {
+	b.ReportAllocs()
+	nUid, err := c.Users.Create("testing", "testpass", "", 2, true)
+	if err != nil {
+		debug.PrintStack()
+		b.Fatal(err)
+	}
+	benchUidI = nUid
+	tid, err := c.Topics.Create(2, "test topic", "hiii", 1, "")
+	if err != nil {
+		debug.PrintStack()
+		b.Fatal(err)
+	}
+	benchTidI5 = tid
+	benchTid5 = strconv.Itoa(tid)
+	topic, err := c.Topics.Get(tid)
+	if err != nil {
+		debug.PrintStack()
+		b.Fatal(err)
+	}
+	b.RunParallel(func(pb *testing.PB) {
+		var uid int
+		for pb.Next() {
+			for i := 0; i < 25; i++ {
+				if i%2 == 0 {
+					uid = nUid
+				} else {
+					uid = 1
+				}
+				_, err := c.Rstore.Create(topic, "hiii", "", uid)
+				if err != nil {
+					debug.PrintStack()
+					b.Fatal(err)
+				}
+			}
+		}
+	})
+}
+
+func BenchmarkTopic2UserAdminFullPageRouteParallelWithRouter(b *testing.B) {
+	tI := benchTidI
+	t := benchTid
+	benchTidI = benchTidI5
+	benchTid = benchTid5
+	BenchmarkTopicAdminRouteParallel(b)
+	benchTidI = tI
+	benchTid = t
+}
+
+func BenchmarkTopic2UserGuestFullPageRouteParallelWithRouter(b *testing.B) {
+	obRoute(b, "/topic/hm."+benchTid5)
+}
+
+var benchTidI6 int
+var benchTid6 string
+
+func BenchmarkPopulateTopic3UserWithRouter(b *testing.B) {
+	b.ReportAllocs()
+	nUid, err := c.Users.Create("testing2", "testpass", "", 2, true)
+	if err != nil {
+		debug.PrintStack()
+		b.Fatal(err)
+	}
+	tid, err := c.Topics.Create(2, "test topic", "hiii", 1, "")
+	if err != nil {
+		debug.PrintStack()
+		b.Fatal(err)
+	}
+	benchTidI6 = tid
+	benchTid6 = strconv.Itoa(tid)
+	t, err := c.Topics.Get(tid)
+	if err != nil {
+		debug.PrintStack()
+		b.Fatal(err)
+	}
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			for i := 0; i < 5; i++ {
+				_, err := c.Rstore.Create(t, "hiii", "", 1)
+				if err != nil {
+					debug.PrintStack()
+					b.Fatal(err)
+				}
+				_, err = c.Rstore.Create(t, "hiii", "", benchUidI)
+				if err != nil {
+					debug.PrintStack()
+					b.Fatal(err)
+				}
+				_, err = c.Rstore.Create(t, "hiii", "", nUid)
+				if err != nil {
+					debug.PrintStack()
+					b.Fatal(err)
+				}
+			}
+		}
+	})
+}
+
+func BenchmarkTopic3UserAdminFullPageRouteParallelWithRouter(b *testing.B) {
+	tI := benchTidI
+	t := benchTid
+	benchTidI = benchTidI6
+	benchTid = benchTid6
+	BenchmarkTopicAdminRouteParallel(b)
+	benchTidI = tI
+	benchTid = t
+}
+
+func BenchmarkTopic3UserGuestFullPageRouteParallelWithRouter(b *testing.B) {
+	obRoute(b, "/topic/hm."+benchTid6)
+}
+
+// TODO: Add topic poll page bench
 
 // TODO: Make these routes compatible with the changes to the router
 /*
@@ -931,7 +1526,7 @@ func BenchmarkQueryPreparedTopicParallel(b *testing.B) {
 	b.RunParallel(func(pb *testing.PB) {
 		var tu c.TopicUser
 
-		getTopicUser, err := qgen.Builder.SimpleLeftJoin("topics", "users", "topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ip, topics.postCount, topics.likeCount, users.name, users.avatar, users.group, users.level", "topics.createdBy = users.uid", "tid = ?", "", "")
+		getTopicUser, err := qgen.Builder.SimpleLeftJoin("topics", "users", "topics.title, topics.content, topics.createdBy, topics.createdAt, topics.is_closed, topics.sticky, topics.parentID, topics.ip, topics.postCount, topics.likeCount, users.name, users.avatar, users.group, users.level", "topics.createdBy=users.uid", "tid=?", "", "")
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -1039,9 +1634,7 @@ func BenchmarkQueriesSerial(b *testing.B) {
 				}
 			}
 			defer rows.Close()
-
-			err = rows.Err()
-			if err != nil {
+			if err = rows.Err(); err != nil {
 				b.Fatal(err)
 				return
 			}
@@ -1051,6 +1644,9 @@ func BenchmarkQueriesSerial(b *testing.B) {
 
 // TODO: Take the attachment system into account in these parser benches
 func BenchmarkParserSerial(b *testing.B) {
+	if !c.PluginsInited {
+		c.InitPlugins()
+	}
 	b.ReportAllocs()
 	f := func(name, msg string) func(b *testing.B) {
 		return func(b *testing.B) {
@@ -1068,6 +1664,9 @@ func BenchmarkParserSerial(b *testing.B) {
 }
 
 func BenchmarkBBCodePluginWithRegexpSerial(b *testing.B) {
+	if !c.PluginsInited {
+		c.InitPlugins()
+	}
 	b.ReportAllocs()
 	f := func(name string, msg string) {
 		b.Run(name, func(b *testing.B) {

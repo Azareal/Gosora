@@ -5,17 +5,18 @@ import (
 	"database/sql"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"net/http/httptest"
 	"os"
 	"runtime/debug"
 	"strconv"
-	"strings"
 	"testing"
 	"time"
 
 	c "github.com/Azareal/Gosora/common"
 	"github.com/Azareal/Gosora/common/gauth"
 	"github.com/Azareal/Gosora/common/phrases"
+	"github.com/Azareal/Gosora/routes"
 	"github.com/pkg/errors"
 )
 
@@ -73,15 +74,15 @@ func userStoreTest(t *testing.T, newUserID int) {
 	isCacheLengthZero := func(uc c.UserCache) bool {
 		return cacheLength(uc) == 0
 	}
-	expectf(t, isCacheLengthZero(uc), "The initial ucache length should be zero, not %d", cacheLength(uc))
+	ex, exf := exp(t), expf(t)
+	exf(isCacheLengthZero(uc), "The initial ucache length should be zero, not %d", cacheLength(uc))
 
 	_, err := c.Users.Get(-1)
 	recordMustNotExist(t, err, "UID #-1 shouldn't exist")
-	expectf(t, isCacheLengthZero(uc), "We found %d items in the user cache and it's supposed to be empty", cacheLength(uc))
-
+	exf(isCacheLengthZero(uc), "We found %d items in the user cache and it's supposed to be empty", cacheLength(uc))
 	_, err = c.Users.Get(0)
 	recordMustNotExist(t, err, "UID #0 shouldn't exist")
-	expectf(t, isCacheLengthZero(uc), "We found %d items in the user cache and it's supposed to be empty", cacheLength(uc))
+	exf(isCacheLengthZero(uc), "We found %d items in the user cache and it's supposed to be empty", cacheLength(uc))
 
 	user, err := c.Users.Get(1)
 	recordMustExist(t, err, "Couldn't find UID #1")
@@ -91,13 +92,13 @@ func userStoreTest(t *testing.T, newUserID int) {
 		if expec {
 			midfix = "should be"
 		}
-		expect(t, cond, prefix+" "+midfix+" "+suffix)
+		ex(cond, prefix+" "+midfix+" "+suffix)
 	}
 
 	// TODO: Add email checks too? Do them separately?
 	expectUser := func(u *c.User, uid int, name string, group int, super, admin, mod, banned bool) {
-		expectf(t, u.ID == uid, "u.ID should be %d. Got '%d' instead.", uid, u.ID)
-		expectf(t, u.Name == name, "u.Name should be '%s', not '%s'", name, u.Name)
+		exf(u.ID == uid, "u.ID should be %d. Got '%d' instead.", uid, u.ID)
+		exf(u.Name == name, "u.Name should be '%s', not '%s'", name, u.Name)
 		expectW(u.Group == group, true, u.Name, "in group"+strconv.Itoa(group))
 		expectW(u.IsSuperAdmin == super, super, u.Name, "a super admin")
 		expectW(u.IsAdmin == admin, admin, u.Name, "an admin")
@@ -112,7 +113,7 @@ func userStoreTest(t *testing.T, newUserID int) {
 	expectUser(user, 1, "Admin", 1, true, true, true, false)
 	us, err := c.Users.BulkGetByName([]string{"Admin"})
 	recordMustExist(t, err, "Couldn't find user 'Admin'")
-	expectf(t, len(us) == 1, "len(us) should be 1, not %d", len(us))
+	exf(len(us) == 1, "len(us) should be 1, not %d", len(us))
 	expectUser(us[0], 1, "Admin", 1, true, true, true, false)
 
 	_, err = c.Users.Get(newUserID)
@@ -129,8 +130,8 @@ func userStoreTest(t *testing.T, newUserID int) {
 		user, err = uc.Get(1)
 		recordMustExist(t, err, "Couldn't find UID #1 in the cache")
 
-		expectf(t, user.ID == 1, "user.ID does not match the requested UID. Got '%d' instead.", user.ID)
-		expectf(t, user.Name == "Admin", "user.Name should be 'Admin', not '%s'", user.Name)
+		exf(user.ID == 1, "user.ID does not match the requested UID. Got '%d' instead.", user.ID)
+		exf(user.Name == "Admin", "user.Name should be 'Admin', not '%s'", user.Name)
 
 		_, err = uc.Get(newUserID)
 		recordMustNotExist(t, err, "UID #%d shouldn't exist, even in the cache", newUserID)
@@ -141,37 +142,37 @@ func userStoreTest(t *testing.T, newUserID int) {
 	// TODO: Lock onto the specific error type. Is this even possible without sacrificing the detailed information in the error message?
 	bulkGetMapEmpty := func(id int) {
 		userList, _ := c.Users.BulkGetMap([]int{id})
-		expectf(t, len(userList) == 0, "The userList length should be 0, not %d", len(userList))
-		expectf(t, isCacheLengthZero(uc), "User cache length should be 0, not %d", cacheLength(uc))
+		exf(len(userList) == 0, "The userList length should be 0, not %d", len(userList))
+		exf(isCacheLengthZero(uc), "User cache length should be 0, not %d", cacheLength(uc))
 	}
 	bulkGetMapEmpty(-1)
 	bulkGetMapEmpty(0)
 
 	userList, _ := c.Users.BulkGetMap([]int{1})
-	expectf(t, len(userList) == 1, "Returned map should have one result (UID #1), not %d", len(userList))
+	exf(len(userList) == 1, "Returned map should have one result (UID #1), not %d", len(userList))
 	user, ok := userList[1]
 	if !ok {
 		t.Error("We couldn't find UID #1 in the returned map")
 		t.Error("userList", userList)
 		return
 	}
-	expectf(t, user.ID == 1, "user.ID does not match the requested UID. Got '%d' instead.", user.ID)
+	exf(user.ID == 1, "user.ID does not match the requested UID. Got '%d' instead.", user.ID)
 
 	if uc != nil {
 		expectIntToBeX(t, uc.Length(), 1, "User cache length should be 1, not %d")
 		user, err = uc.Get(1)
 		recordMustExist(t, err, "Couldn't find UID #1 in the cache")
 
-		expectf(t, user.ID == 1, "user.ID does not match the requested UID. Got '%d' instead.", user.ID)
+		exf(user.ID == 1, "user.ID does not match the requested UID. Got '%d' instead.", user.ID)
 		uc.Flush()
 	}
 
-	expect(t, !c.Users.Exists(-1), "UID #-1 shouldn't exist")
-	expect(t, !c.Users.Exists(0), "UID #0 shouldn't exist")
-	expect(t, c.Users.Exists(1), "UID #1 should exist")
-	expectf(t, !c.Users.Exists(newUserID), "UID #%d shouldn't exist", newUserID)
+	ex(!c.Users.Exists(-1), "UID #-1 shouldn't exist")
+	ex(!c.Users.Exists(0), "UID #0 shouldn't exist")
+	ex(c.Users.Exists(1), "UID #1 should exist")
+	exf(!c.Users.Exists(newUserID), "UID #%d shouldn't exist", newUserID)
 
-	expectf(t, isCacheLengthZero(uc), "User cache length should be 0, not %d", cacheLength(uc))
+	exf(isCacheLengthZero(uc), "User cache length should be 0, not %d", cacheLength(uc))
 	expectIntToBeX(t, c.Users.Count(), 1, "The number of users should be 1, not %d")
 	searchUser := func(name, email string, gid, count int) {
 		f := func(name, email string, gid, count int, m string) {
@@ -210,8 +211,8 @@ func userStoreTest(t *testing.T, newUserID int) {
 	// TODO: Write tests for the registration validators
 	uid, err := c.Users.Create("Sam", "ReallyBadPassword", "sam@localhost.loc", awaitingActivation, false)
 	expectNilErr(t, err)
-	expectf(t, uid == newUserID, "The UID of the new user should be %d not %d", newUserID, uid)
-	expectf(t, c.Users.Exists(newUserID), "UID #%d should exist", newUserID)
+	exf(uid == newUserID, "The UID of the new user should be %d not %d", newUserID, uid)
+	exf(c.Users.Exists(newUserID), "UID #%d should exist", newUserID)
 	expectIntToBeX(t, c.Users.Count(), 2, "The number of users should be 2, not %d")
 	searchUser("Sam", "sam@localhost.loc", 0, 1)
 	// TODO: CountSearch gid test
@@ -224,26 +225,26 @@ func userStoreTest(t *testing.T, newUserID int) {
 		expectIntToBeX(t, uc.Length(), 1, "User cache length should be 1, not %d")
 		user, err = uc.Get(newUserID)
 		recordMustExist(t, err, "Couldn't find UID #%d in the cache", newUserID)
-		expectf(t, user.ID == newUserID, "user.ID does not match the requested UID. Got '%d' instead.", user.ID)
+		exf(user.ID == newUserID, "user.ID does not match the requested UID. Got '%d' instead.", user.ID)
 	}
 
 	userList, _ = c.Users.BulkGetMap([]int{1, uid})
-	expectf(t, len(userList) == 2, "Returned map should have 2 results, not %d", len(userList))
+	exf(len(userList) == 2, "Returned map should have 2 results, not %d", len(userList))
 	// TODO: More tests on userList
 
 	{
 		userList, _ := c.Users.BulkGetByName([]string{"Admin", "Sam"})
-		expectf(t, len(userList) == 2, "Returned list should have 2 results, not %d", len(userList))
+		exf(len(userList) == 2, "Returned list should have 2 results, not %d", len(userList))
 	}
 
 	if uc != nil {
 		expectIntToBeX(t, uc.Length(), 2, "User cache length should be 2, not %d")
 		user, err = uc.Get(1)
 		recordMustExist(t, err, "Couldn't find UID #%d in the cache", 1)
-		expectf(t, user.ID == 1, "user.ID does not match the requested UID. Got '%d' instead.", user.ID)
+		exf(user.ID == 1, "user.ID does not match the requested UID. Got '%d' instead.", user.ID)
 		user, err = uc.Get(newUserID)
 		recordMustExist(t, err, "Couldn't find UID #%d in the cache", newUserID)
-		expectf(t, user.ID == newUserID, "user.ID does not match the requested UID. Got '%d' instead.", user.ID)
+		exf(user.ID == newUserID, "user.ID does not match the requested UID. Got '%d' instead.", user.ID)
 		uc.Flush()
 	}
 
@@ -255,11 +256,10 @@ func userStoreTest(t *testing.T, newUserID int) {
 		expectIntToBeX(t, uc.Length(), 1, "User cache length should be 1, not %d")
 		user, err = uc.Get(newUserID)
 		recordMustExist(t, err, "Couldn't find UID #%d in the cache", newUserID)
-		expectf(t, user.ID == newUserID, "user.ID does not match the requested UID. Got '%d' instead.", user.ID)
+		exf(user.ID == newUserID, "user.ID does not match the requested UID. Got '%d' instead.", user.ID)
 	}
 
-	err = user.Activate()
-	expectNilErr(t, err)
+	expectNilErr(t, user.Activate())
 	expectIntToBeX(t, user.Group, 5, "Sam should still be in group 5 in this copy")
 
 	// ? - What if we change the caching mechanism so it isn't hard purged and reloaded? We'll deal with that when we come to it, but for now, this is a sign of a cache bug
@@ -280,9 +280,8 @@ func userStoreTest(t *testing.T, newUserID int) {
 	duration, _ := time.ParseDuration("0")
 
 	// TODO: Attempt a double ban, double activation, and double unban
-	err = user.Ban(duration, 1)
-	expectNilErr(t, err)
-	expectf(t, user.Group == c.Config.DefaultGroup, "Sam should be in group %d, not %d", c.Config.DefaultGroup, user.Group)
+	expectNilErr(t, user.Ban(duration, 1))
+	exf(user.Group == c.Config.DefaultGroup, "Sam should be in group %d, not %d", c.Config.DefaultGroup, user.Group)
 	afterUserFlush(newUserID)
 
 	user, err = c.Users.Get(newUserID)
@@ -291,8 +290,7 @@ func userStoreTest(t *testing.T, newUserID int) {
 
 	// TODO: Do tests against the scheduled updates table and the task system to make sure the ban exists there and gets revoked when it should
 
-	err = user.Unban()
-	expectNilErr(t, err)
+	expectNilErr(t, user.Unban())
 	expectIntToBeX(t, user.Group, c.BanGroup, "Sam should still be in the ban group in this copy")
 	afterUserFlush(newUserID)
 
@@ -309,10 +307,9 @@ func userStoreTest(t *testing.T, newUserID int) {
 	var user2 *c.User
 
 	changeGroupTest := func(oldGroup, newGroup int) {
-		err = user.ChangeGroup(newGroup)
-		expectNilErr(t, err)
+		expectNilErr(t, user.ChangeGroup(newGroup))
 		// ! I don't think ChangeGroup should be changing the value of user... Investigate this.
-		expect(t, oldGroup == user.Group, "Someone's mutated this pointer elsewhere")
+		ex(oldGroup == user.Group, "Someone's mutated this pointer elsewhere")
 
 		user, err = c.Users.Get(newUserID)
 		recordMustExist(t, err, "Couldn't find UID #%d", newUserID)
@@ -330,11 +327,11 @@ func userStoreTest(t *testing.T, newUserID int) {
 			t.Fatal(err)
 		}
 		ferr := c.ForumUserCheck(head, dummyResponseRecorder, dummyRequest1, user, reportsForumID)
-		expect(t, ferr == nil, "There shouldn't be any errors in forumUserCheck")
-		expect(t, user.Perms.ViewTopic == firstShouldBe, rank+" should be able to access the reports forum")
+		ex(ferr == nil, "There shouldn't be any errors in forumUserCheck")
+		ex(user.Perms.ViewTopic == firstShouldBe, rank+" should be able to access the reports forum")
 		ferr = c.ForumUserCheck(head2, dummyResponseRecorder, dummyRequest2, user2, generalForumID)
-		expect(t, ferr == nil, "There shouldn't be any errors in forumUserCheck")
-		expect(t, user2.Perms.ViewTopic == secondShouldBe, "Sam should be able to access the general forum")
+		ex(ferr == nil, "There shouldn't be any errors in forumUserCheck")
+		ex(user2.Perms.ViewTopic == secondShouldBe, "Sam should be able to access the general forum")
 	}
 
 	changeGroupTest(c.Config.DefaultGroup, 1)
@@ -348,7 +345,7 @@ func userStoreTest(t *testing.T, newUserID int) {
 	changeGroupTest(2, 3)
 	expectUser(user, newUserID, "Sam", 3, false, false, false, false)
 	changeGroupTest2("Members", false, true)
-	expect(t, user.Perms.ViewTopic != user2.Perms.ViewTopic, "user.Perms.ViewTopic and user2.Perms.ViewTopic should never match")
+	ex(user.Perms.ViewTopic != user2.Perms.ViewTopic, "user.Perms.ViewTopic and user2.Perms.ViewTopic should never match")
 
 	changeGroupTest(3, 4)
 	expectUser(user, newUserID, "Sam", 4, false, false, false, true)
@@ -364,10 +361,10 @@ func userStoreTest(t *testing.T, newUserID int) {
 
 	err = user.ChangeGroup(c.Config.DefaultGroup)
 	expectNilErr(t, err)
-	expect(t, user.Group == 6, "Someone's mutated this pointer elsewhere")
+	ex(user.Group == 6, "Someone's mutated this pointer elsewhere")
 
 	expectNilErr(t, user.Delete())
-	expectf(t, !c.Users.Exists(newUserID), "UID #%d should no longer exist", newUserID)
+	exf(!c.Users.Exists(newUserID), "UID #%d should no longer exist", newUserID)
 	afterUserFlush(newUserID)
 	expectIntToBeX(t, c.Users.Count(), 1, "The number of users should be 1, not %d")
 	searchUser("Sam", "sam@localhost.loc", 0, 0)
@@ -379,30 +376,28 @@ func userStoreTest(t *testing.T, newUserID int) {
 	// And a unicode test, even though I doubt it'll fail
 	uid, err = c.Users.Create("サム", "😀😀😀", "sam@localhost.loc", awaitingActivation, false)
 	expectNilErr(t, err)
-	expectf(t, uid == newUserID+1, "The UID of the new user should be %d", newUserID+1)
-	expectf(t, c.Users.Exists(newUserID+1), "UID #%d should exist", newUserID+1)
+	exf(uid == newUserID+1, "The UID of the new user should be %d", newUserID+1)
+	exf(c.Users.Exists(newUserID+1), "UID #%d should exist", newUserID+1)
 
 	user, err = c.Users.Get(newUserID + 1)
 	recordMustExist(t, err, "Couldn't find UID #%d", newUserID+1)
 	expectUser(user, newUserID+1, "サム", 5, false, false, false, false)
 
-	err = user.Delete()
-	expectNilErr(t, err)
-	expectf(t, !c.Users.Exists(newUserID+1), "UID #%d should no longer exist", newUserID+1)
+	expectNilErr(t, user.Delete())
+	exf(!c.Users.Exists(newUserID+1), "UID #%d should no longer exist", newUserID+1)
 
 	// MySQL utf8mb4 username test
 	uid, err = c.Users.Create("😀😀😀", "😀😀😀", "sam@localhost.loc", awaitingActivation, false)
 	expectNilErr(t, err)
-	expectf(t, uid == newUserID+2, "The UID of the new user should be %d", newUserID+2)
-	expectf(t, c.Users.Exists(newUserID+2), "UID #%d should exist", newUserID+2)
+	exf(uid == newUserID+2, "The UID of the new user should be %d", newUserID+2)
+	exf(c.Users.Exists(newUserID+2), "UID #%d should exist", newUserID+2)
 
 	user, err = c.Users.Get(newUserID + 2)
 	recordMustExist(t, err, "Couldn't find UID #%d", newUserID+1)
 	expectUser(user, newUserID+2, "😀😀😀", 5, false, false, false, false)
 
-	err = user.Delete()
-	expectNilErr(t, err)
-	expectf(t, !c.Users.Exists(newUserID+2), "UID #%d should no longer exist", newUserID+2)
+	expectNilErr(t, user.Delete())
+	exf(!c.Users.Exists(newUserID+2), "UID #%d should no longer exist", newUserID+2)
 
 	// TODO: Add unicode login tests somewhere? Probably with the rest of the auth tests
 	// TODO: Add tests for the Cache* methods
@@ -437,6 +432,24 @@ func expectf(t *testing.T, item bool, errmsg string, args ...interface{}) {
 	}
 }
 
+func exp(t *testing.T) func(bool, string) {
+	return func(val bool, errmsg string) {
+		if !val {
+			debug.PrintStack()
+			t.Fatal(errmsg)
+		}
+	}
+}
+
+func expf(t *testing.T) func(bool, string, ...interface{}) {
+	return func(val bool, errmsg string, params ...interface{}) {
+		if !val {
+			debug.PrintStack()
+			t.Fatalf(errmsg, params...)
+		}
+	}
+}
+
 func TestPermsMiddleware(t *testing.T) {
 	miscinit(t)
 	if !c.PluginsInited {
@@ -447,49 +460,46 @@ func TestPermsMiddleware(t *testing.T) {
 	bytesBuffer := bytes.NewBuffer([]byte(""))
 	dummyRequest := httptest.NewRequest("", "/forum/1", bytesBuffer)
 	user := c.BlankUser()
+	ex := exp(t)
 
-	ferr := c.SuperModOnly(dummyResponseRecorder, dummyRequest, user)
-	expect(t, ferr != nil, "Blank users shouldn't be supermods")
+	f := func(ff func(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError) bool {
+		ferr := ff(dummyResponseRecorder, dummyRequest, user)
+		return ferr == nil
+	}
 
+	ex(!f(c.SuperModOnly), "Blank users shouldn't be supermods")
 	user.IsSuperMod = false
-	ferr = c.SuperModOnly(dummyResponseRecorder, dummyRequest, user)
-	expect(t, ferr != nil, "Non-supermods shouldn't be allowed through supermod gates")
-
+	ex(!f(c.SuperModOnly), "Non-supermods shouldn't be allowed through supermod gates")
 	user.IsSuperMod = true
-	ferr = c.SuperModOnly(dummyResponseRecorder, dummyRequest, user)
-	expect(t, ferr == nil, "Supermods should be allowed through supermod gates")
+	ex(f(c.SuperModOnly), "Supermods should be allowed through supermod gates")
 
 	// TODO: Loop over the Control Panel routes and make sure only supermods can get in
 
 	user = c.BlankUser()
 
-	ferr = c.MemberOnly(dummyResponseRecorder, dummyRequest, user)
-	expect(t, ferr != nil, "Blank users shouldn't be considered loggedin")
-
+	ex(!f(c.MemberOnly), "Blank users shouldn't be considered loggedin")
 	user.Loggedin = false
-	ferr = c.MemberOnly(dummyResponseRecorder, dummyRequest, user)
-	expect(t, ferr != nil, "Guests shouldn't be able to access member areas")
-
+	ex(!f(c.MemberOnly), "Guests shouldn't be able to access member areas")
 	user.Loggedin = true
-	ferr = c.MemberOnly(dummyResponseRecorder, dummyRequest, user)
-	expect(t, ferr == nil, "Logged in users should be able to access member areas")
+	ex(f(c.MemberOnly), "Logged in users should be able to access member areas")
 
 	// TODO: Loop over the /user/ routes and make sure only members can access the ones other than /user/username
 
-	// TODO: Write tests for AdminOnly()
+	user = c.BlankUser()
+
+	ex(!f(c.AdminOnly), "Blank users shouldn't be considered admins")
+	user.IsAdmin = false
+	ex(!f(c.AdminOnly), "Non-admins shouldn't be able to access admin areas")
+	user.IsAdmin = true
+	ex(f(c.AdminOnly), "Admins should be able to access admin areas")
 
 	user = c.BlankUser()
 
-	ferr = c.SuperAdminOnly(dummyResponseRecorder, dummyRequest, user)
-	expect(t, ferr != nil, "Blank users shouldn't be considered super admins")
-
+	ex(!f(c.SuperAdminOnly), "Blank users shouldn't be considered super admins")
 	user.IsSuperAdmin = false
-	ferr = c.SuperAdminOnly(dummyResponseRecorder, dummyRequest, user)
-	expect(t, ferr != nil, "Non-super admins shouldn't be allowed through the super admin gate")
-
+	ex(!f(c.SuperAdminOnly), "Non-super admins shouldn't be allowed through the super admin gate")
 	user.IsSuperAdmin = true
-	ferr = c.SuperAdminOnly(dummyResponseRecorder, dummyRequest, user)
-	expect(t, ferr == nil, "Super admins should be allowed through super admin gates")
+	ex(f(c.SuperAdminOnly), "Super admins should be allowed through super admin gates")
 
 	// TODO: Make sure only super admins can access the backups route
 
@@ -623,12 +633,13 @@ func TestForumStore(t *testing.T) {
 	if !c.PluginsInited {
 		c.InitPlugins()
 	}
+	ex, exf := exp(t), expf(t)
 	// TODO: Test ForumStore.Reload
 
 	fcache, ok := c.Forums.(c.ForumCache)
-	expect(t, ok, "Unable to cast ForumStore to ForumCache")
-	expect(t, c.Forums.Count() == 2, "The forumstore global count should be 2")
-	expect(t, fcache.Length() == 2, "The forum cache length should be 2")
+	ex(ok, "Unable to cast ForumStore to ForumCache")
+	ex(c.Forums.Count() == 2, "The forumstore global count should be 2")
+	ex(fcache.Length() == 2, "The forum cache length should be 2")
 
 	_, err := c.Forums.Get(-1)
 	recordMustNotExist(t, err, "FID #-1 shouldn't exist")
@@ -637,12 +648,12 @@ func TestForumStore(t *testing.T) {
 
 	forum, err := c.Forums.Get(1)
 	recordMustExist(t, err, "Couldn't find FID #1")
-	expectf(t, forum.ID == 1, "forum.ID doesn't not match the requested FID. Got '%d' instead.'", forum.ID)
+	exf(forum.ID == 1, "forum.ID doesn't not match the requested FID. Got '%d' instead.'", forum.ID)
 	// TODO: Check the preset and forum permissions
-	expectf(t, forum.Name == "Reports", "FID #0 is named '%s' and not 'Reports'", forum.Name)
-	expectf(t, !forum.Active, "The reports forum shouldn't be active")
+	exf(forum.Name == "Reports", "FID #0 is named '%s' and not 'Reports'", forum.Name)
+	exf(!forum.Active, "The reports forum shouldn't be active")
 	expectDesc := "All the reports go here"
-	expectf(t, forum.Desc == expectDesc, "The forum description should be '%s' not '%s'", expectDesc, forum.Desc)
+	exf(forum.Desc == expectDesc, "The forum description should be '%s' not '%s'", expectDesc, forum.Desc)
 	forum, err = c.Forums.BypassGet(1)
 	recordMustExist(t, err, "Couldn't find FID #1")
 
@@ -651,73 +662,73 @@ func TestForumStore(t *testing.T) {
 	forum, err = c.Forums.BypassGet(2)
 	recordMustExist(t, err, "Couldn't find FID #2")
 
-	expectf(t, forum.ID == 2, "The FID should be 2 not %d", forum.ID)
-	expectf(t, forum.Name == "General", "The name of the forum should be 'General' not '%s'", forum.Name)
-	expectf(t, forum.Active, "The general forum should be active")
+	exf(forum.ID == 2, "The FID should be 2 not %d", forum.ID)
+	exf(forum.Name == "General", "The name of the forum should be 'General' not '%s'", forum.Name)
+	exf(forum.Active, "The general forum should be active")
 	expectDesc = "A place for general discussions which don't fit elsewhere"
-	expectf(t, forum.Desc == expectDesc, "The forum description should be '%s' not '%s'", expectDesc, forum.Desc)
+	exf(forum.Desc == expectDesc, "The forum description should be '%s' not '%s'", expectDesc, forum.Desc)
 
 	// Forum reload test, kind of hacky but gets the job done
 	/*
 		CacheGet(id int) (*Forum, error)
 		CacheSet(forum *Forum) error
 	*/
-	expect(t, ok, "ForumCache should be available")
+	ex(ok, "ForumCache should be available")
 	forum.Name = "nanana"
 	fcache.CacheSet(forum)
 	forum, err = c.Forums.Get(2)
 	recordMustExist(t, err, "Couldn't find FID #2")
-	expectf(t, forum.Name == "nanana", "The faux name should be nanana not %s", forum.Name)
+	exf(forum.Name == "nanana", "The faux name should be nanana not %s", forum.Name)
 	expectNilErr(t, c.Forums.Reload(2))
 	forum, err = c.Forums.Get(2)
 	recordMustExist(t, err, "Couldn't find FID #2")
-	expectf(t, forum.Name == "General", "The proper name should be 2 not %s", forum.Name)
+	exf(forum.Name == "General", "The proper name should be 2 not %s", forum.Name)
 
-	expect(t, !c.Forums.Exists(-1), "FID #-1 shouldn't exist")
-	expect(t, !c.Forums.Exists(0), "FID #0 shouldn't exist")
-	expect(t, c.Forums.Exists(1), "FID #1 should exist")
-	expect(t, c.Forums.Exists(2), "FID #2 should exist")
-	expect(t, !c.Forums.Exists(3), "FID #3 shouldn't exist")
+	ex(!c.Forums.Exists(-1), "FID #-1 shouldn't exist")
+	ex(!c.Forums.Exists(0), "FID #0 shouldn't exist")
+	ex(c.Forums.Exists(1), "FID #1 should exist")
+	ex(c.Forums.Exists(2), "FID #2 should exist")
+	ex(!c.Forums.Exists(3), "FID #3 shouldn't exist")
 
 	_, err = c.Forums.Create("", "", true, "all")
-	expect(t, err != nil, "A forum shouldn't be successfully created, if it has a blank name")
+	ex(err != nil, "A forum shouldn't be successfully created, if it has a blank name")
 
 	fid, err := c.Forums.Create("Test Forum", "", true, "all")
 	expectNilErr(t, err)
-	expect(t, fid == 3, "The first forum we create should have an ID of 3")
-	expect(t, c.Forums.Exists(3), "FID #2 should exist")
+	ex(fid == 3, "The first forum we create should have an ID of 3")
+	ex(c.Forums.Exists(3), "FID #2 should exist")
 
-	expect(t, c.Forums.Count() == 3, "The forumstore global count should be 3")
-	expect(t, fcache.Length() == 3, "The forum cache length should be 3")
+	ex(c.Forums.Count() == 3, "The forumstore global count should be 3")
+	ex(fcache.Length() == 3, "The forum cache length should be 3")
 
 	forum, err = c.Forums.Get(3)
 	recordMustExist(t, err, "Couldn't find FID #3")
 	forum, err = c.Forums.BypassGet(3)
 	recordMustExist(t, err, "Couldn't find FID #3")
 
-	expectf(t, forum.ID == 3, "The FID should be 3 not %d", forum.ID)
-	expectf(t, forum.Name == "Test Forum", "The name of the forum should be 'Test Forum' not '%s'", forum.Name)
-	expectf(t, forum.Active, "The test forum should be active")
-	expectf(t, forum.Desc == "", "The forum description should be blank not '%s'", forum.Desc)
+	exf(forum.ID == 3, "The FID should be 3 not %d", forum.ID)
+	exf(forum.Name == "Test Forum", "The name of the forum should be 'Test Forum' not '%s'", forum.Name)
+	exf(forum.Active, "The test forum should be active")
+	exf(forum.Desc == "", "The forum description should be blank not '%s'", forum.Desc)
 
 	// TODO: More forum creation tests
 
 	expectNilErr(t, c.Forums.Delete(3))
-	expect(t, forum.ID == 3, "forum pointer shenanigans")
-	expect(t, c.Forums.Count() == 2, "The forumstore global count should be 2")
-	expect(t, fcache.Length() == 2, "The forum cache length should be 2")
-	expect(t, !c.Forums.Exists(3), "FID #3 shouldn't exist after being deleted")
+	ex(forum.ID == 3, "forum pointer shenanigans")
+	ex(c.Forums.Count() == 2, "The forumstore global count should be 2")
+	ex(fcache.Length() == 2, "The forum cache length should be 2")
+	ex(!c.Forums.Exists(3), "FID #3 shouldn't exist after being deleted")
 	_, err = c.Forums.Get(3)
 	recordMustNotExist(t, err, "FID #3 shouldn't exist after being deleted")
 	_, err = c.Forums.BypassGet(3)
 	recordMustNotExist(t, err, "FID #3 shouldn't exist after being deleted")
 
-	expect(t, c.Forums.Delete(c.ReportForumID) != nil, "The reports forum shouldn't be deletable")
-	expectf(t, c.Forums.Exists(c.ReportForumID), "FID #%d should still exist", c.ReportForumID)
+	ex(c.Forums.Delete(c.ReportForumID) != nil, "The reports forum shouldn't be deletable")
+	exf(c.Forums.Exists(c.ReportForumID), "FID #%d should still exist", c.ReportForumID)
 	_, err = c.Forums.Get(c.ReportForumID)
-	expectf(t, err == nil, "FID #%d should still exist", c.ReportForumID)
+	exf(err == nil, "FID #%d should still exist", c.ReportForumID)
 	_, err = c.Forums.BypassGet(c.ReportForumID)
-	expectf(t, err == nil, "FID #%d should still exist", c.ReportForumID)
+	exf(err == nil, "FID #%d should still exist", c.ReportForumID)
 
 	eforums := map[int]bool{1: true, 2: true}
 	{
@@ -726,12 +737,12 @@ func TestForumStore(t *testing.T) {
 		found := make(map[int]*c.Forum)
 		for _, forum := range forums {
 			_, ok := eforums[forum.ID]
-			expectf(t, ok, "unknown forum #%d in forums", forum.ID)
+			exf(ok, "unknown forum #%d in forums", forum.ID)
 			found[forum.ID] = forum
 		}
 		for fid, _ := range eforums {
 			_, ok := found[fid]
-			expectf(t, ok, "unable to find expected forum #%d in forums", fid)
+			exf(ok, "unable to find expected forum #%d in forums", fid)
 		}
 	}
 
@@ -741,12 +752,12 @@ func TestForumStore(t *testing.T) {
 		found := make(map[int]bool)
 		for _, fid := range fids {
 			_, ok := eforums[fid]
-			expectf(t, ok, "unknown fid #%d in fids", fid)
+			exf(ok, "unknown fid #%d in fids", fid)
 			found[fid] = true
 		}
 		for fid, _ := range eforums {
 			_, ok := found[fid]
-			expectf(t, ok, "unable to find expected fid #%d in fids", fid)
+			exf(ok, "unable to find expected fid #%d in fids", fid)
 		}
 	}
 
@@ -757,12 +768,12 @@ func TestForumStore(t *testing.T) {
 		found := make(map[int]*c.Forum)
 		for _, forum := range forums {
 			_, ok := vforums[forum.ID]
-			expectf(t, ok, "unknown forum #%d in forums", forum.ID)
+			exf(ok, "unknown forum #%d in forums", forum.ID)
 			found[forum.ID] = forum
 		}
 		for fid, _ := range vforums {
 			_, ok := found[fid]
-			expectf(t, ok, "unable to find expected forum #%d in forums", fid)
+			exf(ok, "unable to find expected forum #%d in forums", fid)
 		}
 	}
 
@@ -772,14 +783,27 @@ func TestForumStore(t *testing.T) {
 		found := make(map[int]bool)
 		for _, fid := range fids {
 			_, ok := vforums[fid]
-			expectf(t, ok, "unknown fid #%d in fids", fid)
+			exf(ok, "unknown fid #%d in fids", fid)
 			found[fid] = true
 		}
 		for fid, _ := range vforums {
 			_, ok := found[fid]
-			expectf(t, ok, "unable to find expected fid #%d in fids", fid)
+			exf(ok, "unable to find expected fid #%d in fids", fid)
 		}
 	}
+
+	forum, err = c.Forums.Get(2)
+	expectNilErr(t, err)
+	prevTopicCount := forum.TopicCount
+	tid, err := c.Topics.Create(forum.ID, "Forum Meta Test", "Forum Meta Test", 1, "")
+	expectNilErr(t, err)
+	forum, err = c.Forums.Get(2)
+	expectNilErr(t, err)
+	exf(forum.TopicCount == (prevTopicCount+1), "forum.TopicCount should be %d not %d", prevTopicCount+1, forum.TopicCount)
+	exf(forum.LastTopicID == tid, "forum.LastTopicID should be %d not %d", tid, forum.LastTopicID)
+	exf(forum.LastPage == 1, "forum.LastPage should be %d not %d", 1, forum.LastPage)
+
+	// TODO: Test topic creation and forum topic metadata
 
 	// TODO: Test forum update
 	// TODO: Other forumstore stuff and forumcache?
@@ -791,17 +815,23 @@ func TestForumPermsStore(t *testing.T) {
 	if !c.PluginsInited {
 		c.InitPlugins()
 	}
+	ex := exp(t)
 
 	f := func(fid, gid int, msg string, inv ...bool) {
 		fp, err := c.FPStore.Get(fid, gid)
-		expectNilErr(t, err)
+		if err == ErrNoRows {
+			fp = c.BlankForumPerms()
+		} else {
+			expectNilErr(t, err)
+		}
 		vt := fp.ViewTopic
 		if len(inv) > 0 && inv[0] == true {
 			vt = !vt
 		}
-		expect(t, vt, msg)
+		ex(vt, msg)
 	}
 
+	// TODO: Test reporting
 	initialState := func() {
 		f(1, 1, "admins should be able to see reports")
 		f(1, 2, "mods should be able to see reports")
@@ -817,6 +847,81 @@ func TestForumPermsStore(t *testing.T) {
 	initialState()
 	expectNilErr(t, c.FPStore.Reload(2))
 	initialState()
+
+	gid, err := c.Groups.Create("FP Test", "FP Test", false, false, false)
+	expectNilErr(t, err)
+	fid, err := c.Forums.Create("FP Test", "FP Test", true, "")
+	expectNilErr(t, err)
+
+	u := c.GuestUser.Copy()
+	rt := func(gid, fid int, shouldSucceed bool) {
+		w := httptest.NewRecorder()
+		bytesBuffer := bytes.NewBuffer([]byte(""))
+		sfid := strconv.Itoa(fid)
+		req := httptest.NewRequest("", "/forum/"+sfid, bytesBuffer)
+		u.Group = gid
+		h, err := c.UserCheck(w, req, &u)
+		expectNilErr(t, err)
+		rerr := routes.ViewForum(w, req, &u, h, sfid)
+		if shouldSucceed {
+			ex(rerr == nil, "ViewForum should succeed")
+		} else {
+			ex(rerr != nil, "ViewForum should not succeed")
+		}
+	}
+	rt(1, fid, false)
+	rt(2, fid, false)
+	rt(3, fid, false)
+	rt(4, fid, false)
+	rt(gid, fid, false)
+
+	fp, err := c.FPStore.GetCopy(fid, gid)
+	if err == sql.ErrNoRows {
+		fp = *c.BlankForumPerms()
+	} else if err != nil {
+		expectNilErr(t, err)
+	}
+	fmt.Printf("fp: %+v\n", fp)
+
+	f(fid, 1, "admins should not be able to see fp test", true)
+	f(fid, 2, "mods should not be able to see fp test", true)
+	f(fid, 3, "members should not be able to see fp test", true)
+	f(fid, 4, "banned users should not be able to see fp test", true)
+	f(fid, gid, "fp test should not be able to see fp test", true)
+
+	fp.ViewTopic = true
+
+	forum, err := c.Forums.Get(fid)
+	expectNilErr(t, err)
+	expectNilErr(t, forum.SetPerms(&fp, "custom", gid))
+
+	rt(1, fid, false)
+	rt(2, fid, false)
+	rt(3, fid, false)
+	rt(4, fid, false)
+	rt(gid, fid, true)
+
+	fp, err = c.FPStore.GetCopy(fid, gid)
+	if err == sql.ErrNoRows {
+		fp = *c.BlankForumPerms()
+	} else if err != nil {
+		expectNilErr(t, err)
+	}
+
+	f(fid, 1, "admins should not be able to see fp test", true)
+	f(fid, 2, "mods should not be able to see fp test", true)
+	f(fid, 3, "members should not be able to see fp test", true)
+	f(fid, 4, "banned users should not be able to see fp test", true)
+	f(fid, gid, "fp test should be able to see fp test")
+
+	expectNilErr(t, c.Forums.Delete(fid))
+	rt(1, fid, false)
+	rt(2, fid, false)
+	rt(3, fid, false)
+	rt(4, fid, false)
+	rt(gid, fid, false)
+
+	// TODO: Test changing forum permissions
 }
 
 // TODO: Test the group permissions
@@ -826,6 +931,7 @@ func TestGroupStore(t *testing.T) {
 	if !c.PluginsInited {
 		c.InitPlugins()
 	}
+	ex, exf := exp(t), expf(t)
 
 	_, err := c.Groups.Get(-1)
 	recordMustNotExist(t, err, "GID #-1 shouldn't exist")
@@ -833,73 +939,66 @@ func TestGroupStore(t *testing.T) {
 	// TODO: Refactor the group store to remove GID #0
 	g, err := c.Groups.Get(0)
 	recordMustExist(t, err, "Couldn't find GID #0")
-
-	expectf(t, g.ID == 0, "g.ID doesn't not match the requested GID. Got '%d' instead.", g.ID)
-	expectf(t, g.Name == "Unknown", "GID #0 is named '%s' and not 'Unknown'", g.Name)
+	exf(g.ID == 0, "g.ID doesn't not match the requested GID. Got '%d' instead.", g.ID)
+	exf(g.Name == "Unknown", "GID #0 is named '%s' and not 'Unknown'", g.Name)
 
 	g, err = c.Groups.Get(1)
 	recordMustExist(t, err, "Couldn't find GID #1")
-	expectf(t, g.ID == 1, "g.ID doesn't not match the requested GID. Got '%d' instead.'", g.ID)
-	expect(t, len(g.CanSee) > 0, "g.CanSee should not be zero")
+	exf(g.ID == 1, "g.ID doesn't not match the requested GID. Got '%d' instead.'", g.ID)
+	ex(len(g.CanSee) > 0, "g.CanSee should not be zero")
 
-	expect(t, !c.Groups.Exists(-1), "GID #-1 shouldn't exist")
+	ex(!c.Groups.Exists(-1), "GID #-1 shouldn't exist")
 	// 0 aka Unknown, for system posts and other oddities
-	expect(t, c.Groups.Exists(0), "GID #0 should exist")
-	expect(t, c.Groups.Exists(1), "GID #1 should exist")
+	ex(c.Groups.Exists(0), "GID #0 should exist")
+	ex(c.Groups.Exists(1), "GID #1 should exist")
 
-	isAdmin := true
-	isMod := true
-	isBanned := false
+	isAdmin, isMod, isBanned := true, true, false
 	gid, err := c.Groups.Create("Testing", "Test", isAdmin, isMod, isBanned)
 	expectNilErr(t, err)
-	expect(t, c.Groups.Exists(gid), "The group we just made doesn't exist")
+	ex(c.Groups.Exists(gid), "The group we just made doesn't exist")
+
+	ff := func(i bool) string {
+		if !i {
+			return "n't"
+		}
+		return ""
+	}
+	f := func(gid int, isBanned, isMod, isAdmin bool) {
+		ex(g.ID == gid, "The group ID should match the requested ID")
+		exf(g.IsAdmin == isAdmin, "This should%s be an admin group", ff(isAdmin))
+		exf(g.IsMod == isMod, "This should%s be a mod group", ff(isMod))
+		exf(g.IsBanned == isBanned, "This should%s be a ban group", ff(isBanned))
+	}
 
 	g, err = c.Groups.Get(gid)
 	expectNilErr(t, err)
-	expect(t, g.ID == gid, "The group ID should match the requested ID")
-	expect(t, g.IsAdmin, "This should be an admin group")
-	expect(t, g.IsMod, "This should be a mod group")
-	expect(t, !g.IsBanned, "This shouldn't be a ban group")
-	expect(t, len(g.CanSee) == 0, "g.CanSee should be empty")
+	f(gid, false, true, true)
+	ex(len(g.CanSee) == 0, "g.CanSee should be empty")
 
-	isAdmin = false
-	isMod = true
-	isBanned = true
+	isAdmin, isMod, isBanned = false, true, true
 	gid, err = c.Groups.Create("Testing 2", "Test", isAdmin, isMod, isBanned)
 	expectNilErr(t, err)
-	expect(t, c.Groups.Exists(gid), "The group we just made doesn't exist")
+	ex(c.Groups.Exists(gid), "The group we just made doesn't exist")
 
 	g, err = c.Groups.Get(gid)
 	expectNilErr(t, err)
-	expect(t, g.ID == gid, "The group ID should match the requested ID")
-	expect(t, !g.IsAdmin, "This should not be an admin group")
-	expect(t, g.IsMod, "This should be a mod group")
-	expect(t, !g.IsBanned, "This shouldn't be a ban group")
+	f(gid, false, true, false)
 
 	// TODO: Make sure this pointer doesn't change once we refactor the group store to stop updating the pointer
-	err = g.ChangeRank(false, false, true)
-	expectNilErr(t, err)
+	expectNilErr(t, g.ChangeRank(false, false, true))
 
 	g, err = c.Groups.Get(gid)
 	expectNilErr(t, err)
-	expect(t, g.ID == gid, "The group ID should match the requested ID")
-	expect(t, !g.IsAdmin, "This shouldn't be an admin group")
-	expect(t, !g.IsMod, "This shouldn't be a mod group")
-	expect(t, g.IsBanned, "This should be a ban group")
+	f(gid, true, false, false)
 
-	err = g.ChangeRank(true, true, true)
-	expectNilErr(t, err)
+	expectNilErr(t, g.ChangeRank(true, true, true))
 
 	g, err = c.Groups.Get(gid)
 	expectNilErr(t, err)
-	expect(t, g.ID == gid, "The group ID should match the requested ID")
-	expect(t, g.IsAdmin, "This should be an admin group")
-	expect(t, g.IsMod, "This should be a mod group")
-	expect(t, !g.IsBanned, "This shouldn't be a ban group")
-	expect(t, len(g.CanSee) == 0, "len(g.CanSee) should be 0")
+	f(gid, false, true, true)
+	ex(len(g.CanSee) == 0, "len(g.CanSee) should be 0")
 
-	err = g.ChangeRank(false, true, true)
-	expectNilErr(t, err)
+	expectNilErr(t, g.ChangeRank(false, true, true))
 
 	forum, err := c.Forums.Get(2)
 	expectNilErr(t, err)
@@ -916,24 +1015,18 @@ func TestGroupStore(t *testing.T) {
 
 	g, err = c.Groups.Get(gid)
 	expectNilErr(t, err)
-	expect(t, g.ID == gid, "The group ID should match the requested ID")
-	expect(t, !g.IsAdmin, "This shouldn't be an admin group")
-	expect(t, g.IsMod, "This should be a mod group")
-	expect(t, !g.IsBanned, "This shouldn't be a ban group")
-	expect(t, g.CanSee != nil, "g.CanSee must not be nil")
-	expect(t, len(g.CanSee) == 1, "len(g.CanSee) should not be one")
-	expect(t, g.CanSee[0] == 2, "g.CanSee[0] should be 2")
+	f(gid, false, true, false)
+	ex(g.CanSee != nil, "g.CanSee must not be nil")
+	ex(len(g.CanSee) == 1, "len(g.CanSee) should not be one")
+	ex(g.CanSee[0] == 2, "g.CanSee[0] should be 2")
 	canSee := g.CanSee
 
 	// Make sure the data is static
-	c.Groups.Reload(gid)
+	expectNilErr(t, c.Groups.Reload(gid))
 
 	g, err = c.Groups.Get(gid)
 	expectNilErr(t, err)
-	expect(t, g.ID == gid, "The group ID should match the requested ID")
-	expect(t, !g.IsAdmin, "This shouldn't be an admin group")
-	expect(t, g.IsMod, "This should be a mod group")
-	expect(t, !g.IsBanned, "This shouldn't be a ban group")
+	f(gid, false, true, false)
 
 	// TODO: Don't enforce a specific order here
 	canSeeTest := func(a, b []int) bool {
@@ -951,7 +1044,7 @@ func TestGroupStore(t *testing.T) {
 		return true
 	}
 
-	expect(t, canSeeTest(g.CanSee, canSee), "g.CanSee is not being reused")
+	ex(canSeeTest(g.CanSee, canSee), "g.CanSee is not being reused")
 
 	// TODO: Test group deletion
 	// TODO: Test group reload
@@ -963,6 +1056,7 @@ func TestGroupPromotions(t *testing.T) {
 	if !c.PluginsInited {
 		c.InitPlugins()
 	}
+	ex, exf := exp(t), expf(t)
 
 	_, err := c.GroupPromotions.Get(-1)
 	recordMustNotExist(t, err, "GP #-1 shouldn't exist")
@@ -976,35 +1070,35 @@ func TestGroupPromotions(t *testing.T) {
 
 	testPromo := func(exid, from, to, level, posts, registeredFor int, shouldFail bool) {
 		gpid, err := c.GroupPromotions.Create(from, to, false, level, posts, registeredFor)
-		expectf(t, gpid == exid, "gpid should be %d not %d", exid, gpid)
+		exf(gpid == exid, "gpid should be %d not %d", exid, gpid)
 		//fmt.Println("gpid:", gpid)
 		gp, err := c.GroupPromotions.Get(gpid)
 		expectNilErr(t, err)
-		expectf(t, gp.ID == gpid, "gp.ID should be %d not %d", gpid, gp.ID)
-		expectf(t, gp.From == from, "gp.From should be %d not %d", from, gp.From)
-		expectf(t, gp.To == to, "gp.To should be %d not %d", to, gp.To)
-		expect(t, !gp.TwoWay, "gp.TwoWay should be false not true")
-		expectf(t, gp.Level == level, "gp.Level should be %d not %d", level, gp.Level)
-		expectf(t, gp.Posts == posts, "gp.Posts should be %d not %d", posts, gp.Posts)
-		expectf(t, gp.MinTime == 0, "gp.MinTime should be %d not %d", 0, gp.MinTime)
-		expectf(t, gp.RegisteredFor == registeredFor, "gp.RegisteredFor should be %d not %d", registeredFor, gp.RegisteredFor)
+		exf(gp.ID == gpid, "gp.ID should be %d not %d", gpid, gp.ID)
+		exf(gp.From == from, "gp.From should be %d not %d", from, gp.From)
+		exf(gp.To == to, "gp.To should be %d not %d", to, gp.To)
+		ex(!gp.TwoWay, "gp.TwoWay should be false not true")
+		exf(gp.Level == level, "gp.Level should be %d not %d", level, gp.Level)
+		exf(gp.Posts == posts, "gp.Posts should be %d not %d", posts, gp.Posts)
+		exf(gp.MinTime == 0, "gp.MinTime should be %d not %d", 0, gp.MinTime)
+		exf(gp.RegisteredFor == registeredFor, "gp.RegisteredFor should be %d not %d", registeredFor, gp.RegisteredFor)
 
 		uid, err := c.Users.Create("Lord_"+strconv.Itoa(gpid), "I_Rule", "", from, false)
 		expectNilErr(t, err)
 		u, err := c.Users.Get(uid)
 		expectNilErr(t, err)
-		expectf(t, u.ID == uid, "u.ID should be %d not %d", uid, u.ID)
-		expectf(t, u.Group == from, "u.Group should be %d not %d", from, u.Group)
+		exf(u.ID == uid, "u.ID should be %d not %d", uid, u.ID)
+		exf(u.Group == from, "u.Group should be %d not %d", from, u.Group)
 		err = c.GroupPromotions.PromoteIfEligible(u, u.Level, u.Posts, u.CreatedAt)
 		expectNilErr(t, err)
 		u.CacheRemove()
 		u, err = c.Users.Get(uid)
 		expectNilErr(t, err)
-		expectf(t, u.ID == uid, "u.ID should be %d not %d", uid, u.ID)
+		exf(u.ID == uid, "u.ID should be %d not %d", uid, u.ID)
 		if shouldFail {
-			expectf(t, u.Group == from, "u.Group should be (from-group) %d not %d", from, u.Group)
+			exf(u.Group == from, "u.Group should be (from-group) %d not %d", from, u.Group)
 		} else {
-			expectf(t, u.Group == to, "u.Group should be (to-group)%d not %d", to, u.Group)
+			exf(u.Group == to, "u.Group should be (to-group)%d not %d", to, u.Group)
 		}
 
 		expectNilErr(t, c.GroupPromotions.Delete(gpid))
@@ -1033,13 +1127,14 @@ func TestReplyStore(t *testing.T) {
 }
 
 func testReplyStore(t *testing.T, newID, newPostCount int, ip string) {
+	ex, exf := exp(t), expf(t)
 	replyTest2 := func(r *c.Reply, err error, rid, parentID, createdBy int, content, ip string) {
 		expectNilErr(t, err)
-		expectf(t, r.ID == rid, "RID #%d has the wrong ID. It should be %d not %d", rid, rid, r.ID)
-		expectf(t, r.ParentID == parentID, "The parent topic of RID #%d should be %d not %d", rid, parentID, r.ParentID)
-		expectf(t, r.CreatedBy == createdBy, "The creator of RID #%d should be %d not %d", rid, createdBy, r.CreatedBy)
-		expectf(t, r.Content == content, "The contents of RID #%d should be '%s' not %s", rid, content, r.Content)
-		expectf(t, r.IP == ip, "The IP of RID#%d should be '%s' not %s", rid, ip, r.IP)
+		exf(r.ID == rid, "RID #%d has the wrong ID. It should be %d not %d", rid, rid, r.ID)
+		exf(r.ParentID == parentID, "The parent topic of RID #%d should be %d not %d", rid, parentID, r.ParentID)
+		exf(r.CreatedBy == createdBy, "The creator of RID #%d should be %d not %d", rid, createdBy, r.CreatedBy)
+		exf(r.Content == content, "The contents of RID #%d should be '%s' not %s", rid, content, r.Content)
+		exf(r.IP == ip, "The IP of RID#%d should be '%s' not %s", rid, ip, r.IP)
 	}
 
 	replyTest := func(rid, parentID, createdBy int, content, ip string) {
@@ -1059,32 +1154,32 @@ func testReplyStore(t *testing.T, newID, newPostCount int, ip string) {
 
 	topic, err := c.Topics.Get(1)
 	expectNilErr(t, err)
-	expectf(t, topic.PostCount == newPostCount, "TID #%d's post count should be %d, not %d", topic.ID, newPostCount, topic.PostCount)
+	exf(topic.PostCount == newPostCount, "TID #%d's post count should be %d, not %d", topic.ID, newPostCount, topic.PostCount)
 
 	_, err = c.Rstore.GetCache().Get(newID)
 	recordMustNotExist(t, err, "RID #%d shouldn't be in the cache", newID)
 
 	rid, err := c.Rstore.Create(topic, "Fofofo", ip, 1)
 	expectNilErr(t, err)
-	expectf(t, rid == newID, "The next reply ID should be %d not %d", newID, rid)
-	expectf(t, topic.PostCount == newPostCount, "The old TID #1 in memory's post count should be %d, not %d", newPostCount+1, topic.PostCount)
+	exf(rid == newID, "The next reply ID should be %d not %d", newID, rid)
+	exf(topic.PostCount == newPostCount, "The old TID #1 in memory's post count should be %d, not %d", newPostCount+1, topic.PostCount)
 	// TODO: Test the reply count on the topic
 
 	replyTest(newID, 1, 1, "Fofofo", ip)
 
 	topic, err = c.Topics.Get(1)
 	expectNilErr(t, err)
-	expectf(t, topic.PostCount == newPostCount+1, "TID #1's post count should be %d, not %d", newPostCount+1, topic.PostCount)
+	exf(topic.PostCount == newPostCount+1, "TID #1's post count should be %d, not %d", newPostCount+1, topic.PostCount)
 
 	err = topic.CreateActionReply("destroy", ip, 1)
 	expectNilErr(t, err)
-	expectf(t, topic.PostCount == newPostCount+1, "The old TID #1 in memory's post count should be %d, not %d", newPostCount+1, topic.PostCount)
+	exf(topic.PostCount == newPostCount+1, "The old TID #1 in memory's post count should be %d, not %d", newPostCount+1, topic.PostCount)
 	replyTest(newID+1, 1, 1, "", ip)
 	// TODO: Check the actionType field of the reply, this might not be loaded by TopicStore, maybe we should add it there?
 
 	topic, err = c.Topics.Get(1)
 	expectNilErr(t, err)
-	expectf(t, topic.PostCount == newPostCount+2, "TID #1's post count should be %d, not %d", newPostCount+2, topic.PostCount)
+	exf(topic.PostCount == newPostCount+2, "TID #1's post count should be %d, not %d", newPostCount+2, topic.PostCount)
 
 	// TODO: Expand upon this
 	rid, err = c.Rstore.Create(topic, "hiii", ip, 1)
@@ -1094,14 +1189,14 @@ func testReplyStore(t *testing.T, newID, newPostCount int, ip string) {
 	reply, err := c.Rstore.Get(rid)
 	expectNilErr(t, err)
 	expectNilErr(t, reply.SetPost("huuu"))
-	expectf(t, reply.Content == "hiii", "topic.Content should be hiii, not %s", reply.Content)
+	exf(reply.Content == "hiii", "topic.Content should be hiii, not %s", reply.Content)
 	reply, err = c.Rstore.Get(rid)
 	expectNilErr(t, err)
-	expectf(t, reply.Content == "huuu", "topic.Content should be huuu, not %s", reply.Content)
+	exf(reply.Content == "huuu", "topic.Content should be huuu, not %s", reply.Content)
 	expectNilErr(t, reply.Delete())
 	// No pointer shenanigans x.x
 	// TODO: Log reply.ID and rid in cases of pointer shenanigans?
-	expect(t, reply.ID == rid, "pointer shenanigans")
+	ex(reply.ID == rid, "pointer shenanigans")
 
 	_, err = c.Rstore.GetCache().Get(rid)
 	recordMustNotExist(t, err, fmt.Sprintf("RID #%d shouldn't be in the cache", rid))
@@ -1120,12 +1215,13 @@ func TestLikes(t *testing.T) {
 	if !c.PluginsInited {
 		c.InitPlugins()
 	}
+	ex, exf := exp(t), expf(t)
 
 	uid := 1
 	ids, err := c.Likes.BulkExists([]int{}, uid, "replies")
 	//recordMustNotExist(t, err, "no likes should be found")
 	expectNilErr(t, err)
-	expect(t, len(ids) == 0, "len ids should be 0")
+	ex(len(ids) == 0, "len ids should be 0")
 
 	topic, err := c.Topics.Get(1)
 	expectNilErr(t, err)
@@ -1136,7 +1232,7 @@ func TestLikes(t *testing.T) {
 	expectNilErr(t, r.Like(uid))
 	ids, err = c.Likes.BulkExists([]int{rid}, uid, "replies")
 	expectNilErr(t, err)
-	expectf(t, len(ids) == 1, "ids should be %d not %d", 1, len(ids))
+	exf(len(ids) == 1, "ids should be %d not %d", 1, len(ids))
 
 	rid2, err := c.Rstore.Create(topic, "hi 2 u 2", "", uid)
 	expectNilErr(t, err)
@@ -1145,17 +1241,17 @@ func TestLikes(t *testing.T) {
 	expectNilErr(t, r2.Like(uid))
 	ids, err = c.Likes.BulkExists([]int{rid, rid2}, uid, "replies")
 	expectNilErr(t, err)
-	expectf(t, len(ids) == 2, "ids should be %d not %d", 2, len(ids))
+	exf(len(ids) == 2, "ids should be %d not %d", 2, len(ids))
 
 	expectNilErr(t, r.Unlike(uid))
 	ids, err = c.Likes.BulkExists([]int{rid2}, uid, "replies")
 	expectNilErr(t, err)
-	expectf(t, len(ids) == 1, "ids should be %d not %d", 1, len(ids))
+	exf(len(ids) == 1, "ids should be %d not %d", 1, len(ids))
 	expectNilErr(t, r2.Unlike(uid))
 	ids, err = c.Likes.BulkExists([]int{}, uid, "replies")
 	//recordMustNotExist(t, err, "no likes should be found")
 	expectNilErr(t, err)
-	expect(t, len(ids) == 0, "len ids should be 0")
+	ex(len(ids) == 0, "len ids should be 0")
 
 	//BulkExists(ids []int, sentBy int, targetType string) (eids []int, err error)
 
@@ -1168,34 +1264,35 @@ func TestAttachments(t *testing.T) {
 	if !c.PluginsInited {
 		c.InitPlugins()
 	}
+	ex, exf := exp(t), expf(t)
 
 	filename := "n0-48.png"
 	srcFile := "./test_data/" + filename
 	destFile := "./attachs/" + filename
 
-	expect(t, c.Attachments.Count() == 0, "the number of attachments should be 0")
-	expect(t, c.Attachments.CountIn("topics", 1) == 0, "the number of attachments in topic 1 should be 0")
-	expectf(t, c.Attachments.CountInPath(filename) == 0, "the number of attachments with path '%s' should be 0", filename)
+	ex(c.Attachments.Count() == 0, "the number of attachments should be 0")
+	ex(c.Attachments.CountIn("topics", 1) == 0, "the number of attachments in topic 1 should be 0")
+	exf(c.Attachments.CountInPath(filename) == 0, "the number of attachments with path '%s' should be 0", filename)
 	_, err := c.Attachments.FGet(1)
 	if err != nil && err != sql.ErrNoRows {
 		t.Error(err)
 	}
-	expect(t, err == sql.ErrNoRows, ".FGet should have no results")
+	ex(err == sql.ErrNoRows, ".FGet should have no results")
 	_, err = c.Attachments.Get(1)
 	if err != nil && err != sql.ErrNoRows {
 		t.Error(err)
 	}
-	expect(t, err == sql.ErrNoRows, ".Get should have no results")
+	ex(err == sql.ErrNoRows, ".Get should have no results")
 	_, err = c.Attachments.MiniGetList("topics", 1)
 	if err != nil && err != sql.ErrNoRows {
 		t.Error(err)
 	}
-	expect(t, err == sql.ErrNoRows, ".MiniGetList should have no results")
+	ex(err == sql.ErrNoRows, ".MiniGetList should have no results")
 	_, err = c.Attachments.BulkMiniGetList("topics", []int{1})
 	if err != nil && err != sql.ErrNoRows {
 		t.Error(err)
 	}
-	expect(t, err == sql.ErrNoRows, ".BulkMiniGetList should have no results")
+	ex(err == sql.ErrNoRows, ".BulkMiniGetList should have no results")
 
 	simUpload := func() {
 		// Sim an upload, try a proper upload through the proper pathway later on
@@ -1218,31 +1315,31 @@ func TestAttachments(t *testing.T) {
 	expectNilErr(t, err)
 	aid, err := c.Attachments.Add(2, "forums", tid, "topics", 1, filename, "")
 	expectNilErr(t, err)
-	expectf(t, aid == 1, "aid should be 1 not %d", aid)
+	exf(aid == 1, "aid should be 1 not %d", aid)
 	expectNilErr(t, c.Attachments.AddLinked("topics", tid))
-	expect(t, c.Attachments.Count() == 1, "the number of attachments should be 1")
-	expectf(t, c.Attachments.CountIn("topics", tid) == 1, "the number of attachments in topic %d should be 1", tid)
-	expectf(t, c.Attachments.CountInPath(filename) == 1, "the number of attachments with path '%s' should be 1", filename)
+	ex(c.Attachments.Count() == 1, "the number of attachments should be 1")
+	exf(c.Attachments.CountIn("topics", tid) == 1, "the number of attachments in topic %d should be 1", tid)
+	exf(c.Attachments.CountInPath(filename) == 1, "the number of attachments with path '%s' should be 1", filename)
 
 	e := func(a *c.MiniAttachment, aid, sid, oid, uploadedBy int, path, extra, ext string) {
-		expectf(t, a.ID == aid, "ID should be %d not %d", aid, a.ID)
-		expectf(t, a.SectionID == sid, "SectionID should be %d not %d", sid, a.SectionID)
-		expectf(t, a.OriginID == oid, "OriginID should be %d not %d", oid, a.OriginID)
-		expectf(t, a.UploadedBy == uploadedBy, "UploadedBy should be %d not %d", uploadedBy, a.UploadedBy)
-		expectf(t, a.Path == path, "Path should be %s not %s", path, a.Path)
-		expectf(t, a.Extra == extra, "Extra should be %s not %s", extra, a.Extra)
-		expect(t, a.Image, "Image should be true")
-		expectf(t, a.Ext == ext, "Ext should be %s not %s", ext, a.Ext)
+		exf(a.ID == aid, "ID should be %d not %d", aid, a.ID)
+		exf(a.SectionID == sid, "SectionID should be %d not %d", sid, a.SectionID)
+		exf(a.OriginID == oid, "OriginID should be %d not %d", oid, a.OriginID)
+		exf(a.UploadedBy == uploadedBy, "UploadedBy should be %d not %d", uploadedBy, a.UploadedBy)
+		exf(a.Path == path, "Path should be %s not %s", path, a.Path)
+		exf(a.Extra == extra, "Extra should be %s not %s", extra, a.Extra)
+		ex(a.Image, "Image should be true")
+		exf(a.Ext == ext, "Ext should be %s not %s", ext, a.Ext)
 	}
 	e2 := func(a *c.Attachment, aid, sid, oid, uploadedBy int, path, extra, ext string) {
-		expectf(t, a.ID == aid, "ID should be %d not %d", aid, a.ID)
-		expectf(t, a.SectionID == sid, "SectionID should be %d not %d", sid, a.SectionID)
-		expectf(t, a.OriginID == oid, "OriginID should be %d not %d", oid, a.OriginID)
-		expectf(t, a.UploadedBy == uploadedBy, "UploadedBy should be %d not %d", uploadedBy, a.UploadedBy)
-		expectf(t, a.Path == path, "Path should be %s not %s", path, a.Path)
-		expectf(t, a.Extra == extra, "Extra should be %s not %s", extra, a.Extra)
-		expect(t, a.Image, "Image should be true")
-		expectf(t, a.Ext == ext, "Ext should be %s not %s", ext, a.Ext)
+		exf(a.ID == aid, "ID should be %d not %d", aid, a.ID)
+		exf(a.SectionID == sid, "SectionID should be %d not %d", sid, a.SectionID)
+		exf(a.OriginID == oid, "OriginID should be %d not %d", oid, a.OriginID)
+		exf(a.UploadedBy == uploadedBy, "UploadedBy should be %d not %d", uploadedBy, a.UploadedBy)
+		exf(a.Path == path, "Path should be %s not %s", path, a.Path)
+		exf(a.Extra == extra, "Extra should be %s not %s", extra, a.Extra)
+		ex(a.Image, "Image should be true")
+		exf(a.Ext == ext, "Ext should be %s not %s", ext, a.Ext)
 	}
 
 	f2 := func(aid, sid, oid int, extra string, topic bool) {
@@ -1262,25 +1359,25 @@ func TestAttachments(t *testing.T) {
 
 		alist, err := c.Attachments.MiniGetList(tbl, oid)
 		expectNilErr(t, err)
-		expectf(t, len(alist) == 1, "len(alist) should be 1 not %d", len(alist))
+		exf(len(alist) == 1, "len(alist) should be 1 not %d", len(alist))
 		a = alist[0]
 		e(a, aid, sid, oid, 1, filename, extra, "png")
 
 		amap, err := c.Attachments.BulkMiniGetList(tbl, []int{oid})
 		expectNilErr(t, err)
-		expectf(t, len(amap) == 1, "len(amap) should be 1 not %d", len(amap))
+		exf(len(amap) == 1, "len(amap) should be 1 not %d", len(amap))
 		alist, ok := amap[oid]
 		if !ok {
 			t.Logf("key %d not found in amap", oid)
 		}
-		expectf(t, len(alist) == 1, "len(alist) should be 1 not %d", len(alist))
+		exf(len(alist) == 1, "len(alist) should be 1 not %d", len(alist))
 		a = alist[0]
 		e(a, aid, sid, oid, 1, filename, extra, "png")
 	}
 
 	topic, err := c.Topics.Get(tid)
 	expectNilErr(t, err)
-	expectf(t, topic.AttachCount == 1, "topic.AttachCount should be 1 not %d", topic.AttachCount)
+	exf(topic.AttachCount == 1, "topic.AttachCount should be 1 not %d", topic.AttachCount)
 	f2(aid, 2, tid, "", true)
 	expectNilErr(t, topic.MoveTo(1))
 	f2(aid, 1, tid, "", true)
@@ -1298,52 +1395,52 @@ func TestAttachments(t *testing.T) {
 		}
 		//expectNilErr(t, c.Attachments.Delete(aid))
 		expectNilErr(t, c.DeleteAttachment(aid))
-		expect(t, c.Attachments.Count() == 0, "the number of attachments should be 0")
-		expectf(t, c.Attachments.CountIn(tbl, oid) == 0, "the number of attachments in topic %d should be 0", tid)
-		expectf(t, c.Attachments.CountInPath(filename) == 0, "the number of attachments with path '%s' should be 0", filename)
+		ex(c.Attachments.Count() == 0, "the number of attachments should be 0")
+		exf(c.Attachments.CountIn(tbl, oid) == 0, "the number of attachments in topic %d should be 0", tid)
+		exf(c.Attachments.CountInPath(filename) == 0, "the number of attachments with path '%s' should be 0", filename)
 		_, err = c.Attachments.FGet(aid)
 		if err != nil && err != sql.ErrNoRows {
 			t.Error(err)
 		}
-		expect(t, err == sql.ErrNoRows, ".FGet should have no results")
+		ex(err == sql.ErrNoRows, ".FGet should have no results")
 		_, err = c.Attachments.Get(aid)
 		if err != nil && err != sql.ErrNoRows {
 			t.Error(err)
 		}
-		expect(t, err == sql.ErrNoRows, ".Get should have no results")
+		ex(err == sql.ErrNoRows, ".Get should have no results")
 		_, err = c.Attachments.MiniGetList(tbl, oid)
 		if err != nil && err != sql.ErrNoRows {
 			t.Error(err)
 		}
-		expect(t, err == sql.ErrNoRows, ".MiniGetList should have no results")
+		ex(err == sql.ErrNoRows, ".MiniGetList should have no results")
 		_, err = c.Attachments.BulkMiniGetList(tbl, []int{oid})
 		if err != nil && err != sql.ErrNoRows {
 			t.Error(err)
 		}
-		expect(t, err == sql.ErrNoRows, ".BulkMiniGetList should have no results")
+		ex(err == sql.ErrNoRows, ".BulkMiniGetList should have no results")
 	}
 	deleteTest(aid, tid, true)
 	topic, err = c.Topics.Get(tid)
 	expectNilErr(t, err)
-	expectf(t, topic.AttachCount == 0, "topic.AttachCount should be 0 not %d", topic.AttachCount)
+	exf(topic.AttachCount == 0, "topic.AttachCount should be 0 not %d", topic.AttachCount)
 
 	simUpload()
 	rid, err := c.Rstore.Create(topic, "Reply Filler", "", 1)
 	expectNilErr(t, err)
 	aid, err = c.Attachments.Add(2, "forums", rid, "replies", 1, filename, strconv.Itoa(topic.ID))
 	expectNilErr(t, err)
-	expectf(t, aid == 2, "aid should be 2 not %d", aid)
+	exf(aid == 2, "aid should be 2 not %d", aid)
 	expectNilErr(t, c.Attachments.AddLinked("replies", rid))
 	r, err := c.Rstore.Get(rid)
 	expectNilErr(t, err)
-	expectf(t, r.AttachCount == 1, "r.AttachCount should be 1 not %d", r.AttachCount)
+	exf(r.AttachCount == 1, "r.AttachCount should be 1 not %d", r.AttachCount)
 	f2(aid, 2, rid, strconv.Itoa(topic.ID), false)
 	expectNilErr(t, c.Attachments.MoveTo(1, rid, "replies"))
 	f2(aid, 1, rid, strconv.Itoa(topic.ID), false)
 	deleteTest(aid, rid, false)
 	r, err = c.Rstore.Get(rid)
 	expectNilErr(t, err)
-	expectf(t, r.AttachCount == 0, "r.AttachCount should be 0 not %d", r.AttachCount)
+	exf(r.AttachCount == 0, "r.AttachCount should be 0 not %d", r.AttachCount)
 
 	// TODO: Path overlap tests
 }
@@ -1460,6 +1557,7 @@ func TestProfileReplyStore(t *testing.T) {
 	testProfileReplyStore(t, 2, "")
 }
 func testProfileReplyStore(t *testing.T, newID int, ip string) {
+	exf := expf(t)
 	// ? - Commented this one out as strong constraints like this put an unreasonable load on the database, we only want errors if a delete which should succeed fails
 	//profileReply := c.BlankProfileReply(1)
 	//err = profileReply.Delete()
@@ -1468,20 +1566,19 @@ func testProfileReplyStore(t *testing.T, newID int, ip string) {
 	profileID := 1
 	prid, err := c.Prstore.Create(profileID, "Haha", 1, ip)
 	expectNilErr(t, err)
-	expectf(t, prid == newID, "The first profile reply should have an ID of %d", newID)
+	exf(prid == newID, "The first profile reply should have an ID of %d", newID)
 
 	pr, err := c.Prstore.Get(newID)
 	expectNilErr(t, err)
-	expectf(t, pr.ID == newID, "The profile reply should have an ID of %d not %d", newID, pr.ID)
-	expectf(t, pr.ParentID == 1, "The parent ID of the profile reply should be 1 not %d", pr.ParentID)
-	expectf(t, pr.Content == "Haha", "The profile reply's contents should be 'Haha' not '%s'", pr.Content)
-	expectf(t, pr.CreatedBy == 1, "The profile reply's creator should be 1 not %d", pr.CreatedBy)
-	expectf(t, pr.IP == ip, "The profile reply's IP should be '%s' not '%s'", ip, pr.IP)
+	exf(pr.ID == newID, "The profile reply should have an ID of %d not %d", newID, pr.ID)
+	exf(pr.ParentID == 1, "The parent ID of the profile reply should be 1 not %d", pr.ParentID)
+	exf(pr.Content == "Haha", "The profile reply's contents should be 'Haha' not '%s'", pr.Content)
+	exf(pr.CreatedBy == 1, "The profile reply's creator should be 1 not %d", pr.CreatedBy)
+	exf(pr.IP == ip, "The profile reply's IP should be '%s' not '%s'", ip, pr.IP)
 
-	err = pr.Delete()
-	expectNilErr(t, err)
+	expectNilErr(t, pr.Delete())
 	_, err = c.Prstore.Get(newID)
-	expectf(t, err != nil, "PRID #%d shouldn't exist after being deleted", newID)
+	exf(err != nil, "PRID #%d shouldn't exist after being deleted", newID)
 
 	// TODO: Test pr.SetBody() and pr.Creator()
 }
@@ -1491,6 +1588,7 @@ func TestConvos(t *testing.T) {
 	if !c.PluginsInited {
 		c.InitPlugins()
 	}
+	ex, exf := exp(t), expf(t)
 
 	sf := func(i interface{}, e error) error {
 		return e
@@ -1517,8 +1615,8 @@ func TestConvos(t *testing.T) {
 		mf(sf(c.Convos.GetUserExtra(uid, offset)), fmt.Sprintf("convo getuserextra %d %d should%s exist", uid, offset, s), exists)
 	}
 
-	expect(t, c.Convos.GetUserCount(-1) == 0, "getusercount should be zero")
-	expect(t, c.Convos.GetUserCount(0) == 0, "getusercount should be zero")
+	ex(c.Convos.GetUserCount(-1) == 0, "getusercount should be 0")
+	ex(c.Convos.GetUserCount(0) == 0, "getusercount should be 0")
 	mf(sf(c.Convos.Get(-1)), "convo -1 should not exist", false)
 	mf(sf(c.Convos.Get(0)), "convo 0 should not exist", false)
 	gu(-1, -1, false)
@@ -1528,7 +1626,7 @@ func TestConvos(t *testing.T) {
 	gue(-1, 0, false)
 	gue(0, 0, false)
 
-	nf := func(cid int, count int) {
+	nf := func(cid, count int) {
 		ex := count > 0
 		s := ""
 		if !ex {
@@ -1538,10 +1636,10 @@ func TestConvos(t *testing.T) {
 		gu(1, 0, ex)
 		gu(1, 5, false) // invariant may change in future tests
 
-		expectf(t, c.Convos.GetUserCount(1) == count, "getusercount should be %d", count)
+		exf(c.Convos.GetUserCount(1) == count, "getusercount should be %d", count)
 		gue(1, 0, ex)
 		gue(1, 5, false) // invariant may change in future tests
-		expectf(t, c.Convos.Count() == count, "convos count should be %d", count)
+		exf(c.Convos.Count() == count, "convos count should be %d", count)
 	}
 	nf(1, 0)
 
@@ -1551,29 +1649,29 @@ func TestConvos(t *testing.T) {
 
 	cid, err := c.Convos.Create("hehe", 1, []int{uid})
 	expectNilErr(t, err)
-	expect(t, cid == 1, "cid should be 1")
-	expect(t, c.Convos.Count() == 1, "convos count should be 1")
+	ex(cid == 1, "cid should be 1")
+	ex(c.Convos.Count() == 1, "convos count should be 1")
 
 	co, err := c.Convos.Get(cid)
 	expectNilErr(t, err)
-	expect(t, co.ID == 1, "co.ID should be 1")
-	expect(t, co.CreatedBy == 1, "co.CreatedBy should be 1")
+	ex(co.ID == 1, "co.ID should be 1")
+	ex(co.CreatedBy == 1, "co.CreatedBy should be 1")
 	// TODO: CreatedAt test
-	expect(t, co.LastReplyBy == 1, "co.LastReplyBy should be 1")
+	ex(co.LastReplyBy == 1, "co.LastReplyBy should be 1")
 	// TODO: LastReplyAt test
 	expectIntToBeX(t, co.PostsCount(), 1, "postscount should be 1, not %d")
-	expect(t, co.Has(uid), "saturn should be in the conversation")
-	expect(t, !co.Has(9999), "uid 9999 should not be in the conversation")
+	ex(co.Has(uid), "saturn should be in the conversation")
+	ex(!co.Has(9999), "uid 9999 should not be in the conversation")
 	uids, err := co.Uids()
 	expectNilErr(t, err)
 	expectIntToBeX(t, len(uids), 2, "uids length should be 2, not %d")
-	expectf(t, uids[0] == uid, "uids[0] should be %d, not %d", uid, uids[0])
-	expectf(t, uids[1] == 1, "uids[1] should be %d, not %d", 1, uids[1])
+	exf(uids[0] == uid, "uids[0] should be %d, not %d", uid, uids[0])
+	exf(uids[1] == 1, "uids[1] should be %d, not %d", 1, uids[1])
 	nf(cid, 1)
 
 	expectNilErr(t, c.Convos.Delete(cid))
 	expectIntToBeX(t, co.PostsCount(), 0, "postscount should be 0, not %d")
-	expect(t, !co.Has(uid), "saturn should not be in a deleted conversation")
+	ex(!co.Has(uid), "saturn should not be in a deleted conversation")
 	uids, err = co.Uids()
 	expectNilErr(t, err)
 	expectIntToBeX(t, len(uids), 0, "uids length should be 0, not %d")
@@ -1585,25 +1683,25 @@ func TestConvos(t *testing.T) {
 
 	ok, err := c.UserBlocks.IsBlockedBy(1, 1)
 	expectNilErr(t, err)
-	expect(t, !ok, "there shouldn't be any blocks")
+	ex(!ok, "there shouldn't be any blocks")
 	ok, err = c.UserBlocks.BulkIsBlockedBy([]int{1}, 1)
 	expectNilErr(t, err)
-	expect(t, !ok, "there shouldn't be any blocks")
+	ex(!ok, "there shouldn't be any blocks")
 	bf := func(blocker, offset, perPage, expectLen, blockee int) {
 		l, err := c.UserBlocks.BlockedByOffset(blocker, offset, perPage)
 		expectNilErr(t, err)
-		expectf(t, len(l) == expectLen, "there should be %d users blocked by %d not %d", expectLen, blocker, len(l))
+		exf(len(l) == expectLen, "there should be %d users blocked by %d not %d", expectLen, blocker, len(l))
 		if len(l) > 0 {
-			expectf(t, l[0] == blockee, "blocked uid should be %d not %d", blockee, l[0])
+			exf(l[0] == blockee, "blocked uid should be %d not %d", blockee, l[0])
 		}
 	}
 	nbf := func(blocker, blockee int) {
 		ok, err := c.UserBlocks.IsBlockedBy(1, 2)
 		expectNilErr(t, err)
-		expect(t, !ok, "there shouldn't be any blocks")
+		ex(!ok, "there shouldn't be any blocks")
 		ok, err = c.UserBlocks.BulkIsBlockedBy([]int{1}, 2)
 		expectNilErr(t, err)
-		expect(t, !ok, "there shouldn't be any blocks")
+		ex(!ok, "there shouldn't be any blocks")
 		expectIntToBeX(t, c.UserBlocks.BlockedByCount(1), 0, "blockedbycount for 1 should be 1, not %d")
 		bf(1, 0, 1, 0, 0)
 		bf(1, 0, 15, 0, 0)
@@ -1615,7 +1713,7 @@ func TestConvos(t *testing.T) {
 	expectNilErr(t, c.UserBlocks.Add(1, 2))
 	ok, err = c.UserBlocks.IsBlockedBy(1, 2)
 	expectNilErr(t, err)
-	expect(t, ok, "2 should be blocked by 1")
+	ex(ok, "2 should be blocked by 1")
 	expectIntToBeX(t, c.UserBlocks.BlockedByCount(1), 1, "blockedbycount for 1 should be 1, not %d")
 	bf(1, 0, 1, 1, 2)
 	bf(1, 0, 15, 1, 2)
@@ -1626,7 +1724,7 @@ func TestConvos(t *testing.T) {
 	expectNilErr(t, c.UserBlocks.Add(1, 2))
 	ok, err = c.UserBlocks.IsBlockedBy(1, 2)
 	expectNilErr(t, err)
-	expect(t, ok, "2 should be blocked by 1")
+	ex(ok, "2 should be blocked by 1")
 	//expectIntToBeX(t, c.UserBlocks.BlockedByCount(1), 1, "blockedbycount for 1 should be 1, not %d") // todo: fix this
 	//bf(1, 0, 1, 1, 2) // todo: fix this
 	//bf(1, 0, 15, 1, 2) // todo: fix this
@@ -1646,8 +1744,9 @@ func TestConvos(t *testing.T) {
 
 func TestActivityStream(t *testing.T) {
 	miscinit(t)
+	ex := exp(t)
 
-	expect(t, c.Activity.Count() == 0, "activity stream count should be 0")
+	ex(c.Activity.Count() == 0, "activity stream count should be 0")
 
 	_, err := c.Activity.Get(-1)
 	recordMustNotExist(t, err, "activity item -1 shouldn't exist")
@@ -1659,25 +1758,31 @@ func TestActivityStream(t *testing.T) {
 	a := c.Alert{ActorID: 1, TargetUserID: 1, Event: "like", ElementType: "topic", ElementID: 1}
 	id, err := c.Activity.Add(a)
 	expectNilErr(t, err)
-	expect(t, id == 1, "new activity item id should be 1")
+	ex(id == 1, "new activity item id should be 1")
 
-	expect(t, c.Activity.Count() == 1, "activity stream count should be 1")
-	alert, err := c.Activity.Get(1)
+	ex(c.Activity.Count() == 1, "activity stream count should be 1")
+	al, err := c.Activity.Get(1)
 	expectNilErr(t, err)
-	expect(t, alert.ActorID == 1, "alert actorid should be 1")
-	expect(t, alert.TargetUserID == 1, "alert targetuserid should be 1")
-	expect(t, alert.Event == "like", "alert event type should be like")
-	expect(t, alert.ElementType == "topic", "alert element type should be topic")
-	expect(t, alert.ElementID == 1, "alert element id should be 1")
+	ex(al.ActorID == 1, "alert actorid should be 1")
+	ex(al.TargetUserID == 1, "alert targetuserid should be 1")
+	ex(al.Event == "like", "alert event type should be like")
+	ex(al.ElementType == "topic", "alert element type should be topic")
+	ex(al.ElementID == 1, "alert element id should be 1")
+
+	expectNilErr(t, c.Activity.Delete(id))
+	ex(c.Activity.Count() == 0, "activity stream count should be 0")
+
+	// TODO: More tests
 }
 
 func TestLogs(t *testing.T) {
+	ex, exf := exp(t), expf(t)
 	miscinit(t)
 	gTests := func(s c.LogStore, phrase string) {
-		expect(t, s.Count() == 0, "There shouldn't be any "+phrase)
+		ex(s.Count() == 0, "There shouldn't be any "+phrase)
 		logs, err := s.GetOffset(0, 25)
 		expectNilErr(t, err)
-		expect(t, len(logs) == 0, "The log slice should be empty")
+		ex(len(logs) == 0, "The log slice should be empty")
 	}
 	gTests(c.ModLogs, "modlogs")
 	gTests(c.AdminLogs, "adminlogs")
@@ -1686,17 +1791,17 @@ func TestLogs(t *testing.T) {
 		err := s.Create("something", 0, "bumblefly", "::1", 1)
 		expectNilErr(t, err)
 		count := s.Count()
-		expectf(t, count == 1, "store.Count should return one, not %d", count)
+		exf(count == 1, "store.Count should return one, not %d", count)
 		logs, err := s.GetOffset(0, 25)
 		recordMustExist(t, err, "We should have at-least one "+phrase)
-		expect(t, len(logs) == 1, "The length of the log slice should be one")
+		ex(len(logs) == 1, "The length of the log slice should be one")
 
 		l := logs[0]
-		expect(t, l.Action == "something", "l.Action is not something")
-		expect(t, l.ElementID == 0, "l.ElementID is not 0")
-		expect(t, l.ElementType == "bumblefly", "l.ElementType is not bumblefly")
-		expect(t, l.IP == "::1", "l.IP is not ::1")
-		expect(t, l.ActorID == 1, "l.ActorID is not 1")
+		ex(l.Action == "something", "l.Action is not something")
+		ex(l.ElementID == 0, "l.ElementID is not 0")
+		ex(l.ElementType == "bumblefly", "l.ElementType is not bumblefly")
+		ex(l.IP == "::1", "l.IP is not ::1")
+		ex(l.ActorID == 1, "l.ActorID is not 1")
 		// TODO: Add a test for log.DoneAt? Maybe throw in some dates and times which are clearly impossible but which may occur due to timezone bugs?
 	}
 	gTests2(c.ModLogs, "modlog")
@@ -1710,119 +1815,120 @@ func TestPluginManager(t *testing.T) {
 	if !c.PluginsInited {
 		c.InitPlugins()
 	}
+	ex := exp(t)
 
 	_, ok := c.Plugins["fairy-dust"]
-	expect(t, !ok, "Plugin fairy-dust shouldn't exist")
+	ex(!ok, "Plugin fairy-dust shouldn't exist")
 	pl, ok := c.Plugins["bbcode"]
-	expect(t, ok, "Plugin bbcode should exist")
-	expect(t, !pl.Installable, "Plugin bbcode shouldn't be installable")
-	expect(t, !pl.Installed, "Plugin bbcode shouldn't be 'installed'")
-	expect(t, !pl.Active, "Plugin bbcode shouldn't be active")
+	ex(ok, "Plugin bbcode should exist")
+	ex(!pl.Installable, "Plugin bbcode shouldn't be installable")
+	ex(!pl.Installed, "Plugin bbcode shouldn't be 'installed'")
+	ex(!pl.Active, "Plugin bbcode shouldn't be active")
 	active, err := pl.BypassActive()
 	expectNilErr(t, err)
-	expect(t, !active, "Plugin bbcode shouldn't be active in the database either")
+	ex(!active, "Plugin bbcode shouldn't be active in the database either")
 	hasPlugin, err := pl.InDatabase()
 	expectNilErr(t, err)
-	expect(t, !hasPlugin, "Plugin bbcode shouldn't exist in the database")
+	ex(!hasPlugin, "Plugin bbcode shouldn't exist in the database")
 	// TODO: Add some test cases for SetActive and SetInstalled before calling AddToDatabase
 
 	expectNilErr(t, pl.AddToDatabase(true, false))
-	expect(t, !pl.Installable, "Plugin bbcode shouldn't be installable")
-	expect(t, !pl.Installed, "Plugin bbcode shouldn't be 'installed'")
-	expect(t, pl.Active, "Plugin bbcode should be active")
+	ex(!pl.Installable, "Plugin bbcode shouldn't be installable")
+	ex(!pl.Installed, "Plugin bbcode shouldn't be 'installed'")
+	ex(pl.Active, "Plugin bbcode should be active")
 	active, err = pl.BypassActive()
 	expectNilErr(t, err)
-	expect(t, active, "Plugin bbcode should be active in the database too")
+	ex(active, "Plugin bbcode should be active in the database too")
 	hasPlugin, err = pl.InDatabase()
 	expectNilErr(t, err)
-	expect(t, hasPlugin, "Plugin bbcode should exist in the database")
-	expect(t, pl.Init != nil, "Plugin bbcode should have an init function")
+	ex(hasPlugin, "Plugin bbcode should exist in the database")
+	ex(pl.Init != nil, "Plugin bbcode should have an init function")
 	expectNilErr(t, pl.Init(pl))
 
 	expectNilErr(t, pl.SetActive(true))
-	expect(t, !pl.Installable, "Plugin bbcode shouldn't be installable")
-	expect(t, !pl.Installed, "Plugin bbcode shouldn't be 'installed'")
-	expect(t, pl.Active, "Plugin bbcode should still be active")
+	ex(!pl.Installable, "Plugin bbcode shouldn't be installable")
+	ex(!pl.Installed, "Plugin bbcode shouldn't be 'installed'")
+	ex(pl.Active, "Plugin bbcode should still be active")
 	active, err = pl.BypassActive()
 	expectNilErr(t, err)
-	expect(t, active, "Plugin bbcode should still be active in the database too")
+	ex(active, "Plugin bbcode should still be active in the database too")
 	hasPlugin, err = pl.InDatabase()
 	expectNilErr(t, err)
-	expect(t, hasPlugin, "Plugin bbcode should still exist in the database")
+	ex(hasPlugin, "Plugin bbcode should still exist in the database")
 
 	expectNilErr(t, pl.SetActive(false))
-	expect(t, !pl.Installable, "Plugin bbcode shouldn't be installable")
-	expect(t, !pl.Installed, "Plugin bbcode shouldn't be 'installed'")
-	expect(t, !pl.Active, "Plugin bbcode shouldn't be active")
+	ex(!pl.Installable, "Plugin bbcode shouldn't be installable")
+	ex(!pl.Installed, "Plugin bbcode shouldn't be 'installed'")
+	ex(!pl.Active, "Plugin bbcode shouldn't be active")
 	active, err = pl.BypassActive()
 	expectNilErr(t, err)
-	expect(t, !active, "Plugin bbcode shouldn't be active in the database")
+	ex(!active, "Plugin bbcode shouldn't be active in the database")
 	hasPlugin, err = pl.InDatabase()
 	expectNilErr(t, err)
-	expect(t, hasPlugin, "Plugin bbcode should still exist in the database")
-	expect(t, pl.Deactivate != nil, "Plugin bbcode should have an init function")
+	ex(hasPlugin, "Plugin bbcode should still exist in the database")
+	ex(pl.Deactivate != nil, "Plugin bbcode should have an init function")
 	pl.Deactivate(pl) // Returns nothing
 
 	// Not installable, should not be mutated
-	expect(t, pl.SetInstalled(true) == c.ErrPluginNotInstallable, "Plugin was set as installed despite not being installable")
-	expect(t, !pl.Installable, "Plugin bbcode shouldn't be installable")
-	expect(t, !pl.Installed, "Plugin bbcode shouldn't be 'installed'")
-	expect(t, !pl.Active, "Plugin bbcode shouldn't be active")
+	ex(pl.SetInstalled(true) == c.ErrPluginNotInstallable, "Plugin was set as installed despite not being installable")
+	ex(!pl.Installable, "Plugin bbcode shouldn't be installable")
+	ex(!pl.Installed, "Plugin bbcode shouldn't be 'installed'")
+	ex(!pl.Active, "Plugin bbcode shouldn't be active")
 	active, err = pl.BypassActive()
 	expectNilErr(t, err)
-	expect(t, !active, "Plugin bbcode shouldn't be active in the database either")
+	ex(!active, "Plugin bbcode shouldn't be active in the database either")
 	hasPlugin, err = pl.InDatabase()
 	expectNilErr(t, err)
-	expect(t, hasPlugin, "Plugin bbcode should still exist in the database")
+	ex(hasPlugin, "Plugin bbcode should still exist in the database")
 
-	expect(t, pl.SetInstalled(false) == c.ErrPluginNotInstallable, "Plugin was set as not installed despite not being installable")
-	expect(t, !pl.Installable, "Plugin bbcode shouldn't be installable")
-	expect(t, !pl.Installed, "Plugin bbcode shouldn't be 'installed'")
-	expect(t, !pl.Active, "Plugin bbcode shouldn't be active")
+	ex(pl.SetInstalled(false) == c.ErrPluginNotInstallable, "Plugin was set as not installed despite not being installable")
+	ex(!pl.Installable, "Plugin bbcode shouldn't be installable")
+	ex(!pl.Installed, "Plugin bbcode shouldn't be 'installed'")
+	ex(!pl.Active, "Plugin bbcode shouldn't be active")
 	active, err = pl.BypassActive()
 	expectNilErr(t, err)
-	expect(t, !active, "Plugin bbcode shouldn't be active in the database either")
+	ex(!active, "Plugin bbcode shouldn't be active in the database either")
 	hasPlugin, err = pl.InDatabase()
 	expectNilErr(t, err)
-	expect(t, hasPlugin, "Plugin bbcode should still exist in the database")
+	ex(hasPlugin, "Plugin bbcode should still exist in the database")
 
 	// This isn't really installable, but we want to get a few tests done before getting plugins which are stateful
 	pl.Installable = true
 	expectNilErr(t, pl.SetInstalled(true))
-	expect(t, pl.Installable, "Plugin bbcode should be installable")
-	expect(t, pl.Installed, "Plugin bbcode should be 'installed'")
-	expect(t, !pl.Active, "Plugin bbcode shouldn't be active")
+	ex(pl.Installable, "Plugin bbcode should be installable")
+	ex(pl.Installed, "Plugin bbcode should be 'installed'")
+	ex(!pl.Active, "Plugin bbcode shouldn't be active")
 	active, err = pl.BypassActive()
 	expectNilErr(t, err)
-	expect(t, !active, "Plugin bbcode shouldn't be active in the database either")
+	ex(!active, "Plugin bbcode shouldn't be active in the database either")
 	hasPlugin, err = pl.InDatabase()
 	expectNilErr(t, err)
-	expect(t, hasPlugin, "Plugin bbcode should still exist in the database")
+	ex(hasPlugin, "Plugin bbcode should still exist in the database")
 
 	expectNilErr(t, pl.SetInstalled(false))
-	expect(t, pl.Installable, "Plugin bbcode should be installable")
-	expect(t, !pl.Installed, "Plugin bbcode shouldn't be 'installed'")
-	expect(t, !pl.Active, "Plugin bbcode shouldn't be active")
+	ex(pl.Installable, "Plugin bbcode should be installable")
+	ex(!pl.Installed, "Plugin bbcode shouldn't be 'installed'")
+	ex(!pl.Active, "Plugin bbcode shouldn't be active")
 	active, err = pl.BypassActive()
 	expectNilErr(t, err)
-	expect(t, !active, "Plugin bbcode shouldn't be active in the database either")
+	ex(!active, "Plugin bbcode shouldn't be active in the database either")
 	hasPlugin, err = pl.InDatabase()
 	expectNilErr(t, err)
-	expect(t, hasPlugin, "Plugin bbcode should still exist in the database")
+	ex(hasPlugin, "Plugin bbcode should still exist in the database")
 
 	// Bugs sometimes arise when we try to delete a hook when there are multiple, so test for that
 	// TODO: Do a finer grained test for that case...? A bigger test might catch more odd cases with multiple plugins
 	pl2, ok := c.Plugins["markdown"]
-	expect(t, ok, "Plugin markdown should exist")
-	expect(t, !pl2.Installable, "Plugin markdown shouldn't be installable")
-	expect(t, !pl2.Installed, "Plugin markdown shouldn't be 'installed'")
-	expect(t, !pl2.Active, "Plugin markdown shouldn't be active")
+	ex(ok, "Plugin markdown should exist")
+	ex(!pl2.Installable, "Plugin markdown shouldn't be installable")
+	ex(!pl2.Installed, "Plugin markdown shouldn't be 'installed'")
+	ex(!pl2.Active, "Plugin markdown shouldn't be active")
 	active, err = pl2.BypassActive()
 	expectNilErr(t, err)
-	expect(t, !active, "Plugin markdown shouldn't be active in the database either")
+	ex(!active, "Plugin markdown shouldn't be active in the database either")
 	hasPlugin, err = pl2.InDatabase()
 	expectNilErr(t, err)
-	expect(t, !hasPlugin, "Plugin markdown shouldn't exist in the database")
+	ex(!hasPlugin, "Plugin markdown shouldn't exist in the database")
 
 	expectNilErr(t, pl2.AddToDatabase(true, false))
 	expectNilErr(t, pl2.Init(pl2))
@@ -1837,23 +1943,23 @@ func TestPluginManager(t *testing.T) {
 	ht := func() *c.HookTable {
 		return c.GetHookTable()
 	}
-	expect(t, ht().Sshook("haha", "ho") == "ho", "Sshook shouldn't have anything bound to it yet")
+	ex(ht().Sshook("haha", "ho") == "ho", "Sshook shouldn't have anything bound to it yet")
 	handle := func(in string) (out string) {
 		return in + "hi"
 	}
 	pl.AddHook("haha", handle)
-	expect(t, ht().Sshook("haha", "ho") == "hohi", "Sshook didn't give hohi")
+	ex(ht().Sshook("haha", "ho") == "hohi", "Sshook didn't give hohi")
 	pl.RemoveHook("haha", handle)
-	expect(t, ht().Sshook("haha", "ho") == "ho", "Sshook shouldn't have anything bound to it anymore")
+	ex(ht().Sshook("haha", "ho") == "ho", "Sshook shouldn't have anything bound to it anymore")
 
-	/*expect(t, ht().Hook("haha", "ho") == "ho", "Hook shouldn't have anything bound to it yet")
+	/*ex(ht().Hook("haha", "ho") == "ho", "Hook shouldn't have anything bound to it yet")
 	handle2 := func(inI interface{}) (out interface{}) {
 		return inI.(string) + "hi"
 	}
 	pl.AddHook("hehe", handle2)
-	expect(t, ht().Hook("hehe", "ho").(string) == "hohi", "Hook didn't give hohi")
+	ex(ht().Hook("hehe", "ho").(string) == "hohi", "Hook didn't give hohi")
 	pl.RemoveHook("hehe", handle2)
-	expect(t, ht().Hook("hehe", "ho").(string) == "ho", "Hook shouldn't have anything bound to it anymore")*/
+	ex(ht().Hook("hehe", "ho").(string) == "ho", "Hook shouldn't have anything bound to it anymore")*/
 
 	// TODO: Add tests for more hook types
 }
@@ -1895,7 +2001,8 @@ func TestMetaStore(t *testing.T) {
 }
 
 func TestPages(t *testing.T) {
-	expect(t, c.Pages.Count() == 0, "Page count should be 0")
+	ex := exp(t)
+	ex(c.Pages.Count() == 0, "Page count should be 0")
 	_, err := c.Pages.Get(1)
 	recordMustNotExist(t, err, "Page 1 should not exist yet")
 	expectNilErr(t, c.Pages.Delete(-1))
@@ -1912,14 +2019,14 @@ func TestPages(t *testing.T) {
 	ipage.Body = "A test page"
 	pid, err := ipage.Create()
 	expectNilErr(t, err)
-	expect(t, pid == 1, "The first page should have an ID of 1")
-	expect(t, c.Pages.Count() == 1, "Page count should be 1")
+	ex(pid == 1, "The first page should have an ID of 1")
+	ex(c.Pages.Count() == 1, "Page count should be 1")
 
 	page, err := c.Pages.Get(1)
 	expectNilErr(t, err)
-	expect(t, page.Name == ipage.Name, "The page name should be "+ipage.Name)
-	expect(t, page.Title == ipage.Title, "The page title should be "+ipage.Title)
-	expect(t, page.Body == ipage.Body, "The page body should be "+ipage.Body)
+	ex(page.Name == ipage.Name, "The page name should be "+ipage.Name)
+	ex(page.Title == ipage.Title, "The page title should be "+ipage.Title)
+	ex(page.Body == ipage.Body, "The page body should be "+ipage.Body)
 
 	opage, err := c.Pages.Get(1)
 	expectNilErr(t, err)
@@ -1930,13 +2037,12 @@ func TestPages(t *testing.T) {
 
 	page, err = c.Pages.Get(1)
 	expectNilErr(t, err)
-	expect(t, page.Name == opage.Name, "The page name should be "+opage.Name)
-	expect(t, page.Title == opage.Title, "The page title should be "+opage.Title)
-	expect(t, page.Body == opage.Body, "The page body should be "+opage.Body)
+	ex(page.Name == opage.Name, "The page name should be "+opage.Name)
+	ex(page.Title == opage.Title, "The page title should be "+opage.Title)
+	ex(page.Body == opage.Body, "The page body should be "+opage.Body)
 
-	err = c.Pages.Delete(1)
-	expectNilErr(t, err)
-	expect(t, c.Pages.Count() == 0, "Page count should be 0")
+	expectNilErr(t, c.Pages.Delete(1))
+	ex(c.Pages.Count() == 0, "Page count should be 0")
 	_, err = c.Pages.Get(1)
 	recordMustNotExist(t, err, "Page 1 should not exist")
 	//err = c.Pages.Reload(1)
@@ -1946,33 +2052,34 @@ func TestPages(t *testing.T) {
 }
 
 func TestWordFilters(t *testing.T) {
+	ex, exf := exp(t), expf(t)
 	// TODO: Test the word filters and their store
-	expect(t, c.WordFilters.Length() == 0, "Word filter list should be empty")
-	expect(t, c.WordFilters.EstCount() == 0, "Word filter list should be empty")
-	expect(t, c.WordFilters.Count() == 0, "Word filter list should be empty")
+	ex(c.WordFilters.Length() == 0, "Word filter list should be empty")
+	ex(c.WordFilters.EstCount() == 0, "Word filter list should be empty")
+	ex(c.WordFilters.Count() == 0, "Word filter list should be empty")
 	filters, err := c.WordFilters.GetAll()
 	expectNilErr(t, err) // TODO: Slightly confusing that we don't get ErrNoRow here
-	expect(t, len(filters) == 0, "Word filter map should be empty")
+	ex(len(filters) == 0, "Word filter map should be empty")
 	// TODO: Add a test for ParseMessage relating to word filters
 	_, err = c.WordFilters.Get(1)
 	recordMustNotExist(t, err, "filter 1 should not exist")
 
 	wfid, err := c.WordFilters.Create("imbecile", "lovely")
 	expectNilErr(t, err)
-	expect(t, wfid == 1, "The first word filter should have an ID of 1")
-	expect(t, c.WordFilters.Length() == 1, "Word filter list should not be empty")
-	expect(t, c.WordFilters.EstCount() == 1, "Word filter list should not be empty")
-	expect(t, c.WordFilters.Count() == 1, "Word filter list should not be empty")
+	ex(wfid == 1, "The first word filter should have an ID of 1")
+	ex(c.WordFilters.Length() == 1, "Word filter list should not be empty")
+	ex(c.WordFilters.EstCount() == 1, "Word filter list should not be empty")
+	ex(c.WordFilters.Count() == 1, "Word filter list should not be empty")
 
 	ftest := func(f *c.WordFilter, id int, find, replace string) {
-		expectf(t, f.ID == id, "Word filter ID should be %d, not %d", id, f.ID)
-		expectf(t, f.Find == find, "Word filter needle should be '%s', not '%s'", find, f.Find)
-		expectf(t, f.Replace == replace, "Word filter replacement should be '%s', not '%s'", replace, f.Replace)
+		exf(f.ID == id, "Word filter ID should be %d, not %d", id, f.ID)
+		exf(f.Find == find, "Word filter needle should be '%s', not '%s'", find, f.Find)
+		exf(f.Replace == replace, "Word filter replacement should be '%s', not '%s'", replace, f.Replace)
 	}
 
 	filters, err = c.WordFilters.GetAll()
 	expectNilErr(t, err)
-	expect(t, len(filters) == 1, "Word filter map should not be empty")
+	ex(len(filters) == 1, "Word filter map should not be empty")
 	ftest(filters[1], 1, "imbecile", "lovely")
 
 	filter, err := c.WordFilters.Get(1)
@@ -1982,13 +2089,13 @@ func TestWordFilters(t *testing.T) {
 	// Update
 	expectNilErr(t, c.WordFilters.Update(1, "b", "a"))
 
-	expect(t, c.WordFilters.Length() == 1, "Word filter list should not be empty")
-	expect(t, c.WordFilters.EstCount() == 1, "Word filter list should not be empty")
-	expect(t, c.WordFilters.Count() == 1, "Word filter list should not be empty")
+	ex(c.WordFilters.Length() == 1, "Word filter list should not be empty")
+	ex(c.WordFilters.EstCount() == 1, "Word filter list should not be empty")
+	ex(c.WordFilters.Count() == 1, "Word filter list should not be empty")
 
 	filters, err = c.WordFilters.GetAll()
 	expectNilErr(t, err)
-	expect(t, len(filters) == 1, "Word filter map should not be empty")
+	ex(len(filters) == 1, "Word filter map should not be empty")
 	ftest(filters[1], 1, "b", "a")
 
 	filter, err = c.WordFilters.Get(1)
@@ -1999,12 +2106,12 @@ func TestWordFilters(t *testing.T) {
 
 	expectNilErr(t, c.WordFilters.Delete(1))
 
-	expect(t, c.WordFilters.Length() == 0, "Word filter list should be empty")
-	expect(t, c.WordFilters.EstCount() == 0, "Word filter list should be empty")
-	expect(t, c.WordFilters.Count() == 0, "Word filter list should be empty")
+	ex(c.WordFilters.Length() == 0, "Word filter list should be empty")
+	ex(c.WordFilters.EstCount() == 0, "Word filter list should be empty")
+	ex(c.WordFilters.Count() == 0, "Word filter list should be empty")
 	filters, err = c.WordFilters.GetAll()
 	expectNilErr(t, err) // TODO: Slightly confusing that we don't get ErrNoRow here
-	expect(t, len(filters) == 0, "Word filter map should be empty")
+	ex(len(filters) == 0, "Word filter map should be empty")
 	_, err = c.WordFilters.Get(1)
 	recordMustNotExist(t, err, "filter 1 should not exist")
 
@@ -2012,6 +2119,7 @@ func TestWordFilters(t *testing.T) {
 }
 
 func TestMFAStore(t *testing.T) {
+	exf := expf(t)
 	_, err := c.MFAstore.Get(-1)
 	recordMustNotExist(t, err, "mfa uid -1 should not exist")
 	_, err = c.MFAstore.Get(0)
@@ -2028,16 +2136,16 @@ func TestMFAStore(t *testing.T) {
 	it, err := c.MFAstore.Get(1)
 	test := func(j int) {
 		expectNilErr(t, err)
-		expectf(t, it.UID == 1, "UID should be 1 not %d", it.UID)
-		expectf(t, it.Secret == secret, "Secret should be '%s' not %s", secret, it.Secret)
-		expectf(t, len(it.Scratch) == 8, "Scratch should be 8 not %d", len(it.Scratch))
+		exf(it.UID == 1, "UID should be 1 not %d", it.UID)
+		exf(it.Secret == secret, "Secret should be '%s' not %s", secret, it.Secret)
+		exf(len(it.Scratch) == 8, "Scratch should be 8 not %d", len(it.Scratch))
 		for i, scratch := range it.Scratch {
-			expectf(t, scratch != "", "scratch %d should not be empty", i)
+			exf(scratch != "", "scratch %d should not be empty", i)
 			if scratches != nil {
 				if j == i {
-					expectf(t, scratches[i] != scratch, "scratches[%d] should not be %s", i, scratches[i])
+					exf(scratches[i] != scratch, "scratches[%d] should not be %s", i, scratches[i])
 				} else {
-					expectf(t, scratches[i] == scratch, "scratches[%d] should be %s not %s", i, scratches[i], scratch)
+					exf(scratches[i] == scratch, "scratches[%d] should be %s not %s", i, scratches[i], scratch)
 				}
 			}
 		}
@@ -2099,23 +2207,24 @@ func TestSlugs(t *testing.T) {
 }
 
 func TestWidgets(t *testing.T) {
+	ex, exf := exp(t), expf(t)
 	_, err := c.Widgets.Get(1)
 	recordMustNotExist(t, err, "There shouldn't be any widgets by default")
 	widgets := c.Docks.RightSidebar.Items
-	expectf(t, len(widgets) == 0, "RightSidebar should have 0 items, not %d", len(widgets))
+	exf(len(widgets) == 0, "RightSidebar should have 0 items, not %d", len(widgets))
 
 	widget := &c.Widget{Position: 0, Side: "rightSidebar", Type: "simple", Enabled: true, Location: "global"}
 	ewidget := &c.WidgetEdit{widget, map[string]string{"Name": "Test", "Text": "Testing"}}
 	wid, err := ewidget.Create()
 	expectNilErr(t, err)
-	expect(t, wid == 1, "wid should be 1")
+	ex(wid == 1, "wid should be 1")
 
 	wtest := func(w, w2 *c.Widget) {
-		expect(t, w.Position == w2.Position, "wrong position")
-		expect(t, w.Side == w2.Side, "wrong side")
-		expect(t, w.Type == w2.Type, "wrong type")
-		expect(t, w2.Enabled, "not enabled")
-		expect(t, w.Location == w2.Location, "wrong location")
+		ex(w.Position == w2.Position, "wrong position")
+		ex(w.Side == w2.Side, "wrong side")
+		ex(w.Type == w2.Type, "wrong type")
+		ex(w.Enabled == w2.Enabled, "wrong enabled")
+		ex(w.Location == w2.Location, "wrong location")
 	}
 
 	// TODO: Do a test for the widget body
@@ -2124,7 +2233,7 @@ func TestWidgets(t *testing.T) {
 	wtest(widget, widget2)
 
 	widgets = c.Docks.RightSidebar.Items
-	expectf(t, len(widgets) == 1, "RightSidebar should have 1 item, not %d", len(widgets))
+	exf(len(widgets) == 1, "RightSidebar should have 1 item, not %d", len(widgets))
 	wtest(widget, widgets[0])
 
 	widget2.Enabled = false
@@ -2133,66 +2242,206 @@ func TestWidgets(t *testing.T) {
 
 	widget2, err = c.Widgets.Get(1)
 	expectNilErr(t, err)
-	expect(t, widget2.Position == widget.Position, "wrong position")
-	expect(t, widget2.Side == widget.Side, "wrong side")
-	expect(t, widget2.Type == widget.Type, "wrong type")
-	expect(t, !widget2.Enabled, "should not be enabled")
-	expect(t, widget2.Location == widget.Location, "wrong location")
+	widget.Enabled = false
+	wtest(widget, widget2)
 
 	widgets = c.Docks.RightSidebar.Items
-	expectf(t, len(widgets) == 1, "RightSidebar should have 1 item, not %d", len(widgets))
-	expect(t, widgets[0].Position == widget.Position, "wrong position")
-	expect(t, widgets[0].Side == widget.Side, "wrong side")
-	expect(t, widgets[0].Type == widget.Type, "wrong type")
-	expect(t, !widgets[0].Enabled, "should not be enabled")
-	expect(t, widgets[0].Location == widget.Location, "wrong location")
+	exf(len(widgets) == 1, "RightSidebar should have 1 item, not %d", len(widgets))
+	widget.Enabled = false
+	wtest(widget, widgets[0])
 
-	err = widget2.Delete()
-	expectNilErr(t, err)
+	expectNilErr(t, widget2.Delete())
 
 	_, err = c.Widgets.Get(1)
 	recordMustNotExist(t, err, "There shouldn't be any widgets anymore")
 	widgets = c.Docks.RightSidebar.Items
-	expectf(t, len(widgets) == 0, "RightSidebar should have 0 items, not %d", len(widgets))
+	exf(len(widgets) == 0, "RightSidebar should have 0 items, not %d", len(widgets))
+}
+
+func TestTopicList(t *testing.T) {
+	ex, exf := exp(t), expf(t)
+	fid, err := c.Forums.Create("Test Forum", "Desc for test forum", true, "")
+	expectNilErr(t, err)
+	tint := c.TopicList.(c.TopicListIntTest)
+
+	testPagi := func(p c.Paginator, pageList []int, page, lastPage int) {
+		exf(len(p.PageList) == len(pageList), "len(pagi.PageList) should be %d not %d", len(pageList), len(p.PageList))
+		for i, page := range pageList {
+			exf(p.PageList[i] == page, "pagi.PageList[%d] should be %d not %d", i, page, p.PageList[i])
+		}
+		exf(p.Page == page, "pagi.Page should be %d not %d", page, p.Page)
+		exf(p.LastPage == lastPage, "pagi.LastPage should be %d not %d", lastPage, p.LastPage)
+	}
+	test := func(topicList []*c.TopicsRow, pagi c.Paginator, listLen int, pagi2 c.Paginator, tid1 int) {
+		exf(len(topicList) == listLen, "len(topicList) should be %d not %d", listLen, len(topicList))
+		if len(topicList) > 0 {
+			topic := topicList[0]
+			exf(topic.ID == tid1, "topic.ID should be %d not %d", tid1, topic.ID)
+		}
+		testPagi(pagi, pagi2.PageList, pagi2.Page, pagi2.LastPage)
+	}
+	noTopics := func(topicList []*c.TopicsRow, pagi c.Paginator) {
+		exf(len(topicList) == 0, "len(topicList) should be 0 not %d", len(topicList))
+		testPagi(pagi, []int{}, 1, 1)
+	}
+	noTopicsOnPage2 := func(topicList []*c.TopicsRow, pagi c.Paginator) {
+		exf(len(topicList) == 0, "len(topicList) should be 0 not %d", len(topicList))
+		testPagi(pagi, []int{1}, 2, 1)
+	}
+
+	forum, err := c.Forums.Get(fid)
+	expectNilErr(t, err)
+
+	isAdmin, isMod, isBanned := false, false, false
+	gid, err := c.Groups.Create("Topic List Test", "Test", isAdmin, isMod, isBanned)
+	expectNilErr(t, err)
+	ex(c.Groups.Exists(gid), "The group we just made doesn't exist")
+
+	fp, err := c.FPStore.GetCopy(fid, gid)
+	if err == sql.ErrNoRows {
+		fp = *c.BlankForumPerms()
+	} else if err != nil {
+		expectNilErr(t, err)
+	}
+	fp.ViewTopic = true
+
+	forum, err = c.Forums.Get(fid)
+	expectNilErr(t, err)
+	expectNilErr(t, forum.SetPerms(&fp, "custom", gid))
+
+	g, err := c.Groups.Get(gid)
+	expectNilErr(t, err)
+
+	noTopicsTests := func() {
+		rr := func(page, orderby int) {
+			topicList, forumList, pagi, err := c.TopicList.GetListByGroup(g, page, orderby, []int{fid})
+			expectNilErr(t, err)
+			noTopics(topicList, pagi)
+			exf(len(forumList) == 1, "len(forumList) should be 1 not %d", len(forumList))
+		}
+		rr(1, 0)
+		rr(2, 0)
+		rr(1, 1)
+		rr(2, 1)
+
+		topicList, pagi, err := c.TopicList.GetListByForum(forum, 1, 0)
+		expectNilErr(t, err)
+		noTopics(topicList, pagi)
+
+		topicList, pagi, err = tint.RawGetListByForum(forum, 1, 0)
+		expectNilErr(t, err)
+		noTopics(topicList, pagi)
+
+		topicList, forumList, pagi, err := c.TopicList.GetList(1, 0, []int{fid})
+		expectNilErr(t, err)
+		noTopics(topicList, pagi)
+		exf(len(forumList) == 1, "len(forumList) should be 1 not %d", len(forumList))
+
+		topicList, forumList, pagi, err = c.TopicList.GetListByCanSee([]int{fid}, 1, 0, []int{fid})
+		expectNilErr(t, err)
+		noTopics(topicList, pagi)
+		exf(len(forumList) == 1, "len(forumList) should be 1 not %d", len(forumList))
+
+		topicList, forumList, pagi, err = c.TopicList.GetListByCanSee([]int{}, 1, 0, []int{fid})
+		expectNilErr(t, err)
+		noTopics(topicList, pagi)
+		// TODO: Why is there a discrepency between this and GetList()?
+		exf(len(forumList) == 0, "len(forumList) should be 0 not %d", len(forumList))
+	}
+	noTopicsTests()
+
+	tid, err := c.Topics.Create(fid, "New Topic", "New Topic Body", 1, "")
+	expectNilErr(t, err)
+
+	topicList, forumList, pagi, err := c.TopicList.GetListByGroup(g, 1, 0, []int{fid})
+	expectNilErr(t, err)
+	test(topicList, pagi, 1, c.Paginator{[]int{1}, 1, 1}, tid)
+	exf(len(forumList) == 1, "len(forumList) should be 1 not %d", len(forumList))
+
+	topicList, forumList, pagi, err = c.TopicList.GetListByGroup(g, 2, 0, []int{fid})
+	expectNilErr(t, err)
+	noTopics(topicList, pagi)
+	exf(len(forumList) == 1, "len(forumList) should be 1 not %d", len(forumList))
+
+	topicList, forumList, pagi, err = c.TopicList.GetListByGroup(g, 1, 1, []int{fid})
+	expectNilErr(t, err)
+	test(topicList, pagi, 1, c.Paginator{[]int{1}, 1, 1}, tid)
+	exf(len(forumList) == 1, "len(forumList) should be 1 not %d", len(forumList))
+
+	topicList, forumList, pagi, err = c.TopicList.GetListByGroup(g, 2, 1, []int{fid})
+	expectNilErr(t, err)
+	noTopicsOnPage2(topicList, pagi)
+	exf(len(forumList) == 1, "len(forumList) should be 1 not %d", len(forumList))
+
+	topicList, pagi, err = tint.RawGetListByForum(forum, 1, 0)
+	expectNilErr(t, err)
+	test(topicList, pagi, 1, c.Paginator{[]int{1}, 1, 1}, tid)
+
+	topicList, pagi, err = tint.RawGetListByForum(forum, 0, 0)
+	expectNilErr(t, err)
+	test(topicList, pagi, 1, c.Paginator{[]int{1}, 1, 1}, tid)
+
+	expectNilErr(t, tint.Tick())
+	forum, err = c.Forums.Get(fid)
+	expectNilErr(t, err)
+	topicList, pagi, err = c.TopicList.GetListByForum(forum, 1, 0)
+	expectNilErr(t, err)
+	test(topicList, pagi, 1, c.Paginator{[]int{1}, 1, 1}, tid)
+
+	topicList, forumList, pagi, err = c.TopicList.GetList(1, 0, []int{fid})
+	expectNilErr(t, err)
+	test(topicList, pagi, 1, c.Paginator{[]int{1}, 1, 1}, tid)
+	exf(len(forumList) == 1, "len(forumList) should be 1 not %d", len(forumList))
+
+	topicList, forumList, pagi, err = c.TopicList.GetListByCanSee([]int{fid}, 1, 0, []int{fid})
+	expectNilErr(t, err)
+	test(topicList, pagi, 1, c.Paginator{[]int{1}, 1, 1}, tid)
+	exf(len(forumList) == 1, "len(forumList) should be 1 not %d", len(forumList))
+
+	topicList, forumList, pagi, err = c.TopicList.GetListByCanSee([]int{}, 1, 0, []int{fid})
+	expectNilErr(t, err)
+	noTopics(topicList, pagi)
+	exf(len(forumList) == 0, "len(forumList) should be 0 not %d", len(forumList))
+
+	topic, err := c.Topics.Get(tid)
+	expectNilErr(t, err)
+	expectNilErr(t, topic.Delete())
+
+	forum, err = c.Forums.Get(fid)
+	expectNilErr(t, err)
+	noTopicsTests()
+
+	// TODO: More tests
+
+	_ = ex
 }
 
 func TestUtils(t *testing.T) {
-	email := "test@example.com"
-	cemail := c.CanonEmail(email)
-	expectf(t, cemail == email, "%s should be %s", cemail, email)
-	email = "test.test@example.com"
-	cemail = c.CanonEmail(email)
-	expectf(t, cemail == email, "%s should be %s", cemail, email)
-
 	ee := func(email, eemail string) {
 		cemail := c.CanonEmail(email)
 		expectf(t, cemail == eemail, "%s should be %s", cemail, eemail)
 	}
+	ee("test@example.com", "test@example.com")
+	ee("test.test@example.com", "test.test@example.com")
 	ee("", "")
 	ee("ddd", "ddd")
 	ee("test.test@gmail.com", "testtest@gmail.com")
 	ee("TEST.test@gmail.com", "testtest@gmail.com")
 	ee("test.TEST.test@gmail.com", "testtesttest@gmail.com")
 	ee("test..TEST.test@gmail.com", "testtesttest@gmail.com")
-
-	email = "TEST.test@example.com"
-	lowEmail := strings.ToLower(email)
-	cemail = c.CanonEmail(email)
-	expectf(t, cemail == lowEmail, "%s should be %s", cemail, lowEmail)
-
-	email = "test.TEST.test@example.com"
-	lowEmail = strings.ToLower(email)
-	cemail = c.CanonEmail(email)
-	expectf(t, cemail == lowEmail, "%s should be %s", cemail, lowEmail)
+	ee("TEST.test@example.com", "test.test@example.com")
+	ee("test.TEST.test@example.com", "test.test.test@example.com")
+	// TODO: Exotic unicode email types? Are there those?
 
 	// TODO: More utils.go tests
 }
 
 func TestWeakPassword(t *testing.T) {
-	/*weakPass := func(password, username, email string) func(error,string,...interface{}) {
-		err := c.WeakPassword(password, username, email)
+	ex := exp(t)
+	/*weakPass := func(password, name, email string) func(error,string,...interface{}) {
+		err := c.WeakPassword(password, name, email)
 		return func(expectErr error, m string, p ...interface{}) {
-			m = fmt.Sprintf("pass=%s, user=%s, email=%s ", password, username, email) + m
+			m = fmt.Sprintf("pass=%s, user=%s, email=%s ", password, name, email) + m
 			expect(t, err == expectErr, fmt.Sprintf(m,p...))
 		}
 	}*/
@@ -2202,13 +2451,13 @@ func TestWeakPassword(t *testing.T) {
 		}
 		return e
 	}
-	weakPass := func(password, username, email string) func(error) {
-		err := c.WeakPassword(password, username, email)
+	weakPass := func(password, name, email string) func(error) {
+		err := c.WeakPassword(password, name, email)
 		e := nilErrStr(err)
-		m := fmt.Sprintf("pass=%s, user=%s, email=%s ", password, username, email)
+		m := fmt.Sprintf("pass=%s, user=%s, email=%s ", password, name, email)
 		return func(expectErr error) {
 			ee := nilErrStr(expectErr)
-			expect(t, err == expectErr, m+fmt.Sprintf("err should be '%s' not '%s'", ee, e))
+			ex(err == expectErr, m+fmt.Sprintf("err should be '%s' not '%s'", ee, e))
 		}
 	}
 
@@ -2240,6 +2489,7 @@ func TestWeakPassword(t *testing.T) {
 }
 
 func TestAuth(t *testing.T) {
+	ex := exp(t)
 	// bcrypt likes doing stupid things, so this test will probably fail
 	realPassword := "Madame Cassandra's Mystic Orb"
 	t.Logf("Set realPassword to '%s'", realPassword)
@@ -2260,38 +2510,38 @@ func TestAuth(t *testing.T) {
 	// TODO: Peek at the prefix to verify this is a bcrypt hash
 
 	_, err, _ = c.Auth.Authenticate("None", "password")
-	errmsg := "Username None shouldn't exist"
+	errmsg := "Name None shouldn't exist"
 	if err != nil {
 		errmsg += "\n" + err.Error()
 	}
-	expect(t, err == c.ErrNoUserByName, errmsg)
+	ex(err == c.ErrNoUserByName, errmsg)
 
 	uid, err, _ := c.Auth.Authenticate("Admin", "password")
 	expectNilErr(t, err)
 	expectf(t, uid == 1, "Default admin uid should be 1 not %d", uid)
 
 	_, err, _ = c.Auth.Authenticate("Sam", "ReallyBadPassword")
-	errmsg = "Username Sam shouldn't exist"
+	errmsg = "Name Sam shouldn't exist"
 	if err != nil {
 		errmsg += "\n" + err.Error()
 	}
-	expect(t, err == c.ErrNoUserByName, errmsg)
+	ex(err == c.ErrNoUserByName, errmsg)
 
 	admin, err := c.Users.Get(1)
 	expectNilErr(t, err)
 	// TODO: Move this into the user store tests to provide better coverage? E.g. To see if the installer and the user creator initialise the field differently
-	expect(t, admin.Session == "", "Admin session should be blank")
+	ex(admin.Session == "", "Admin session should be blank")
 
 	session, err := c.Auth.CreateSession(1)
 	expectNilErr(t, err)
-	expect(t, session != "", "Admin session shouldn't be blank")
+	ex(session != "", "Admin session shouldn't be blank")
 	// TODO: Test the actual length set in the setting in addition to this "too short" test
 	// TODO: We might be able to push up this minimum requirement
-	expect(t, len(session) > 10, "Admin session shouldn't be too short")
-	expect(t, admin.Session != session, "Old session should not match new one")
+	ex(len(session) > 10, "Admin session shouldn't be too short")
+	ex(admin.Session != session, "Old session should not match new one")
 	admin, err = c.Users.Get(1)
 	expectNilErr(t, err)
-	expect(t, admin.Session == session, "Sessions should match")
+	ex(admin.Session == session, "Sessions should match")
 
 	// TODO: Create a user with a unicode password and see if we can login as them
 	// TODO: Tests for SessionCheck, GetCookies, and ForceLogout
