@@ -37,7 +37,6 @@ type GenRouter struct {
 	extraRoutes   map[string]func(http.ResponseWriter, *http.Request, *c.User) c.RouteError
 
 	reqLogger *log.Logger
-	//suspReqLogger *log.Logger
 
 	reqLog2 *RouterLog
 	suspLog *RouterLog
@@ -57,31 +56,40 @@ type RouterLog struct {
 }
 
 func (r *GenRouter) DailyTick() error {
-	r.suspLog.Lock()
-	defer r.suspLog.Unlock()
+	rotateLog := func(l *RouterLog, name string) error {
+		l.Lock()
+		defer l.Unlock()
 
-	f := r.suspLog.FileVal.Load().(*os.File)
-	stat, err := f.Stat()
-	if err != nil {
+		f := l.FileVal.Load().(*os.File)
+		stat, err := f.Stat()
+		if err != nil {
+			return nil
+		}
+		if stat.Size() < int64(c.Megabyte) {
+			return nil
+		}
+		if err = f.Close(); err != nil {
+			return err
+		}
+
+		stimestr := strconv.FormatInt(c.StartTime.Unix(), 10)
+		f, err = os.OpenFile(c.Config.LogDir+name+stimestr+".log", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0755)
+		if err != nil {
+			return err
+		}
+		lval := log.New(f, "", log.LstdFlags)
+		l.FileVal.Store(f)
+		l.LogVal.Store(lval)
 		return nil
 	}
-	if stat.Size() < int64(c.Megabyte) {
-		return nil
+	
+	if !c.Config.DisableSuspLog {
+		err := rotateLog(r.suspLog, "reqs-susp-")
+		if err != nil {
+			return err
+		}
 	}
-	if err = f.Close(); err != nil {
-		return err
-	}
-
-	stimestr := strconv.FormatInt(c.StartTime.Unix(), 10)
-	f, err = os.OpenFile(c.Config.LogDir+"reqs-susp-"+stimestr+".log", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0755)
-	if err != nil {
-		return err
-	}
-	l := log.New(f, "", log.LstdFlags)
-	r.suspLog.FileVal.Store(f)
-	r.suspLog.LogVal.Store(l)
-
-	return nil
+	return rotateLog(r.reqLog2, "reqs-")
 }
 
 func NewGenRouter(uploads http.Handler) (*GenRouter, error) {
@@ -102,9 +110,12 @@ func NewGenRouter(uploads http.Handler) (*GenRouter, error) {
 	if err != nil {
 		return nil, err
 	}
-	suspReqLog, err := createLog("reqs-susp", stimestr)
-	if err != nil {
-		return nil, err
+	var suspReqLog *RouterLog
+	if !c.Config.DisableSuspLog {
+		suspReqLog, err = createLog("reqs-susp", stimestr)
+		if err != nil {
+			return nil, err
+		}
 	}
 	f3, err := os.OpenFile(c.Config.LogDir+"reqs-misc-"+stimestr+".log", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0755)
 	if err != nil {

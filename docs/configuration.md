@@ -146,7 +146,7 @@ WriteTimeout - The number of seconds that a route is allowed to run for before t
 
 IdleTimeout - The number of seconds that a Keep-Alive connection will be kept open before being closed. You might to tweak this, if you use Cloudflare or similar. Defaults to 120.
 
-LogDir - The directory in which logs are stored. Default: ./logs/
+LogDir - The directory in which logs are stored, with the exception of ops log, until a related bug is resolved. Default: ./logs/
 
 DisableSuspLog - Whether suspicious requests are logged in the suspicious request logs. Enabling this may make a site faster. Defaults to false.
 
