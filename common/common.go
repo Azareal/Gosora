@@ -12,7 +12,7 @@ import (
 	"log"
 	"os"
 	"strconv"
-	//"sync"
+	"strings"
 	"sync/atomic"
 	"time"
 
@@ -223,10 +223,10 @@ func eachall(stmt *sql.Stmt, f func(r *sql.Rows) error) error {
 	return rows.Err()
 }
 
-var qcache = []string{0: "?", 1: "?,?", 2: "?,?,?", 3: "?,?,?,?", 4: "?,?,?,?,?", 5: "?,?,?,?,?,?"}
+var qcache = []string{0: "?", 1: "?,?", 2: "?,?,?", 3: "?,?,?,?", 4: "?,?,?,?,?", 5: "?,?,?,?,?,?", 6: "?,?,?,?,?,?,?", 7: "?,?,?,?,?,?,?,?"}
 
 func inqbuild(ids []int) ([]interface{}, string) {
-	if len(ids) < 5 {
+	if len(ids) < 7 {
 		idList := make([]interface{}, len(ids))
 		for i, id := range ids {
 			idList[i] = strconv.Itoa(id)
@@ -234,21 +234,38 @@ func inqbuild(ids []int) ([]interface{}, string) {
 		return idList, qcache[len(ids)-1]
 	}
 
-	var q string
+	var sb strings.Builder
+	sb.Grow((len(ids) * 2) - 1)
 	idList := make([]interface{}, len(ids))
 	for i, id := range ids {
 		idList[i] = strconv.Itoa(id)
 		if i == 0 {
-			q = "?"
+			sb.WriteRune('?')
 		} else {
-			q += ",?"
+			sb.WriteString(",?")
 		}
 	}
-	return idList, q
+	return idList, sb.String()
+}
+
+func inqbuild2(count int) string {
+	if count <= 7 {
+		return qcache[count-1]
+	}
+	var sb strings.Builder
+	sb.Grow((count * 2) - 1)
+	for i := 0; i <= count; i++ {
+		if i == 0 {
+			sb.WriteRune('?')
+		} else {
+			sb.WriteString(",?")
+		}
+	}
+	return sb.String()
 }
 
 func inqbuildstr(strs []string) ([]interface{}, string) {
-	if len(strs) < 5 {
+	if len(strs) < 7 {
 		idList := make([]interface{}, len(strs))
 		for i, id := range strs {
 			idList[i] = id
@@ -256,15 +273,16 @@ func inqbuildstr(strs []string) ([]interface{}, string) {
 		return idList, qcache[len(strs)-1]
 	}
 
-	var q string
+	var sb strings.Builder
+	sb.Grow((len(strs) * 2) - 1)
 	idList := make([]interface{}, len(strs))
 	for i, id := range strs {
 		idList[i] = id
 		if i == 0 {
-			q = "?"
+			sb.WriteRune('?')
 		} else {
-			q += ",?"
+			sb.WriteString(",?")
 		}
 	}
-	return idList, q
+	return idList, sb.String()
 }

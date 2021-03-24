@@ -28,11 +28,17 @@ type ForumTopicListHolder struct {
 	Paginator Paginator
 }
 
+// TODO: Should we return no rows errors on empty pages? Is this likely to break something?
 type TopicListInt interface {
 	GetListByCanSee(canSee []int, page, orderby int, filterIDs []int) (topicList []*TopicsRow, forumList []Forum, pagi Paginator, err error)
 	GetListByGroup(g *Group, page, orderby int, filterIDs []int) (topicList []*TopicsRow, forumList []Forum, pagi Paginator, err error)
 	GetListByForum(f *Forum, page, orderby int) (topicList []*TopicsRow, pagi Paginator, err error)
 	GetList(page, orderby int, filterIDs []int) (topicList []*TopicsRow, forumList []Forum, pagi Paginator, err error)
+}
+
+type TopicListIntTest interface {
+	RawGetListByForum(f *Forum, page, orderby int) (topicList []*TopicsRow, pagi Paginator, err error)
+	Tick() error
 }
 
 type DefaultTopicList struct {
@@ -73,9 +79,7 @@ func NewDefaultTopicList(acc *qgen.Accumulator) (*DefaultTopicList, error) {
 	if err := acc.FirstError(); err != nil {
 		return nil, err
 	}
-
-	err := tList.Tick()
-	if err != nil {
+	if err := tList.Tick(); err != nil {
 		return nil, err
 	}
 
@@ -181,13 +185,7 @@ func (tList *DefaultTopicList) Tick() error {
 			continue
 		}
 
-		var qlist string
-		for i := 0; i < top; i++ {
-			if i != 0 {
-				qlist += ","
-			}
-			qlist += "?"
-		}
+		qlist := inqbuild2(top - 1)
 		cols := "tid,title,content,createdBy,is_closed,sticky,createdAt,lastReplyAt,lastReplyBy,lastReplyID,parentID,views,postCount,likeCount,attachCount,poll,data"
 
 		stmt, err := qgen.Builder.SimpleSelect("topics", cols, "parentID IN("+qlist+")", "views DESC,lastReplyAt DESC,createdBy DESC", "?,?")
@@ -260,14 +258,9 @@ func (tList *DefaultTopicList) Tick() error {
 	// TODO: Avoid rebuilding the entire list on every tick
 	fList := make(map[int]*ForumTopicListHolder)
 	for _, f := range fshort {
-		topicList, pagi := []*TopicsRow{}, Paginator{}
-		if f.TopicCount == 0 {
-			page := 1
-			_, page, lastPage := PageOffset(f.TopicCount, page, Config.ItemsPerPage)
-			pageList := Paginate(page, lastPage, 5)
-			pagi = Paginator{pageList, page, lastPage}
-		} else {
-			topicList, pagi, err = tList.getListByForum(f, 1, 0)
+		topicList, pagi := []*TopicsRow{}, tList.defaultPagi()
+		if f.TopicCount != 0 {
+			topicList, pagi, err = tList.RawGetListByForum(f, 1, 0)
 			if err != nil {
 				return err
 			}
@@ -281,14 +274,26 @@ func (tList *DefaultTopicList) Tick() error {
 		fList[f.ID] = &ForumTopicListHolder{topicList, pagi}*/
 	}
 
-	tList.forumLock.Lock()
-	tList.forums = fList
-	tList.forumLock.Unlock()
+	//fmt.Printf("fList: %+v\n", fList)
+	tList.setForumList(fList)
 
 	hTbl := GetHookTable()
 	_, _ = hTbl.VhookSkippable("tasks_tick_topic_list", tList)
 
 	return nil
+}
+
+func (tList *DefaultTopicList) defaultPagi() Paginator {
+	/*_, page, lastPage := PageOffset(f.TopicCount, page, Config.ItemsPerPage)
+	pageList := Paginate(page, lastPage, 5)
+	return topicList, Paginator{pageList, page, lastPage}, nil*/
+	return Paginator{[]int{}, 1, 1}
+}
+
+func (tList *DefaultTopicList) setForumList(forums map[int]*ForumTopicListHolder) {
+	tList.forumLock.Lock()
+	tList.forums = forums
+	tList.forumLock.Unlock()
 }
 
 /*var reloadForumMutex sync.Mutex
@@ -313,13 +318,8 @@ func (tList *DefaultTopicList) ReloadForum(id int) error {
 	}
 	tList.forumLock.Unlock()
 
-	topicList, pagi := []*TopicsRow{}, Paginator{}
-	if forum.TopicCount == 0 {
-		page := 1
-		_, page, lastPage := PageOffset(forum.TopicCount, page, Config.ItemsPerPage)
-		pageList := Paginate(page, lastPage, 5)
-		pagi = Paginator{pageList, page, lastPage}
-	} else {
+	topicList, pagi := []*TopicsRow{}, tList.defaultPagi()
+	if forum.TopicCount != 0 {
 		topicList, pagi, err = tList.getListByForum(forum, 1, 0)
 		if err != nil {
 			return err
@@ -327,9 +327,7 @@ func (tList *DefaultTopicList) ReloadForum(id int) error {
 	}
 	fList[forum.ID] = &ForumTopicListHolder{topicList, pagi}
 
-	tList.forumLock.Lock()
-	tList.forums = fList
-	tList.forumLock.Unlock()
+	tList.setForumList(fList)
 	return nil
 }*/
 
@@ -340,9 +338,7 @@ func (tList *DefaultTopicList) GetListByForum(f *Forum, page, orderby int) (topi
 		page = 1
 	}
 	if f.TopicCount == 0 {
-		_, page, lastPage := PageOffset(f.TopicCount, page, Config.ItemsPerPage)
-		pageList := Paginate(page, lastPage, 5)
-		return topicList, Paginator{pageList, page, lastPage}, nil
+		return topicList, tList.defaultPagi(), nil
 	}
 	if page == 1 && orderby == 0 {
 		var h *ForumTopicListHolder
@@ -354,16 +350,16 @@ func (tList *DefaultTopicList) GetListByForum(f *Forum, page, orderby int) (topi
 			return h.List, h.Paginator, nil
 		}
 	}
-	return tList.getListByForum(f, page, orderby)
+	return tList.RawGetListByForum(f, page, orderby)
 }
 
-func (tList *DefaultTopicList) getListByForum(f *Forum, page, orderby int) (topicList []*TopicsRow, pagi Paginator, err error) {
+func (tList *DefaultTopicList) RawGetListByForum(f *Forum, page, orderby int) (topicList []*TopicsRow, pagi Paginator, err error) {
 	// TODO: Does forum.TopicCount take the deleted items into consideration for guests? We don't have soft-delete yet, only hard-delete
 	offset, page, lastPage := PageOffset(f.TopicCount, page, Config.ItemsPerPage)
 
 	rows, err := tList.getTopicsByForum.Query(f.ID, offset, Config.ItemsPerPage)
 	if err != nil {
-		return nil, Paginator{nil, 1, 1}, err
+		return nil, tList.defaultPagi(), err
 	}
 	defer rows.Close()
 
@@ -373,7 +369,7 @@ func (tList *DefaultTopicList) getListByForum(f *Forum, page, orderby int) (topi
 		t := TopicsRow{Topic: Topic{ParentID: f.ID}}
 		err := rows.Scan(&t.ID, &t.Title, &t.Content, &t.CreatedBy, &t.IsClosed, &t.Sticky, &t.CreatedAt, &t.LastReplyAt, &t.LastReplyBy, &t.LastReplyID, &t.ViewCount, &t.PostCount, &t.LikeCount)
 		if err != nil {
-			return nil, Paginator{nil, 1, 1}, err
+			return nil, tList.defaultPagi(), err
 		}
 
 		t.Link = BuildTopicURL(NameToSlug(t.Title), t.ID)
@@ -387,7 +383,7 @@ func (tList *DefaultTopicList) getListByForum(f *Forum, page, orderby int) (topi
 		reqUserList[t.LastReplyBy] = true
 	}
 	if err = rows.Err(); err != nil {
-		return nil, Paginator{nil, 1, 1}, err
+		return nil, tList.defaultPagi(), err
 	}
 
 	// Convert the user ID map to a slice, then bulk load the users
@@ -401,7 +397,7 @@ func (tList *DefaultTopicList) getListByForum(f *Forum, page, orderby int) (topi
 	// TODO: What if a user is deleted via the Control Panel?
 	userList, err := Users.BulkGetMap(idSlice)
 	if err != nil {
-		return nil, Paginator{nil, 1, 1}, err
+		return nil, tList.defaultPagi(), err
 	}
 
 	// Second pass to the add the user data
@@ -411,6 +407,9 @@ func (tList *DefaultTopicList) getListByForum(f *Forum, page, orderby int) (topi
 		t.LastUser = userList[t.LastReplyBy]
 	}
 
+	if len(topicList) == 0 {
+		return topicList, tList.defaultPagi(), nil
+	}
 	pageList := Paginate(page, lastPage, 5)
 	return topicList, Paginator{pageList, page, lastPage}, nil
 }
@@ -489,7 +488,7 @@ func (tList *DefaultTopicList) GetListByCanSee(canSee []int, page, orderby int, 
 	argList, qlist := ForumListToArgQ(filteredForums)
 	if qlist == "" {
 		// We don't want to kill the page, so pass an empty slice and nil error
-		return topicList, filteredForums, Paginator{[]int{}, 1, 1}, nil
+		return topicList, filteredForums, tList.defaultPagi(), nil
 	}
 
 	topicList, pagi, err = tList.getList(page, orderby, topicCount, argList, qlist)
@@ -501,7 +500,7 @@ func (tList *DefaultTopicList) GetList(page, orderby int, filterIDs []int) (topi
 	// TODO: Make CanSee a method on *Group with a canSee field? Have a CanSee method on *User to cover the case of superadmins?
 	cCanSee, err := Forums.GetAllVisibleIDs()
 	if err != nil {
-		return nil, nil, Paginator{nil, 1, 1}, err
+		return nil, nil, tList.defaultPagi(), err
 	}
 	//log.Printf("cCanSee: %+v\n", cCanSee)
 	inSlice := func(haystack []int, needle int) bool {
@@ -546,7 +545,7 @@ func (tList *DefaultTopicList) GetList(page, orderby int, filterIDs []int) (topi
 	argList, qlist := ForumListToArgQ(forumList)
 	if qlist == "" {
 		// If the super admin can't see anything, then things have gone terribly wrong
-		return topicList, forumList, Paginator{[]int{}, 1, 1}, err
+		return topicList, forumList, tList.defaultPagi(), err
 	}
 
 	topicList, pagi, err = tList.getList(page, orderby, topicCount, argList, qlist)
@@ -557,7 +556,7 @@ func (tList *DefaultTopicList) GetList(page, orderby int, filterIDs []int) (topi
 // TODO: Make orderby an enum of sorts
 func (tList *DefaultTopicList) getList(page, orderby, topicCount int, argList []interface{}, qlist string) (topicList []*TopicsRow, paginator Paginator, err error) {
 	if topicCount == 0 {
-		return nil, Paginator{nil, 1, 1}, err
+		return nil, tList.defaultPagi(), err
 	}
 	//log.Printf("argList: %+v\n",argList)
 	//log.Printf("qlist: %+v\n",qlist)
@@ -580,12 +579,12 @@ func (tList *DefaultTopicList) getList(page, orderby, topicCount int, argList []
 			}
 			topicCount, err = ArgQToWeekViewTopicCount(argList, qlist)
 			if err != nil {
-				return nil, Paginator{nil, 1, 1}, err
+				return nil, tList.defaultPagi(), err
 			}
 			acc := qgen.NewAcc()
 			stmt = acc.Select("topics").Columns(cols).Where("parentID IN(" + qlist + ") AND (weekEvenViews!=0 OR weekOddViews!=0)").Orderby(orderq).Limit("?,?").ComplexPrepare()
 			if e := acc.FirstError(); e != nil {
-				return nil, Paginator{nil, 1, 1}, e
+				return nil, tList.defaultPagi(), e
 			}
 			defer stmt.Close()
 		}
@@ -612,7 +611,7 @@ func (tList *DefaultTopicList) getList(page, orderby, topicCount int, argList []
 	if stmt == nil {
 		stmt, err = qgen.Builder.SimpleSelect("topics", cols, "parentID IN("+qlist+")", orderq, "?,?")
 		if err != nil {
-			return nil, Paginator{nil, 1, 1}, err
+			return nil, tList.defaultPagi(), err
 		}
 		defer stmt.Close()
 	}
@@ -622,14 +621,13 @@ func (tList *DefaultTopicList) getList(page, orderby, topicCount int, argList []
 
 	rows, err := stmt.Query(argList...)
 	if err != nil {
-		return nil, Paginator{nil, 1, 1}, err
+		return nil, tList.defaultPagi(), err
 	}
 	defer rows.Close()
 
-	rc := Rstore.GetCache()
+	rc, tc := Rstore.GetCache(), Topics.GetCache()
 	rcap := rc.GetCapacity()
 	rlen := rc.Length()
-	tc := Topics.GetCache()
 	reqUserList := make(map[int]bool)
 	for rows.Next() {
 		// TODO: Embed Topic structs in TopicsRow to make it easier for us to reuse this work in the topic cache
@@ -637,7 +635,7 @@ func (tList *DefaultTopicList) getList(page, orderby, topicCount int, argList []
 		//var weekViews []uint8
 		err := rows.Scan(&t.ID, &t.Title, &t.Content, &t.CreatedBy, &t.IsClosed, &t.Sticky, &t.CreatedAt, &t.LastReplyAt, &t.LastReplyBy, &t.LastReplyID, &t.ParentID, &t.ViewCount, &t.PostCount, &t.LikeCount, &t.AttachCount, &t.Poll, &t.Data, &t.WeekViews)
 		if err != nil {
-			return nil, Paginator{nil, 1, 1}, err
+			return nil, tList.defaultPagi(), err
 		}
 		//t.WeekViews = int(weekViews[0])
 		//log.Printf("t: %+v\n", t)
@@ -675,7 +673,7 @@ func (tList *DefaultTopicList) getList(page, orderby, topicCount int, argList []
 		if t.PostCount == 2 && rlen < rcap && !hRids && page < 5 {
 			rids, err := GetRidsForTopic(t.ID, 0)
 			if err != nil {
-				return nil, Paginator{nil, 1, 1}, err
+				return nil, tList.defaultPagi(), err
 			}
 
 			//log.Print("rids: ", rids)
@@ -695,7 +693,7 @@ func (tList *DefaultTopicList) getList(page, orderby, topicCount int, argList []
 		}
 	}
 	if err = rows.Err(); err != nil {
-		return nil, Paginator{nil, 1, 1}, err
+		return nil, tList.defaultPagi(), err
 	}
 
 	// TODO: specialcase for when reqUserList only has one or two items to avoid map alloc
@@ -704,7 +702,7 @@ func (tList *DefaultTopicList) getList(page, orderby, topicCount int, argList []
 		for uid, _ := range reqUserList {
 			u, err = Users.Get(uid)
 			if err != nil {
-				return nil, Paginator{nil, 1, 1}, err
+				return nil, tList.defaultPagi(), err
 			}
 		}
 		for _, t := range topicList {
@@ -723,7 +721,7 @@ func (tList *DefaultTopicList) getList(page, orderby, topicCount int, argList []
 		// TODO: What if a user is deleted via the Control Panel?
 		userList, err := Users.BulkGetMap(idSlice)
 		if err != nil {
-			return nil, Paginator{nil, 1, 1}, err
+			return nil, tList.defaultPagi(), err
 		}
 
 		// Second pass to the add the user data

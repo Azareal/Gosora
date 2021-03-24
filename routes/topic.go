@@ -8,7 +8,6 @@ import (
 	"errors"
 	"io"
 
-	//"fmt"
 	"image"
 	"image/gif"
 	"image/jpeg"
@@ -24,7 +23,7 @@ import (
 
 	c "github.com/Azareal/Gosora/common"
 	co "github.com/Azareal/Gosora/common/counters"
-	"github.com/Azareal/Gosora/common/phrases"
+	p "github.com/Azareal/Gosora/common/phrases"
 	qgen "github.com/Azareal/Gosora/query_gen"
 )
 
@@ -48,7 +47,7 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user *c.User, h *c.Header
 	page, _ := strconv.Atoi(r.FormValue("page"))
 	_, tid, err := ParseSEOURL(urlBit)
 	if err != nil {
-		return c.SimpleError(phrases.GetErrorPhrase("url_id_must_be_integer"), w, r, h)
+		return c.SimpleError(p.GetErrorPhrase("url_id_must_be_integer"), w, r, h)
 	}
 
 	// Get the topic...
@@ -158,6 +157,7 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user *c.User, h *c.Header
 		} else if err != nil {
 			return c.InternalError(err, w, r)
 		}
+		//fmt.Printf("rlist: %+v\n",rlist)
 		tpage.ItemList = rlist
 		if externalHead {
 			h.ExternalMedia = true
@@ -206,7 +206,7 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user *c.User, h *c.Header
 func AttachTopicActCommon(w http.ResponseWriter, r *http.Request, u *c.User, stid string) (t *c.Topic, ferr c.RouteError) {
 	tid, err := strconv.Atoi(stid)
 	if err != nil {
-		return t, c.LocalErrorJS(phrases.GetErrorPhrase("id_must_be_integer"), w, r)
+		return t, c.LocalErrorJS(p.GetErrorPhrase("id_must_be_integer"), w, r)
 	}
 	t, err = c.Topics.Get(tid)
 	if err != nil {
@@ -268,7 +268,7 @@ func RemoveAttachFromTopicSubmit(w http.ResponseWriter, r *http.Request, u *c.Us
 	for _, said := range strings.Split(r.PostFormValue("aids"), ",") {
 		aid, err := strconv.Atoi(said)
 		if err != nil {
-			return c.LocalErrorJS(phrases.GetErrorPhrase("id_must_be_integer"), w, r)
+			return c.LocalErrorJS(p.GetErrorPhrase("id_must_be_integer"), w, r)
 		}
 		rerr := deleteAttachment(w, r, u, aid, true)
 		if rerr != nil {
@@ -293,7 +293,7 @@ func CreateTopic(w http.ResponseWriter, r *http.Request, u *c.User, h *c.Header,
 	if sfid != "" {
 		fid, err = strconv.Atoi(sfid)
 		if err != nil {
-			return c.LocalError(phrases.GetErrorPhrase("url_id_must_be_integer"), w, r, u)
+			return c.LocalError(p.GetErrorPhrase("url_id_must_be_integer"), w, r, u)
 		}
 	}
 	if fid == 0 {
@@ -308,7 +308,7 @@ func CreateTopic(w http.ResponseWriter, r *http.Request, u *c.User, h *c.Header,
 		return c.NoPermissions(w, r, u)
 	}
 	// TODO: Add a phrase for this
-	h.Title = phrases.GetTitlePhrase("create_topic")
+	h.Title = p.GetTitlePhrase("create_topic")
 	h.Zone = "create_topic"
 
 	// Lock this to the forum being linked?
@@ -361,7 +361,7 @@ func CreateTopic(w http.ResponseWriter, r *http.Request, u *c.User, h *c.Header,
 func CreateTopicSubmit(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
 	fid, err := strconv.Atoi(r.PostFormValue("board"))
 	if err != nil {
-		return c.LocalError(phrases.GetErrorPhrase("id_must_be_integer"), w, r, u)
+		return c.LocalError(p.GetErrorPhrase("id_must_be_integer"), w, r, u)
 	}
 	// TODO: Add hooks to make use of headerLite
 	lite, ferr := c.SimpleForumUserCheck(w, r, u, fid)
@@ -562,11 +562,11 @@ func uploadFilesWithHash(w http.ResponseWriter, r *http.Request, u *c.User, dir 
 
 // TODO: Update the stats after edits so that we don't under or over decrement stats during deletes
 // TODO: Disable stat updates in posts handled by plugin_guilds
-func EditTopicSubmit(w http.ResponseWriter, r *http.Request, user *c.User, stid string) c.RouteError {
+func EditTopicSubmit(w http.ResponseWriter, r *http.Request, u *c.User, stid string) c.RouteError {
 	js := (r.PostFormValue("js") == "1")
 	tid, err := strconv.Atoi(stid)
 	if err != nil {
-		return c.PreErrorJSQ(phrases.GetErrorPhrase("id_must_be_integer"), w, r, js)
+		return c.PreErrorJSQ(p.GetErrorPhrase("id_must_be_integer"), w, r, js)
 	}
 	topic, err := c.Topics.Get(tid)
 	if err == sql.ErrNoRows {
@@ -576,15 +576,15 @@ func EditTopicSubmit(w http.ResponseWriter, r *http.Request, user *c.User, stid 
 	}
 
 	// TODO: Add hooks to make use of headerLite
-	lite, ferr := c.SimpleForumUserCheck(w, r, user, topic.ParentID)
+	lite, ferr := c.SimpleForumUserCheck(w, r, u, topic.ParentID)
 	if ferr != nil {
 		return ferr
 	}
-	if !user.Perms.ViewTopic || !user.Perms.EditTopic {
-		return c.NoPermissionsJSQ(w, r, user, js)
+	if !u.Perms.ViewTopic || !u.Perms.EditTopic {
+		return c.NoPermissionsJSQ(w, r, u, js)
 	}
-	if topic.IsClosed && !user.Perms.CloseTopic {
-		return c.NoPermissionsJSQ(w, r, user, js)
+	if topic.IsClosed && !u.Perms.CloseTopic {
+		return c.NoPermissionsJSQ(w, r, u, js)
 	}
 
 	err = topic.Update(r.PostFormValue("name"), r.PostFormValue("content"))
@@ -592,16 +592,16 @@ func EditTopicSubmit(w http.ResponseWriter, r *http.Request, user *c.User, stid 
 	if err != nil {
 		switch err {
 		case c.ErrNoTitle:
-			return c.LocalErrorJSQ("This topic doesn't have a title", w, r, user, js)
+			return c.LocalErrorJSQ("This topic doesn't have a title", w, r, u, js)
 		case c.ErrLongTitle:
-			return c.LocalErrorJSQ("The length of the title is too long, max: "+strconv.Itoa(c.Config.MaxTopicTitleLength), w, r, user, js)
+			return c.LocalErrorJSQ("The length of the title is too long, max: "+strconv.Itoa(c.Config.MaxTopicTitleLength), w, r, u, js)
 		case c.ErrNoBody:
-			return c.LocalErrorJSQ("This topic doesn't have a body", w, r, user, js)
+			return c.LocalErrorJSQ("This topic doesn't have a body", w, r, u, js)
 		}
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
 
-	err = c.Forums.UpdateLastTopic(topic.ID, user.ID, topic.ParentID)
+	err = c.Forums.UpdateLastTopic(topic.ID, u.ID, topic.ParentID)
 	if err != nil && err != sql.ErrNoRows {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
@@ -614,7 +614,7 @@ func EditTopicSubmit(w http.ResponseWriter, r *http.Request, user *c.User, stid 
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
 
-	skip, rerr := lite.Hooks.VhookSkippable("action_end_edit_topic", topic.ID, user)
+	skip, rerr := lite.Hooks.VhookSkippable("action_end_edit_topic", topic.ID, u)
 	if skip || rerr != nil {
 		return rerr
 	}
@@ -622,7 +622,7 @@ func EditTopicSubmit(w http.ResponseWriter, r *http.Request, user *c.User, stid 
 	if !js {
 		http.Redirect(w, r, "/topic/"+strconv.Itoa(tid), http.StatusSeeOther)
 	} else {
-		outBytes, err := json.Marshal(JsonReply{c.ParseMessage(topic.Content, topic.ParentID, "forums", user.ParseSettings, user)})
+		outBytes, err := json.Marshal(JsonReply{c.ParseMessage(topic.Content, topic.ParentID, "forums", u.ParseSettings, u)})
 		if err != nil {
 			return c.InternalErrorJSQ(err, w, r, js)
 		}
@@ -722,7 +722,7 @@ func StickTopicSubmit(w http.ResponseWriter, r *http.Request, u *c.User, stid st
 func topicActionPre(stid, action string, w http.ResponseWriter, r *http.Request, u *c.User) (*c.Topic, *c.HeaderLite, c.RouteError) {
 	tid, err := strconv.Atoi(stid)
 	if err != nil {
-		return nil, nil, c.PreError(phrases.GetErrorPhrase("id_must_be_integer"), w, r)
+		return nil, nil, c.PreError(p.GetErrorPhrase("id_must_be_integer"), w, r)
 	}
 	t, err := c.Topics.Get(tid)
 	if err == sql.ErrNoRows {
@@ -766,7 +766,7 @@ func UnstickTopicSubmit(w http.ResponseWriter, r *http.Request, u *c.User, stid 
 	return topicActionPost(t.Unstick(), "unstick", w, r, lite, t, u)
 }
 
-func LockTopicSubmit(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
+func LockTopicSubmit(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
 	// TODO: Move this to some sort of middleware
 	var tids []int
 	js := c.ReqIsJson(r)
@@ -786,7 +786,7 @@ func LockTopicSubmit(w http.ResponseWriter, r *http.Request, user *c.User) c.Rou
 		tids = append(tids, tid)
 	}
 	if len(tids) == 0 {
-		return c.LocalErrorJSQ("You haven't provided any IDs", w, r, user, js)
+		return c.LocalErrorJSQ("You haven't provided any IDs", w, r, u, js)
 	}
 
 	for _, tid := range tids {
@@ -798,12 +798,12 @@ func LockTopicSubmit(w http.ResponseWriter, r *http.Request, user *c.User) c.Rou
 		}
 
 		// TODO: Add hooks to make use of headerLite
-		lite, ferr := c.SimpleForumUserCheck(w, r, user, topic.ParentID)
+		lite, ferr := c.SimpleForumUserCheck(w, r, u, topic.ParentID)
 		if ferr != nil {
 			return ferr
 		}
-		if !user.Perms.ViewTopic || !user.Perms.CloseTopic {
-			return c.NoPermissionsJSQ(w, r, user, js)
+		if !u.Perms.ViewTopic || !u.Perms.CloseTopic {
+			return c.NoPermissionsJSQ(w, r, u, js)
 		}
 
 		err = topic.Lock()
@@ -811,13 +811,13 @@ func LockTopicSubmit(w http.ResponseWriter, r *http.Request, user *c.User) c.Rou
 			return c.InternalErrorJSQ(err, w, r, js)
 		}
 
-		err = addTopicAction("lock", topic, user)
+		err = addTopicAction("lock", topic, u)
 		if err != nil {
 			return c.InternalErrorJSQ(err, w, r, js)
 		}
 
 		// TODO: Do a bulk lock action hook?
-		skip, rerr := lite.Hooks.VhookSkippable("action_end_lock_topic", topic.ID, user)
+		skip, rerr := lite.Hooks.VhookSkippable("action_end_lock_topic", topic.ID, u)
 		if skip || rerr != nil {
 			return rerr
 		}
@@ -842,10 +842,10 @@ func UnlockTopicSubmit(w http.ResponseWriter, r *http.Request, u *c.User, stid s
 
 // ! JS only route
 // TODO: Figure a way to get this route to work without JS
-func MoveTopicSubmit(w http.ResponseWriter, r *http.Request, user *c.User, sfid string) c.RouteError {
+func MoveTopicSubmit(w http.ResponseWriter, r *http.Request, u *c.User, sfid string) c.RouteError {
 	fid, err := strconv.Atoi(sfid)
 	if err != nil {
-		return c.PreErrorJS(phrases.GetErrorPhrase("id_must_be_integer"), w, r)
+		return c.PreErrorJS(p.GetErrorPhrase("id_must_be_integer"), w, r)
 	}
 	// TODO: Move this to some sort of middleware
 	var tids []int
@@ -869,19 +869,19 @@ func MoveTopicSubmit(w http.ResponseWriter, r *http.Request, user *c.User, sfid 
 		}
 
 		// TODO: Add hooks to make use of headerLite
-		_, ferr := c.SimpleForumUserCheck(w, r, user, topic.ParentID)
+		_, ferr := c.SimpleForumUserCheck(w, r, u, topic.ParentID)
 		if ferr != nil {
 			return ferr
 		}
-		if !user.Perms.ViewTopic || !user.Perms.MoveTopic {
-			return c.NoPermissionsJS(w, r, user)
+		if !u.Perms.ViewTopic || !u.Perms.MoveTopic {
+			return c.NoPermissionsJS(w, r, u)
 		}
-		lite, ferr := c.SimpleForumUserCheck(w, r, user, fid)
+		lite, ferr := c.SimpleForumUserCheck(w, r, u, fid)
 		if ferr != nil {
 			return ferr
 		}
-		if !user.Perms.ViewTopic || !user.Perms.MoveTopic {
-			return c.NoPermissionsJS(w, r, user)
+		if !u.Perms.ViewTopic || !u.Perms.MoveTopic {
+			return c.NoPermissionsJS(w, r, u)
 		}
 
 		err = topic.MoveTo(fid)
@@ -889,13 +889,13 @@ func MoveTopicSubmit(w http.ResponseWriter, r *http.Request, user *c.User, sfid 
 			return c.InternalErrorJS(err, w, r)
 		}
 		// ? - Is there a better way of doing this?
-		err = addTopicAction("move-"+strconv.Itoa(fid), topic, user)
+		err = addTopicAction("move-"+strconv.Itoa(fid), topic, u)
 		if err != nil {
 			return c.InternalErrorJS(err, w, r)
 		}
 
 		// TODO: Do a bulk move action hook?
-		skip, rerr := lite.Hooks.VhookSkippable("action_end_move_topic", topic.ID, user)
+		skip, rerr := lite.Hooks.VhookSkippable("action_end_move_topic", topic.ID, u)
 		if skip || rerr != nil {
 			return rerr
 		}
@@ -916,11 +916,11 @@ func addTopicAction(action string, t *c.Topic, u *c.User) error {
 }
 
 // TODO: Refactor this
-func LikeTopicSubmit(w http.ResponseWriter, r *http.Request, user *c.User, stid string) c.RouteError {
+func LikeTopicSubmit(w http.ResponseWriter, r *http.Request, u *c.User, stid string) c.RouteError {
 	js := r.PostFormValue("js") == "1"
 	tid, err := strconv.Atoi(stid)
 	if err != nil {
-		return c.PreErrorJSQ(phrases.GetErrorPhrase("id_must_be_integer"), w, r, js)
+		return c.PreErrorJSQ(p.GetErrorPhrase("id_must_be_integer"), w, r, js)
 	}
 	topic, err := c.Topics.Get(tid)
 	if err == sql.ErrNoRows {
@@ -930,50 +930,50 @@ func LikeTopicSubmit(w http.ResponseWriter, r *http.Request, user *c.User, stid 
 	}
 
 	// TODO: Add hooks to make use of headerLite
-	lite, ferr := c.SimpleForumUserCheck(w, r, user, topic.ParentID)
+	lite, ferr := c.SimpleForumUserCheck(w, r, u, topic.ParentID)
 	if ferr != nil {
 		return ferr
 	}
-	if !user.Perms.ViewTopic || !user.Perms.LikeItem {
-		return c.NoPermissionsJSQ(w, r, user, js)
+	if !u.Perms.ViewTopic || !u.Perms.LikeItem {
+		return c.NoPermissionsJSQ(w, r, u, js)
 	}
-	if topic.CreatedBy == user.ID {
-		return c.LocalErrorJSQ("You can't like your own topics", w, r, user, js)
+	if topic.CreatedBy == u.ID {
+		return c.LocalErrorJSQ("You can't like your own topics", w, r, u, js)
 	}
 
 	_, err = c.Users.Get(topic.CreatedBy)
 	if err != nil && err == sql.ErrNoRows {
-		return c.LocalErrorJSQ("The target user doesn't exist", w, r, user, js)
+		return c.LocalErrorJSQ("The target user doesn't exist", w, r, u, js)
 	} else if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
 
 	score := 1
-	err = topic.Like(score, user.ID)
+	err = topic.Like(score, u.ID)
 	if err == c.ErrAlreadyLiked {
-		return c.LocalErrorJSQ("You already liked this", w, r, user, js)
+		return c.LocalErrorJSQ("You already liked this", w, r, u, js)
 	} else if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
 
 	// ! Be careful about leaking per-route permission state with user ptr
-	alert := c.Alert{ActorID: user.ID, TargetUserID: topic.CreatedBy, Event: "like", ElementType: "topic", ElementID: tid, Actor: user}
+	alert := c.Alert{ActorID: u.ID, TargetUserID: topic.CreatedBy, Event: "like", ElementType: "topic", ElementID: tid, Actor: u}
 	err = c.AddActivityAndNotifyTarget(alert)
 	if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
 
-	skip, rerr := lite.Hooks.VhookSkippable("action_end_like_topic", topic.ID, user)
+	skip, rerr := lite.Hooks.VhookSkippable("action_end_like_topic", topic.ID, u)
 	if skip || rerr != nil {
 		return rerr
 	}
 	return actionSuccess(w, r, "/topic/"+strconv.Itoa(tid), js)
 }
-func UnlikeTopicSubmit(w http.ResponseWriter, r *http.Request, user *c.User, stid string) c.RouteError {
+func UnlikeTopicSubmit(w http.ResponseWriter, r *http.Request, u *c.User, stid string) c.RouteError {
 	js := r.PostFormValue("js") == "1"
 	tid, err := strconv.Atoi(stid)
 	if err != nil {
-		return c.PreErrorJSQ(phrases.GetErrorPhrase("id_must_be_integer"), w, r, js)
+		return c.PreErrorJSQ(p.GetErrorPhrase("id_must_be_integer"), w, r, js)
 	}
 	topic, err := c.Topics.Get(tid)
 	if err == sql.ErrNoRows {
@@ -983,21 +983,21 @@ func UnlikeTopicSubmit(w http.ResponseWriter, r *http.Request, user *c.User, sti
 	}
 
 	// TODO: Add hooks to make use of headerLite
-	lite, ferr := c.SimpleForumUserCheck(w, r, user, topic.ParentID)
+	lite, ferr := c.SimpleForumUserCheck(w, r, u, topic.ParentID)
 	if ferr != nil {
 		return ferr
 	}
-	if !user.Perms.ViewTopic || !user.Perms.LikeItem {
-		return c.NoPermissionsJSQ(w, r, user, js)
+	if !u.Perms.ViewTopic || !u.Perms.LikeItem {
+		return c.NoPermissionsJSQ(w, r, u, js)
 	}
 
 	_, err = c.Users.Get(topic.CreatedBy)
 	if err != nil && err == sql.ErrNoRows {
-		return c.LocalErrorJSQ("The target user doesn't exist", w, r, user, js)
+		return c.LocalErrorJSQ("The target user doesn't exist", w, r, u, js)
 	} else if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
-	err = topic.Unlike(user.ID)
+	err = topic.Unlike(u.ID)
 	if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
@@ -1015,7 +1015,7 @@ func UnlikeTopicSubmit(w http.ResponseWriter, r *http.Request, user *c.User, sti
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
 
-	skip, rerr := lite.Hooks.VhookSkippable("action_end_unlike_topic", topic.ID, user)
+	skip, rerr := lite.Hooks.VhookSkippable("action_end_unlike_topic", topic.ID, u)
 	if skip || rerr != nil {
 		return rerr
 	}
