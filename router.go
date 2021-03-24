@@ -205,8 +205,9 @@ func (r *GenRouter) ddumpRequest(req *http.Request, pre string, l *RouterLog, sb
 	nfield("\nIP: ", req.RemoteAddr)
 	sb.WriteString("\n")
 
+	str := sb.String()
 	l.RLock()
-	l.LogVal.Load().(*log.Logger).Print(sb.String())
+	l.LogVal.Load().(*log.Logger).Print(str)
 	l.RUnlock()
 }
 
