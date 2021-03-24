@@ -14,6 +14,8 @@ import (
 
 var Attachments AttachmentStore
 
+var ErrCorruptAttachPath = errors.New("corrupt attachment path")
+
 type MiniAttachment struct {
 	ID         int
 	SectionID  int
@@ -41,6 +43,7 @@ type Attachment struct {
 }
 
 type AttachmentStore interface {
+	GetForRenderRoute(filename string, sid int, sectionTable string) (*Attachment, error)
 	FGet(id int) (*Attachment, error)
 	Get(id int) (*MiniAttachment, error)
 	MiniGetList(originTable string, originID int) (alist []*MiniAttachment, err error)
@@ -58,6 +61,8 @@ type AttachmentStore interface {
 }
 
 type DefaultAttachmentStore struct {
+	getForRenderRoute *sql.Stmt
+
 	fget        *sql.Stmt
 	get         *sql.Stmt
 	getByObj    *sql.Stmt
@@ -76,6 +81,8 @@ type DefaultAttachmentStore struct {
 func NewDefaultAttachmentStore(acc *qgen.Accumulator) (*DefaultAttachmentStore, error) {
 	a := "attachments"
 	return &DefaultAttachmentStore{
+		getForRenderRoute: acc.Select(a).Columns("sectionTable, originID, originTable, uploadedBy, path").Where("path=? AND sectionID=? AND sectionTable=?").Prepare(),
+
 		fget:        acc.Select(a).Columns("originTable, originID, sectionTable, sectionID, uploadedBy, path, extra").Where("attachID=?").Prepare(),
 		get:         acc.Select(a).Columns("originID, sectionID, uploadedBy, path, extra").Where("attachID=?").Prepare(),
 		getByObj:    acc.Select(a).Columns("attachID, sectionID, uploadedBy, path, extra").Where("originTable=? AND originID=?").Prepare(),
@@ -93,6 +100,15 @@ func NewDefaultAttachmentStore(acc *qgen.Accumulator) (*DefaultAttachmentStore, 
 	}, acc.FirstError()
 }
 
+// TODO: Revamp this to make it less of a copy-paste from the original code in the route
+// ! Lacks some attachment initialisation code
+func (s *DefaultAttachmentStore) GetForRenderRoute(filename string, sid int, sectionTable string) (*Attachment, error) {
+	a := &Attachment{SectionID: sid}
+	e := s.getForRenderRoute.QueryRow(filename, sid, sectionTable).Scan(&a.SectionTable, &a.OriginID, &a.OriginTable, &a.UploadedBy, &a.Path)
+	// TODO: Initialise attachment struct fields?
+	return a, e
+}
+
 func (s *DefaultAttachmentStore) MiniGetList(originTable string, originID int) (alist []*MiniAttachment, err error) {
 	rows, err := s.getByObj.Query(originTable, originID)
 	defer rows.Close()
@@ -104,7 +120,7 @@ func (s *DefaultAttachmentStore) MiniGetList(originTable string, originID int) (
 		}
 		a.Ext = strings.TrimPrefix(filepath.Ext(a.Path), ".")
 		if len(a.Ext) == 0 {
-			return nil, errors.New("corrupt attachment path")
+			return nil, ErrCorruptAttachPath
 		}
 		a.Image = ImageFileExts.Contains(a.Ext)
 		alist = append(alist, a)
@@ -140,7 +156,7 @@ func (s *DefaultAttachmentStore) BulkMiniGetList(originTable string, ids []int) 
 		}
 		a.Ext = strings.TrimPrefix(filepath.Ext(a.Path), ".")
 		if len(a.Ext) == 0 {
-			return nil, errors.New("corrupt attachment path")
+			return nil, ErrCorruptAttachPath
 		}
 		a.Image = ImageFileExts.Contains(a.Ext)
 		if currentID == 0 {
@@ -169,7 +185,7 @@ func (s *DefaultAttachmentStore) FGet(id int) (*Attachment, error) {
 	}
 	a.Ext = strings.TrimPrefix(filepath.Ext(a.Path), ".")
 	if len(a.Ext) == 0 {
-		return nil, errors.New("corrupt attachment path")
+		return nil, ErrCorruptAttachPath
 	}
 	a.Image = ImageFileExts.Contains(a.Ext)
 	return a, nil
@@ -183,7 +199,7 @@ func (s *DefaultAttachmentStore) Get(id int) (*MiniAttachment, error) {
 	}
 	a.Ext = strings.TrimPrefix(filepath.Ext(a.Path), ".")
 	if len(a.Ext) == 0 {
-		return nil, errors.New("corrupt attachment path")
+		return nil, ErrCorruptAttachPath
 	}
 	a.Image = ImageFileExts.Contains(a.Ext)
 	return a, nil
@@ -209,32 +225,32 @@ func (s *DefaultAttachmentStore) MoveToByExtra(sectionID int, originTable, extra
 }
 
 func (s *DefaultAttachmentStore) Count() (count int) {
-	err := s.count.QueryRow().Scan(&count)
-	if err != nil {
-		LogError(err)
+	e := s.count.QueryRow().Scan(&count)
+	if e != nil {
+		LogError(e)
 	}
 	return count
 }
 
 func (s *DefaultAttachmentStore) CountIn(originTable string, oid int) (count int) {
-	err := s.countIn.QueryRow(originTable, oid).Scan(&count)
-	if err != nil {
-		LogError(err)
+	e := s.countIn.QueryRow(originTable, oid).Scan(&count)
+	if e != nil {
+		LogError(e)
 	}
 	return count
 }
 
 func (s *DefaultAttachmentStore) CountInPath(path string) (count int) {
-	err := s.countInPath.QueryRow(path).Scan(&count)
-	if err != nil {
-		LogError(err)
+	e := s.countInPath.QueryRow(path).Scan(&count)
+	if e != nil {
+		LogError(e)
 	}
 	return count
 }
 
 func (s *DefaultAttachmentStore) Delete(id int) error {
-	_, err := s.delete.Exec(id)
-	return err
+	_, e := s.delete.Exec(id)
+	return e
 }
 
 // TODO: Split this out of this store
@@ -256,10 +272,7 @@ func (s *DefaultAttachmentStore) AddLinked(otable string, oid int) (err error) {
 	if err == sql.ErrNoRows {
 		err = nil
 	}
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 // TODO: Split this out of this store
@@ -280,10 +293,7 @@ func (s *DefaultAttachmentStore) RemoveLinked(otable string, oid int) (err error
 		}
 		err = Rstore.GetCache().Remove(oid)
 	}
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 // TODO: Add a table for the files and lock the file row when performing tasks related to the file

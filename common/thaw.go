@@ -38,6 +38,21 @@ func (t *SingleServerThaw) Thaw() {
 	}
 }
 
+type TestThaw struct {
+}
+
+func NewTestThaw() *TestThaw {
+	return &TestThaw{}
+}
+func (t *TestThaw) Thawed() bool {
+	return true
+}
+func (t *TestThaw) Thaw() {
+}
+func (t *TestThaw) Tick() error {
+	return nil
+}
+
 type DefaultThaw struct {
 	thawed int64
 }

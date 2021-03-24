@@ -44,13 +44,13 @@ func simpleForumUserCheck(w http.ResponseWriter, r *http.Request, u *User, fid i
 		return h, rerr
 	}
 
-	fperms, err := FPStore.Get(fid, u.Group)
+	fp, err := FPStore.Get(fid, u.Group)
 	if err == ErrNoRows {
-		fperms = BlankForumPerms()
+		fp = BlankForumPerms()
 	} else if err != nil {
 		return h, InternalError(err, w, r)
 	}
-	cascadeForumPerms(fperms, u)
+	cascadeForumPerms(fp, u)
 	return h, nil
 }
 
@@ -72,13 +72,13 @@ func forumUserCheck(h *Header, w http.ResponseWriter, r *http.Request, u *User, 
 		return rerr
 	}
 
-	fperms, err := FPStore.Get(fid, u.Group)
+	fp, err := FPStore.Get(fid, u.Group)
 	if err == ErrNoRows {
-		fperms = BlankForumPerms()
+		fp = BlankForumPerms()
 	} else if err != nil {
 		return InternalError(err, w, r)
 	}
-	cascadeForumPerms(fperms, u)
+	cascadeForumPerms(fp, u)
 	h.CurrentUser = u // TODO: Use a pointer instead for CurrentUser, so we don't have to do this
 	return rerr
 }

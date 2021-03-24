@@ -8,50 +8,47 @@ import (
 	"strings"
 
 	c "github.com/Azareal/Gosora/common"
-	qgen "github.com/Azareal/Gosora/query_gen"
 )
-
-type AttachmentStmts struct {
-	get *sql.Stmt
-}
-
-var attachmentStmts AttachmentStmts
-
-// TODO: Abstract this with an attachment store
-func init() {
-	c.DbInits.Add(func(acc *qgen.Accumulator) error {
-		attachmentStmts = AttachmentStmts{
-			get: acc.Select("attachments").Columns("sectionID, sectionTable, originID, originTable, uploadedBy, path").Where("path=? AND sectionID=? AND sectionTable=?").Prepare(),
-		}
-		return acc.FirstError()
-	})
-}
 
 var maxAgeYear = "max-age=" + strconv.Itoa(int(c.Year))
 
 func ShowAttachment(w http.ResponseWriter, r *http.Request, u *c.User, filename string) c.RouteError {
-	filename = c.Stripslashes(filename)
-	ext := filepath.Ext("./attachs/" + filename)
-	if !c.AllowedFileExts.Contains(strings.TrimPrefix(ext, ".")) {
-		return c.LocalError("Bad extension", w, r, u)
-	}
-
 	sid, err := strconv.Atoi(r.FormValue("sid"))
 	if err != nil {
 		return c.LocalError("The sid is not an integer", w, r, u)
 	}
 	sectionTable := r.FormValue("stype")
 
-	var originTable string
-	var originID, uploadedBy int
-	err = attachmentStmts.get.QueryRow(filename, sid, sectionTable).Scan(&sid, &sectionTable, &originID, &originTable, &uploadedBy, &filename)
+	filename = c.Stripslashes(filename)
+	if filename == "" {
+		return c.LocalError("Bad filename", w, r, u)
+	}
+	ext := filepath.Ext(filename)
+	if ext == "" || !c.AllowedFileExts.Contains(strings.TrimPrefix(ext, ".")) {
+		return c.LocalError("Bad extension", w, r, u)
+	}
+
+	// TODO: Use the same hook table as upstream
+	hTbl := c.GetHookTable()
+	skip, rerr := c.H_route_attach_start_hook(hTbl, w, r, u, filename)
+	if skip || rerr != nil {
+		return rerr
+	}
+
+	a, err := c.Attachments.GetForRenderRoute(filename, sid, sectionTable)
+	// ErrCorruptAttachPath is a possibility now
 	if err == sql.ErrNoRows {
 		return c.NotFound(w, r, nil)
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
 
-	if sectionTable == "forums" {
+	skip, rerr = c.H_route_attach_post_get_hook(hTbl, w, r, u, a)
+	if skip || rerr != nil {
+		return rerr
+	}
+
+	if a.SectionTable == "forums" {
 		_, ferr := c.SimpleForumUserCheck(w, r, u, sid)
 		if ferr != nil {
 			return ferr
@@ -63,7 +60,7 @@ func ShowAttachment(w http.ResponseWriter, r *http.Request, u *c.User, filename 
 		return c.LocalError("Unknown section", w, r, u)
 	}
 
-	if originTable != "topics" && originTable != "replies" {
+	if a.OriginTable != "topics" && a.OriginTable != "replies" {
 		return c.LocalError("Unknown origin", w, r, u)
 	}
 
@@ -89,11 +86,11 @@ func ShowAttachment(w http.ResponseWriter, r *http.Request, u *c.User, filename 
 }
 
 func deleteAttachment(w http.ResponseWriter, r *http.Request, u *c.User, aid int, js bool) c.RouteError {
-	err := c.DeleteAttachment(aid)
-	if err == sql.ErrNoRows {
+	e := c.DeleteAttachment(aid)
+	if e == sql.ErrNoRows {
 		return c.NotFoundJSQ(w, r, nil, js)
-	} else if err != nil {
-		return c.InternalErrorJSQ(err, w, r, js)
+	} else if e != nil {
+		return c.InternalErrorJSQ(e, w, r, js)
 	}
 	return nil
 }

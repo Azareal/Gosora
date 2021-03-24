@@ -1,7 +1,7 @@
 /*
 *
 * Gosora Plugin System
-* Copyright Azareal 2016 - 2020
+* Copyright Azareal 2016 - 2021
 *
  */
 package common
@@ -25,9 +25,9 @@ type PluginList map[string]*Plugin
 // TODO: Have a proper store rather than a map?
 var Plugins PluginList = make(map[string]*Plugin)
 
-func (list PluginList) Add(pl *Plugin) {
+func (l PluginList) Add(pl *Plugin) {
 	buildPlugin(pl)
-	list[pl.UName] = pl
+	l[pl.UName] = pl
 }
 
 func buildPlugin(pl *Plugin) {
@@ -94,6 +94,8 @@ var hookTable = &HookTable{
 		"route_topic_list_start":            nil,
 		"route_topic_list_mostviewed_start": nil,
 		"route_forum_list_start":            nil,
+		"route_attach_start":                nil,
+		"route_attach_post_get":             nil,
 
 		"action_end_create_topic":  nil,
 		"action_end_edit_topic":    nil,
@@ -126,8 +128,8 @@ var hookTable = &HookTable{
 		"tasks_tick_widget_wol": nil,
 	},
 	map[string][]func(string) string{
-		"preparse_preassign": nil,
-		"parse_assign":       nil,
+		"preparse_preassign":  nil,
+		"parse_assign":        nil,
 		"topic_ogdesc_assign": nil,
 	},
 	nil,

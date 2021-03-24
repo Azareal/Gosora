@@ -44,19 +44,18 @@ func NewSQLSearcher(acc *qgen.Accumulator) (*SQLSearcher, error) {
 func (s *SQLSearcher) queryAll(q string) ([]int, error) {
 	var ids []int
 	run := func(stmt *sql.Stmt, q ...interface{}) error {
-		rows, err := stmt.Query(q...)
-		if err == sql.ErrNoRows {
+		rows, e := stmt.Query(q...)
+		if e == sql.ErrNoRows {
 			return nil
-		} else if err != nil {
-			return err
+		} else if e != nil {
+			return e
 		}
 		defer rows.Close()
 
 		for rows.Next() {
 			var id int
-			err := rows.Scan(&id)
-			if err != nil {
-				return err
+			if e := rows.Scan(&id); e != nil {
+				return e
 			}
 			ids = append(ids, id)
 		}
@@ -81,19 +80,18 @@ func (s *SQLSearcher) Query(q string, zones []int) (ids []int, err error) {
 	if len(zones) == 0 {
 		return nil, nil
 	}
-	run := func(rows *sql.Rows, err error) error {
-		/*if err == sql.ErrNoRows {
+	run := func(rows *sql.Rows, e error) error {
+		/*if e == sql.ErrNoRows {
 			return nil
-		} else */if err != nil {
-			return err
+		} else */if e != nil {
+			return e
 		}
 		defer rows.Close()
 
 		for rows.Next() {
 			var id int
-			err := rows.Scan(&id)
-			if err != nil {
-				return err
+			if e := rows.Scan(&id); e != nil {
+				return e
 			}
 			ids = append(ids, id)
 		}
@@ -116,14 +114,12 @@ func (s *SQLSearcher) Query(q string, zones []int) (ids []int, err error) {
 
 		acc := qgen.NewAcc()
 		/*stmt := acc.RawPrepare("SELECT topics.tid FROM topics INNER JOIN replies ON topics.tid = replies.tid WHERE (MATCH(topics.title) AGAINST (? IN BOOLEAN MODE) OR MATCH(topics.content) AGAINST (? IN BOOLEAN MODE) OR MATCH(replies.content) AGAINST (? IN BOOLEAN MODE) OR topics.title=? OR topics.content=? OR replies.content=?) AND topics.parentID IN(" + zList + ")")
-		err = acc.FirstError()
-		if err != nil {
+		if err = acc.FirstError(); err != nil {
 			return nil, err
 		}*/
 		// TODO: Cache common IN counts
 		stmt := acc.RawPrepare("SELECT tid FROM topics WHERE (MATCH(topics.title) AGAINST (? IN BOOLEAN MODE) OR MATCH(topics.content) AGAINST (? IN BOOLEAN MODE)) AND parentID IN(" + zList + ")")
-		err = acc.FirstError()
-		if err != nil {
+		if err = acc.FirstError(); err != nil {
 			return nil, err
 		}
 		err = run(stmt.Query(q, q))
@@ -131,8 +127,7 @@ func (s *SQLSearcher) Query(q string, zones []int) (ids []int, err error) {
 			return nil, err
 		}
 		stmt = acc.RawPrepare("SELECT tid FROM replies WHERE MATCH(replies.content) AGAINST (? IN BOOLEAN MODE) AND tid IN(" + zList + ")")
-		err = acc.FirstError()
-		if err != nil {
+		if err = acc.FirstError(); err != nil {
 			return nil, err
 		}
 		err = run(stmt.Query(q))

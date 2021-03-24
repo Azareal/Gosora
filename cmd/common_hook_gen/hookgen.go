@@ -1,60 +1,62 @@
 package hookgen
 
 import (
+	"bytes"
 	"log"
 	"os"
-	"bytes"
 	"text/template"
 )
 
 type HookVars struct {
 	Imports []string
-	Hooks []Hook
+	Hooks   []Hook
 }
 
 type Hook struct {
-	Name string
-	Params string
-	Params2 string
-	Ret string
-	Type string
-	Any bool
-	MultiHook bool
-	Skip bool
+	Name       string
+	Params     string
+	Params2    string
+	Ret        string
+	Type       string
+	Any        bool
+	MultiHook  bool
+	Skip       bool
 	DefaultRet string
-	Pure string
+	Pure       string
 }
 
 func AddHooks(add func(name, params, ret, htype string, multiHook, skip bool, defaultRet, pure string)) {
 	vhookskip := func(name, params string) {
-		add(name,params,"(bool,RouteError)","VhookSkippable_",false,true,"false,nil","")
+		add(name, params, "(bool,RouteError)", "VhookSkippable_", false, true, "false,nil", "")
 	}
-	vhookskip("forum_check_pre_perms","w http.ResponseWriter,r *http.Request,u *User,fid *int,h *Header")
-	vhookskip("router_after_filters","w http.ResponseWriter,r *http.Request,prefix string")
-	vhookskip("router_pre_route","w http.ResponseWriter,r *http.Request,u *User,prefix string")
-	vhookskip("route_forum_list_start","w http.ResponseWriter,r *http.Request,u *User,h *Header")
-	vhookskip("route_topic_list_start","w http.ResponseWriter,r *http.Request,u *User,h *Header")
+	vhookskip("forum_check_pre_perms", "w http.ResponseWriter,r *http.Request,u *User,fid *int,h *Header")
+	vhookskip("router_after_filters", "w http.ResponseWriter,r *http.Request,prefix string")
+	vhookskip("router_pre_route", "w http.ResponseWriter,r *http.Request,u *User,prefix string")
+	vhookskip("route_forum_list_start", "w http.ResponseWriter,r *http.Request,u *User,h *Header")
+	vhookskip("route_topic_list_start", "w http.ResponseWriter,r *http.Request,u *User,h *Header")
+	vhookskip("route_attach_start", "w http.ResponseWriter,r *http.Request,u *User,fname string")
+	vhookskip("route_attach_post_get", "w http.ResponseWriter,r *http.Request,u *User,a *Attachment")
 	vhooknoret := func(name, params string) {
-		add(name,params,"","Vhooks",false,false,"false,nil","")
+		add(name, params, "", "Vhooks", false, false, "false,nil", "")
 	}
-	vhooknoret("router_end","w http.ResponseWriter,r *http.Request,u *User,prefix string, extraData string")
-	vhooknoret("topic_reply_row_assign","r *ReplyUser")
+	vhooknoret("router_end", "w http.ResponseWriter,r *http.Request,u *User,prefix string,extraData string")
+	vhooknoret("topic_reply_row_assign", "r *ReplyUser")
 	//forums_frow_assign
 	//Hook(name string, data interface{}) interface{}
 	/*hook := func(name, params, ret, pure string) {
 		add(name,params,ret,"Hooks",true,false,ret,pure)
 	}*/
 	hooknoret := func(name, params string) {
-		add(name,params,"","HooksNoRet",true,false,"","")
+		add(name, params, "", "HooksNoRet", true, false, "", "")
 	}
-	hooknoret("forums_frow_assign","f *Forum")
+	hooknoret("forums_frow_assign", "f *Forum")
 	hookskip := func(name, params string) {
-		add(name,params,"(skip bool)","HooksSkip",true,true,"","")
+		add(name, params, "(skip bool)", "HooksSkip", true, true, "", "")
 	}
 	//hookskip("forums_frow_assign","f *Forum")
-	hookskip("topic_create_frow_assign","f *Forum")
+	hookskip("topic_create_frow_assign", "f *Forum")
 	hookss := func(name string) {
-		add(name,"d string","string","Sshooks",true,false,"","d")
+		add(name, "d string", "string", "Sshooks", true, false, "", "d")
 	}
 	hookss("topic_ogdesc_assign")
 }
@@ -85,8 +87,8 @@ func H_{{.Name}}_hook(t *HookTable,{{.Params}}) {{.Ret}} { {{if .Any}}
 	if e := tmpl.Execute(&b, hookVars); e != nil {
 		log.Fatal(e)
 	}
-	
-	err := writeFile("./common/gen_extend.go", string(b.Bytes()))
+
+	err := writeFile("./common/gen_extend.go", b.String())
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -9,7 +9,7 @@ import (
 var IPSearch IPSearcher
 
 type IPSearcher interface {
-	Lookup(ip string) (uids []int, err error)
+	Lookup(ip string) (uids []int, e error)
 }
 
 type DefaultIPSearcher struct {
@@ -23,27 +23,29 @@ type DefaultIPSearcher struct {
 func NewDefaultIPSearcher() (*DefaultIPSearcher, error) {
 	acc := qgen.NewAcc()
 	uu := "users"
+	q := func(tbl string) *sql.Stmt {
+		return acc.Select(uu).Columns("uid").InQ("uid", acc.Select(tbl).Columns("createdBy").Where("ip=?")).Prepare()
+	}
 	return &DefaultIPSearcher{
 		searchUsers:        acc.Select(uu).Columns("uid").Where("last_ip=? OR last_ip LIKE CONCAT('%-',?)").Prepare(),
-		searchTopics:       acc.Select(uu).Columns("uid").InQ("uid", acc.Select("topics").Columns("createdBy").Where("ip=?")).Prepare(),
-		searchReplies:      acc.Select(uu).Columns("uid").InQ("uid", acc.Select("replies").Columns("createdBy").Where("ip=?")).Prepare(),
-		searchUsersReplies: acc.Select(uu).Columns("uid").InQ("uid", acc.Select("users_replies").Columns("createdBy").Where("ip=?")).Prepare(),
+		searchTopics:       q("topics"),
+		searchReplies:      q("replies"),
+		searchUsersReplies: q("users_replies"),
 	}, acc.FirstError()
 }
 
-func (s *DefaultIPSearcher) Lookup(ip string) (uids []int, err error) {
+func (s *DefaultIPSearcher) Lookup(ip string) (uids []int, e error) {
 	var uid int
 	reqUserList := make(map[int]bool)
-	runQuery2 := func(rows *sql.Rows, err error) error {
-		if err != nil {
-			return err
+	runQuery2 := func(rows *sql.Rows, e error) error {
+		if e != nil {
+			return e
 		}
 		defer rows.Close()
 
 		for rows.Next() {
-			err := rows.Scan(&uid)
-			if err != nil {
-				return err
+			if e := rows.Scan(&uid); e != nil {
+				return e
 			}
 			reqUserList[uid] = true
 		}
@@ -53,21 +55,21 @@ func (s *DefaultIPSearcher) Lookup(ip string) (uids []int, err error) {
 		return runQuery2(stmt.Query(ip))
 	}
 
-	err = runQuery2(s.searchUsers.Query(ip, ip))
-	if err != nil {
-		return uids, err
+	e = runQuery2(s.searchUsers.Query(ip, ip))
+	if e != nil {
+		return uids, e
 	}
-	err = runQuery(s.searchTopics)
-	if err != nil {
-		return uids, err
+	e = runQuery(s.searchTopics)
+	if e != nil {
+		return uids, e
 	}
-	err = runQuery(s.searchReplies)
-	if err != nil {
-		return uids, err
+	e = runQuery(s.searchReplies)
+	if e != nil {
+		return uids, e
 	}
-	err = runQuery(s.searchUsersReplies)
-	if err != nil {
-		return uids, err
+	e = runQuery(s.searchUsersReplies)
+	if e != nil {
+		return uids, e
 	}
 
 	// Convert the user ID map to a slice, then bulk load the users
