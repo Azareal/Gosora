@@ -41,7 +41,6 @@ func CreateReplySubmit(w http.ResponseWriter, r *http.Request, user *c.User) c.R
 	if err != nil {
 		return c.PreErrorJSQ("Failed to convert the Topic ID", w, r, js)
 	}
-
 	topic, err := c.Topics.Get(tid)
 	if err == sql.ErrNoRows {
 		return c.PreErrorJSQ("Couldn't find the parent topic", w, r, js)
@@ -88,21 +87,20 @@ func CreateReplySubmit(w http.ResponseWriter, r *http.Request, user *c.User) c.R
 		for key, values := range r.Form {
 			//c.DebugDetail("key: ", key)
 			//c.DebugDetailf("values: %+v\n", values)
+			if !strings.HasPrefix(key, "pollinputitem[") {
+				continue
+			}
+			halves := strings.Split(key, "[")
+			if len(halves) != 2 {
+				return c.LocalErrorJSQ("Malformed pollinputitem", w, r, user, js)
+			}
+			halves[1] = strings.TrimSuffix(halves[1], "]")
+
+			index, err := strconv.Atoi(halves[1])
+			if err != nil {
+				return c.LocalErrorJSQ("Malformed pollinputitem", w, r, user, js)
+			}
 			for _, value := range values {
-				if !strings.HasPrefix(key, "pollinputitem[") {
-					continue
-				}
-				halves := strings.Split(key, "[")
-				if len(halves) != 2 {
-					return c.LocalErrorJSQ("Malformed pollinputitem", w, r, user, js)
-				}
-				halves[1] = strings.TrimSuffix(halves[1], "]")
-
-				index, err := strconv.Atoi(halves[1])
-				if err != nil {
-					return c.LocalErrorJSQ("Malformed pollinputitem", w, r, user, js)
-				}
-
 				// If there are duplicates, then something has gone horribly wrong, so let's ignore them, this'll likely happen during an attack
 				_, exists := pollInputItems[index]
 				// TODO: Should we use SanitiseBody instead to keep the newlines?
@@ -150,7 +148,6 @@ func CreateReplySubmit(w http.ResponseWriter, r *http.Request, user *c.User) c.R
 	} else if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
-
 	page := c.LastPage(nTopic.PostCount, c.Config.ItemsPerPage)
 
 	rows, err := replyStmts.createReplyPaging.Query(reply.ID, topic.ID)
@@ -211,27 +208,7 @@ func CreateReplySubmit(w http.ResponseWriter, r *http.Request, user *c.User) c.R
 // TODO: Update the stats after edits so that we don't under or over decrement stats during deletes
 func ReplyEditSubmit(w http.ResponseWriter, r *http.Request, u *c.User, srid string) c.RouteError {
 	js := r.PostFormValue("js") == "1"
-	rid, err := strconv.Atoi(srid)
-	if err != nil {
-		return c.PreErrorJSQ("The provided Reply ID is not a valid number.", w, r, js)
-	}
-
-	reply, err := c.Rstore.Get(rid)
-	if err == sql.ErrNoRows {
-		return c.PreErrorJSQ("The target reply doesn't exist.", w, r, js)
-	} else if err != nil {
-		return c.InternalErrorJSQ(err, w, r, js)
-	}
-
-	topic, err := reply.Topic()
-	if err == sql.ErrNoRows {
-		return c.PreErrorJSQ("The parent topic doesn't exist.", w, r, js)
-	} else if err != nil {
-		return c.InternalErrorJSQ(err, w, r, js)
-	}
-
-	// TODO: Add hooks to make use of headerLite
-	lite, ferr := c.SimpleForumUserCheck(w, r, u, topic.ParentID)
+	reply, topic, lite, ferr := ReplyActPre(w, r, u, srid, js)
 	if ferr != nil {
 		return ferr
 	}
@@ -242,7 +219,7 @@ func ReplyEditSubmit(w http.ResponseWriter, r *http.Request, u *c.User, srid str
 		return c.NoPermissionsJSQ(w, r, u, js)
 	}
 
-	err = reply.SetPost(r.PostFormValue("edit_item"))
+	err := reply.SetPost(r.PostFormValue("edit_item"))
 	if err == sql.ErrNoRows {
 		return c.PreErrorJSQ("The parent topic doesn't exist.", w, r, js)
 	} else if err != nil {
@@ -250,7 +227,7 @@ func ReplyEditSubmit(w http.ResponseWriter, r *http.Request, u *c.User, srid str
 	}
 
 	// TODO: Avoid the load to get this faster?
-	reply, err = c.Rstore.Get(rid)
+	reply, err = c.Rstore.Get(reply.ID)
 	if err == sql.ErrNoRows {
 		return c.PreErrorJSQ("The updated reply doesn't exist.", w, r, js)
 	} else if err != nil {
@@ -263,7 +240,7 @@ func ReplyEditSubmit(w http.ResponseWriter, r *http.Request, u *c.User, srid str
 	}
 
 	if !js {
-		http.Redirect(w, r, "/topic/"+strconv.Itoa(topic.ID)+"#reply-"+strconv.Itoa(rid), http.StatusSeeOther)
+		http.Redirect(w, r, "/topic/"+strconv.Itoa(topic.ID)+"#reply-"+strconv.Itoa(reply.ID), http.StatusSeeOther)
 	} else {
 		outBytes, err := json.Marshal(JsonReply{c.ParseMessage(reply.Content, topic.ParentID, "forums", u.ParseSettings, u)})
 		if err != nil {
@@ -279,26 +256,7 @@ func ReplyEditSubmit(w http.ResponseWriter, r *http.Request, u *c.User, srid str
 // TODO: Disable stat updates in posts handled by plugin_guilds
 func ReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, u *c.User, srid string) c.RouteError {
 	js := r.PostFormValue("js") == "1"
-	rid, err := strconv.Atoi(srid)
-	if err != nil {
-		return c.PreErrorJSQ("The provided Reply ID is not a valid number.", w, r, js)
-	}
-
-	reply, err := c.Rstore.Get(rid)
-	if err == sql.ErrNoRows {
-		return c.PreErrorJSQ("The reply you tried to delete doesn't exist.", w, r, js)
-	} else if err != nil {
-		return c.InternalErrorJSQ(err, w, r, js)
-	}
-	topic, err := c.Topics.Get(reply.ParentID)
-	if err == sql.ErrNoRows {
-		return c.PreErrorJSQ("The parent topic doesn't exist.", w, r, js)
-	} else if err != nil {
-		return c.InternalErrorJSQ(err, w, r, js)
-	}
-
-	// TODO: Add hooks to make use of headerLite
-	lite, ferr := c.SimpleForumUserCheck(w, r, u, topic.ParentID)
+	reply, _, lite, ferr := ReplyActPre(w, r, u, srid, js)
 	if ferr != nil {
 		return ferr
 	}
@@ -316,7 +274,7 @@ func ReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, u *c.User, srid s
 		return rerr
 	}
 
-	//log.Printf("Reply #%d was deleted by c.User #%d", rid, user.ID)
+	//log.Printf("Reply #%d was deleted by c.User #%d", rid, u.ID)
 	if !js {
 		http.Redirect(w, r, "/topic/"+strconv.Itoa(reply.ParentID), http.StatusSeeOther)
 	} else {
@@ -334,7 +292,7 @@ func ReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, u *c.User, srid s
 		return c.InternalErrorJSQ(err, w, r, js)
 	}*/
 
-	err = c.ModLogs.Create("delete", reply.ParentID, "reply", u.GetIP(), u.ID)
+	err := c.ModLogs.Create("delete", reply.ParentID, "reply", u.GetIP(), u.ID)
 	if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
@@ -345,24 +303,7 @@ func ReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, u *c.User, srid s
 // TODO: Enforce the max request limit on all of this topic's attachments
 // TODO: Test this route
 func AddAttachToReplySubmit(w http.ResponseWriter, r *http.Request, u *c.User, srid string) c.RouteError {
-	rid, err := strconv.Atoi(srid)
-	if err != nil {
-		return c.LocalErrorJS(p.GetErrorPhrase("id_must_be_integer"), w, r)
-	}
-
-	reply, err := c.Rstore.Get(rid)
-	if err == sql.ErrNoRows {
-		return c.PreErrorJS("You can't attach to something which doesn't exist!", w, r)
-	} else if err != nil {
-		return c.InternalErrorJS(err, w, r)
-	}
-
-	topic, err := c.Topics.Get(reply.ParentID)
-	if err != nil {
-		return c.NotFoundJS(w, r)
-	}
-
-	lite, ferr := c.SimpleForumUserCheck(w, r, u, topic.ParentID)
+	reply, topic, lite, ferr := ReplyActPre(w, r, u, srid, true)
 	if ferr != nil {
 		return ferr
 	}
@@ -374,7 +315,7 @@ func AddAttachToReplySubmit(w http.ResponseWriter, r *http.Request, u *c.User, s
 	}
 
 	// Handle the file attachments
-	pathMap, rerr := uploadAttachment(w, r, u, topic.ParentID, "forums", rid, "replies", strconv.Itoa(topic.ID))
+	pathMap, rerr := uploadAttachment(w, r, u, topic.ParentID, "forums", reply.ID, "replies", strconv.Itoa(topic.ID))
 	if rerr != nil {
 		// TODO: This needs to be a JS error...
 		return rerr
@@ -402,24 +343,7 @@ func AddAttachToReplySubmit(w http.ResponseWriter, r *http.Request, u *c.User, s
 
 // TODO: Reduce the amount of duplication between this and RemoveAttachFromTopicSubmit
 func RemoveAttachFromReplySubmit(w http.ResponseWriter, r *http.Request, u *c.User, srid string) c.RouteError {
-	rid, err := strconv.Atoi(srid)
-	if err != nil {
-		return c.LocalErrorJS(p.GetErrorPhrase("id_must_be_integer"), w, r)
-	}
-
-	reply, err := c.Rstore.Get(rid)
-	if err == sql.ErrNoRows {
-		return c.PreErrorJS("You can't attach from something which doesn't exist!", w, r)
-	} else if err != nil {
-		return c.InternalErrorJS(err, w, r)
-	}
-
-	topic, err := c.Topics.Get(reply.ParentID)
-	if err != nil {
-		return c.NotFoundJS(w, r)
-	}
-
-	lite, ferr := c.SimpleForumUserCheck(w, r, u, topic.ParentID)
+	reply, topic, lite, ferr := ReplyActPre(w, r, u, srid, true)
 	if ferr != nil {
 		return ferr
 	}
@@ -455,29 +379,33 @@ func RemoveAttachFromReplySubmit(w http.ResponseWriter, r *http.Request, u *c.Us
 	return nil
 }
 
-func ReplyLikeSubmit(w http.ResponseWriter, r *http.Request, u *c.User, srid string) c.RouteError {
-	js := r.PostFormValue("js") == "1"
+func ReplyActPre(w http.ResponseWriter, r *http.Request, u *c.User, srid string, js bool) (rep *c.Reply, t *c.Topic, l *c.HeaderLite, ferr c.RouteError) {
 	rid, err := strconv.Atoi(srid)
 	if err != nil {
-		return c.PreErrorJSQ("The provided Reply ID is not a valid number.", w, r, js)
+		return rep, t, l, c.PreErrorJSQ("The provided Reply ID is not a valid number.", w, r, js)
+	}
+	rep, err = c.Rstore.Get(rid)
+	if err == sql.ErrNoRows {
+		return rep, t, l, c.PreErrorJSQ("The linked reply doesn't exist.", w, r, js)
+	} else if err != nil {
+		return rep, t, l, c.InternalErrorJSQ(err, w, r, js)
 	}
 
-	reply, err := c.Rstore.Get(rid)
+	t, err = rep.Topic()
 	if err == sql.ErrNoRows {
-		return c.PreErrorJSQ("You can't like something which doesn't exist!", w, r, js)
+		return rep, t, l, c.PreErrorJSQ("The parent topic doesn't exist.", w, r, js)
 	} else if err != nil {
-		return c.InternalErrorJSQ(err, w, r, js)
-	}
-
-	topic, err := c.Topics.Get(reply.ParentID)
-	if err == sql.ErrNoRows {
-		return c.PreErrorJSQ("The parent topic doesn't exist.", w, r, js)
-	} else if err != nil {
-		return c.InternalErrorJSQ(err, w, r, js)
+		return rep, t, l, c.InternalErrorJSQ(err, w, r, js)
 	}
 
 	// TODO: Add hooks to make use of headerLite
-	lite, ferr := c.SimpleForumUserCheck(w, r, u, topic.ParentID)
+	l, ferr = c.SimpleForumUserCheck(w, r, u, t.ParentID)
+	return rep, t, l, ferr
+}
+
+func ReplyLikeSubmit(w http.ResponseWriter, r *http.Request, u *c.User, srid string) c.RouteError {
+	js := r.PostFormValue("js") == "1"
+	reply, _, lite, ferr := ReplyActPre(w, r, u, srid, js)
 	if ferr != nil {
 		return ferr
 	}
@@ -488,7 +416,7 @@ func ReplyLikeSubmit(w http.ResponseWriter, r *http.Request, u *c.User, srid str
 		return c.LocalErrorJSQ("You can't like your own replies", w, r, u, js)
 	}
 
-	_, err = c.Users.Get(reply.CreatedBy)
+	_, err := c.Users.Get(reply.CreatedBy)
 	if err != nil && err != sql.ErrNoRows {
 		return c.LocalErrorJSQ("The target user doesn't exist", w, r, u, js)
 	} else if err != nil {
@@ -503,7 +431,7 @@ func ReplyLikeSubmit(w http.ResponseWriter, r *http.Request, u *c.User, srid str
 	}
 
 	// ! Be careful about leaking per-route permission state with user ptr
-	alert := c.Alert{ActorID: u.ID, TargetUserID: reply.CreatedBy, Event: "like", ElementType: "post", ElementID: rid, Actor: u}
+	alert := c.Alert{ActorID: u.ID, TargetUserID: reply.CreatedBy, Event: "like", ElementType: "post", ElementID: reply.ID, Actor: u}
 	err = c.AddActivityAndNotifyTarget(alert)
 	if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
@@ -518,27 +446,7 @@ func ReplyLikeSubmit(w http.ResponseWriter, r *http.Request, u *c.User, srid str
 
 func ReplyUnlikeSubmit(w http.ResponseWriter, r *http.Request, u *c.User, srid string) c.RouteError {
 	js := r.PostFormValue("js") == "1"
-	rid, err := strconv.Atoi(srid)
-	if err != nil {
-		return c.PreErrorJSQ("The provided Reply ID is not a valid number.", w, r, js)
-	}
-
-	reply, err := c.Rstore.Get(rid)
-	if err == sql.ErrNoRows {
-		return c.PreErrorJSQ("You can't unlike something which doesn't exist!", w, r, js)
-	} else if err != nil {
-		return c.InternalErrorJSQ(err, w, r, js)
-	}
-
-	topic, err := c.Topics.Get(reply.ParentID)
-	if err == sql.ErrNoRows {
-		return c.PreErrorJSQ("The parent topic doesn't exist.", w, r, js)
-	} else if err != nil {
-		return c.InternalErrorJSQ(err, w, r, js)
-	}
-
-	// TODO: Add hooks to make use of headerLite
-	lite, ferr := c.SimpleForumUserCheck(w, r, u, topic.ParentID)
+	reply, _, lite, ferr := ReplyActPre(w, r, u, srid, js)
 	if ferr != nil {
 		return ferr
 	}
@@ -546,7 +454,7 @@ func ReplyUnlikeSubmit(w http.ResponseWriter, r *http.Request, u *c.User, srid s
 		return c.NoPermissionsJSQ(w, r, u, js)
 	}
 
-	_, err = c.Users.Get(reply.CreatedBy)
+	_, err := c.Users.Get(reply.CreatedBy)
 	if err != nil && err != sql.ErrNoRows {
 		return c.LocalErrorJSQ("The target user doesn't exist", w, r, u, js)
 	} else if err != nil {
