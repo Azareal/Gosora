@@ -249,7 +249,10 @@ func compileCommons(c *tmpl.CTemplateSet, head, head2 *Header, forumList []Forum
 	var replyList []*ReplyUser
 	reply := Reply{1, 1, "Yo!", 1 /*, Config.DefaultGroup*/, now, 0, 0, 1, "::1", true, 1, 1, ""}
 	ru := &ReplyUser{ClassName: "", Reply: reply, CreatedByName: "Alice", Avatar: avatar, Group: Config.DefaultGroup, Level: 0, Attachments: miniAttach}
-	ru.Init(user2)
+	_, err := ru.Init(user2)
+	if err != nil {
+		return err
+	}
 	replyList = append(replyList, ru)
 	tpage := TopicPage{htitle("Topic Name"), replyList, tu, &Forum{ID: 1, Name: "Hahaha"}, &poll, Paginator{[]int{1}, 1, 1}}
 	tpage.Forum.Link = BuildForumURL(NameToSlug(tpage.Forum.Name), tpage.Forum.ID)
@@ -279,7 +282,10 @@ func compileTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName string
 	//avatar, microAvatar = BuildAvatar(0, "")
 	reply := Reply{1, 1, "Yo!", 1 /*, Config.DefaultGroup*/, now, 0, 0, 1, "::1", true, 1, 1, ""}
 	ru := &ReplyUser{ClassName: "", Reply: reply, CreatedByName: "Alice", Avatar: "", Group: Config.DefaultGroup, Level: 0, Attachments: miniAttach}
-	ru.Init(user)
+	_, err := ru.Init(user)
+	if err != nil {
+		return err
+	}
 	replyList = append(replyList, ru)
 
 	// TODO: Use a dummy forum list to avoid o(n) problems
@@ -302,7 +308,7 @@ func compileTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName string
 		return header
 	}
 	t := TItemHold(make(map[string]TItem))
-	err := compileCommons(c, header, header2, forumList, t)
+	err = compileCommons(c, header, header2, forumList, t)
 	if err != nil {
 		return err
 	}
@@ -556,7 +562,10 @@ func compileJSTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName stri
 	avatar, microAvatar = BuildAvatar(0, "")
 	reply := Reply{1, 1, "Yo!", 1 /*, Config.DefaultGroup*/, now, 0, 0, 1, "::1", true, 1, 1, ""}
 	ru := &ReplyUser{ClassName: "", Reply: reply, CreatedByName: "Alice", Avatar: avatar, Group: Config.DefaultGroup, Level: 0, Attachments: miniAttach}
-	ru.Init(user)
+	_, err = ru.Init(user)
+	if err != nil {
+		return err
+	}
 	replyList = append(replyList, ru)
 
 	varList = make(map[string]tmpl.VarItem)

@@ -709,8 +709,12 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			} else {
 				// TODO: Test this
 				items = items[:0]
-				r.SuspiciousRequest(req,"Illegal char "+strconv.Itoa(int(it))+" in UA")
-				r.reqLogger.Print("UA Buf: ", buf,"\nUA Buf String: ", string(buf))
+				if c.Config.DisableSuspLog {
+					r.reqLogger.Print("Illegal char "+strconv.Itoa(int(it))+" in UA\nUA Buf: ", buf,"\nUA Buf String: ", string(buf))
+				} else {
+					r.SuspiciousRequest(req,"Illegal char "+strconv.Itoa(int(it))+" in UA")
+					r.reqLogger.Print("UA Buf: ", buf,"\nUA Buf String: ", string(buf))
+				}
 				break
 			}
 		}
@@ -973,7 +977,9 @@ func (r *GenRouter) routeSwitch(w http.ResponseWriter, req *http.Request, user *
 			}
 			}
 
-			r.DumpRequest(req,"Bad Route")
+			if !c.Config.DisableBadRouteLog {
+				r.DumpRequest(req,"Bad Route")
+			}
 			ae := req.Header.Get("Accept-Encoding")
 			likelyBot := ae == "gzip" || ae == ""
 			if likelyBot {

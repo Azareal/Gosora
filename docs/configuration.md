@@ -148,7 +148,9 @@ IdleTimeout - The number of seconds that a Keep-Alive connection will be kept op
 
 LogDir - The directory in which logs are stored, with the exception of ops log, until a related bug is resolved. Default: ./logs/
 
-DisableSuspLog - Whether suspicious requests are logged in the suspicious request logs. Enabling this may make a site faster. Defaults to false.
+DisableSuspLog - Whether suspicious requests are logged in the suspicious request logs. Enabling this may make a site faster. Defaults: false.
+
+DisableBadRouteLog - Whether requests referencing routes which don't exist should be individually logged. Enabling this may make a site faster. Default: false
 
 Related: https://support.cloudflare.com/hc/en-us/articles/212794707-General-Best-Practices-for-Load-Balancing-at-your-origin-with-Cloudflare
 

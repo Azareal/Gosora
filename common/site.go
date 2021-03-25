@@ -135,8 +135,9 @@ type config struct {
 	WriteTimeout int
 	IdleTimeout  int
 
-	LogDir         string
-	DisableSuspLog bool
+	LogDir             string
+	DisableSuspLog     bool
+	DisableBadRouteLog bool
 }
 
 type devConfig struct {
