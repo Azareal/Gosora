@@ -519,6 +519,7 @@ func (t *Topic) SetPoll(pollID int) error {
 }
 
 // TODO: Have this go through the ReplyStore?
+// TODO: Return the rid?
 func (t *Topic) CreateActionReply(action, ip string, uid int) (err error) {
 	if Config.DisablePostIP {
 		ip = ""

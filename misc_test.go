@@ -1195,6 +1195,8 @@ func testReplyStore(t *testing.T, newID int, ip string) {
 	topic, err = c.Topics.Get(tid)
 	expectNilErr(t, err)
 	exf(topic.PostCount == newPostCount+2, "topic.PostCount should be %d, not %d", newPostCount+2, topic.PostCount)
+	exf(topic.LastReplyID != rid, "topic.LastReplyID should not be %d", rid)
+	arid := topic.LastReplyID
 
 	// TODO: Expand upon this
 	rid, err = c.Rstore.Create(topic, "hiii", ip, 1)
@@ -1217,6 +1219,10 @@ func testReplyStore(t *testing.T, newID int, ip string) {
 	recordMustNotExist(t, err, fmt.Sprintf("RID #%d shouldn't be in the cache", rid))
 	_, err = c.Rstore.Get(rid)
 	recordMustNotExist(t, err, fmt.Sprintf("RID #%d shouldn't exist", rid))
+
+	topic, err = c.Topics.Get(tid)
+	expectNilErr(t, err)
+	exf(topic.LastReplyID == arid, "topic.LastReplyID should be %d not %d", arid, topic.LastReplyID)
 
 	// TODO: Write a test for this
 	//(topic *TopicUser) Replies(offset int, pFrag int, user *User) (rlist []*ReplyUser, ogdesc string, err error)

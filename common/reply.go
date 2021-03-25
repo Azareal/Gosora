@@ -91,7 +91,7 @@ func init() {
 			deleteActivitySubs:     acc.Delete("activity_subscriptions").Where("targetID=? AND targetType='post'").Prepare(),
 
 			// TODO: Optimise this to avoid firing an update if it's not the last reply in a topic. We will need to set lastReplyID properly in other places and in the patcher first so we can use it here.
-			updateTopicReplies:  acc.RawPrepare("UPDATE topics t INNER JOIN replies r ON t.tid=r.tid SET t.lastReplyBy=r.createdBy, t.lastReplyAt=r.createdAt, t.lastReplyID=r.rid WHERE t.tid=?"),
+			updateTopicReplies:  acc.RawPrepare("UPDATE topics t INNER JOIN replies r ON t.tid=r.tid SET t.lastReplyBy=r.createdBy, t.lastReplyAt=r.createdAt, t.lastReplyID=r.rid WHERE t.tid=? ORDER BY r.rid DESC"),
 			updateTopicReplies2: acc.Update("topics").Set("lastReplyAt=createdAt,lastReplyBy=createdBy,lastReplyID=0").Where("postCount=1 AND tid=?").Prepare(),
 
 			getAidsOfReply: acc.Select("attachments").Columns("attachID").Where("originID=? AND originTable='replies'").Prepare(),
