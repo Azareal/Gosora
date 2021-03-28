@@ -446,10 +446,20 @@ func (c *CTemplateSet) compile(name, content, expects string, expectsInt interfa
 			importList += "import \"" + item + "\"\n"
 		}
 	}
-	var varString string
+	//var varString string
+	var vssb strings.Builder
+	vssb.Grow(10 + 3)
 	for _, varItem := range c.varList {
-		varString += "var " + varItem.Name + " " + varItem.Type + " = " + varItem.Destination + "\n"
+		//varString += "var " + varItem.Name + " " + varItem.Type + " = " + varItem.Destination + "\n"
+		vssb.WriteString("var ")
+		vssb.WriteString(varItem.Name)
+		vssb.WriteRune(' ')
+		vssb.WriteString(varItem.Type)
+		vssb.WriteString(" = ")
+		vssb.WriteString(varItem.Destination)
+		vssb.WriteString("\n")
 	}
+	varString := vssb.String()
 
 	var fout string
 	if c.buildTags != "" {
@@ -459,22 +469,31 @@ func (c *CTemplateSet) compile(name, content, expects string, expectsInt interfa
 	fout += "package " + c.config.PackageName + "\n" + importList + "\n"
 
 	if c.lang == "js" {
-		var l string
+		//var l string
 		if len(c.langIndexToName) > 0 {
+			var lsb strings.Builder
+			lsb.Grow(len(c.langIndexToName) * (1 + 2))
 			for i, name := range c.langIndexToName {
 				//l += `"` + name + `"` + ",\n"
 				if i == 0 {
-					l += `"` + name + `"`
+					//l += `"` + name + `"`
+					lsb.WriteRune('"')
 				} else {
-					l += `,"` + name + `"`
+					//l += `,"` + name + `"`
+					lsb.WriteString(`,"`)
 				}
+				lsb.WriteString(name)
+				lsb.WriteRune('"')
 			}
+			fout += "if(tmplInits===undefined) var tmplInits={}\n"
+			fout += "tmplInits[\"tmpl_" + fname + "\"]=[" + lsb.String() + "]"
+		} else {
+			fout += "if(tmplInits===undefined) var tmplInits={}\n"
+			fout += "tmplInits[\"tmpl_" + fname + "\"]=[]"
 		}
 		/*if len(l) > 0 {
 			l = "\n" + l
 		}*/
-		fout += "if(tmplInits===undefined) var tmplInits={}\n"
-		fout += "tmplInits[\"tmpl_" + fname + "\"]=[" + l + "]"
 	} else if !c.config.SkipInitBlock {
 		if len(c.langIndexToName) > 0 {
 			fout += "var " + fname + "_tmpl_phrase_id int\n\n"
@@ -549,14 +568,16 @@ if !ok {
 		//fout += "if len(plist) > 0 {\n_ = plist[len(plist)-1]\n}\n"
 		//fout += "var plist = " + fname + "_phrase_arr\n"
 	}
-	fout += varString
-
+	var fsb strings.Builder
+	fsb.WriteString(varString)
+	//fout += varString
 	skipped := make(map[string]*SkipBlock) // map[templateName]*SkipBlock{map[atIndexAndAfter]skipThisMuch,lastCount}
 
 	writeTextFrame := func(tmplName string, index int) {
 		out := "w.Write(" + tmplName + "_frags[" + strconv.Itoa(index) + "]" + ")\n"
 		c.detail("writing ", out)
-		fout += out
+		//fout += out
+		fsb.WriteString(out)
 	}
 
 	for fid := 0; len(outBuf) > fid; fid++ {
@@ -591,20 +612,32 @@ if !ok {
 			}
 			writeTextFrame(fr.TemplateName, fr.Extra.(int)-skip)
 		case fr.Type == "varsub" || fr.Type == "cvarsub":
-			fout += "w.Write(" + fr.Body + ")\n"
+			//fout += "w.Write(" + fr.Body + ")\n"
+			fsb.WriteString("w.Write(")
+			fsb.WriteString(fr.Body)
+			fsb.WriteString(")\n")
 		case fr.Type == "lang":
 			//fout += "w.Write(plist[" + strconv.Itoa(fr.Extra.(int)) + "])\n"
+			fsb.WriteString("w.Write(")
+			fsb.WriteString(fname)
 			if len(c.langIndexToName) == 1 {
-				fout += "w.Write(" + fname + "_phrase)\n"
+				//fout += "w.Write(" + fname + "_phrase)\n"
+				fsb.WriteString("_phrase)\n")
 			} else {
-				fout += "w.Write(" + fname + "_phrase_arr[" + strconv.Itoa(fr.Extra.(int)) + "])\n"
+				//fout += "w.Write(" + fname + "_phrase_arr[" + strconv.Itoa(fr.Extra.(int)) + "])\n"
+				fsb.WriteString("_phrase_arr[")
+				fsb.WriteString(strconv.Itoa(fr.Extra.(int)))
+				fsb.WriteString("])\n")
 			}
 		//case fr.Type == "identifier":
 		default:
-			fout += fr.Body
+			//fout += fr.Body
+			fsb.WriteString(fr.Body)
 		}
 	}
-	fout += "return nil\n}\n"
+	//fout += "return nil\n}\n"
+	fsb.WriteString("return nil\n}\n")
+	fout += fsb.String()
 
 	writeFrag := func(tmplName string, index int, body string) {
 		//c.detail("writing ", fragmentPrefix)
