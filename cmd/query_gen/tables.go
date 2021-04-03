@@ -172,7 +172,7 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 			ccol("scratch8", 50, ""),
 			{"createdAt", "createdAt", 0, false, false, ""},
 		},
-		[]tblKey{
+		[]tK{
 			{"uid", "primary", "", false},
 		},
 	)
@@ -217,7 +217,7 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 			{"revert_at", "datetime", 0, false, false, ""},
 			{"temporary", "boolean", 0, false, false, ""}, // special case for permanent bans to do the necessary bookkeeping, might be removed in the future
 		},
-		[]tblKey{
+		[]tK{
 			{"uid", "primary", "", false},
 		},
 	)
@@ -227,7 +227,7 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 		[]tC{
 			{"uid", "int", 0, false, false, ""}, // TODO: Make this a foreign key
 		},
-		[]tblKey{
+		[]tK{
 			{"uid", "primary", "", false},
 		},
 	)
@@ -282,7 +282,7 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 			{"lastTopicID", "int", 0, false, false, "0"},
 			{"lastReplyerID", "int", 0, false, false, "0"},
 		},
-		[]tblKey{
+		[]tK{
 			{"fid", "primary", "", false},
 		},
 	)
@@ -294,7 +294,7 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 			ccol("preset", 100, "''"),
 			text("permissions", "{}"),
 		},
-		[]tblKey{
+		[]tK{
 			// TODO: Test to see that the compound primary key works
 			{"fid,gid", "primary", "", false},
 		},
@@ -376,7 +376,7 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 			ccol("path", 200, ""),
 			ccol("extra", 200, ""),
 		},
-		[]tblKey{
+		[]tK{
 			{"attachID", "primary", "", false},
 		},
 	)
@@ -390,7 +390,7 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 			createdAt(),
 			// TODO: Add a createdBy column?
 		},
-		[]tblKey{
+		[]tK{
 			{"reviseID", "primary", "", false},
 		},
 	)
@@ -404,7 +404,7 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 			{"options", "json", 0, false, false, ""},
 			{"votes", "int", 0, false, false, "0"},
 		},
-		[]tblKey{
+		[]tK{
 			{"pollID", "primary", "", false},
 		},
 	)
@@ -439,7 +439,7 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 			{"lastEditBy", "int", 0, false, false, "0"},
 			ccol("ip", 200, "''"),
 		},
-		[]tblKey{
+		[]tK{
 			{"rid", "primary", "", false},
 		},
 	)
@@ -455,7 +455,7 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 		}, nil,
 	)
 
-	//columns("participants, createdBy, createdAt, lastReplyBy, lastReplyAt").Where("cid = ?")
+	//columns("participants,createdBy,createdAt,lastReplyBy,lastReplyAt").Where("cid=?")
 	createTable("conversations", "", "",
 		[]tC{
 			{"cid", "int", 0, false, true, ""},
@@ -464,7 +464,7 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 			{"lastReplyAt", "datetime", 0, false, false, ""},
 			{"lastReplyBy", "int", 0, false, false, ""},
 		},
-		[]tblKey{
+		[]tK{
 			{"cid", "primary", "", false},
 		},
 	)
@@ -477,7 +477,7 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 			ccol("body", 50, ""),
 			ccol("post", 50, "''"),
 		},
-		[]tblKey{
+		[]tK{
 			{"pid", "primary", "", false},
 		},
 	)
@@ -516,7 +516,7 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 			{"watcher", "int", 0, false, false, ""}, // TODO: Make this a foreign key
 			{"asid", "int", 0, false, false, ""},    // TODO: Make this a foreign key
 		},
-		[]tblKey{
+		[]tK{
 			{"asid,asid", "foreign", "activity_stream", true},
 		},
 	)
@@ -670,7 +670,7 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 			ccol("ipaddress", 200, ""),
 			createdAt("doneAt"),
 		},
-		[]tblKey{
+		[]tK{
 			{"rlid", "primary", "", false},
 		},
 	)
@@ -684,7 +684,7 @@ func createTables2(a qgen.Adapter, f func(table, charset, collation string, colu
 			ccol("ipaddress", 200, ""),
 			createdAt("doneAt"),
 		},
-		[]tblKey{
+		[]tK{
 			{"lid", "primary", "", false},
 		},
 	)
