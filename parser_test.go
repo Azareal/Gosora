@@ -178,10 +178,12 @@ func TestParser(t *testing.T) {
 	l.Add("<b>t</b>", "<b>t</b>")
 	l.Add("//", "//")
 	l.Add("http://", "<red>[Invalid URL]</red>")
-	l.Add("https://", "<red>[Invalid URL]</red>")
+	//l.Add("https://", "<red>[Invalid URL]</red>")
+	l.Add("ipfs://", "<red>[Invalid URL]</red>")
 	l.Add("ftp://", "<red>[Invalid URL]</red>")
 	l.Add("git://", "<red>[Invalid URL]</red>")
 	l.Add("ssh://", "ssh://")
+	l.Add("fff://", "fff://")
 
 	l.Add("// ", "// ")
 	l.Add("// //", "// //")
@@ -191,6 +193,7 @@ func TestParser(t *testing.T) {
 	l.Add("ftp:// ", "<red>[Invalid URL]</red> ")
 	l.Add("git:// ", "<red>[Invalid URL]</red> ")
 	l.Add("ssh:// ", "ssh:// ")
+	l.Add("fff:// ", "fff:// ")
 
 	l.Add("//t", "<a rel='ugc'href='//t'>t</a>")
 	l.Add("// t", "// t")
@@ -280,6 +283,7 @@ func TestParser(t *testing.T) {
 		l.Add("//"+u+"\n//"+u, "<a href='"+fs+"'>"+c.Site.URL+"</a><br><a href='"+fs+"'>"+c.Site.URL+"</a>")
 		l.Add("http://"+u, "<a href='"+fs+"'>"+c.Site.URL+"</a>")
 		l.Add("https://"+u, "<a href='"+fs+"'>"+c.Site.URL+"</a>")
+		l.Add("ipfs://testthis", "<a rel='ugc'href='ipfs://testthis'>ipfs://testthis</a>")
 
 		l.Add("//"+u+"/attachs/sha256hash.webm?sid=1&stype=forums", "<video controls src=\""+fs+"/attachs/sha256hash.webm?sid=1&amp;stype=forums\"><a class='attach'href=\""+fs+"/attachs/sha256hash.webm?sid=1&amp;stype=forums\"download>Attachment</a></video>")
 		l.Add("//"+u+"/attachs/sha256hash.webm", "<video controls src=\""+fs+"/attachs/sha256hash.webm?sid=1&amp;stype=forums\"><a class='attach'href=\""+fs+"/attachs/sha256hash.webm?sid=1&amp;stype=forums\"download>Attachment</a></video>")

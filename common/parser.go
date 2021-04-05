@@ -630,7 +630,7 @@ func ParseMessage2(msg string, sectionID int, sectionType string, settings *Pars
 				sb.Write(URLClose)
 				lastItem = i
 				i--
-			case 'h', 'f', 'g', '/':
+			case 'h', 'f', 'g', '/', 'i':
 				//fmt.Println("s3")
 				fch := msg[i+1]
 				if msg[i] == 'h' && fch == 't' && len(msg) > i+5 && msg[i+2] == 't' && msg[i+3] == 'p' {
@@ -645,6 +645,8 @@ func ParseMessage2(msg string, sectionID int, sectionType string, settings *Pars
 					if fch == 't' && msg[i+2] == 'p' && msg[i+3] == ':' && msg[i+4] == '/' && msg[i] == 'f' {
 						// Do nothing
 					} else if fch == 'i' && msg[i+2] == 't' && msg[i+3] == ':' && msg[i+4] == '/' && msg[i] == 'g' {
+						// Do nothing
+					} else if msg[i] == 'i' && fch == 'p' && msg[i+2] == 'f' && msg[i+3] == 's' {
 						// Do nothing
 					} else if fch == '/' && msg[i] == '/' {
 						// Do nothing
@@ -865,25 +867,25 @@ func ParseMessage2(msg string, sectionID int, sectionType string, settings *Pars
 }
 
 // 6, 7, 8, 6, 2, 7
-// ftp://, http://, https:// git://, //, mailto: (not a URL, just here for length comparison purposes)
+// ftp://, http://, https://, git://, ipfs://, //, mailto: (not a URL, just here for length comparison purposes)
 // TODO: Write a test for this
-func validateURLString(data string) bool {
+func validateURLString(d string) bool {
 	i := 0
-	if len(data) >= 6 {
-		if data[0:6] == "ftp://" || data[0:6] == "git://" {
+	if len(d) >= 6 {
+		if d[0:6] == "ftp://" || d[0:6] == "git://" {
 			i = 6
-		} else if len(data) >= 7 && data[0:7] == "http://" {
+		} else if len(d) >= 7 && (d[0:7] == "http://" || d[0:7] == "ipfs://") {
 			i = 7
-		} else if len(data) >= 8 && data[0:8] == "https://" {
+		} else if len(d) >= 8 && d[0:8] == "https://" {
 			i = 8
 		}
-	} else if len(data) >= 2 && data[0] == '/' && data[1] == '/' {
+	} else if len(d) >= 2 && d[0] == '/' && d[1] == '/' {
 		i = 2
 	}
 
 	// ? - There should only be one : and that's only if the URL is on a non-standard port. Same for ?s.
-	for ; len(data) > i; i++ {
-		ch := data[i]
+	for ; len(d) > i; i++ {
+		ch := d[i]
 		if ch != '\\' && ch != '_' && ch != '?' && ch != '&' && ch != '=' && ch != '@' && ch != '#' && ch != ']' && !(ch > 44 && ch < 60) && !(ch > 64 && ch < 92) && !(ch > 96 && ch < 123) { // 57 is 9, 58 is :, 59 is ;, 90 is Z, 91 is [
 			return false
 		}
@@ -920,51 +922,51 @@ func validatedURLBytes(data []byte) (url []byte) {
 }
 
 // TODO: Write a test for this
-func PartialURLString(data string) (url []byte) {
+func PartialURLString(d string) (url []byte) {
 	i := 0
-	end := len(data) - 1
-	if len(data) >= 6 {
-		if data[0:6] == "ftp://" || data[0:6] == "git://" {
+	end := len(d) - 1
+	if len(d) >= 6 {
+		if d[0:6] == "ftp://" || d[0:6] == "git://" {
 			i = 6
-		} else if len(data) >= 7 && data[0:7] == "http://" {
+		} else if len(d) >= 7 && (d[0:7] == "http://" || d[0:7] == "ipfs://") {
 			i = 7
-		} else if len(data) >= 8 && data[0:8] == "https://" {
+		} else if len(d) >= 8 && d[0:8] == "https://" {
 			i = 8
 		}
-	} else if len(data) >= 2 && data[0] == '/' && data[1] == '/' {
+	} else if len(d) >= 2 && d[0] == '/' && d[1] == '/' {
 		i = 2
 	}
 
 	// ? - There should only be one : and that's only if the URL is on a non-standard port. Same for ?s.
 	for ; end >= i; i++ {
-		ch := data[i]
+		ch := d[i]
 		if ch != '\\' && ch != '_' && ch != '?' && ch != '&' && ch != '=' && ch != '@' && ch != '#' && ch != ']' && !(ch > 44 && ch < 60) && !(ch > 64 && ch < 92) && !(ch > 96 && ch < 123) { // 57 is 9, 58 is :, 59 is ;, 90 is Z, 91 is [
 			end = i
 		}
 	}
 
-	url = append(url, []byte(data[0:end])...)
+	url = append(url, []byte(d[0:end])...)
 	return url
 }
 
 // TODO: Write a test for this
 // TODO: Handle the host bits differently from the paths...
-func PartialURLStringLen(data string) (int, bool) {
+func PartialURLStringLen(d string) (int, bool) {
 	i := 0
-	if len(data) >= 6 {
-		//log.Print(string(data[0:5]))
-		if data[0:6] == "ftp://" || data[0:6] == "git://" {
+	if len(d) >= 6 {
+		//log.Print(string(d[0:5]))
+		if d[0:6] == "ftp://" || d[0:6] == "git://" {
 			i = 6
-		} else if len(data) >= 7 && data[0:7] == "http://" {
+		} else if len(d) >= 7 && (d[0:7] == "http://" || d[0:7] == "ipfs://") {
 			i = 7
-		} else if len(data) >= 8 && data[0:8] == "https://" {
+		} else if len(d) >= 8 && d[0:8] == "https://" {
 			i = 8
 		}
-	} else if len(data) >= 2 && data[0] == '/' && data[1] == '/' {
+	} else if len(d) >= 2 && d[0] == '/' && d[1] == '/' {
 		i = 2
 	}
-	//fmt.Println("Data Length: ",len(data))
-	if len(data) < i {
+	//fmt.Println("Data Length: ",len(d))
+	if len(d) < i {
 		//fmt.Println("e1:",i)
 		return i + 1, false
 	}
@@ -972,9 +974,9 @@ func PartialURLStringLen(data string) (int, bool) {
 	// ? - There should only be one : and that's only if the URL is on a non-standard port. Same for ?s.
 	f := i
 	//fmt.Println("f:",f)
-	for ; len(data) > i; i++ {
-		ch := data[i] //char
-		if ch < 33 {  // space and invisibles
+	for ; len(d) > i; i++ {
+		ch := d[i]   //char
+		if ch < 33 { // space and invisibles
 			//fmt.Println("e2:",i)
 			return i, i != f
 		} else if ch != '\\' && ch != '_' && ch != '?' && ch != '&' && ch != '=' && ch != '@' && ch != '#' && ch != ']' && !(ch > 44 && ch < 60) && !(ch > 64 && ch < 92) && !(ch > 96 && ch < 123) { // 57 is 9, 58 is :, 59 is ;, 90 is Z, 91 is [
@@ -994,31 +996,31 @@ func PartialURLStringLen(data string) (int, bool) {
 
 // TODO: Write a test for this
 // TODO: Get this to support IPv6 hosts, this isn't currently done as this is used in the bbcode plugin where it thinks the [ is a IPv6 host
-func PartialURLStringLen2(data string) int {
+func PartialURLStringLen2(d string) int {
 	i := 0
-	if len(data) >= 6 {
-		//log.Print(string(data[0:5]))
-		if data[0:6] == "ftp://" || data[0:6] == "git://" {
+	if len(d) >= 6 {
+		//log.Print(string(d[0:5]))
+		if d[0:6] == "ftp://" || d[0:6] == "git://" {
 			i = 6
-		} else if len(data) >= 7 && data[0:7] == "http://" {
+		} else if len(d) >= 7 && (d[0:7] == "http://" || d[0:7] == "ipfs://") {
 			i = 7
-		} else if len(data) >= 8 && data[0:8] == "https://" {
+		} else if len(d) >= 8 && d[0:8] == "https://" {
 			i = 8
 		}
-	} else if len(data) >= 2 && data[0] == '/' && data[1] == '/' {
+	} else if len(d) >= 2 && d[0] == '/' && d[1] == '/' {
 		i = 2
 	}
 
 	// ? - There should only be one : and that's only if the URL is on a non-standard port. Same for ?s.
-	for ; len(data) > i; i++ {
-		ch := data[i]
+	for ; len(d) > i; i++ {
+		ch := d[i]
 		if ch != '\\' && ch != '_' && ch != '?' && ch != '&' && ch != '=' && ch != '@' && ch != '#' && ch != ']' && !(ch > 44 && ch < 60) && !(ch > 64 && ch < 91) && !(ch > 96 && ch < 123) { // 57 is 9, 58 is :, 59 is ;, 90 is Z, 91 is [
 			//log.Print("Bad Character: ", ch)
 			return i
 		}
 	}
-	//log.Print("Data Length: ",len(data))
-	return len(data)
+	//log.Print("Data Length: ",len(d))
+	return len(d)
 }
 
 type MediaEmbed struct {
@@ -1056,6 +1058,11 @@ func parseMediaString(data string, settings *ParseSettings) (media MediaEmbed, o
 	}
 	host := uurl.Hostname()
 	scheme := uurl.Scheme
+	if scheme == "ipfs" {
+		media.FURL = data
+		media.URL = media.FURL
+		return media, true
+	}
 	port := uurl.Port()
 	query, err := url.ParseQuery(uurl.RawQuery)
 	if err != nil {
