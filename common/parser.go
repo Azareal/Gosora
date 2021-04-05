@@ -648,6 +648,8 @@ func ParseMessage2(msg string, sectionID int, sectionType string, settings *Pars
 						// Do nothing
 					} else if msg[i] == 'i' && fch == 'p' && msg[i+2] == 'f' && msg[i+3] == 's' {
 						// Do nothing
+					} else if msg[i] == 'i' && fch == 'p' && msg[i+2] == 'n' && msg[i+3] == 's' {
+						// Do nothing
 					} else if fch == '/' && msg[i] == '/' {
 						// Do nothing
 					} else {
@@ -867,14 +869,14 @@ func ParseMessage2(msg string, sectionID int, sectionType string, settings *Pars
 }
 
 // 6, 7, 8, 6, 2, 7
-// ftp://, http://, https://, git://, ipfs://, //, mailto: (not a URL, just here for length comparison purposes)
+// ftp://, http://, https://, git://, ipfs://, ipns://, //, mailto: (not a URL, just here for length comparison purposes)
 // TODO: Write a test for this
 func validateURLString(d string) bool {
 	i := 0
 	if len(d) >= 6 {
 		if d[0:6] == "ftp://" || d[0:6] == "git://" {
 			i = 6
-		} else if len(d) >= 7 && (d[0:7] == "http://" || d[0:7] == "ipfs://") {
+		} else if len(d) >= 7 && (d[0:7] == "http://" || d[0:7] == "ipfs://" || d[0:7] == "ipns://") {
 			i = 7
 		} else if len(d) >= 8 && d[0:8] == "https://" {
 			i = 8
@@ -928,7 +930,7 @@ func PartialURLString(d string) (url []byte) {
 	if len(d) >= 6 {
 		if d[0:6] == "ftp://" || d[0:6] == "git://" {
 			i = 6
-		} else if len(d) >= 7 && (d[0:7] == "http://" || d[0:7] == "ipfs://") {
+		} else if len(d) >= 7 && (d[0:7] == "http://" || d[0:7] == "ipfs://" || d[0:7] == "ipns://") {
 			i = 7
 		} else if len(d) >= 8 && d[0:8] == "https://" {
 			i = 8
@@ -957,7 +959,7 @@ func PartialURLStringLen(d string) (int, bool) {
 		//log.Print(string(d[0:5]))
 		if d[0:6] == "ftp://" || d[0:6] == "git://" {
 			i = 6
-		} else if len(d) >= 7 && (d[0:7] == "http://" || d[0:7] == "ipfs://") {
+		} else if len(d) >= 7 && (d[0:7] == "http://" || d[0:7] == "ipfs://" || d[0:7] == "ipns://") {
 			i = 7
 		} else if len(d) >= 8 && d[0:8] == "https://" {
 			i = 8
@@ -1002,7 +1004,7 @@ func PartialURLStringLen2(d string) int {
 		//log.Print(string(d[0:5]))
 		if d[0:6] == "ftp://" || d[0:6] == "git://" {
 			i = 6
-		} else if len(d) >= 7 && (d[0:7] == "http://" || d[0:7] == "ipfs://") {
+		} else if len(d) >= 7 && (d[0:7] == "http://" || d[0:7] == "ipfs://" || d[0:7] == "ipns://") {
 			i = 7
 		} else if len(d) >= 8 && d[0:8] == "https://" {
 			i = 8
@@ -1071,7 +1073,7 @@ func parseMediaString(data string, settings *ParseSettings) (media MediaEmbed, o
 	//fmt.Println("host:", host)
 	//log.Print("Site.URL:",Site.URL)
 
-	samesite := host == "localhost" || host == "127.0.0.1" || host == "::1" || host == Site.URL
+	samesite := (host == "localhost" || host == "127.0.0.1" || host == "::1" || host == Site.URL) && scheme != "ipns"
 	if samesite {
 		host = strings.Split(Site.URL, ":")[0]
 		// ?- Test this as I'm not sure it'll do what it should. If someone's running SSL on port 80 or non-SSL on port 443 then... Well... They're in far worse trouble than this...

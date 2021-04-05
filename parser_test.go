@@ -269,6 +269,7 @@ func TestParser(t *testing.T) {
 	local := func(u string) {
 		s := "//" + c.Site.URL
 		fs := "http://" + c.Site.URL
+		ipns := "ipns://" + c.Site.URL
 		if c.Config.SslSchema {
 			s = "https:" + s
 			fs = "https://" + c.Site.URL
@@ -284,6 +285,7 @@ func TestParser(t *testing.T) {
 		l.Add("http://"+u, "<a href='"+fs+"'>"+c.Site.URL+"</a>")
 		l.Add("https://"+u, "<a href='"+fs+"'>"+c.Site.URL+"</a>")
 		l.Add("ipfs://testthis", "<a rel='ugc'href='ipfs://testthis'>ipfs://testthis</a>")
+		l.Add(ipns, "<a rel='ugc'href='"+ipns+"'>"+c.Site.URL+"</a>")
 
 		l.Add("//"+u+"/attachs/sha256hash.webm?sid=1&stype=forums", "<video controls src=\""+fs+"/attachs/sha256hash.webm?sid=1&amp;stype=forums\"><a class='attach'href=\""+fs+"/attachs/sha256hash.webm?sid=1&amp;stype=forums\"download>Attachment</a></video>")
 		l.Add("//"+u+"/attachs/sha256hash.webm", "<video controls src=\""+fs+"/attachs/sha256hash.webm?sid=1&amp;stype=forums\"><a class='attach'href=\""+fs+"/attachs/sha256hash.webm?sid=1&amp;stype=forums\"download>Attachment</a></video>")
