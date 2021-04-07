@@ -1,6 +1,7 @@
 package common
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"runtime/debug"
@@ -105,7 +106,7 @@ func SysError(errmsg string) RouteError {
 // TODO: Clean-up extra as a way of passing additional context
 func LogError(err error, extra ...string) {
 	LogWarning(err, extra...)
-	log.Fatal("")
+	ErrLogger.Fatal("")
 }
 
 func LogWarning(err error, extra ...string) {
@@ -121,7 +122,7 @@ func LogWarning(err error, extra ...string) {
 	errorBufferMutex.Lock()
 	defer errorBufferMutex.Unlock()
 	stack := debug.Stack() // debug.Stack() can't be executed concurrently, so we'll guard this with a mutex too
-	log.Print(errmsg+"\n", string(stack))
+	Err(errmsg+"\n", string(stack))
 	errorBuffer = append(errorBuffer, ErrorItem{err, stack})
 }
 
@@ -218,6 +219,10 @@ func PreErrorJSQ(errmsg string, w http.ResponseWriter, r *http.Request, js bool)
 
 func LocalError(errmsg string, w http.ResponseWriter, r *http.Request, user *User) RouteError {
 	return SimpleError(errmsg, w, r, errorHeader(w, user, ""))
+}
+
+func LocalErrorf(errmsg string, w http.ResponseWriter, r *http.Request, user *User, params ...interface{}) RouteError {
+	return LocalError(fmt.Sprintf(errmsg, params), w, r, user)
 }
 
 func SimpleError(errmsg string, w http.ResponseWriter, r *http.Request, h *Header) RouteError {

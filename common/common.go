@@ -167,7 +167,9 @@ func StoppedServer(msg ...interface{}) {
 
 var StopServerChan = make(chan []interface{})
 
-var LogWriter = io.MultiWriter(os.Stderr)
+var LogWriter = io.MultiWriter(os.Stdout)
+var ErrLogWriter = io.MultiWriter(os.Stderr)
+var ErrLogger = log.New(os.Stderr, "", log.LstdFlags)
 
 func DebugDetail(args ...interface{}) {
 	if Dev.SuperDebug {
@@ -196,6 +198,9 @@ func DebugLogf(str string, args ...interface{}) {
 func Log(args ...interface{}) {
 	log.Print(args...)
 }
+func Err(args ...interface{}) {
+	ErrLogger.Print(args...)
+}
 
 func Logf(str string, args ...interface{}) {
 	log.Printf(str, args...)
@@ -223,10 +228,10 @@ func eachall(stmt *sql.Stmt, f func(r *sql.Rows) error) error {
 	return rows.Err()
 }
 
-var qcache = []string{0: "?", 1: "?,?", 2: "?,?,?", 3: "?,?,?,?", 4: "?,?,?,?,?", 5: "?,?,?,?,?,?", 6: "?,?,?,?,?,?,?", 7: "?,?,?,?,?,?,?,?"}
+var qcache = []string{0: "?", 1: "?,?", 2: "?,?,?", 3: "?,?,?,?", 4: "?,?,?,?,?", 5: "?,?,?,?,?,?", 6: "?,?,?,?,?,?,?", 7: "?,?,?,?,?,?,?,?", 8: "?,?,?,?,?,?,?,?,?"}
 
 func inqbuild(ids []int) ([]interface{}, string) {
-	if len(ids) < 7 {
+	if len(ids) < 8 {
 		idList := make([]interface{}, len(ids))
 		for i, id := range ids {
 			idList[i] = strconv.Itoa(id)
@@ -249,7 +254,7 @@ func inqbuild(ids []int) ([]interface{}, string) {
 }
 
 func inqbuild2(count int) string {
-	if count <= 7 {
+	if count <= 8 {
 		return qcache[count-1]
 	}
 	var sb strings.Builder
@@ -265,7 +270,7 @@ func inqbuild2(count int) string {
 }
 
 func inqbuildstr(strs []string) ([]interface{}, string) {
-	if len(strs) < 7 {
+	if len(strs) < 8 {
 		idList := make([]interface{}, len(strs))
 		for i, id := range strs {
 			idList[i] = id

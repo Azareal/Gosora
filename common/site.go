@@ -138,6 +138,8 @@ type config struct {
 	LogDir             string
 	DisableSuspLog     bool
 	DisableBadRouteLog bool
+	DisableStdout      bool
+	DisableStderr      bool
 }
 
 type devConfig struct {

@@ -152,6 +152,10 @@ DisableSuspLog - Whether suspicious requests are logged in the suspicious reques
 
 DisableBadRouteLog - Whether requests referencing routes which don't exist should be individually logged. Enabling this may make a site faster. Default: false
 
+DisableStdout - Stop writing logs to stdout. Default: false.
+
+DisableStderr - Stop writing errors to stderr. Default: false
+
 Related: https://support.cloudflare.com/hc/en-us/articles/212794707-General-Best-Practices-for-Load-Balancing-at-your-origin-with-Cloudflare
 
 

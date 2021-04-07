@@ -124,72 +124,77 @@ func afterDBInit() (err error) {
 
 // Experimenting with a new error package here to try to reduce the amount of debugging we have to do
 // TODO: Dynamically register these items to avoid maintaining as much code here?
-func storeInit() (err error) {
+func storeInit() (e error) {
 	acc := qgen.NewAcc()
+	ws := errors.WithStack
 	var rcache c.ReplyCache
 	if c.Config.ReplyCache == "static" {
 		rcache = c.NewMemoryReplyCache(c.Config.ReplyCacheCapacity)
 	}
-	c.Rstore, err = c.NewSQLReplyStore(acc, rcache)
-	if err != nil {
-		return errors.WithStack(err)
+	c.Rstore, e = c.NewSQLReplyStore(acc, rcache)
+	if e != nil {
+		return ws(e)
 	}
-	c.Prstore, err = c.NewSQLProfileReplyStore(acc)
-	if err != nil {
-		return errors.WithStack(err)
+	c.Prstore, e = c.NewSQLProfileReplyStore(acc)
+	if e != nil {
+		return ws(e)
 	}
-	c.Likes, err = c.NewDefaultLikeStore(acc)
-	if err != nil {
-		return errors.WithStack(err)
+	c.Likes, e = c.NewDefaultLikeStore(acc)
+	if e != nil {
+		return ws(e)
 	}
-	c.Convos, err = c.NewDefaultConversationStore(acc)
-	if err != nil {
-		return errors.WithStack(err)
+	c.ForumActionStore, e = c.NewDefaultForumActionStore(acc)
+	if e != nil {
+		return ws(e)
 	}
-	c.UserBlocks, err = c.NewDefaultBlockStore(acc)
-	if err != nil {
-		return errors.WithStack(err)
+	c.Convos, e = c.NewDefaultConversationStore(acc)
+	if e != nil {
+		return ws(e)
 	}
-	c.GroupPromotions, err = c.NewDefaultGroupPromotionStore(acc)
-	if err != nil {
-		return errors.WithStack(err)
+	c.UserBlocks, e = c.NewDefaultBlockStore(acc)
+	if e != nil {
+		return ws(e)
+	}
+	c.GroupPromotions, e = c.NewDefaultGroupPromotionStore(acc)
+	if e != nil {
+		return ws(e)
 	}
 
-	if err = p.InitPhrases(c.Site.Language); err != nil {
-		return errors.WithStack(err)
+	if e = p.InitPhrases(c.Site.Language); e != nil {
+		return ws(e)
 	}
-	if err = c.InitEmoji(); err != nil {
-		return errors.WithStack(err)
+	if e = c.InitEmoji(); e != nil {
+		return ws(e)
 	}
-	if err = c.InitWeakPasswords(); err != nil {
-		return errors.WithStack(err)
+	if e = c.InitWeakPasswords(); e != nil {
+		return ws(e)
 	}
 
 	log.Print("Loading the static files.")
-	if err = c.Themes.LoadStaticFiles(); err != nil {
-		return errors.WithStack(err)
+	if e = c.Themes.LoadStaticFiles(); e != nil {
+		return ws(e)
 	}
-	if err = c.StaticFiles.Init(); err != nil {
-		return errors.WithStack(err)
+	if e = c.StaticFiles.Init(); e != nil {
+		return ws(e)
 	}
-	if err = c.StaticFiles.JSTmplInit(); err != nil {
-		return errors.WithStack(err)
+	if e = c.StaticFiles.JSTmplInit(); e != nil {
+		return ws(e)
 	}
 
 	log.Print("Initialising the widgets")
 	c.Widgets = c.NewDefaultWidgetStore()
-	if err = c.InitWidgets(); err != nil {
-		return errors.WithStack(err)
+	if e = c.InitWidgets(); e != nil {
+		return ws(e)
 	}
 
 	log.Print("Initialising the menu item list")
 	c.Menus = c.NewDefaultMenuStore()
-	if err = c.Menus.Load(1); err != nil { // 1 = the default menu
-		return errors.WithStack(err)
+	if e = c.Menus.Load(1); e != nil { // 1 = the default menu
+		return ws(e)
 	}
-	menuHold, err := c.Menus.Get(1)
-	if err != nil {
-		return errors.WithStack(err)
+	menuHold, e := c.Menus.Get(1)
+	if e != nil {
+		return ws(e)
 	}
 	fmt.Printf("menuHold: %+v\n", menuHold)
 	var b bytes.Buffer
@@ -197,147 +202,147 @@ func storeInit() (err error) {
 	fmt.Println("menuHold output: ", string(b.Bytes()))
 
 	log.Print("Initialising the authentication system")
-	c.Auth, err = c.NewDefaultAuth()
-	if err != nil {
-		return errors.WithStack(err)
+	c.Auth, e = c.NewDefaultAuth()
+	if e != nil {
+		return ws(e)
 	}
 
 	log.Print("Initialising the stores")
-	c.WordFilters, err = c.NewDefaultWordFilterStore(acc)
-	if err != nil {
-		return errors.WithStack(err)
+	c.WordFilters, e = c.NewDefaultWordFilterStore(acc)
+	if e != nil {
+		return ws(e)
 	}
-	c.MFAstore, err = c.NewSQLMFAStore(acc)
-	if err != nil {
-		return errors.WithStack(err)
+	c.MFAstore, e = c.NewSQLMFAStore(acc)
+	if e != nil {
+		return ws(e)
 	}
-	c.Pages, err = c.NewDefaultPageStore(acc)
-	if err != nil {
-		return errors.WithStack(err)
+	c.Pages, e = c.NewDefaultPageStore(acc)
+	if e != nil {
+		return ws(e)
 	}
-	c.Reports, err = c.NewDefaultReportStore(acc)
-	if err != nil {
-		return errors.WithStack(err)
+	c.Reports, e = c.NewDefaultReportStore(acc)
+	if e != nil {
+		return ws(e)
 	}
-	c.Emails, err = c.NewDefaultEmailStore(acc)
-	if err != nil {
-		return errors.WithStack(err)
+	c.Emails, e = c.NewDefaultEmailStore(acc)
+	if e != nil {
+		return ws(e)
 	}
-	c.LoginLogs, err = c.NewLoginLogStore(acc)
-	if err != nil {
-		return errors.WithStack(err)
+	c.LoginLogs, e = c.NewLoginLogStore(acc)
+	if e != nil {
+		return ws(e)
 	}
-	c.RegLogs, err = c.NewRegLogStore(acc)
-	if err != nil {
-		return errors.WithStack(err)
+	c.RegLogs, e = c.NewRegLogStore(acc)
+	if e != nil {
+		return ws(e)
 	}
-	c.ModLogs, err = c.NewModLogStore(acc)
-	if err != nil {
-		return errors.WithStack(err)
+	c.ModLogs, e = c.NewModLogStore(acc)
+	if e != nil {
+		return ws(e)
 	}
-	c.AdminLogs, err = c.NewAdminLogStore(acc)
-	if err != nil {
-		return errors.WithStack(err)
+	c.AdminLogs, e = c.NewAdminLogStore(acc)
+	if e != nil {
+		return ws(e)
 	}
-	c.IPSearch, err = c.NewDefaultIPSearcher()
-	if err != nil {
-		return errors.WithStack(err)
+	c.IPSearch, e = c.NewDefaultIPSearcher()
+	if e != nil {
+		return ws(e)
 	}
 	if c.Config.Search == "" || c.Config.Search == "sql" {
-		c.RepliesSearch, err = c.NewSQLSearcher(acc)
-		if err != nil {
-			return errors.WithStack(err)
+		c.RepliesSearch, e = c.NewSQLSearcher(acc)
+		if e != nil {
+			return ws(e)
 		}
 	}
-	c.Subscriptions, err = c.NewDefaultSubscriptionStore()
-	if err != nil {
-		return errors.WithStack(err)
+	c.Subscriptions, e = c.NewDefaultSubscriptionStore()
+	if e != nil {
+		return ws(e)
 	}
-	c.Attachments, err = c.NewDefaultAttachmentStore(acc)
-	if err != nil {
-		return errors.WithStack(err)
+	c.Attachments, e = c.NewDefaultAttachmentStore(acc)
+	if e != nil {
+		return ws(e)
 	}
-	c.Polls, err = c.NewDefaultPollStore(c.NewMemoryPollCache(100)) // TODO: Max number of polls held in cache, make this a config item
-	if err != nil {
-		return errors.WithStack(err)
+	c.Polls, e = c.NewDefaultPollStore(c.NewMemoryPollCache(100)) // TODO: Max number of polls held in cache, make this a config item
+	if e != nil {
+		return ws(e)
 	}
-	c.TopicList, err = c.NewDefaultTopicList(acc)
-	if err != nil {
-		return errors.WithStack(err)
+	c.TopicList, e = c.NewDefaultTopicList(acc)
+	if e != nil {
+		return ws(e)
 	}
-	c.PasswordResetter, err = c.NewDefaultPasswordResetter(acc)
-	if err != nil {
-		return errors.WithStack(err)
+	c.PasswordResetter, e = c.NewDefaultPasswordResetter(acc)
+	if e != nil {
+		return ws(e)
 	}
-	c.Activity, err = c.NewDefaultActivityStream(acc)
-	if err != nil {
-		return errors.WithStack(err)
+	c.Activity, e = c.NewDefaultActivityStream(acc)
+	if e != nil {
+		return ws(e)
 	}
 	// TODO: Let the admin choose other thumbnailers, maybe ones defined in plugins
 	c.Thumbnailer = c.NewCaireThumbnailer()
-	c.Recalc, err = c.NewDefaultRecalc(acc)
-	if err != nil {
-		return errors.WithStack(err)
+	c.Recalc, e = c.NewDefaultRecalc(acc)
+	if e != nil {
+		return ws(e)
 	}
 
 	log.Print("Initialising the meta store")
-	c.Meta, err = meta.NewDefaultMetaStore(acc)
-	if err != nil {
-		return errors.WithStack(err)
+	c.Meta, e = meta.NewDefaultMetaStore(acc)
+	if e != nil {
+		return ws(e)
 	}
 
 	log.Print("Initialising the view counters")
 	if !c.Config.DisableAnalytics {
-		co.GlobalViewCounter, err = co.NewGlobalViewCounter(acc)
-		if err != nil {
-			return errors.WithStack(err)
+		co.GlobalViewCounter, e = co.NewGlobalViewCounter(acc)
+		if e != nil {
+			return ws(e)
 		}
-		co.AgentViewCounter, err = co.NewDefaultAgentViewCounter(acc)
-		if err != nil {
-			return errors.WithStack(err)
+		co.AgentViewCounter, e = co.NewDefaultAgentViewCounter(acc)
+		if e != nil {
+			return ws(e)
 		}
-		co.OSViewCounter, err = co.NewDefaultOSViewCounter(acc)
-		if err != nil {
-			return errors.WithStack(err)
+		co.OSViewCounter, e = co.NewDefaultOSViewCounter(acc)
+		if e != nil {
+			return ws(e)
 		}
-		co.LangViewCounter, err = co.NewDefaultLangViewCounter(acc)
-		if err != nil {
-			return errors.WithStack(err)
+		co.LangViewCounter, e = co.NewDefaultLangViewCounter(acc)
+		if e != nil {
+			return ws(e)
 		}
 		if !c.Config.RefNoTrack {
-			co.ReferrerTracker, err = co.NewDefaultReferrerTracker()
-			if err != nil {
-				return errors.WithStack(err)
+			co.ReferrerTracker, e = co.NewDefaultReferrerTracker()
+			if e != nil {
+				return ws(e)
 			}
 		}
-		co.MemoryCounter, err = co.NewMemoryCounter(acc)
-		if err != nil {
-			return errors.WithStack(err)
+		co.MemoryCounter, e = co.NewMemoryCounter(acc)
+		if e != nil {
+			return ws(e)
 		}
-		co.PerfCounter, err = co.NewDefaultPerfCounter(acc)
-		if err != nil {
-			return errors.WithStack(err)
+		co.PerfCounter, e = co.NewDefaultPerfCounter(acc)
+		if e != nil {
+			return ws(e)
 		}
 	}
-	co.RouteViewCounter, err = co.NewDefaultRouteViewCounter(acc)
-	if err != nil {
-		return errors.WithStack(err)
+	co.RouteViewCounter, e = co.NewDefaultRouteViewCounter(acc)
+	if e != nil {
+		return ws(e)
 	}
-	co.PostCounter, err = co.NewPostCounter()
-	if err != nil {
-		return errors.WithStack(err)
+	co.PostCounter, e = co.NewPostCounter()
+	if e != nil {
+		return ws(e)
 	}
-	co.TopicCounter, err = co.NewTopicCounter()
-	if err != nil {
-		return errors.WithStack(err)
+	co.TopicCounter, e = co.NewTopicCounter()
+	if e != nil {
+		return ws(e)
 	}
-	co.TopicViewCounter, err = co.NewDefaultTopicViewCounter()
-	if err != nil {
-		return errors.WithStack(err)
+	co.TopicViewCounter, e = co.NewDefaultTopicViewCounter()
+	if e != nil {
+		return ws(e)
 	}
-	co.ForumViewCounter, err = co.NewDefaultForumViewCounter()
-	if err != nil {
-		return errors.WithStack(err)
+	co.ForumViewCounter, e = co.NewDefaultForumViewCounter()
+	if e != nil {
+		return ws(e)
 	}
 
 	return nil
@@ -361,8 +366,11 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	c.LogWriter = io.MultiWriter(os.Stderr, f)
+	//c.LogWriter = io.MultiWriter(os.Stderr, f)
+	c.LogWriter = io.MultiWriter(os.Stdout, f)
+	c.ErrLogWriter = io.MultiWriter(os.Stderr, f)
 	log.SetOutput(c.LogWriter)
+	c.ErrLogger = log.New(c.ErrLogWriter, "", log.LstdFlags)
 	log.Print("Running Gosora v" + c.SoftwareVersion.String())
 	fmt.Println("")
 
@@ -395,6 +403,14 @@ func main() {
 	err = c.ProcessConfig()
 	if err != nil {
 		log.Fatal(err)
+	}
+	if c.Config.DisableStdout {
+		c.LogWriter = f
+		log.SetOutput(c.LogWriter)
+	}
+	if c.Config.DisableStderr {
+		c.ErrLogWriter = f
+		c.ErrLogger = log.New(c.ErrLogWriter, "", log.LstdFlags)
 	}
 
 	err = c.InitTemplates()
