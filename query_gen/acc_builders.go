@@ -32,6 +32,11 @@ func (b *accDeleteBuilder) DateOlderThan(col string, quantity int, unit string) 
 	return b
 }
 
+func (b *accDeleteBuilder) DateOlderThanQ(col, unit string) *accDeleteBuilder {
+	b.dateCutoff = &dateCutoff{col, 0, unit, 11}
+	return b
+}
+
 /*func (b *accDeleteBuilder) Prepare() *sql.Stmt {
 	return b.build.SimpleDelete(b.table, b.where)
 }*/
@@ -87,6 +92,11 @@ func (b *accUpdateBuilder) DateOlderThan(col string, quantity int, unit string) 
 	return b
 }
 
+func (b *accUpdateBuilder) DateOlderThanQ(col, unit string) *accUpdateBuilder {
+	b.up.dateCutoff = &dateCutoff{col, 0, unit, 11}
+	return b
+}
+
 func (b *accUpdateBuilder) WhereQ(sel *selectPrebuilder) *accUpdateBuilder {
 	b.up.whereSubQuery = sel
 	return b
@@ -98,14 +108,24 @@ func (b *accUpdateBuilder) Prepare() *sql.Stmt {
 	}
 	return b.build.prepare(b.build.adapter.SimpleUpdate(b.up))
 }
+func (b *accUpdateBuilder) Stmt() *sql.Stmt {
+	if b.up.whereSubQuery != nil {
+		return b.build.prepare(b.build.adapter.SimpleUpdateSelect(b.up))
+	}
+	return b.build.prepare(b.build.adapter.SimpleUpdate(b.up))
+}
 
 func (b *accUpdateBuilder) Exec(args ...interface{}) (res sql.Result, err error) {
-	query, err := b.build.adapter.SimpleUpdate(b.up)
+	q, err := b.build.adapter.SimpleUpdate(b.up)
 	if err != nil {
 		return res, err
 	}
-	//fmt.Println("query:", query)
-	return b.build.exec(query, args...)
+	//fmt.Println("q:", q)
+	return b.build.exec(q, args...)
+}
+
+type AccBuilder interface {
+	Prepare() *sql.Stmt
 }
 
 type AccSelectBuilder struct {
@@ -147,8 +167,8 @@ func (b *AccSelectBuilder) In(col string, inList []int) *AccSelectBuilder {
 
 	// TODO: Optimise this
 	where := col + " IN("
-	for _, item := range inList {
-		where += strconv.Itoa(item) + ","
+	for _, it := range inList {
+		where += strconv.Itoa(it) + ","
 	}
 	where = where[:len(where)-1] + ")"
 	if b.where != "" {
@@ -209,6 +229,15 @@ func (b *AccSelectBuilder) Limit(limit string) *AccSelectBuilder {
 }
 
 func (b *AccSelectBuilder) Prepare() *sql.Stmt {
+	// TODO: Phase out the procedural API and use the adapter's OO API? The OO API might need a bit more work before we do that and it needs to be rolled out to MSSQL.
+	if b.dateCutoff != nil || b.inChain != nil {
+		selectBuilder := b.build.GetAdapter().Builder().Select().FromAcc(b)
+		return b.build.prepare(b.build.GetAdapter().ComplexSelect(selectBuilder))
+	}
+	return b.build.SimpleSelect(b.table, b.columns, b.where, b.orderby, b.limit)
+}
+
+func (b *AccSelectBuilder) Stmt() *sql.Stmt {
 	// TODO: Phase out the procedural API and use the adapter's OO API? The OO API might need a bit more work before we do that and it needs to be rolled out to MSSQL.
 	if b.dateCutoff != nil || b.inChain != nil {
 		selectBuilder := b.build.GetAdapter().Builder().Select().FromAcc(b)

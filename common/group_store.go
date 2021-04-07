@@ -141,22 +141,20 @@ func (s *MemoryGroupStore) GetCopy(id int) (Group, error) {
 
 func (s *MemoryGroupStore) Reload(id int) error {
 	// TODO: Reload this data too
-	g, err := s.Get(id)
-	if err != nil {
+	g, e := s.Get(id)
+	if e != nil {
 		LogError(errors.New("can't get cansee data for group #" + strconv.Itoa(id)))
 		return nil
 	}
 	canSee := g.CanSee
 
 	g = &Group{ID: id, CanSee: canSee}
-	err = s.get.QueryRow(id).Scan(&g.Name, &g.PermissionsText, &g.PluginPermsText, &g.IsMod, &g.IsAdmin, &g.IsBanned, &g.Tag)
-	if err != nil {
-		return err
+	e = s.get.QueryRow(id).Scan(&g.Name, &g.PermissionsText, &g.PluginPermsText, &g.IsMod, &g.IsAdmin, &g.IsBanned, &g.Tag)
+	if e != nil {
+		return e
 	}
-
-	err = s.initGroup(g)
-	if err != nil {
-		LogError(err)
+	if e = s.initGroup(g); e != nil {
+		LogError(e)
 		return nil
 	}
 
@@ -166,19 +164,19 @@ func (s *MemoryGroupStore) Reload(id int) error {
 }
 
 func (s *MemoryGroupStore) initGroup(g *Group) error {
-	err := json.Unmarshal(g.PermissionsText, &g.Perms)
-	if err != nil {
-		log.Printf("group: %+v\n", g)
+	e := json.Unmarshal(g.PermissionsText, &g.Perms)
+	if e != nil {
+		log.Printf("g: %+v\n", g)
 		log.Print("bad group perms: ", g.PermissionsText)
-		return err
+		return e
 	}
 	DebugLogf(g.Name+": %+v\n", g.Perms)
 
-	err = json.Unmarshal(g.PluginPermsText, &g.PluginPerms)
-	if err != nil {
-		log.Printf("group: %+v\n", g)
+	e = json.Unmarshal(g.PluginPermsText, &g.PluginPerms)
+	if e != nil {
+		log.Printf("g: %+v\n", g)
 		log.Print("bad group plugin perms: ", g.PluginPermsText)
-		return err
+		return e
 	}
 	DebugLogf(g.Name+": %+v\n", g.PluginPerms)
 
@@ -188,9 +186,9 @@ func (s *MemoryGroupStore) initGroup(g *Group) error {
 		g.IsBanned = false
 	}
 
-	err = s.userCount.QueryRow(g.ID).Scan(&g.UserCount)
-	if err != sql.ErrNoRows {
-		return err
+	e = s.userCount.QueryRow(g.ID).Scan(&g.UserCount)
+	if e != sql.ErrNoRows {
+		return e
 	}
 	return nil
 }

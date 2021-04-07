@@ -18,10 +18,10 @@ func Debug(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
 
 	goVersion := runtime.Version()
 	dbVersion := qgen.Builder.DbVersion()
-	upDuration := time.Since(c.StartTime)
-	hours := int(upDuration.Hours())
-	mins := int(upDuration.Minutes())
-	secs := int(upDuration.Seconds())
+	upDur := time.Since(c.StartTime)
+	hours := int(upDur.Hours())
+	mins := int(upDur.Minutes())
+	secs := int(upDur.Seconds())
 	var uptime string
 	if hours > 24 {
 		days := hours / 24
@@ -44,6 +44,7 @@ func Debug(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
 	// TODO: Fetch the adapter from Builder rather than getting it from a global?
 	goroutines := runtime.NumGoroutine()
 	cpus := runtime.NumCPU()
+	httpConns := c.ConnWatch.Count()
 
 	debugTasks := c.DebugPageTasks{c.ScheduledHalfSecondTaskCount(), c.ScheduledSecondTaskCount(), c.ScheduledFifteenMinuteTaskCount(), c.ScheduledHourTaskCount(), c.ShutdownTaskCount()}
 	var memStats runtime.MemStats
@@ -51,20 +52,17 @@ func Debug(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
 
 	var tlen, ulen, rlen int
 	var tcap, ucap, rcap int
-	tcache := c.Topics.GetCache()
-	if tcache != nil {
-		tlen = tcache.Length()
-		tcap = tcache.GetCapacity()
+	tc := c.Topics.GetCache()
+	if tc != nil {
+		tlen, tcap = tc.Length(), tc.GetCapacity()
 	}
-	ucache := c.Users.GetCache()
-	if ucache != nil {
-		ulen = ucache.Length()
-		ucap = ucache.GetCapacity()
+	uc := c.Users.GetCache()
+	if uc != nil {
+		ulen, ucap = uc.Length(), uc.GetCapacity()
 	}
-	rcache := c.Rstore.GetCache()
-	if rcache != nil {
-		rlen = rcache.Length()
-		rcap = rcache.GetCapacity()
+	rc := c.Rstore.GetCache()
+	if rc != nil {
+		rlen, rcap = rc.Length(), rc.GetCapacity()
 	}
 	topicListThawed := c.TopicListThaw.Thawed()
 
@@ -121,12 +119,13 @@ func Debug(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
 	if fErr != nil {
 		return c.InternalError(fErr, w, r)
 	}
+	// TODO: How can we measure this without freezing up the entire page?
 	//gitSize, _ := c.DirSize("./.git")
 	gitSize := 0
 
 	debugDisk := c.DebugPageDisk{staticSize, attachSize, uploadsSize, logsSize, backupsSize, gitSize}
 
-	pi := c.PanelDebugPage{basePage, goVersion, dbVersion, uptime, openConnCount, qgen.Builder.GetAdapter().GetName(), goroutines, cpus, debugTasks, memStats, debugCache, debugDatabase, debugDisk}
+	pi := c.PanelDebugPage{basePage, goVersion, dbVersion, uptime, openConnCount, qgen.Builder.GetAdapter().GetName(), goroutines, cpus, httpConns, debugTasks, memStats, debugCache, debugDatabase, debugDisk}
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_dashboard_right", "debug_page", "panel_debug", pi})
 }
 

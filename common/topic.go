@@ -199,6 +199,7 @@ type TopicStmts struct {
 	deleteActivity      *sql.Stmt
 	edit                *sql.Stmt
 	setPoll             *sql.Stmt
+	testSetCreatedAt    *sql.Stmt
 	createAction        *sql.Stmt
 
 	getTopicUser *sql.Stmt // TODO: Can we get rid of this?
@@ -209,31 +210,35 @@ var topicStmts TopicStmts
 
 func init() {
 	DbInits.Add(func(acc *qgen.Accumulator) error {
-		t := "topics"
+		t, w := "topics", "tid=?"
+		set := func(s string) *sql.Stmt {
+			return acc.Update(t).Set(s).Where(w).Prepare()
+		}
 		topicStmts = TopicStmts{
-			getRids:             acc.Select("replies").Columns("rid").Where("tid=?").Orderby("rid ASC").Limit("?,?").Prepare(),
+			getRids:             acc.Select("replies").Columns("rid").Where(w).Orderby("rid ASC").Limit("?,?").Prepare(),
 			getReplies:          acc.SimpleLeftJoin("replies AS r", "users AS u", "r.rid, r.content, r.createdBy, r.createdAt, r.lastEdit, r.lastEditBy, u.avatar, u.name, u.group, u.level, r.ip, r.likeCount, r.attachCount, r.actionType", "r.createdBy=u.uid", "r.tid=?", "r.rid ASC", "?,?"),
 			getReplies2:         acc.SimpleLeftJoin("replies AS r", "users AS u", "r.rid, r.content, r.createdBy, r.createdAt, r.lastEdit, r.lastEditBy, u.avatar, u.name, u.group, u.level, r.likeCount, r.attachCount, r.actionType", "r.createdBy=u.uid", "r.tid=?", "r.rid ASC", "?,?"),
-			getReplies3:         acc.Select("replies").Columns("rid, content, createdBy, createdAt, lastEdit, lastEditBy, likeCount, attachCount, actionType").Where("tid=?").Orderby("rid ASC").Limit("?,?").Prepare(),
-			addReplies:          acc.Update(t).Set("postCount=postCount+?, lastReplyBy=?, lastReplyAt=UTC_TIMESTAMP()").Where("tid=?").Prepare(),
-			updateLastReply:     acc.Update(t).Set("lastReplyID=?").Where("lastReplyID < ? AND tid=?").Prepare(),
-			lock:                acc.Update(t).Set("is_closed=1").Where("tid=?").Prepare(),
-			unlock:              acc.Update(t).Set("is_closed=0").Where("tid=?").Prepare(),
-			moveTo:              acc.Update(t).Set("parentID=?").Where("tid=?").Prepare(),
-			stick:               acc.Update(t).Set("sticky=1").Where("tid=?").Prepare(),
-			unstick:             acc.Update(t).Set("sticky=0").Where("tid=?").Prepare(),
+			getReplies3:         acc.Select("replies").Columns("rid,content,createdBy,createdAt,lastEdit,lastEditBy,likeCount,attachCount,actionType").Where(w).Orderby("rid ASC").Limit("?,?").Prepare(),
+			addReplies:          set("postCount=postCount+?,lastReplyBy=?,lastReplyAt=UTC_TIMESTAMP()"),
+			updateLastReply:     acc.Update(t).Set("lastReplyID=?").Where("lastReplyID<? AND tid=?").Prepare(),
+			lock:                set("is_closed=1"),
+			unlock:              set("is_closed=0"),
+			moveTo:              set("parentID=?"),
+			stick:               set("sticky=1"),
+			unstick:             set("sticky=0"),
 			hasLikedTopic:       acc.Select("likes").Columns("targetItem").Where("sentBy=? and targetItem=? and targetType='topics'").Prepare(),
-			createLike:          acc.Insert("likes").Columns("weight, targetItem, targetType, sentBy, createdAt").Fields("?,?,?,?,UTC_TIMESTAMP()").Prepare(),
-			addLikesToTopic:     acc.Update(t).Set("likeCount=likeCount+?").Where("tid=?").Prepare(),
-			delete:              acc.Delete(t).Where("tid=?").Prepare(),
-			deleteReplies:       acc.Delete("replies").Where("tid=?").Prepare(),
+			createLike:          acc.Insert("likes").Columns("weight,targetItem,targetType,sentBy,createdAt").Fields("?,?,?,?,UTC_TIMESTAMP()").Prepare(),
+			addLikesToTopic:     set("likeCount=likeCount+?"),
+			delete:              acc.Delete(t).Where(w).Prepare(),
+			deleteReplies:       acc.Delete("replies").Where(w).Prepare(),
 			deleteLikesForTopic: acc.Delete("likes").Where("targetItem=? AND targetType='topics'").Prepare(),
 			deleteActivity:      acc.Delete("activity_stream").Where("elementID=? AND elementType='topic'").Prepare(),
-			edit:                acc.Update(t).Set("title=?,content=?,parsed_content=?").Where("tid=?").Prepare(), // TODO: Only run the content update bits on non-polls, does this matter?
+			edit:                set("title=?,content=?,parsed_content=?"), // TODO: Only run the content update bits on non-polls, does this matter?
 			setPoll:             acc.Update(t).Set("poll=?").Where("tid=? AND poll=0").Prepare(),
-			createAction:        acc.Insert("replies").Columns("tid, actionType, ip, createdBy, createdAt, lastUpdated, content, parsed_content").Fields("?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),'',''").Prepare(),
+			testSetCreatedAt:    set("createdAt=?"),
+			createAction:        acc.Insert("replies").Columns("tid,actionType,ip,createdBy,createdAt,lastUpdated,content,parsed_content").Fields("?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),'',''").Prepare(),
 
-			getTopicUser: acc.SimpleLeftJoin("topics AS t", "users AS u", "t.title, t.content, t.createdBy, t.createdAt, t.lastReplyAt, t.lastReplyBy, t.lastReplyID, t.is_closed, t.sticky, t.parentID, t.ip, t.views, t.postCount, t.likeCount, t.attachCount,t.poll, u.name, u.avatar, u.group, u.level", "t.createdBy=u.uid", "tid=?", "", ""),
+			getTopicUser: acc.SimpleLeftJoin("topics AS t", "users AS u", "t.title, t.content, t.createdBy, t.createdAt, t.lastReplyAt, t.lastReplyBy, t.lastReplyID, t.is_closed, t.sticky, t.parentID, t.ip, t.views, t.postCount, t.likeCount, t.attachCount,t.poll, u.name, u.avatar, u.group, u.level", "t.createdBy=u.uid", w, "", ""),
 			getByReplyID: acc.SimpleLeftJoin("replies AS r", "topics AS t", "t.tid, t.title, t.content, t.createdBy, t.createdAt, t.is_closed, t.sticky, t.parentID, t.ip, t.views, t.postCount, t.likeCount, t.poll, t.data", "r.tid=t.tid", "rid=?", "", ""),
 		}
 		return acc.FirstError()
@@ -250,52 +255,58 @@ func (t *Topic) cacheRemove() {
 }
 
 // TODO: Write a test for this
-func (t *Topic) AddReply(rid, uid int) (err error) {
-	_, err = topicStmts.addReplies.Exec(1, uid, t.ID)
-	if err != nil {
-		return err
+func (t *Topic) AddReply(rid, uid int) (e error) {
+	_, e = topicStmts.addReplies.Exec(1, uid, t.ID)
+	if e != nil {
+		return e
 	}
-	_, err = topicStmts.updateLastReply.Exec(rid, rid, t.ID)
+	_, e = topicStmts.updateLastReply.Exec(rid, rid, t.ID)
 	t.cacheRemove()
-	return err
+	return e
 }
 
-func (t *Topic) Lock() (err error) {
-	_, err = topicStmts.lock.Exec(t.ID)
+func (t *Topic) Lock() (e error) {
+	_, e = topicStmts.lock.Exec(t.ID)
 	t.cacheRemove()
-	return err
+	return e
 }
 
-func (t *Topic) Unlock() (err error) {
-	_, err = topicStmts.unlock.Exec(t.ID)
+func (t *Topic) Unlock() (e error) {
+	_, e = topicStmts.unlock.Exec(t.ID)
 	t.cacheRemove()
-	return err
+	return e
 }
 
-func (t *Topic) MoveTo(destForum int) (err error) {
-	_, err = topicStmts.moveTo.Exec(destForum, t.ID)
+func (t *Topic) MoveTo(destForum int) (e error) {
+	_, e = topicStmts.moveTo.Exec(destForum, t.ID)
 	t.cacheRemove()
-	if err != nil {
-		return err
+	if e != nil {
+		return e
 	}
-	err = Attachments.MoveTo(destForum, t.ID, "topics")
-	if err != nil {
-		return err
+	e = Attachments.MoveTo(destForum, t.ID, "topics")
+	if e != nil {
+		return e
 	}
 	return Attachments.MoveToByExtra(destForum, "replies", strconv.Itoa(t.ID))
 }
 
-// TODO: We might want more consistent terminology rather than using stick in some places and pin in others. If you don't understand the difference, there is none, they are one and the same.
-func (t *Topic) Stick() (err error) {
-	_, err = topicStmts.stick.Exec(t.ID)
+func (t *Topic) TestSetCreatedAt(s time.Time) (e error) {
+	_, e = topicStmts.testSetCreatedAt.Exec(s, t.ID)
 	t.cacheRemove()
-	return err
+	return e
 }
 
-func (t *Topic) Unstick() (err error) {
-	_, err = topicStmts.unstick.Exec(t.ID)
+// TODO: We might want more consistent terminology rather than using stick in some places and pin in others. If you don't understand the difference, there is none, they are one and the same.
+func (t *Topic) Stick() (e error) {
+	_, e = topicStmts.stick.Exec(t.ID)
 	t.cacheRemove()
-	return err
+	return e
+}
+
+func (t *Topic) Unstick() (e error) {
+	_, e = topicStmts.unstick.Exec(t.ID)
+	t.cacheRemove()
+	return e
 }
 
 // TODO: Test this
@@ -323,49 +334,46 @@ func (t *Topic) Like(score, uid int) (err error) {
 
 // TODO: Use a transaction
 func (t *Topic) Unlike(uid int) error {
-	err := Likes.Delete(t.ID, "topics")
-	if err != nil {
-		return err
+	e := Likes.Delete(t.ID, "topics")
+	if e != nil {
+		return e
 	}
-	_, err = topicStmts.addLikesToTopic.Exec(-1, t.ID)
-	if err != nil {
-		return err
+	_, e = topicStmts.addLikesToTopic.Exec(-1, t.ID)
+	if e != nil {
+		return e
 	}
-	_, err = userStmts.decLiked.Exec(1, uid)
+	_, e = userStmts.decLiked.Exec(1, uid)
 	t.cacheRemove()
-	return err
+	return e
 }
 
 func handleLikedTopicReplies(tid int) error {
-	rows, err := userStmts.getLikedRepliesOfTopic.Query(tid)
-	if err != nil {
-		return err
+	rows, e := userStmts.getLikedRepliesOfTopic.Query(tid)
+	if e != nil {
+		return e
 	}
 	defer rows.Close()
-
 	for rows.Next() {
 		var rid int
-		err := rows.Scan(&rid)
-		if err != nil {
-			return err
+		if e := rows.Scan(&rid); e != nil {
+			return e
 		}
-		_, err = replyStmts.deleteLikesForReply.Exec(rid)
-		if err != nil {
-			return err
+		_, e = replyStmts.deleteLikesForReply.Exec(rid)
+		if e != nil {
+			return e
 		}
-		err = Activity.DeleteByParams("like", rid, "post")
-		if err != nil {
-			return err
+		e = Activity.DeleteByParams("like", rid, "post")
+		if e != nil {
+			return e
 		}
 	}
-
 	return rows.Err()
 }
 
 func handleTopicAttachments(tid int) error {
-	err := handleAttachments(userStmts.getAttachmentsOfTopic, tid)
-	if err != nil {
-		return err
+	e := handleAttachments(userStmts.getAttachmentsOfTopic, tid)
+	if e != nil {
+		return e
 	}
 	return handleAttachments(userStmts.getAttachmentsOfTopic2, tid)
 }
@@ -375,120 +383,113 @@ func handleReplyAttachments(rid int) error {
 }
 
 func handleAttachments(stmt *sql.Stmt, id int) error {
-	rows, err := stmt.Query(id)
-	if err != nil {
-		return err
+	rows, e := stmt.Query(id)
+	if e != nil {
+		return e
 	}
 	defer rows.Close()
-
 	for rows.Next() {
 		var aid int
-		err := rows.Scan(&aid)
-		if err != nil {
-			return err
+		if e := rows.Scan(&aid); e != nil {
+			return e
 		}
-		a, err := Attachments.FGet(aid)
-		if err != nil {
-			return err
+		a, e := Attachments.FGet(aid)
+		if e != nil {
+			return e
 		}
-		err = deleteAttachment(a)
-		if err != nil && err != sql.ErrNoRows {
-			return err
+		e = deleteAttachment(a)
+		if e != nil && e != sql.ErrNoRows {
+			return e
 		}
 	}
-
 	return rows.Err()
 }
 
 // TODO: Only load a row per createdBy, maybe with group by?
 func handleTopicReplies(umap map[int]struct{}, uid, tid int) error {
-	rows, err := userStmts.getRepliesOfTopic.Query(uid, tid)
-	if err != nil {
-		return err
+	rows, e := userStmts.getRepliesOfTopic.Query(uid, tid)
+	if e != nil {
+		return e
 	}
 	defer rows.Close()
-
 	var createdBy int
 	for rows.Next() {
-		err := rows.Scan(&createdBy)
-		if err != nil {
-			return err
+		if e := rows.Scan(&createdBy); e != nil {
+			return e
 		}
 		umap[createdBy] = struct{}{}
 	}
-
 	return rows.Err()
 }
 
 // TODO: Use a transaction here
 func (t *Topic) Delete() error {
-	/*creator, err := Users.Get(t.CreatedBy)
-	if err == nil {
-		err = creator.DecreasePostStats(WordCount(t.Content), true)
-		if err != nil {
-			return err
+	/*creator, e := Users.Get(t.CreatedBy)
+	if e == nil {
+		e = creator.DecreasePostStats(WordCount(t.Content), true)
+		if e != nil {
+			return e
 		}
-	} else if err != ErrNoRows {
-		return err
+	} else if e != ErrNoRows {
+		return e
 	}*/
 
 	// TODO: Clear reply cache too
-	_, err := topicStmts.delete.Exec(t.ID)
+	_, e := topicStmts.delete.Exec(t.ID)
 	t.cacheRemove()
-	if err != nil {
-		return err
+	if e != nil {
+		return e
 	}
-	err = Forums.RemoveTopic(t.ParentID)
-	if err != nil && err != ErrNoRows {
-		return err
+	e = Forums.RemoveTopic(t.ParentID)
+	if e != nil && e != ErrNoRows {
+		return e
 	}
-	_, err = topicStmts.deleteLikesForTopic.Exec(t.ID)
-	if err != nil {
-		return err
+	_, e = topicStmts.deleteLikesForTopic.Exec(t.ID)
+	if e != nil {
+		return e
 	}
 
 	if t.PostCount > 1 {
-		err = handleLikedTopicReplies(t.ID)
-		if err != nil {
-			return err
+		if e = handleLikedTopicReplies(t.ID); e != nil {
+			return e
 		}
 		umap := make(map[int]struct{})
-		err = handleTopicReplies(umap, t.CreatedBy, t.ID)
-		if err != nil {
-			return err
+		e = handleTopicReplies(umap, t.CreatedBy, t.ID)
+		if e != nil {
+			return e
 		}
-		_, err = topicStmts.deleteReplies.Exec(t.ID)
-		if err != nil {
-			return err
+		_, e = topicStmts.deleteReplies.Exec(t.ID)
+		if e != nil {
+			return e
 		}
 		for uid := range umap {
-			err = (&User{ID: uid}).RecalcPostStats()
-			if err != nil {
-				//log.Printf("err: %+v\n", err)
-				return err
+			e = (&User{ID: uid}).RecalcPostStats()
+			if e != nil {
+				//log.Printf("e: %+v\n", e)
+				return e
 			}
 		}
 	}
-	err = (&User{ID: t.CreatedBy}).RecalcPostStats()
-	if err != nil {
-		return err
+	e = (&User{ID: t.CreatedBy}).RecalcPostStats()
+	if e != nil {
+		return e
 	}
-	err = handleTopicAttachments(t.ID)
-	if err != nil {
-		return err
+	e = handleTopicAttachments(t.ID)
+	if e != nil {
+		return e
 	}
-	err = Subscriptions.DeleteResource(t.ID, "topic")
-	if err != nil {
-		return err
+	e = Subscriptions.DeleteResource(t.ID, "topic")
+	if e != nil {
+		return e
 	}
-	_, err = topicStmts.deleteActivity.Exec(t.ID)
-	if err != nil {
-		return err
+	_, e = topicStmts.deleteActivity.Exec(t.ID)
+	if e != nil {
+		return e
 	}
 	if t.Poll > 0 {
-		err = (&Poll{ID: t.Poll}).Delete()
-		if err != nil {
-			return err
+		e = (&Poll{ID: t.Poll}).Delete()
+		if e != nil {
+			return e
 		}
 	}
 	return nil
@@ -513,9 +514,9 @@ func (t *Topic) Update(name, content string) error {
 }
 
 func (t *Topic) SetPoll(pollID int) error {
-	_, err := topicStmts.setPoll.Exec(pollID, t.ID) // TODO: Sniff if this changed anything to see if we hit an existing poll
+	_, e := topicStmts.setPoll.Exec(pollID, t.ID) // TODO: Sniff if this changed anything to see if we hit an existing poll
 	t.cacheRemove()
-	return err
+	return e
 }
 
 // TODO: Have this go through the ReplyStore?
@@ -543,22 +544,19 @@ func (t *Topic) CreateActionReply(action, ip string, uid int) (err error) {
 	return err
 }
 
-func GetRidsForTopic(tid, offset int) (rids []int, err error) {
-	rows, err := topicStmts.getRids.Query(tid, offset, Config.ItemsPerPage)
-	if err != nil {
-		return nil, err
+func GetRidsForTopic(tid, offset int) (rids []int, e error) {
+	rows, e := topicStmts.getRids.Query(tid, offset, Config.ItemsPerPage)
+	if e != nil {
+		return nil, e
 	}
 	defer rows.Close()
-
 	var rid int
 	for rows.Next() {
-		err := rows.Scan(&rid)
-		if err != nil {
-			return nil, err
+		if e := rows.Scan(&rid); e != nil {
+			return nil, e
 		}
 		rids = append(rids, rid)
 	}
-
 	return rids, rows.Err()
 }
 

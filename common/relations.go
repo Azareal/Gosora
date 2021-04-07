@@ -39,11 +39,11 @@ func NewDefaultBlockStore(acc *qgen.Accumulator) (*DefaultBlockStore, error) {
 }
 
 func (s *DefaultBlockStore) IsBlockedBy(blocker, blockee int) (bool, error) {
-	err := s.isBlocked.QueryRow(blocker, blockee).Scan(&blocker)
-	if err == ErrNoRows {
+	e := s.isBlocked.QueryRow(blocker, blockee).Scan(&blocker)
+	if e == ErrNoRows {
 		return false, nil
 	}
-	return err == nil, err
+	return e == nil, e
 }
 
 // TODO: Optimise the query to avoid preparing it on the spot? Maybe, use knowledge of the most common IN() parameter counts?
@@ -55,34 +55,33 @@ func (s *DefaultBlockStore) BulkIsBlockedBy(blockers []int, blockee int) (bool, 
 		return s.IsBlockedBy(blockers[0], blockee)
 	}
 	idList, q := inqbuild(blockers)
-	count, err := qgen.NewAcc().Count("users_blocks").Where("blocker IN(" + q + ") AND blockedUser=?").TotalP(idList...)
-	if err == ErrNoRows {
+	count, e := qgen.NewAcc().Count("users_blocks").Where("blocker IN(" + q + ") AND blockedUser=?").TotalP(idList...)
+	if e == ErrNoRows {
 		return false, nil
 	}
-	return count == 0, err
+	return count == 0, e
 }
 
 func (s *DefaultBlockStore) Add(blocker, blockee int) error {
-	_, err := s.add.Exec(blocker, blockee)
-	return err
+	_, e := s.add.Exec(blocker, blockee)
+	return e
 }
 
 func (s *DefaultBlockStore) Remove(blocker, blockee int) error {
-	_, err := s.remove.Exec(blocker, blockee)
-	return err
+	_, e := s.remove.Exec(blocker, blockee)
+	return e
 }
 
 func (s *DefaultBlockStore) BlockedByOffset(blocker, offset, perPage int) (uids []int, err error) {
-	rows, err := s.blockedBy.Query(blocker, offset, perPage)
-	if err != nil {
-		return nil, err
+	rows, e := s.blockedBy.Query(blocker, offset, perPage)
+	if e != nil {
+		return nil, e
 	}
 	defer rows.Close()
 	for rows.Next() {
 		var uid int
-		err := rows.Scan(&uid)
-		if err != nil {
-			return nil, err
+		if e := rows.Scan(&uid); e != nil {
+			return nil, e
 		}
 		uids = append(uids, uid)
 	}
@@ -90,9 +89,9 @@ func (s *DefaultBlockStore) BlockedByOffset(blocker, offset, perPage int) (uids 
 }
 
 func (s *DefaultBlockStore) BlockedByCount(blocker int) (count int) {
-	err := s.blockedByCount.QueryRow(blocker).Scan(&count)
-	if err != nil {
-		LogError(err)
+	e := s.blockedByCount.QueryRow(blocker).Scan(&count)
+	if e != nil {
+		LogError(e)
 	}
 	return count
 }
@@ -127,13 +126,13 @@ func NewDefaultFriendStore(acc *qgen.Accumulator) (*DefaultFriendStore, error) {
 }
 
 func (s *DefaultFriendStore) AddInvite(requester, target int) error {
-	_, err := s.addInvite.Exec(requester, target)
-	return err
+	_, e := s.addInvite.Exec(requester, target)
+	return e
 }
 
 func (s *DefaultFriendStore) Confirm(requester, target int) error {
-	_, err := s.confirm.Exec(requester, target)
-	return err
+	_, e := s.confirm.Exec(requester, target)
+	return e
 }
 
 func (s *DefaultFriendStore) GetOwnSentInvites(uid int) ([]FriendInvite, error) {

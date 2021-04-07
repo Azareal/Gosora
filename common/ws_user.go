@@ -28,8 +28,8 @@ func (u *WSUser) Ping() error {
 			continue
 		}
 		socket.conn.SetWriteDeadline(time.Now().Add(time.Minute))
-		err := socket.conn.WriteMessage(websocket.PingMessage, nil)
-		if err != nil {
+		e := socket.conn.WriteMessage(websocket.PingMessage, nil)
+		if e != nil {
 			socket.conn.Close()
 		}
 	}
@@ -42,9 +42,9 @@ func (u *WSUser) WriteAll(msg string) error {
 		if socket == nil {
 			continue
 		}
-		w, err := socket.conn.NextWriter(websocket.TextMessage)
-		if err != nil {
-			return err
+		w, e := socket.conn.NextWriter(websocket.TextMessage)
+		if e != nil {
+			return e
 		}
 		_, _ = w.Write(msgbytes)
 		w.Close()
@@ -66,8 +66,8 @@ func (u *WSUser) WriteToPageBytes(msg []byte, page string) error {
 		if socket.Page != page {
 			continue
 		}
-		w, err := socket.conn.NextWriter(websocket.TextMessage)
-		if err != nil {
+		w, e := socket.conn.NextWriter(websocket.TextMessage)
+		if e != nil {
 			continue // Skip dead sockets, a dedicated goroutine handles those
 		}
 		_, _ = w.Write(msg)
@@ -90,8 +90,8 @@ func (u *WSUser) WriteToPageBytesMulti(msgs [][]byte, page string) error {
 		if socket.Page != page {
 			continue
 		}
-		w, err := socket.conn.NextWriter(websocket.TextMessage)
-		if err != nil {
+		w, e := socket.conn.NextWriter(websocket.TextMessage)
+		if e != nil {
 			continue // Skip dead sockets, a dedicated goroutine handles those
 		}
 		for _, msg := range msgs {
@@ -184,7 +184,7 @@ func (u *WSUser) InPage(page string) bool {
 	return false
 }
 
-func (u *WSUser) FinalizePage(page string, handle func()) {
+func (u *WSUser) FinalizePage(page string, h func()) {
 	u.Lock()
 	defer u.Unlock()
 	for _, socket := range u.Sockets {
@@ -195,5 +195,5 @@ func (u *WSUser) FinalizePage(page string, handle func()) {
 			return
 		}
 	}
-	handle()
+	h()
 }

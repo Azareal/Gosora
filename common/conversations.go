@@ -85,25 +85,19 @@ func (co *Conversation) Posts(offset, itemsPerPage int) (posts []*ConversationPo
 }
 
 func (co *Conversation) PostsCount() (count int) {
-	err := convoStmts.countPosts.QueryRow(co.ID).Scan(&count)
-	if err != nil {
-		LogError(err)
-	}
-	return count
+	return Countf(convoStmts.countPosts, co.ID)
 }
 
 func (co *Conversation) Uids() (ids []int, err error) {
-	rows, err := convoStmts.getUsers.Query(co.ID)
-	if err != nil {
-		return nil, err
+	rows, e := convoStmts.getUsers.Query(co.ID)
+	if e != nil {
+		return nil, e
 	}
 	defer rows.Close()
-
 	for rows.Next() {
 		var id int
-		err := rows.Scan(&id)
-		if err != nil {
-			return nil, err
+		if e := rows.Scan(&id); e != nil {
+			return nil, e
 		}
 		ids = append(ids, id)
 	}
@@ -111,12 +105,7 @@ func (co *Conversation) Uids() (ids []int, err error) {
 }
 
 func (co *Conversation) Has(uid int) (in bool) {
-	var count int
-	err := convoStmts.has.QueryRow(uid, co.ID).Scan(&count)
-	if err != nil {
-		LogError(err)
-	}
-	return count > 0
+	return Countf(convoStmts.has, uid, co.ID) > 0
 }
 
 func (co *Conversation) Update() error {
@@ -247,7 +236,7 @@ func (s *DefaultConversationStore) GetUserExtra(uid, offset int) (cos []*Convers
 		cmap[co.ID] = &ConversationExtra{co, nil}
 	}
 
-	// TODO: Add a function for the q stuff
+	// TODO: Use inqbuild for this or a similar function
 	var q string
 	idList := make([]interface{}, len(raw))
 	for i, co := range raw {

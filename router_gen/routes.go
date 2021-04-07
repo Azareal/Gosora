@@ -199,6 +199,8 @@ func panelRoutes() *RouteGroup {
 		Action("panel.ForumsEditPermsSubmit", "/panel/forums/edit/perms/submit/", "extraData"),
 		View("panel.ForumsEditPermsAdvance", "/panel/forums/edit/perms/", "extraData"),
 		Action("panel.ForumsEditPermsAdvanceSubmit", "/panel/forums/edit/perms/adv/submit/", "extraData"),
+		Action("panel.ForumsEditActionCreateSubmit", "/panel/forums/action/create/submit/", "extraData"),
+		Action("panel.ForumsEditActionDeleteSubmit", "/panel/forums/action/delete/submit/", "extraData"),
 
 		View("panel.Settings", "/panel/settings/"),
 		View("panel.SettingEdit", "/panel/settings/edit/", "extraData"),

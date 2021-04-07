@@ -13,8 +13,8 @@ import (
 
 func wsTopicList(topicList []*c.TopicsRow, lastPage int) *c.WsTopicList {
 	wsTopicList := make([]*c.WsTopicsRow, len(topicList))
-	for i, topicRow := range topicList {
-		wsTopicList[i] = topicRow.WebSockets()
+	for i, tr := range topicList {
+		wsTopicList[i] = tr.WebSockets()
 	}
 	return &c.WsTopicList{wsTopicList, lastPage, 0}
 }

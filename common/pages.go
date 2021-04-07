@@ -649,12 +649,18 @@ type GroupForumPermPreset struct {
 
 type PanelEditForumPage struct {
 	*BasePanelPage
-	ID     int
-	Name   string
-	Desc   string
-	Active bool
-	Preset string
-	Groups []GroupForumPermPreset
+	ID      int
+	Name    string
+	Desc    string
+	Active  bool
+	Preset  string
+	Groups  []GroupForumPermPreset
+	Actions []*ForumActionAction
+}
+
+type ForumActionAction struct {
+	*ForumAction
+	ActionName string
 }
 
 type NameLangToggle struct {
@@ -793,11 +799,12 @@ type PanelDebugPage struct {
 	DBVersion string
 	Uptime    string
 
-	OpenConns int
+	DBConns   int
 	DBAdapter string
 
 	Goroutines int
 	CPUs       int
+	HttpConns  int
 
 	Tasks    DebugPageTasks
 	MemStats runtime.MemStats

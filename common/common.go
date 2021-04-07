@@ -10,6 +10,8 @@ import (
 	"database/sql"
 	"io"
 	"log"
+	"net"
+	"net/http"
 	"os"
 	"strconv"
 	"strings"
@@ -290,4 +292,23 @@ func inqbuildstr(strs []string) ([]interface{}, string) {
 		}
 	}
 	return idList, sb.String()
+}
+
+var ConnWatch = &ConnWatcher{}
+
+type ConnWatcher struct {
+	n int64
+}
+
+func (cw *ConnWatcher) StateChange(conn net.Conn, state http.ConnState) {
+	switch state {
+	case http.StateNew:
+		atomic.AddInt64(&cw.n, 1)
+	case http.StateHijacked, http.StateClosed:
+		atomic.AddInt64(&cw.n, -1)
+	}
+}
+
+func (cw *ConnWatcher) Count() int {
+	return int(atomic.LoadInt64(&cw.n))
 }

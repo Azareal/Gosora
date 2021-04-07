@@ -5,6 +5,6 @@ CREATE TABLE "widgets" (
 	`type` varchar (100) not null,
 	`active` boolean DEFAULT 0 not null,
 	`location` varchar (100) not null,
-	`data` text DEFAULT '' not null,
+	`data` text not null,
 	primary key(`wid`)
 );

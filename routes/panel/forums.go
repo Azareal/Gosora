@@ -144,6 +144,7 @@ func ForumsOrderSubmit(w http.ResponseWriter, r *http.Request, u *c.User) c.Rout
 	if ferr != nil {
 		return ferr
 	}
+	// TODO: Move this even earlier?
 	js := r.PostFormValue("js") == "1"
 	if !u.Perms.ManageForums {
 		return c.NoPermissionsJSQ(w, r, u, js)
@@ -187,14 +188,14 @@ func ForumsEdit(w http.ResponseWriter, r *http.Request, u *c.User, sfid string) 
 	}
 	basePage.Header.AddScriptAsync("panel_forum_edit.js")
 
-	forum, err := c.Forums.Get(fid)
+	f, err := c.Forums.Get(fid)
 	if err == sql.ErrNoRows {
 		return c.LocalError("The forum you're trying to edit doesn't exist.", w, r, u)
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
-	if forum.Preset == "" {
-		forum.Preset = "custom"
+	if f.Preset == "" {
+		f.Preset = "custom"
 	}
 
 	glist, err := c.Groups.GetAll()
@@ -221,7 +222,16 @@ func ForumsEdit(w http.ResponseWriter, r *http.Request, u *c.User, sfid string) 
 		basePage.AddNotice("panel_forum_updated")
 	}
 
-	pi := c.PanelEditForumPage{basePage, forum.ID, forum.Name, forum.Desc, forum.Active, forum.Preset, gplist}
+	falist, e := c.ForumActionStore.GetInForum(f.ID)
+	if err != sql.ErrNoRows && e != nil {
+		return c.InternalError(e, w, r)
+	}
+	afalist := make([]*c.ForumActionAction, len(falist))
+	for i, faitem := range falist {
+		afalist[i] = &c.ForumActionAction{faitem, c.ConvActToString(faitem.Action)}
+	}
+
+	pi := c.PanelEditForumPage{basePage, f.ID, f.Name, f.Desc, f.Active, f.Preset, gplist, afalist}
 	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "", "", "panel_forum_edit", &pi})
 }
 
@@ -290,7 +300,7 @@ func ForumsEditPermsSubmit(w http.ResponseWriter, r *http.Request, u *c.User, sf
 		return c.LocalErrorJSQ("Invalid Group ID", w, r, u, js)
 	}
 
-	forum, err := c.Forums.Get(fid)
+	f, err := c.Forums.Get(fid)
 	if err == sql.ErrNoRows {
 		return c.LocalErrorJSQ("This forum doesn't exist", w, r, u, js)
 	} else if err != nil {
@@ -298,7 +308,7 @@ func ForumsEditPermsSubmit(w http.ResponseWriter, r *http.Request, u *c.User, sf
 	}
 
 	permPreset := c.StripInvalidGroupForumPreset(r.PostFormValue("perm_preset"))
-	err = forum.SetPreset(permPreset, gid)
+	err = f.SetPreset(permPreset, gid)
 	if err != nil {
 		return c.LocalErrorJSQ(err.Error(), w, r, u, js)
 	}
@@ -311,23 +321,20 @@ func ForumsEditPermsSubmit(w http.ResponseWriter, r *http.Request, u *c.User, sf
 }
 
 // A helper function for the Advanced portion of the Forum Perms Editor
-func forumPermsExtractDash(paramList string) (fid, gid int, err error) {
+func forumPermsExtractDash(paramList string) (fid, gid int, e error) {
 	params := strings.Split(paramList, "-")
 	if len(params) != 2 {
 		return fid, gid, errors.New("Parameter count mismatch")
 	}
-
-	fid, err = strconv.Atoi(params[0])
-	if err != nil {
+	fid, e = strconv.Atoi(params[0])
+	if e != nil {
 		return fid, gid, errors.New("The provided Forum ID is not a valid number.")
 	}
-
-	gid, err = strconv.Atoi(params[1])
-	if err != nil {
-		err = errors.New("The provided Group ID is not a valid number.")
+	gid, e = strconv.Atoi(params[1])
+	if e != nil {
+		e = errors.New("The provided Group ID is not a valid number.")
 	}
-
-	return fid, gid, err
+	return fid, gid, e
 }
 
 func ForumsEditPermsAdvance(w http.ResponseWriter, r *http.Request, u *c.User, paramList string) c.RouteError {
@@ -403,7 +410,7 @@ func ForumsEditPermsAdvanceSubmit(w http.ResponseWriter, r *http.Request, u *c.U
 		return c.LocalError(err.Error(), w, r, u)
 	}
 
-	forum, err := c.Forums.Get(fid)
+	f, err := c.Forums.Get(fid)
 	if err == sql.ErrNoRows {
 		return c.LocalError("The forum you're trying to edit doesn't exist.", w, r, u)
 	} else if err != nil {
@@ -417,25 +424,24 @@ func ForumsEditPermsAdvanceSubmit(w http.ResponseWriter, r *http.Request, u *c.U
 		return c.InternalError(err, w, r)
 	}
 
-	extractPerm := func(name string) bool {
+	ep := func(name string) bool {
 		pvalue := r.PostFormValue("perm-" + name)
 		return (pvalue == "1")
 	}
-
 	// TODO: Generate this code?
-	fp.ViewTopic = extractPerm("ViewTopic")
-	fp.LikeItem = extractPerm("LikeItem")
-	fp.CreateTopic = extractPerm("CreateTopic")
-	fp.EditTopic = extractPerm("EditTopic")
-	fp.DeleteTopic = extractPerm("DeleteTopic")
-	fp.CreateReply = extractPerm("CreateReply")
-	fp.EditReply = extractPerm("EditReply")
-	fp.DeleteReply = extractPerm("DeleteReply")
-	fp.PinTopic = extractPerm("PinTopic")
-	fp.CloseTopic = extractPerm("CloseTopic")
-	fp.MoveTopic = extractPerm("MoveTopic")
+	fp.ViewTopic = ep("ViewTopic")
+	fp.LikeItem = ep("LikeItem")
+	fp.CreateTopic = ep("CreateTopic")
+	fp.EditTopic = ep("EditTopic")
+	fp.DeleteTopic = ep("DeleteTopic")
+	fp.CreateReply = ep("CreateReply")
+	fp.EditReply = ep("EditReply")
+	fp.DeleteReply = ep("DeleteReply")
+	fp.PinTopic = ep("PinTopic")
+	fp.CloseTopic = ep("CloseTopic")
+	fp.MoveTopic = ep("MoveTopic")
 
-	err = forum.SetPerms(&fp, "custom", gid)
+	err = f.SetPerms(&fp, "custom", gid)
 	if err != nil {
 		return c.LocalErrorJSQ(err.Error(), w, r, u, js)
 	}
@@ -445,4 +451,108 @@ func ForumsEditPermsAdvanceSubmit(w http.ResponseWriter, r *http.Request, u *c.U
 	}
 
 	return successRedirect("/panel/forums/edit/perms/"+strconv.Itoa(fid)+"-"+strconv.Itoa(gid)+"?updated=1", w, r, js)
+}
+
+func ForumsEditActionDeleteSubmit(w http.ResponseWriter, r *http.Request, u *c.User, sfaid string) c.RouteError {
+	_, ferr := c.SimplePanelUserCheck(w, r, u)
+	if ferr != nil {
+		return ferr
+	}
+	// TODO: Should we split this permission?
+	if !u.Perms.ManageForums {
+		return c.NoPermissions(w, r, u)
+	}
+	js := r.PostFormValue("js") == "1"
+
+	faid, e := strconv.Atoi(sfaid)
+	if e != nil {
+		return c.LocalError("The forum action ID is not a valid integer.", w, r, u)
+	}
+	e = c.ForumActionStore.Delete(faid)
+	if e != nil {
+		return c.InternalError(e, w, r)
+	}
+
+	fid, e := strconv.Atoi(r.FormValue("ret"))
+	if e != nil {
+		return c.LocalError("The forum action ID is not a valid integer.", w, r, u)
+	}
+	if !c.Forums.Exists(fid) {
+		return c.LocalError("The target forum doesn't exist.", w, r, u)
+	}
+
+	return successRedirect("/panel/forums/edit/"+strconv.Itoa(fid)+"?updated=1", w, r, js)
+}
+
+func ForumsEditActionCreateSubmit(w http.ResponseWriter, r *http.Request, u *c.User, sfid string) c.RouteError {
+	_, ferr := c.SimplePanelUserCheck(w, r, u)
+	if ferr != nil {
+		return ferr
+	}
+	// TODO: Should we split this permission?
+	if !u.Perms.ManageForums {
+		return c.NoPermissions(w, r, u)
+	}
+	js := r.PostFormValue("js") == "1"
+
+	fid, e := strconv.Atoi(sfid)
+	if e != nil {
+		return c.LocalError("The provided Forum ID is not a valid number.", w, r, u)
+	}
+	if !c.Forums.Exists(fid) {
+		return c.LocalError("This forum does not exist", w, r, u)
+	}
+
+	runOnTopicCreation := r.PostFormValue("action_run_on_topic_creation") == "1"
+
+	f := func(s string) (int, c.RouteError) {
+		i, e := strconv.Atoi(r.PostFormValue(s))
+		if e != nil {
+			return i, c.LocalError(s+" is not a valid integer.", w, r, u)
+		}
+		if i < 0 {
+			return i, c.LocalError(s+" cannot be less than 0", w, r, u)
+		}
+		return i, nil
+	}
+	runDaysAfterTopicCreation, re := f("action_run_days_after_topic_creation")
+	if re != nil {
+		return re
+	}
+	runDaysAfterTopicLastReply, re := f("action_run_days_after_topic_last_reply")
+	if re != nil {
+		return re
+	}
+
+	action := r.PostFormValue("action_action")
+	aint := c.ConvStringToAct(action)
+	if aint == -1 {
+		return c.LocalError("invalid action", w, r, u)
+	}
+
+	extra := r.PostFormValue("action_extra")
+	switch aint {
+	case c.ForumActionMove:
+		conv, e := strconv.Atoi(extra)
+		if e != nil {
+			return c.LocalError("action_extra is not a valid integer.", w, r, u)
+		}
+		extra = strconv.Itoa(conv)
+	default:
+		extra = ""
+	}
+
+	_, e = c.ForumActionStore.Add(&c.ForumAction{
+		Forum:                      fid,
+		RunOnTopicCreation:         runOnTopicCreation,
+		RunDaysAfterTopicCreation:  runDaysAfterTopicCreation,
+		RunDaysAfterTopicLastReply: runDaysAfterTopicLastReply,
+		Action:                     aint,
+		Extra:                      extra,
+	})
+	if e != nil {
+		return c.InternalError(e, w, r)
+	}
+
+	return successRedirect("/panel/forums/edit/"+strconv.Itoa(fid)+"?updated=1", w, r, js)
 }

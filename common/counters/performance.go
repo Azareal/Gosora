@@ -51,21 +51,22 @@ func (co *DefaultPerfCounter) Tick() error {
 		b.Unlock()
 		return c
 	}
+	var low int64
+	hTbl := c.GetHookTable()
 	for _, b := range co.buckets {
-		var low int64
 		b.low.Lock()
-		low = b.low.counter
-		b.low.counter = math.MaxInt64
+		low, b.low.counter = b.low.counter, math.MaxInt64
 		b.low.Unlock()
 		if low == math.MaxInt64 {
 			low = 0
 		}
 		high := getCounter(b.high)
 		avg := getCounter(b.avg)
+		c.H_counters_perf_tick_row_hook(hTbl, low, high, avg)
 
-		err := co.insertChunk(low, high, avg) // TODO: Bulk insert for speed?
-		if err != nil {
-			return errors.Wrap(errors.WithStack(err), "perf counter")
+		e := co.insertChunk(low, high, avg) // TODO: Bulk insert for speed?
+		if e != nil {
+			return errors.Wrap(errors.WithStack(e), "perf counter")
 		}
 	}
 	return nil
@@ -76,8 +77,8 @@ func (co *DefaultPerfCounter) insertChunk(low, high, avg int64) error {
 		return nil
 	}
 	c.DebugLogf("Inserting a pchunk with low %d, high %d, avg %d", low, high, avg)
-	_, err := co.insert.Exec(low, high, avg)
-	return err
+	_, e := co.insert.Exec(low, high, avg)
+	return e
 }
 
 func (co *DefaultPerfCounter) Push(dur time.Duration /*,_ bool*/) {

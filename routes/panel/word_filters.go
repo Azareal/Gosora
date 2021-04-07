@@ -20,9 +20,9 @@ func WordFilters(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError
 	}
 
 	// TODO: What if this list gets too long?
-	filters, err := c.WordFilters.GetAll()
-	if err != nil {
-		return c.InternalError(err, w, r)
+	filters, e := c.WordFilters.GetAll()
+	if e != nil {
+		return c.InternalError(e, w, r)
 	}
 
 	pi := c.PanelPage{basePage, tList, filters}
@@ -48,13 +48,13 @@ func WordFiltersCreateSubmit(w http.ResponseWriter, r *http.Request, u *c.User) 
 	// Unlike with find, it's okay if we leave this blank, as this means that the admin wants to remove the word entirely with no replacement
 	replace := strings.TrimSpace(r.PostFormValue("replace"))
 
-	wfid, err := c.WordFilters.Create(find, replace)
-	if err != nil {
-		return c.InternalErrorJSQ(err, w, r, js)
+	wfid, e := c.WordFilters.Create(find, replace)
+	if e != nil {
+		return c.InternalErrorJSQ(e, w, r, js)
 	}
-	err = c.AdminLogs.Create("create", wfid, "word_filter", u.GetIP(), u.ID)
-	if err != nil {
-		return c.InternalError(err, w, r)
+	e = c.AdminLogs.Create("create", wfid, "word_filter", u.GetIP(), u.ID)
+	if e != nil {
+		return c.InternalError(e, w, r)
 	}
 
 	return successRedirect("/panel/settings/word-filters/", w, r, js)

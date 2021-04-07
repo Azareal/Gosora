@@ -53,6 +53,7 @@ func init() {
 	addPatch(33, patch33)
 	addPatch(34, patch34)
 	addPatch(35, patch35)
+	addPatch(36, patch36)
 }
 
 func bcol(col string, val bool) qgen.DBTableColumn {
@@ -168,18 +169,17 @@ func patch0(scanner *bufio.Scanner) (err error) {
 }
 
 func patch1(scanner *bufio.Scanner) error {
-	routes := map[string]string{
+	return renameRoutes(map[string]string{
 		"routeAccountEditCriticalSubmit": "routes.AccountEditCriticalSubmit",
 		"routeAccountEditAvatar":         "routes.AccountEditAvatar",
 		"routeAccountEditAvatarSubmit":   "routes.AccountEditAvatarSubmit",
 		"routeAccountEditUsername":       "routes.AccountEditUsername",
 		"routeAccountEditUsernameSubmit": "routes.AccountEditUsernameSubmit",
-	}
-	return renameRoutes(routes)
+	})
 }
 
 func patch2(scanner *bufio.Scanner) error {
-	routes := map[string]string{
+	return renameRoutes(map[string]string{
 		"routeLogout":                   "routes.AccountLogout",
 		"routeShowAttachment":           "routes.ShowAttachment",
 		"routeChangeTheme":              "routes.ChangeTheme",
@@ -189,8 +189,7 @@ func patch2(scanner *bufio.Scanner) error {
 		"routeDynamic":                  "routes.DynamicRoute",
 		"routeUploads":                  "routes.UploadedFile",
 		"BadRoute":                      "routes.BadRoute",
-	}
-	return renameRoutes(routes)
+	})
 }
 
 func patch3(scanner *bufio.Scanner) error {
@@ -248,14 +247,14 @@ func patch4(scanner *bufio.Scanner) error {
 		"routePanelForumsEditPermsAdvanceSubmit": "panel.ForumsEditPermsAdvanceSubmit",
 		"routePanelBackups":                      "panel.Backups",
 	}
-	err := renameRoutes(routes)
-	if err != nil {
-		return err
+	e := renameRoutes(routes)
+	if e != nil {
+		return e
 	}
 
-	err = execStmt(qgen.Builder.SimpleDelete("settings", "name='url_tags'"))
-	if err != nil {
-		return err
+	e = execStmt(qgen.Builder.SimpleDelete("settings", "name='url_tags'"))
+	if e != nil {
+		return e
 	}
 
 	return createTable("pages", "utf8mb4", "utf8mb4_general_ci",
@@ -281,14 +280,14 @@ func patch5(scanner *bufio.Scanner) error {
 		"routes.AccountEditCritical":       "routes.AccountEditPassword",
 		"routes.AccountEditCriticalSubmit": "routes.AccountEditPasswordSubmit",
 	}
-	err := renameRoutes(routes)
-	if err != nil {
-		return err
+	e := renameRoutes(routes)
+	if e != nil {
+		return e
 	}
 
-	err = execStmt(qgen.Builder.SimpleUpdate("menu_items", "path='/user/edit/'", "path='/user/edit/critical/'"))
-	if err != nil {
-		return err
+	e = execStmt(qgen.Builder.SimpleUpdate("menu_items", "path='/user/edit/'", "path='/user/edit/critical/'"))
+	if e != nil {
+		return e
 	}
 
 	return createTable("users_2fa_keys", "utf8mb4", "utf8mb4_general_ci",
@@ -333,9 +332,9 @@ func renameRoutes(routes map[string]string) error {
 	}
 
 	for key, value := range routes {
-		err := replaceTextWhere(key, value)
-		if err != nil {
-			return err
+		e := replaceTextWhere(key, value)
+		if e != nil {
+			return e
 		}
 	}
 
@@ -370,9 +369,9 @@ func patch8(scanner *bufio.Scanner) error {
 		"routePanelThemesMenuItemOrderSubmit":  "panel.ThemesMenuItemOrderSubmit",
 		"routePanelDashboard":                  "panel.Dashboard",
 	}
-	err := renameRoutes(routes)
-	if err != nil {
-		return err
+	e := renameRoutes(routes)
+	if e != nil {
+		return e
 	}
 
 	return createTable("updates", "", "",
@@ -812,36 +811,36 @@ func patch29(scanner *bufio.Scanner) error {
 }
 
 func patch30(scanner *bufio.Scanner) error {
-	err := execStmt(qgen.Builder.AddColumn("users_groups_promotions", tC{"registeredFor", "int", 0, false, false, "0"}, nil))
-	if err != nil {
-		return err
+	e := execStmt(qgen.Builder.AddColumn("users_groups_promotions", tC{"registeredFor", "int", 0, false, false, "0"}, nil))
+	if e != nil {
+		return e
 	}
 	return execStmt(qgen.Builder.SetDefaultColumn("users", "last_ip", "varchar", ""))
 }
 
 func patch31(scanner *bufio.Scanner) (e error) {
 	addKey := func(tbl, col string, tk qgen.DBTableKey) error {
-		/*err := execStmt(qgen.Builder.RemoveIndex(tbl, col))
-		if err != nil {
-			return err
+		/*e := execStmt(qgen.Builder.RemoveIndex(tbl, col))
+		if e != nil {
+			return e
 		}*/
 		return execStmt(qgen.Builder.AddKey(tbl, col, tk))
 	}
-	err := addKey("topics", "title", tK{"title", "fulltext", "", false})
-	if err != nil {
-		return err
+	e = addKey("topics", "title", tK{"title", "fulltext", "", false})
+	if e != nil {
+		return e
 	}
-	err = addKey("topics", "content", tK{"content", "fulltext", "", false})
-	if err != nil {
-		return err
+	e = addKey("topics", "content", tK{"content", "fulltext", "", false})
+	if e != nil {
+		return e
 	}
 	return addKey("replies", "content", tK{"content", "fulltext", "", false})
 }
 
 func createTable(tbl, charset, collation string, cols []tC, keys []tK) error {
-	err := execStmt(qgen.Builder.DropTable(tbl))
-	if err != nil {
-		return err
+	e := execStmt(qgen.Builder.DropTable(tbl))
+	if e != nil {
+		return e
 	}
 	return execStmt(qgen.Builder.CreateTable(tbl, charset, collation, cols, keys))
 }
@@ -934,9 +933,31 @@ func patch34(scanner *bufio.Scanner) error {
 }
 
 func patch35(scanner *bufio.Scanner) error {
-	err := execStmt(qgen.Builder.AddColumn("topics", tC{"weekEvenViews", "int", 0, false, false, "0"}, nil))
-	if err != nil {
-		return err
+	e := execStmt(qgen.Builder.AddColumn("topics", tC{"weekEvenViews", "int", 0, false, false, "0"}, nil))
+	if e != nil {
+		return e
 	}
 	return execStmt(qgen.Builder.AddColumn("topics", tC{"weekOddViews", "int", 0, false, false, "0"}, nil))
+}
+
+func patch36(scanner *bufio.Scanner) error {
+	e := createTable("forums_actions", "utf8mb4", "utf8mb4_general_ci",
+		[]tC{
+			{"faid", "int", 0, false, true, ""},
+			{"fid", "int", 0, false, false, ""},
+			bcol("runOnTopicCreation", false),
+			{"runDaysAfterTopicCreation", "int", 0, false, false, "0"},
+			{"runDaysAfterTopicLastReply", "int", 0, false, false, "0"},
+			ccol("action", 50, ""),
+			ccol("extra", 200, "''"),
+		},
+		[]tK{
+			{"faid", "primary", "", false},
+		},
+	)
+	if e != nil {
+		return e
+	}
+	//qgen.Install.SimpleInsert("settings", "name, content, type, constraints", "'activation_type','1','list','1-3'")
+	return execStmt(qgen.Builder.SimpleInsert("settings", "name, content, type", "'avatar_visibility','0','list','0-1'"))
 }

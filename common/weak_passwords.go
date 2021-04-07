@@ -27,9 +27,9 @@ type weakpassHolder struct {
 
 func InitWeakPasswords() error {
 	var weakpass weakpassHolder
-	err := unmarshalJsonFile("./config/weakpass_default.json", &weakpass)
-	if err != nil {
-		return err
+	e := unmarshalJsonFile("./config/weakpass_default.json", &weakpass)
+	if e != nil {
+		return e
 	}
 
 	wcon := make(map[string]struct{})
@@ -41,9 +41,9 @@ func InitWeakPasswords() error {
 	}
 
 	weakpass = weakpassHolder{}
-	err = unmarshalJsonFileIgnore404("./config/weakpass.json", &weakpass)
-	if err != nil {
-		return err
+	e = unmarshalJsonFileIgnore404("./config/weakpass.json", &weakpass)
+	if e != nil {
+		return e
 	}
 
 	for _, item := range weakpass.Contains {

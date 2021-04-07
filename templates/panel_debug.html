@@ -13,16 +13,16 @@
 	{{template "panel_debug_stat_head.html" "panel_debug_adapter_label"}}
 	{{/** TODO: Use this for active database connections when Go 1.11 lands **/}}
 	{{template "panel_debug_stat_head_q.html"}}
-	{{template "panel_debug_stat.html" .OpenConns}}
+	{{template "panel_debug_stat.html" .DBConns}}
 	{{template "panel_debug_stat.html" .DBAdapter}}
 	{{template "panel_debug_stat_q.html"}}
 
 	{{template "panel_debug_stat_head.html" "panel_debug_goroutine_count_label"}}
 	{{template "panel_debug_stat_head.html" "panel_debug_cpu_count_label"}}
-	{{template "panel_debug_stat_head_q.html"}}
+	{{template "panel_debug_stat_head.html" "panel_debug_http_conns_label"}}
 	{{template "panel_debug_stat.html" .Goroutines}}
 	{{template "panel_debug_stat.html" .CPUs}}
-	{{template "panel_debug_stat_q.html"}}
+	{{template "panel_debug_stat.html" .HttpConns}}
 </div>
 {{template "panel_debug_subhead.html" "panel_debug_tasks"}}
 <div id="panel_debug"class="colstack_grid">

@@ -26,11 +26,11 @@ func init() {
 	DbInits.Add(func(acc *qgen.Accumulator) error {
 		w := "widgets"
 		widgetStmts = WidgetStmts{
-			//getList: acc.Select(w).Columns("wid, position, side, type, active, location, data").Orderby("position ASC").Prepare(),
-			getDockList: acc.Select(w).Columns("wid, position, type, active, location, data").Where("side=?").Orderby("position ASC").Prepare(),
+			//getList: acc.Select(w).Columns("wid,position,side,type,active,location,data").Orderby("position ASC").Prepare(),
+			getDockList: acc.Select(w).Columns("wid,position,type,active,location,data").Where("side=?").Orderby("position ASC").Prepare(),
 			//model: acc.SimpleModel(w,"position,type,active,location,data","wid"),
 			delete: acc.Delete(w).Where("wid=?").Prepare(),
-			create: acc.Insert(w).Columns("position, side, type, active, location, data").Fields("?,?,?,?,?,?").Prepare(),
+			create: acc.Insert(w).Columns("position,side,type,active,location,data").Fields("?,?,?,?,?,?").Prepare(),
 			update: acc.Update(w).Set("position=?,side=?,type=?,active=?,location=?,data=?").Where("wid=?").Prepare(),
 		}
 		return acc.FirstError()
@@ -73,10 +73,10 @@ func (w *Widget) Delete() error {
 	return nil
 }
 
-func (w *Widget) Copy() (owidget *Widget) {
-	owidget = &Widget{}
-	*owidget = *w
-	return owidget
+func (w *Widget) Copy() (ow *Widget) {
+	ow = &Widget{}
+	*ow = *w
+	return ow
 }
 
 // TODO: Test this

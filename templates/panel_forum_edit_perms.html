@@ -1,5 +1,5 @@
 <div class="colstack_item colstack_head">
-	<div class="rowitem"><h1>{{.Name}}{{lang "panel_forum_head_suffix"}}</h1></div>
+	<div class="rowitem"><h1>{{.Name}}{{lang "panel.forum_head_suffix"}}</h1></div>
 </div>
 <form action="/panel/forums/edit/perms/adv/submit/{{.ForumID}}-{{.GroupID}}?s={{.CurrentUser.Session}}"method="post">
 	<div class="colstack_item rowlist formlist the_form panel_forum_perms">
@@ -16,7 +16,7 @@
 			</div>
 		</div>{{end}}
 		<div class="formrow">
-			<div class="formitem"><button name="panel-button"class="formbutton form_middle_button">{{lang "panel_forum_update_button"}}</button></div>
+			<div class="formitem"><button name="panel-button"class="formbutton form_middle_button">{{lang "panel.forum_update_button"}}</button></div>
 		</div>
 	</div>
 </form>

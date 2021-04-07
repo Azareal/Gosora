@@ -143,10 +143,10 @@ func storeInit() (e error) {
 	if e != nil {
 		return ws(e)
 	}
-	/*c.ForumActionStore, e = c.NewDefaultForumActionStore(acc)
+	c.ForumActionStore, e = c.NewDefaultForumActionStore(acc)
 	if e != nil {
 		return ws(e)
-	}*/
+	}
 	c.Convos, e = c.NewDefaultConversationStore(acc)
 	if e != nil {
 		return ws(e)
@@ -549,8 +549,7 @@ func main() {
 
 	// Resource Management Goroutine
 	go func() {
-		uc := c.Users.GetCache()
-		tc := c.Topics.GetCache()
+		uc, tc := c.Users.GetCache(), c.Topics.GetCache()
 		if uc == nil && tc == nil {
 			return
 		}
@@ -630,7 +629,7 @@ func main() {
 
 func startServer() {
 	// We might not need the timeouts, if we're behind a reverse-proxy like Nginx
-	newServer := func(addr string, handler http.Handler) *http.Server {
+	newServer := func(addr string, h http.Handler) *http.Server {
 		rtime := c.Config.ReadTimeout
 		if rtime == 0 {
 			rtime = 8
@@ -650,8 +649,9 @@ func startServer() {
 			itime = 0
 		}
 		return &http.Server{
-			Addr:    addr,
-			Handler: handler,
+			Addr:      addr,
+			Handler:   h,
+			ConnState: c.ConnWatch.StateChange,
 
 			ReadTimeout:  time.Duration(rtime) * time.Second,
 			WriteTimeout: time.Duration(wtime) * time.Second,

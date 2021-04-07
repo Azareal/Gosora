@@ -5,12 +5,12 @@ package main // import "github.com/Azareal/Gosora/hook_gen"
 import (
 	"fmt"
 	"log"
-	"strings"
 	"runtime/debug"
-	
-	_ "github.com/Azareal/Gosora/extend"
-	c "github.com/Azareal/Gosora/common"
+	"strings"
+
 	h "github.com/Azareal/Gosora/cmd/common_hook_gen"
+	c "github.com/Azareal/Gosora/common"
+	_ "github.com/Azareal/Gosora/extend"
 )
 
 // TODO: Make sure all the errors in this file propagate upwards properly
@@ -22,7 +22,7 @@ func main() {
 			debug.PrintStack()
 		}
 	}()
-	
+
 	hooks := make(map[string]int)
 	for _, pl := range c.Plugins {
 		if len(pl.Meta.Hooks) > 0 {
@@ -45,23 +45,24 @@ func main() {
 		}
 	}
 	log.Printf("hooks: %+v\n", hooks)
-	
+
 	imports := []string{"net/http"}
-	hookVars := h.HookVars{imports,nil}
+	hookVars := h.HookVars{imports, nil}
+	var params2sb strings.Builder
 	add := func(name, params, ret, htype string, multiHook, skip bool, defaultRet, pure string) {
-		var params2 string
 		first := true
-		for _, param := range strings.Split(params,",") {
+		for _, param := range strings.Split(params, ",") {
 			if !first {
-				params2 += ","
+				params2sb.WriteRune(',')
 			}
-			pspl := strings.Split(strings.ReplaceAll(strings.TrimSpace(param),"  "," ")," ")
-			params2 += pspl[0]
+			pspl := strings.Split(strings.ReplaceAll(strings.TrimSpace(param), "  ", " "), " ")
+			params2sb.WriteString(pspl[0])
 			first = false
 		}
-		hookVars.Hooks = append(hookVars.Hooks, h.Hook{name, params, params2, ret, htype, hooks[name] > 0, multiHook, skip, defaultRet, pure})
+		hookVars.Hooks = append(hookVars.Hooks, h.Hook{name, params, params2sb.String(), ret, htype, hooks[name] > 0, multiHook, skip, defaultRet, pure})
+		params2sb.Reset()
 	}
-	
+
 	h.AddHooks(add)
 	h.Write(hookVars)
 	log.Println("Successfully generated the hooks")

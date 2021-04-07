@@ -25,7 +25,7 @@ type DefaultActivityStream struct {
 	delete              *sql.Stmt
 	deleteByParams      *sql.Stmt
 	deleteByParamsExtra *sql.Stmt
-	aidsByParams   *sql.Stmt
+	aidsByParams        *sql.Stmt
 	aidsByParamsExtra   *sql.Stmt
 	count               *sql.Stmt
 }
@@ -38,7 +38,7 @@ func NewDefaultActivityStream(acc *qgen.Accumulator) (*DefaultActivityStream, er
 		delete:              acc.Delete(as).Where("asid=?").Prepare(),
 		deleteByParams:      acc.Delete(as).Where("event=? AND elementID=? AND elementType=?").Prepare(),
 		deleteByParamsExtra: acc.Delete(as).Where("event=? AND elementID=? AND elementType=? AND extra=?").Prepare(),
-		aidsByParams:   acc.Select(as).Columns("asid").Where("event=? AND elementID=? AND elementType=?").Prepare(),
+		aidsByParams:        acc.Select(as).Columns("asid").Where("event=? AND elementID=? AND elementType=?").Prepare(),
 		aidsByParamsExtra:   acc.Select(as).Columns("asid").Where("event=? AND elementID=? AND elementType=? AND extra=?").Prepare(),
 		count:               acc.Count(as).Prepare(),
 	}, acc.FirstError()
@@ -90,16 +90,16 @@ func (s *DefaultActivityStream) AidsByParams(event string, elementID int, elemen
 	return aids, rows.Err()
 }
 
-func (s *DefaultActivityStream) AidsByParamsExtra(event string, elementID int, elementType, extra string) (aids []int, err error) {
-	rows, err := s.aidsByParamsExtra.Query(event, elementID, elementType, extra)
-	if err != nil {
-		return nil, err
+func (s *DefaultActivityStream) AidsByParamsExtra(event string, elementID int, elementType, extra string) (aids []int, e error) {
+	rows, e := s.aidsByParamsExtra.Query(event, elementID, elementType, extra)
+	if e != nil {
+		return nil, e
 	}
 	defer rows.Close()
 	for rows.Next() {
 		var aid int
-		if err := rows.Scan(&aid); err != nil {
-			return nil, err
+		if e := rows.Scan(&aid); e != nil {
+			return nil, e
 		}
 		aids = append(aids, aid)
 	}
@@ -109,9 +109,9 @@ func (s *DefaultActivityStream) AidsByParamsExtra(event string, elementID int, e
 // TODO: Write a test for this
 // Count returns the total number of activity stream items
 func (s *DefaultActivityStream) Count() (count int) {
-	err := s.count.QueryRow().Scan(&count)
-	if err != nil {
-		LogError(err)
+	e := s.count.QueryRow().Scan(&count)
+	if e != nil {
+		LogError(e)
 	}
 	return count
 }

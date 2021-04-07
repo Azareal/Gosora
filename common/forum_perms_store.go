@@ -52,9 +52,9 @@ func (s *MemoryForumPermsStore) Init() error {
 // TODO: Optimise this?
 func (s *MemoryForumPermsStore) ReloadAll() error {
 	DebugLog("Reloading the forum perms")
-	fids, err := Forums.GetAllIDs()
-	if err != nil {
-		return err
+	fids, e := Forums.GetAllIDs()
+	if e != nil {
+		return e
 	}
 	for _, fid := range fids {
 		if e := s.reload(fid); e != nil {
@@ -68,13 +68,13 @@ func (s *MemoryForumPermsStore) ReloadAll() error {
 	return nil
 }
 
-func (s *MemoryForumPermsStore) parseForumPerm(perms []byte) (pperms *ForumPerms, err error) {
+func (s *MemoryForumPermsStore) parseForumPerm(perms []byte) (pperms *ForumPerms, e error) {
 	DebugDetail("perms: ", string(perms))
 	pperms = BlankForumPerms()
-	err = json.Unmarshal(perms, &pperms)
+	e = json.Unmarshal(perms, &pperms)
 	pperms.ExtData = make(map[string]bool)
 	pperms.Overrides = true
-	return pperms, err
+	return pperms, e
 }
 
 func (s *MemoryForumPermsStore) Reload(fid int) error {
@@ -246,10 +246,10 @@ func (s *MemoryForumPermsStore) Get(fid, gid int) (fp *ForumPerms, err error) {
 
 // TODO: Check if the forum exists?
 // TODO: Fix the races
-func (s *MemoryForumPermsStore) GetCopy(fid, gid int) (fp ForumPerms, err error) {
-	fPermsPtr, err := s.Get(fid, gid)
-	if err != nil {
-		return fp, err
+func (s *MemoryForumPermsStore) GetCopy(fid, gid int) (fp ForumPerms, e error) {
+	fPermsPtr, e := s.Get(fid, gid)
+	if e != nil {
+		return fp, e
 	}
 	return *fPermsPtr, nil
 }

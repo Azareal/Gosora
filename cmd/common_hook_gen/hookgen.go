@@ -41,6 +41,7 @@ func AddHooks(add func(name, params, ret, htype string, multiHook, skip bool, de
 	}
 	vhooknoret("router_end", "w http.ResponseWriter,r *http.Request,u *User,prefix string,extraData string")
 	vhooknoret("topic_reply_row_assign", "r *ReplyUser")
+	vhooknoret("counters_perf_tick_row", "low int64,high int64,avg int64")
 	//forums_frow_assign
 	//Hook(name string, data interface{}) interface{}
 	/*hook := func(name, params, ret, pure string) {

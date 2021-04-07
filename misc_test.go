@@ -1128,8 +1128,8 @@ func TestReplyStore(t *testing.T) {
 
 func testReplyStore(t *testing.T, newID int, ip string) {
 	ex, exf := exp(t), expf(t)
-	replyTest2 := func(r *c.Reply, err error, rid, parentID, createdBy int, content, ip string) {
-		expectNilErr(t, err)
+	replyTest2 := func(r *c.Reply, e error, rid, parentID, createdBy int, content, ip string) {
+		expectNilErr(t, e)
 		exf(r.ID == rid, "RID #%d has the wrong ID. It should be %d not %d", rid, rid, r.ID)
 		exf(r.ParentID == parentID, "The parent topic of RID #%d should be %d not %d", rid, parentID, r.ParentID)
 		exf(r.CreatedBy == createdBy, "The creator of RID #%d should be %d not %d", rid, createdBy, r.CreatedBy)
@@ -1138,12 +1138,12 @@ func testReplyStore(t *testing.T, newID int, ip string) {
 	}
 
 	replyTest := func(rid, parentID, createdBy int, content, ip string) {
-		r, err := c.Rstore.Get(rid)
-		replyTest2(r, err, rid, parentID, createdBy, content, ip)
-		r, err = c.Rstore.GetCache().Get(rid)
-		replyTest2(r, err, rid, parentID, createdBy, content, ip)
+		r, e := c.Rstore.Get(rid)
+		replyTest2(r, e, rid, parentID, createdBy, content, ip)
+		r, e = c.Rstore.GetCache().Get(rid)
+		replyTest2(r, e, rid, parentID, createdBy, content, ip)
 	}
-	replyTest(1, 1, 1, "A reply!", "::1")
+	replyTest(1, 1, 1, "A reply!", "")
 
 	// ! This is hard to do deterministically as the system may pre-load certain items but let's give it a try:
 	//_, err = c.Rstore.GetCache().Get(1)
@@ -2277,6 +2277,108 @@ func TestWidgets(t *testing.T) {
 	recordMustNotExist(t, err, "There shouldn't be any widgets anymore")
 	widgets = c.Docks.RightSidebar.Items
 	exf(len(widgets) == 0, "RightSidebar should have 0 items, not %d", len(widgets))
+}
+
+/*type ForumActionStoreInt interface {
+	Get(faid int) (*ForumAction, error)
+	GetInForum(fid int) ([]*ForumAction, error)
+	GetAll() ([]*ForumAction, error)
+	GetNewTopicActions(fid int) ([]*ForumAction, error)
+
+	Add(fa *ForumAction) (int, error)
+	Delete(faid int) error
+	Exists(faid int) bool
+	Count() int
+	CountInForum(fid int) int
+
+	DailyTick() error
+}*/
+
+func TestForumActions(t *testing.T) {
+	ex, exf, s := exp(t), expf(t), c.ForumActionStore
+
+	count := s.CountInForum(-1)
+	exf(count == 0, "count should be %d not %d", 0, count)
+	count = s.CountInForum(0)
+	exf(count == 0, "count in 0 should be %d not %d", 0, count)
+	ex(!s.Exists(-1), "faid -1 should not exist")
+	ex(!s.Exists(0), "faid 0 should not exist")
+	_, e := s.Get(-1)
+	recordMustNotExist(t, e, "faid -1 should not exist")
+	_, e = s.Get(0)
+	recordMustNotExist(t, e, "faid 0 should not exist")
+
+	noActions := func(fid, faid int) {
+		/*sfid, */ sfaid := /*strconv.Itoa(fid), */ strconv.Itoa(faid)
+		count := s.Count()
+		exf(count == 0, "count should be %d not %d", 0, count)
+		count = s.CountInForum(fid)
+		exf(count == 0, "count in %d should be %d not %d", fid, 0, count)
+		exf(!s.Exists(faid), "faid %d should not exist", faid)
+		_, e = s.Get(faid)
+		recordMustNotExist(t, e, "faid "+sfaid+" should not exist")
+		fas, e := s.GetInForum(fid)
+		//recordMustNotExist(t, e, "fid "+sfid+" should not have any actions")
+		expectNilErr(t, e) // TODO: Why does this not return ErrNoRows?
+		exf(len(fas) == 0, "len(fas) should be %d not %d", 0, len(fas))
+		fas, e = s.GetAll()
+		//recordMustNotExist(t, e, "there should not be any actions")
+		expectNilErr(t, e) // TODO: Why does this not return ErrNoRows?
+		exf(len(fas) == 0, "len(fas) should be %d not %d", 0, len(fas))
+		fas, e = s.GetNewTopicActions(fid)
+		//recordMustNotExist(t, e, "fid "+sfid+" should not have any new topic actions")
+		expectNilErr(t, e) // TODO: Why does this not return ErrNoRows?
+		exf(len(fas) == 0, "len(fas) should be %d not %d", 0, len(fas))
+	}
+	noActions(1, 1)
+
+	fid, e := c.Forums.Create("Forum Action Test", "Forum Action Test", true, "")
+	expectNilErr(t, e)
+	noActions(fid, 1)
+
+	faid, e := c.ForumActionStore.Add(&c.ForumAction{
+		Forum:                      fid,
+		RunOnTopicCreation:         false,
+		RunDaysAfterTopicCreation:  1,
+		RunDaysAfterTopicLastReply: 0,
+		Action:                     c.ForumActionLock,
+		Extra:                      "",
+	})
+	expectNilErr(t, e)
+	exf(faid == 1, "faid should be %d not %d", 1, faid)
+	count = s.Count()
+	exf(count == 1, "count should be %d not %d", 1, count)
+	count = s.CountInForum(fid)
+	exf(count == 1, "count in %d should be %d not %d", fid, 1, count)
+	exf(s.Exists(faid), "faid %d should exist", faid)
+
+	fa, e := s.Get(faid)
+	expectNilErr(t, e)
+	exf(fa.ID == faid, "fa.ID should be %d not %d", faid, fa.ID)
+	exf(fa.Forum == fid, "fa.Forum should be %d not %d", fid, fa.Forum)
+	exf(fa.RunOnTopicCreation == false, "fa.RunOnTopicCreation should be false")
+	exf(fa.RunDaysAfterTopicCreation == 1, "fa.RunDaysAfterTopicCreation should be %d not %d", 1, fa.RunDaysAfterTopicCreation)
+	exf(fa.RunDaysAfterTopicLastReply == 0, "fa.RunDaysAfterTopicLastReply should be %d not %d", 0, fa.RunDaysAfterTopicLastReply)
+	exf(fa.Action == c.ForumActionLock, "fa.Action should be %d not %d", c.ForumActionLock, fa.Action)
+	exf(fa.Extra == "", "fa.Extra should be '%s' not '%s'", "", fa.Extra)
+
+	tid, e := c.Topics.Create(fid, "Forum Action Topic", "Forum Action Topic", 1, "")
+	expectNilErr(t, e)
+	topic, e := c.Topics.Get(tid)
+	expectNilErr(t, e)
+	dayAgo := time.Now().AddDate(0, 0, -5)
+	expectNilErr(t, topic.TestSetCreatedAt(dayAgo))
+	expectNilErr(t, fa.Run())
+	topic, e = c.Topics.Get(tid)
+	expectNilErr(t, e)
+	ex(topic.IsClosed, "topic.IsClosed should be true")
+	/*_, e = c.Rstore.Create(topic, "Forum Action Reply", "", 1)
+	expectNilErr(t, e)*/
+
+	_ = tid
+
+	expectNilErr(t, s.Delete(faid))
+	noActions(fid, faid)
 }
 
 func TestTopicList(t *testing.T) {

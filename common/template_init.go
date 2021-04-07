@@ -385,7 +385,7 @@ func compileTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName string
 	debugCache := DebugPageCache{1, 1, 1, 2, 2, 2, true}
 	debugDatabase := DebugPageDatabase{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
 	debugDisk := DebugPageDisk{1, 1, 1, 1, 1, 1}
-	dpage := PanelDebugPage{basePage, goVersion, dbVersion, "0s", 1, qgen.Builder.GetAdapter().GetName(), 1, 1, debugTasks, memStats, debugCache, debugDatabase, debugDisk}
+	dpage := PanelDebugPage{basePage, goVersion, dbVersion, "0s", 1, qgen.Builder.GetAdapter().GetName(), 1, 1, 1, debugTasks, memStats, debugCache, debugDatabase, debugDisk}
 	t.AddStd("panel_debug", "c.PanelDebugPage", dpage)
 	//t.AddStd("panel_analytics", "c.PanelAnalytics", Panel{basePage, "panel_dashboard_right","panel_dashboard", inter})
 
@@ -395,9 +395,9 @@ func compileTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName string
 			if content == "" {
 				return //log.Fatal("No content body for " + name)
 			}
-			err := writeFile("./tmpl_"+name+".go", content)
-			if err != nil {
-				log.Fatal(err)
+			e := writeFile("./tmpl_"+name+".go", content)
+			if e != nil {
+				log.Fatal(e)
 			}
 		}
 		wg.Add(1)
@@ -595,9 +595,9 @@ func compileJSTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName stri
 			if tname != "" {
 				tname = "_" + tname
 			}
-			err := writeFile(dirPrefix+"tmpl_"+name+tname+".jgo", content)
-			if err != nil {
-				log.Fatal(err)
+			e := writeFile(dirPrefix+"tmpl_"+name+tname+".jgo", content)
+			if e != nil {
+				log.Fatal(e)
 			}
 			wg.Done()
 		}()
@@ -737,9 +737,9 @@ func writeTemplateList(c *tmpl.CTemplateSet, wg *sync.WaitGroup, prefix string) 
 	log.Print("Writing template list")
 	wg.Add(1)
 	go func() {
-		err := writeFile(prefix+"tmpl_list.go", getTemplateList(c, wg, prefix))
-		if err != nil {
-			log.Fatal(err)
+		e := writeFile(prefix+"tmpl_list.go", getTemplateList(c, wg, prefix))
+		if e != nil {
+			log.Fatal(e)
 		}
 		wg.Done()
 	}()

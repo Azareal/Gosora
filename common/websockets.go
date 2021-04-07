@@ -3,7 +3,7 @@
 /*
 *
 *	Gosora WebSocket Subsystem
-*	Copyright Azareal 2017 - 2020
+*	Copyright Azareal 2017 - 2021
 *
  */
 package common
@@ -149,12 +149,12 @@ func wsPageResponses(wsUser *WSUser, conn *websocket.Conn, page string) {
 		if wsUser.User.ID == 0 {
 			return
 		}
-		_, tid, err := ParseSEOURL(page)
-		if err != nil {
+		_, tid, e := ParseSEOURL(page)
+		if e != nil {
 			return
 		}
-		topic, err := Topics.Get(tid)
-		if err != nil {
+		topic, e := Topics.Get(tid)
+		if e != nil {
 			return
 		}
 		if !Forums.Exists(topic.ParentID) {
@@ -169,10 +169,10 @@ func wsPageResponses(wsUser *WSUser, conn *websocket.Conn, page string) {
 			return
 		}*/
 
-		fperms, err := FPStore.Get(topic.ParentID, usercpy.Group)
-		if err == ErrNoRows {
+		fperms, e := FPStore.Get(topic.ParentID, usercpy.Group)
+		if e == ErrNoRows {
 			fperms = BlankForumPerms()
-		} else if err != nil {
+		} else if e != nil {
 			return
 		}
 		cascadeForumPerms(fperms, usercpy)
@@ -202,9 +202,9 @@ func wsPageResponses(wsUser *WSUser, conn *websocket.Conn, page string) {
 	default:
 		return
 	}
-	err := wsUser.SetPageForSocket(conn, page)
-	if err != nil {
-		LogError(err)
+	e := wsUser.SetPageForSocket(conn, page)
+	if e != nil {
+		LogError(e)
 	}
 }
 
@@ -221,7 +221,7 @@ func wsPageResume(wsUser *WSUser, conn *websocket.Conn, page string, resume int6
 		/*if resume >= hub.lastTick.Unix() {
 			conn.Write([]byte("resume tooslow"))
 		} else {
-		conn.Write([]byte("resume success"))
+			conn.Write([]byte("resume success"))
 		}*/
 	default:
 		return
@@ -248,8 +248,8 @@ func wsLeavePage(wsUser *WSUser, conn *websocket.Conn, page string) {
 			return
 		}
 		wsUser.FinalizePage(page, func() {
-			_, tid, err := ParseSEOURL(page)
-			if err != nil {
+			_, tid, e := ParseSEOURL(page)
+			if e != nil {
 				return
 			}
 			topicMutex.Lock()
@@ -258,8 +258,7 @@ func wsLeavePage(wsUser *WSUser, conn *websocket.Conn, page string) {
 			if !ok {
 				return
 			}
-			_, ok = topic[wsUser]
-			if !ok {
+			if _, ok = topic[wsUser]; !ok {
 				return
 			}
 			delete(topic, wsUser)
@@ -272,9 +271,9 @@ func wsLeavePage(wsUser *WSUser, conn *websocket.Conn, page string) {
 		delete(adminStatsWatchers, conn)
 		adminStatsMutex.Unlock()
 	}
-	err := wsUser.SetPageForSocket(conn, "")
-	if err != nil {
-		LogError(err)
+	e := wsUser.SetPageForSocket(conn, "")
+	if e != nil {
+		LogError(e)
 	}
 }
 
@@ -290,9 +289,7 @@ var adminStatsMutex sync.RWMutex
 func adminStatsTicker() {
 	time.Sleep(time.Second)
 
-	lastUonline := -1
-	lastGonline := -1
-	lastTotonline := -1
+	lastUonline, lastGonline, lastTotonline := -1, -1, -1
 	lastCPUPerc := -1
 	var lastAvailableRAM int64 = -1
 	var noStatUpdates, noRAMUpdates bool

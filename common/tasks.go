@@ -11,7 +11,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/Azareal/Gosora/query_gen"
+	qgen "github.com/Azareal/Gosora/query_gen"
 )
 
 type TaskStmts struct {
@@ -68,18 +68,22 @@ func AddShutdownTask(task func() error) {
 func ScheduledHalfSecondTaskCount() int {
 	return len(ScheduledHalfSecondTasks)
 }
+
 // ScheduledSecondTaskCount is not concurrency safe
 func ScheduledSecondTaskCount() int {
 	return len(ScheduledSecondTasks)
 }
+
 // ScheduledFifteenMinuteTaskCount is not concurrency safe
 func ScheduledFifteenMinuteTaskCount() int {
 	return len(ScheduledFifteenMinuteTasks)
 }
+
 // ScheduledHourTaskCount is not concurrency safe
 func ScheduledHourTaskCount() int {
 	return len(ScheduledHourTasks)
 }
+
 // ShutdownTaskCount is not concurrency safe
 func ShutdownTaskCount() int {
 	return len(ShutdownTasks)
@@ -87,25 +91,23 @@ func ShutdownTaskCount() int {
 
 // TODO: Use AddScheduledSecondTask
 func HandleExpiredScheduledGroups() error {
-	rows, err := taskStmts.getExpiredScheduledGroups.Query()
-	if err != nil {
-		return err
+	rows, e := taskStmts.getExpiredScheduledGroups.Query()
+	if e != nil {
+		return e
 	}
 	defer rows.Close()
 
 	var uid int
 	for rows.Next() {
-		err := rows.Scan(&uid)
-		if err != nil {
-			return err
+		if e := rows.Scan(&uid); e != nil {
+			return e
 		}
-
 		// Sneaky way of initialising a *User, please use the methods on the UserStore instead
 		user := BlankUser()
 		user.ID = uid
-		err = user.RevertGroupUpdate()
-		if err != nil {
-			return err
+		e = user.RevertGroupUpdate()
+		if e != nil {
+			return e
 		}
 	}
 	return rows.Err()
@@ -122,28 +124,28 @@ func HandleServerSync() error {
 	}
 
 	var lastUpdate time.Time
-	err := taskStmts.getSync.QueryRow().Scan(&lastUpdate)
-	if err != nil {
-		return err
+	e := taskStmts.getSync.QueryRow().Scan(&lastUpdate)
+	if e != nil {
+		return e
 	}
 
 	if lastUpdate.After(lastSync) {
-		err = Forums.LoadForums()
-		if err != nil {
+		e = Forums.LoadForums()
+		if e != nil {
 			log.Print("Unable to reload the forums")
-			return err
+			return e
 		}
 		// TODO: Resync the groups
 		// TODO: Resync the permissions
-		err = LoadSettings()
-		if err != nil {
+		e = LoadSettings()
+		if e != nil {
 			log.Print("Unable to reload the settings")
-			return err
+			return e
 		}
-		err = WordFilters.ReloadAll()
-		if err != nil {
+		e = WordFilters.ReloadAll()
+		if e != nil {
 			log.Print("Unable to reload the word filters")
-			return err
+			return e
 		}
 	}
 	return nil

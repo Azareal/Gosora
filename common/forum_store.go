@@ -81,18 +81,21 @@ type MemoryForumStore struct {
 func NewMemoryForumStore() (*MemoryForumStore, error) {
 	acc := qgen.NewAcc()
 	f := "forums"
+	set := func(s string) *sql.Stmt {
+		return acc.Update(f).Set(s).Where("fid=?").Prepare()
+	}
 	// TODO: Do a proper delete
 	return &MemoryForumStore{
 		get:          acc.Select(f).Columns("name, desc, tmpl, active, order, preset, parentID, parentType, topicCount, lastTopicID, lastReplyerID").Where("fid=?").Prepare(),
 		getAll:       acc.Select(f).Columns("fid, name, desc, tmpl, active, order, preset, parentID, parentType, topicCount, lastTopicID, lastReplyerID").Orderby("order ASC, fid ASC").Prepare(),
-		delete:       acc.Update(f).Set("name='',active=0").Where("fid=?").Prepare(),
-		create:       acc.Insert(f).Columns("name, desc, tmpl, active, preset").Fields("?,?,'',?,?").Prepare(),
+		delete:       set("name='',active=0"),
+		create:       acc.Insert(f).Columns("name,desc,tmpl,active,preset").Fields("?,?,'',?,?").Prepare(),
 		count:        acc.Count(f).Where("name != ''").Prepare(),
-		updateCache:  acc.Update(f).Set("lastTopicID=?, lastReplyerID=?").Where("fid=?").Prepare(),
-		addTopics:    acc.Update(f).Set("topicCount=topicCount+?").Where("fid=?").Prepare(),
-		removeTopics: acc.Update(f).Set("topicCount=topicCount-?").Where("fid=?").Prepare(),
-		lastTopic:    acc.Select("topics").Columns("tid").Where("parentID=?").Orderby("lastReplyAt DESC, createdAt DESC").Limit("1").Prepare(),
-		updateOrder:  acc.Update(f).Set("order=?").Where("fid=?").Prepare(),
+		updateCache:  set("lastTopicID=?,lastReplyerID=?"),
+		addTopics:    set("topicCount=topicCount+?"),
+		removeTopics: set("topicCount=topicCount-?"),
+		lastTopic:    acc.Select("topics").Columns("tid").Where("parentID=?").Orderby("lastReplyAt DESC,createdAt DESC").Limit("1").Prepare(),
+		updateOrder:  set("order=?"),
 	}, acc.FirstError()
 }
 

@@ -44,11 +44,13 @@ var groupStmts GroupStmts
 
 func init() {
 	DbInits.Add(func(acc *qgen.Accumulator) error {
-		ug := "users_groups"
+		set := func(s string) *sql.Stmt {
+			return acc.Update("users_groups").Set(s).Where("gid=?").Prepare()
+		}
 		groupStmts = GroupStmts{
-			updateGroup:      acc.Update(ug).Set("name=?,tag=?").Where("gid=?").Prepare(),
-			updateGroupRank:  acc.Update(ug).Set("is_admin=?,is_mod=?,is_banned=?").Where("gid=?").Prepare(),
-			updateGroupPerms: acc.Update(ug).Set("permissions=?").Where("gid=?").Prepare(),
+			updateGroup:      set("name=?,tag=?"),
+			updateGroupRank:  set("is_admin=?,is_mod=?,is_banned=?"),
+			updateGroupPerms: set("permissions=?"),
 		}
 		return acc.FirstError()
 	})
