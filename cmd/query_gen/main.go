@@ -8,6 +8,7 @@ import (
 	"os"
 	"runtime/debug"
 	"strconv"
+	"strings"
 
 	c "github.com/Azareal/Gosora/common"
 	qgen "github.com/Azareal/Gosora/query_gen"
@@ -30,17 +31,17 @@ func main() {
 		qgen.Install.SetAdapterInstance(a)
 		qgen.Install.AddPlugins(NewPrimaryKeySpitter()) // TODO: Do we really need to fill the spitter for every adapter?
 
-		err := writeStatements(a)
-		if err != nil {
-			log.Print(err)
+		e := writeStatements(a)
+		if e != nil {
+			log.Print(e)
 		}
-		err = qgen.Install.Write()
-		if err != nil {
-			log.Print(err)
+		e = qgen.Install.Write()
+		if e != nil {
+			log.Print(e)
 		}
-		err = a.Write()
-		if err != nil {
-			log.Print(err)
+		e = a.Write()
+		if e != nil {
+			log.Print(e)
 		}
 	}
 }
@@ -86,15 +87,42 @@ func seedTables(a qgen.Adapter) error {
 	//qgen.Install.AddKey("topics", "title,content", tK{"title,content", "fulltext", "", false})
 	//qgen.Install.AddKey("replies", "content", tK{"content", "fulltext", "", false})
 
-	qgen.Install.SimpleInsert("sync", "last_update", "UTC_TIMESTAMP()")
-	qgen.Install.SimpleInsert("settings", "name, content, type, constraints", "'activation_type','1','list','1-3'")
-	qgen.Install.SimpleInsert("settings", "name, content, type", "'bigpost_min_words','250','int'")
-	qgen.Install.SimpleInsert("settings", "name, content, type", "'megapost_min_words','1000','int'")
-	qgen.Install.SimpleInsert("settings", "name, content, type", "'meta_desc','','html-attribute'")
-	qgen.Install.SimpleInsert("settings", "name, content, type", "'rapid_loading','1','bool'")
-	qgen.Install.SimpleInsert("settings", "name, content, type", "'google_site_verify','','html-attribute'")
-	qgen.Install.SimpleInsert("themes", "uname, default", "'cosora',1")
-	qgen.Install.SimpleInsert("emails", "email, uid, validated", "'admin@localhost',1,1") // ? - Use a different default email or let the admin input it during installation?
+	insert := func(tbl, cols, vals string) {
+		qgen.Install.SimpleInsert(tbl, cols, vals)
+	}
+	insert("sync", "last_update", "UTC_TIMESTAMP()")
+	addSetting := func(name, content, stype string, constraints ...string) {
+		if strings.Contains(name, "'") {
+			panic("name contains '")
+		}
+		if strings.Contains(stype, "'") {
+			panic("stype contains '")
+		}
+		// TODO: Add more field validators
+		cols := "name,content,type"
+		if len(constraints) > 0 {
+			cols += ",constraints"
+		}
+		q := func(s string) string {
+			return "'" + s + "'"
+		}
+		c := func() string {
+			if len(constraints) == 0 {
+				return ""
+			}
+			return "," + q(constraints[0])
+		}
+		insert("settings", cols, q(name)+","+q(content)+","+q(stype)+c())
+	}
+	addSetting("activation_type", "1", "list", "1-3")
+	addSetting("bigpost_min_words", "250", "int")
+	addSetting("megapost_min_words", "1000", "int")
+	addSetting("meta_desc", "", "html-attribute")
+	addSetting("rapid_loading", "1", "bool")
+	addSetting("google_site_verify", "", "html-attribute")
+	addSetting("avatar_visibility", "0", "list", "0-1")
+	insert("themes", "uname, default", "'cosora',1")
+	insert("emails", "email, uid, validated", "'admin@localhost',1,1") // ? - Use a different default email or let the admin input it during installation?
 
 	/*
 		The Permissions:
@@ -163,7 +191,7 @@ func seedTables(a qgen.Adapter) error {
 		if banned {
 			bi = "1"
 		}
-		qgen.Install.SimpleInsert("users_groups", "name, permissions, plugin_perms, is_mod, is_admin, is_banned, tag", `'`+name+`','`+p(&perms)+`','{}',`+mi+`,`+ai+`,`+bi+`,"`+tag+`"`)
+		insert("users_groups", "name, permissions, plugin_perms, is_mod, is_admin, is_banned, tag", `'`+name+`','`+p(&perms)+`','{}',`+mi+`,`+ai+`,`+bi+`,"`+tag+`"`)
 	}
 
 	perms := c.AllPerms
@@ -185,44 +213,43 @@ func seedTables(a qgen.Adapter) error {
 	//
 	// TODO: Stop processFields() from stripping the spaces in the descriptions in the next commit
 
-	qgen.Install.SimpleInsert("forums", "name, active, desc, tmpl", "'Reports',0,'All the reports go here',''")
-
-	qgen.Install.SimpleInsert("forums", "name, lastTopicID, lastReplyerID, desc, tmpl", "'General',1,1,'A place for general discussions which don't fit elsewhere',''")
+	insert("forums", "name, active, desc, tmpl", "'Reports',0,'All the reports go here',''")
+	insert("forums", "name, lastTopicID, lastReplyerID, desc, tmpl", "'General',1,1,'A place for general discussions which don't fit elsewhere',''")
 
 	//
 
 	/*var addForumPerm = func(gid, fid int, permStr string) {
-		qgen.Install.SimpleInsert("forums_permissions", "gid, fid, permissions", strconv.Itoa(gid)+`,`+strconv.Itoa(fid)+`,'`+permStr+`'`)
+		insert("forums_permissions", "gid, fid, permissions", strconv.Itoa(gid)+`,`+strconv.Itoa(fid)+`,'`+permStr+`'`)
 	}*/
 
-	qgen.Install.SimpleInsert("forums_permissions", "gid, fid, permissions", `1,1,'{"ViewTopic":true,"CreateReply":true,"CreateTopic":true,"PinTopic":true,"CloseTopic":true}'`)
-	qgen.Install.SimpleInsert("forums_permissions", "gid, fid, permissions", `2,1,'{"ViewTopic":true,"CreateReply":true,"CloseTopic":true}'`)
-	qgen.Install.SimpleInsert("forums_permissions", "gid, fid, permissions", "3,1,'{}'")
-	qgen.Install.SimpleInsert("forums_permissions", "gid, fid, permissions", "4,1,'{}'")
-	qgen.Install.SimpleInsert("forums_permissions", "gid, fid, permissions", "5,1,'{}'")
-	qgen.Install.SimpleInsert("forums_permissions", "gid, fid, permissions", "6,1,'{}'")
+	insert("forums_permissions", "gid, fid, permissions", `1,1,'{"ViewTopic":true,"CreateReply":true,"CreateTopic":true,"PinTopic":true,"CloseTopic":true}'`)
+	insert("forums_permissions", "gid, fid, permissions", `2,1,'{"ViewTopic":true,"CreateReply":true,"CloseTopic":true}'`)
+	insert("forums_permissions", "gid, fid, permissions", "3,1,'{}'")
+	insert("forums_permissions", "gid, fid, permissions", "4,1,'{}'")
+	insert("forums_permissions", "gid, fid, permissions", "5,1,'{}'")
+	insert("forums_permissions", "gid, fid, permissions", "6,1,'{}'")
 
 	//
 
-	qgen.Install.SimpleInsert("forums_permissions", "gid, fid, permissions", `1,2,'{"ViewTopic":true,"CreateReply":true,"CreateTopic":true,"LikeItem":true,"EditTopic":true,"DeleteTopic":true,"EditReply":true,"DeleteReply":true,"PinTopic":true,"CloseTopic":true,"MoveTopic":true}'`)
+	insert("forums_permissions", "gid, fid, permissions", `1,2,'{"ViewTopic":true,"CreateReply":true,"CreateTopic":true,"LikeItem":true,"EditTopic":true,"DeleteTopic":true,"EditReply":true,"DeleteReply":true,"PinTopic":true,"CloseTopic":true,"MoveTopic":true}'`)
 
-	qgen.Install.SimpleInsert("forums_permissions", "gid, fid, permissions", `2,2,'{"ViewTopic":true,"CreateReply":true,"CreateTopic":true,"LikeItem":true,"EditTopic":true,"DeleteTopic":true,"EditReply":true,"DeleteReply":true,"PinTopic":true,"CloseTopic":true,"MoveTopic":true}'`)
+	insert("forums_permissions", "gid, fid, permissions", `2,2,'{"ViewTopic":true,"CreateReply":true,"CreateTopic":true,"LikeItem":true,"EditTopic":true,"DeleteTopic":true,"EditReply":true,"DeleteReply":true,"PinTopic":true,"CloseTopic":true,"MoveTopic":true}'`)
 
-	qgen.Install.SimpleInsert("forums_permissions", "gid, fid, permissions", `3,2,'{"ViewTopic":true,"CreateReply":true,"CreateTopic":true,"LikeItem":true}'`)
+	insert("forums_permissions", "gid, fid, permissions", `3,2,'{"ViewTopic":true,"CreateReply":true,"CreateTopic":true,"LikeItem":true}'`)
 
-	qgen.Install.SimpleInsert("forums_permissions", "gid, fid, permissions", `4,2,'{"ViewTopic":true}'`)
+	insert("forums_permissions", "gid, fid, permissions", `4,2,'{"ViewTopic":true}'`)
 
-	qgen.Install.SimpleInsert("forums_permissions", "gid, fid, permissions", `5,2,'{"ViewTopic":true}'`)
+	insert("forums_permissions", "gid, fid, permissions", `5,2,'{"ViewTopic":true}'`)
 
-	qgen.Install.SimpleInsert("forums_permissions", "gid, fid, permissions", `6,2,'{"ViewTopic":true}'`)
+	insert("forums_permissions", "gid, fid, permissions", `6,2,'{"ViewTopic":true}'`)
 
 	//
 
-	qgen.Install.SimpleInsert("topics", "title, content, parsed_content, createdAt, lastReplyAt, lastReplyBy, createdBy, parentID, ip", "'Test Topic','A topic automatically generated by the software.','A topic automatically generated by the software.',UTC_TIMESTAMP(),UTC_TIMESTAMP(),1,1,2,'::1'")
+	insert("topics", "title, content, parsed_content, createdAt, lastReplyAt, lastReplyBy, createdBy, parentID, ip", "'Test Topic','A topic automatically generated by the software.','A topic automatically generated by the software.',UTC_TIMESTAMP(),UTC_TIMESTAMP(),1,1,2,''")
 
-	qgen.Install.SimpleInsert("replies", "tid, content, parsed_content, createdAt, createdBy, lastUpdated, lastEdit, lastEditBy, ip", "1,'A reply!','A reply!',UTC_TIMESTAMP(),1,UTC_TIMESTAMP(),0,0,'::1'")
+	insert("replies", "tid, content, parsed_content, createdAt, createdBy, lastUpdated, lastEdit, lastEditBy, ip", "1,'A reply!','A reply!',UTC_TIMESTAMP(),1,UTC_TIMESTAMP(),0,0,''")
 
-	qgen.Install.SimpleInsert("menus", "", "")
+	insert("menus", "", "")
 
 	// Go maps have a random iteration order, so we have to do this, otherwise the schema files will become unstable and harder to audit
 	order := 0
@@ -235,7 +262,7 @@ func seedTables(a qgen.Adapter) error {
 			data["position"] = "left"
 		}
 		cols, values := qgen.InterfaceMapToInsertStrings(data, mOrder)
-		qgen.Install.SimpleInsert("menu_items", cols+", order", values+","+strconv.Itoa(order))
+		insert("menu_items", cols+", order", values+","+strconv.Itoa(order))
 		order++
 	}
 
