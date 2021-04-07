@@ -9,6 +9,7 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	c "github.com/Azareal/Gosora/common"
 )
@@ -56,33 +57,34 @@ type RouterLog struct {
 }
 
 func (r *GenRouter) DailyTick() error {
+	currentTime := time.Now()
 	rotateLog := func(l *RouterLog, name string) error {
 		l.Lock()
 		defer l.Unlock()
 
 		f := l.FileVal.Load().(*os.File)
-		stat, err := f.Stat()
-		if err != nil {
+		stat, e := f.Stat()
+		if e != nil {
 			return nil
 		}
-		if stat.Size() < int64(c.Megabyte) {
+		if (stat.Size() < int64(c.Megabyte)) && (currentTime.Sub(c.StartTime).Hours() >= (24 * 7)) {
 			return nil
 		}
-		if err = f.Close(); err != nil {
-			return err
+		if e = f.Close(); e != nil {
+			return e
 		}
 
-		stimestr := strconv.FormatInt(c.StartTime.Unix(), 10)
-		f, err = os.OpenFile(c.Config.LogDir+name+stimestr+".log", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0755)
-		if err != nil {
-			return err
+		stimestr := strconv.FormatInt(currentTime.Unix(), 10)
+		f, e = os.OpenFile(c.Config.LogDir+name+stimestr+".log", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0755)
+		if e != nil {
+			return e
 		}
 		lval := log.New(f, "", log.LstdFlags)
 		l.FileVal.Store(f)
 		l.LogVal.Store(lval)
 		return nil
 	}
-	
+
 	if !c.Config.DisableSuspLog {
 		err := rotateLog(r.suspLog, "reqs-susp-")
 		if err != nil {
