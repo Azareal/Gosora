@@ -143,10 +143,10 @@ func storeInit() (e error) {
 	if e != nil {
 		return ws(e)
 	}
-	c.ForumActionStore, e = c.NewDefaultForumActionStore(acc)
+	/*c.ForumActionStore, e = c.NewDefaultForumActionStore(acc)
 	if e != nil {
 		return ws(e)
-	}
+	}*/
 	c.Convos, e = c.NewDefaultConversationStore(acc)
 	if e != nil {
 		return ws(e)
