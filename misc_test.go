@@ -2315,8 +2315,9 @@ func TestForumActions(t *testing.T) {
 		count = s.CountInForum(fid)
 		exf(count == 0, "count in %d should be %d not %d", fid, 0, count)
 		exf(!s.Exists(faid), "faid %d should not exist", faid)
-		_, e = s.Get(faid)
+		_, e := s.Get(faid)
 		recordMustNotExist(t, e, "faid "+sfaid+" should not exist")
+		//exf(fa == nil, "fa should be nil not %+v", fa)
 		fas, e := s.GetInForum(fid)
 		//recordMustNotExist(t, e, "fid "+sfid+" should not have any actions")
 		expectNilErr(t, e) // TODO: Why does this not return ErrNoRows?
@@ -2366,6 +2367,7 @@ func TestForumActions(t *testing.T) {
 	expectNilErr(t, e)
 	topic, e := c.Topics.Get(tid)
 	expectNilErr(t, e)
+	ex(!topic.IsClosed, "topic.IsClosed should be false")
 	dayAgo := time.Now().AddDate(0, 0, -5)
 	expectNilErr(t, topic.TestSetCreatedAt(dayAgo))
 	expectNilErr(t, fa.Run())
@@ -2374,6 +2376,16 @@ func TestForumActions(t *testing.T) {
 	ex(topic.IsClosed, "topic.IsClosed should be true")
 	/*_, e = c.Rstore.Create(topic, "Forum Action Reply", "", 1)
 	expectNilErr(t, e)*/
+
+	tid, e = c.Topics.Create(fid, "Forum Action Topic 2", "Forum Action Topic 2", 1, "")
+	expectNilErr(t, e)
+	topic, e = c.Topics.Get(tid)
+	expectNilErr(t, e)
+	ex(!topic.IsClosed, "topic.IsClosed should be false")
+	expectNilErr(t, fa.Run())
+	topic, e = c.Topics.Get(tid)
+	expectNilErr(t, e)
+	ex(!topic.IsClosed, "topic.IsClosed should be false")
 
 	_ = tid
 

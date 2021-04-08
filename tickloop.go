@@ -249,24 +249,29 @@ func dailies() {
 		}
 	}
 
-	err := router.DailyTick()
-	if err != nil {
-		c.LogError(err)
+	e := router.DailyTick()
+	if e != nil {
+		c.LogError(e)
+	}
+	e = c.ForumActionStore.DailyTick()
+	if e != nil {
+		c.LogError(e)
 	}
 
 	{
-		err := c.Meta.Set("lastDaily", strconv.FormatInt(time.Now().Unix(), 10))
-		if err != nil {
-			c.LogError(err)
+		e := c.Meta.Set("lastDaily", strconv.FormatInt(time.Now().Unix(), 10))
+		if e != nil {
+			c.LogError(e)
 		}
 	}
 }
 
 func sched() error {
+	ws := errors.WithStack
 	schedStr, err := c.Meta.Get("sched")
 	// TODO: Report this error back correctly...
 	if err != nil && err != sql.ErrNoRows {
-		return errors.WithStack(err)
+		return ws(err)
 	}
 
 	if schedStr == "recalc" {
@@ -274,37 +279,37 @@ func sched() error {
 
 		count, err := c.Recalc.Replies()
 		if err != nil {
-			return errors.WithStack(err)
+			return ws(err)
 		}
 		log.Printf("Deleted %d orphaned replies.", count)
 
 		count, err = c.Recalc.Forums()
 		if err != nil {
-			return errors.WithStack(err)
+			return ws(err)
 		}
 		log.Printf("Recalculated %d forum topic counts.", count)
 
 		count, err = c.Recalc.Subscriptions()
 		if err != nil {
-			return errors.WithStack(err)
+			return ws(err)
 		}
 		log.Printf("Deleted %d orphaned subscriptions.", count)
 
 		count, err = c.Recalc.ActivityStream()
 		if err != nil {
-			return errors.WithStack(err)
+			return ws(err)
 		}
 		log.Printf("Deleted %d orphaned activity stream items.", count)
 
 		err = c.Recalc.Users()
 		if err != nil {
-			return errors.WithStack(err)
+			return ws(err)
 		}
 		log.Print("Recalculated user post stats.")
 
 		count, err = c.Recalc.Attachments()
 		if err != nil {
-			return errors.WithStack(err)
+			return ws(err)
 		}
 		log.Printf("Deleted %d orphaned attachments.", count)
 	}
