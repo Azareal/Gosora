@@ -27,21 +27,22 @@ func InitDatabase() (err error) {
 		return err
 	}
 	globs = &Globs{stmts}
+	ws := errors.WithStack
 
 	log.Print("Running the db handlers.")
 	err = c.DbInits.Run()
 	if err != nil {
-		return errors.WithStack(err)
+		return ws(err)
 	}
 
 	log.Print("Loading the usergroups.")
 	c.Groups, err = c.NewMemoryGroupStore()
 	if err != nil {
-		return errors.WithStack(err)
+		return ws(err)
 	}
 	err2 := c.Groups.LoadGroups()
 	if err2 != nil {
-		return errors.WithStack(err2)
+		return ws(err2)
 	}
 
 	// We have to put this here, otherwise LoadForums() won't be able to get the last poster data when building it's forums
@@ -58,49 +59,49 @@ func InitDatabase() (err error) {
 
 	c.Users, err = c.NewDefaultUserStore(ucache)
 	if err != nil {
-		return errors.WithStack(err)
+		return ws(err)
 	}
 	c.Topics, err = c.NewDefaultTopicStore(tcache)
 	if err != nil {
-		return errors.WithStack(err2)
+		return ws(err)
 	}
 
 	log.Print("Loading the forums.")
 	c.Forums, err = c.NewMemoryForumStore()
 	if err != nil {
-		return errors.WithStack(err)
+		return ws(err)
 	}
 	err = c.Forums.LoadForums()
 	if err != nil {
-		return errors.WithStack(err)
+		return ws(err)
 	}
 
 	log.Print("Loading the forum permissions.")
 	c.FPStore, err = c.NewMemoryForumPermsStore()
 	if err != nil {
-		return errors.WithStack(err)
+		return ws(err)
 	}
 	err = c.FPStore.Init()
 	if err != nil {
-		return errors.WithStack(err)
+		return ws(err)
 	}
 
 	log.Print("Loading the settings.")
 	err = c.LoadSettings()
 	if err != nil {
-		return errors.WithStack(err)
+		return ws(err)
 	}
 
 	log.Print("Loading the plugins.")
 	err = c.InitExtend()
 	if err != nil {
-		return errors.WithStack(err)
+		return ws(err)
 	}
 
 	log.Print("Loading the themes.")
 	err = c.Themes.LoadActiveStatus()
 	if err != nil {
-		return errors.WithStack(err)
+		return ws(err)
 	}
 	return nil
 }
