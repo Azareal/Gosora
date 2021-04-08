@@ -958,6 +958,5 @@ func patch36(scanner *bufio.Scanner) error {
 	if e != nil {
 		return e
 	}
-	//qgen.Install.SimpleInsert("settings", "name, content, type, constraints", "'activation_type','1','list','1-3'")
-	return execStmt(qgen.Builder.SimpleInsert("settings", "name, content, type", "'avatar_visibility','0','list','0-1'"))
+	return execStmt(qgen.Builder.SimpleInsert("settings", "name, content, type, constraints", "'avatar_visibility','0','list','0-1'"))
 }
