@@ -10,7 +10,8 @@ import (
 	"sync/atomic"
 	"errors"
 	"net/http"
-	"time"
+	"io"
+	"io/ioutil"
 
 	c "github.com/Azareal/Gosora/common"
 	co "github.com/Azareal/Gosora/common/counters"
@@ -897,34 +898,6 @@ var markToID = map[string]int{
 	"safari":1,
 }*/
 
-// TODO: Stop spilling these into the package scope?
-func init() {
-	_ = time.Now()
-	co.SetRouteMapEnum(routeMapEnum)
-	co.SetReverseRouteMapEnum(reverseRouteMapEnum)
-	co.SetAgentMapEnum(agentMapEnum)
-	co.SetReverseAgentMapEnum(reverseAgentMapEnum)
-	co.SetOSMapEnum(osMapEnum)
-	co.SetReverseOSMapEnum(reverseOSMapEnum)
-
-	g := func(n string) int {
-		a, ok := agentMapEnum[n]
-		if !ok {
-			panic("name not found in agentMapEnum")
-		}
-		return a
-	}
-	c.Chrome = g("chrome")
-	c.Firefox = g("firefox")
-	c.SimpleBots = []int{
-		g("semrush"),
-		g("ahrefs"),
-		g("python"),
-		//g("go"),
-		g("curl"),
-	}
-}
-
 // HTTPSRedirect is a connection handler which redirects all HTTP requests to HTTPS
 type HTTPSRedirect struct {}
 
@@ -953,6 +926,13 @@ func (r *GenRouter) SuspiciousRequest(req *http.Request, pre string) {
 // TODO: SetDefaultPath
 // TODO: GetDefaultPath
 func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	// HTTP/1.1 hanging conn fix
+	if req.ProtoMajor == 1 && c.Dev.ExpFix1 {
+		defer func() {
+			io.Copy(ioutil.Discard, req.Body)
+			req.Body.Close()
+		}()
+	}
 	malformedRequest := func(typ int) {
 		w.WriteHeader(200) // 400
 		w.Write([]byte(""))

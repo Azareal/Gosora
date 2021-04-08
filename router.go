@@ -12,7 +12,36 @@ import (
 	"time"
 
 	c "github.com/Azareal/Gosora/common"
+	co "github.com/Azareal/Gosora/common/counters"
 )
+
+// TODO: Stop spilling these into the package scope?
+func init() {
+	_ = time.Now()
+	co.SetRouteMapEnum(routeMapEnum)
+	co.SetReverseRouteMapEnum(reverseRouteMapEnum)
+	co.SetAgentMapEnum(agentMapEnum)
+	co.SetReverseAgentMapEnum(reverseAgentMapEnum)
+	co.SetOSMapEnum(osMapEnum)
+	co.SetReverseOSMapEnum(reverseOSMapEnum)
+
+	g := func(n string) int {
+		a, ok := agentMapEnum[n]
+		if !ok {
+			panic("name not found in agentMapEnum")
+		}
+		return a
+	}
+	c.Chrome = g("chrome")
+	c.Firefox = g("firefox")
+	c.SimpleBots = []int{
+		g("semrush"),
+		g("ahrefs"),
+		g("python"),
+		//g("go"),
+		g("curl"),
+	}
+}
 
 type WriterIntercept struct {
 	http.ResponseWriter
