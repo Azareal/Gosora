@@ -432,8 +432,6 @@ import (
 	"sync/atomic"
 	"errors"
 	"net/http"
-	"io"
-	"io/ioutil"
 
 	c "github.com/Azareal/Gosora/common"
 	co "github.com/Azareal/Gosora/common/counters"
@@ -510,12 +508,12 @@ func (r *GenRouter) SuspiciousRequest(req *http.Request, pre string) {
 // TODO: GetDefaultPath
 func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	// HTTP/1.1 hanging conn fix
-	if req.ProtoMajor == 1 && c.Dev.ExpFix1 {
+	/*if req.ProtoMajor == 1 && c.Dev.ExpFix1 {
 		defer func() {
-			io.Copy(ioutil.Discard, req.Body)
+			//io.Copy(ioutil.Discard, req.Body)
 			req.Body.Close()
 		}()
-	}
+	}*/
 	malformedRequest := func(typ int) {
 		w.WriteHeader(200) // 400
 		w.Write([]byte(""))
@@ -604,6 +602,7 @@ func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		} else {
 			h.Set("Referrer-Policy","strict-origin")
 		}
+		h.Set("Permissions-Policy","interest-cohort=()")
 	}
 	
 	if c.Dev.SuperDebug {
