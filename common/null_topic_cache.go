@@ -31,6 +31,9 @@ func (c *NullTopicCache) AddUnsafe(_ *Topic) error {
 func (c *NullTopicCache) Remove(id int) error {
 	return nil
 }
+func (c *NullTopicCache) RemoveMany(ids []int) error {
+	return nil
+}
 func (c *NullTopicCache) RemoveUnsafe(id int) error {
 	return nil
 }

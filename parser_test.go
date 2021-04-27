@@ -248,6 +248,7 @@ func TestParser(t *testing.T) {
 	l.Add("ddd ddd //a ", "ddd ddd <a rel='ugc'href='//a'>a</a> ")
 	l.Add("https://"+url, "<a rel='ugc'href='https://"+url+"'>"+url+"</a>")
 	l.Add("https://t", "<a rel='ugc'href='https://t'>t</a>")
+	l.Add("https://en.wikipedia.org/wiki/First_they_came_...", "<a rel='ugc'href='https://en.wikipedia.org/wiki/First_they_came_...'>en.wikipedia.org/wiki/First_they_came_...</a>") // this frequently fails in some chat clients, we should make sure that doesn't happen here
 	l.Add("http://"+url, "<a rel='ugc'href='http://"+url+"'>"+url+"</a>")
 	l.Add("#http://"+url, "#http://"+url)
 	l.Add("@http://"+url, "<red>[Invalid Profile]</red>ttp://"+url)

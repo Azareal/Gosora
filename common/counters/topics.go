@@ -30,7 +30,7 @@ func NewTopicCounter() (*DefaultTopicCounter, error) {
 	return co, acc.FirstError()
 }
 
-func (co *DefaultTopicCounter) Tick() (err error) {
+func (co *DefaultTopicCounter) Tick() (e error) {
 	oldBucket := co.currentBucket
 	var nextBucket int64 // 0
 	if co.currentBucket == 0 {
@@ -42,9 +42,9 @@ func (co *DefaultTopicCounter) Tick() (err error) {
 
 	previousViewChunk := co.buckets[oldBucket]
 	atomic.AddInt64(&co.buckets[oldBucket], -previousViewChunk)
-	err = co.insertChunk(previousViewChunk)
-	if err != nil {
-		return errors.Wrap(errors.WithStack(err), "topics counter")
+	e = co.insertChunk(previousViewChunk)
+	if e != nil {
+		return errors.Wrap(errors.WithStack(e), "topics counter")
 	}
 	return nil
 }
@@ -58,6 +58,6 @@ func (co *DefaultTopicCounter) insertChunk(count int64) error {
 		return nil
 	}
 	c.DebugLogf("Inserting a topicchunk with a count of %d", count)
-	_, err := co.insert.Exec(count)
-	return err
+	_, e := co.insert.Exec(count)
+	return e
 }

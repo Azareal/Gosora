@@ -26,6 +26,7 @@ type Pollable interface {
 type PollStore interface {
 	Get(id int) (*Poll, error)
 	Exists(id int) bool
+	ClearIPs() error
 	Create(parent Pollable, pollType int, pollOptions map[int]string) (int, error)
 	Reload(id int) error
 	//Count() int
@@ -43,6 +44,8 @@ type DefaultPollStore struct {
 	createPollOption *sql.Stmt
 	delete           *sql.Stmt
 	//count      *sql.Stmt
+
+	clearIPs *sql.Stmt
 }
 
 func NewDefaultPollStore(cache PollCache) (*DefaultPollStore, error) {
@@ -54,11 +57,13 @@ func NewDefaultPollStore(cache PollCache) (*DefaultPollStore, error) {
 	p := "polls"
 	return &DefaultPollStore{
 		cache:            cache,
-		get:              acc.Select(p).Columns("parentID, parentTable, type, options, votes").Where("pollID=?").Prepare(),
-		exists:           acc.Select(p).Columns("pollID").Where("pollID=?").Prepare(),
-		createPoll:       acc.Insert(p).Columns("parentID, parentTable, type, options").Fields("?,?,?,?").Prepare(),
+		get:              acc.Select(p).Columns("parentID,parentTable,type,options,votes").Where("pollID=?").Stmt(),
+		exists:           acc.Select(p).Columns("pollID").Where("pollID=?").Stmt(),
+		createPoll:       acc.Insert(p).Columns("parentID,parentTable,type,options").Fields("?,?,?,?").Prepare(),
 		createPollOption: acc.Insert("polls_options").Columns("pollID,option,votes").Fields("?,?,0").Prepare(),
 		//count: acc.SimpleCount(p, "", ""),
+
+		clearIPs: acc.Update("polls_votes").Set("ip=''").Where("ip!=''").Stmt(),
 	}, acc.FirstError()
 }
 
@@ -144,8 +149,7 @@ func (s *DefaultPollStore) BulkGetMap(ids []int) (list map[int]*Poll, err error)
 	if idCount > len(list) {
 		var sidList string
 		for _, id := range ids {
-			_, ok := list[id]
-			if !ok {
+			if _, ok := list[id]; !ok {
 				sidList += strconv.Itoa(id) + ","
 			}
 		}
@@ -172,18 +176,16 @@ func (s *DefaultPollStore) BulkGetMap(ids []int) (list map[int]*Poll, err error)
 func (s *DefaultPollStore) Reload(id int) error {
 	p := &Poll{ID: id}
 	var optionTxt []byte
-	err := s.get.QueryRow(id).Scan(&p.ParentID, &p.ParentTable, &p.Type, &optionTxt, &p.VoteCount)
-	if err != nil {
-		s.cache.Remove(id)
-		return err
+	e := s.get.QueryRow(id).Scan(&p.ParentID, &p.ParentTable, &p.Type, &optionTxt, &p.VoteCount)
+	if e != nil {
+		_ = s.cache.Remove(id)
+		return e
 	}
-
-	err = json.Unmarshal(optionTxt, &p.Options)
-	if err != nil {
-		s.cache.Remove(id)
-		return err
+	e = json.Unmarshal(optionTxt, &p.Options)
+	if e != nil {
+		_ = s.cache.Remove(id)
+		return e
 	}
-
 	p.QuickOptions = s.unpackOptionsMap(p.Options)
 	_ = s.cache.Set(p)
 	return nil
@@ -195,6 +197,11 @@ func (s *DefaultPollStore) unpackOptionsMap(rawOptions map[int]string) []PollOpt
 		opts[id] = PollOption{id, opt}
 	}
 	return opts
+}
+
+func (s *DefaultPollStore) ClearIPs() error {
+	_, e := s.clearIPs.Exec()
+	return e
 }
 
 // TODO: Use a transaction for this

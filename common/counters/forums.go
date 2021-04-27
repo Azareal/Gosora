@@ -48,18 +48,18 @@ func (co *DefaultForumViewCounter) Tick() error {
 			l.Lock()
 			delete(m, fid)
 			l.Unlock()
-			err := co.insertChunk(count, fid)
-			if err != nil {
-				return errors.Wrap(errors.WithStack(err),"forum counter")
+			e := co.insertChunk(count, fid)
+			if e != nil {
+				return errors.Wrap(errors.WithStack(e),"forum counter")
 			}
 			l.RLock()
 		}
 		l.RUnlock()
 		return nil
 	}
-	err := cLoop(&co.oddLock,co.oddMap)
-	if err != nil {
-		return err
+	e := cLoop(&co.oddLock,co.oddMap)
+	if e != nil {
+		return e
 	}
 	return cLoop(&co.evenLock,co.evenMap)
 }
@@ -69,8 +69,8 @@ func (co *DefaultForumViewCounter) insertChunk(count, forum int) error {
 		return nil
 	}
 	c.DebugLogf("Inserting a vchunk with a count of %d for forum %d", count, forum)
-	_, err := co.insert.Exec(count, forum)
-	return err
+	_, e := co.insert.Exec(count, forum)
+	return e
 }
 
 func (co *DefaultForumViewCounter) Bump(fid int) {

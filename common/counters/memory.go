@@ -54,7 +54,7 @@ func NewMemoryCounter(acc *qgen.Accumulator) (*DefaultMemoryCounter, error) {
 	return co, acc.FirstError()
 }
 
-func (co *DefaultMemoryCounter) Tick() (err error) {
+func (co *DefaultMemoryCounter) Tick() (e error) {
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
 	var rTotMem, rTotCount, rStackMem, rStackCount, rHeapMem, rHeapCount uint64
@@ -83,9 +83,9 @@ func (co *DefaultMemoryCounter) Tick() (err error) {
 	avgHeap = (rHeapMem + m.HeapAlloc) / (rHeapCount + 1)
 
 	c.DebugLogf("Inserting a memchunk with a value of %d - %d - %d", avgMem, avgStack, avgHeap)
-	_, err = co.insert.Exec(avgMem, avgStack, avgHeap)
-	if err != nil {
-		return errors.Wrap(errors.WithStack(err), "mem counter")
+	_, e = co.insert.Exec(avgMem, avgStack, avgHeap)
+	if e != nil {
+		return errors.Wrap(errors.WithStack(e), "mem counter")
 	}
 	return nil
 }

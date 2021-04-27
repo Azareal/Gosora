@@ -40,6 +40,9 @@ type TopicStore interface {
 	CountMegaUser(uid int) int
 	CountBigUser(uid int) int
 
+	ClearIPs() error
+	LockMany(tids []int) error
+
 	SetCache(cache TopicCache)
 	GetCache() TopicCache
 }
@@ -53,6 +56,9 @@ type DefaultTopicStore struct {
 	countUser     *sql.Stmt
 	countWordUser *sql.Stmt
 	create        *sql.Stmt
+
+	clearIPs *sql.Stmt
+	lockTen *sql.Stmt
 }
 
 // NewDefaultTopicStore gives you a new instance of DefaultTopicStore
@@ -64,22 +70,25 @@ func NewDefaultTopicStore(cache TopicCache) (*DefaultTopicStore, error) {
 	t := "topics"
 	return &DefaultTopicStore{
 		cache:         cache,
-		get:           acc.Select(t).Columns("title,content,createdBy,createdAt,lastReplyBy,lastReplyAt,lastReplyID,is_closed,sticky,parentID,ip,views,postCount,likeCount,attachCount,poll,data").Where("tid=?").Prepare(),
-		exists:        acc.Exists(t, "tid").Prepare(),
-		count:         acc.Count(t).Prepare(),
-		countUser:     acc.Count(t).Where("createdBy=?").Prepare(),
-		countWordUser: acc.Count(t).Where("createdBy=? AND words>=?").Prepare(),
-		create:        acc.Insert(t).Columns("parentID, title, content, parsed_content, createdAt, lastReplyAt, lastReplyBy, ip, words, createdBy").Fields("?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,?,?").Prepare(),
+		get:           acc.Select(t).Columns("title,content,createdBy,createdAt,lastReplyBy,lastReplyAt,lastReplyID,is_closed,sticky,parentID,ip,views,postCount,likeCount,attachCount,poll,data").Where("tid=?").Stmt(),
+		exists:        acc.Exists(t, "tid").Stmt(),
+		count:         acc.Count(t).Stmt(),
+		countUser:     acc.Count(t).Where("createdBy=?").Stmt(),
+		countWordUser: acc.Count(t).Where("createdBy=? AND words>=?").Stmt(),
+		create:        acc.Insert(t).Columns("parentID,title,content,parsed_content,createdAt,lastReplyAt,lastReplyBy,ip,words,createdBy").Fields("?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),?,?,?,?").Prepare(),
+
+		clearIPs: acc.Update(t).Set("ip=''").Where("ip!=''").Stmt(),
+		lockTen: acc.Update(t).Set("is_closed=1").Where("tid IN(" + inqbuild2(10) + ")").Stmt(),
 	}, acc.FirstError()
 }
 
 func (s *DefaultTopicStore) DirtyGet(id int) *Topic {
-	t, err := s.cache.Get(id)
-	if err == nil {
+	t, e := s.cache.Get(id)
+	if e == nil {
 		return t
 	}
-	t, err = s.BypassGet(id)
-	if err == nil {
+	t, e = s.BypassGet(id)
+	if e == nil {
 		_ = s.cache.Set(t)
 		return t
 	}
@@ -87,26 +96,26 @@ func (s *DefaultTopicStore) DirtyGet(id int) *Topic {
 }
 
 // TODO: Log weird cache errors?
-func (s *DefaultTopicStore) Get(id int) (t *Topic, err error) {
-	t, err = s.cache.Get(id)
-	if err == nil {
+func (s *DefaultTopicStore) Get(id int) (t *Topic, e error) {
+	t, e = s.cache.Get(id)
+	if e == nil {
 		return t, nil
 	}
-	t, err = s.BypassGet(id)
-	if err == nil {
+	t, e = s.BypassGet(id)
+	if e == nil {
 		_ = s.cache.Set(t)
 	}
-	return t, err
+	return t, e
 }
 
 // BypassGet will always bypass the cache and pull the topic directly from the database
 func (s *DefaultTopicStore) BypassGet(id int) (*Topic, error) {
 	t := &Topic{ID: id}
-	err := s.get.QueryRow(id).Scan(&t.Title, &t.Content, &t.CreatedBy, &t.CreatedAt, &t.LastReplyBy, &t.LastReplyAt, &t.LastReplyID, &t.IsClosed, &t.Sticky, &t.ParentID, &t.IP, &t.ViewCount, &t.PostCount, &t.LikeCount, &t.AttachCount, &t.Poll, &t.Data)
-	if err == nil {
+	e := s.get.QueryRow(id).Scan(&t.Title, &t.Content, &t.CreatedBy, &t.CreatedAt, &t.LastReplyBy, &t.LastReplyAt, &t.LastReplyID, &t.IsClosed, &t.Sticky, &t.ParentID, &t.IP, &t.ViewCount, &t.PostCount, &t.LikeCount, &t.AttachCount, &t.Poll, &t.Data)
+	if e == nil {
 		t.Link = BuildTopicURL(NameToSlug(t.Title), id)
 	}
-	return t, err
+	return t, e
 }
 
 /*func (s *DefaultTopicStore) GetByUser(uid int) (list map[int]*Topic, err error) {
@@ -119,7 +128,7 @@ func (s *DefaultTopicStore) BypassGet(id int) (*Topic, error) {
 }*/
 
 // TODO: Avoid duplicating much of this logic from user_store.go
-func (s *DefaultTopicStore) BulkGetMap(ids []int) (list map[int]*Topic, err error) {
+func (s *DefaultTopicStore) BulkGetMap(ids []int) (list map[int]*Topic, e error) {
 	idCount := len(ids)
 	list = make(map[int]*Topic)
 	if idCount == 0 {
@@ -143,66 +152,113 @@ func (s *DefaultTopicStore) BulkGetMap(ids []int) (list map[int]*Topic, err erro
 	if len(ids) == 0 {
 		return list, nil
 	} else if len(ids) == 1 {
-		topic, err := s.Get(ids[0])
-		if err != nil {
-			return list, err
+		t, e := s.Get(ids[0])
+		if e != nil {
+			return list, e
 		}
-		list[topic.ID] = topic
+		list[t.ID] = t
 		return list, nil
 	}
 
 	idList, q := inqbuild(ids)
-	rows, err := qgen.NewAcc().Select("topics").Columns("tid,title,content,createdBy,createdAt,lastReplyBy,lastReplyAt,lastReplyID,is_closed,sticky,parentID,ip,views,postCount,likeCount,attachCount,poll,data").Where("tid IN(" + q + ")").Query(idList...)
-	if err != nil {
-		return list, err
+	rows, e := qgen.NewAcc().Select("topics").Columns("tid,title,content,createdBy,createdAt,lastReplyBy,lastReplyAt,lastReplyID,is_closed,sticky,parentID,ip,views,postCount,likeCount,attachCount,poll,data").Where("tid IN(" + q + ")").Query(idList...)
+	if e != nil {
+		return list, e
 	}
 	defer rows.Close()
 
 	for rows.Next() {
 		t := &Topic{}
-		err := rows.Scan(&t.ID, &t.Title, &t.Content, &t.CreatedBy, &t.CreatedAt, &t.LastReplyBy, &t.LastReplyAt, &t.LastReplyID, &t.IsClosed, &t.Sticky, &t.ParentID, &t.IP, &t.ViewCount, &t.PostCount, &t.LikeCount, &t.AttachCount, &t.Poll, &t.Data)
-		if err != nil {
-			return list, err
+		e := rows.Scan(&t.ID, &t.Title, &t.Content, &t.CreatedBy, &t.CreatedAt, &t.LastReplyBy, &t.LastReplyAt, &t.LastReplyID, &t.IsClosed, &t.Sticky, &t.ParentID, &t.IP, &t.ViewCount, &t.PostCount, &t.LikeCount, &t.AttachCount, &t.Poll, &t.Data)
+		if e != nil {
+			return list, e
 		}
 		t.Link = BuildTopicURL(NameToSlug(t.Title), t.ID)
-		s.cache.Set(t)
+		_ = s.cache.Set(t)
 		list[t.ID] = t
 	}
-	if err = rows.Err(); err != nil {
-		return list, err
+	if e = rows.Err(); e != nil {
+		return list, e
 	}
 
 	// Did we miss any topics?
 	if idCount > len(list) {
 		var sidList string
-		for _, id := range ids {
-			_, ok := list[id]
-			if !ok {
-				sidList += strconv.Itoa(id) + ","
+		for i, id := range ids {
+			if _, ok := list[id]; !ok {
+				if i == 0 {
+					sidList += strconv.Itoa(id)
+				} else {
+					sidList += ","+strconv.Itoa(id)
+				}
 			}
 		}
 		if sidList != "" {
-			sidList = sidList[0 : len(sidList)-1]
-			err = errors.New("Unable to find topics with the following IDs: " + sidList)
+			e = errors.New("Unable to find topics with the following IDs: " + sidList)
 		}
 	}
 
-	return list, err
+	return list, e
 }
 
 func (s *DefaultTopicStore) Reload(id int) error {
-	topic, err := s.BypassGet(id)
-	if err == nil {
-		_ = s.cache.Set(topic)
+	t, e := s.BypassGet(id)
+	if e == nil {
+		_ = s.cache.Set(t)
 	} else {
 		_ = s.cache.Remove(id)
 	}
 	TopicListThaw.Thaw()
-	return err
+	return e
 }
 
 func (s *DefaultTopicStore) Exists(id int) bool {
 	return s.exists.QueryRow(id).Scan(&id) == nil
+}
+
+func (s *DefaultTopicStore) ClearIPs() error {
+	_, e := s.clearIPs.Exec()
+	return e
+}
+
+func (s *DefaultTopicStore) LockMany(tids []int) (e error) {
+	tc, i := Topics.GetCache(), 0
+	singles := func() error {
+		for ; i < len(tids); i++ {
+			_, e := topicStmts.lock.Exec(tids[i])
+			if e != nil {
+				return e
+			}
+		}
+		return nil
+	}
+
+	if len(tids) < 10 {
+		if e = singles(); e != nil {
+			return e
+		}
+		if tc != nil {
+			_ = tc.RemoveMany(tids)
+		}
+		TopicListThaw.Thaw()
+		return nil
+	}
+
+	for ; (i + 10) < len(tids); i += 10 {
+		_, e := s.lockTen.Exec(tids[i], tids[i+1], tids[i+2], tids[i+3], tids[i+4], tids[i+5], tids[i+6], tids[i+7], tids[i+8], tids[i+9])
+		if e != nil {
+			return e
+		}
+	}
+
+	if e = singles(); e != nil {
+		return e
+	}
+	if tc != nil {
+		_ = tc.RemoveMany(tids)
+	}
+	TopicListThaw.Thaw()
+	return nil
 }
 
 func (s *DefaultTopicStore) Create(fid int, name, content string, uid int, ip string) (tid int, err error) {

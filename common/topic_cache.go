@@ -15,6 +15,7 @@ type TopicCache interface {
 	AddUnsafe(item *Topic) error
 	Remove(id int) error
 	RemoveUnsafe(id int) error
+	RemoveMany(ids []int) error
 	Flush()
 	Length() int
 	SetCapacity(cap int)
@@ -70,16 +71,16 @@ func (s *MemoryTopicCache) BulkGet(ids []int) (list []*Topic) {
 }
 
 // Set overwrites the value of a topic in the cache, whether it's present or not. May return a capacity overflow error.
-func (s *MemoryTopicCache) Set(item *Topic) error {
+func (s *MemoryTopicCache) Set(it *Topic) error {
 	s.Lock()
-	_, ok := s.items[item.ID]
+	_, ok := s.items[it.ID]
 	if ok {
-		s.items[item.ID] = item
+		s.items[it.ID] = it
 	} else if int(s.length) >= s.capacity {
 		s.Unlock()
 		return ErrStoreCapacityOverflow
 	} else {
-		s.items[item.ID] = item
+		s.items[it.ID] = it
 		atomic.AddInt64(&s.length, 1)
 	}
 	s.Unlock()
@@ -112,9 +113,9 @@ func (s *MemoryTopicCache) AddUnsafe(item *Topic) error {
 
 // Remove removes a topic from the cache by ID, if they exist. Returns ErrNoRows if no items exist.
 func (s *MemoryTopicCache) Remove(id int) error {
+	var ok bool
 	s.Lock()
-	_, ok := s.items[id]
-	if !ok {
+	if _, ok = s.items[id]; !ok {
 		s.Unlock()
 		return ErrNoRows
 	}
@@ -124,10 +125,24 @@ func (s *MemoryTopicCache) Remove(id int) error {
 	return nil
 }
 
+func (s *MemoryTopicCache) RemoveMany(ids []int) error {
+	var n int64
+	var ok bool
+	s.Lock()
+	for _, id := range ids {
+		if _, ok = s.items[id]; ok {
+			delete(s.items, id)
+			n++
+		}
+	}
+	atomic.AddInt64(&s.length, -n)
+	s.Unlock()
+	return nil
+}
+
 // RemoveUnsafe is the unsafe version of Remove. THIS METHOD IS NOT THREAD-SAFE.
 func (s *MemoryTopicCache) RemoveUnsafe(id int) error {
-	_, ok := s.items[id]
-	if !ok {
+	if _, ok := s.items[id]; !ok {
 		return ErrNoRows
 	}
 	delete(s.items, id)

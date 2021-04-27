@@ -191,23 +191,23 @@ func RebuildGroupPermissions(g *Group) error {
 	log.Print("Reloading a group")
 
 	// TODO: Avoid re-initting this all the time
-	getGroupPerms, err := qgen.Builder.SimpleSelect("users_groups", "permissions", "gid=?", "", "")
-	if err != nil {
-		return err
+	getGroupPerms, e := qgen.Builder.SimpleSelect("users_groups", "permissions", "gid=?", "", "")
+	if e != nil {
+		return e
 	}
 	defer getGroupPerms.Close()
 
-	err = getGroupPerms.QueryRow(g.ID).Scan(&permstr)
-	if err != nil {
-		return err
+	e = getGroupPerms.QueryRow(g.ID).Scan(&permstr)
+	if e != nil {
+		return e
 	}
 
 	tmpPerms := Perms{
 		//ExtData: make(map[string]bool),
 	}
-	err = json.Unmarshal(permstr, &tmpPerms)
-	if err != nil {
-		return err
+	e = json.Unmarshal(permstr, &tmpPerms)
+	if e != nil {
+		return e
 	}
 	g.Perms = tmpPerms
 	return nil

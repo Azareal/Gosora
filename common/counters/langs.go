@@ -127,9 +127,9 @@ func NewDefaultLangViewCounter(acc *qgen.Accumulator) (*DefaultLangViewCounter, 
 func (co *DefaultLangViewCounter) Tick() error {
 	for id := 0; id < len(co.buckets); id++ {
 		count := atomic.SwapInt64(&co.buckets[id], 0)
-		err := co.insertChunk(count, id) // TODO: Bulk insert for speed?
-		if err != nil {
-			return errors.Wrap(errors.WithStack(err), "langview counter")
+		e := co.insertChunk(count, id) // TODO: Bulk insert for speed?
+		if e != nil {
+			return errors.Wrap(errors.WithStack(e), "langview counter")
 		}
 	}
 	return nil
@@ -144,8 +144,8 @@ func (co *DefaultLangViewCounter) insertChunk(count int64, id int) error {
 		langCode = "none"
 	}
 	c.DebugLogf("Inserting a vchunk with a count of %d for lang %s (%d)", count, langCode, id)
-	_, err := co.insert.Exec(count, langCode)
-	return err
+	_, e := co.insert.Exec(count, langCode)
+	return e
 }
 
 func (co *DefaultLangViewCounter) Bump(langCode string) (validCode bool) {

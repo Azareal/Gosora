@@ -507,13 +507,6 @@ func (r *GenRouter) SuspiciousRequest(req *http.Request, pre string) {
 // TODO: SetDefaultPath
 // TODO: GetDefaultPath
 func (r *GenRouter) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	// HTTP/1.1 hanging conn fix
-	/*if req.ProtoMajor == 1 && c.Dev.ExpFix1 {
-		defer func() {
-			//io.Copy(ioutil.Discard, req.Body)
-			req.Body.Close()
-		}()
-	}*/
 	malformedRequest := func(typ int) {
 		w.WriteHeader(200) // 400
 		w.Write([]byte(""))
