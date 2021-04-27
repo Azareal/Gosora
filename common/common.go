@@ -208,12 +208,27 @@ func Logf(str string, args ...interface{}) {
 	log.Printf(str, args...)
 }
 
-func Countf(stmt *sql.Stmt, args ...interface{}) (count int) {
-	err := stmt.QueryRow(args...).Scan(&count)
-	if err != nil {
-		LogError(err)
+func Count(stmt *sql.Stmt) (count int) {
+	e := stmt.QueryRow().Scan(&count)
+	if e != nil {
+		LogError(e)
 	}
 	return count
+}
+func Countf(stmt *sql.Stmt, args ...interface{}) (count int) {
+	e := stmt.QueryRow(args...).Scan(&count)
+	if e != nil {
+		LogError(e)
+	}
+	return count
+}
+func Createf(stmt *sql.Stmt, args ...interface{}) (id int, e error) {
+	res, e := stmt.Exec(args...)
+	if e != nil {
+		return 0, e
+	}
+	id64, e := res.LastInsertId()
+	return int(id64), e
 }
 
 func eachall(stmt *sql.Stmt, f func(r *sql.Rows) error) error {
@@ -261,7 +276,7 @@ func inqbuild2(count int) string {
 	}
 	var sb strings.Builder
 	sb.Grow((count * 2) - 1)
-	for i := 0; i <= count; i++ {
+	for i := 0; i < count; i++ {
 		if i == 0 {
 			sb.WriteRune('?')
 		} else {
