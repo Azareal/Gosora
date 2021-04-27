@@ -11,6 +11,7 @@ var Prstore ProfileReplyStore
 type ProfileReplyStore interface {
 	Get(id int) (*ProfileReply, error)
 	Exists(id int) bool
+	ClearIPs() error
 	Create(profileID int, content string, createdBy int, ip string) (id int, err error)
 	Count() (count int)
 }
@@ -22,54 +23,59 @@ type SQLProfileReplyStore struct {
 	exists *sql.Stmt
 	create *sql.Stmt
 	count  *sql.Stmt
+
+	clearIPs *sql.Stmt
 }
 
 func NewSQLProfileReplyStore(acc *qgen.Accumulator) (*SQLProfileReplyStore, error) {
 	ur := "users_replies"
 	return &SQLProfileReplyStore{
-		get:    acc.Select(ur).Columns("uid, content, createdBy, createdAt, lastEdit, lastEditBy, ip").Where("rid=?").Prepare(),
+		get:    acc.Select(ur).Columns("uid,content,createdBy,createdAt,lastEdit,lastEditBy,ip").Where("rid=?").Stmt(),
 		exists: acc.Exists(ur, "rid").Prepare(),
-		create: acc.Insert(ur).Columns("uid, content, parsed_content, createdAt, createdBy, ip").Fields("?,?,?,UTC_TIMESTAMP(),?,?").Prepare(),
-		count:  acc.Count(ur).Prepare(),
+		create: acc.Insert(ur).Columns("uid,content,parsed_content,createdAt,createdBy,ip").Fields("?,?,?,UTC_TIMESTAMP(),?,?").Prepare(),
+		count:  acc.Count(ur).Stmt(),
+
+		clearIPs: acc.Update(ur).Set("ip=''").Where("ip!=''").Stmt(),
 	}, acc.FirstError()
 }
 
 func (s *SQLProfileReplyStore) Get(id int) (*ProfileReply, error) {
 	r := ProfileReply{ID: id}
-	err := s.get.QueryRow(id).Scan(&r.ParentID, &r.Content, &r.CreatedBy, &r.CreatedAt, &r.LastEdit, &r.LastEditBy, &r.IP)
-	return &r, err
+	e := s.get.QueryRow(id).Scan(&r.ParentID, &r.Content, &r.CreatedBy, &r.CreatedAt, &r.LastEdit, &r.LastEditBy, &r.IP)
+	return &r, e
 }
 
 func (s *SQLProfileReplyStore) Exists(id int) bool {
-	err := s.exists.QueryRow(id).Scan(&id)
-	if err != nil && err != ErrNoRows {
-		LogError(err)
+	e := s.exists.QueryRow(id).Scan(&id)
+	if e != nil && e != ErrNoRows {
+		LogError(e)
 	}
-	return err != ErrNoRows
+	return e != ErrNoRows
 }
 
-func (s *SQLProfileReplyStore) Create(profileID int, content string, createdBy int, ip string) (id int, err error) {
+func (s *SQLProfileReplyStore) ClearIPs() error {
+	_, e := s.clearIPs.Exec()
+	return e
+}
+
+func (s *SQLProfileReplyStore) Create(profileID int, content string, createdBy int, ip string) (id int, e error) {
 	if Config.DisablePostIP {
 		ip = ""
 	}
-	res, err := s.create.Exec(profileID, content, ParseMessage(content, 0, "", nil, nil), createdBy, ip)
-	if err != nil {
-		return 0, err
+	res, e := s.create.Exec(profileID, content, ParseMessage(content, 0, "", nil, nil), createdBy, ip)
+	if e != nil {
+		return 0, e
 	}
-	lastID, err := res.LastInsertId()
-	if err != nil {
-		return 0, err
+	lastID, e := res.LastInsertId()
+	if e != nil {
+		return 0, e
 	}
 	// Should we reload the user?
-	return int(lastID), err
+	return int(lastID), e
 }
 
 // TODO: Write a test for this
 // Count returns the total number of topic replies on these forums
 func (s *SQLProfileReplyStore) Count() (count int) {
-	err := s.count.QueryRow().Scan(&count)
-	if err != nil {
-		LogError(err)
-	}
-	return count
+	return Count(s.count)
 }

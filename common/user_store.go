@@ -30,6 +30,7 @@ type UserStore interface {
 	//BulkGet(ids []int) ([]*User, error)
 	BulkGetMap(ids []int) (map[int]*User, error)
 	BypassGet(id int) (*User, error)
+	ClearLastIPs() error
 	Create(name, password, email string, group int, active bool) (int, error)
 	Reload(id int) error
 	Count() int
@@ -53,6 +54,8 @@ type DefaultUserStore struct {
 
 	count       *sql.Stmt
 	countSearch *sql.Stmt
+
+	clearIPs *sql.Stmt
 }
 
 // NewDefaultUserStore gives you a new instance of DefaultUserStore
@@ -79,6 +82,8 @@ func NewDefaultUserStore(cache UserCache) (*DefaultUserStore, error) {
 
 		count:       acc.Count(u).Prepare(),
 		countSearch: acc.Count(u).Where("(name=? OR ?='') AND (email=? OR ?='') AND (group=? OR ?=0)").Prepare(),
+
+		clearIPs: acc.Update(u).Set("last_ip=''").Where("last_ip!=''").Prepare(),
 	}, acc.FirstError()
 }
 
@@ -410,6 +415,11 @@ func (s *DefaultUserStore) Exists(id int) bool {
 		LogError(err)
 	}
 	return err != ErrNoRows
+}
+
+func (s *DefaultUserStore) ClearLastIPs() error {
+	_, e := s.clearIPs.Exec()
+	return e
 }
 
 // TODO: Change active to a bool?

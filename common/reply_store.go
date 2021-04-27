@@ -13,6 +13,7 @@ type ReplyStore interface {
 	Get(id int) (*Reply, error)
 	Each(f func(*Reply) error) error
 	Exists(id int) bool
+	ClearIPs() error
 	Create(t *Topic, content, ip string, uid int) (id int, err error)
 	Count() (count int)
 	CountUser(uid int) (count int)
@@ -33,6 +34,8 @@ type SQLReplyStore struct {
 	count         *sql.Stmt
 	countUser     *sql.Stmt
 	countWordUser *sql.Stmt
+
+	clearIPs *sql.Stmt
 }
 
 func NewSQLReplyStore(acc *qgen.Accumulator, cache ReplyCache) (*SQLReplyStore, error) {
@@ -49,6 +52,8 @@ func NewSQLReplyStore(acc *qgen.Accumulator, cache ReplyCache) (*SQLReplyStore, 
 		count:         acc.Count(re).Prepare(),
 		countUser:     acc.Count(re).Where("createdBy=?").Prepare(),
 		countWordUser: acc.Count(re).Where("createdBy=? AND words>=?").Prepare(),
+
+		clearIPs: acc.Update(re).Set("ip=''").Where("ip!=''").Stmt(),
 	}, acc.FirstError()
 }
 
@@ -94,6 +99,11 @@ func (s *SQLReplyStore) Exists(id int) bool {
 		LogError(err)
 	}
 	return err != ErrNoRows
+}
+
+func (s *SQLReplyStore) ClearIPs() error {
+	_, e := s.clearIPs.Exec()
+	return e
 }
 
 // TODO: Write a test for this
