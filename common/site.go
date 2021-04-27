@@ -99,10 +99,11 @@ type config struct {
 	LogPruneCutoff int
 	//SelfDeleteTruncCutoff int // Personal data is stripped from the mod action rows only leaving the TID and the action for later investigation.
 
-	DisableLastIP bool
-	DisablePostIP bool
-	DisablePollIP bool
-	DisableRegLog bool
+	DisableLastIP   bool
+	DisablePostIP   bool
+	DisablePollIP   bool
+	DisableRegLog   bool
+	DisableLoginLog bool
 	//DisableSelfDeleteLog bool
 
 	DisableLiveTopicList bool

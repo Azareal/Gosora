@@ -37,29 +37,31 @@ func AccountLoginSubmit(w http.ResponseWriter, r *http.Request, u *c.User) c.Rou
 	}
 
 	name := c.SanitiseSingleLine(r.PostFormValue("username"))
-	uid, err, requiresExtraAuth := c.Auth.Authenticate(name, r.PostFormValue("password"))
-	if err != nil {
+	uid, e, requiresExtraAuth := c.Auth.Authenticate(name, r.PostFormValue("password"))
+	if e != nil {
 		// TODO: uid is currently set to 0 as authenticate fetches the user by username and password. Get the actual uid, so we can alert the user of attempted logins? What if someone takes advantage of the response times to deduce if an account exists?
-		logItem := &c.LoginLogItem{UID: uid, Success: false, IP: u.GetIP()}
-		_, ierr := logItem.Create()
-		if ierr != nil {
-			return c.InternalError(ierr, w, r)
+		if !c.Config.DisableLoginLog {
+			li := &c.LoginLogItem{UID: uid, Success: false, IP: u.GetIP()}
+			if _, ie := li.Create(); ie != nil {
+				return c.InternalError(ie, w, r)
+			}
 		}
-		return c.LocalError(err.Error(), w, r, u)
+		return c.LocalError(e.Error(), w, r, u)
 	}
 
 	// TODO: Take 2FA into account
-	logItem := &c.LoginLogItem{UID: uid, Success: true, IP: u.GetIP()}
-	_, err = logItem.Create()
-	if err != nil {
-		return c.InternalError(err, w, r)
+	if !c.Config.DisableLoginLog {
+		li := &c.LoginLogItem{UID: uid, Success: true, IP: u.GetIP()}
+		if _, e = li.Create(); e != nil {
+			return c.InternalError(e, w, r)
+		}
 	}
 
 	// TODO: Do we want to slacken this by only doing it when the IP changes?
 	if requiresExtraAuth {
-		provSession, signedSession, err := c.Auth.CreateProvisionalSession(uid)
-		if err != nil {
-			return c.InternalError(err, w, r)
+		provSession, signedSession, e := c.Auth.CreateProvisionalSession(uid)
+		if e != nil {
+			return c.InternalError(e, w, r)
 		}
 		// TODO: Use the login log ID in the provisional cookie?
 		c.Auth.SetProvisionalCookies(w, uid, provSession, signedSession)
@@ -283,9 +285,8 @@ func AccountRegisterSubmit(w http.ResponseWriter, r *http.Request, user *c.User)
 
 	regLog := c.RegLogItem{Username: name, Email: email, FailureReason: regErrReason, Success: regSuccess, IP: user.GetIP()}
 	if !c.Config.DisableRegLog && regSuccess {
-		_, err := regLog.Create()
-		if err != nil {
-			return c.InternalError(err, w, r)
+		if _, e := regLog.Create(); e != nil {
+			return c.InternalError(e, w, r)
 		}
 	}
 	if !regSuccess {
@@ -305,8 +306,8 @@ func AccountRegisterSubmit(w http.ResponseWriter, r *http.Request, user *c.User)
 	pushLog := func(reason string) error {
 		if !c.Config.DisableRegLog {
 			regLog.FailureReason += reason + "|"
-			_, err := regLog.Create()
-			return err
+			_, e := regLog.Create()
+			return e
 		}
 		return nil
 	}
