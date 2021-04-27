@@ -2,6 +2,8 @@ package qgen
 
 import (
 	"database/sql"
+	"strings"
+
 	//"fmt"
 	"strconv"
 )
@@ -51,17 +53,21 @@ func (b *accDeleteBuilder) Prepare() *sql.Stmt {
 	return b.build.SimpleDelete(b.table, b.where)
 }
 
-func (b *accDeleteBuilder) Run(args ...interface{}) (int, error) {
+func (b *accDeleteBuilder) Exec(args ...interface{}) (res sql.Result, e error) {
 	stmt := b.Prepare()
 	if stmt == nil {
-		return 0, b.build.FirstError()
+		return res, b.build.FirstError()
 	}
-	res, err := stmt.Exec(args...)
-	if err != nil {
-		return 0, err
+	return stmt.Exec(args...)
+}
+
+func (b *accDeleteBuilder) Run(args ...interface{}) (int, error) {
+	res, e := b.Exec(args...)
+	if e != nil {
+		return 0, e
 	}
-	lastID, err := res.LastInsertId()
-	return int(lastID), err
+	lastID, e := res.LastInsertId()
+	return int(lastID), e
 }
 
 type accUpdateBuilder struct {
@@ -116,9 +122,9 @@ func (b *accUpdateBuilder) Stmt() *sql.Stmt {
 }
 
 func (b *accUpdateBuilder) Exec(args ...interface{}) (res sql.Result, err error) {
-	q, err := b.build.adapter.SimpleUpdate(b.up)
+	q, e := b.build.adapter.SimpleUpdate(b.up)
 	if err != nil {
-		return res, err
+		return res, e
 	}
 	//fmt.Println("q:", q)
 	return b.build.exec(q, args...)
@@ -126,6 +132,10 @@ func (b *accUpdateBuilder) Exec(args ...interface{}) (res sql.Result, err error)
 
 type AccBuilder interface {
 	Prepare() *sql.Stmt
+}
+
+type AccExec interface {
+	Exec(args ...interface{}) (res sql.Result, err error)
 }
 
 type AccSelectBuilder struct {
@@ -165,17 +175,24 @@ func (b *AccSelectBuilder) In(col string, inList []int) *AccSelectBuilder {
 		return b
 	}
 
-	// TODO: Optimise this
-	where := col + " IN("
-	for _, it := range inList {
-		where += strconv.Itoa(it) + ","
+	var wsb strings.Builder
+	wsb.Grow(len(col) + 5 + 1 + len(b.where) + (len(inList) * 2))
+	wsb.WriteString(col)
+	wsb.WriteString(" IN(")
+	for i, it := range inList {
+		if i != 0 {
+			wsb.WriteRune(',')
+		}
+		wsb.WriteString(strconv.Itoa(it))
 	}
-	where = where[:len(where)-1] + ")"
 	if b.where != "" {
-		where += " AND " + b.where
+		wsb.WriteString(") AND ")
+		wsb.WriteString(b.where)
+	} else {
+		wsb.WriteRune(')')
 	}
 
-	b.where = where
+	b.where = wsb.String()
 	return b
 }
 
@@ -368,25 +385,21 @@ func (b *accInsertBuilder) Prepare() *sql.Stmt {
 	return b.build.SimpleInsert(b.table, b.columns, b.fields)
 }
 
-func (b *accInsertBuilder) Exec(args ...interface{}) (res sql.Result, err error) {
-	query, err := b.build.adapter.SimpleInsert("", b.table, b.columns, b.fields)
-	if err != nil {
-		return res, err
+func (b *accInsertBuilder) Exec(args ...interface{}) (res sql.Result, e error) {
+	q, e := b.build.adapter.SimpleInsert("", b.table, b.columns, b.fields)
+	if e != nil {
+		return res, e
 	}
-	return b.build.exec(query, args...)
+	return b.build.exec(q, args...)
 }
 
 func (b *accInsertBuilder) Run(args ...interface{}) (int, error) {
-	query, err := b.build.adapter.SimpleInsert("", b.table, b.columns, b.fields)
-	if err != nil {
-		return 0, err
+	res, e := b.Exec(args...)
+	if e != nil {
+		return 0, e
 	}
-	res, err := b.build.exec(query, args...)
-	if err != nil {
-		return 0, err
-	}
-	lastID, err := res.LastInsertId()
-	return int(lastID), err
+	lastID, e := res.LastInsertId()
+	return int(lastID), e
 }
 
 type accBulkInsertBuilder struct {
@@ -412,24 +425,20 @@ func (b *accBulkInsertBuilder) Prepare() *sql.Stmt {
 }
 
 func (b *accBulkInsertBuilder) Exec(args ...interface{}) (res sql.Result, err error) {
-	query, err := b.build.adapter.SimpleBulkInsert("", b.table, b.columns, b.fieldSet)
-	if err != nil {
-		return res, err
+	q, e := b.build.adapter.SimpleBulkInsert("", b.table, b.columns, b.fieldSet)
+	if e != nil {
+		return res, e
 	}
-	return b.build.exec(query, args...)
+	return b.build.exec(q, args...)
 }
 
 func (b *accBulkInsertBuilder) Run(args ...interface{}) (int, error) {
-	query, err := b.build.adapter.SimpleBulkInsert("", b.table, b.columns, b.fieldSet)
-	if err != nil {
-		return 0, err
+	res, e := b.Exec(args...)
+	if e != nil {
+		return 0, e
 	}
-	res, err := b.build.exec(query, args...)
-	if err != nil {
-		return 0, err
-	}
-	lastID, err := res.LastInsertId()
-	return int(lastID), err
+	lastID, e := res.LastInsertId()
+	return int(lastID), e
 }
 
 type accCountBuilder struct {
@@ -456,8 +465,13 @@ func (b *accCountBuilder) Limit(limit string) *accCountBuilder {
 	return b
 }
 
-func (b *accCountBuilder) DateCutoff(column string, quantity int, unit string) *accCountBuilder {
-	b.dateCutoff = &dateCutoff{column, quantity, unit, 0}
+func (b *accCountBuilder) DateCutoff(col string, quantity int, unit string) *accCountBuilder {
+	b.dateCutoff = &dateCutoff{col, quantity, unit, 0}
+	return b
+}
+
+func (b *accCountBuilder) DateOlderThanQ(col, unit string) *accCountBuilder {
+	b.dateCutoff = &dateCutoff{col, 0, unit, 11}
 	return b
 }
 
@@ -471,23 +485,33 @@ func (b *accCountBuilder) Prepare() *sql.Stmt {
 	}
 	return b.build.SimpleCount(b.table, b.where, b.limit)
 }
-
-func (b *accCountBuilder) Total() (total int, err error) {
-	stmt := b.Prepare()
-	if stmt == nil {
-		return 0, b.build.FirstError()
+// TODO: Fix this nasty hack
+func (b *accCountBuilder) Stmt() *sql.Stmt {
+	// TODO: Phase out the procedural API and use the adapter's OO API? The OO API might need a bit more work before we do that and it needs to be rolled out to MSSQL.
+	if b.dateCutoff != nil || b.inChain != nil {
+		selBuilder := b.build.GetAdapter().Builder().Count().FromCountAcc(b)
+		selBuilder.columns = "COUNT(*)"
+		return b.build.prepare(b.build.GetAdapter().ComplexSelect(selBuilder))
 	}
-	err = stmt.QueryRow().Scan(&total)
-	return total, err
+	return b.build.SimpleCount(b.table, b.where, b.limit)
 }
 
-func (b *accCountBuilder) TotalP(params ...interface{}) (total int, err error) {
+func (b *accCountBuilder) Total() (total int, e error) {
 	stmt := b.Prepare()
 	if stmt == nil {
 		return 0, b.build.FirstError()
 	}
-	err = stmt.QueryRow(params).Scan(&total)
-	return total, err
+	e = stmt.QueryRow().Scan(&total)
+	return total, e
+}
+
+func (b *accCountBuilder) TotalP(params ...interface{}) (total int, e error) {
+	stmt := b.Prepare()
+	if stmt == nil {
+		return 0, b.build.FirstError()
+	}
+	e = stmt.QueryRow(params).Scan(&total)
+	return total, e
 }
 
 // TODO: Add a Sum builder for summing viewchunks up into one number for the dashboard?

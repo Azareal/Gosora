@@ -106,12 +106,7 @@ func (s *DefaultActivityStream) AidsByParamsExtra(event string, elementID int, e
 	return aids, rows.Err()
 }
 
-// TODO: Write a test for this
 // Count returns the total number of activity stream items
 func (s *DefaultActivityStream) Count() (count int) {
-	e := s.count.QueryRow().Scan(&count)
-	if e != nil {
-		LogError(e)
-	}
-	return count
+	return Count(s.count)
 }
