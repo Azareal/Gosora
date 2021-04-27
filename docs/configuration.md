@@ -98,6 +98,8 @@ DisablePostIP - Disable storing post IPs for users and purge any existing post I
 
 DisablePollIP - Disable storing poll vote IPs and purge any existing poll vote IP data. Default: false
 
+DisableRegLog - Disable storing registration events and purge any existing registration event data. Default: false
+
 LogPruneCutoff - The number of days which need to pass before the login and registration logs are pruned. 0 defaults to whatever the current default is, currently 180 and -1 disables this feature.
 
 DisableLiveTopicList - This switch allows you to disable the live topic list. Default: false
