@@ -12,15 +12,15 @@ import (
 )
 
 func Forums(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
-	basePage, ferr := buildBasePage(w, r, u, "forums", "forums")
+	bp, ferr := buildBasePage(w, r, u, "forums", "forums")
 	if ferr != nil {
 		return ferr
 	}
 	if !u.Perms.ManageForums {
 		return c.NoPermissions(w, r, u)
 	}
-	basePage.Header.AddScript("Sortable-1.4.0/Sortable.min.js")
-	basePage.Header.AddScriptAsync("panel_forums.js")
+	bp.Header.AddScript("Sortable-1.4.0/Sortable.min.js")
+	bp.Header.AddScriptAsync("panel_forums.js")
 
 	// TODO: Paginate this?
 	var forumList []interface{}
@@ -41,15 +41,15 @@ func Forums(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
 	}
 
 	if r.FormValue("created") == "1" {
-		basePage.AddNotice("panel_forum_created")
+		bp.AddNotice("panel_forum_created")
 	} else if r.FormValue("deleted") == "1" {
-		basePage.AddNotice("panel_forum_deleted")
+		bp.AddNotice("panel_forum_deleted")
 	} else if r.FormValue("updated") == "1" {
-		basePage.AddNotice("panel_forum_updated")
+		bp.AddNotice("panel_forum_updated")
 	}
 
-	pi := c.PanelPage{basePage, forumList, nil}
-	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "", "", "panel_forums", &pi})
+	pi := c.PanelPage{bp, forumList, nil}
+	return renderTemplate("panel", w, r, bp.Header, c.Panel{bp, "", "", "panel_forums", &pi})
 }
 
 func ForumsCreateSubmit(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
@@ -338,7 +338,7 @@ func forumPermsExtractDash(paramList string) (fid, gid int, e error) {
 }
 
 func ForumsEditPermsAdvance(w http.ResponseWriter, r *http.Request, u *c.User, paramList string) c.RouteError {
-	basePage, ferr := buildBasePage(w, r, u, "edit_forum", "forums")
+	bp, ferr := buildBasePage(w, r, u, "edit_forum", "forums")
 	if ferr != nil {
 		return ferr
 	}
@@ -388,11 +388,11 @@ func ForumsEditPermsAdvance(w http.ResponseWriter, r *http.Request, u *c.User, p
 	addToggle("MoveTopic", fp.MoveTopic)
 
 	if r.FormValue("updated") == "1" {
-		basePage.AddNotice("panel_forum_perms_updated")
+		bp.AddNotice("panel_forum_perms_updated")
 	}
 
-	pi := c.PanelEditForumGroupPage{basePage, f.ID, gid, f.Name, f.Desc, f.Active, f.Preset, formattedPermList}
-	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "", "", "panel_forum_edit_perms", &pi})
+	pi := c.PanelEditForumGroupPage{bp, f.ID, gid, f.Name, f.Desc, f.Active, f.Preset, formattedPermList}
+	return renderTemplate("panel", w, r, bp.Header, c.Panel{bp, "", "", "panel_forum_edit_perms", &pi})
 }
 
 func ForumsEditPermsAdvanceSubmit(w http.ResponseWriter, r *http.Request, u *c.User, paramList string) c.RouteError {

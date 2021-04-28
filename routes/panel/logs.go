@@ -13,7 +13,7 @@ import (
 
 // TODO: Link the usernames for successful registrations to the profiles
 func LogsRegs(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
-	basePage, ferr := buildBasePage(w, r, u, "registration_logs", "logs")
+	bp, ferr := buildBasePage(w, r, u, "registration_logs", "logs")
 	if ferr != nil {
 		return ferr
 	}
@@ -32,20 +32,20 @@ func LogsRegs(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
 	}
 
 	pageList := c.Paginate(page, lastPage, 5)
-	pi := c.PanelRegLogsPage{basePage, llist, c.Paginator{pageList, page, lastPage}}
-	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "", "", "panel_reglogs", pi})
+	pi := c.PanelRegLogsPage{bp, llist, c.Paginator{pageList, page, lastPage}}
+	return renderTemplate("panel", w, r, bp.Header, c.Panel{bp, "", "", "panel_reglogs", pi})
 }
 
 // TODO: Log errors when something really screwy is going on?
 // TODO: Base the slugs on the localised usernames?
-func handleUnknownUser(u *c.User, err error) *c.User {
-	if err != nil {
+func handleUnknownUser(u *c.User, e error) *c.User {
+	if e != nil {
 		return &c.User{Name: p.GetTmplPhrase("user_unknown"), Link: c.BuildProfileURL("unknown", 0)}
 	}
 	return u
 }
-func handleUnknownTopic(t *c.Topic, err error) *c.Topic {
-	if err != nil {
+func handleUnknownTopic(t *c.Topic, e error) *c.Topic {
+	if e != nil {
 		return &c.Topic{Title: p.GetTmplPhrase("topic_unknown"), Link: c.BuildTopicURL("unknown", 0)}
 	}
 	return t
@@ -169,7 +169,7 @@ func adminlogsElementType(action, elementType string, elementID int, actor *c.Us
 }
 
 func LogsMod(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
-	basePage, ferr := buildBasePage(w, r, u, "mod_logs", "logs")
+	bp, ferr := buildBasePage(w, r, u, "mod_logs", "logs")
 	if ferr != nil {
 		return ferr
 	}
@@ -189,12 +189,12 @@ func LogsMod(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
 	}
 
 	pageList := c.Paginate(page, lastPage, 5)
-	pi := c.PanelLogsPage{basePage, llist, c.Paginator{pageList, page, lastPage}}
-	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "", "", "panel_modlogs", pi})
+	pi := c.PanelLogsPage{bp, llist, c.Paginator{pageList, page, lastPage}}
+	return renderTemplate("panel", w, r, bp.Header, c.Panel{bp, "", "", "panel_modlogs", pi})
 }
 
 func LogsAdmin(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
-	basePage, ferr := buildBasePage(w, r, u, "admin_logs", "logs")
+	bp, ferr := buildBasePage(w, r, u, "admin_logs", "logs")
 	if ferr != nil {
 		return ferr
 	}
@@ -214,6 +214,6 @@ func LogsAdmin(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
 	}
 
 	pageList := c.Paginate(page, lastPage, 5)
-	pi := c.PanelLogsPage{basePage, llist, c.Paginator{pageList, page, lastPage}}
-	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "", "", "panel_adminlogs", pi})
+	pi := c.PanelLogsPage{bp, llist, c.Paginator{pageList, page, lastPage}}
+	return renderTemplate("panel", w, r, bp.Header, c.Panel{bp, "", "", "panel_adminlogs", pi})
 }

@@ -9,14 +9,14 @@ import (
 )
 
 func Pages(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
-	basePage, ferr := buildBasePage(w, r, u, "pages", "pages")
+	bp, ferr := buildBasePage(w, r, u, "pages", "pages")
 	if ferr != nil {
 		return ferr
 	}
 	if r.FormValue("created") == "1" {
-		basePage.AddNotice("panel_page_created")
+		bp.AddNotice("panel_page_created")
 	} else if r.FormValue("deleted") == "1" {
-		basePage.AddNotice("panel_page_deleted")
+		bp.AddNotice("panel_page_deleted")
 	}
 
 	// TODO: Test the pagination here
@@ -31,8 +31,8 @@ func Pages(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
 	}
 
 	pageList := c.Paginate(page, lastPage, 5)
-	pi := c.PanelCustomPagesPage{basePage, cPages, c.Paginator{pageList, page, lastPage}}
-	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_page_list", "", "panel_pages", &pi})
+	pi := c.PanelCustomPagesPage{bp, cPages, c.Paginator{pageList, page, lastPage}}
+	return renderTemplate("panel", w, r, bp.Header, c.Panel{bp, "panel_page_list", "", "panel_pages", &pi})
 }
 
 func PagesCreateSubmit(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
@@ -72,12 +72,12 @@ func PagesCreateSubmit(w http.ResponseWriter, r *http.Request, u *c.User) c.Rout
 }
 
 func PagesEdit(w http.ResponseWriter, r *http.Request, u *c.User, spid string) c.RouteError {
-	basePage, ferr := buildBasePage(w, r, u, "pages_edit", "pages")
+	bp, ferr := buildBasePage(w, r, u, "pages_edit", "pages")
 	if ferr != nil {
 		return ferr
 	}
 	if r.FormValue("updated") == "1" {
-		basePage.AddNotice("panel_page_updated")
+		bp.AddNotice("panel_page_updated")
 	}
 
 	pid, err := strconv.Atoi(spid)
@@ -86,13 +86,13 @@ func PagesEdit(w http.ResponseWriter, r *http.Request, u *c.User, spid string) c
 	}
 	page, err := c.Pages.Get(pid)
 	if err == sql.ErrNoRows {
-		return c.NotFound(w, r, basePage.Header)
+		return c.NotFound(w, r, bp.Header)
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
 
-	pi := c.PanelCustomPageEditPage{basePage, page}
-	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_page_edit", "", "panel_pages_edit", &pi})
+	pi := c.PanelCustomPageEditPage{bp, page}
+	return renderTemplate("panel", w, r, bp.Header, c.Panel{bp, "panel_page_edit", "", "panel_pages_edit", &pi})
 }
 
 func PagesEditSubmit(w http.ResponseWriter, r *http.Request, u *c.User, spid string) c.RouteError {
