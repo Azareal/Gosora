@@ -51,8 +51,8 @@ func (h *WsHubImpl) Start() {
 				l.RLock()
 				defer l.RUnlock()
 				// TODO: Copy to temporary slice for less contention?
-				for _, user := range userMap {
-					user.Ping()
+				for _, u := range userMap {
+					u.Ping()
 				}
 			}
 			select {
@@ -135,19 +135,19 @@ func wsTopicListTick(h *WsHubImpl) error {
 
 	groups := make(map[int]*Group)
 	canSeeMap := make(map[string][]int)
-	for groupID, _ := range groupIDs {
-		group, err := Groups.Get(groupID)
+	for gid, _ := range groupIDs {
+		g, err := Groups.Get(gid)
 		if err != nil {
 			// TODO: Do we really want to halt all pushes for what is possibly just one user?
 			return err
 		}
-		groups[group.ID] = group
+		groups[g.ID] = g
 
-		canSee := make([]byte, len(group.CanSee))
-		for i, item := range group.CanSee {
+		canSee := make([]byte, len(g.CanSee))
+		for i, item := range g.CanSee {
 			canSee[i] = byte(item)
 		}
-		canSeeMap[string(canSee)] = group.CanSee
+		canSeeMap[string(canSee)] = g.CanSee
 	}
 
 	canSeeRenders := make(map[string][]byte)
@@ -213,11 +213,11 @@ func wsTopicListTick(h *WsHubImpl) error {
 			modSet = make(map[int]int, len(l))
 			for i, t := range l {
 				// TODO: Abstract this?
-				fp, err := FPStore.Get(t.ParentID, u.Group)
-				if err == ErrNoRows {
+				fp, e := FPStore.Get(t.ParentID, u.Group)
+				if e == ErrNoRows {
 					fp = BlankForumPerms()
-				} else if err != nil {
-					return err
+				} else if e != nil {
+					return e
 				}
 				var ccanMod, ccanLock, ccanMove bool
 				if fp.Overrides {
@@ -329,17 +329,17 @@ func (h *WsHubImpl) broadcastMessage(msg string) error {
 		m.RLock()
 		defer m.RUnlock()
 		for _, wsUser := range users {
-			err := wsUser.WriteAll(msg)
-			if err != nil {
-				return err
+			e := wsUser.WriteAll(msg)
+			if e != nil {
+				return e
 			}
 		}
 		return nil
 	}
 	// TODO: Can we move this RLock inside the closure safely?
-	err := userLoop(h.evenOnlineUsers, &h.evenUserLock)
-	if err != nil {
-		return err
+	e := userLoop(h.evenOnlineUsers, &h.evenUserLock)
+	if e != nil {
+		return e
 	}
 	return userLoop(h.oddOnlineUsers, &h.oddUserLock)
 }
@@ -366,12 +366,15 @@ func (h *WsHubImpl) getUsers(uids []int) (wsUsers []*WSUser, err error) {
 	if len(uids) == 0 {
 		return nil, errWsNouser
 	}
+	wsUsers = make([]*WSUser, len(uids))
+	i := 0
 	appender := func(l *sync.RWMutex, users map[int]*WSUser) {
 		l.RLock()
 		defer l.RUnlock()
 		// We don't want to keep a lock on this for too long, so we'll accept some nil pointers
 		for _, uid := range uids {
-			wsUsers = append(wsUsers, users[uid])
+			wsUsers[i] = users[uid]
+			i++
 		}
 	}
 	appender(&h.evenUserLock, h.evenOnlineUsers)
@@ -387,8 +390,8 @@ func (h *WsHubImpl) AllUsers() (users []*User) {
 	appender := func(l *sync.RWMutex, userMap map[int]*WSUser) {
 		l.RLock()
 		defer l.RUnlock()
-		for _, user := range userMap {
-			users = append(users, user.User)
+		for _, u := range userMap {
+			users = append(users, u.User)
 		}
 	}
 	appender(&h.evenUserLock, h.evenOnlineUsers)
@@ -461,26 +464,26 @@ func (h *WsHubImpl) RemoveConn(wsUser *WSUser, conn *websocket.Conn) {
 }
 
 func (h *WsHubImpl) PushMessage(targetUser int, msg string) error {
-	wsUser, err := h.getUser(targetUser)
-	if err != nil {
-		return err
+	wsUser, e := h.getUser(targetUser)
+	if e != nil {
+		return e
 	}
 	return wsUser.WriteAll(msg)
 }
 
-func (h *WsHubImpl) pushAlert(targetUser int, alert Alert) error {
-	wsUser, err := h.getUser(targetUser)
-	if err != nil {
-		return err
+func (h *WsHubImpl) pushAlert(targetUser int, a Alert) error {
+	wsUser, e := h.getUser(targetUser)
+	if e != nil {
+		return e
 	}
-	astr, err := BuildAlert(alert, *wsUser.User)
-	if err != nil {
-		return err
+	astr, e := BuildAlert(a, *wsUser.User)
+	if e != nil {
+		return e
 	}
 	return wsUser.WriteAll(astr)
 }
 
-func (h *WsHubImpl) pushAlerts(users []int, alert Alert) error {
+func (h *WsHubImpl) pushAlerts(users []int, a Alert) error {
 	wsUsers, err := h.getUsers(users)
 	if err != nil {
 		return err
@@ -491,7 +494,7 @@ func (h *WsHubImpl) pushAlerts(users []int, alert Alert) error {
 		if wsUser == nil {
 			continue
 		}
-		alert, err := BuildAlert(alert, *wsUser.User)
+		alert, err := BuildAlert(a, *wsUser.User)
 		if err != nil {
 			errs = append(errs, err)
 		}
@@ -503,8 +506,8 @@ func (h *WsHubImpl) pushAlerts(users []int, alert Alert) error {
 
 	// Return the first error
 	if len(errs) != 0 {
-		for _, err := range errs {
-			return err
+		for _, e := range errs {
+			return e
 		}
 	}
 	return nil

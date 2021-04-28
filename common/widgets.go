@@ -49,15 +49,15 @@ type NameTextPair struct {
 	Text template.HTML
 }
 
-func preparseWidget(w *Widget, wdata string) (err error) {
+func preparseWidget(w *Widget, wdata string) (e error) {
 	prebuildWidget := func(name string, data interface{}) (string, error) {
 		var b bytes.Buffer
-		err := DefaultTemplates.ExecuteTemplate(&b, name+".html", data)
-		content := string(b.Bytes())
+		e := DefaultTemplates.ExecuteTemplate(&b, name+".html", data)
+		content := b.String()
 		if Config.MinifyTemplates {
 			content = min.Minify(content)
 		}
-		return content, err
+		return content, e
 	}
 
 	sbytes := []byte(wdata)
@@ -66,11 +66,11 @@ func preparseWidget(w *Widget, wdata string) (err error) {
 	switch w.Type {
 	case "simple", "about":
 		var tmp NameTextPair
-		err = json.Unmarshal(sbytes, &tmp)
-		if err != nil {
-			return err
+		e = json.Unmarshal(sbytes, &tmp)
+		if e != nil {
+			return e
 		}
-		w.Body, err = prebuildWidget("widget_"+w.Type, tmp)
+		w.Body, e = prebuildWidget("widget_"+w.Type, tmp)
 	case "search_and_filter":
 		w.Literal = false
 		w.BuildFunc = widgetSearchAndFilter
@@ -88,9 +88,12 @@ func preparseWidget(w *Widget, wdata string) (err error) {
 
 	// TODO: Test this
 	// TODO: Should we toss this through a proper parser rather than crudely replacing it?
-	w.Location = strings.Replace(w.Location, " ", "", -1)
-	w.Location = strings.Replace(w.Location, "frontend", "!panel", -1)
-	w.Location = strings.Replace(w.Location, "!!", "", -1)
+	rep := func(from, to string) {
+		w.Location = strings.Replace(w.Location, from, to, -1)
+	}
+	rep(" ", "")
+	rep("frontend", "!panel")
+	rep("!!", "")
 
 	// Skip blank zones
 	locs := strings.Split(w.Location, "|")
@@ -105,7 +108,7 @@ func preparseWidget(w *Widget, wdata string) (err error) {
 		w.Location = w.Location[:len(w.Location)-1]
 	}
 
-	return err
+	return e
 }
 
 func GetDockList() []string {
@@ -193,11 +196,11 @@ func BuildWidget(dock string, h *Header) (sbody string) {
 		widgets = Docks.RightOfNav
 	case "topMenu":
 		// 1 = id for the default menu
-		mhold, err := Menus.Get(1)
-		if err == nil {
-			err := mhold.Build(h.Writer, h.CurrentUser, h.Path)
-			if err != nil {
-				LogError(err)
+		mhold, e := Menus.Get(1)
+		if e == nil {
+			e := mhold.Build(h.Writer, h.CurrentUser, h.Path)
+			if e != nil {
+				LogError(e)
 			}
 		}
 		return ""
@@ -212,9 +215,9 @@ func BuildWidget(dock string, h *Header) (sbody string) {
 			continue
 		}
 		if widget.Allowed(h.Zone, h.ZoneID) {
-			item, err := widget.Build(h)
-			if err != nil {
-				LogError(err)
+			item, e := widget.Build(h)
+			if e != nil {
+				LogError(e)
 			}
 			sbody += item
 		}
@@ -248,11 +251,11 @@ func BuildWidget2(dock int, h *Header) (sbody string) {
 		widgets = Docks.RightOfNav
 	case 2:
 		// 1 = id for the default menu
-		mhold, err := Menus.Get(1)
-		if err == nil {
-			err := mhold.Build(h.Writer, h.CurrentUser, h.Path)
-			if err != nil {
-				LogError(err)
+		mhold, e := Menus.Get(1)
+		if e == nil {
+			e := mhold.Build(h.Writer, h.CurrentUser, h.Path)
+			if e != nil {
+				LogError(e)
 			}
 		}
 		return ""
@@ -267,9 +270,9 @@ func BuildWidget2(dock int, h *Header) (sbody string) {
 			continue
 		}
 		if w.Allowed(h.Zone, h.ZoneID) {
-			item, err := w.Build(h)
-			if err != nil {
-				LogError(err)
+			item, e := w.Build(h)
+			if e != nil {
+				LogError(e)
 			}
 			sbody += item
 		}
@@ -314,9 +317,9 @@ func BuildWidget3(dock int, h *Header) {
 			continue
 		}
 		if w.Allowed(h.Zone, h.ZoneID) {
-			item, err := w.Build(h)
-			if err != nil {
-				LogError(err)
+			item, e := w.Build(h)
+			if e != nil {
+				LogError(e)
 			}
 			if item != "" {
 				h.Writer.Write(uutils.StringToBytes(item))
@@ -362,23 +365,22 @@ func HasWidgets2(dock int, h *Header) bool {
 	return wcount > 0
 }
 
-func getDockWidgets(dock string) (widgets []*Widget, err error) {
-	rows, err := widgetStmts.getDockList.Query(dock)
-	if err != nil {
-		return nil, err
+func getDockWidgets(dock string) (widgets []*Widget, e error) {
+	rows, e := widgetStmts.getDockList.Query(dock)
+	if e != nil {
+		return nil, e
 	}
 	defer rows.Close()
 
 	for rows.Next() {
 		w := &Widget{Position: 0, Side: dock}
-		err = rows.Scan(&w.ID, &w.Position, &w.Type, &w.Enabled, &w.Location, &w.RawBody)
-		if err != nil {
-			return nil, err
+		e = rows.Scan(&w.ID, &w.Position, &w.Type, &w.Enabled, &w.Location, &w.RawBody)
+		if e != nil {
+			return nil, e
 		}
-
-		err = preparseWidget(w, w.RawBody)
-		if err != nil {
-			return nil, err
+		e = preparseWidget(w, w.RawBody)
+		if e != nil {
+			return nil, e
 		}
 		Widgets.set(w)
 		widgets = append(widgets, w)
@@ -393,9 +395,9 @@ func InitWidgets() (fi error) {
 		if fi != nil {
 			return
 		}
-		dock, err := getDockWidgets(name)
-		if err != nil {
-			fi = err
+		dock, e := getDockWidgets(name)
+		if e != nil {
+			fi = e
 			return
 		}
 		setDock(name, dock)
@@ -484,9 +486,9 @@ func (s *WidgetScheduler) Tick() error {
 		if widget.TickFunc == nil {
 			continue
 		}
-		err := widget.TickFunc(widget)
-		if err != nil {
-			return errors.WithStack(err)
+		e := widget.TickFunc(widget)
+		if e != nil {
+			return errors.WithStack(e)
 		}
 	}
 	return nil

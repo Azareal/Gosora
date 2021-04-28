@@ -14,13 +14,16 @@ func wolContextRender(widget *Widget, hvars interface{}) (string, error) {
 	if ok {
 		ucount = len(topic)
 		if ucount < 30 {
+			users = make([]*User, len(topic))
+			i := 0
 			for wsUser, _ := range topic {
-				users = append(users, wsUser.User)
+				users[i] = wsUser.User
+				i++
 			}
 		}
 	}
 	topicMutex.RUnlock()
 	wol := &wolUsers{header, phrases.GetTmplPhrase("widget.online_view_topic_name"), users, ucount}
-	err := header.Theme.RunTmpl("widget_online", wol, header.Writer)
-	return "", err
+	e := header.Theme.RunTmpl("widget_online", wol, header.Writer)
+	return "", e
 }

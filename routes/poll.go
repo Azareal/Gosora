@@ -88,9 +88,8 @@ func PollResults(w http.ResponseWriter, r *http.Request, u *c.User, sPollID stri
 	optList := ""
 	var votes int
 	for rows.Next() {
-		err := rows.Scan(&votes)
-		if err != nil {
-			return c.InternalError(err, w, r)
+		if e := rows.Scan(&votes); e != nil {
+			return c.InternalError(e, w, r)
 		}
 		optList += strconv.Itoa(votes) + ","
 	}

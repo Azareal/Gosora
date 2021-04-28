@@ -225,13 +225,8 @@ func ReplyEditSubmit(w http.ResponseWriter, r *http.Request, u *c.User, srid str
 	} else if err != nil {
 		return c.InternalErrorJSQ(err, w, r, js)
 	}
-
-	// TODO: Avoid the load to get this faster?
-	reply, err = c.Rstore.Get(reply.ID)
-	if err == sql.ErrNoRows {
+	if !c.Rstore.Exists(reply.ID) {
 		return c.PreErrorJSQ("The updated reply doesn't exist.", w, r, js)
-	} else if err != nil {
-		return c.InternalErrorJSQ(err, w, r, js)
 	}
 
 	skip, rerr := lite.Hooks.VhookSkippable("action_end_edit_reply", reply.ID, u)
@@ -265,8 +260,8 @@ func ReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, u *c.User, srid s
 			return c.NoPermissionsJSQ(w, r, u, js)
 		}
 	}
-	if err := reply.Delete(); err != nil {
-		return c.InternalErrorJSQ(err, w, r, js)
+	if e := reply.Delete(); e != nil {
+		return c.InternalErrorJSQ(e, w, r, js)
 	}
 
 	skip, rerr := lite.Hooks.VhookSkippable("action_end_delete_reply", reply.ID, u)
@@ -282,19 +277,19 @@ func ReplyDeleteSubmit(w http.ResponseWriter, r *http.Request, u *c.User, srid s
 	}
 
 	// ? - What happens if an error fires after a redirect...?
-	/*creator, err := c.Users.Get(reply.CreatedBy)
-	if err == nil {
-		err = creator.DecreasePostStats(c.WordCount(reply.Content), false)
-		if err != nil {
-			return c.InternalErrorJSQ(err, w, r, js)
+	/*creator, e := c.Users.Get(reply.CreatedBy)
+	if e == nil {
+		e = creator.DecreasePostStats(c.WordCount(reply.Content), false)
+		if e != nil {
+			return c.InternalErrorJSQ(e, w, r, js)
 		}
-	} else if err != sql.ErrNoRows {
-		return c.InternalErrorJSQ(err, w, r, js)
+	} else if e != sql.ErrNoRows {
+		return c.InternalErrorJSQ(e, w, r, js)
 	}*/
 
-	err := c.ModLogs.Create("delete", reply.ParentID, "reply", u.GetIP(), u.ID)
-	if err != nil {
-		return c.InternalErrorJSQ(err, w, r, js)
+	e := c.ModLogs.Create("delete", reply.ParentID, "reply", u.GetIP(), u.ID)
+	if e != nil {
+		return c.InternalErrorJSQ(e, w, r, js)
 	}
 	return nil
 }
