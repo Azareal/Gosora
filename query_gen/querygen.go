@@ -103,6 +103,7 @@ const (
 	TokenOr
 	TokenNot
 	TokenLike
+	TokenScope
 )
 
 type DBToken struct {

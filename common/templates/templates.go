@@ -78,6 +78,8 @@ type CTemplateSet struct {
 	logger  *log.Logger
 	loggerf *os.File
 	lang    string
+
+	fsb strings.Builder
 }
 
 func NewCTemplateSet(in string, logDir ...string) *CTemplateSet {
@@ -446,20 +448,6 @@ func (c *CTemplateSet) compile(name, content, expects string, expectsInt interfa
 			importList += "import \"" + item + "\"\n"
 		}
 	}
-	//var varString string
-	var vssb strings.Builder
-	vssb.Grow(10 + 3)
-	for _, varItem := range c.varList {
-		//varString += "var " + varItem.Name + " " + varItem.Type + " = " + varItem.Destination + "\n"
-		vssb.WriteString("var ")
-		vssb.WriteString(varItem.Name)
-		vssb.WriteRune(' ')
-		vssb.WriteString(varItem.Type)
-		vssb.WriteString(" = ")
-		vssb.WriteString(varItem.Destination)
-		vssb.WriteString("\n")
-	}
-	varString := vssb.String()
 
 	var fout string
 	if c.buildTags != "" {
@@ -537,19 +525,27 @@ func (c *CTemplateSet) compile(name, content, expects string, expectsInt interfa
 		fout += "}\n\n"
 	}
 
+	c.fsb.Reset()
+	c.fsb.WriteString("// nolint\nfunc Tmpl_")
+	c.fsb.WriteString(fname)
 	if c.lang == "normal" {
-		fout += "// nolint\nfunc Tmpl_" + fname + "(tmpl_i interface{}, w io.Writer) error {\n"
-		fout += `tmpl_` + fname + `_vars, ok := tmpl_i.(` + expects + `)
-if !ok {
-	return errors.New("invalid page struct value")
-}
-`
-		/*fout += `tmpl_vars, ok := tmpl_i.(` + expects + `)
+		/*fout += "// nolint\nfunc Tmpl_" + fname + "(tmpl_i interface{}, w io.Writer) error {\n"
+				fout += `tmpl_` + fname + `_vars, ok := tmpl_i.(` + expects + `)
 		if !ok {
 			return errors.New("invalid page struct value")
 		}
 		`*/
-		fout += `var iw http.ResponseWriter
+		c.fsb.WriteString("(tmpl_i interface{}, w io.Writer) error {\n")
+
+		c.fsb.WriteString(`tmpl_`)
+		c.fsb.WriteString(fname)
+		c.fsb.WriteString(`_vars, ok := tmpl_i.(`)
+		c.fsb.WriteString(expects)
+		c.fsb.WriteString(`)
+	if !ok {
+		return errors.New("invalid page struct value")
+	}
+	var iw http.ResponseWriter
 	if gzw, ok := w.(c.GzipResponseWriter); ok {
 		iw = gzw.ResponseWriter
 		w = gzw.Writer
@@ -557,19 +553,41 @@ if !ok {
 	_ = iw
 	var tmp []byte
 	_ = tmp
-`
+`)
 	} else {
-		fout += "// nolint\nfunc Tmpl_" + fname + "(tmpl_" + fname + "_vars interface{}, w io.Writer) error {\n"
+		//fout += "// nolint\nfunc Tmpl_" + fname + "(tmpl_" + fname + "_vars interface{}, w io.Writer) error {\n"
+		c.fsb.WriteString("(tmpl_")
+		c.fsb.WriteString(fname)
+		c.fsb.WriteString("_vars interface{}, w io.Writer) error {\n")
 		//fout += "// nolint\nfunc Tmpl_" + fname + "(tmpl_vars interface{}, w io.Writer) error {\n"
 	}
 
+	//var fsb strings.Builder
 	if len(c.langIndexToName) > 0 {
-		fout += "//var plist = phrases.GetTmplPhrasesBytes(" + fname + "_tmpl_phrase_id)\n"
+		//fout += "//var plist = phrases.GetTmplPhrasesBytes(" + fname + "_tmpl_phrase_id)\n"
+		c.fsb.WriteString("//var plist = phrases.GetTmplPhrasesBytes(")
+		c.fsb.WriteString(fname)
+		c.fsb.WriteString("_tmpl_phrase_id)\n")
+
 		//fout += "if len(plist) > 0 {\n_ = plist[len(plist)-1]\n}\n"
 		//fout += "var plist = " + fname + "_phrase_arr\n"
 	}
-	var fsb strings.Builder
-	fsb.WriteString(varString)
+
+	//var varString string
+	//var vssb strings.Builder
+	c.fsb.Grow(10 + 3)
+	for _, varItem := range c.varList {
+		//varString += "var " + varItem.Name + " " + varItem.Type + " = " + varItem.Destination + "\n"
+		c.fsb.WriteString("var ")
+		c.fsb.WriteString(varItem.Name)
+		c.fsb.WriteRune(' ')
+		c.fsb.WriteString(varItem.Type)
+		c.fsb.WriteString(" = ")
+		c.fsb.WriteString(varItem.Destination)
+		c.fsb.WriteString("\n")
+	}
+
+	//c.fsb.WriteString(varString)
 	//fout += varString
 	skipped := make(map[string]*SkipBlock) // map[templateName]*SkipBlock{map[atIndexAndAfter]skipThisMuch,lastCount}
 
@@ -577,7 +595,7 @@ if !ok {
 		out := "w.Write(" + tmplName + "_frags[" + strconv.Itoa(index) + "]" + ")\n"
 		c.detail("writing ", out)
 		//fout += out
-		fsb.WriteString(out)
+		c.fsb.WriteString(out)
 	}
 
 	for fid := 0; len(outBuf) > fid; fid++ {
@@ -613,31 +631,31 @@ if !ok {
 			writeTextFrame(fr.TemplateName, fr.Extra.(int)-skip)
 		case fr.Type == "varsub" || fr.Type == "cvarsub":
 			//fout += "w.Write(" + fr.Body + ")\n"
-			fsb.WriteString("w.Write(")
-			fsb.WriteString(fr.Body)
-			fsb.WriteString(")\n")
+			c.fsb.WriteString("w.Write(")
+			c.fsb.WriteString(fr.Body)
+			c.fsb.WriteString(")\n")
 		case fr.Type == "lang":
 			//fout += "w.Write(plist[" + strconv.Itoa(fr.Extra.(int)) + "])\n"
-			fsb.WriteString("w.Write(")
-			fsb.WriteString(fname)
+			c.fsb.WriteString("w.Write(")
+			c.fsb.WriteString(fname)
 			if len(c.langIndexToName) == 1 {
 				//fout += "w.Write(" + fname + "_phrase)\n"
-				fsb.WriteString("_phrase)\n")
+				c.fsb.WriteString("_phrase)\n")
 			} else {
 				//fout += "w.Write(" + fname + "_phrase_arr[" + strconv.Itoa(fr.Extra.(int)) + "])\n"
-				fsb.WriteString("_phrase_arr[")
-				fsb.WriteString(strconv.Itoa(fr.Extra.(int)))
-				fsb.WriteString("])\n")
+				c.fsb.WriteString("_phrase_arr[")
+				c.fsb.WriteString(strconv.Itoa(fr.Extra.(int)))
+				c.fsb.WriteString("])\n")
 			}
 		//case fr.Type == "identifier":
 		default:
 			//fout += fr.Body
-			fsb.WriteString(fr.Body)
+			c.fsb.WriteString(fr.Body)
 		}
 	}
 	//fout += "return nil\n}\n"
-	fsb.WriteString("return nil\n}\n")
-	fout += fsb.String()
+	c.fsb.WriteString("return nil\n}\n")
+	fout += c.fsb.String()
 
 	writeFrag := func(tmplName string, index int, body string) {
 		//c.detail("writing ", fragmentPrefix)
@@ -2163,8 +2181,7 @@ func (c *CTemplateSet) afterTemplateV2(con CContext, startIndex int /*, typ int*
 	c.dumpCall("afterTemplateV2", con, startIndex)
 	defer c.retCall("afterTemplateV2")
 
-	loopDepth := 0
-	ifNilDepth := 0
+	loopDepth, ifNilDepth := 0, 0
 	var outBuf = *con.OutBuf
 	varcounts := make(map[string]int)
 	loopStart := startIndex
@@ -2228,8 +2245,7 @@ OLoop:
 	}
 
 	// Exclude varsubs within loops for now
-	loopDepth = 0
-	ifNilDepth = 0
+	loopDepth, ifNilDepth = 0, 0
 OOLoop:
 	for i := loopStart; i < len(outBuf); i++ {
 		item := outBuf[i]

@@ -1,4 +1,4 @@
-CREATE TABLE `menu_items` (
+CREATE TABLE `menu_items`(
 	`miid` int not null AUTO_INCREMENT,
 	`mid` int not null,
 	`name` varchar(200) DEFAULT '' not null,

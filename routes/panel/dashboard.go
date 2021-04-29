@@ -265,9 +265,9 @@ func startDirSizeTask() {
 			dstMuGuess = 0
 			dstMu.Unlock()
 		}()
-		dDirSize, err := c.DirSize(".")
-		if err != nil {
-			c.LogWarning(err)
+		dDirSize, e := c.DirSize(".")
+		if e != nil {
+			c.LogWarning(e)
 		}
 		cachedDirSize.Store(dirSize{dDirSize, time.Now()})
 	}()

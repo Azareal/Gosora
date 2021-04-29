@@ -1,4 +1,4 @@
-CREATE TABLE `registration_logs` (
+CREATE TABLE `registration_logs`(
 	`rlid` int not null AUTO_INCREMENT,
 	`username` varchar(100) not null,
 	`email` varchar(100) not null,

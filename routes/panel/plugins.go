@@ -9,7 +9,7 @@ import (
 )
 
 func Plugins(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
-	basePage, ferr := buildBasePage(w, r, u, "plugins", "plugins")
+	bp, ferr := buildBasePage(w, r, u, "plugins", "plugins")
 	if ferr != nil {
 		return ferr
 	}
@@ -17,12 +17,13 @@ func Plugins(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
 		return c.NoPermissions(w, r, u)
 	}
 
-	var plList []interface{}
+	plList, i := make([]interface{}, len(c.Plugins)), 0
 	for _, pl := range c.Plugins {
-		plList = append(plList, pl)
+		plList[i] = pl
+		i++
 	}
 
-	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "", "", "panel_plugins", c.PanelPage{basePage, plList, nil}})
+	return renderTemplate("panel", w, r, bp.Header, c.Panel{bp, "", "", "panel_plugins", c.PanelPage{bp, plList, nil}})
 }
 
 // TODO: Abstract more of the plugin activation / installation / deactivation logic, so we can test all that more reliably and easily

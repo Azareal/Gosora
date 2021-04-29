@@ -1,4 +1,4 @@
-CREATE TABLE `topics` (
+CREATE TABLE `topics`(
 	`tid` int not null AUTO_INCREMENT,
 	`title` varchar(100) not null,
 	`content` text not null,

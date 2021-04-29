@@ -1,4 +1,4 @@
-CREATE TABLE `revisions` (
+CREATE TABLE `revisions`(
 	`reviseID` int not null AUTO_INCREMENT,
 	`content` text not null,
 	`contentID` int not null,

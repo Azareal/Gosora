@@ -1,4 +1,4 @@
-CREATE TABLE `pages` (
+CREATE TABLE `pages`(
 	`pid` int not null AUTO_INCREMENT,
 	`name` varchar(200) not null,
 	`title` varchar(200) not null,

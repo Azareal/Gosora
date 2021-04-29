@@ -1,4 +1,4 @@
-CREATE TABLE `attachments` (
+CREATE TABLE `attachments`(
 	`attachID` int not null AUTO_INCREMENT,
 	`sectionID` int DEFAULT 0 not null,
 	`sectionTable` varchar(200) DEFAULT 'forums' not null,

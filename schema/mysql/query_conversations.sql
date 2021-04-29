@@ -1,4 +1,4 @@
-CREATE TABLE `conversations` (
+CREATE TABLE `conversations`(
 	`cid` int not null AUTO_INCREMENT,
 	`createdBy` int not null,
 	`createdAt` datetime not null,

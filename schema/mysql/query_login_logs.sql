@@ -1,4 +1,4 @@
-CREATE TABLE `login_logs` (
+CREATE TABLE `login_logs`(
 	`lid` int not null AUTO_INCREMENT,
 	`uid` int not null,
 	`success` boolean DEFAULT 0 not null,

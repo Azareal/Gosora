@@ -1,4 +1,4 @@
-CREATE TABLE `users_groups_promotions` (
+CREATE TABLE `users_groups_promotions`(
 	`pid` int not null AUTO_INCREMENT,
 	`from_gid` int not null,
 	`to_gid` int not null,

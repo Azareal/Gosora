@@ -31,16 +31,16 @@ type installer struct {
 }
 
 func (i *installer) SetAdapter(name string) error {
-	adap, err := GetAdapter(name)
+	a, err := GetAdapter(name)
 	if err != nil {
 		return err
 	}
-	i.SetAdapterInstance(adap)
+	i.SetAdapterInstance(a)
 	return nil
 }
 
-func (i *installer) SetAdapterInstance(adap Adapter) {
-	i.adapter = adap
+func (i *installer) SetAdapterInstance(a Adapter) {
+	i.adapter = a
 	i.instructions = []DBInstallInstruction{}
 }
 
@@ -48,13 +48,13 @@ func (i *installer) AddPlugins(plugins ...QueryPlugin) {
 	i.plugins = append(i.plugins, plugins...)
 }
 
-func (i *installer) CreateTable(table, charset, collation string, columns []DBTableColumn, keys []DBTableKey) error {
-	tableStruct := &DBInstallTable{table, charset, collation, columns, keys}
+func (i *installer) CreateTable(table, charset, collation string, cols []DBTableColumn, keys []DBTableKey) error {
+	tableStruct := &DBInstallTable{table, charset, collation, cols, keys}
 	err := i.RunHook("CreateTableStart", tableStruct)
 	if err != nil {
 		return err
 	}
-	res, err := i.adapter.CreateTable("", table, charset, collation, columns, keys)
+	res, err := i.adapter.CreateTable("", table, charset, collation, cols, keys)
 	if err != nil {
 		return err
 	}
@@ -68,16 +68,16 @@ func (i *installer) CreateTable(table, charset, collation string, columns []DBTa
 }
 
 // TODO: Let plugins manipulate the parameters like in CreateTable
-func (i *installer) AddIndex(table, iname, colname string) error {
-	err := i.RunHook("AddIndexStart", table, iname, colname)
+func (i *installer) AddIndex(table, iname, colName string) error {
+	err := i.RunHook("AddIndexStart", table, iname, colName)
 	if err != nil {
 		return err
 	}
-	res, err := i.adapter.AddIndex("", table, iname, colname)
+	res, err := i.adapter.AddIndex("", table, iname, colName)
 	if err != nil {
 		return err
 	}
-	err = i.RunHook("AddIndexAfter", table, iname, colname)
+	err = i.RunHook("AddIndexAfter", table, iname, colName)
 	if err != nil {
 		return err
 	}
@@ -85,16 +85,16 @@ func (i *installer) AddIndex(table, iname, colname string) error {
 	return nil
 }
 
-func (i *installer) AddKey(table, column string, key DBTableKey) error {
-	err := i.RunHook("AddKeyStart", table, column, key)
+func (i *installer) AddKey(table, col string, key DBTableKey) error {
+	err := i.RunHook("AddKeyStart", table, col, key)
 	if err != nil {
 		return err
 	}
-	res, err := i.adapter.AddKey("", table, column, key)
+	res, err := i.adapter.AddKey("", table, col, key)
 	if err != nil {
 		return err
 	}
-	err = i.RunHook("AddKeyAfter", table, column, key)
+	err = i.RunHook("AddKeyAfter", table, col, key)
 	if err != nil {
 		return err
 	}
@@ -120,9 +120,26 @@ func (i *installer) SimpleInsert(table, columns, fields string) error {
 	return nil
 }
 
+func (i *installer) SimpleBulkInsert(table, cols string, fieldSet []string) error {
+	err := i.RunHook("SimpleBulkInsertStart", table, cols, fieldSet)
+	if err != nil {
+		return err
+	}
+	res, err := i.adapter.SimpleBulkInsert("", table, cols, fieldSet)
+	if err != nil {
+		return err
+	}
+	err = i.RunHook("SimpleBulkInsertAfter", table, cols, fieldSet, res)
+	if err != nil {
+		return err
+	}
+	i.instructions = append(i.instructions, DBInstallInstruction{table, res, "bulk-insert"})
+	return nil
+}
+
 func (i *installer) RunHook(name string, args ...interface{}) error {
-	for _, plugin := range i.plugins {
-		err := plugin.Hook(name, args...)
+	for _, pl := range i.plugins {
+		err := pl.Hook(name, args...)
 		if err != nil {
 			return err
 		}

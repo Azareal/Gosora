@@ -1,4 +1,4 @@
-CREATE TABLE `forums` (
+CREATE TABLE `forums`(
 	`fid` int not null AUTO_INCREMENT,
 	`name` varchar(100) not null,
 	`desc` varchar(200) not null,

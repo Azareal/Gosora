@@ -1,4 +1,4 @@
-CREATE TABLE `users_replies` (
+CREATE TABLE `users_replies`(
 	`rid` int not null AUTO_INCREMENT,
 	`uid` int not null,
 	`content` text not null,

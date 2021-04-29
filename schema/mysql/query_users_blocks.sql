@@ -1,4 +1,4 @@
-CREATE TABLE `users_blocks` (
+CREATE TABLE `users_blocks`(
 	`blocker` int not null,
 	`blockedUser` int not null
 );

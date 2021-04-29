@@ -1,4 +1,4 @@
-CREATE TABLE `polls` (
+CREATE TABLE `polls`(
 	`pollID` int not null AUTO_INCREMENT,
 	`parentID` int DEFAULT 0 not null,
 	`parentTable` varchar(100) DEFAULT 'topics' not null,

@@ -10,6 +10,7 @@ package qgen
 import (
 	"os"
 	"strings"
+	//"fmt"
 )
 
 // TODO: Add support for numbers and strings?
@@ -34,11 +35,17 @@ func processColumns(colStr string) (columns []DBColumn) {
 		if len(halves) == 2 {
 			outCol.Alias = strings.TrimSpace(halves[1])
 		}
-		if halves[0][len(halves[0])-1] == ')' {
+		//fmt.Printf("halves: %+v\n", halves)
+		//fmt.Printf("halves[0]: %+v\n", halves[0])
+		switch {
+		case halves[0][0] == '(':
+			outCol.Type = TokenScope
+			outCol.Table = ""
+		case halves[0][len(halves[0])-1] == ')':
 			outCol.Type = TokenFunc
-		} else if halves[0] == "?" {
+		case halves[0] == "?":
 			outCol.Type = TokenSub
-		} else {
+		default:
 			outCol.Type = TokenColumn
 		}
 
@@ -144,7 +151,7 @@ func (wh *DBWhere) parseColumn(seg string, i int) int {
 	return i
 }
 
-func (wh *DBWhere) parseFunction(seg string, buffer string, i int) int {
+func (wh *DBWhere) parseFunction(seg, buffer string, i int) int {
 	preI := i
 	i = skipFunctionCall(seg, i-1)
 	buffer += seg[preI:i] + string(seg[i])
@@ -299,7 +306,7 @@ func (set *DBSetter) parseColumn(seg string, i int) int {
 	return i
 }
 
-func (set *DBSetter) parseFunction(segment string, buffer string, i int) int {
+func (set *DBSetter) parseFunction(segment, buffer string, i int) int {
 	preI := i
 	i = skipFunctionCall(segment, i-1)
 	buffer += segment[preI:i] + string(segment[i])

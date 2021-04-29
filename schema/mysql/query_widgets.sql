@@ -1,4 +1,4 @@
-CREATE TABLE `widgets` (
+CREATE TABLE `widgets`(
 	`wid` int not null AUTO_INCREMENT,
 	`position` int not null,
 	`side` varchar(100) not null,
