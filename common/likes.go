@@ -10,6 +10,7 @@ var Likes LikeStore
 
 type LikeStore interface {
 	BulkExists(ids []int, sentBy int, targetType string) ([]int, error)
+	BulkExistsFunc(ids []int, sentBy int, targetType string, f func(int) error) error
 	Delete(targetID int, targetType string) error
 	Count() (count int)
 }
@@ -54,6 +55,36 @@ func (s *DefaultLikeStore) BulkExists(ids []int, sentBy int, targetType string) 
 		eids = append(eids, id)
 	}
 	return eids, rows.Err()
+}
+
+// TODO: Write a test for this
+func (s *DefaultLikeStore) BulkExistsFunc(ids []int, sentBy int, targetType string, f func(id int) error) (e error) {
+	if len(ids) == 0 {
+		return nil
+	}
+	var rows *sql.Rows
+	if len(ids) == 1 {
+		rows, e = s.singleExists.Query(sentBy, targetType, ids[0])
+	} else {
+		rows, e = qgen.NewAcc().Select("likes").Columns("targetItem").Where("sentBy=? AND targetType=?").In("targetItem", ids).Query(sentBy, targetType)
+	}
+	if e == sql.ErrNoRows {
+		return nil
+	} else if e != nil {
+		return e
+	}
+	defer rows.Close()
+
+	var id int
+	for rows.Next() {
+		if e := rows.Scan(&id); e != nil {
+			return e
+		}
+		if e := f(id); e != nil {
+			return e
+		}
+	}
+	return rows.Err()
 }
 
 func (s *DefaultLikeStore) Delete(targetID int, targetType string) error {

@@ -1048,12 +1048,12 @@ func (t *TopicUser) Replies(offset int /*pFrag int, */, user *User) (rlist []*Re
 
 	// TODO: Add a config setting to disable the liked query for a burst of extra speed
 	if user.Liked > 0 && len(likedQueryList) > 0 /*&& user.LastLiked <= time.Now()*/ {
-		eids, err := Likes.BulkExists(likedQueryList, user.ID, "replies")
-		if err != nil {
-			return nil, externalHead, err
-		}
-		for _, eid := range eids {
+		e := Likes.BulkExistsFunc(likedQueryList, user.ID, "replies", func(eid int) error {
 			rlist[likedMap[eid]].Liked = true
+			return nil
+		})
+		if e != nil {
+			return nil, externalHead, e
 		}
 	}
 

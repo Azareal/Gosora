@@ -77,32 +77,32 @@ func init() {
 }
 
 func (i MenuItem) Commit() error {
-	_, err := menuItemStmts.update.Exec(i.Name, i.HTMLID, i.CSSClass, i.Position, i.Path, i.Aria, i.Tooltip, i.TmplName, i.GuestOnly, i.MemberOnly, i.SuperModOnly, i.AdminOnly, i.ID)
+	_, e := menuItemStmts.update.Exec(i.Name, i.HTMLID, i.CSSClass, i.Position, i.Path, i.Aria, i.Tooltip, i.TmplName, i.GuestOnly, i.MemberOnly, i.SuperModOnly, i.AdminOnly, i.ID)
 	Menus.Load(i.MenuID)
-	return err
+	return e
 }
 
 func (i MenuItem) Create() (int, error) {
-	res, err := menuItemStmts.insert.Exec(i.MenuID, i.Name, i.HTMLID, i.CSSClass, i.Position, i.Path, i.Aria, i.Tooltip, i.TmplName, i.GuestOnly, i.MemberOnly, i.SuperModOnly, i.AdminOnly)
-	if err != nil {
-		return 0, err
+	res, e := menuItemStmts.insert.Exec(i.MenuID, i.Name, i.HTMLID, i.CSSClass, i.Position, i.Path, i.Aria, i.Tooltip, i.TmplName, i.GuestOnly, i.MemberOnly, i.SuperModOnly, i.AdminOnly)
+	if e != nil {
+		return 0, e
 	}
 	Menus.Load(i.MenuID)
 
-	miid64, err := res.LastInsertId()
-	return int(miid64), err
+	miid64, e := res.LastInsertId()
+	return int(miid64), e
 }
 
 func (i MenuItem) Delete() error {
-	_, err := menuItemStmts.delete.Exec(i.ID)
+	_, e := menuItemStmts.delete.Exec(i.ID)
 	Menus.Load(i.MenuID)
-	return err
+	return e
 }
 
-func (h *MenuListHolder) LoadTmpl(name string) (t MenuTmpl, err error) {
-	data, err := ioutil.ReadFile("./templates/" + name + ".html")
-	if err != nil {
-		return t, err
+func (h *MenuListHolder) LoadTmpl(name string) (t MenuTmpl, e error) {
+	data, e := ioutil.ReadFile("./templates/" + name + ".html")
+	if e != nil {
+		return t, e
 	}
 	return h.Parse(name, []byte(tmpl.Minify(string(data)))), nil
 }
@@ -110,31 +110,31 @@ func (h *MenuListHolder) LoadTmpl(name string) (t MenuTmpl, err error) {
 // TODO: Make this atomic, maybe with a transaction or store the order on the menu itself?
 func (h *MenuListHolder) UpdateOrder(updateMap map[int]int) error {
 	for miid, order := range updateMap {
-		_, err := menuItemStmts.updateOrder.Exec(order, miid)
-		if err != nil {
-			return err
+		_, e := menuItemStmts.updateOrder.Exec(order, miid)
+		if e != nil {
+			return e
 		}
 	}
 	Menus.Load(h.MenuID)
 	return nil
 }
 
-func (h *MenuListHolder) LoadTmpls() (tmpls map[string]MenuTmpl, err error) {
+func (h *MenuListHolder) LoadTmpls() (tmpls map[string]MenuTmpl, e error) {
 	tmpls = make(map[string]MenuTmpl)
 	load := func(name string) error {
-		menuTmpl, err := h.LoadTmpl(name)
-		if err != nil {
-			return err
+		menuTmpl, e := h.LoadTmpl(name)
+		if e != nil {
+			return e
 		}
 		tmpls[name] = menuTmpl
 		return nil
 	}
-	err = load("menu_item")
-	if err != nil {
-		return tmpls, err
+	e = load("menu_item")
+	if e != nil {
+		return tmpls, e
 	}
-	err = load("menu_alerts")
-	return tmpls, err
+	e = load("menu_alerts")
+	return tmpls, e
 }
 
 // TODO: Run this in main, sync ticks, when the phrase file changes (need to implement the sync for that first), and when the settings are changed
@@ -259,8 +259,8 @@ type MenuTmpl struct {
 func menuDumpSlice(outerSlice [][]byte) {
 	for sliceID, slice := range outerSlice {
 		fmt.Print(strconv.Itoa(sliceID) + ":[")
-		for _, char := range slice {
-			fmt.Print(string(char))
+		for _, ch := range slice {
+			fmt.Print(string(ch))
 		}
 		fmt.Print("] ")
 	}

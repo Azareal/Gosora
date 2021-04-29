@@ -23,6 +23,7 @@ var ScheduledHalfSecondTasks []func() error
 var ScheduledSecondTasks []func() error
 var ScheduledFifteenMinuteTasks []func() error
 var ScheduledHourTasks []func() error
+var ScheduledDayTasks []func() error
 var ShutdownTasks []func() error
 var taskStmts TaskStmts
 var lastSync time.Time
@@ -59,6 +60,11 @@ func AddScheduledHourTask(task func() error) {
 	ScheduledHourTasks = append(ScheduledHourTasks, task)
 }
 
+// AddScheduledDayTask is not concurrency safe
+func AddScheduledDayTask(task func() error) {
+	ScheduledDayTasks = append(ScheduledDayTasks, task)
+}
+
 // AddShutdownTask is not concurrency safe
 func AddShutdownTask(task func() error) {
 	ShutdownTasks = append(ShutdownTasks, task)
@@ -84,6 +90,11 @@ func ScheduledHourTaskCount() int {
 	return len(ScheduledHourTasks)
 }
 
+// ScheduledDayTaskCount is not concurrency safe
+func ScheduledDayTaskCount() int {
+	return len(ScheduledDayTasks)
+}
+
 // ShutdownTaskCount is not concurrency safe
 func ShutdownTaskCount() int {
 	return len(ShutdownTasks)
@@ -105,8 +116,7 @@ func HandleExpiredScheduledGroups() error {
 		// Sneaky way of initialising a *User, please use the methods on the UserStore instead
 		user := BlankUser()
 		user.ID = uid
-		e = user.RevertGroupUpdate()
-		if e != nil {
+		if e = user.RevertGroupUpdate(); e != nil {
 			return e
 		}
 	}
@@ -130,20 +140,17 @@ func HandleServerSync() error {
 	}
 
 	if lastUpdate.After(lastSync) {
-		e = Forums.LoadForums()
-		if e != nil {
+		if e = Forums.LoadForums(); e != nil {
 			log.Print("Unable to reload the forums")
 			return e
 		}
 		// TODO: Resync the groups
 		// TODO: Resync the permissions
-		e = LoadSettings()
-		if e != nil {
+		if e = LoadSettings(); e != nil {
 			log.Print("Unable to reload the settings")
 			return e
 		}
-		e = WordFilters.ReloadAll()
-		if e != nil {
+		if e = WordFilters.ReloadAll(); e != nil {
 			log.Print("Unable to reload the word filters")
 			return e
 		}
