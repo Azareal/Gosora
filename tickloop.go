@@ -4,266 +4,138 @@ import (
 	"database/sql"
 	"log"
 	"strconv"
-	"sync/atomic"
 	"time"
 
 	c "github.com/Azareal/Gosora/common"
-	qgen "github.com/Azareal/Gosora/query_gen"
 	"github.com/pkg/errors"
 )
 
-// TODO: Name the tasks so we can figure out which one it was when something goes wrong? Or maybe toss it up WithStack down there?
-func runTasks(tasks []func() error) {
-	for _, task := range tasks {
-		if e := task(); e != nil {
-			c.LogError(e)
-		}
-	}
-}
+var TickLoop *c.TickLoop
 
-func startTick() (abort bool) {
-	isDBDown := atomic.LoadInt32(&c.IsDBDown)
-	if err := db.Ping(); err != nil {
-		// TODO: There's a bit of a race here, but it doesn't matter if this error appears multiple times in the logs as it's capped at three times, we just want to cut it down 99% of the time
-		if isDBDown == 0 {
-			db.SetConnMaxLifetime(time.Second) // Drop all the connections and start over
-			c.LogWarning(err)
-			c.LogWarning(errors.New("The database is down"))
-		}
-		atomic.StoreInt32(&c.IsDBDown, 1)
-		return true
-	}
-	if isDBDown == 1 {
-		log.Print("The database is back")
-	}
-	//db.SetConnMaxLifetime(time.Second * 60 * 5) // Make this infinite as the temporary lifetime change will purge the stale connections?
-	db.SetConnMaxLifetime(-1)
-	atomic.StoreInt32(&c.IsDBDown, 0)
-	return false
-}
-
-func runHook(name string) {
+func runHook(name string) error {
 	if e := c.RunTaskHook(name); e != nil {
-		c.LogError(e, "Failed at task '"+name+"'")
+		return errors.Wrap(e, "Failed at task '"+name+"'")
 	}
+	return nil
 }
 
-func tickLoop(thumbChan chan bool) {
-	lastDailyStr, err := c.Meta.Get("lastDaily")
+func deferredDailies() error {
+	lastDailyStr, e := c.Meta.Get("lastDaily")
 	// TODO: Report this error back correctly...
-	if err != nil && err != sql.ErrNoRows {
-		c.LogError(err)
+	if e != nil && e != sql.ErrNoRows {
+		return e
 	}
 	lastDaily, _ := strconv.ParseInt(lastDailyStr, 10, 64)
 	low := time.Now().Unix() - (60 * 60 * 24)
 	if lastDaily < low {
-		dailies()
-	}
-
-	// TODO: Write tests for these
-	// Run this goroutine once every half second
-	halfSecondTicker := time.NewTicker(time.Second / 2)
-	secondTicker := time.NewTicker(time.Second)
-	fifteenMinuteTicker := time.NewTicker(15 * time.Minute)
-	hourTicker := time.NewTicker(time.Hour)
-	dailyTicker := time.NewTicker(time.Hour * 24)
-	tick := func(name string, tasks []func() error) bool {
-		if startTick() {
-			return true
+		if e := c.Dailies(); e != nil {
+			return e
 		}
-		runHook("before_" + name + "_tick")
-		runTasks(tasks)
-		runHook("after_" + name + "_tick")
-		return false
 	}
-	for {
-		select {
-		case <-halfSecondTicker.C:
-			if tick("half_second", c.ScheduledHalfSecondTasks) {
-				continue
-			}
-		case <-secondTicker.C:
-			if startTick() {
-				continue
-			}
-			runHook("before_second_tick")
-			go func() { thumbChan <- true }()
-			runTasks(c.ScheduledSecondTasks)
-
-			// TODO: Stop hard-coding this
-			if err := c.HandleExpiredScheduledGroups(); err != nil {
-				c.LogError(err)
-			}
-
-			// TODO: Handle delayed moderation tasks
-
-			// Sync with the database, if there are any changes
-			if err = c.HandleServerSync(); err != nil {
-				c.LogError(err)
-			}
-
-			// TODO: Manage the TopicStore, UserStore, and ForumStore
-			// TODO: Alert the admin, if CPU usage, RAM usage, or the number of posts in the past second are too high
-			// TODO: Clean-up alerts with no unread matches which are over two weeks old. Move this to a 24 hour task?
-			// TODO: Rescan the static files for changes
-			runHook("after_second_tick")
-		case <-fifteenMinuteTicker.C:
-			if startTick() {
-				continue
-			}
-			runHook("before_fifteen_minute_tick")
-			runTasks(c.ScheduledFifteenMinuteTasks)
-
-			// TODO: Automatically lock topics, if they're really old, and the associated setting is enabled.
-			// TODO: Publish scheduled posts.
-			runHook("after_fifteen_minute_tick")
-		case <-hourTicker.C:
-			if startTick() {
-				continue
-			}
-			runHook("before_hour_tick")
-
-			jsToken, err := c.GenerateSafeString(80)
-			if err != nil {
-				c.LogError(err)
-			}
-			c.JSTokenBox.Store(jsToken)
-
-			c.OldSessionSigningKeyBox.Store(c.SessionSigningKeyBox.Load().(string)) // TODO: We probably don't need this type conversion
-			sessionSigningKey, err := c.GenerateSafeString(80)
-			if err != nil {
-				c.LogError(err)
-			}
-			c.SessionSigningKeyBox.Store(sessionSigningKey)
-
-			runTasks(c.ScheduledHourTasks)
-			runHook("after_hour_tick")
-		// TODO: Handle the instance going down a lot better
-		case <-dailyTicker.C:
-			dailies()
-		}
-
-		// TODO: Handle the daily clean-up.
-	}
+	return nil
 }
 
-func asmMatches() {
-	// TODO: Find a more efficient way of doing this
-	acc := qgen.NewAcc()
-	countStmt := acc.Count("activity_stream_matches").Where("asid=?").Prepare()
-	if err := acc.FirstError(); err != nil {
-		c.LogError(err)
-		return
+func tickLoop(thumbChan chan bool) error {
+	tl := c.NewTickLoop()
+	TickLoop = tl
+	if e := deferredDailies(); e != nil {
+		return e
+	}
+	if e := c.StartupTasks(); e != nil {
+		return e
 	}
 
-	err := acc.Select("activity_stream").Cols("asid").EachInt(func(asid int) error {
-		var count int
-		err := countStmt.QueryRow(asid).Scan(&count)
-		if err != sql.ErrNoRows {
-			return err
-		}
-		if count > 0 {
+	tick := func(name string, tasks []func() error) error {
+		if c.StartTick() {
 			return nil
 		}
-		_, err = qgen.NewAcc().Delete("activity_stream").Where("asid=?").Run(asid)
-		return err
-	})
-	if err != nil && err != sql.ErrNoRows {
-		c.LogError(err)
-	}
-}
-
-func dailies() {
-	asmMatches()
-
-	if c.Config.DisableRegLog {
-		_, err := qgen.NewAcc().Purge("registration_logs").Exec()
-		if err != nil {
-			c.LogError(err)
+		if e := runHook("before_" + name + "_tick"); e != nil {
+			return e
 		}
-	}
-	if c.Config.LogPruneCutoff > -1 {
-		f := func(tbl string) {
-			_, err := qgen.NewAcc().Delete(tbl).DateOlderThan("doneAt", c.Config.LogPruneCutoff, "day").Run()
-			if err != nil {
-				c.LogError(err)
-			}
+		if e := c.RunTasks(tasks); e != nil {
+			return e
 		}
-		f("login_logs")
-		f("registration_logs")
+		return runHook("after_" + name + "_tick")
 	}
 
-	if c.Config.DisablePostIP {
-		f := func(tbl string) {
-			_, err := qgen.NewAcc().Update(tbl).Set("ip=''").Where("ip!=''").Exec()
-			if err != nil {
-				c.LogError(err)
-			}
+	tl.HalfSecf = func() error {
+		return tick("half_second", c.ScheduledHalfSecondTasks)
+	}
+	// TODO: Automatically lock topics, if they're really old, and the associated setting is enabled.
+	// TODO: Publish scheduled posts.
+	tl.FifteenMinf = func() error {
+		return tick("fifteen_minute", c.ScheduledFifteenMinuteTasks)
+	}
+	// TODO: Handle the instance going down a lot better
+	// TODO: Handle the daily clean-up.
+	tl.Dayf = func() error {
+		if c.StartTick() {
+			return nil
 		}
-		f("topics")
-		f("replies")
-		f("users_replies")
-	} else if c.Config.PostIPCutoff > -1 {
-		// TODO: Use unixtime to remove this MySQLesque logic?
-		f := func(tbl string) {
-			_, err := qgen.NewAcc().Update(tbl).Set("ip=''").DateOlderThan("createdAt", c.Config.PostIPCutoff, "day").Where("ip!=''").Exec()
-			if err != nil {
-				c.LogError(err)
-			}
-		}
-		f("topics")
-		f("replies")
-		f("users_replies")
+		return c.Dailies()
 	}
 
-	if c.Config.DisablePollIP {
-		_, err := qgen.NewAcc().Update("polls_votes").Set("ip=''").Where("ip!=''").Exec()
-		if err != nil {
-			c.LogError(err)
+	tl.Secf = func() (e error) {
+		if c.StartTick() {
+			return nil
 		}
-	} else if c.Config.PollIPCutoff > -1 {
-		// TODO: Use unixtime to remove this MySQLesque logic?
-		_, err := qgen.NewAcc().Update("polls_votes").Set("ip=''").DateOlderThan("castAt", c.Config.PollIPCutoff, "day").Where("ip!=''").Exec()
-		if err != nil {
-			c.LogError(err)
+		if e = runHook("before_second_tick"); e != nil {
+			return e
+		}
+		go func() { thumbChan <- true }()
+		if e = c.RunTasks(c.ScheduledSecondTasks); e != nil {
+			return e
 		}
 
-		// TODO: Find some way of purging the ip data in polls_votes without breaking any anti-cheat measures which might be running... maybe hash it instead?
-	}
-
-	// TODO: lastActiveAt isn't currently set, so we can't rely on this to purge last_ips of users who haven't been on in a while
-	if c.Config.DisableLastIP {
-		_, err := qgen.NewAcc().Update("users").Set("last_ip=''").Where("last_ip!=''").Exec()
-		if err != nil {
-			c.LogError(err)
+		// TODO: Stop hard-coding this
+		if e = c.HandleExpiredScheduledGroups(); e != nil {
+			return e
 		}
-	} else if c.Config.LastIPCutoff > 0 {
-		/*_, err = qgen.NewAcc().Update("users").Set("last_ip='0'").DateOlderThan("lastActiveAt",c.Config.PostIPCutoff,"day").Where("last_ip!='0'").Exec()
-		if err != nil {
-			c.LogError(err)
-		}*/
-		mon := time.Now().Month()
-		_, err := qgen.NewAcc().Update("users").Set("last_ip=''").Where("last_ip!='' AND last_ip NOT LIKE '" + strconv.Itoa(int(mon)) + "-%'").Exec()
-		if err != nil {
-			c.LogError(err)
+
+		// TODO: Handle delayed moderation tasks
+
+		// Sync with the database, if there are any changes
+		if e = c.HandleServerSync(); e != nil {
+			return e
 		}
+
+		// TODO: Manage the TopicStore, UserStore, and ForumStore
+		// TODO: Alert the admin, if CPU usage, RAM usage, or the number of posts in the past second are too high
+		// TODO: Clean-up alerts with no unread matches which are over two weeks old. Move this to a 24 hour task?
+		// TODO: Rescan the static files for changes
+		return runHook("after_second_tick")
 	}
 
-	e := router.DailyTick()
-	if e != nil {
-		c.LogError(e)
-	}
-	e = c.ForumActionStore.DailyTick()
-	if e != nil {
-		c.LogError(e)
-	}
+	tl.Hourf = func() error {
+		if c.StartTick() {
+			return nil
+		}
+		if e := runHook("before_hour_tick"); e != nil {
+			return e
+		}
 
-	{
-		e := c.Meta.Set("lastDaily", strconv.FormatInt(time.Now().Unix(), 10))
+		jsToken, e := c.GenerateSafeString(80)
 		if e != nil {
-			c.LogError(e)
+			return e
 		}
+		c.JSTokenBox.Store(jsToken)
+
+		c.OldSessionSigningKeyBox.Store(c.SessionSigningKeyBox.Load().(string)) // TODO: We probably don't need this type conversion
+		sessionSigningKey, e := c.GenerateSafeString(80)
+		if e != nil {
+			return e
+		}
+		c.SessionSigningKeyBox.Store(sessionSigningKey)
+
+		if e = c.RunTasks(c.ScheduledHourTasks); e != nil {
+			return e
+		}
+		return runHook("after_hour_tick")
 	}
+
+	go tl.Loop()
+
+	return nil
 }
 
 func sched() error {

@@ -278,6 +278,10 @@ func storeInit() (e error) {
 	if e != nil {
 		return ws(e)
 	}
+	c.ActivityMatches, e = c.NewDefaultActivityStreamMatches(acc)
+	if e != nil {
+		return ws(e)
+	}
 	// TODO: Let the admin choose other thumbnailers, maybe ones defined in plugins
 	c.Thumbnailer = c.NewCaireThumbnailer()
 	c.Recalc, e = c.NewDefaultRecalc(acc)
@@ -545,7 +549,9 @@ func main() {
 	// TODO: Could we expand this to attachments and other things too?
 	thumbChan := make(chan bool)
 	go c.ThumbTask(thumbChan)
-	go tickLoop(thumbChan)
+	if err = tickLoop(thumbChan); err != nil {
+		c.LogError(err)
+	}
 
 	// Resource Management Goroutine
 	go func() {
@@ -575,7 +581,9 @@ func main() {
 	}()
 
 	log.Print("Initialising the router")
-	router, err = NewGenRouter(http.FileServer(http.Dir("./uploads")))
+	router, err = NewGenRouter(&RouterConfig{
+		Uploads: http.FileServer(http.Dir("./uploads")),
+	})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -589,7 +597,7 @@ func main() {
 	go func() {
 		sig := <-sigs
 		// TODO: Gracefully shutdown the HTTP server
-		runTasks(c.ShutdownTasks)
+		c.RunTasks(c.ShutdownTasks)
 		c.StoppedServer("Received a signal to shutdown: ", sig)
 	}()
 
@@ -597,9 +605,9 @@ func main() {
 	c.WsHub.Start()
 
 	if false {
-		f, err := os.Create(c.Config.LogDir + "cpu.prof")
-		if err != nil {
-			log.Fatal(err)
+		f, e := os.Create(c.Config.LogDir + "cpu.prof")
+		if e != nil {
+			log.Fatal(e)
 		}
 		pprof.StartCPUProfile(f)
 	}

@@ -34,7 +34,6 @@ type Alert struct {
 
 type AlertStmts struct {
 	notifyWatchers *sql.Stmt
-	notifyOne      *sql.Stmt
 	getWatchers    *sql.Stmt
 }
 
@@ -49,7 +48,6 @@ func init() {
 				qgen.DBInsert{"activity_stream_matches", "watcher,asid", ""},
 				qgen.DBJoin{"activity_stream", "activity_subscriptions", "activity_subscriptions.user, activity_stream.asid", "activity_subscriptions.targetType = activity_stream.elementType AND activity_subscriptions.targetID = activity_stream.elementID AND activity_subscriptions.user != activity_stream.actor", "asid=?", "", ""},
 			),
-			notifyOne:   acc.Insert("activity_stream_matches").Columns("watcher,asid").Fields("?,?").Prepare(),
 			getWatchers: acc.SimpleInnerJoin("activity_stream", "activity_subscriptions", "activity_subscriptions.user", "activity_subscriptions.targetType = activity_stream.elementType AND activity_subscriptions.targetID = activity_stream.elementID AND activity_subscriptions.user != activity_stream.actor", "asid=?", "", ""),
 		}
 		return acc.FirstError()
@@ -101,6 +99,7 @@ func BuildAlert(a Alert, user User /* The current user */) (out string, err erro
 
 	var url, area, phraseName string
 	own := false
+	// TODO: Avoid loading a bit of data twice
 	switch a.ElementType {
 	case "convo":
 		convo, err := Convos.Get(a.ElementID)
@@ -232,6 +231,7 @@ func BuildAlertSb(sb *strings.Builder, a *Alert, u *User /* The current user */)
 
 	var url, area string
 	own := false
+	// TODO: Avoid loading a bit of data twice
 	switch a.ElementType {
 	case "convo":
 		convo, err := Convos.Get(a.ElementID)
@@ -300,6 +300,7 @@ func BuildAlertSb(sb *strings.Builder, a *Alert, u *User /* The current user */)
 
 //const AlertsGrowHint3 = len(`{"msg":"._","sub":["",""],"path":"","img":"","id":}`) + 3 + 2 + 2 + 2 + 2 + 1
 
+// TODO: Create a notifier structure?
 func AddActivityAndNotifyAll(a Alert) error {
 	id, err := Activity.Add(a)
 	if err != nil {
@@ -308,13 +309,14 @@ func AddActivityAndNotifyAll(a Alert) error {
 	return NotifyWatchers(id)
 }
 
+// TODO: Create a notifier structure?
 func AddActivityAndNotifyTarget(a Alert) error {
 	id, err := Activity.Add(a)
 	if err != nil {
 		return err
 	}
 
-	err = NotifyOne(a.TargetUserID, id)
+	err = ActivityMatches.Add(a.TargetUserID, id)
 	if err != nil {
 		return err
 	}
@@ -330,11 +332,7 @@ func AddActivityAndNotifyTarget(a Alert) error {
 	return nil
 }
 
-func NotifyOne(watcher, asid int) error {
-	_, err := alertStmts.notifyOne.Exec(watcher, asid)
-	return err
-}
-
+// TODO: Create a notifier structure?
 func NotifyWatchers(asid int) error {
 	_, err := alertStmts.notifyWatchers.Exec(asid)
 	if err != nil {

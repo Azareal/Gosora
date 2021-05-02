@@ -318,13 +318,13 @@ func userStoreTest(t *testing.T, newUserID int) {
 	}
 
 	changeGroupTest2 := func(rank string, firstShouldBe, secondShouldBe bool) {
-		head, err := c.UserCheck(dummyResponseRecorder, dummyRequest1, user)
-		if err != nil {
-			t.Fatal(err)
+		head, e := c.UserCheck(dummyResponseRecorder, dummyRequest1, user)
+		if e != nil {
+			t.Fatal(e)
 		}
-		head2, err := c.UserCheck(dummyResponseRecorder, dummyRequest2, user2)
-		if err != nil {
-			t.Fatal(err)
+		head2, e := c.UserCheck(dummyResponseRecorder, dummyRequest2, user2)
+		if e != nil {
+			t.Fatal(e)
 		}
 		ferr := c.ForumUserCheck(head, dummyResponseRecorder, dummyRequest1, user, reportsForumID)
 		ex(ferr == nil, "There shouldn't be any errors in forumUserCheck")
@@ -362,6 +362,17 @@ func userStoreTest(t *testing.T, newUserID int) {
 	err = user.ChangeGroup(c.Config.DefaultGroup)
 	expectNilErr(t, err)
 	ex(user.Group == 6, "Someone's mutated this pointer elsewhere")
+
+	exf(user.LastIP == "", "user.LastIP should be blank not %s", user.LastIP)
+	expectNilErr(t, user.UpdateIP("::1"))
+	user, err = c.Users.Get(newUserID)
+	recordMustExist(t, err, "Couldn't find UID #%d", newUserID)
+	exf(user.LastIP == "::1", "user.LastIP should be %s not %s", "::1", user.LastIP)
+	expectNilErr(t, c.Users.ClearLastIPs())
+	expectNilErr(t, c.Users.Reload(newUserID))
+	user, err = c.Users.Get(newUserID)
+	recordMustExist(t, err, "Couldn't find UID #%d", newUserID)
+	exf(user.LastIP == "", "user.LastIP should be blank not %s", user.LastIP)
 
 	expectNilErr(t, user.Delete())
 	exf(!c.Users.Exists(newUserID), "UID #%d should no longer exist", newUserID)
@@ -533,6 +544,7 @@ func TestTopicStore(t *testing.T) {
 func topicStoreTest(t *testing.T, newID int, ip string) {
 	var topic *c.Topic
 	var err error
+	ex, exf := exp(t), expf(t)
 
 	_, err = c.Topics.Get(-1)
 	recordMustNotExist(t, err, "TID #-1 shouldn't exist")
@@ -541,25 +553,25 @@ func topicStoreTest(t *testing.T, newID int, ip string) {
 
 	topic, err = c.Topics.Get(1)
 	recordMustExist(t, err, "Couldn't find TID #1")
-	expectf(t, topic.ID == 1, "topic.ID does not match the requested TID. Got '%d' instead.", topic.ID)
+	exf(topic.ID == 1, "topic.ID does not match the requested TID. Got '%d' instead.", topic.ID)
 
 	// TODO: Add BulkGetMap() to the TopicStore
 
-	expect(t, !c.Topics.Exists(-1), "TID #-1 shouldn't exist")
-	expect(t, !c.Topics.Exists(0), "TID #0 shouldn't exist")
-	expect(t, c.Topics.Exists(1), "TID #1 should exist")
+	ex(!c.Topics.Exists(-1), "TID #-1 shouldn't exist")
+	ex(!c.Topics.Exists(0), "TID #0 shouldn't exist")
+	ex(c.Topics.Exists(1), "TID #1 should exist")
 
 	count := c.Topics.Count()
-	expectf(t, count == 1, "Global count for topics should be 1, not %d", count)
+	exf(count == 1, "Global count for topics should be 1, not %d", count)
 
 	//Create(fid int, topicName string, content string, uid int, ip string) (tid int, err error)
 	tid, err := c.Topics.Create(2, "Test Topic", "Topic Content", 1, ip)
 	expectNilErr(t, err)
-	expectf(t, tid == newID, "TID for the new topic should be %d, not %d", newID, tid)
-	expectf(t, c.Topics.Exists(newID), "TID #%d should exist", newID)
+	exf(tid == newID, "TID for the new topic should be %d, not %d", newID, tid)
+	exf(c.Topics.Exists(newID), "TID #%d should exist", newID)
 
 	count = c.Topics.Count()
-	expectf(t, count == 2, "Global count for topics should be 2, not %d", count)
+	exf(count == 2, "Global count for topics should be 2, not %d", count)
 
 	iFrag := func(cond bool) string {
 		if !cond {
@@ -571,16 +583,16 @@ func topicStoreTest(t *testing.T, newID int, ip string) {
 	testTopic := func(tid int, title, content string, createdBy int, ip string, parentID int, isClosed, sticky bool) {
 		topic, err = c.Topics.Get(tid)
 		recordMustExist(t, err, fmt.Sprintf("Couldn't find TID #%d", tid))
-		expectf(t, topic.ID == tid, "topic.ID does not match the requested TID. Got '%d' instead.", topic.ID)
-		expectf(t, topic.GetID() == tid, "topic.ID does not match the requested TID. Got '%d' instead.", topic.GetID())
-		expectf(t, topic.Title == title, "The topic's name should be '%s', not %s", title, topic.Title)
-		expectf(t, topic.Content == content, "The topic's body should be '%s', not %s", content, topic.Content)
-		expectf(t, topic.CreatedBy == createdBy, "The topic's creator should be %d, not %d", createdBy, topic.CreatedBy)
-		expectf(t, topic.IP == ip, "The topic's IP should be '%s', not %s", ip, topic.IP)
-		expectf(t, topic.ParentID == parentID, "The topic's parent forum should be %d, not %d", parentID, topic.ParentID)
-		expectf(t, topic.IsClosed == isClosed, "This topic should%s be locked", iFrag(topic.IsClosed))
-		expectf(t, topic.Sticky == sticky, "This topic should%s be sticky", iFrag(topic.Sticky))
-		expectf(t, topic.GetTable() == "topics", "The topic's table should be 'topics', not %s", topic.GetTable())
+		exf(topic.ID == tid, "topic.ID does not match the requested TID. Got '%d' instead.", topic.ID)
+		exf(topic.GetID() == tid, "topic.ID does not match the requested TID. Got '%d' instead.", topic.GetID())
+		exf(topic.Title == title, "The topic's name should be '%s', not %s", title, topic.Title)
+		exf(topic.Content == content, "The topic's body should be '%s', not %s", content, topic.Content)
+		exf(topic.CreatedBy == createdBy, "The topic's creator should be %d, not %d", createdBy, topic.CreatedBy)
+		exf(topic.IP == ip, "The topic's IP should be '%s', not %s", ip, topic.IP)
+		exf(topic.ParentID == parentID, "The topic's parent forum should be %d, not %d", parentID, topic.ParentID)
+		exf(topic.IsClosed == isClosed, "This topic should%s be locked", iFrag(topic.IsClosed))
+		exf(topic.Sticky == sticky, "This topic should%s be sticky", iFrag(topic.Sticky))
+		exf(topic.GetTable() == "topics", "The topic's table should be 'topics', not %s", topic.GetTable())
 	}
 
 	tc := c.Topics.GetCache()
@@ -618,12 +630,17 @@ func topicStoreTest(t *testing.T, newID int, ip string) {
 	testTopic(newID, "Test Topic", "Topic Content", 1, ip, 1, false, false)
 	// TODO: Add more tests for more *Topic methods
 
+	expectNilErr(t, c.Topics.ClearIPs())
+	expectNilErr(t, c.Topics.Reload(topic.ID))
+	testTopic(newID, "Test Topic", "Topic Content", 1, "", 1, false, false)
+	// TODO: Add more tests for more *Topic methods
+
 	expectNilErr(t, topic.Delete())
 	shouldNotBeIn(newID)
 
 	_, err = c.Topics.Get(newID)
 	recordMustNotExist(t, err, fmt.Sprintf("TID #%d shouldn't exist", newID))
-	expectf(t, !c.Topics.Exists(newID), "TID #%d shouldn't exist", newID)
+	exf(!c.Topics.Exists(newID), "TID #%d shouldn't exist", newID)
 
 	// TODO: Test topic creation and retrieving that created topic plus reload and inspecting the cache
 }
@@ -646,14 +663,22 @@ func TestForumStore(t *testing.T) {
 	_, err = c.Forums.Get(0)
 	recordMustNotExist(t, err, "FID #0 shouldn't exist")
 
+	testForum := func(f *c.Forum, fid int, name string, active bool, desc string) {
+		exf(f.ID == fid, "forum.ID should be %d, not %d.", fid, f.ID)
+		// TODO: Check the preset and forum permissions
+		exf(f.Name == name, "forum.Name should be %s, not %s", name, f.Name)
+		str := ""
+		if !active {
+			str = "n't"
+		}
+		exf(f.Active == active, "The reports forum should%s be active", str)
+		exf(f.Desc == desc, "forum.Desc should be '%s' not '%s'", desc, f.Desc)
+	}
+
 	forum, err := c.Forums.Get(1)
 	recordMustExist(t, err, "Couldn't find FID #1")
-	exf(forum.ID == 1, "forum.ID doesn't not match the requested FID. Got '%d' instead.'", forum.ID)
-	// TODO: Check the preset and forum permissions
-	exf(forum.Name == "Reports", "FID #0 is named '%s' and not 'Reports'", forum.Name)
-	exf(!forum.Active, "The reports forum shouldn't be active")
 	expectDesc := "All the reports go here"
-	exf(forum.Desc == expectDesc, "The forum description should be '%s' not '%s'", expectDesc, forum.Desc)
+	testForum(forum, 1, "Reports", false, expectDesc)
 	forum, err = c.Forums.BypassGet(1)
 	recordMustExist(t, err, "Couldn't find FID #1")
 
@@ -661,12 +686,8 @@ func TestForumStore(t *testing.T) {
 	recordMustExist(t, err, "Couldn't find FID #2")
 	forum, err = c.Forums.BypassGet(2)
 	recordMustExist(t, err, "Couldn't find FID #2")
-
-	exf(forum.ID == 2, "The FID should be 2 not %d", forum.ID)
-	exf(forum.Name == "General", "The name of the forum should be 'General' not '%s'", forum.Name)
-	exf(forum.Active, "The general forum should be active")
 	expectDesc = "A place for general discussions which don't fit elsewhere"
-	exf(forum.Desc == expectDesc, "The forum description should be '%s' not '%s'", expectDesc, forum.Desc)
+	testForum(forum, 2, "General", true, expectDesc)
 
 	// Forum reload test, kind of hacky but gets the job done
 	/*
@@ -705,11 +726,7 @@ func TestForumStore(t *testing.T) {
 	recordMustExist(t, err, "Couldn't find FID #3")
 	forum, err = c.Forums.BypassGet(3)
 	recordMustExist(t, err, "Couldn't find FID #3")
-
-	exf(forum.ID == 3, "The FID should be 3 not %d", forum.ID)
-	exf(forum.Name == "Test Forum", "The name of the forum should be 'Test Forum' not '%s'", forum.Name)
-	exf(forum.Active, "The test forum should be active")
-	exf(forum.Desc == "", "The forum description should be blank not '%s'", forum.Desc)
+	testForum(forum, 3, "Test Forum", true, "")
 
 	// TODO: More forum creation tests
 
@@ -1115,10 +1132,10 @@ func TestReplyStore(t *testing.T) {
 	if !c.PluginsInited {
 		c.InitPlugins()
 	}
-	_, err := c.Rstore.Get(-1)
-	recordMustNotExist(t, err, "RID #-1 shouldn't exist")
-	_, err = c.Rstore.Get(0)
-	recordMustNotExist(t, err, "RID #0 shouldn't exist")
+	_, e := c.Rstore.Get(-1)
+	recordMustNotExist(t, e, "RID #-1 shouldn't exist")
+	_, e = c.Rstore.Get(0)
+	recordMustNotExist(t, e, "RID #0 shouldn't exist")
 
 	c.Config.DisablePostIP = false
 	testReplyStore(t, 2, "::1")
@@ -1207,9 +1224,13 @@ func testReplyStore(t *testing.T, newID int, ip string) {
 	expectNilErr(t, err)
 	expectNilErr(t, reply.SetPost("huuu"))
 	exf(reply.Content == "hiii", "topic.Content should be hiii, not %s", reply.Content)
+
 	reply, err = c.Rstore.Get(rid)
-	expectNilErr(t, err)
-	exf(reply.Content == "huuu", "topic.Content should be huuu, not %s", reply.Content)
+	replyTest2(reply, err, rid, topic.ID, 1, "huuu", ip)
+	expectNilErr(t, c.Rstore.ClearIPs())
+	_ = c.Rstore.GetCache().Remove(rid)
+	replyTest(rid, topic.ID, 1, "huuu", "")
+
 	expectNilErr(t, reply.Delete())
 	// No pointer shenanigans x.x
 	// TODO: Log reply.ID and rid in cases of pointer shenanigans?
@@ -1236,43 +1257,53 @@ func TestLikes(t *testing.T) {
 	if !c.PluginsInited {
 		c.InitPlugins()
 	}
-	ex, exf := exp(t), expf(t)
+	_, exf := exp(t), expf(t)
+	bulkExists := func(iids []int, sentBy int, targetType string, expCount int) {
+		ids, e := c.Likes.BulkExists(iids, sentBy, "replies")
+		//recordMustNotExist(t, e, "no likes should be found")
+		expectNilErr(t, e)
+		exf(len(ids) == expCount, "len ids should be %d", expCount)
+
+		idMap := make(map[int]struct{})
+		for _, id := range ids {
+			idMap[id] = struct{}{}
+		}
+		for _, iid := range iids {
+			_, ok := idMap[iid]
+			exf(ok, "missing iid %d in idMap", iid)
+		}
+
+		idCount := 0
+		expectNilErr(t, c.Likes.BulkExistsFunc(iids, sentBy, targetType, func(_ int) error {
+			idCount++
+			return nil
+		}))
+		exf(idCount == expCount, "idCount should be %d not %d", expCount, idCount)
+	}
 
 	uid := 1
-	ids, err := c.Likes.BulkExists([]int{}, uid, "replies")
-	//recordMustNotExist(t, err, "no likes should be found")
-	expectNilErr(t, err)
-	ex(len(ids) == 0, "len ids should be 0")
+	bulkExists([]int{}, uid, "replies", 0)
 
-	topic, err := c.Topics.Get(1)
-	expectNilErr(t, err)
-	rid, err := c.Rstore.Create(topic, "hiii", "", uid)
-	expectNilErr(t, err)
-	r, err := c.Rstore.Get(rid)
-	expectNilErr(t, err)
+	topic, e := c.Topics.Get(1)
+	expectNilErr(t, e)
+	rid, e := c.Rstore.Create(topic, "hiii", "", uid)
+	expectNilErr(t, e)
+	r, e := c.Rstore.Get(rid)
+	expectNilErr(t, e)
 	expectNilErr(t, r.Like(uid))
-	ids, err = c.Likes.BulkExists([]int{rid}, uid, "replies")
-	expectNilErr(t, err)
-	exf(len(ids) == 1, "ids should be %d not %d", 1, len(ids))
+	bulkExists([]int{rid}, uid, "replies", 1)
 
-	rid2, err := c.Rstore.Create(topic, "hi 2 u 2", "", uid)
-	expectNilErr(t, err)
-	r2, err := c.Rstore.Get(rid2)
-	expectNilErr(t, err)
+	rid2, e := c.Rstore.Create(topic, "hi 2 u 2", "", uid)
+	expectNilErr(t, e)
+	r2, e := c.Rstore.Get(rid2)
+	expectNilErr(t, e)
 	expectNilErr(t, r2.Like(uid))
-	ids, err = c.Likes.BulkExists([]int{rid, rid2}, uid, "replies")
-	expectNilErr(t, err)
-	exf(len(ids) == 2, "ids should be %d not %d", 2, len(ids))
+	bulkExists([]int{rid, rid2}, uid, "replies", 2)
 
 	expectNilErr(t, r.Unlike(uid))
-	ids, err = c.Likes.BulkExists([]int{rid2}, uid, "replies")
-	expectNilErr(t, err)
-	exf(len(ids) == 1, "ids should be %d not %d", 1, len(ids))
+	bulkExists([]int{rid2}, uid, "replies", 1)
 	expectNilErr(t, r2.Unlike(uid))
-	ids, err = c.Likes.BulkExists([]int{}, uid, "replies")
-	//recordMustNotExist(t, err, "no likes should be found")
-	expectNilErr(t, err)
-	ex(len(ids) == 0, "len ids should be 0")
+	bulkExists([]int{}, uid, "replies", 0)
 
 	//BulkExists(ids []int, sentBy int, targetType string) (eids []int, err error)
 
@@ -1291,58 +1322,54 @@ func TestAttachments(t *testing.T) {
 	srcFile := "./test_data/" + filename
 	destFile := "./attachs/" + filename
 
+	ft := func(e error) {
+		if e != nil && e != sql.ErrNoRows {
+			t.Error(e)
+		}
+	}
+
 	ex(c.Attachments.Count() == 0, "the number of attachments should be 0")
 	ex(c.Attachments.CountIn("topics", 1) == 0, "the number of attachments in topic 1 should be 0")
 	exf(c.Attachments.CountInPath(filename) == 0, "the number of attachments with path '%s' should be 0", filename)
-	_, err := c.Attachments.FGet(1)
-	if err != nil && err != sql.ErrNoRows {
-		t.Error(err)
-	}
-	ex(err == sql.ErrNoRows, ".FGet should have no results")
-	_, err = c.Attachments.Get(1)
-	if err != nil && err != sql.ErrNoRows {
-		t.Error(err)
-	}
-	ex(err == sql.ErrNoRows, ".Get should have no results")
-	_, err = c.Attachments.MiniGetList("topics", 1)
-	if err != nil && err != sql.ErrNoRows {
-		t.Error(err)
-	}
-	ex(err == sql.ErrNoRows, ".MiniGetList should have no results")
-	_, err = c.Attachments.BulkMiniGetList("topics", []int{1})
-	if err != nil && err != sql.ErrNoRows {
-		t.Error(err)
-	}
-	ex(err == sql.ErrNoRows, ".BulkMiniGetList should have no results")
+	_, e := c.Attachments.FGet(1)
+	ft(e)
+	ex(e == sql.ErrNoRows, ".FGet should have no results")
+	_, e = c.Attachments.Get(1)
+	ft(e)
+	ex(e == sql.ErrNoRows, ".Get should have no results")
+	_, e = c.Attachments.MiniGetList("topics", 1)
+	ft(e)
+	ex(e == sql.ErrNoRows, ".MiniGetList should have no results")
+	_, e = c.Attachments.BulkMiniGetList("topics", []int{1})
+	ft(e)
+	ex(e == sql.ErrNoRows, ".BulkMiniGetList should have no results")
 
 	simUpload := func() {
 		// Sim an upload, try a proper upload through the proper pathway later on
-		_, err = os.Stat(destFile)
-		if err != nil && !os.IsNotExist(err) {
-			expectNilErr(t, err)
-		} else if err == nil {
-			err := os.Remove(destFile)
-			expectNilErr(t, err)
+		_, e = os.Stat(destFile)
+		if e != nil && !os.IsNotExist(e) {
+			expectNilErr(t, e)
+		} else if e == nil {
+			expectNilErr(t, os.Remove(destFile))
 		}
 
-		input, err := ioutil.ReadFile(srcFile)
-		expectNilErr(t, err)
-		err = ioutil.WriteFile(destFile, input, 0644)
-		expectNilErr(t, err)
+		input, e := ioutil.ReadFile(srcFile)
+		expectNilErr(t, e)
+		expectNilErr(t, ioutil.WriteFile(destFile, input, 0644))
 	}
 	simUpload()
 
-	tid, err := c.Topics.Create(2, "Attach Test", "Filler Body", 1, "")
-	expectNilErr(t, err)
-	aid, err := c.Attachments.Add(2, "forums", tid, "topics", 1, filename, "")
-	expectNilErr(t, err)
+	tid, e := c.Topics.Create(2, "Attach Test", "Filler Body", 1, "")
+	expectNilErr(t, e)
+	aid, e := c.Attachments.Add(2, "forums", tid, "topics", 1, filename, "")
+	expectNilErr(t, e)
 	exf(aid == 1, "aid should be 1 not %d", aid)
 	expectNilErr(t, c.Attachments.AddLinked("topics", tid))
 	ex(c.Attachments.Count() == 1, "the number of attachments should be 1")
 	exf(c.Attachments.CountIn("topics", tid) == 1, "the number of attachments in topic %d should be 1", tid)
 	exf(c.Attachments.CountInPath(filename) == 1, "the number of attachments with path '%s' should be 1", filename)
 
-	e := func(a *c.MiniAttachment, aid, sid, oid, uploadedBy int, path, extra, ext string) {
+	et := func(a *c.MiniAttachment, aid, sid, oid, uploadedBy int, path, extra, ext string) {
 		exf(a.ID == aid, "ID should be %d not %d", aid, a.ID)
 		exf(a.SectionID == sid, "SectionID should be %d not %d", sid, a.SectionID)
 		exf(a.OriginID == oid, "OriginID should be %d not %d", oid, a.OriginID)
@@ -1352,7 +1379,7 @@ func TestAttachments(t *testing.T) {
 		ex(a.Image, "Image should be true")
 		exf(a.Ext == ext, "Ext should be %s not %s", ext, a.Ext)
 	}
-	e2 := func(a *c.Attachment, aid, sid, oid, uploadedBy int, path, extra, ext string) {
+	et2 := func(a *c.Attachment, aid, sid, oid, uploadedBy int, path, extra, ext string) {
 		exf(a.ID == aid, "ID should be %d not %d", aid, a.ID)
 		exf(a.SectionID == sid, "SectionID should be %d not %d", sid, a.SectionID)
 		exf(a.OriginID == oid, "OriginID should be %d not %d", oid, a.OriginID)
@@ -1370,22 +1397,22 @@ func TestAttachments(t *testing.T) {
 		} else {
 			tbl = "replies"
 		}
-		fa, err := c.Attachments.FGet(aid)
-		expectNilErr(t, err)
-		e2(fa, aid, sid, oid, 1, filename, extra, "png")
+		fa, e := c.Attachments.FGet(aid)
+		expectNilErr(t, e)
+		et2(fa, aid, sid, oid, 1, filename, extra, "png")
 
-		a, err := c.Attachments.Get(aid)
-		expectNilErr(t, err)
-		e(a, aid, sid, oid, 1, filename, extra, "png")
+		a, e := c.Attachments.Get(aid)
+		expectNilErr(t, e)
+		et(a, aid, sid, oid, 1, filename, extra, "png")
 
-		alist, err := c.Attachments.MiniGetList(tbl, oid)
-		expectNilErr(t, err)
+		alist, e := c.Attachments.MiniGetList(tbl, oid)
+		expectNilErr(t, e)
 		exf(len(alist) == 1, "len(alist) should be 1 not %d", len(alist))
 		a = alist[0]
-		e(a, aid, sid, oid, 1, filename, extra, "png")
+		et(a, aid, sid, oid, 1, filename, extra, "png")
 
-		amap, err := c.Attachments.BulkMiniGetList(tbl, []int{oid})
-		expectNilErr(t, err)
+		amap, e := c.Attachments.BulkMiniGetList(tbl, []int{oid})
+		expectNilErr(t, e)
 		exf(len(amap) == 1, "len(amap) should be 1 not %d", len(amap))
 		alist, ok := amap[oid]
 		if !ok {
@@ -1393,11 +1420,11 @@ func TestAttachments(t *testing.T) {
 		}
 		exf(len(alist) == 1, "len(alist) should be 1 not %d", len(alist))
 		a = alist[0]
-		e(a, aid, sid, oid, 1, filename, extra, "png")
+		et(a, aid, sid, oid, 1, filename, extra, "png")
 	}
 
-	topic, err := c.Topics.Get(tid)
-	expectNilErr(t, err)
+	topic, e := c.Topics.Get(tid)
+	expectNilErr(t, e)
 	exf(topic.AttachCount == 1, "topic.AttachCount should be 1 not %d", topic.AttachCount)
 	f2(aid, 2, tid, "", true)
 	expectNilErr(t, topic.MoveTo(1))
@@ -1419,48 +1446,40 @@ func TestAttachments(t *testing.T) {
 		ex(c.Attachments.Count() == 0, "the number of attachments should be 0")
 		exf(c.Attachments.CountIn(tbl, oid) == 0, "the number of attachments in topic %d should be 0", tid)
 		exf(c.Attachments.CountInPath(filename) == 0, "the number of attachments with path '%s' should be 0", filename)
-		_, err = c.Attachments.FGet(aid)
-		if err != nil && err != sql.ErrNoRows {
-			t.Error(err)
-		}
-		ex(err == sql.ErrNoRows, ".FGet should have no results")
-		_, err = c.Attachments.Get(aid)
-		if err != nil && err != sql.ErrNoRows {
-			t.Error(err)
-		}
-		ex(err == sql.ErrNoRows, ".Get should have no results")
-		_, err = c.Attachments.MiniGetList(tbl, oid)
-		if err != nil && err != sql.ErrNoRows {
-			t.Error(err)
-		}
-		ex(err == sql.ErrNoRows, ".MiniGetList should have no results")
-		_, err = c.Attachments.BulkMiniGetList(tbl, []int{oid})
-		if err != nil && err != sql.ErrNoRows {
-			t.Error(err)
-		}
-		ex(err == sql.ErrNoRows, ".BulkMiniGetList should have no results")
+		_, e = c.Attachments.FGet(aid)
+		ft(e)
+		ex(e == sql.ErrNoRows, ".FGet should have no results")
+		_, e = c.Attachments.Get(aid)
+		ft(e)
+		ex(e == sql.ErrNoRows, ".Get should have no results")
+		_, e = c.Attachments.MiniGetList(tbl, oid)
+		ft(e)
+		ex(e == sql.ErrNoRows, ".MiniGetList should have no results")
+		_, e = c.Attachments.BulkMiniGetList(tbl, []int{oid})
+		ft(e)
+		ex(e == sql.ErrNoRows, ".BulkMiniGetList should have no results")
 	}
 	deleteTest(aid, tid, true)
-	topic, err = c.Topics.Get(tid)
-	expectNilErr(t, err)
+	topic, e = c.Topics.Get(tid)
+	expectNilErr(t, e)
 	exf(topic.AttachCount == 0, "topic.AttachCount should be 0 not %d", topic.AttachCount)
 
 	simUpload()
-	rid, err := c.Rstore.Create(topic, "Reply Filler", "", 1)
-	expectNilErr(t, err)
-	aid, err = c.Attachments.Add(2, "forums", rid, "replies", 1, filename, strconv.Itoa(topic.ID))
-	expectNilErr(t, err)
+	rid, e := c.Rstore.Create(topic, "Reply Filler", "", 1)
+	expectNilErr(t, e)
+	aid, e = c.Attachments.Add(2, "forums", rid, "replies", 1, filename, strconv.Itoa(topic.ID))
+	expectNilErr(t, e)
 	exf(aid == 2, "aid should be 2 not %d", aid)
 	expectNilErr(t, c.Attachments.AddLinked("replies", rid))
-	r, err := c.Rstore.Get(rid)
-	expectNilErr(t, err)
+	r, e := c.Rstore.Get(rid)
+	expectNilErr(t, e)
 	exf(r.AttachCount == 1, "r.AttachCount should be 1 not %d", r.AttachCount)
 	f2(aid, 2, rid, strconv.Itoa(topic.ID), false)
 	expectNilErr(t, c.Attachments.MoveTo(1, rid, "replies"))
 	f2(aid, 1, rid, strconv.Itoa(topic.ID), false)
 	deleteTest(aid, rid, false)
-	r, err = c.Rstore.Get(rid)
-	expectNilErr(t, err)
+	r, e = c.Rstore.Get(rid)
+	expectNilErr(t, e)
 	exf(r.AttachCount == 0, "r.AttachCount should be 0 not %d", r.AttachCount)
 
 	// TODO: Path overlap tests
@@ -1471,58 +1490,62 @@ func TestPolls(t *testing.T) {
 	if !c.PluginsInited {
 		c.InitPlugins()
 	}
+	ex, exf := exp(t), expf(t)
 
 	shouldNotExist := func(id int) {
-		expectf(t, !c.Polls.Exists(id), "poll %d should not exist", id)
-		_, err := c.Polls.Get(id)
-		recordMustNotExist(t, err, fmt.Sprintf("poll %d shouldn't exist", id))
+		exf(!c.Polls.Exists(id), "poll %d should not exist", id)
+		_, e := c.Polls.Get(id)
+		recordMustNotExist(t, e, fmt.Sprintf("poll %d shouldn't exist", id))
 	}
 	shouldNotExist(-1)
 	shouldNotExist(0)
 	shouldNotExist(1)
 
-	tid, err := c.Topics.Create(2, "Poll Test", "Filler Body", 1, "")
-	expectNilErr(t, err)
-	topic, err := c.Topics.Get(tid)
+	tid, e := c.Topics.Create(2, "Poll Test", "Filler Body", 1, "")
+	expectNilErr(t, e)
+	topic, e := c.Topics.Get(tid)
 	/*Options      map[int]string
 		Results      map[int]int  // map[optionIndex]points
 		QuickOptions []PollOption // TODO: Fix up the template transpiler so we don't need to use this hack anymore
 	}*/
 	pollType := 0 // Basic single choice
-	pid, err := c.Polls.Create(topic, pollType, map[int]string{0: "item 1", 1: "item 2", 2: "item 3"})
-	expectNilErr(t, err)
-	expectf(t, pid == 1, "poll id should be 1 not %d", pid)
-	expect(t, c.Polls.Exists(1), "poll 1 should exist")
+	pid, e := c.Polls.Create(topic, pollType, map[int]string{0: "item 1", 1: "item 2", 2: "item 3"})
+	expectNilErr(t, e)
+	exf(pid == 1, "poll id should be 1 not %d", pid)
+	ex(c.Polls.Exists(1), "poll 1 should exist")
 
 	testPoll := func(p *c.Poll, id, parentID int, parentTable string, ptype int, antiCheat bool, voteCount int) {
-		ef := expectf
-		ef(t, p.ID == id, "p.ID should be %d not %d", id, p.ID)
-		ef(t, p.ParentID == parentID, "p.ParentID should be %d not %d", parentID, p.ParentID)
-		ef(t, p.ParentTable == parentTable, "p.ParentID should be %s not %s", parentTable, p.ParentTable)
-		ef(t, p.Type == ptype, "p.ParentID should be %d not %d", ptype, p.Type)
+		ef := exf
+		ef(p.ID == id, "p.ID should be %d not %d", id, p.ID)
+		ef(p.ParentID == parentID, "p.ParentID should be %d not %d", parentID, p.ParentID)
+		ef(p.ParentTable == parentTable, "p.ParentID should be %s not %s", parentTable, p.ParentTable)
+		ef(p.Type == ptype, "p.ParentID should be %d not %d", ptype, p.Type)
 		s := "false"
 		if p.AntiCheat {
 			s = "true"
 		}
-		ef(t, p.AntiCheat == antiCheat, "p.AntiCheat should be ", s)
+		ef(p.AntiCheat == antiCheat, "p.AntiCheat should be ", s)
 		// TODO: More fields
-		ef(t, p.VoteCount == voteCount, "p.VoteCount should be %d not %d", voteCount, p.VoteCount)
+		ef(p.VoteCount == voteCount, "p.VoteCount should be %d not %d", voteCount, p.VoteCount)
 	}
 
-	p, err := c.Polls.Get(1)
-	expectNilErr(t, err)
+	p, e := c.Polls.Get(1)
+	expectNilErr(t, e)
 	testPoll(p, 1, tid, "topics", 0, false, 0)
 
 	expectNilErr(t, p.CastVote(0, 1, ""))
 	expectNilErr(t, c.Polls.Reload(p.ID))
-	p, err = c.Polls.Get(1)
-	expectNilErr(t, err)
+	p, e = c.Polls.Get(1)
+	expectNilErr(t, e)
 	testPoll(p, 1, tid, "topics", 0, false, 1)
 
+	expectNilErr(t, c.Polls.ClearIPs())
+	// TODO: Test to see if it worked
+
 	expectNilErr(t, p.Delete())
-	expect(t, !c.Polls.Exists(1), "poll 1 should no longer exist")
-	_, err = c.Polls.Get(1)
-	recordMustNotExist(t, err, "poll 1 should no longer exist")
+	ex(!c.Polls.Exists(1), "poll 1 should no longer exist")
+	_, e = c.Polls.Get(1)
+	recordMustNotExist(t, e, "poll 1 should no longer exist")
 }
 
 func TestSearch(t *testing.T) {
@@ -1530,33 +1553,34 @@ func TestSearch(t *testing.T) {
 	if !c.PluginsInited {
 		c.InitPlugins()
 	}
+	exf := expf(t)
 
 	title := "search"
 	body := "bab bab bab bab"
 	q := "search"
-	tid, err := c.Topics.Create(2, title, body, 1, "")
-	expectNilErr(t, err)
+	tid, e := c.Topics.Create(2, title, body, 1, "")
+	expectNilErr(t, e)
 
-	tids, err := c.RepliesSearch.Query(q, []int{2})
-	fmt.Printf("tids: %+v\n", tids)
-	expectNilErr(t, err)
-	expectf(t, len(tids) == 1, "len(tids) should be 1 not %d", len(tids))
+	tids, e := c.RepliesSearch.Query(q, []int{2})
+	//fmt.Printf("tids: %+v\n", tids)
+	expectNilErr(t, e)
+	exf(len(tids) == 1, "len(tids) should be 1 not %d", len(tids))
 
-	topic, err := c.Topics.Get(tids[0])
-	expectNilErr(t, err)
-	expectf(t, topic.ID == tid, "topic.ID should be %d not %d", tid, topic.ID)
-	expectf(t, topic.Title == title, "topic.Title should be %s not %s", title, topic.Title)
+	topic, e := c.Topics.Get(tids[0])
+	expectNilErr(t, e)
+	exf(topic.ID == tid, "topic.ID should be %d not %d", tid, topic.ID)
+	exf(topic.Title == title, "topic.Title should be %s not %s", title, topic.Title)
 
-	tids, err = c.RepliesSearch.Query(q, []int{1, 2})
-	fmt.Printf("tids: %+v\n", tids)
-	expectNilErr(t, err)
-	expectf(t, len(tids) == 1, "len(tids) should be 1 not %d", len(tids))
+	tids, e = c.RepliesSearch.Query(q, []int{1, 2})
+	//fmt.Printf("tids: %+v\n", tids)
+	expectNilErr(t, e)
+	exf(len(tids) == 1, "len(tids) should be 1 not %d", len(tids))
 
 	q = "bab"
-	tids, err = c.RepliesSearch.Query(q, []int{1, 2})
-	fmt.Printf("tids: %+v\n", tids)
-	expectNilErr(t, err)
-	expectf(t, len(tids) == 1, "len(tids) should be 1 not %d", len(tids))
+	tids, e = c.RepliesSearch.Query(q, []int{1, 2})
+	//fmt.Printf("tids: %+v\n", tids)
+	expectNilErr(t, e)
+	exf(len(tids) == 1, "len(tids) should be 1 not %d", len(tids))
 }
 
 func TestProfileReplyStore(t *testing.T) {
@@ -1565,12 +1589,12 @@ func TestProfileReplyStore(t *testing.T) {
 		c.InitPlugins()
 	}
 
-	_, err := c.Prstore.Get(-1)
-	recordMustNotExist(t, err, "PRID #-1 shouldn't exist")
-	_, err = c.Prstore.Get(0)
-	recordMustNotExist(t, err, "PRID #0 shouldn't exist")
-	_, err = c.Prstore.Get(1)
-	recordMustNotExist(t, err, "PRID #1 shouldn't exist")
+	_, e := c.Prstore.Get(-1)
+	recordMustNotExist(t, e, "PRID #-1 shouldn't exist")
+	_, e = c.Prstore.Get(0)
+	recordMustNotExist(t, e, "PRID #0 shouldn't exist")
+	_, e = c.Prstore.Get(1)
+	recordMustNotExist(t, e, "PRID #1 shouldn't exist")
 
 	c.Config.DisablePostIP = false
 	testProfileReplyStore(t, 1, "::1")
@@ -1581,25 +1605,36 @@ func testProfileReplyStore(t *testing.T, newID int, ip string) {
 	exf := expf(t)
 	// ? - Commented this one out as strong constraints like this put an unreasonable load on the database, we only want errors if a delete which should succeed fails
 	//profileReply := c.BlankProfileReply(1)
-	//err = profileReply.Delete()
-	//expect(t,err != nil,"You shouldn't be able to delete profile replies which don't exist")
+	//e = profileReply.Delete()
+	//expect(t,e != nil,"You shouldn't be able to delete profile replies which don't exist")
 
 	profileID := 1
-	prid, err := c.Prstore.Create(profileID, "Haha", 1, ip)
-	expectNilErr(t, err)
+	prid, e := c.Prstore.Create(profileID, "Haha", 1, ip)
+	expectNilErr(t, e)
 	exf(prid == newID, "The first profile reply should have an ID of %d", newID)
 
-	pr, err := c.Prstore.Get(newID)
-	expectNilErr(t, err)
+	pr, e := c.Prstore.Get(newID)
+	expectNilErr(t, e)
 	exf(pr.ID == newID, "The profile reply should have an ID of %d not %d", newID, pr.ID)
 	exf(pr.ParentID == 1, "The parent ID of the profile reply should be 1 not %d", pr.ParentID)
 	exf(pr.Content == "Haha", "The profile reply's contents should be 'Haha' not '%s'", pr.Content)
 	exf(pr.CreatedBy == 1, "The profile reply's creator should be 1 not %d", pr.CreatedBy)
 	exf(pr.IP == ip, "The profile reply's IP should be '%s' not '%s'", ip, pr.IP)
 
+	expectNilErr(t, c.Prstore.ClearIPs())
+
+	pr, e = c.Prstore.Get(newID)
+	expectNilErr(t, e)
+	exf(pr.ID == newID, "The profile reply should have an ID of %d not %d", newID, pr.ID)
+	exf(pr.ParentID == 1, "The parent ID of the profile reply should be 1 not %d", pr.ParentID)
+	exf(pr.Content == "Haha", "The profile reply's contents should be 'Haha' not '%s'", pr.Content)
+	exf(pr.CreatedBy == 1, "The profile reply's creator should be 1 not %d", pr.CreatedBy)
+	ip = ""
+	exf(pr.IP == ip, "The profile reply's IP should be '%s' not '%s'", ip, pr.IP)
+
 	expectNilErr(t, pr.Delete())
-	_, err = c.Prstore.Get(newID)
-	exf(err != nil, "PRID #%d shouldn't exist after being deleted", newID)
+	_, e = c.Prstore.Get(newID)
+	exf(e != nil, "PRID #%d shouldn't exist after being deleted", newID)
 
 	// TODO: Test pr.SetBody() and pr.Creator()
 }
@@ -1765,33 +1800,63 @@ func TestConvos(t *testing.T) {
 
 func TestActivityStream(t *testing.T) {
 	miscinit(t)
-	ex := exp(t)
+	ex, exf := exp(t), expf(t)
 
 	ex(c.Activity.Count() == 0, "activity stream count should be 0")
-
-	_, err := c.Activity.Get(-1)
-	recordMustNotExist(t, err, "activity item -1 shouldn't exist")
-	_, err = c.Activity.Get(0)
-	recordMustNotExist(t, err, "activity item 0 shouldn't exist")
-	_, err = c.Activity.Get(1)
-	recordMustNotExist(t, err, "activity item 1 shouldn't exist")
+	gNone := func(id int) {
+		_, e := c.Activity.Get(id)
+		recordMustNotExist(t, e, "activity item "+strconv.Itoa(id)+" shouldn't exist")
+	}
+	gNone(-1)
+	gNone(0)
+	gNone(1)
+	countAsid := func(asid, count int) {
+		exf(c.ActivityMatches.CountAsid(asid) == count, "activity stream matches count for asid %d should be %d not %d", asid, count, c.ActivityMatches.CountAsid(asid))
+	}
+	countAsid(-1, 0)
+	countAsid(0, 0)
+	countAsid(1, 0)
 
 	a := c.Alert{ActorID: 1, TargetUserID: 1, Event: "like", ElementType: "topic", ElementID: 1}
-	id, err := c.Activity.Add(a)
-	expectNilErr(t, err)
+	id, e := c.Activity.Add(a)
+	expectNilErr(t, e)
 	ex(id == 1, "new activity item id should be 1")
 
 	ex(c.Activity.Count() == 1, "activity stream count should be 1")
-	al, err := c.Activity.Get(1)
-	expectNilErr(t, err)
+	al, e := c.Activity.Get(1)
+	expectNilErr(t, e)
+	exf(al.ASID == id, "alert asid should be %d not %d", id, al.ASID)
 	ex(al.ActorID == 1, "alert actorid should be 1")
 	ex(al.TargetUserID == 1, "alert targetuserid should be 1")
 	ex(al.Event == "like", "alert event type should be like")
 	ex(al.ElementType == "topic", "alert element type should be topic")
 	ex(al.ElementID == 1, "alert element id should be 1")
 
+	countAsid(id, 0)
+
+	tuid, e := c.Users.Create("Activity Target", "Activity Target", "", 1, true)
+	expectNilErr(t, e)
+	expectNilErr(t, c.ActivityMatches.Add(tuid, 1))
+	countAsid(id, 1)
+	expectNilErr(t, c.ActivityMatches.Delete(tuid, id))
+	countAsid(id, 0)
+
+	expectNilErr(t, c.ActivityMatches.Add(tuid, 1))
+	countAsid(id, 1)
+	changed, e := c.ActivityMatches.DeleteAndCountChanged(tuid, id)
+	expectNilErr(t, e)
+	exf(changed == 1, "changed should be %d not %d", 1, changed)
+	countAsid(id, 0)
+
+	expectNilErr(t, c.ActivityMatches.Add(tuid, 1))
+	countAsid(id, 1)
+
+	// TODO: Add more tests
+
 	expectNilErr(t, c.Activity.Delete(id))
 	ex(c.Activity.Count() == 0, "activity stream count should be 0")
+	gNone(id)
+	countAsid(id, 0)
 
 	// TODO: More tests
 }
@@ -1829,7 +1894,162 @@ func TestLogs(t *testing.T) {
 	gTests2(c.AdminLogs, "adminlog")
 }
 
-// TODO: Add tests for registration logs
+func TestRegLogs(t *testing.T) {
+	miscinit(t)
+	if !c.PluginsInited {
+		c.InitPlugins()
+	}
+	exf := expf(t)
+
+	mustNone := func() {
+		exf(c.RegLogs.Count() == 0, "count should be %d not %d", 0, c.RegLogs.Count())
+		items, e := c.RegLogs.GetOffset(0, 10)
+		expectNilErr(t, e)
+		exf(len(items) == 0, "len(items) should be %d not %d", 0, len(items))
+		expectNilErr(t, c.RegLogs.Purge())
+		exf(c.RegLogs.Count() == 0, "count should be %d not %d", 0, c.RegLogs.Count())
+		items, e = c.RegLogs.GetOffset(0, 10)
+		expectNilErr(t, e)
+		exf(len(items) == 0, "len(items) should be %d not %d", 0, len(items))
+	}
+	mustNone()
+
+	regLog := &c.RegLogItem{Username: "Aa", Email: "aa@example.com", FailureReason: "fake", Success: false, IP: ""}
+	id, e := regLog.Create()
+	exf(id == 1, "id should be %d not %d", 1, id)
+	expectNilErr(t, e)
+
+	exf(c.RegLogs.Count() == 1, "count should be %d not %d", 1, c.RegLogs.Count())
+	items, e := c.RegLogs.GetOffset(0, 10)
+	expectNilErr(t, e)
+	exf(len(items) == 1, "len(items) should be %d not %d", 1, len(items))
+	// TODO: Add more tests
+
+	expectNilErr(t, c.RegLogs.DeleteOlderThanDays(2))
+
+	exf(c.RegLogs.Count() == 1, "count should be %d not %d", 1, c.RegLogs.Count())
+	items, e = c.RegLogs.GetOffset(0, 10)
+	expectNilErr(t, e)
+	exf(len(items) == 1, "len(items) should be %d not %d", 1, len(items))
+	// TODO: Add more tests
+
+	// TODO: Commit() test?
+	dayAgo := time.Now().AddDate(0, 0, -5)
+	items[0].DoneAt = dayAgo.Format("2006-01-02 15:04:05")
+	expectNilErr(t, items[0].Commit())
+
+	exf(c.RegLogs.Count() == 1, "count should be %d not %d", 1, c.RegLogs.Count())
+	items, e = c.RegLogs.GetOffset(0, 10)
+	expectNilErr(t, e)
+	exf(len(items) == 1, "len(items) should be %d not %d", 1, len(items))
+	// TODO: Add more tests
+
+	expectNilErr(t, c.RegLogs.DeleteOlderThanDays(2))
+	mustNone()
+
+	regLog = &c.RegLogItem{Username: "Aa", Email: "aa@example.com", FailureReason: "fake", Success: false, IP: ""}
+	id, e = regLog.Create()
+	exf(id == 2, "id should be %d not %d", 2, id)
+	expectNilErr(t, e)
+
+	exf(c.RegLogs.Count() == 1, "count should be %d not %d", 1, c.RegLogs.Count())
+	items, e = c.RegLogs.GetOffset(0, 10)
+	expectNilErr(t, e)
+	exf(len(items) == 1, "len(items) should be %d not %d", 1, len(items))
+	// TODO: Add more tests
+
+	expectNilErr(t, c.RegLogs.Purge())
+	mustNone()
+
+	// TODO: Add more tests
+}
+
+func TestLoginLogs(t *testing.T) {
+	miscinit(t)
+	if !c.PluginsInited {
+		c.InitPlugins()
+	}
+	ex, exf := exp(t), expf(t)
+	uid, e := c.Users.Create("Log Test", "Log Test", "", 1, true)
+	expectNilErr(t, e)
+
+	exf(c.LoginLogs.CountUser(-1) == 0, "countuser(-1) should be %d not %d", 0, c.LoginLogs.CountUser(-1))
+	exf(c.LoginLogs.CountUser(0) == 0, "countuser(0) should be %d not %d", 0, c.LoginLogs.CountUser(0))
+	exf(c.LoginLogs.CountUser(1) == 0, "countuser(1) should be %d not %d", 0, c.LoginLogs.CountUser(1))
+	goNone := func(uid, offset, perPage int) {
+		items, e := c.LoginLogs.GetOffset(uid, offset, perPage)
+		expectNilErr(t, e)
+		exf(len(items) == 0, "len(items) should be %d not %d", 0, len(items))
+	}
+	goNone(-1, 0, 10)
+	goNone(0, 0, 10)
+	goNone(1, 0, 10)
+	goNone(1, 1, 10)
+	goNone(1, 0, 0)
+
+	mustNone := func() {
+		exf(c.LoginLogs.Count() == 0, "count should be %d not %d", 0, c.LoginLogs.Count())
+		exf(c.LoginLogs.CountUser(uid) == 0, "countuser(%d) should be %d not %d", uid, 0, c.LoginLogs.CountUser(uid))
+		goNone(uid, 0, 10)
+		goNone(uid, 1, 10)
+		goNone(uid, 0, 0)
+	}
+	mustNone()
+
+	logItem := &c.LoginLogItem{UID: uid, Success: true, IP: ""}
+	_, e = logItem.Create()
+	expectNilErr(t, e)
+
+	exf(c.LoginLogs.Count() == 1, "count should be %d not %d", 1, c.LoginLogs.Count())
+	exf(c.LoginLogs.CountUser(uid) == 1, "countuser(%d) should be %d not %d", uid, 1, c.LoginLogs.CountUser(uid))
+	items, e := c.LoginLogs.GetOffset(uid, 0, 10)
+	expectNilErr(t, e)
+	exf(len(items) == 1, "len(items) should be %d not %d", 1, len(items))
+	// TODO: More tests
+	exf(items[0].UID == uid, "UID should be %d not %d", uid, items[0].UID)
+	ex(items[0].Success, "Success should be true")
+	ex(items[0].IP == "", "IP should be blank")
+	goNone(uid, 1, 10)
+	goNone(uid, 0, 0)
+
+	dayAgo := time.Now().AddDate(0, 0, -5)
+	items[0].DoneAt = dayAgo.Format("2006-01-02 15:04:05")
+	prevDoneAt := items[0].DoneAt
+	expectNilErr(t, items[0].Commit())
+
+	items, e = c.LoginLogs.GetOffset(uid, 0, 10)
+	expectNilErr(t, e)
+	exf(len(items) == 1, "len(items) should be %d not %d", 1, len(items))
+	// TODO: More tests
+	exf(items[0].UID == uid, "UID should be %d not %d", uid, items[0].UID)
+	ex(items[0].Success, "Success should be true")
+	ex(items[0].IP == "", "IP should be blank")
+	exf(items[0].DoneAt == prevDoneAt, "DoneAt should be %s not %s", prevDoneAt, items[0].DoneAt)
+	goNone(uid, 1, 10)
+	goNone(uid, 0, 0)
+
+	expectNilErr(t, c.LoginLogs.DeleteOlderThanDays(2))
+	mustNone()
+
+	logItem = &c.LoginLogItem{UID: uid, Success: true, IP: ""}
+	_, e = logItem.Create()
+	expectNilErr(t, e)
+
+	exf(c.LoginLogs.Count() == 1, "count should be %d not %d", 1, c.LoginLogs.Count())
+	exf(c.LoginLogs.CountUser(uid) == 1, "countuser(%d) should be %d not %d", uid, 1, c.LoginLogs.CountUser(uid))
+	items, e = c.LoginLogs.GetOffset(uid, 0, 10)
+	expectNilErr(t, e)
+	exf(len(items) == 1, "len(items) should be %d not %d", 1, len(items))
+	// TODO: More tests
+	exf(items[0].UID == uid, "UID should be %d not %d", uid, items[0].UID)
+	ex(items[0].Success, "Success should be true")
+	ex(items[0].IP == "", "IP should be blank")
+	goNone(uid, 1, 10)
+	goNone(uid, 0, 0)
+
+	expectNilErr(t, c.LoginLogs.Purge())
+	mustNone()
+}
 
 func TestPluginManager(t *testing.T) {
 	miscinit(t)
@@ -1845,11 +2065,11 @@ func TestPluginManager(t *testing.T) {
 	ex(!pl.Installable, "Plugin bbcode shouldn't be installable")
 	ex(!pl.Installed, "Plugin bbcode shouldn't be 'installed'")
 	ex(!pl.Active, "Plugin bbcode shouldn't be active")
-	active, err := pl.BypassActive()
-	expectNilErr(t, err)
+	active, e := pl.BypassActive()
+	expectNilErr(t, e)
 	ex(!active, "Plugin bbcode shouldn't be active in the database either")
-	hasPlugin, err := pl.InDatabase()
-	expectNilErr(t, err)
+	hasPlugin, e := pl.InDatabase()
+	expectNilErr(t, e)
 	ex(!hasPlugin, "Plugin bbcode shouldn't exist in the database")
 	// TODO: Add some test cases for SetActive and SetInstalled before calling AddToDatabase
 
@@ -1857,11 +2077,11 @@ func TestPluginManager(t *testing.T) {
 	ex(!pl.Installable, "Plugin bbcode shouldn't be installable")
 	ex(!pl.Installed, "Plugin bbcode shouldn't be 'installed'")
 	ex(pl.Active, "Plugin bbcode should be active")
-	active, err = pl.BypassActive()
-	expectNilErr(t, err)
+	active, e = pl.BypassActive()
+	expectNilErr(t, e)
 	ex(active, "Plugin bbcode should be active in the database too")
-	hasPlugin, err = pl.InDatabase()
-	expectNilErr(t, err)
+	hasPlugin, e = pl.InDatabase()
+	expectNilErr(t, e)
 	ex(hasPlugin, "Plugin bbcode should exist in the database")
 	ex(pl.Init != nil, "Plugin bbcode should have an init function")
 	expectNilErr(t, pl.Init(pl))
@@ -1870,22 +2090,22 @@ func TestPluginManager(t *testing.T) {
 	ex(!pl.Installable, "Plugin bbcode shouldn't be installable")
 	ex(!pl.Installed, "Plugin bbcode shouldn't be 'installed'")
 	ex(pl.Active, "Plugin bbcode should still be active")
-	active, err = pl.BypassActive()
-	expectNilErr(t, err)
+	active, e = pl.BypassActive()
+	expectNilErr(t, e)
 	ex(active, "Plugin bbcode should still be active in the database too")
-	hasPlugin, err = pl.InDatabase()
-	expectNilErr(t, err)
+	hasPlugin, e = pl.InDatabase()
+	expectNilErr(t, e)
 	ex(hasPlugin, "Plugin bbcode should still exist in the database")
 
 	expectNilErr(t, pl.SetActive(false))
 	ex(!pl.Installable, "Plugin bbcode shouldn't be installable")
 	ex(!pl.Installed, "Plugin bbcode shouldn't be 'installed'")
 	ex(!pl.Active, "Plugin bbcode shouldn't be active")
-	active, err = pl.BypassActive()
-	expectNilErr(t, err)
+	active, e = pl.BypassActive()
+	expectNilErr(t, e)
 	ex(!active, "Plugin bbcode shouldn't be active in the database")
-	hasPlugin, err = pl.InDatabase()
-	expectNilErr(t, err)
+	hasPlugin, e = pl.InDatabase()
+	expectNilErr(t, e)
 	ex(hasPlugin, "Plugin bbcode should still exist in the database")
 	ex(pl.Deactivate != nil, "Plugin bbcode should have an init function")
 	pl.Deactivate(pl) // Returns nothing
@@ -1895,22 +2115,22 @@ func TestPluginManager(t *testing.T) {
 	ex(!pl.Installable, "Plugin bbcode shouldn't be installable")
 	ex(!pl.Installed, "Plugin bbcode shouldn't be 'installed'")
 	ex(!pl.Active, "Plugin bbcode shouldn't be active")
-	active, err = pl.BypassActive()
-	expectNilErr(t, err)
+	active, e = pl.BypassActive()
+	expectNilErr(t, e)
 	ex(!active, "Plugin bbcode shouldn't be active in the database either")
-	hasPlugin, err = pl.InDatabase()
-	expectNilErr(t, err)
+	hasPlugin, e = pl.InDatabase()
+	expectNilErr(t, e)
 	ex(hasPlugin, "Plugin bbcode should still exist in the database")
 
 	ex(pl.SetInstalled(false) == c.ErrPluginNotInstallable, "Plugin was set as not installed despite not being installable")
 	ex(!pl.Installable, "Plugin bbcode shouldn't be installable")
 	ex(!pl.Installed, "Plugin bbcode shouldn't be 'installed'")
 	ex(!pl.Active, "Plugin bbcode shouldn't be active")
-	active, err = pl.BypassActive()
-	expectNilErr(t, err)
+	active, e = pl.BypassActive()
+	expectNilErr(t, e)
 	ex(!active, "Plugin bbcode shouldn't be active in the database either")
-	hasPlugin, err = pl.InDatabase()
-	expectNilErr(t, err)
+	hasPlugin, e = pl.InDatabase()
+	expectNilErr(t, e)
 	ex(hasPlugin, "Plugin bbcode should still exist in the database")
 
 	// This isn't really installable, but we want to get a few tests done before getting plugins which are stateful
@@ -1919,22 +2139,22 @@ func TestPluginManager(t *testing.T) {
 	ex(pl.Installable, "Plugin bbcode should be installable")
 	ex(pl.Installed, "Plugin bbcode should be 'installed'")
 	ex(!pl.Active, "Plugin bbcode shouldn't be active")
-	active, err = pl.BypassActive()
-	expectNilErr(t, err)
+	active, e = pl.BypassActive()
+	expectNilErr(t, e)
 	ex(!active, "Plugin bbcode shouldn't be active in the database either")
-	hasPlugin, err = pl.InDatabase()
-	expectNilErr(t, err)
+	hasPlugin, e = pl.InDatabase()
+	expectNilErr(t, e)
 	ex(hasPlugin, "Plugin bbcode should still exist in the database")
 
 	expectNilErr(t, pl.SetInstalled(false))
 	ex(pl.Installable, "Plugin bbcode should be installable")
 	ex(!pl.Installed, "Plugin bbcode shouldn't be 'installed'")
 	ex(!pl.Active, "Plugin bbcode shouldn't be active")
-	active, err = pl.BypassActive()
-	expectNilErr(t, err)
+	active, e = pl.BypassActive()
+	expectNilErr(t, e)
 	ex(!active, "Plugin bbcode shouldn't be active in the database either")
-	hasPlugin, err = pl.InDatabase()
-	expectNilErr(t, err)
+	hasPlugin, e = pl.InDatabase()
+	expectNilErr(t, e)
 	ex(hasPlugin, "Plugin bbcode should still exist in the database")
 
 	// Bugs sometimes arise when we try to delete a hook when there are multiple, so test for that
@@ -1944,11 +2164,11 @@ func TestPluginManager(t *testing.T) {
 	ex(!pl2.Installable, "Plugin markdown shouldn't be installable")
 	ex(!pl2.Installed, "Plugin markdown shouldn't be 'installed'")
 	ex(!pl2.Active, "Plugin markdown shouldn't be active")
-	active, err = pl2.BypassActive()
-	expectNilErr(t, err)
+	active, e = pl2.BypassActive()
+	expectNilErr(t, e)
 	ex(!active, "Plugin markdown shouldn't be active in the database either")
-	hasPlugin, err = pl2.InDatabase()
-	expectNilErr(t, err)
+	hasPlugin, e = pl2.InDatabase()
+	expectNilErr(t, e)
 	ex(!hasPlugin, "Plugin markdown shouldn't exist in the database")
 
 	expectNilErr(t, pl2.AddToDatabase(true, false))
@@ -2000,54 +2220,62 @@ func TestPhrases(t *testing.T) {
 }
 
 func TestMetaStore(t *testing.T) {
-	m, err := c.Meta.Get("magic")
-	expect(t, m == "", "meta var magic should be empty")
-	recordMustNotExist(t, err, "meta var magic should not exist")
+	ex, exf := exp(t), expf(t)
+	m, e := c.Meta.Get("magic")
+	ex(m == "", "meta var magic should be empty")
+	recordMustNotExist(t, e, "meta var magic should not exist")
+
+	expectVal := func(name, expect string) {
+		m, e = c.Meta.Get(name)
+		expectNilErr(t, e)
+		exf(m == expect, "meta var %s should be %s", name, expect)
+	}
 
 	expectNilErr(t, c.Meta.Set("magic", "lol"))
-
-	m, err = c.Meta.Get("magic")
-	expectNilErr(t, err)
-	expect(t, m == "lol", "meta var magic should be lol")
-
+	expectVal("magic", "lol")
 	expectNilErr(t, c.Meta.Set("magic", "wha"))
+	expectVal("magic", "wha")
 
-	m, err = c.Meta.Get("magic")
-	expectNilErr(t, err)
-	expect(t, m == "wha", "meta var magic should be wha")
+	m, e = c.Meta.Get("giggle")
+	ex(m == "", "meta var giggle should be empty")
+	recordMustNotExist(t, e, "meta var giggle should not exist")
 
-	m, err = c.Meta.Get("giggle")
-	expect(t, m == "", "meta var giggle should be empty")
-	recordMustNotExist(t, err, "meta var giggle should not exist")
+	expectNilErr(t, c.Meta.SetInt("magic", 1))
+	expectVal("magic", "1")
+	expectNilErr(t, c.Meta.SetInt64("magic", 5))
+	expectVal("magic", "5")
 }
 
 func TestPages(t *testing.T) {
 	ex := exp(t)
 	ex(c.Pages.Count() == 0, "Page count should be 0")
-	_, err := c.Pages.Get(1)
-	recordMustNotExist(t, err, "Page 1 should not exist yet")
+	_, e := c.Pages.Get(1)
+	recordMustNotExist(t, e, "Page 1 should not exist yet")
 	expectNilErr(t, c.Pages.Delete(-1))
 	expectNilErr(t, c.Pages.Delete(0))
 	expectNilErr(t, c.Pages.Delete(1))
-	_, err = c.Pages.Get(1)
-	recordMustNotExist(t, err, "Page 1 should not exist yet")
-	//err = c.Pages.Reload(1)
-	//recordMustNotExist(t,err,"Page 1 should not exist yet")
+	_, e = c.Pages.Get(1)
+	recordMustNotExist(t, e, "Page 1 should not exist yet")
+	//e = c.Pages.Reload(1)
+	//recordMustNotExist(t,e,"Page 1 should not exist yet")
 
 	ipage := c.BlankCustomPage()
 	ipage.Name = "test"
 	ipage.Title = "Test"
 	ipage.Body = "A test page"
-	pid, err := ipage.Create()
-	expectNilErr(t, err)
+	pid, e := ipage.Create()
+	expectNilErr(t, e)
 	ex(pid == 1, "The first page should have an ID of 1")
 	ex(c.Pages.Count() == 1, "Page count should be 1")
 
-	page, err := c.Pages.Get(1)
-	expectNilErr(t, err)
-	ex(page.Name == ipage.Name, "The page name should be "+ipage.Name)
-	ex(page.Title == ipage.Title, "The page title should be "+ipage.Title)
-	ex(page.Body == ipage.Body, "The page body should be "+ipage.Body)
+	test := func(pid int, ep *c.CustomPage) {
+		p, e := c.Pages.Get(pid)
+		expectNilErr(t, e)
+		ex(p.Name == ep.Name, "The page name should be "+ep.Name)
+		ex(p.Title == ep.Title, "The page title should be "+ep.Title)
+		ex(p.Body == ep.Body, "The page body should be "+ep.Body)
+	}
+	test(1, ipage)
 
 	opage, err := c.Pages.Get(1)
 	expectNilErr(t, err)
@@ -2056,18 +2284,14 @@ func TestPages(t *testing.T) {
 	opage.Body = "testing"
 	expectNilErr(t, opage.Commit())
 
-	page, err = c.Pages.Get(1)
-	expectNilErr(t, err)
-	ex(page.Name == opage.Name, "The page name should be "+opage.Name)
-	ex(page.Title == opage.Title, "The page title should be "+opage.Title)
-	ex(page.Body == opage.Body, "The page body should be "+opage.Body)
+	test(1, opage)
 
 	expectNilErr(t, c.Pages.Delete(1))
 	ex(c.Pages.Count() == 0, "Page count should be 0")
-	_, err = c.Pages.Get(1)
-	recordMustNotExist(t, err, "Page 1 should not exist")
-	//err = c.Pages.Reload(1)
-	//recordMustNotExist(t,err,"Page 1 should not exist")
+	_, e = c.Pages.Get(1)
+	recordMustNotExist(t, e, "Page 1 should not exist")
+	//e = c.Pages.Reload(1)
+	//recordMustNotExist(t,e,"Page 1 should not exist")
 
 	// TODO: More tests
 }
@@ -2141,22 +2365,26 @@ func TestWordFilters(t *testing.T) {
 
 func TestMFAStore(t *testing.T) {
 	exf := expf(t)
-	_, err := c.MFAstore.Get(-1)
-	recordMustNotExist(t, err, "mfa uid -1 should not exist")
-	_, err = c.MFAstore.Get(0)
-	recordMustNotExist(t, err, "mfa uid 0 should not exist")
-	_, err = c.MFAstore.Get(1)
-	recordMustNotExist(t, err, "mfa uid 1 should not exist")
 
-	secret, err := c.GenerateGAuthSecret()
-	expectNilErr(t, err)
+	mustNone := func() {
+		_, e := c.MFAstore.Get(-1)
+		recordMustNotExist(t, e, "mfa uid -1 should not exist")
+		_, e = c.MFAstore.Get(0)
+		recordMustNotExist(t, e, "mfa uid 0 should not exist")
+		_, e = c.MFAstore.Get(1)
+		recordMustNotExist(t, e, "mfa uid 1 should not exist")
+	}
+	mustNone()
+
+	secret, e := c.GenerateGAuthSecret()
+	expectNilErr(t, e)
 	expectNilErr(t, c.MFAstore.Create(secret, 1))
-	_, err = c.MFAstore.Get(0)
-	recordMustNotExist(t, err, "mfa uid 0 should not exist")
+	_, e = c.MFAstore.Get(0)
+	recordMustNotExist(t, e, "mfa uid 0 should not exist")
 	var scratches []string
-	it, err := c.MFAstore.Get(1)
+	it, e := c.MFAstore.Get(1)
 	test := func(j int) {
-		expectNilErr(t, err)
+		expectNilErr(t, e)
 		exf(it.UID == 1, "UID should be 1 not %d", it.UID)
 		exf(it.Secret == secret, "Secret should be '%s' not %s", secret, it.Secret)
 		exf(len(it.Scratch) == 8, "Scratch should be 8 not %d", len(it.Scratch))
@@ -2176,19 +2404,14 @@ func TestMFAStore(t *testing.T) {
 	test(0)
 	for i := 0; i < len(scratches); i++ {
 		expectNilErr(t, it.BurnScratch(i))
-		it, err = c.MFAstore.Get(1)
+		it, e = c.MFAstore.Get(1)
 		test(i)
 	}
-	token, err := gauth.GetTOTPToken(secret)
-	expectNilErr(t, err)
+	token, e := gauth.GetTOTPToken(secret)
+	expectNilErr(t, e)
 	expectNilErr(t, c.Auth.ValidateMFAToken(token, 1))
 	expectNilErr(t, it.Delete())
-	_, err = c.MFAstore.Get(-1)
-	recordMustNotExist(t, err, "mfa uid -1 should not exist")
-	_, err = c.MFAstore.Get(0)
-	recordMustNotExist(t, err, "mfa uid 0 should not exist")
-	_, err = c.MFAstore.Get(1)
-	recordMustNotExist(t, err, "mfa uid 1 should not exist")
+	mustNone()
 }
 
 // TODO: Expand upon the valid characters which can go in URLs?
@@ -2229,15 +2452,15 @@ func TestSlugs(t *testing.T) {
 
 func TestWidgets(t *testing.T) {
 	ex, exf := exp(t), expf(t)
-	_, err := c.Widgets.Get(1)
-	recordMustNotExist(t, err, "There shouldn't be any widgets by default")
+	_, e := c.Widgets.Get(1)
+	recordMustNotExist(t, e, "There shouldn't be any widgets by default")
 	widgets := c.Docks.RightSidebar.Items
 	exf(len(widgets) == 0, "RightSidebar should have 0 items, not %d", len(widgets))
 
 	widget := &c.Widget{Position: 0, Side: "rightSidebar", Type: "simple", Enabled: true, Location: "global"}
 	ewidget := &c.WidgetEdit{widget, map[string]string{"Name": "Test", "Text": "Testing"}}
-	wid, err := ewidget.Create()
-	expectNilErr(t, err)
+	wid, e := ewidget.Create()
+	expectNilErr(t, e)
 	ex(wid == 1, "wid should be 1")
 
 	wtest := func(w, w2 *c.Widget) {
@@ -2249,8 +2472,8 @@ func TestWidgets(t *testing.T) {
 	}
 
 	// TODO: Do a test for the widget body
-	widget2, err := c.Widgets.Get(1)
-	expectNilErr(t, err)
+	widget2, e := c.Widgets.Get(1)
+	expectNilErr(t, e)
 	wtest(widget, widget2)
 
 	widgets = c.Docks.RightSidebar.Items
@@ -2261,8 +2484,8 @@ func TestWidgets(t *testing.T) {
 	ewidget = &c.WidgetEdit{widget2, map[string]string{"Name": "Test", "Text": "Testing"}}
 	expectNilErr(t, ewidget.Commit())
 
-	widget2, err = c.Widgets.Get(1)
-	expectNilErr(t, err)
+	widget2, e = c.Widgets.Get(1)
+	expectNilErr(t, e)
 	widget.Enabled = false
 	wtest(widget, widget2)
 
@@ -2273,8 +2496,8 @@ func TestWidgets(t *testing.T) {
 
 	expectNilErr(t, widget2.Delete())
 
-	_, err = c.Widgets.Get(1)
-	recordMustNotExist(t, err, "There shouldn't be any widgets anymore")
+	_, e = c.Widgets.Get(1)
+	recordMustNotExist(t, e, "There shouldn't be any widgets anymore")
 	widgets = c.Docks.RightSidebar.Items
 	exf(len(widgets) == 0, "RightSidebar should have 0 items, not %d", len(widgets))
 }
@@ -2391,6 +2614,66 @@ func TestForumActions(t *testing.T) {
 
 	expectNilErr(t, s.Delete(faid))
 	noActions(fid, faid)
+
+	// TODO: Bulk lock tests
+	faid, e = c.ForumActionStore.Add(&c.ForumAction{
+		Forum:                      fid,
+		RunOnTopicCreation:         false,
+		RunDaysAfterTopicCreation:  2,
+		RunDaysAfterTopicLastReply: 0,
+		Action:                     c.ForumActionLock,
+		Extra:                      "",
+	})
+	expectNilErr(t, e)
+
+	var l []int
+	addTopic := func() {
+		tid, e = c.Topics.Create(fid, "Forum Action Topic 2", "Forum Action Topic 2", 1, "")
+		expectNilErr(t, e)
+		topic, e := c.Topics.Get(tid)
+		expectNilErr(t, e)
+		ex(!topic.IsClosed, "topic.IsClosed should be false")
+		dayAgo := time.Now().AddDate(0, 0, -5)
+		expectNilErr(t, topic.TestSetCreatedAt(dayAgo))
+		l = append(l, tid)
+	}
+	lTest := func() {
+		for _, ll := range l {
+			to, e := c.Topics.Get(ll)
+			expectNilErr(t, e)
+			ex(to.IsClosed, "to.IsClosed should be true")
+		}
+		l = nil
+	}
+
+	addTopic()
+	addTopic()
+	addTopic()
+	addTopic()
+	addTopic()
+	addTopic()
+	addTopic()
+	addTopic()
+	addTopic()
+	addTopic()
+	expectNilErr(t, fa.Run())
+	lTest()
+	// TODO: Create a method on the *ForumAction to get the count of topics which it could be run on and add a test to verify the count is as expected.
+
+	addTopic()
+	addTopic()
+	addTopic()
+	addTopic()
+	addTopic()
+	addTopic()
+	addTopic()
+	addTopic()
+	addTopic()
+	addTopic()
+	addTopic()
+	expectNilErr(t, fa.Run())
+	lTest()
+	// TODO: Create a method on the *ForumAction to get the count of topics which it could be run on and add a test to verify the count is as expected.
 }
 
 func TestTopicList(t *testing.T) {
@@ -2722,6 +3005,9 @@ func passwordTest(t *testing.T, realPassword, hashedPassword string) {
 func TestUserPrivacy(t *testing.T) {
 	pu, u := c.BlankUser(), &c.GuestUser
 	pu.ID = 1
+	ex, exf := exp(t), expf(t)
+	ex(!pu.Privacy.NoPresence, "pu.Privacy.NoPresence should be false")
+	ex(!u.Privacy.NoPresence, "u.Privacy.NoPresence should be false")
 
 	var msg string
 	test := func(expects bool, level int) {
@@ -2732,7 +3018,7 @@ func TestUserPrivacy(t *testing.T) {
 			bit = " not"
 			val = !val
 		}
-		expectf(t, val, "%s should%s be able to see comments on level %d", msg, bit, level)
+		exf(val, "%s should%s be able to see comments on level %d", msg, bit, level)
 	}
 	// 0 = default, 1 = public, 2 = registered, 3 = friends, 4 = self, 5 = disabled
 
@@ -2892,4 +3178,9 @@ func TestWordCount(t *testing.T) {
 			t.Error("Expected:", item.Expects)
 		}
 	}
+}
+
+func TestTick(t *testing.T) {
+	expectNilErr(t, c.StartupTasks())
+	expectNilErr(t, c.Dailies())
 }

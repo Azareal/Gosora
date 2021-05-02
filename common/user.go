@@ -66,8 +66,9 @@ type User struct {
 }
 
 type UserPrivacy struct {
-	ShowComments int // 0 = default, 1 = public, 2 = registered, 3 = friends, 4 = self, 5 = disabled / unused
-	AllowMessage int // 0 = default, 1 = registered, 2 = friends, 3 = mods, 4 = disabled / unused
+	ShowComments int  // 0 = default, 1 = public, 2 = registered, 3 = friends, 4 = self, 5 = disabled / unused
+	AllowMessage int  // 0 = default, 1 = registered, 2 = friends, 3 = mods, 4 = disabled / unused
+	NoPresence   bool // false = default, true = true
 }
 
 func (u *User) WebSockets() *WsJSONUser {
@@ -169,37 +170,39 @@ var userStmts UserStmts
 
 func init() {
 	DbInits.Add(func(acc *qgen.Accumulator) error {
-		u := "users"
-		w := "uid=?"
+		u, w := "users", "uid=?"
+		set := func(s string) *sql.Stmt {
+			return acc.Update(u).Set(s).Where(w).Prepare()
+		}
 		userStmts = UserStmts{
-			activate:    acc.SimpleUpdate(u, "active=1", w),
-			changeGroup: acc.SimpleUpdate(u, "group=?", w), // TODO: Implement user_count for users_groups here
+			activate:    set("active=1"),
+			changeGroup: set("group=?"), // TODO: Implement user_count for users_groups here
 			delete:      acc.Delete(u).Where(w).Prepare(),
-			setAvatar:   acc.Update(u).Set("avatar=?").Where(w).Prepare(),
-			setName:     acc.Update(u).Set("name=?").Where(w).Prepare(),
-			update:      acc.Update(u).Set("name=?,email=?,group=?").Where(w).Prepare(), // TODO: Implement user_count for users_groups on things which use this
+			setAvatar:   set("avatar=?"),
+			setName:     set("name=?"),
+			update:      set("name=?,email=?,group=?"), // TODO: Implement user_count for users_groups on things which use this
 
 			// Stat Statements
 			// TODO: Do +0 to avoid having as many statements?
-			incScore:         acc.Update(u).Set("score=score+?").Where(w).Prepare(),
-			incPosts:         acc.Update(u).Set("posts=posts+?").Where(w).Prepare(),
-			incBigposts:      acc.Update(u).Set("posts=posts+?,bigposts=bigposts+?").Where(w).Prepare(),
-			incMegaposts:     acc.Update(u).Set("posts=posts+?,bigposts=bigposts+?,megaposts=megaposts+?").Where(w).Prepare(),
-			incPostStats:     acc.Update(u).Set("posts=posts+?,score=score+?,level=?").Where(w).Prepare(),
-			incBigpostStats:  acc.Update(u).Set("posts=posts+?,bigposts=bigposts+?,score=score+?,level=?").Where(w).Prepare(),
-			incMegapostStats: acc.Update(u).Set("posts=posts+?,bigposts=bigposts+?,megaposts=megaposts+?,score=score+?,level=?").Where(w).Prepare(),
-			incTopics:        acc.SimpleUpdate(u, "topics=topics+?", w),
-			updateLevel:      acc.SimpleUpdate(u, "level=?", w),
-			resetStats:       acc.Update(u).Set("score=0,posts=0,bigposts=0,megaposts=0,topics=0,level=0").Where(w).Prepare(),
-			setStats:         acc.Update(u).Set("score=?,posts=?,bigposts=?,megaposts=?,topics=?,level=?").Where(w).Prepare(),
+			incScore:         set("score=score+?"),
+			incPosts:         set("posts=posts+?"),
+			incBigposts:      set("posts=posts+?,bigposts=bigposts+?"),
+			incMegaposts:     set("posts=posts+?,bigposts=bigposts+?,megaposts=megaposts+?"),
+			incPostStats:     set("posts=posts+?,score=score+?,level=?"),
+			incBigpostStats:  set("posts=posts+?,bigposts=bigposts+?,score=score+?,level=?"),
+			incMegapostStats: set("posts=posts+?,bigposts=bigposts+?,megaposts=megaposts+?,score=score+?,level=?"),
+			incTopics:        set("topics=topics+?"),
+			updateLevel:      set("level=?"),
+			resetStats:       set("score=0,posts=0,bigposts=0,megaposts=0,topics=0,level=0"),
+			setStats:         set("score=?,posts=?,bigposts=?,megaposts=?,topics=?,level=?"),
 
-			incLiked: acc.Update(u).Set("liked=liked+?,lastLiked=UTC_TIMESTAMP()").Where(w).Prepare(),
-			decLiked: acc.Update(u).Set("liked=liked-?").Where(w).Prepare(),
+			incLiked: set("liked=liked+?,lastLiked=UTC_TIMESTAMP()"),
+			decLiked: set("liked=liked-?"),
 			//recalcLastLiked: acc...
-			updateLastIP:  acc.SimpleUpdate(u, "last_ip=?", w),
-			updatePrivacy: acc.Update(u).Set("profile_comments=?,enable_embeds=?").Where(w).Prepare(),
+			updateLastIP:  set("last_ip=?"),
+			updatePrivacy: set("profile_comments=?,enable_embeds=?"),
 
-			setPassword: acc.Update(u).Set("password=?,salt=?").Where(w).Prepare(),
+			setPassword: set("password=?,salt=?"),
 
 			scheduleAvatarResize: acc.Insert("users_avatar_queue").Columns("uid").Fields("?").Prepare(),
 
@@ -269,34 +272,34 @@ func (u *User) ScheduleGroupUpdate(gid, issuedBy int, dur time.Duration) error {
 	}
 	revertAt := time.Now().Add(dur)
 
-	tx, err := qgen.Builder.Begin()
-	if err != nil {
-		return err
+	tx, e := qgen.Builder.Begin()
+	if e != nil {
+		return e
 	}
 	defer tx.Rollback()
 
-	err = u.deleteScheduleGroupTx(tx)
-	if err != nil {
-		return err
+	e = u.deleteScheduleGroupTx(tx)
+	if e != nil {
+		return e
 	}
 
-	createScheduleGroupTx, err := qgen.Builder.SimpleInsertTx(tx, "users_groups_scheduler", "uid,set_group,issued_by,issued_at,revert_at,temporary", "?,?,?,UTC_TIMESTAMP(),?,?")
-	if err != nil {
-		return err
+	createScheduleGroupTx, e := qgen.Builder.SimpleInsertTx(tx, "users_groups_scheduler", "uid,set_group,issued_by,issued_at,revert_at,temporary", "?,?,?,UTC_TIMESTAMP(),?,?")
+	if e != nil {
+		return e
 	}
-	_, err = createScheduleGroupTx.Exec(u.ID, gid, issuedBy, revertAt, temp)
-	if err != nil {
-		return err
+	_, e = createScheduleGroupTx.Exec(u.ID, gid, issuedBy, revertAt, temp)
+	if e != nil {
+		return e
 	}
 
-	err = u.setTempGroupTx(tx, gid)
-	if err != nil {
-		return err
+	e = u.setTempGroupTx(tx, gid)
+	if e != nil {
+		return e
 	}
-	err = tx.Commit()
+	e = tx.Commit()
 
 	u.CacheRemove()
-	return err
+	return e
 }
 
 func (u *User) RevertGroupUpdate() error {
@@ -338,11 +341,8 @@ func (u *User) Activate() (e error) {
 // TODO: Expose this to the admin?
 func (u *User) Delete() error {
 	_, e := userStmts.delete.Exec(u.ID)
-	if e != nil {
-		return e
-	}
 	u.CacheRemove()
-	return nil
+	return e
 }
 
 // TODO: dismiss-event
@@ -530,17 +530,17 @@ func (u *User) ChangeAvatar(avatar string) error {
 }
 
 // TODO: Abstract this with an interface so we can scale this with an actual dedicated queue in a real cluster
-func (u *User) ScheduleAvatarResize() (err error) {
-	_, err = userStmts.scheduleAvatarResize.Exec(u.ID)
-	if err != nil {
+func (u *User) ScheduleAvatarResize() (e error) {
+	_, e = userStmts.scheduleAvatarResize.Exec(u.ID)
+	if e != nil {
 		// TODO: Do a more generic check so that we're not as tied to MySQL
-		me, ok := err.(*mysql.MySQLError)
+		me, ok := e.(*mysql.MySQLError)
 		if !ok {
-			return err
+			return e
 		}
 		// If it's just telling us that the item already exists in the database, then we can ignore it, as it doesn't matter if it's this call or another which schedules the item in the queue
 		if me.Number != 1062 {
-			return err
+			return e
 		}
 	}
 	return nil
@@ -557,11 +557,11 @@ func (u *User) GetIP() string {
 
 // ! Only updates the database not the *User for safety reasons
 func (u *User) UpdateIP(ip string) error {
-	_, err := userStmts.updateLastIP.Exec(ip, u.ID)
+	_, e := userStmts.updateLastIP.Exec(ip, u.ID)
 	if uc := Users.GetCache(); uc != nil {
 		uc.Remove(u.ID)
 	}
-	return err
+	return e
 }
 
 //var ErrMalformedInteger = errors.New("malformed integer")
@@ -722,6 +722,28 @@ func (u *User) InitPerms() {
 	}
 }
 
+// TODO: Write unit tests for this
+func InitPerms2(group int, superAdmin bool, tempGroup int) (perms *Perms, admin, superMod, banned bool) {
+	if tempGroup != 0 {
+		group = tempGroup
+	}
+
+	g := Groups.DirtyGet(group)
+	if superAdmin {
+		perms = &AllPerms
+	} else {
+		perms = &g.Perms
+	}
+
+	admin = superAdmin || g.IsAdmin
+	superMod = admin || g.IsMod
+	banned = g.IsBanned
+	if banned && superMod {
+		banned = false
+	}
+	return perms, admin, superMod, banned
+}
+
 // TODO: Write tests
 // TODO: Implement and use this
 // TODO: Implement friends
@@ -781,7 +803,14 @@ func buildNoavatar(uid, width int) string {
 		l(10)
 	}
 	if !Config.DisableDefaultNoavatar && uid < 11 {
-		if width == 200 {
+		/*if uid < 6 {
+			if width == 200 {
+				return noavatarCache200Avif[uid]
+			} else if width == 48 {
+				return noavatarCache48Avif[uid]
+			}
+			return StaticFiles.Prefix + "n" + strconv.Itoa(uid) + "-" + strconv.Itoa(width) + ".avif?i=0"
+		} else */if width == 200 {
 			return noavatarCache200[uid]
 		} else if width == 48 {
 			return noavatarCache48[uid]

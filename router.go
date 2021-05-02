@@ -123,7 +123,12 @@ func (r *GenRouter) DailyTick() error {
 	return rotateLog(r.reqLog2, "reqs-")
 }
 
-func NewGenRouter(uploads http.Handler) (*GenRouter, error) {
+type RouterConfig struct {
+	Uploads     http.Handler
+	DisableTick bool
+}
+
+func NewGenRouter(cfg *RouterConfig) (*GenRouter, error) {
 	stimestr := strconv.FormatInt(c.StartTime.Unix(), 10)
 	createLog := func(name, stimestr string) (*RouterLog, error) {
 		f, err := os.OpenFile(c.Config.LogDir+name+"-"+stimestr+".log", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0755)
@@ -154,17 +159,21 @@ func NewGenRouter(uploads http.Handler) (*GenRouter, error) {
 	}
 	reqMiscLog := log.New(f3, "", log.LstdFlags)
 
-	return &GenRouter{
+	ro := &GenRouter{
 		UploadHandler: func(w http.ResponseWriter, r *http.Request) {
 			writ := NewWriterIntercept(w)
-			http.StripPrefix("/uploads/", uploads).ServeHTTP(writ, r)
+			http.StripPrefix("/uploads/", cfg.Uploads).ServeHTTP(writ, r)
 		},
 		extraRoutes: make(map[string]func(http.ResponseWriter, *http.Request, *c.User) c.RouteError),
 
 		reqLogger: reqMiscLog,
 		reqLog2:   reqLog,
 		suspLog:   suspReqLog,
-	}, nil
+	}
+	if !cfg.DisableTick {
+		c.AddScheduledDayTask(ro.DailyTick)
+	}
+	return ro, nil
 }
 
 func (r *GenRouter) handleError(err c.RouteError, w http.ResponseWriter, req *http.Request, u *c.User) {

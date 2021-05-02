@@ -622,7 +622,7 @@ func compileJSTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName stri
 }
 
 var poutlen = len("\n// nolint\nfunc init() {\n")
-var poutlooplen = len("__frags[0]=arr_0[:]\n")
+var poutlooplen = len("__frags[0]=a_0[:]\n")
 
 func getTemplateList(c *tmpl.CTemplateSet, wg *sync.WaitGroup, prefix string) string {
 	DebugLog("in getTemplateList")
@@ -666,16 +666,16 @@ func getTemplateList(c *tmpl.CTemplateSet, wg *sync.WaitGroup, prefix string) st
 				}
 			}
 			tmpStr := strconv.Itoa(tmpCount)
-			//"arr_" + tmpStr + ":=[...]byte{" + /*bits*/ bsb.String() + "}\n"
-			poutsb.WriteString("arr_")
+			//"a_" + tmpStr + ":=[...]byte{" + /*bits*/ bsb.String() + "}\n"
+			poutsb.WriteString("a_")
 			poutsb.WriteString(tmpStr)
 			poutsb.WriteString(":=[...]byte{")
 			poutsb.WriteString(bsb.String())
 			poutsb.WriteString("}\n")
 
-			//front + "=arr_" + tmpStr + "[:]\n"
+			//front + "=a_" + tmpStr + "[:]\n"
 			poutsb.WriteString(front)
-			poutsb.WriteString("=arr_")
+			poutsb.WriteString("=a_")
 			poutsb.WriteString(tmpStr)
 			poutsb.WriteString("[:]\n")
 			tmpCount++
