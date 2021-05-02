@@ -46,11 +46,10 @@ func ResetTables() (err error) {
 	return installAdapter.InitialData()
 }
 
-func gloinit() (err error) {
+func gloinit() (e error) {
 	if gloinited {
 		return nil
 	}
-
 	// TODO: Make these configurable via flags to the go test command
 	c.Dev.DebugMode = false
 	c.Dev.SuperDebug = false
@@ -59,22 +58,25 @@ func gloinit() (err error) {
 	//nogrouplog = true
 	c.StartTime = time.Now()
 
-	err = c.LoadConfig()
-	if err != nil {
-		return errors.WithStack(err)
+	ws := func(e error) error {
+		return errors.WithStack(e)
 	}
-	err = c.ProcessConfig()
-	if err != nil {
-		return errors.WithStack(err)
+	e = c.LoadConfig()
+	if e != nil {
+		return ws(e)
+	}
+	e = c.ProcessConfig()
+	if e != nil {
+		return ws(e)
 	}
 
-	err = c.InitTemplates()
-	if err != nil {
-		return errors.WithStack(err)
+	e = c.InitTemplates()
+	if e != nil {
+		return ws(e)
 	}
-	c.Themes, err = c.NewThemeList()
-	if err != nil {
-		return errors.WithStack(err)
+	c.Themes, e = c.NewThemeList()
+	if e != nil {
+		return ws(e)
 	}
 	c.TopicListThaw = c.NewTestThaw()
 	c.SwitchToTestDB()
@@ -82,36 +84,45 @@ func gloinit() (err error) {
 	var ok bool
 	installAdapter, ok = install.Lookup(dbAdapter)
 	if !ok {
-		return errors.WithStack(errors.New("We couldn't find the adapter '" + dbAdapter + "'"))
+		return ws(errors.New("We couldn't find the adapter '" + dbAdapter + "'"))
 	}
 	installAdapter.SetConfig(c.DbConfig.Host, c.DbConfig.Username, c.DbConfig.Password, c.DbConfig.Dbname, c.DbConfig.Port)
 
-	err = ResetTables()
-	if err != nil {
-		return err
+	e = ResetTables()
+	if e != nil {
+		return e
 	}
-	err = InitDatabase()
-	if err != nil {
-		return err
+	e = InitDatabase()
+	if e != nil {
+		return e
 	}
-	err = afterDBInit()
-	if err != nil {
-		return err
+	e = afterDBInit()
+	if e != nil {
+		return e
 	}
 
-	router, err = NewGenRouter(http.FileServer(http.Dir("./uploads")))
-	if err != nil {
-		return errors.WithStack(err)
+	rrcfg := rcfg()
+	rrcfg.DisableTick = false
+	router, e = NewGenRouter(rrcfg)
+	if e != nil {
+		return ws(e)
 	}
 	gloinited = true
 	return nil
 }
 
+func rcfg() *RouterConfig {
+	return &RouterConfig{
+		Uploads:     http.FileServer(http.Dir("./uploads")),
+		DisableTick: true,
+	}
+}
+
 func init() {
-	if err := gloinit(); err != nil {
+	if e := gloinit(); e != nil {
 		log.Print("Something bad happened")
 		//debug.PrintStack()
-		log.Fatalf("%+v\n", err)
+		log.Fatalf("%+v\n", e)
 	}
 }
 
@@ -147,9 +158,9 @@ func BenchmarkTopicAdminRouteParallel(b *testing.B) {
 			if !ok {
 				b.Fatal("Mysterious error!")
 			}
-			head, err := c.UserCheck(w, reqAdmin, &user)
-			if err != nil {
-				b.Fatal(err)
+			head, e := c.UserCheck(w, reqAdmin, &user)
+			if e != nil {
+				b.Fatal(e)
 			}
 			//w.Body.Reset()
 			routes.ViewTopic(w, reqAdmin, &user, head, "1")
@@ -165,17 +176,17 @@ func BenchmarkTopicAdminRouteParallel(b *testing.B) {
 
 func BenchmarkTopicAdminRouteParallelWithRouter(b *testing.B) {
 	binit(b)
-	router, err := NewGenRouter(http.FileServer(http.Dir("./uploads")))
-	if err != nil {
-		b.Fatal(err)
+	router, e := NewGenRouter(rcfg())
+	if e != nil {
+		b.Fatal(e)
 	}
 	cfg := NewStashConfig()
 	c.Dev.DebugMode = false
 	c.Dev.SuperDebug = false
 
-	admin, err := c.Users.Get(1)
-	if err != nil {
-		b.Fatal(err)
+	admin, e := c.Users.Get(1)
+	if e != nil {
+		b.Fatal(e)
 	}
 	if !admin.IsAdmin {
 		b.Fatal("UID1 is not an admin")
@@ -223,17 +234,17 @@ func BenchmarkTopicGuestAdminRouteParallelWithRouterPre(b *testing.B) {
 
 func BenchmarkTopicGuestAdminRouteParallelWithRouter(b *testing.B) {
 	binit(b)
-	router, err := NewGenRouter(http.FileServer(http.Dir("./uploads")))
-	if err != nil {
-		b.Fatal(err)
+	router, e := NewGenRouter(rcfg())
+	if e != nil {
+		b.Fatal(e)
 	}
 	cfg := NewStashConfig()
 	c.Dev.DebugMode = false
 	c.Dev.SuperDebug = false
 
-	admin, err := c.Users.Get(1)
-	if err != nil {
-		b.Fatal(err)
+	admin, e := c.Users.Get(1)
+	if e != nil {
+		b.Fatal(e)
 	}
 	if !admin.IsAdmin {
 		b.Fatal("UID1 is not an admin")
@@ -282,17 +293,17 @@ func BenchmarkTopicGuestAdminRouteParallelWithRouterPre2(b *testing.B) {
 
 func BenchmarkTopicGuestAdminRouteParallelWithRouterGC(b *testing.B) {
 	binit(b)
-	router, err := NewGenRouter(http.FileServer(http.Dir("./uploads")))
-	if err != nil {
-		b.Fatal(err)
+	router, e := NewGenRouter(rcfg())
+	if e != nil {
+		b.Fatal(e)
 	}
 	cfg := NewStashConfig()
 	c.Dev.DebugMode = false
 	c.Dev.SuperDebug = false
 
-	admin, err := c.Users.Get(1)
-	if err != nil {
-		b.Fatal(err)
+	admin, e := c.Users.Get(1)
+	if e != nil {
+		b.Fatal(e)
 	}
 	if !admin.IsAdmin {
 		b.Fatal("UID1 is not an admin")
@@ -349,9 +360,9 @@ func BenchmarkTopicGuestRouteParallel(b *testing.B) {
 			req := httptest.NewRequest("get", "/topic/hm."+benchTid, bytes.NewReader(nil))
 			user := c.GuestUser
 
-			head, err := c.UserCheck(w, req, &user)
-			if err != nil {
-				b.Fatal(err)
+			head, e := c.UserCheck(w, req, &user)
+			if e != nil {
+				b.Fatal(e)
 			}
 			//w.Body.Reset()
 			routes.ViewTopic(w, req, &user, head, "1")
@@ -372,17 +383,17 @@ func BenchmarkForumsRouteAdminParallelWithRouterGC2Pre(b *testing.B) {
 
 func BenchmarkForumsRouteAdminParallelWithRouterGC2(b *testing.B) {
 	binit(b)
-	router, err := NewGenRouter(http.FileServer(http.Dir("./uploads")))
-	if err != nil {
-		b.Fatal(err)
+	router, e := NewGenRouter(rcfg())
+	if e != nil {
+		b.Fatal(e)
 	}
 	cfg := NewStashConfig()
 	c.Dev.DebugMode = false
 	c.Dev.SuperDebug = false
 
-	admin, err := c.Users.Get(1)
-	if err != nil {
-		b.Fatal(err)
+	admin, e := c.Users.Get(1)
+	if e != nil {
+		b.Fatal(e)
 	}
 	if !admin.IsAdmin {
 		b.Fatal("UID1 is not an admin")
@@ -420,17 +431,17 @@ func BenchmarkForumsRouteAdminParallelWithRouterGCBrotliPre(b *testing.B) {
 
 func BenchmarkForumsRouteAdminParallelWithRouterGCBrotli(b *testing.B) {
 	binit(b)
-	router, err := NewGenRouter(http.FileServer(http.Dir("./uploads")))
-	if err != nil {
-		b.Fatal(err)
+	router, e := NewGenRouter(rcfg())
+	if e != nil {
+		b.Fatal(e)
 	}
 	cfg := NewStashConfig()
 	c.Dev.DebugMode = false
 	c.Dev.SuperDebug = false
 
-	admin, err := c.Users.Get(1)
-	if err != nil {
-		b.Fatal(err)
+	admin, e := c.Users.Get(1)
+	if e != nil {
+		b.Fatal(e)
 	}
 	if !admin.IsAdmin {
 		b.Fatal("UID1 is not an admin")
@@ -472,17 +483,17 @@ func BenchmarkTopicRouteAdminParallelWithRouterGC2Pre(b *testing.B) {
 
 func BenchmarkTopicRouteAdminParallelWithRouterGC2(b *testing.B) {
 	binit(b)
-	router, err := NewGenRouter(http.FileServer(http.Dir("./uploads")))
-	if err != nil {
-		b.Fatal(err)
+	router, e := NewGenRouter(rcfg())
+	if e != nil {
+		b.Fatal(e)
 	}
 	cfg := NewStashConfig()
 	c.Dev.DebugMode = false
 	c.Dev.SuperDebug = false
 
-	admin, err := c.Users.Get(1)
-	if err != nil {
-		b.Fatal(err)
+	admin, e := c.Users.Get(1)
+	if e != nil {
+		b.Fatal(e)
 	}
 	if !admin.IsAdmin {
 		b.Fatal("UID1 is not an admin")
@@ -520,17 +531,17 @@ func BenchmarkTopicRouteAdminParallelWithRouterGCBrotliPre(b *testing.B) {
 
 func BenchmarkTopicRouteAdminParallelWithRouterGCBrotli(b *testing.B) {
 	binit(b)
-	router, err := NewGenRouter(http.FileServer(http.Dir("./uploads")))
-	if err != nil {
-		b.Fatal(err)
+	router, e := NewGenRouter(rcfg())
+	if e != nil {
+		b.Fatal(e)
 	}
 	cfg := NewStashConfig()
 	c.Dev.DebugMode = false
 	c.Dev.SuperDebug = false
 
-	admin, err := c.Users.Get(1)
-	if err != nil {
-		b.Fatal(err)
+	admin, e := c.Users.Get(1)
+	if e != nil {
+		b.Fatal(e)
 	}
 	if !admin.IsAdmin {
 		b.Fatal("UID1 is not an admin")
@@ -571,17 +582,17 @@ func BenchmarkTopicsRouteAdminParallelWithRouterGC2Pre(b *testing.B) {
 
 func BenchmarkTopicsRouteAdminParallelWithRouterGC2(b *testing.B) {
 	binit(b)
-	router, err := NewGenRouter(http.FileServer(http.Dir("./uploads")))
-	if err != nil {
-		b.Fatal(err)
+	router, e := NewGenRouter(rcfg())
+	if e != nil {
+		b.Fatal(e)
 	}
 	cfg := NewStashConfig()
 	c.Dev.DebugMode = false
 	c.Dev.SuperDebug = false
 
-	admin, err := c.Users.Get(1)
-	if err != nil {
-		b.Fatal(err)
+	admin, e := c.Users.Get(1)
+	if e != nil {
+		b.Fatal(e)
 	}
 	if !admin.IsAdmin {
 		b.Fatal("UID1 is not an admin")
@@ -619,17 +630,17 @@ func BenchmarkTopicsRouteAdminParallelWithRouterGCBrotliPre(b *testing.B) {
 
 func BenchmarkTopicsRouteAdminParallelWithRouterGCBrotli(b *testing.B) {
 	binit(b)
-	router, err := NewGenRouter(http.FileServer(http.Dir("./uploads")))
-	if err != nil {
-		b.Fatal(err)
+	router, e := NewGenRouter(rcfg())
+	if e != nil {
+		b.Fatal(e)
 	}
 	cfg := NewStashConfig()
 	c.Dev.DebugMode = false
 	c.Dev.SuperDebug = false
 
-	admin, err := c.Users.Get(1)
-	if err != nil {
-		b.Fatal(err)
+	admin, e := c.Users.Get(1)
+	if e != nil {
+		b.Fatal(e)
 	}
 	if !admin.IsAdmin {
 		b.Fatal("UID1 is not an admin")
@@ -668,17 +679,17 @@ func BenchmarkTopicsRouteAdminParallelWithRouterGCGzipPre(b *testing.B) {
 
 func BenchmarkTopicsRouteAdminParallelWithRouterGCGzip(b *testing.B) {
 	binit(b)
-	router, err := NewGenRouter(http.FileServer(http.Dir("./uploads")))
-	if err != nil {
-		b.Fatal(err)
+	router, e := NewGenRouter(rcfg())
+	if e != nil {
+		b.Fatal(e)
 	}
 	cfg := NewStashConfig()
 	c.Dev.DebugMode = false
 	c.Dev.SuperDebug = false
 
-	admin, err := c.Users.Get(1)
-	if err != nil {
-		b.Fatal(err)
+	admin, e := c.Users.Get(1)
+	if e != nil {
+		b.Fatal(e)
 	}
 	if !admin.IsAdmin {
 		b.Fatal("UID1 is not an admin")
@@ -744,17 +755,17 @@ func BenchmarkAlertsRouteAdminParallelWithRouterGCPre(b *testing.B) {
 
 func BenchmarkAlertsRouteAdminParallelWithRouterGC(b *testing.B) {
 	binit(b)
-	router, err := NewGenRouter(http.FileServer(http.Dir("./uploads")))
-	if err != nil {
-		b.Fatal(err)
+	router, e := NewGenRouter(rcfg())
+	if e != nil {
+		b.Fatal(e)
 	}
 	cfg := NewStashConfig()
 	c.Dev.DebugMode = false
 	c.Dev.SuperDebug = false
 
-	admin, err := c.Users.Get(1)
-	if err != nil {
-		b.Fatal(err)
+	admin, e := c.Users.Get(1)
+	if e != nil {
+		b.Fatal(e)
 	}
 	if !admin.IsAdmin {
 		b.Fatal("UID1 is not an admin")
@@ -862,9 +873,9 @@ func (cfg *StashConfig) Restore() {
 }
 
 func benchRoute(b *testing.B, path string) func(*testing.PB) {
-	router, err := NewGenRouter(http.FileServer(http.Dir("./uploads")))
-	if err != nil {
-		b.Fatal(err)
+	router, e := NewGenRouter(rcfg())
+	if e != nil {
+		b.Fatal(e)
 	}
 	return func(pb *testing.PB) {
 		for pb.Next() {
@@ -883,9 +894,9 @@ func benchRoute(b *testing.B, path string) func(*testing.PB) {
 }
 
 func benchRouteNoError(b *testing.B, path string) func(*testing.PB) {
-	router, err := NewGenRouter(http.FileServer(http.Dir("./uploads")))
-	if err != nil {
-		b.Fatal(err)
+	router, e := NewGenRouter(rcfg())
+	if e != nil {
+		b.Fatal(e)
 	}
 	return func(pb *testing.PB) {
 		for pb.Next() {
