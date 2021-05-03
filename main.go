@@ -274,6 +274,7 @@ func storeInit() (e error) {
 	if e != nil {
 		return ws(e)
 	}
+	c.Analytics = c.NewDefaultAnalytics()
 	c.Activity, e = c.NewDefaultActivityStream(acc)
 	if e != nil {
 		return ws(e)
@@ -600,6 +601,7 @@ func main() {
 		log.Print("Received a signal to shutdown: ", sig)
 		// TODO: Gracefully shutdown the HTTP server
 		c.Tasks.Shutdown.Run()
+		log.Print("Ran shutdown tasks")
 		c.StoppedServer("Stopped server")
 	}()
 
