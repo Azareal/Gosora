@@ -438,12 +438,10 @@ func main() {
 	buildTemplates := flag.Bool("build-templates", false, "build the templates")
 	flag.Parse()
 	if *buildTemplates {
-		err = c.CompileTemplates()
-		if err != nil {
+		if err = c.CompileTemplates(); err != nil {
 			log.Fatal(err)
 		}
-		err = c.CompileJSTemplates()
-		if err != nil {
+		if err = c.CompileJSTemplates(); err != nil {
 			log.Fatal(err)
 		}
 		return
@@ -453,7 +451,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("%+v", err)
 	}
-
 	err = c.VerifyConfig()
 	if err != nil {
 		log.Fatal(err)
@@ -600,8 +597,16 @@ func main() {
 		sig := <-sigs
 		log.Print("Received a signal to shutdown: ", sig)
 		// TODO: Gracefully shutdown the HTTP server
+		if e := runHook("before_shutdown_tick"); e != nil {
+			log.Print("before_shutdown_tick err:", e)
+		}
+		log.Print("Running shutdown tasks")
 		c.Tasks.Shutdown.Run()
 		log.Print("Ran shutdown tasks")
+		if e := runHook("after_shutdown_tick"); e != nil {
+			log.Print("after_shutdown_tick err:", e)
+		}
+		log.Print("Stopping server")
 		c.StoppedServer("Stopped server")
 	}()
 

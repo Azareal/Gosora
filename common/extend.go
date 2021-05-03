@@ -243,6 +243,8 @@ var taskHooks = map[string][]func() error{
 	"after_second_tick":          nil,
 	"before_fifteen_minute_tick": nil,
 	"after_fifteen_minute_tick":  nil,
+	"before_shutdown_tick":       nil,
+	"after_shutdown_tick":        nil,
 }
 
 // Coming Soon:
