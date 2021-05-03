@@ -21,18 +21,17 @@ func NewDefaultOSViewCounter(acc *qgen.Accumulator) (*DefaultOSViewCounter, erro
 		buckets: make([]int64, len(osMapEnum)),
 		insert:  acc.Insert("viewchunks_systems").Columns("count,createdAt,system").Fields("?,UTC_TIMESTAMP(),?").Prepare(),
 	}
-	c.AddScheduledFifteenMinuteTask(co.Tick)
-	//c.AddScheduledSecondTask(co.Tick)
-	c.AddShutdownTask(co.Tick)
+	c.Tasks.FifteenMin.Add(co.Tick)
+	//c.Tasks.Sec.Add(co.Tick)
+	c.Tasks.Shutdown.Add(co.Tick)
 	return co, acc.FirstError()
 }
 
 func (co *DefaultOSViewCounter) Tick() error {
 	for id, _ := range co.buckets {
 		count := atomic.SwapInt64(&co.buckets[id], 0)
-		err := co.insertChunk(count, id) // TODO: Bulk insert for speed?
-		if err != nil {
-			return errors.Wrap(errors.WithStack(err), "system counter")
+		if e := co.insertChunk(count, id); e != nil { // TODO: Bulk insert for speed?
+			return errors.Wrap(errors.WithStack(e), "system counter")
 		}
 	}
 	return nil

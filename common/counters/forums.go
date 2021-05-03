@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	c "github.com/Azareal/Gosora/common"
-	"github.com/Azareal/Gosora/query_gen"
+	qgen "github.com/Azareal/Gosora/query_gen"
 	"github.com/pkg/errors"
 )
 
@@ -29,9 +29,9 @@ func NewDefaultForumViewCounter() (*DefaultForumViewCounter, error) {
 		evenMap: make(map[int]*RWMutexCounterBucket),
 		insert:  acc.Insert("viewchunks_forums").Columns("count,createdAt,forum").Fields("?,UTC_TIMESTAMP(),?").Prepare(),
 	}
-	c.AddScheduledFifteenMinuteTask(co.Tick) // There could be a lot of routes, so we don't want to be running this every second
-	//c.AddScheduledSecondTask(co.Tick)
-	c.AddShutdownTask(co.Tick)
+	c.Tasks.FifteenMin.Add(co.Tick) // There could be a lot of routes, so we don't want to be running this every second
+	//c.Tasks.Sec.Add(co.Tick)
+	c.Tasks.Shutdown.Add(co.Tick)
 	return co, acc.FirstError()
 }
 
@@ -50,18 +50,18 @@ func (co *DefaultForumViewCounter) Tick() error {
 			l.Unlock()
 			e := co.insertChunk(count, fid)
 			if e != nil {
-				return errors.Wrap(errors.WithStack(e),"forum counter")
+				return errors.Wrap(errors.WithStack(e), "forum counter")
 			}
 			l.RLock()
 		}
 		l.RUnlock()
 		return nil
 	}
-	e := cLoop(&co.oddLock,co.oddMap)
+	e := cLoop(&co.oddLock, co.oddMap)
 	if e != nil {
 		return e
 	}
-	return cLoop(&co.evenLock,co.evenMap)
+	return cLoop(&co.evenLock, co.evenMap)
 }
 
 func (co *DefaultForumViewCounter) insertChunk(count, forum int) error {

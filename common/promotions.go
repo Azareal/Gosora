@@ -55,7 +55,7 @@ func NewDefaultGroupPromotionStore(acc *qgen.Accumulator) (*DefaultGroupPromotio
 		updateUser:    acc.Update("users").Set("group=?").Where("group=? AND uid=?").Prepare(),
 		updateGeneric: acc.Update("users").Set("group=?").Where("group=? AND level>=? AND posts>=?").Prepare(),
 	}
-	AddScheduledFifteenMinuteTask(prs.Tick)
+	Tasks.FifteenMin.Add(prs.Tick)
 	return prs, acc.FirstError()
 }
 

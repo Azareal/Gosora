@@ -196,7 +196,7 @@ func Dailies() (e error) {
 	if e != nil {
 		return e
 	}
-	if e = RunTasks(ScheduledDayTasks); e != nil {
+	if e = Tasks.Day.Run(); e != nil {
 		return e
 	}
 	e = ForumActionStore.DailyTick()

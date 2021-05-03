@@ -37,9 +37,9 @@ func NewDefaultReferrerTracker() (*DefaultReferrerTracker, error) {
 		even:   make(map[string]*ReferrerItem),
 		insert: acc.Insert("viewchunks_referrers").Columns("count,createdAt,domain").Fields("?,UTC_TIMESTAMP(),?").Prepare(), // TODO: Do something more efficient than doing a query for each referrer
 	}
-	c.AddScheduledFifteenMinuteTask(refTracker.Tick)
-	//c.AddScheduledSecondTask(refTracker.Tick)
-	c.AddShutdownTask(refTracker.Tick)
+	c.Tasks.FifteenMin.Add(refTracker.Tick)
+	//c.Tasks.Sec.Add(refTracker.Tick)
+	c.Tasks.Shutdown.Add(refTracker.Tick)
 	return refTracker, acc.FirstError()
 }
 

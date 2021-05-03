@@ -30,9 +30,9 @@ func NewMemoryCounter(acc *qgen.Accumulator) (*DefaultMemoryCounter, error) {
 	co := &DefaultMemoryCounter{
 		insert: acc.Insert("memchunks").Columns("count,stack,heap,createdAt").Fields("?,?,?,UTC_TIMESTAMP()").Prepare(),
 	}
-	c.AddScheduledFifteenMinuteTask(co.Tick)
-	//c.AddScheduledSecondTask(co.Tick)
-	c.AddShutdownTask(co.Tick)
+	c.Tasks.FifteenMin.Add(co.Tick)
+	//c.Tasks.Sec.Add(co.Tick)
+	c.Tasks.Shutdown.Add(co.Tick)
 	ticker := time.NewTicker(time.Minute)
 	go func() {
 		for {

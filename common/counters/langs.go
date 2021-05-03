@@ -118,9 +118,9 @@ func NewDefaultLangViewCounter(acc *qgen.Accumulator) (*DefaultLangViewCounter, 
 		insert:         acc.Insert("viewchunks_langs").Columns("count,createdAt,lang").Fields("?,UTC_TIMESTAMP(),?").Prepare(),
 	}
 
-	c.AddScheduledFifteenMinuteTask(co.Tick)
-	//c.AddScheduledSecondTask(co.Tick)
-	c.AddShutdownTask(co.Tick)
+	c.Tasks.FifteenMin.Add(co.Tick)
+	//c.Tasks.Sec.Add(co.Tick)
+	c.Tasks.Shutdown.Add(co.Tick)
 	return co, acc.FirstError()
 }
 

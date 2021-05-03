@@ -25,9 +25,9 @@ func NewGlobalViewCounter(acc *qgen.Accumulator) (*DefaultViewCounter, error) {
 		currentBucket: 0,
 		insert:        acc.Insert("viewchunks").Columns("count,createdAt,route").Fields("?,UTC_TIMESTAMP(),''").Prepare(),
 	}
-	c.AddScheduledFifteenMinuteTask(co.Tick) // This is run once every fifteen minutes to match the frequency of the RouteViewCounter
-	//c.AddScheduledSecondTask(co.Tick)
-	c.AddShutdownTask(co.Tick)
+	c.Tasks.FifteenMin.Add(co.Tick) // This is run once every fifteen minutes to match the frequency of the RouteViewCounter
+	//c.Tasks.Sec.Add(co.Tick)
+	c.Tasks.Shutdown.Add(co.Tick)
 	return co, acc.FirstError()
 }
 

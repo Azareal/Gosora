@@ -157,6 +157,7 @@ type devConfig struct {
 	//QuicPort int // Experimental!
 
 	//ExpFix1 bool // unlisted setting, experimental fix for http/1.1 conn hangs
+	LogLongTick bool // unlisted setting
 }
 
 // configHolder is purely for having a big struct to unmarshal data into

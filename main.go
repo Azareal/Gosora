@@ -416,6 +416,7 @@ func main() {
 		c.ErrLogWriter = f
 		c.ErrLogger = log.New(c.ErrLogWriter, "", log.LstdFlags)
 	}
+	c.Tasks = c.NewScheduledTasks()
 
 	err = c.InitTemplates()
 	if err != nil {
@@ -596,9 +597,10 @@ func main() {
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		sig := <-sigs
+		log.Print("Received a signal to shutdown: ", sig)
 		// TODO: Gracefully shutdown the HTTP server
-		c.RunTasks(c.ShutdownTasks)
-		c.StoppedServer("Received a signal to shutdown: ", sig)
+		c.Tasks.Shutdown.Run()
+		c.StoppedServer("Stopped server")
 	}()
 
 	// Start up the WebSocket ticks

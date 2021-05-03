@@ -171,7 +171,7 @@ func NewGenRouter(cfg *RouterConfig) (*GenRouter, error) {
 		suspLog:   suspReqLog,
 	}
 	if !cfg.DisableTick {
-		c.AddScheduledDayTask(ro.DailyTick)
+		c.Tasks.Day.Add(ro.DailyTick)
 	}
 	return ro, nil
 }

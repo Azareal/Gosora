@@ -61,14 +61,13 @@ func gloinit() (e error) {
 	ws := func(e error) error {
 		return errors.WithStack(e)
 	}
-	e = c.LoadConfig()
-	if e != nil {
+	if e = c.LoadConfig(); e != nil {
 		return ws(e)
 	}
-	e = c.ProcessConfig()
-	if e != nil {
+	if e = c.ProcessConfig(); e != nil {
 		return ws(e)
 	}
+	c.Tasks = c.NewScheduledTasks()
 
 	e = c.InitTemplates()
 	if e != nil {

@@ -412,9 +412,9 @@ func InitWidgets() (fi error) {
 		return fi
 	}
 
-	AddScheduledSecondTask(Docks.LeftSidebar.Scheduler.Tick)
-	AddScheduledSecondTask(Docks.RightSidebar.Scheduler.Tick)
-	AddScheduledSecondTask(Docks.Footer.Scheduler.Tick)
+	Tasks.Sec.Add(Docks.LeftSidebar.Scheduler.Tick)
+	Tasks.Sec.Add(Docks.RightSidebar.Scheduler.Tick)
+	Tasks.Sec.Add(Docks.Footer.Scheduler.Tick)
 
 	return nil
 }

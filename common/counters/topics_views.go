@@ -28,6 +28,9 @@ type DefaultTopicViewCounter struct {
 	resetOdd  *sql.Stmt
 	resetEven *sql.Stmt
 	resetBoth *sql.Stmt
+
+	insertListBuf []TopicViewInsert
+	saveTick      *SavedTick
 }
 
 func NewDefaultTopicViewCounter() (*DefaultTopicViewCounter, error) {
@@ -42,27 +45,68 @@ func NewDefaultTopicViewCounter() (*DefaultTopicViewCounter, error) {
 		resetOdd:  acc.Update(t).Set("weekOddViews=0").Prepare(),
 		resetEven: acc.Update(t).Set("weekEvenViews=0").Prepare(),
 		resetBoth: acc.Update(t).Set("weekOddViews=0,weekEvenViews=0").Prepare(),
+
+		//insertListBuf: make([]TopicViewInsert, 1024),
 	}
-	err := co.WeekResetInit()
-	if err != nil {
-		return co, err
+	e := co.WeekResetInit()
+	if e != nil {
+		return co, e
 	}
 
-	addTick := func(f func() error) {
-		c.AddScheduledFifteenMinuteTask(f) // Who knows how many topics we have queued up, we probably don't want this running too frequently
-		//c.AddScheduledSecondTask(f)
-		c.AddShutdownTask(f)
+	tick := func(f func() error) {
+		c.Tasks.FifteenMin.Add(f) // Who knows how many topics we have queued up, we probably don't want this running too frequently
+		//c.Tasks.Sec.Add(f)
+		c.Tasks.Shutdown.Add(f)
 	}
-	addTick(co.Tick)
-	addTick(co.WeekResetTick)
+	tick(co.Tick)
+	tick(co.WeekResetTick)
 
 	return co, acc.FirstError()
+}
+
+type TopicViewInsert struct {
+	Count   int
+	TopicID int
+}
+
+type SavedTick struct {
+	I  int
+	I2 int
+}
+
+func (co *DefaultTopicViewCounter) handleInsertListBuf(i, i2 int) error {
+	ilb := co.insertListBuf
+	var lastSuccess int
+	for i3 := i2; i3 < i; i3++ {
+		iitem := ilb[i3]
+		if e := co.insertChunk(iitem.Count, iitem.TopicID); e != nil {
+			co.saveTick = &SavedTick{I: i, I2: lastSuccess + 1}
+			for i3 := i2; i3 < i && i3 <= lastSuccess; i3++ {
+				ilb[i3].Count, ilb[i3].TopicID = 0, 0
+			}
+			return errors.Wrap(errors.WithStack(e), "topicview counter")
+		}
+		lastSuccess = i3
+	}
+	for i3 := i2; i3 < i; i3++ {
+		ilb[i3].Count, ilb[i3].TopicID = 0, 0
+	}
+	return nil
 }
 
 func (co *DefaultTopicViewCounter) Tick() error {
 	// TODO: Fold multiple 1 view topics into one query
 
+	/*if co.saveTick != nil {
+		e := co.handleInsertListBuf(co.saveTick.I, co.saveTick.I2)
+		if e != nil {
+			return e
+		}
+		co.saveTick = nil
+	}*/
+
 	cLoop := func(l *sync.RWMutex, m map[int]*RWMutexCounterBucket) error {
+		//i := 0
 		l.RLock()
 		for topicID, topic := range m {
 			l.RUnlock()
@@ -74,18 +118,23 @@ func (co *DefaultTopicViewCounter) Tick() error {
 			l.Lock()
 			delete(m, topicID)
 			l.Unlock()
-			e := co.insertChunk(count, topicID)
-			if e != nil {
+			/*if len(co.insertListBuf) >= i {
+				co.insertListBuf[i].Count = count
+				co.insertListBuf[i].TopicID = topicID
+				i++
+			} else if i < 4096 {
+				co.insertListBuf = append(co.insertListBuf, TopicViewInsert{count, topicID})
+			} else */if e := co.insertChunk(count, topicID); e != nil {
 				return errors.Wrap(errors.WithStack(e), "topicview counter")
 			}
 			l.RLock()
 		}
 		l.RUnlock()
-		return nil
+		return nil //co.handleInsertListBuf(i, 0)
 	}
-	err := cLoop(&co.oddLock, co.oddTopics)
-	if err != nil {
-		return err
+	e := cLoop(&co.oddLock, co.oddTopics)
+	if e != nil {
+		return e
 	}
 	return cLoop(&co.evenLock, co.evenTopics)
 }

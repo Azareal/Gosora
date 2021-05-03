@@ -37,9 +37,9 @@ func NewDefaultPerfCounter(acc *qgen.Accumulator) (*DefaultPerfCounter, error) {
 		insert: acc.Insert("perfchunks").Columns("low,high,avg,createdAt").Fields("?,?,?,UTC_TIMESTAMP()").Prepare(),
 	}
 
-	c.AddScheduledFifteenMinuteTask(co.Tick)
-	//c.AddScheduledSecondTask(co.Tick)
-	c.AddShutdownTask(co.Tick)
+	c.Tasks.FifteenMin.Add(co.Tick)
+	//c.Tasks.Sec.Add(co.Tick)
+	c.Tasks.Shutdown.Add(co.Tick)
 	return co, acc.FirstError()
 }
 

@@ -20,7 +20,7 @@ type SingleServerThaw struct {
 func NewSingleServerThaw() *SingleServerThaw {
 	t := &SingleServerThaw{}
 	if Config.ServerCount == 1 {
-		AddScheduledSecondTask(t.Tick)
+		Tasks.Sec.Add(t.Tick)
 	}
 	return t
 }
@@ -59,7 +59,7 @@ type DefaultThaw struct {
 
 func NewDefaultThaw() *DefaultThaw {
 	t := &DefaultThaw{}
-	AddScheduledSecondTask(t.Tick)
+	Tasks.Sec.Add(t.Tick)
 	return t
 }
 

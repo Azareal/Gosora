@@ -41,9 +41,9 @@ func NewDefaultRouteViewCounter(acc *qgen.Accumulator) (*DefaultRouteViewCounter
 		insert5: acc.BulkInsert("viewchunks").Columns("count,avg,createdAt,route").Fields(fields, fields, fields, fields, fields).Prepare(),
 	}
 	if !c.Config.DisableAnalytics {
-		c.AddScheduledFifteenMinuteTask(co.Tick) // There could be a lot of routes, so we don't want to be running this every second
-		//c.AddScheduledSecondTask(co.Tick)
-		c.AddShutdownTask(co.Tick)
+		c.Tasks.FifteenMin.Add(co.Tick) // There could be a lot of routes, so we don't want to be running this every second
+		//c.Tasks.Sec.Add(co.Tick)
+		c.Tasks.Shutdown.Add(co.Tick)
 	}
 	return co, acc.FirstError()
 }

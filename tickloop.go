@@ -7,6 +7,7 @@ import (
 	"time"
 
 	c "github.com/Azareal/Gosora/common"
+	"github.com/Azareal/Gosora/uutils"
 	"github.com/pkg/errors"
 )
 
@@ -35,6 +36,16 @@ func deferredDailies() error {
 	return nil
 }
 
+func handleLogLongTick(name string, cn int64) {
+	if !c.Dev.LogLongTick {
+		return
+	}
+	dur := time.Duration(uutils.Nanotime() - cn)
+	if dur.Seconds() > 5 {
+		log.Print("tick " + name + " completed in " + dur.String())
+	}
+}
+
 func tickLoop(thumbChan chan bool) error {
 	tl := c.NewTickLoop()
 	TickLoop = tl
@@ -45,26 +56,28 @@ func tickLoop(thumbChan chan bool) error {
 		return e
 	}
 
-	tick := func(name string, tasks []func() error) error {
+	tick := func(name string, tasks c.TaskSet) error {
 		if c.StartTick() {
 			return nil
 		}
 		if e := runHook("before_" + name + "_tick"); e != nil {
 			return e
 		}
-		if e := c.RunTasks(tasks); e != nil {
+		cn := uutils.Nanotime()
+		if e := tasks.Run(); e != nil {
 			return e
 		}
+		handleLogLongTick(name, cn)
 		return runHook("after_" + name + "_tick")
 	}
 
 	tl.HalfSecf = func() error {
-		return tick("half_second", c.ScheduledHalfSecondTasks)
+		return tick("half_second", c.Tasks.HalfSec)
 	}
 	// TODO: Automatically lock topics, if they're really old, and the associated setting is enabled.
 	// TODO: Publish scheduled posts.
 	tl.FifteenMinf = func() error {
-		return tick("fifteen_minute", c.ScheduledFifteenMinuteTasks)
+		return tick("fifteen_minute", c.Tasks.FifteenMin)
 	}
 	// TODO: Handle the instance going down a lot better
 	// TODO: Handle the daily clean-up.
@@ -72,7 +85,12 @@ func tickLoop(thumbChan chan bool) error {
 		if c.StartTick() {
 			return nil
 		}
-		return c.Dailies()
+		cn := uutils.Nanotime()
+		if e := c.Dailies(); e != nil {
+			return e
+		}
+		handleLogLongTick("day", cn)
+		return nil
 	}
 
 	tl.Secf = func() (e error) {
@@ -82,8 +100,10 @@ func tickLoop(thumbChan chan bool) error {
 		if e = runHook("before_second_tick"); e != nil {
 			return e
 		}
+		cn := uutils.Nanotime()
 		go func() { thumbChan <- true }()
-		if e = c.RunTasks(c.ScheduledSecondTasks); e != nil {
+
+		if e = c.Tasks.Sec.Run(); e != nil {
 			return e
 		}
 
@@ -98,6 +118,7 @@ func tickLoop(thumbChan chan bool) error {
 		if e = c.HandleServerSync(); e != nil {
 			return e
 		}
+		handleLogLongTick("second", cn)
 
 		// TODO: Manage the TopicStore, UserStore, and ForumStore
 		// TODO: Alert the admin, if CPU usage, RAM usage, or the number of posts in the past second are too high
@@ -113,6 +134,7 @@ func tickLoop(thumbChan chan bool) error {
 		if e := runHook("before_hour_tick"); e != nil {
 			return e
 		}
+		cn := uutils.Nanotime()
 
 		jsToken, e := c.GenerateSafeString(80)
 		if e != nil {
@@ -127,9 +149,10 @@ func tickLoop(thumbChan chan bool) error {
 		}
 		c.SessionSigningKeyBox.Store(sessionSigningKey)
 
-		if e = c.RunTasks(c.ScheduledHourTasks); e != nil {
+		if e = c.Tasks.Hour.Run(); e != nil {
 			return e
 		}
+		handleLogLongTick("hour", cn)
 		return runHook("after_hour_tick")
 	}
 

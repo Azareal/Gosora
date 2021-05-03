@@ -19,12 +19,66 @@ type TaskStmts struct {
 	getSync                   *sql.Stmt
 }
 
-var ScheduledHalfSecondTasks []func() error
+var Tasks *ScheduledTasks
+
+type TaskSet interface {
+	Add(func() error)
+	GetList() []func() error
+	Run() error
+	Count() int
+}
+
+type DefaultTaskSet struct {
+	Tasks []func() error
+}
+
+func (s *DefaultTaskSet) Add(task func() error) {
+	s.Tasks = append(s.Tasks, task)
+}
+
+func (s *DefaultTaskSet) GetList() []func() error {
+	return s.Tasks
+}
+
+func (s *DefaultTaskSet) Run() error {
+	for _, task := range s.Tasks {
+		if e := task(); e != nil {
+			return e
+		}
+	}
+	return nil
+}
+
+func (s *DefaultTaskSet) Count() int {
+	return len(s.Tasks)
+}
+
+type ScheduledTasks struct {
+	HalfSec    TaskSet
+	Sec        TaskSet
+	FifteenMin TaskSet
+	Hour       TaskSet
+	Day        TaskSet
+	Shutdown   TaskSet
+}
+
+func NewScheduledTasks() *ScheduledTasks {
+	return &ScheduledTasks{
+		HalfSec:    &DefaultTaskSet{},
+		Sec:        &DefaultTaskSet{},
+		FifteenMin: &DefaultTaskSet{},
+		Hour:       &DefaultTaskSet{},
+		Day:        &DefaultTaskSet{},
+		Shutdown:   &DefaultTaskSet{},
+	}
+}
+
+/*var ScheduledHalfSecondTasks []func() error
 var ScheduledSecondTasks []func() error
 var ScheduledFifteenMinuteTasks []func() error
 var ScheduledHourTasks []func() error
 var ScheduledDayTasks []func() error
-var ShutdownTasks []func() error
+var ShutdownTasks []func() error*/
 var taskStmts TaskStmts
 var lastSync time.Time
 
@@ -41,7 +95,7 @@ func init() {
 }
 
 // AddScheduledHalfSecondTask is not concurrency safe
-func AddScheduledHalfSecondTask(task func() error) {
+/*func AddScheduledHalfSecondTask(task func() error) {
 	ScheduledHalfSecondTasks = append(ScheduledHalfSecondTasks, task)
 }
 
@@ -98,7 +152,7 @@ func ScheduledDayTaskCount() int {
 // ShutdownTaskCount is not concurrency safe
 func ShutdownTaskCount() int {
 	return len(ShutdownTasks)
-}
+}*/
 
 // TODO: Use AddScheduledSecondTask
 func HandleExpiredScheduledGroups() error {

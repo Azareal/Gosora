@@ -66,7 +66,7 @@ func (h *WsHubImpl) Start() {
 		return
 	}
 	h.lastTick = time.Now()
-	AddScheduledSecondTask(h.Tick)
+	Tasks.Sec.Add(h.Tick)
 }
 
 // This Tick is separate from the admin one, as we want to process that in parallel with this due to the blocking calls to gopsutil

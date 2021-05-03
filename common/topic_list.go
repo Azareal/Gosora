@@ -2,6 +2,7 @@ package common
 
 import (
 	"database/sql"
+	"fmt"
 	"strconv"
 	"sync"
 	"time"
@@ -83,8 +84,8 @@ func NewDefaultTopicList(acc *qgen.Accumulator) (*DefaultTopicList, error) {
 		return nil, err
 	}
 
-	AddScheduledHalfSecondTask(tList.Tick)
-	//AddScheduledSecondTask(tList.GroupCountTick) // TODO: Dynamically change the groups in the short list to be optimised every second
+	Tasks.HalfSec.Add(tList.Tick)
+	//Tasks.Sec.Add(tList.GroupCountTick) // TODO: Dynamically change the groups in the short list to be optimised every second
 	return tList, nil
 }
 
@@ -209,6 +210,7 @@ func (tList *DefaultTopicList) Tick() error {
 	tList.qcounts2 = qcounts2
 	tList.qLock2.Unlock()
 
+	fmt.Printf("Forums: %+v\n", Forums)
 	forums, err := Forums.GetAll()
 	if err != nil {
 		return err
