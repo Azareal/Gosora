@@ -46,7 +46,7 @@ func Debug(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
 	cpus := runtime.NumCPU()
 	httpConns := c.ConnWatch.Count()
 
-	debugTasks := c.DebugPageTasks{c.ScheduledHalfSecondTaskCount(), c.ScheduledSecondTaskCount(), c.ScheduledFifteenMinuteTaskCount(), c.ScheduledHourTaskCount(), c.ShutdownTaskCount()}
+	debugTasks := c.DebugPageTasks{c.Tasks.HalfSec.Count(), c.Tasks.Sec.Count(), c.Tasks.FifteenMin.Count(), c.Tasks.Hour.Count(), c.Tasks.Shutdown.Count()}
 	var memStats runtime.MemStats
 	runtime.ReadMemStats(&memStats)
 
