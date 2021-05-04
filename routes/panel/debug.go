@@ -10,8 +10,8 @@ import (
 	qgen "github.com/Azareal/Gosora/query_gen"
 )
 
-func Debug(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
-	basePage, ferr := buildBasePage(w, r, user, "debug", "debug")
+func Debug(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
+	bp, ferr := buildBasePage(w, r, u, "debug", "debug")
 	if ferr != nil {
 		return ferr
 	}
@@ -46,7 +46,7 @@ func Debug(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
 	cpus := runtime.NumCPU()
 	httpConns := c.ConnWatch.Count()
 
-	debugTasks := c.DebugPageTasks{c.Tasks.HalfSec.Count(), c.Tasks.Sec.Count(), c.Tasks.FifteenMin.Count(), c.Tasks.Hour.Count(), c.Tasks.Shutdown.Count()}
+	debugTasks := c.DebugPageTasks{c.Tasks.HalfSec.Count(), c.Tasks.Sec.Count(), c.Tasks.FifteenMin.Count(), c.Tasks.Hour.Count(), c.Tasks.Day.Count(), c.Tasks.Shutdown.Count()}
 	var memStats runtime.MemStats
 	runtime.ReadMemStats(&memStats)
 
@@ -69,11 +69,12 @@ func Debug(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
 	debugCache := c.DebugPageCache{tlen, ulen, rlen, tcap, ucap, rcap, topicListThawed}
 
 	var fErr error
+	acc := qgen.NewAcc()
 	count := func(tbl string) int {
 		if fErr != nil {
 			return 0
 		}
-		c, err := qgen.NewAcc().Count(tbl).Total()
+		c, err := acc.Count(tbl).Total()
 		fErr = err
 		return c
 	}
@@ -81,12 +82,19 @@ func Debug(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
 	// TODO: Call Count on an attachment store
 	attachs := count("attachments")
 	// TODO: Implement a PollStore and call Count on that instead
-	polls := count("polls")
+	//polls := count("polls")
+	polls := c.Polls.Count()
+	//pollsOptions := count("polls_options") // TODO: Add this
+	//pollsVotes := count("polls_votes") // TODO: Add this
 
-	loginLogs := count("login_logs")
-	regLogs := count("registration_logs")
-	modLogs := count("moderation_logs")
-	adminLogs := count("administration_logs")
+	//loginLogs := count("login_logs")
+	loginLogs := c.LoginLogs.Count()
+	//regLogs := count("registration_logs")
+	regLogs := c.RegLogs.Count()
+	//modLogs := count("moderation_logs")
+	modLogs := c.ModLogs.Count()
+	//adminLogs := count("administration_logs")
+	adminLogs := c.AdminLogs.Count()
 
 	views := count("viewchunks")
 	viewsAgents := count("viewchunks_agents")
@@ -125,18 +133,19 @@ func Debug(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
 
 	debugDisk := c.DebugPageDisk{staticSize, attachSize, uploadsSize, logsSize, backupsSize, gitSize}
 
-	pi := c.PanelDebugPage{basePage, goVersion, dbVersion, uptime, openConnCount, qgen.Builder.GetAdapter().GetName(), goroutines, cpus, httpConns, debugTasks, memStats, debugCache, debugDatabase, debugDisk}
-	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_dashboard_right", "debug_page", "panel_debug", pi})
+	pi := c.PanelDebugPage{bp, goVersion, dbVersion, uptime, openConnCount, qgen.Builder.GetAdapter().GetName(), goroutines, cpus, httpConns, debugTasks, memStats, debugCache, debugDatabase, debugDisk}
+	return renderTemplate("panel", w, r, bp.Header, c.Panel{bp, "panel_dashboard_right", "debug_page", "panel_debug", pi})
 }
 
-func DebugTasks(w http.ResponseWriter, r *http.Request, user *c.User) c.RouteError {
-	basePage, ferr := buildBasePage(w, r, user, "debug", "debug")
+func DebugTasks(w http.ResponseWriter, r *http.Request, u *c.User) c.RouteError {
+	bp, ferr := buildBasePage(w, r, u, "debug", "debug")
 	if ferr != nil {
 		return ferr
 	}
 
-	var debugTasks []c.PanelDebugTaskTask
+	var tasks []c.PanelTaskTask
+	var taskTypes []c.PanelTaskType
 
-	pi := c.PanelDebugTaskPage{basePage, debugTasks}
-	return renderTemplate("panel", w, r, basePage.Header, c.Panel{basePage, "panel_dashboard_right", "debug_page", "panel_debug_task", pi})
+	pi := c.PanelTaskPage{bp, tasks, taskTypes}
+	return renderTemplate("panel", w, r, bp.Header, c.Panel{bp, "panel_dashboard_right", "debug_page", "panel_debug_task", pi})
 }

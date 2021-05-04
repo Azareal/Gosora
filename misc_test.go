@@ -1500,6 +1500,7 @@ func TestPolls(t *testing.T) {
 	shouldNotExist(-1)
 	shouldNotExist(0)
 	shouldNotExist(1)
+	exf(c.Polls.Count() == 0, "count should be %d not %d", 0, c.Polls.Count())
 
 	tid, e := c.Topics.Create(2, "Poll Test", "Filler Body", 1, "")
 	expectNilErr(t, e)
@@ -1513,6 +1514,7 @@ func TestPolls(t *testing.T) {
 	expectNilErr(t, e)
 	exf(pid == 1, "poll id should be 1 not %d", pid)
 	ex(c.Polls.Exists(1), "poll 1 should exist")
+	exf(c.Polls.Count() == 1, "count should be %d not %d", 1, c.Polls.Count())
 
 	testPoll := func(p *c.Poll, id, parentID int, parentTable string, ptype int, antiCheat bool, voteCount int) {
 		ef := exf
@@ -1546,6 +1548,7 @@ func TestPolls(t *testing.T) {
 	ex(!c.Polls.Exists(1), "poll 1 should no longer exist")
 	_, e = c.Polls.Get(1)
 	recordMustNotExist(t, e, "poll 1 should no longer exist")
+	exf(c.Polls.Count() == 0, "count should be %d not %d", 0, c.Polls.Count())
 }
 
 func TestSearch(t *testing.T) {

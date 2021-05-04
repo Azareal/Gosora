@@ -29,7 +29,7 @@ type PollStore interface {
 	ClearIPs() error
 	Create(parent Pollable, pollType int, pollOptions map[int]string) (int, error)
 	Reload(id int) error
-	//Count() int
+	Count() int
 
 	SetCache(cache PollCache)
 	GetCache() PollCache
@@ -43,7 +43,7 @@ type DefaultPollStore struct {
 	createPoll       *sql.Stmt
 	createPollOption *sql.Stmt
 	delete           *sql.Stmt
-	//count      *sql.Stmt
+	count            *sql.Stmt
 
 	clearIPs *sql.Stmt
 }
@@ -61,7 +61,7 @@ func NewDefaultPollStore(cache PollCache) (*DefaultPollStore, error) {
 		exists:           acc.Select(p).Columns("pollID").Where("pollID=?").Stmt(),
 		createPoll:       acc.Insert(p).Columns("parentID,parentTable,type,options").Fields("?,?,?,?").Prepare(),
 		createPollOption: acc.Insert("polls_options").Columns("pollID,option,votes").Fields("?,?,0").Prepare(),
-		//count: acc.SimpleCount(p, "", ""),
+		count:            acc.Count(p).Prepare(),
 
 		clearIPs: acc.Update("polls_votes").Set("ip=''").Where("ip!=''").Stmt(),
 	}, acc.FirstError()
@@ -229,6 +229,10 @@ func (s *DefaultPollStore) Create(parent Pollable, pollType int, pollOptions map
 
 	id = int(lastID)
 	return id, parent.SetPoll(id) // TODO: Delete the poll (and options) if SetPoll fails
+}
+
+func (s *DefaultPollStore) Count() int {
+	return Count(s.count)
 }
 
 func (s *DefaultPollStore) SetCache(cache PollCache) {

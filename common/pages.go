@@ -744,6 +744,7 @@ type DebugPageTasks struct {
 	Second        int
 	FifteenMinute int
 	Hour          int
+	Day           int
 	Shutdown      int
 }
 
@@ -813,13 +814,18 @@ type PanelDebugPage struct {
 	Disk     DebugPageDisk
 }
 
-type PanelDebugTaskTask struct {
+type PanelTaskTask struct {
 	Name string
 	Type int // 0 = halfsec, 1 = sec, 2 = fifteenmin, 3 = hour, 4 = shutdown
 }
-type PanelDebugTaskPage struct {
+type PanelTaskType struct {
+	Name string
+	FAvg string
+}
+type PanelTaskPage struct {
 	*BasePanelPage
-	Tasks []PanelDebugTaskTask
+	Tasks []PanelTaskTask
+	Types []PanelTaskType
 }
 
 type PageSimple struct {
