@@ -381,7 +381,7 @@ func compileTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName string
 	dbVersion := qgen.Builder.DbVersion()
 	var memStats runtime.MemStats
 	runtime.ReadMemStats(&memStats)
-	debugTasks := DebugPageTasks{0, 0, 0, 0, 0}
+	debugTasks := DebugPageTasks{0, 0, 0, 0, 0, 0}
 	debugCache := DebugPageCache{1, 1, 1, 2, 2, 2, true}
 	debugDatabase := DebugPageDatabase{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
 	debugDisk := DebugPageDisk{1, 1, 1, 1, 1, 1}
