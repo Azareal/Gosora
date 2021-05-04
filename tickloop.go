@@ -36,12 +36,12 @@ func deferredDailies() error {
 	return nil
 }
 
-func handleLogLongTick(name string, cn int64) {
+func handleLogLongTick(name string, cn int64, secs int) {
 	if !c.Dev.LogLongTick {
 		return
 	}
 	dur := time.Duration(uutils.Nanotime() - cn)
-	if dur.Seconds() > 5 {
+	if dur.Seconds() > float64(secs) {
 		log.Print("tick " + name + " completed in " + dur.String())
 	}
 }
@@ -56,7 +56,7 @@ func tickLoop(thumbChan chan bool) error {
 		return e
 	}
 
-	tick := func(name string, tasks c.TaskSet) error {
+	tick := func(name string, tasks c.TaskSet, secs int) error {
 		if c.StartTick() {
 			return nil
 		}
@@ -67,17 +67,17 @@ func tickLoop(thumbChan chan bool) error {
 		if e := tasks.Run(); e != nil {
 			return e
 		}
-		handleLogLongTick(name, cn)
+		handleLogLongTick(name, cn, secs)
 		return runHook("after_" + name + "_tick")
 	}
 
 	tl.HalfSecf = func() error {
-		return tick("half_second", c.Tasks.HalfSec)
+		return tick("half_second", c.Tasks.HalfSec, 2)
 	}
 	// TODO: Automatically lock topics, if they're really old, and the associated setting is enabled.
 	// TODO: Publish scheduled posts.
 	tl.FifteenMinf = func() error {
-		return tick("fifteen_minute", c.Tasks.FifteenMin)
+		return tick("fifteen_minute", c.Tasks.FifteenMin, 5)
 	}
 	// TODO: Handle the instance going down a lot better
 	// TODO: Handle the daily clean-up.
@@ -89,7 +89,7 @@ func tickLoop(thumbChan chan bool) error {
 		if e := c.Dailies(); e != nil {
 			return e
 		}
-		handleLogLongTick("day", cn)
+		handleLogLongTick("day", cn, 5)
 		return nil
 	}
 
@@ -118,7 +118,7 @@ func tickLoop(thumbChan chan bool) error {
 		if e = c.HandleServerSync(); e != nil {
 			return e
 		}
-		handleLogLongTick("second", cn)
+		handleLogLongTick("second", cn, 3)
 
 		// TODO: Manage the TopicStore, UserStore, and ForumStore
 		// TODO: Alert the admin, if CPU usage, RAM usage, or the number of posts in the past second are too high
@@ -152,7 +152,7 @@ func tickLoop(thumbChan chan bool) error {
 		if e = c.Tasks.Hour.Run(); e != nil {
 			return e
 		}
-		handleLogLongTick("hour", cn)
+		handleLogLongTick("hour", cn, 5)
 		return runHook("after_hour_tick")
 	}
 
