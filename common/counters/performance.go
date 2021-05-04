@@ -63,9 +63,7 @@ func (co *DefaultPerfCounter) Tick() error {
 		high := getCounter(b.high)
 		avg := getCounter(b.avg)
 		c.H_counters_perf_tick_row_hook(hTbl, low, high, avg)
-
-		e := co.insertChunk(low, high, avg) // TODO: Bulk insert for speed?
-		if e != nil {
+		if e := co.insertChunk(low, high, avg); e != nil { // TODO: Bulk insert for speed?
 			return errors.Wrap(errors.WithStack(e), "perf counter")
 		}
 	}
@@ -77,6 +75,9 @@ func (co *DefaultPerfCounter) insertChunk(low, high, avg int64) error {
 		return nil
 	}
 	c.DebugLogf("Inserting a pchunk with low %d, high %d, avg %d", low, high, avg)
+	if c.Dev.LogNewLongRoute && (high*1000*1000) > 5 {
+		c.Logf("pchunk high %d", high)
+	}
 	_, e := co.insert.Exec(low, high, avg)
 	return e
 }
@@ -84,7 +85,7 @@ func (co *DefaultPerfCounter) insertChunk(low, high, avg int64) error {
 func (co *DefaultPerfCounter) Push(dur time.Duration /*,_ bool*/) {
 	id := 0
 	b := co.buckets[id]
-	//c.DebugDetail("buckets[", id, "]: ", b)
+	//c.DebugDetail("buckets ", id, ": ", b)
 	micro := dur.Microseconds()
 	if micro >= math.MaxInt32 {
 		c.LogWarning(errors.New("dur should not be int32 max or higher"))
