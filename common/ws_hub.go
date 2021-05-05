@@ -362,19 +362,21 @@ func (h *WsHubImpl) getUser(uid int) (wsUser *WSUser, err error) {
 }
 
 // Warning: For efficiency, some of the *WSUsers may be nil pointers, DO NOT EXPORT
+// TODO: Write tests for this
 func (h *WsHubImpl) getUsers(uids []int) (wsUsers []*WSUser, err error) {
 	if len(uids) == 0 {
 		return nil, errWsNouser
 	}
-	wsUsers = make([]*WSUser, len(uids))
-	i := 0
+	//wsUsers = make([]*WSUser, len(uids))
+	//i := 0
 	appender := func(l *sync.RWMutex, users map[int]*WSUser) {
 		l.RLock()
 		defer l.RUnlock()
 		// We don't want to keep a lock on this for too long, so we'll accept some nil pointers
 		for _, uid := range uids {
-			wsUsers[i] = users[uid]
-			i++
+			//wsUsers[i] = users[uid]
+			wsUsers = append(wsUsers, users[uid])
+			//i++
 		}
 	}
 	appender(&h.evenUserLock, h.evenOnlineUsers)
