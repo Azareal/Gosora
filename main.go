@@ -19,6 +19,7 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
+	"runtime/debug"
 	"runtime/pprof"
 	"strconv"
 	"strings"
@@ -356,13 +357,13 @@ func storeInit() (e error) {
 // TODO: Split this function up
 func main() {
 	// TODO: Recover from panics
-	/*defer func() {
+	defer func() {
 		if r := recover(); r != nil {
 			log.Print(r)
 			debug.PrintStack()
-			return
+			log.Fatal("Fatal error.")
 		}
-	}()*/
+	}()
 	c.StartTime = time.Now()
 
 	// TODO: Have a file for each run with the time/date the server started as the file name?
@@ -465,6 +466,7 @@ func main() {
 		defer watcher.Close()
 
 		go func() {
+			defer c.EatPanics()
 			var ErrFileSkip = errors.New("skip mod file")
 			modifiedFileEvent := func(path string) error {
 				pathBits := strings.Split(path, "\\")
@@ -551,9 +553,11 @@ func main() {
 	if err = tickLoop(thumbChan); err != nil {
 		c.LogError(err)
 	}
+	go TickLoop.Loop()
 
 	// Resource Management Goroutine
 	go func() {
+		defer c.EatPanics()
 		uc, tc := c.Users.GetCache(), c.Topics.GetCache()
 		if uc == nil && tc == nil {
 			return
@@ -594,6 +598,7 @@ func main() {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
+		defer c.EatPanics()
 		sig := <-sigs
 		log.Print("Received a signal to shutdown: ", sig)
 		// TODO: Gracefully shutdown the HTTP server
@@ -690,6 +695,7 @@ func startServer() {
 		sQuicPort := strconv.Itoa(c.Dev.QuicPort)
 		log.Print("Listening on quic port " + sQuicPort)
 		go func() {
+			defer c.EatPanics()
 			c.StoppedServer(http3.ListenAndServeQUIC(":"+sQuicPort, c.Config.SslFullchain, c.Config.SslPrivkey, router))
 		}()
 	}*/
@@ -700,6 +706,7 @@ func startServer() {
 		}
 		log.Print("Listening on port " + c.Site.Port)
 		go func() {
+			defer c.EatPanics()
 			c.StoppedServer(newServer(":"+c.Site.Port, router).ListenAndServe())
 		}()
 		return
@@ -712,12 +719,14 @@ func startServer() {
 		// We should also run the server on port 80
 		// TODO: Redirect to port 443
 		go func() {
+			defer c.EatPanics()
 			log.Print("Listening on port 80")
 			c.StoppedServer(newServer(":80", &HTTPSRedirect{}).ListenAndServe())
 		}()
 	}
 	log.Printf("Listening on port %s", c.Site.Port)
 	go func() {
+		defer c.EatPanics()
 		c.StoppedServer(newServer(":"+c.Site.Port, router).ListenAndServeTLS(c.Config.SslFullchain, c.Config.SslPrivkey))
 	}()
 }

@@ -402,6 +402,7 @@ func compileTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName string
 		}
 		wg.Add(1)
 		go func() {
+			defer EatPanics()
 			tname := themeName
 			if tname != "" {
 				tname = "_" + tname
@@ -591,6 +592,7 @@ func compileJSTemplates(wg *sync.WaitGroup, c *tmpl.CTemplateSet, themeName stri
 		}
 		wg.Add(1)
 		go func() {
+			defer EatPanics()
 			tname := themeName
 			if tname != "" {
 				tname = "_" + tname
@@ -737,6 +739,7 @@ func writeTemplateList(c *tmpl.CTemplateSet, wg *sync.WaitGroup, prefix string) 
 	log.Print("Writing template list")
 	wg.Add(1)
 	go func() {
+		defer EatPanics()
 		e := writeFile(prefix+"tmpl_list.go", getTemplateList(c, wg, prefix))
 		if e != nil {
 			log.Fatal(e)

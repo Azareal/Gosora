@@ -3186,4 +3186,18 @@ func TestWordCount(t *testing.T) {
 func TestTick(t *testing.T) {
 	expectNilErr(t, c.StartupTasks())
 	expectNilErr(t, c.Dailies())
+
+	expectNilErr(t, c.Tasks.HalfSec.Run())
+	expectNilErr(t, c.Tasks.Sec.Run())
+	expectNilErr(t, c.Tasks.FifteenMin.Run())
+	expectNilErr(t, c.Tasks.Hour.Run())
+	expectNilErr(t, c.Tasks.Day.Run())
+
+	thumbChan := make(chan bool)
+	expectNilErr(t, tickLoop(thumbChan))
+	expectNilErr(t, c.CTickLoop.HalfSecf())
+	expectNilErr(t, c.CTickLoop.Secf())
+	expectNilErr(t, c.CTickLoop.FifteenMinf())
+	expectNilErr(t, c.CTickLoop.Hourf())
+	expectNilErr(t, c.CTickLoop.Dayf())
 }

@@ -265,6 +265,7 @@ func startDirSizeTask() {
 			dstMuGuess = 0
 			dstMu.Unlock()
 		}()
+		defer c.EatPanics()
 		dDirSize, e := c.DirSize(".")
 		if e != nil {
 			c.LogWarning(e)

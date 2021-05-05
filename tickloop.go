@@ -1,12 +1,15 @@
 package main
 
 import (
+	"bytes"
 	"database/sql"
 	"log"
+	"net/http/httptest"
 	"strconv"
 	"time"
 
 	c "github.com/Azareal/Gosora/common"
+	"github.com/Azareal/Gosora/routes"
 	"github.com/Azareal/Gosora/uutils"
 	"github.com/pkg/errors"
 )
@@ -101,7 +104,10 @@ func tickLoop(thumbChan chan bool) error {
 			return e
 		}
 		cn := uutils.Nanotime()
-		go func() { thumbChan <- true }()
+		go func() {
+			defer c.EatPanics()
+			thumbChan <- true
+		}()
 
 		if e = c.Tasks.Sec.Run(); e != nil {
 			return e
@@ -152,12 +158,14 @@ func tickLoop(thumbChan chan bool) error {
 		if e = c.Tasks.Hour.Run(); e != nil {
 			return e
 		}
+		if e = PingLastTopicTick(); e != nil {
+			return e
+		}
 		handleLogLongTick("hour", cn, 5)
 		return runHook("after_hour_tick")
 	}
 
-	go tl.Loop()
-
+	c.CTickLoop = tl
 	return nil
 }
 
@@ -209,5 +217,47 @@ func sched() error {
 		log.Printf("Deleted %d orphaned attachments.", count)
 	}
 
+	return nil
+}
+
+// TODO: Move somewhere else
+func PingLastTopicTick() error {
+	g, e := c.Groups.Get(c.GuestUser.Group)
+	if e != nil {
+		return e
+	}
+	tList, _, _, e := c.TopicList.GetListByGroup(g, 1, 0, nil)
+	if e != nil {
+		return e
+	}
+	if len(tList) == 0 {
+		return nil
+	}
+	w := httptest.NewRecorder()
+	sid := strconv.Itoa(tList[0].ID)
+	req := httptest.NewRequest("get", "/topic/"+sid, bytes.NewReader(nil))
+	cn := uutils.Nanotime()
+
+	// Deal with the session stuff, etc.
+	ucpy, ok := c.PreRoute(w, req)
+	if !ok {
+		return errors.New("preroute failed")
+	}
+	head, rerr := c.UserCheck(w, req, &ucpy)
+	if rerr != nil {
+		return errors.New(rerr.Error())
+	}
+	rerr = routes.ViewTopic(w, req, &ucpy, head, sid)
+	if rerr != nil {
+		return errors.New(rerr.Error())
+	}
+	/*if w.Code != 200 {
+		return errors.New("topic code not 200")
+	}*/
+
+	dur := time.Duration(uutils.Nanotime() - cn)
+	if dur.Seconds() > 5 {
+		c.Log("topic " + sid + " completed in " + dur.String())
+	}
 	return nil
 }
