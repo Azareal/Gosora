@@ -195,7 +195,34 @@ type OutFrag struct {
 	Body     string
 }
 
-func (c *CTemplateSet) CompileByLoggedin(name, fileDir, expects string, expectsInt interface{}, varList map[string]VarItem, imports ...string) (stub, gout, mout string, err error) {
+func (c *CTemplateSet) buildImportList() (importList string) {
+	if len(c.importMap) == 0 {
+		return ""
+	}
+	var ilsb strings.Builder
+	ilsb.Grow(10 + (len(c.importMap) * 3))
+	ilsb.WriteString("import (")
+	for _, item := range c.importMap {
+		ispl := strings.Split(item, " ")
+		if len(ispl) > 1 {
+			//importList += ispl[0] + " \"" + ispl[1] + "\"\n"
+			ilsb.WriteString(ispl[0])
+			ilsb.WriteString(" \"")
+			ilsb.WriteString(ispl[1])
+			ilsb.WriteString("\"\n")
+		} else {
+			//importList += "\"" + item + "\"\n"
+			ilsb.WriteString("\"")
+			ilsb.WriteString(item)
+			ilsb.WriteString("\"\n")
+		}
+	}
+	//importList += ")\n"
+	ilsb.WriteString(")\n")
+	return ilsb.String()
+}
+
+func (c *CTemplateSet) CompileByLoggedin(name, fileDir, expects string, expectsInt interface{}, varList map[string]VarItem, imports ...string) (stub, gout, mout string, e error) {
 	c.importMap = map[string]string{}
 	for index, item := range c.baseImportMap {
 		c.importMap[index] = item
@@ -203,15 +230,8 @@ func (c *CTemplateSet) CompileByLoggedin(name, fileDir, expects string, expectsI
 	for _, importItem := range imports {
 		c.importMap[importItem] = importItem
 	}
-	var importList string
-	for _, item := range c.importMap {
-		ispl := strings.Split(item, " ")
-		if len(ispl) > 1 {
-			importList += "import " + ispl[0] + " \"" + ispl[1] + "\"\n"
-		} else {
-			importList += "import \"" + item + "\"\n"
-		}
-	}
+	c.importMap["errors"] = "errors"
+	importList := c.buildImportList()
 
 	fname := strings.TrimSuffix(name, filepath.Ext(name))
 	if c.themeName != "" {
@@ -223,24 +243,40 @@ func (c *CTemplateSet) CompileByLoggedin(name, fileDir, expects string, expectsI
 	}
 	c.importMap["github.com/Azareal/Gosora/common"] = "c github.com/Azareal/Gosora/common"
 
-	stub = `package ` + c.config.PackageName + `
-` + importList + `
-import "errors"
-`
+	c.fsb.Reset()
+	stub = `package ` + c.config.PackageName + "\n" + importList + "\n"
 
 	if !c.config.SkipInitBlock {
-		stub += "// nolint\nfunc init() {\n"
+		//stub += "// nolint\nfunc init() {\n"
+		c.fsb.WriteString("// nolint\nfunc init() {\n")
 		if !c.config.SkipHandles && c.themeName == "" {
-			stub += "\tc.Tmpl_" + fname + "_handle = Tmpl_" + fname + "\n"
-			stub += "\tc.Ctemplates = append(c.Ctemplates,\"" + fname + "\")\n"
+			//stub += "\tc.Tmpl_" + fname + "_handle = Tmpl_" + fname + "\n"
+			c.fsb.WriteString("\tc.Tmpl_")
+			c.fsb.WriteString(fname)
+			c.fsb.WriteString("_handle = Tmpl_")
+			c.fsb.WriteString(fname)
+			//stub += "\tc.Ctemplates = append(c.Ctemplates,\"" + fname + "\")\n"
+			c.fsb.WriteString("\n\tc.Ctemplates = append(c.Ctemplates,\"")
+			c.fsb.WriteString(fname)
+			c.fsb.WriteString("\")\n")
 		}
 		if !c.config.SkipTmplPtrMap {
-			stub += "tmpl := Tmpl_" + fname + "\n"
-			stub += "\tc.TmplPtrMap[\"" + fname + "\"] = &tmpl\n"
-			stub += "\tc.TmplPtrMap[\"o_" + fname + "\"] = tmpl\n"
+			//stub += "tmpl := Tmpl_" + fname + "\n"
+			c.fsb.WriteString("tmpl := Tmpl_")
+			c.fsb.WriteString(fname)
+			//stub += "\tc.TmplPtrMap[\"" + fname + "\"] = &tmpl\n"
+			c.fsb.WriteString("\n\tc.TmplPtrMap[\"")
+			c.fsb.WriteString(fname)
+			c.fsb.WriteString("\"] = &tmpl\n")
+			//stub += "\tc.TmplPtrMap[\"o_" + fname + "\"] = tmpl\n"
+			c.fsb.WriteString("\tc.TmplPtrMap[\"o_")
+			c.fsb.WriteString(fname)
+			c.fsb.WriteString("\"] = tmpl\n")
 		}
-		stub += "}\n\n"
+		//stub += "}\n\n"
+		c.fsb.WriteString("}\n\n")
 	}
+	stub += c.fsb.String()
 
 	// TODO: Try to remove this redundant interface cast
 	stub += `
@@ -257,35 +293,35 @@ func Tmpl_` + fname + `(tmpl_i interface{}, w io.Writer) error {
 }`
 
 	c.fileDir = fileDir
-	content, err := c.loadTemplate(c.fileDir, name)
-	if err != nil {
-		c.detail("bailing out:", err)
-		return "", "", "", err
+	content, e := c.loadTemplate(c.fileDir, name)
+	if e != nil {
+		c.detail("bailing out:", e)
+		return "", "", "", e
 	}
 
 	c.guestOnly = true
-	gout, err = c.compile(name, content, expects, expectsInt, varList, imports...)
-	if err != nil {
-		return "", "", "", err
+	gout, e = c.compile(name, content, expects, expectsInt, varList, imports...)
+	if e != nil {
+		return "", "", "", e
 	}
 	c.guestOnly = false
 
 	c.memberOnly = true
-	mout, err = c.compile(name, content, expects, expectsInt, varList, imports...)
+	mout, e = c.compile(name, content, expects, expectsInt, varList, imports...)
 	c.memberOnly = false
 
-	return stub, gout, mout, err
+	return stub, gout, mout, e
 }
 
-func (c *CTemplateSet) Compile(name, fileDir, expects string, expectsInt interface{}, varList map[string]VarItem, imports ...string) (out string, err error) {
+func (c *CTemplateSet) Compile(name, fileDir, expects string, expectsInt interface{}, varList map[string]VarItem, imports ...string) (out string, e error) {
 	if c.config.Debug {
 		c.logger.Println("Compiling template '" + name + "'")
 	}
 	c.fileDir = fileDir
-	content, err := c.loadTemplate(c.fileDir, name)
-	if err != nil {
-		c.detail("bailing out:", err)
-		return "", err
+	content, e := c.loadTemplate(c.fileDir, name)
+	if e != nil {
+		c.detail("bailing out:", e)
+		return "", e
 	}
 
 	return c.compile(name, content, expects, expectsInt, varList, imports...)
@@ -390,11 +426,10 @@ func (c *CTemplateSet) compile(name, content, expects string, expectsInt interfa
 		if name == nname {
 			c.templateList[fname] = tree
 		} else {
-			if !strings.HasPrefix(nname, ".html") {
-				c.templateList[nname] = tree
-			} else {
-				c.templateList[strings.TrimSuffix(nname, ".html")] = tree
+			if strings.HasPrefix(nname, ".html") {
+				nname = strings.TrimSuffix(nname, ".html")
 			}
+			c.templateList[nname] = tree
 		}
 	}
 	c.detailf("c.templateList: %+v\n", c.templateList)
@@ -434,32 +469,33 @@ func (c *CTemplateSet) compile(name, content, expects string, expectsInt interfa
 	if len(c.langIndexToName) > 0 {
 		c.importMap[langPkg] = langPkg
 	}
-
 	// TODO: Simplify this logic by doing some reordering?
 	if c.lang == "normal" {
 		c.importMap["net/http"] = "net/http"
 	}
-	var importList string
-	for _, item := range c.importMap {
-		ispl := strings.Split(item, " ")
-		if len(ispl) > 1 {
-			importList += "import " + ispl[0] + " \"" + ispl[1] + "\"\n"
-		} else {
-			importList += "import \"" + item + "\"\n"
-		}
-	}
+	importList := c.buildImportList()
 
-	var fout string
+	c.fsb.Reset()
+	//var fout string
 	if c.buildTags != "" {
-		fout += "// +build " + c.buildTags + "\n\n"
+		//fout += "// +build " + c.buildTags + "\n\n"
+		c.fsb.WriteString("// +build ")
+		c.fsb.WriteString(c.buildTags)
+		c.fsb.WriteString("\n\n")
 	}
-	fout += "// Code generated by Gosora. More below:\n/* This file was automatically generated by the software. Please don't edit it as your changes may be overwritten at any moment. */\n"
-	fout += "package " + c.config.PackageName + "\n" + importList + "\n"
+	//fout += "// Code generated by Gosora. More below:\n/* This file was automatically generated by the software. Please don't edit it as your changes may be overwritten at any moment. */\n"
+	c.fsb.WriteString("// Code generated by Gosora. More below:\n/* This file was automatically generated by the software. Please don't edit it as your changes may be overwritten at any moment. */\n")
+	//fout += "package " + c.config.PackageName + "\n" + importList + "\n"
+	c.fsb.WriteString("package ")
+	c.fsb.WriteString(c.config.PackageName)
+	c.fsb.WriteString("\n")
+	c.fsb.WriteString(importList)
+	c.fsb.WriteString("\n")
 
 	if c.lang == "js" {
 		//var l string
 		if len(c.langIndexToName) > 0 {
-			var lsb strings.Builder
+			/*var lsb strings.Builder
 			lsb.Grow(len(c.langIndexToName) * (1 + 2))
 			for i, name := range c.langIndexToName {
 				//l += `"` + name + `"` + ",\n"
@@ -472,60 +508,128 @@ func (c *CTemplateSet) compile(name, content, expects string, expectsInt interfa
 				}
 				lsb.WriteString(name)
 				lsb.WriteRune('"')
+			}*/
+			//fout += "if(tmplInits===undefined) var tmplInits={}\n"
+			c.fsb.WriteString("if(tmplInits===undefined) var tmplInits={}\n")
+			//fout += "tmplInits[\"tmpl_" + fname + "\"]=[" + lsb.String() + "]"
+			c.fsb.WriteString("tmplInits[\"tmpl_")
+			c.fsb.WriteString(fname)
+			c.fsb.WriteString("\"]=[")
+
+			c.fsb.Grow(len(c.langIndexToName) * (1 + 2))
+			for i, name := range c.langIndexToName {
+				//l += `"` + name + `"` + ",\n"
+				if i == 0 {
+					//l += `"` + name + `"`
+					c.fsb.WriteRune('"')
+				} else {
+					//l += `,"` + name + `"`
+					c.fsb.WriteString(`,"`)
+				}
+				c.fsb.WriteString(name)
+				c.fsb.WriteRune('"')
 			}
-			fout += "if(tmplInits===undefined) var tmplInits={}\n"
-			fout += "tmplInits[\"tmpl_" + fname + "\"]=[" + lsb.String() + "]"
+
+			c.fsb.WriteString("]")
 		} else {
-			fout += "if(tmplInits===undefined) var tmplInits={}\n"
-			fout += "tmplInits[\"tmpl_" + fname + "\"]=[]"
+			//fout += "if(tmplInits===undefined) var tmplInits={}\n"
+			c.fsb.WriteString("if(tmplInits===undefined) var tmplInits={}\n")
+			//fout += "tmplInits[\"tmpl_" + fname + "\"]=[]"
+			c.fsb.WriteString("tmplInits[\"tmpl_")
+			c.fsb.WriteString(fname)
+			c.fsb.WriteString("\"]=[]")
 		}
 		/*if len(l) > 0 {
 			l = "\n" + l
 		}*/
 	} else if !c.config.SkipInitBlock {
 		if len(c.langIndexToName) > 0 {
-			fout += "var " + fname + "_tmpl_phrase_id int\n\n"
+			//fout += "var " + fname + "_tmpl_phrase_id int\n\n"
+			c.fsb.WriteString("var ")
+			c.fsb.WriteString(fname)
+			c.fsb.WriteString("_tmpl_phrase_id int\n\n")
+			c.fsb.WriteString("var ")
+			c.fsb.WriteString(fname)
 			if len(c.langIndexToName) > 1 {
-				fout += "var " + fname + "_phrase_arr [" + strconv.Itoa(len(c.langIndexToName)) + "][]byte\n\n"
+				//fout += "var " + fname + "_phrase_arr [" + strconv.Itoa(len(c.langIndexToName)) + "][]byte\n\n"
+				c.fsb.WriteString("_phrase_arr [")
+				c.fsb.WriteString(strconv.Itoa(len(c.langIndexToName)))
+				c.fsb.WriteString("][]byte\n\n")
 			} else {
-				fout += "var " + fname + "_phrase []byte\n\n"
+				//fout += "var " + fname + "_phrase []byte\n\n"
+				c.fsb.WriteString("_phrase []byte\n\n")
 			}
 		}
-		fout += "// nolint\nfunc init() {\n"
+		//fout += "// nolint\nfunc init() {\n"
+		c.fsb.WriteString("// nolint\nfunc init() {\n")
 
 		if !c.config.SkipHandles && c.themeName == "" {
-			fout += "\tc.Tmpl_" + fname + "_handle = Tmpl_" + fname + "\n"
-			fout += "\tc.Ctemplates = append(c.Ctemplates,\"" + fname + "\")\n"
+			//fout += "\tc.Tmpl_" + fname + "_handle = Tmpl_" + fname
+			c.fsb.WriteString("\tc.Tmpl_")
+			c.fsb.WriteString(fname)
+			c.fsb.WriteString("_handle = Tmpl_")
+			c.fsb.WriteString(fname)
+			//fout += "\n\tc.Ctemplates = append(c.Ctemplates,\"" + fname + "\")\n"
+			c.fsb.WriteString("\n\tc.Ctemplates = append(c.Ctemplates,\"")
+			c.fsb.WriteString(fname)
+			c.fsb.WriteString("\")\n")
 		}
 
 		if !c.config.SkipTmplPtrMap {
-			fout += "tmpl := Tmpl_" + fname + "\n"
-			fout += "\tc.TmplPtrMap[\"" + fname + "\"] = &tmpl\n"
-			fout += "\tc.TmplPtrMap[\"o_" + fname + "\"] = tmpl\n"
+			//fout += "tmpl := Tmpl_" + fname + "\n"
+			c.fsb.WriteString("tmpl := Tmpl_")
+			c.fsb.WriteString(fname)
+			//fout += "\tc.TmplPtrMap[\"" + fname + "\"] = &tmpl\n"
+			c.fsb.WriteString("\n\tc.TmplPtrMap[\"")
+			c.fsb.WriteString(fname)
+			c.fsb.WriteString("\"] = &tmpl\n")
+			//fout += "\tc.TmplPtrMap[\"o_" + fname + "\"] = tmpl\n"
+			c.fsb.WriteString("\tc.TmplPtrMap[\"o_")
+			c.fsb.WriteString(fname)
+			c.fsb.WriteString("\"] = tmpl\n")
 		}
 		if len(c.langIndexToName) > 0 {
-			fout += "\t" + fname + "_tmpl_phrase_id = phrases.RegisterTmplPhraseNames([]string{\n"
+			//fout += "\t" + fname + "_tmpl_phrase_id = phrases.RegisterTmplPhraseNames([]string{\n"
+			c.fsb.WriteString("\t")
+			c.fsb.WriteString(fname)
+			c.fsb.WriteString("_tmpl_phrase_id = phrases.RegisterTmplPhraseNames([]string{\n")
 			for _, name := range c.langIndexToName {
-				fout += "\t\t" + `"` + name + `"` + ",\n"
+				//fout += "\t\t" + `"` + name + `"` + ",\n"
+				c.fsb.WriteString("\t\t\"")
+				c.fsb.WriteString(name)
+				c.fsb.WriteString("\",\n")
 			}
-			fout += "\t})\n"
+			//fout += "\t})\n"
+			c.fsb.WriteString("\t})\n")
 
 			if len(c.langIndexToName) > 1 {
-				fout += `	phrases.AddTmplIndexCallback(func(phraseSet [][]byte) {
-		copy(` + fname + `_phrase_arr[:], phraseSet)
+				/*fout += `	phrases.AddTmplIndexCallback(func(phraseSet [][]byte) {
+						copy(` + fname + `_phrase_arr[:], phraseSet)
+					})
+				`*/
+				c.fsb.WriteString(`	phrases.AddTmplIndexCallback(func(phraseSet [][]byte) {
+		copy(`)
+				c.fsb.WriteString(fname)
+				c.fsb.WriteString(`_phrase_arr[:], phraseSet)
 	})
-`
+`)
 			} else {
-				fout += `	phrases.AddTmplIndexCallback(func(phraseSet [][]byte) {
-		` + fname + `_phrase = phraseSet[0]
+				/*fout += `	phrases.AddTmplIndexCallback(func(phraseSet [][]byte) {
+						` + fname + `_phrase = phraseSet[0]
+				})
+				`*/
+				c.fsb.WriteString(`	phrases.AddTmplIndexCallback(func(phraseSet [][]byte) {
+`)
+				c.fsb.WriteString(fname)
+				c.fsb.WriteString(`_phrase = phraseSet[0]
 	})
-`
+`)
 			}
 		}
-		fout += "}\n\n"
+		//fout += "}\n\n"
+		c.fsb.WriteString("}\n\n")
 	}
 
-	c.fsb.Reset()
 	c.fsb.WriteString("// nolint\nfunc Tmpl_")
 	c.fsb.WriteString(fname)
 	if c.lang == "normal" {
@@ -655,7 +759,7 @@ func (c *CTemplateSet) compile(name, content, expects string, expectsInt interfa
 	}
 	//fout += "return nil\n}\n"
 	c.fsb.WriteString("return nil\n}\n")
-	fout += c.fsb.String()
+	//fout += c.fsb.String()
 
 	writeFrag := func(tmplName string, index int, body string) {
 		//c.detail("writing ", fragmentPrefix)
@@ -684,7 +788,7 @@ func (c *CTemplateSet) compile(name, content, expects string, expectsInt interfa
 		writeFrag(frag.TemplateName, index, frag.Body)
 	}
 
-	fout = strings.Replace(fout, `))
+	fout := strings.Replace(c.fsb.String(), `))
 w.Write([]byte(`, " + ", -1)
 	fout = strings.Replace(fout, "` + `", "", -1)
 
