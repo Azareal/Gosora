@@ -75,7 +75,7 @@ func (co *DefaultPerfCounter) insertChunk(low, high, avg int64) error {
 		return nil
 	}
 	c.DebugLogf("Inserting a pchunk with low %d, high %d, avg %d", low, high, avg)
-	if c.Dev.LogNewLongRoute && (high*1000*1000) > 5 {
+	if c.Dev.LogNewLongRoute && high > (5*1000*1000) {
 		c.Logf("pchunk high %d", high)
 	}
 	_, e := co.insert.Exec(low, high, avg)

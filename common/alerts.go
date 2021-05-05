@@ -325,6 +325,7 @@ func AddActivityAndNotifyTarget(a Alert) error {
 	// Live alerts, if the target is online and WebSockets is enabled
 	if EnableWebsockets {
 		go func() {
+			defer EatPanics()
 			_ = WsHub.pushAlert(a.TargetUserID, a)
 			//fmt.Println("err:",err)
 		}()
@@ -341,15 +342,18 @@ func NotifyWatchers(asid int) error {
 
 	// Alert the subscribers about this without blocking us from doing something else
 	if EnableWebsockets {
-		go notifyWatchers(asid)
+		go func() {
+			defer EatPanics()
+			notifyWatchers(asid)
+		}()
 	}
 	return nil
 }
 
 func notifyWatchers(asid int) {
-	rows, err := alertStmts.getWatchers.Query(asid)
-	if err != nil && err != ErrNoRows {
-		LogError(err)
+	rows, e := alertStmts.getWatchers.Query(asid)
+	if e != nil && e != ErrNoRows {
+		LogError(e)
 		return
 	}
 	defer rows.Close()
@@ -357,21 +361,20 @@ func notifyWatchers(asid int) {
 	var uid int
 	var uids []int
 	for rows.Next() {
-		err := rows.Scan(&uid)
-		if err != nil {
-			LogError(err)
+		if e := rows.Scan(&uid); e != nil {
+			LogError(e)
 			return
 		}
 		uids = append(uids, uid)
 	}
-	if err = rows.Err(); err != nil {
-		LogError(err)
+	if e = rows.Err(); e != nil {
+		LogError(e)
 		return
 	}
 
-	alert, err := Activity.Get(asid)
-	if err != nil && err != ErrNoRows {
-		LogError(err)
+	alert, e := Activity.Get(asid)
+	if e != nil && e != ErrNoRows {
+		LogError(e)
 		return
 	}
 	_ = WsHub.pushAlerts(uids, alert)

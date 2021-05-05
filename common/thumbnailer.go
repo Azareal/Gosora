@@ -15,13 +15,14 @@ import (
 )
 
 func ThumbTask(thumbChan chan bool) {
+	defer EatPanics()
+	acc := qgen.NewAcc()
 	for {
 		// Put this goroutine to sleep until we have work to do
 		<-thumbChan
 
 		// TODO: Use a real queue
 		// TODO: Transactions? Self-repairing?
-		acc := qgen.NewAcc()
 		err := acc.Select("users_avatar_queue").Columns("uid").Limit("0,5").EachInt(func(uid int) error {
 			// TODO: Do a bulk user fetch instead?
 			u, err := Users.Get(uid)

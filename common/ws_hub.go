@@ -46,6 +46,7 @@ func (h *WsHubImpl) Start() {
 	}()
 
 	go func() {
+		defer EatPanics()
 		for {
 			item := func(l *sync.RWMutex, userMap map[int]*WSUser) {
 				l.RLock()

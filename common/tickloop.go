@@ -10,6 +10,8 @@ import (
 	"github.com/pkg/errors"
 )
 
+var CTickLoop *TickLoop
+
 type TickLoop struct {
 	HalfSec    *time.Ticker
 	Sec        *time.Ticker
@@ -42,6 +44,7 @@ func (l *TickLoop) Loop() {
 			LogError(e)
 		}
 	}
+	defer EatPanics()
 	for {
 		select {
 		case <-l.HalfSec.C:
@@ -199,8 +202,7 @@ func Dailies() (e error) {
 	if e = Tasks.Day.Run(); e != nil {
 		return e
 	}
-	e = ForumActionStore.DailyTick()
-	if e != nil {
+	if e = ForumActionStore.DailyTick(); e != nil {
 		return e
 	}
 

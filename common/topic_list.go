@@ -77,11 +77,11 @@ func NewDefaultTopicList(acc *qgen.Accumulator) (*DefaultTopicList, error) {
 		getTopicsByForum: acc.Select("topics").Columns("tid,title,content,createdBy,is_closed,sticky,createdAt,lastReplyAt,lastReplyBy,lastReplyID,views,postCount,likeCount").Where("parentID=?").Orderby("sticky DESC,lastReplyAt DESC,createdBy DESC").Limit("?,?").Prepare(),
 		//getTidsByForum: acc.Select("topics").Columns("tid").Where("parentID=?").Orderby("sticky DESC,lastReplyAt DESC,createdBy DESC").Limit("?,?").Prepare(),
 	}
-	if err := acc.FirstError(); err != nil {
-		return nil, err
+	if e := acc.FirstError(); e != nil {
+		return nil, e
 	}
-	if err := tList.Tick(); err != nil {
-		return nil, err
+	if e := tList.Tick(); e != nil {
+		return nil, e
 	}
 
 	Tasks.HalfSec.Add(tList.Tick)

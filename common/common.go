@@ -13,6 +13,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"sync/atomic"
@@ -200,12 +201,11 @@ func DebugLogf(str string, args ...interface{}) {
 func Log(args ...interface{}) {
 	log.Print(args...)
 }
-func Err(args ...interface{}) {
-	ErrLogger.Print(args...)
-}
-
 func Logf(str string, args ...interface{}) {
 	log.Printf(str, args...)
+}
+func Err(args ...interface{}) {
+	ErrLogger.Print(args...)
 }
 
 func Count(stmt *sql.Stmt) (count int) {
@@ -326,4 +326,12 @@ func (cw *ConnWatcher) StateChange(conn net.Conn, state http.ConnState) {
 
 func (cw *ConnWatcher) Count() int {
 	return int(atomic.LoadInt64(&cw.n))
+}
+
+func EatPanics() {
+	if r := recover(); r != nil {
+		log.Print(r)
+		debug.PrintStack()
+		log.Fatal("Fatal error.")
+	}
 }

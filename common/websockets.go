@@ -196,7 +196,10 @@ func wsPageResponses(wsUser *WSUser, conn *websocket.Conn, page string) {
 		watchers := len(adminStatsWatchers)
 		adminStatsWatchers[conn] = wsUser
 		if watchers == 0 {
-			go adminStatsTicker()
+			go func() {
+				defer EatPanics()
+				adminStatsTicker()
+			}()
 		}
 		adminStatsMutex.Unlock()
 	default:

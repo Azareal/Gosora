@@ -35,6 +35,7 @@ func NewMemoryCounter(acc *qgen.Accumulator) (*DefaultMemoryCounter, error) {
 	c.Tasks.Shutdown.Add(co.Tick)
 	ticker := time.NewTicker(time.Minute)
 	go func() {
+		defer c.EatPanics()
 		for {
 			select {
 			case <-ticker.C:
