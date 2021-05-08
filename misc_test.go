@@ -3201,3 +3201,76 @@ func TestTick(t *testing.T) {
 	expectNilErr(t, c.CTickLoop.Hourf())
 	expectNilErr(t, c.CTickLoop.Dayf())
 }
+
+func TestWSHub(t *testing.T) {
+	ex, exf, h := exp(t), expf(t), &c.WsHub
+	exf(h.GuestCount() == 0, "GuestCount should be %d not %d", 0, h.GuestCount())
+	exf(h.UserCount() == 0, "UserCount should be %d not %d", 0, h.UserCount())
+	ex(!h.HasUser(-1), "HasUser(-1) should be false")
+	ex(!h.HasUser(0), "HasUser(0) should be false")
+	ex(!h.HasUser(1), "HasUser(1) should be false")
+
+	uid, e := c.Users.Create("WsHub Test", "WsHub Test", "", 1, true)
+	expectNilErr(t, e)
+	exf(!h.HasUser(uid), "HasUser(%d) should be false", uid)
+	exf(len(h.AllUsers()) == 0, "len(AllUsers()) should be %d not %d", 0, len(h.AllUsers()))
+
+	f := func(uid, guestCount, userCount, allUserListLen int, hasUser bool) {
+		exf(h.GuestCount() == guestCount, "GuestCount should be %d not %d", guestCount, h.GuestCount())
+		exf(h.UserCount() == userCount, "UserCount should be %d not %d", userCount, h.UserCount())
+		exf(len(h.AllUsers()) == allUserListLen, "len(AllUsers()) should be %d not %d", allUserListLen, len(h.AllUsers()))
+		if hasUser {
+			exf(h.HasUser(uid), "HasUser(%d) should be true", uid)
+		} else {
+			exf(!h.HasUser(uid), "HasUser(%d) should be false", uid)
+		}
+	}
+
+	u, e := c.Users.Get(uid)
+	expectNilErr(t, e)
+	wsUser, e := h.AddConn(u, nil)
+	expectNilErr(t, e)
+	f(uid, 0, 1, 1, true)
+
+	uid, e = c.Users.Create("WsHub Test 2", "WsHub Test 2", "", 1, true)
+	expectNilErr(t, e)
+	u2, e := c.Users.Get(uid)
+	expectNilErr(t, e)
+	wsUser2, e := h.AddConn(u2, nil)
+	expectNilErr(t, e)
+	f(uid, 0, 2, 2, true)
+
+	h.RemoveConn(wsUser2, nil)
+	f(uid, 0, 1, 1, false)
+	h.RemoveConn(wsUser2, nil)
+	f(uid, 0, 1, 1, false)
+	h.RemoveConn(wsUser, nil)
+	f(uid, 0, 0, 0, false)
+
+	countSockets := func(wsUser *c.WSUser, expect int) {
+		exf(wsUser.CountSockets() == expect, "CountSockets() should be %d not %d", expect, wsUser.CountSockets())
+	}
+	wsUser2, e = h.AddConn(u2, nil)
+	expectNilErr(t, e)
+	f(uid, 0, 1, 1, true)
+	countSockets(wsUser2, 1)
+	wsUser2.RemoveSocket(nil)
+	f(uid, 0, 1, 1, true)
+	countSockets(wsUser2, 0)
+	h.RemoveConn(wsUser2, nil)
+	f(uid, 0, 0, 0, false)
+	countSockets(wsUser2, 0)
+
+	wsUser2, e = h.AddConn(u2, nil)
+	expectNilErr(t, e)
+	f(uid, 0, 1, 1, true)
+	countSockets(wsUser2, 1)
+	expectNilErr(t, wsUser2.Ping())
+	f(uid, 0, 1, 1, true)
+	countSockets(wsUser2, 0)
+	h.RemoveConn(wsUser2, nil)
+	f(uid, 0, 0, 0, false)
+	countSockets(wsUser2, 0)
+
+	// TODO: Add more tests
+}

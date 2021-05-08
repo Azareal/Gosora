@@ -23,16 +23,36 @@ type WSUserSocket struct {
 }
 
 func (u *WSUser) Ping() error {
-	for _, socket := range u.Sockets {
-		if socket == nil {
-			continue
+	var sockets []*WSUserSocket
+	var del int
+	func() {
+		u.Lock()
+		defer u.Unlock()
+		for i, s := range u.Sockets {
+			if s == nil || s.conn == nil {
+				del++
+				u.Sockets[i] = u.Sockets[len(u.Sockets)-del]
+				continue
+			}
+			sockets = append(sockets, s)
 		}
-		socket.conn.SetWriteDeadline(time.Now().Add(time.Minute))
-		e := socket.conn.WriteMessage(websocket.PingMessage, nil)
+	}()
+	if del > 0 {
+		// TODO: Resize the capacity to release memory more eagerly?
+		u.Sockets = u.Sockets[:len(u.Sockets)-del]
+	}
+
+	for _, s := range sockets {
+		_ = s.conn.SetWriteDeadline(time.Now().Add(time.Minute))
+		e := s.conn.WriteMessage(websocket.PingMessage, nil)
 		if e != nil {
-			socket.conn.Close()
+			s.conn.Close()
+			u.Lock()
+			s.conn = nil
+			u.Unlock()
 		}
 	}
+
 	return nil
 }
 
@@ -106,10 +126,16 @@ func (u *WSUser) WriteToPageBytesMulti(msgs [][]byte, page string) error {
 	return nil
 }
 
+func (u *WSUser) CountSockets() int {
+	u.Lock()
+	defer u.Unlock()
+	return len(u.Sockets)
+}
+
 func (u *WSUser) AddSocket(conn *websocket.Conn, page string) {
 	u.Lock()
 	// If the number of the sockets is small, then we can keep the size of the slice mostly static and just walk through it looking for empty slots
-	if len(u.Sockets) < 6 {
+	/*if len(u.Sockets) < 6 {
 		for i, socket := range u.Sockets {
 			if socket == nil {
 				u.Sockets[i] = &WSUserSocket{conn, page}
@@ -118,15 +144,35 @@ func (u *WSUser) AddSocket(conn *websocket.Conn, page string) {
 				return
 			}
 		}
-	}
+	}*/
 	u.Sockets = append(u.Sockets, &WSUserSocket{conn, page})
 	//fmt.Printf("%+v\n", u.Sockets)
 	u.Unlock()
 }
 
 func (u *WSUser) RemoveSocket(conn *websocket.Conn) {
+	var del int
 	u.Lock()
 	defer u.Unlock()
+	for i, socket := range u.Sockets {
+		if socket == nil || socket.conn == nil {
+			del++
+			u.Sockets[i] = u.Sockets[len(u.Sockets)-del]
+		} else if socket.conn == conn {
+			del++
+			u.Sockets[i] = u.Sockets[len(u.Sockets)-del]
+			//break
+		}
+	}
+	//Logf("%+v\n", u.Sockets)
+	//Log("del: ", del)
+	if del > 0 {
+		// TODO: Resize the capacity to release memory more eagerly?
+		u.Sockets = u.Sockets[:len(u.Sockets)-del]
+	}
+	//Logf("%+v\n", u.Sockets)
+	return
+
 	if len(u.Sockets) < 6 {
 		for i, socket := range u.Sockets {
 			if socket == nil {
