@@ -111,9 +111,10 @@ func cascadeForumPerms(fp *ForumPerms, u *User) {
 func panelUserCheck(w http.ResponseWriter, r *http.Request, u *User) (h *Header, stats PanelStats, rerr RouteError) {
 	theme := GetThemeByReq(r)
 	h = &Header{
-		Site:        Site,
-		Settings:    SettingBox.Load().(SettingMap),
-		Themes:      Themes,
+		Site:     Site,
+		Settings: SettingBox.Load().(SettingMap),
+		//Themes:      Themes,
+		ThemesSlice: ThemesSlice,
 		Theme:       theme,
 		CurrentUser: u,
 		Hooks:       GetHookTable(),
@@ -165,8 +166,7 @@ func panelUserCheck(w http.ResponseWriter, r *http.Request, u *User) (h *Header,
 		// TODO: Optimise this by removing a superfluous string alloc
 		var tname string
 		if theme.OverridenMap != nil {
-			_, ok := theme.OverridenMap[name]
-			if ok {
+			if _, ok := theme.OverridenMap[name]; ok {
 				tname = "_" + theme.Name
 			}
 		}
@@ -193,8 +193,8 @@ func simpleUserCheck(w http.ResponseWriter, r *http.Request, u *User) (lite *Hea
 
 func GetThemeByReq(r *http.Request) *Theme {
 	theme := &Theme{Name: ""}
-	cookie, err := r.Cookie("current_theme")
-	if err == nil {
+	cookie, e := r.Cookie("current_theme")
+	if e == nil {
 		inTheme, ok := Themes[html.EscapeString(cookie.Value)]
 		if ok && !theme.HideFromThemes {
 			theme = inTheme
@@ -216,9 +216,10 @@ func userCheck(w http.ResponseWriter, r *http.Request, u *User) (h *Header, rerr
 func userCheck2(w http.ResponseWriter, r *http.Request, u *User, nano int64) (h *Header, rerr RouteError) {
 	theme := GetThemeByReq(r)
 	h = &Header{
-		Site:        Site,
-		Settings:    SettingBox.Load().(SettingMap),
-		Themes:      Themes,
+		Site:     Site,
+		Settings: SettingBox.Load().(SettingMap),
+		//Themes:      Themes,
+		ThemesSlice: ThemesSlice,
 		Theme:       theme,
 		CurrentUser: u, // ! Some things rely on this being a pointer downstream from this function
 		Hooks:       GetHookTable(),
@@ -282,16 +283,15 @@ func PrepResources(u *User, h *Header, theme *Theme) {
 
 	addPreScript := func(name string, i int) {
 		// TODO: Optimise this by removing a superfluous string alloc
-		var tname string
 		if theme.OverridenMap != nil {
 			//fmt.Printf("name %+v\n", name)
 			//fmt.Printf("theme.OverridenMap %+v\n", theme.OverridenMap)
 			if _, ok := theme.OverridenMap[name]; ok {
-				tname = "_" + theme.Name
+				tname := "_" + theme.Name
+				//fmt.Printf("tname %+v\n", tname)
+				h.AddPreScriptAsync("tmpl_" + name + tname + ".js")
+				return
 			}
-			//fmt.Printf("tname %+v\n", tname)
-			h.AddPreScriptAsync("tmpl_" + name + tname + ".js")
-			return
 		}
 		//fmt.Printf("tname %+v\n", tname)
 		h.AddPreScriptAsync(ucstrs[i])

@@ -24,6 +24,7 @@ type ThemeList map[string]*Theme
 var Themes ThemeList = make(map[string]*Theme) // ? Refactor this into a store?
 var DefaultThemeBox atomic.Value
 var ChangeDefaultThemeMutex sync.Mutex
+var ThemesSlice []*Theme
 
 // TODO: Fallback to a random theme if this doesn't exist, so admins can remove themes they don't use
 // TODO: Use this when the default theme doesn't exist
@@ -41,12 +42,12 @@ var themeStmts ThemeStmts
 
 func init() {
 	DbInits.Add(func(acc *qgen.Accumulator) error {
-		t := "themes"
+		t, cols := "themes", "uname,default"
 		themeStmts = ThemeStmts{
-			getAll:    acc.Select(t).Columns("uname,default").Prepare(),
+			getAll:    acc.Select(t).Columns(cols).Prepare(),
 			isDefault: acc.Select(t).Columns("default").Where("uname=?").Prepare(),
 			update:    acc.Update(t).Set("default=?").Where("uname=?").Prepare(),
-			add:       acc.Insert(t).Columns("uname,default").Fields("?,?").Prepare(),
+			add:       acc.Insert(t).Columns(cols).Fields("?,?").Prepare(),
 		}
 		return acc.FirstError()
 	})
@@ -76,43 +77,43 @@ func NewThemeList() (themes ThemeList, err error) {
 			return themes, err
 		}
 
-		theme := &Theme{}
-		err = json.Unmarshal(themeFile, theme)
+		th := &Theme{}
+		err = json.Unmarshal(themeFile, th)
 		if err != nil {
 			return themes, err
 		}
 
-		if theme.Name == "" {
+		if th.Name == "" {
 			return themes, errors.New("Theme " + themePath + " doesn't have a name set in theme.json")
 		}
-		if theme.Name == fallbackTheme {
+		if th.Name == fallbackTheme {
 			defaultTheme = fallbackTheme
 		}
-		lastTheme = theme.Name
+		lastTheme = th.Name
 
 		// TODO: Implement the static file part of this and fsnotify
-		if theme.Path != "" {
-			log.Print("Resolving redirect to " + theme.Path)
-			themeFile, err := ioutil.ReadFile(theme.Path + "/theme.json")
+		if th.Path != "" {
+			log.Print("Resolving redirect to " + th.Path)
+			themeFile, err := ioutil.ReadFile(th.Path + "/theme.json")
 			if err != nil {
 				return themes, err
 			}
-			theme = &Theme{Path: theme.Path}
-			err = json.Unmarshal(themeFile, theme)
+			th = &Theme{Path: th.Path}
+			err = json.Unmarshal(themeFile, th)
 			if err != nil {
 				return themes, err
 			}
 		} else {
-			theme.Path = themePath
+			th.Path = themePath
 		}
 
-		theme.Active = false // Set this to false, just in case someone explicitly overrode this value in the JSON file
+		th.Active = false // Set this to false, just in case someone explicitly overrode this value in the JSON file
 
 		// TODO: Let the theme specify where it's resources are via the JSON file?
 		// TODO: Let the theme inherit CSS from another theme?
 		// ? - This might not be too helpful, as it only searches for /public/ and not if /public/ is empty. Still, it might help some people with a slightly less cryptic error
-		log.Print(theme.Path + "/public/")
-		_, err = os.Stat(theme.Path + "/public/")
+		log.Print(th.Path + "/public/")
+		_, err = os.Stat(th.Path + "/public/")
 		if err != nil {
 			if os.IsNotExist(err) {
 				return themes, errors.New("We couldn't find this theme's resources. E.g. the /public/ folder.")
@@ -122,31 +123,31 @@ func NewThemeList() (themes ThemeList, err error) {
 			}
 		}
 
-		if theme.FullImage != "" {
+		if th.FullImage != "" {
 			DebugLog("Adding theme image")
-			err = StaticFiles.Add(theme.Path+"/"+theme.FullImage, themePath)
+			err = StaticFiles.Add(th.Path+"/"+th.FullImage, themePath)
 			if err != nil {
 				return themes, err
 			}
 		}
 
-		theme.TemplatesMap = make(map[string]string)
-		theme.TmplPtr = make(map[string]interface{})
-		if theme.Templates != nil {
-			for _, themeTmpl := range theme.Templates {
-				theme.TemplatesMap[themeTmpl.Name] = themeTmpl.Source
-				theme.TmplPtr[themeTmpl.Name] = TmplPtrMap["o_"+themeTmpl.Source]
+		th.TemplatesMap = make(map[string]string)
+		th.TmplPtr = make(map[string]interface{})
+		if th.Templates != nil {
+			for _, themeTmpl := range th.Templates {
+				th.TemplatesMap[themeTmpl.Name] = themeTmpl.Source
+				th.TmplPtr[themeTmpl.Name] = TmplPtrMap["o_"+themeTmpl.Source]
 			}
 		}
 
-		theme.IntTmplHandle = DefaultTemplates
-		overrides, err := ioutil.ReadDir(theme.Path + "/overrides/")
+		th.IntTmplHandle = DefaultTemplates
+		overrides, err := ioutil.ReadDir(th.Path + "/overrides/")
 		if err != nil && !os.IsNotExist(err) {
 			return themes, err
 		}
 		if len(overrides) > 0 {
 			overCount := 0
-			theme.OverridenMap = make(map[string]bool)
+			th.OverridenMap = make(map[string]bool)
 			for _, override := range overrides {
 				if override.IsDir() {
 					continue
@@ -159,25 +160,25 @@ func NewThemeList() (themes ThemeList, err error) {
 				}
 				overCount++
 				nosuf := strings.TrimSuffix(override.Name(), ext)
-				theme.OverridenTemplates = append(theme.OverridenTemplates, nosuf)
-				theme.OverridenMap[nosuf] = true
-				//theme.TmplPtr[nosuf] = TmplPtrMap["o_"+nosuf]
+				th.OverridenTemplates = append(th.OverridenTemplates, nosuf)
+				th.OverridenMap[nosuf] = true
+				//th.TmplPtr[nosuf] = TmplPtrMap["o_"+nosuf]
 				log.Print("succeeded")
 			}
 
 			localTmpls := template.New("")
-			err = loadTemplates(localTmpls, theme.Name)
+			err = loadTemplates(localTmpls, th.Name)
 			if err != nil {
 				return themes, err
 			}
-			theme.IntTmplHandle = localTmpls
-			log.Printf("theme.OverridenTemplates: %+v\n", theme.OverridenTemplates)
-			log.Printf("theme.IntTmplHandle: %+v\n", theme.IntTmplHandle)
+			th.IntTmplHandle = localTmpls
+			log.Printf("theme.OverridenTemplates: %+v\n", th.OverridenTemplates)
+			log.Printf("theme.IntTmplHandle: %+v\n", th.IntTmplHandle)
 		} else {
-			log.Print("no overrides for " + theme.Name)
+			log.Print("no overrides for " + th.Name)
 		}
 
-		for i, res := range theme.Resources {
+		for i, res := range th.Resources {
 			ext := filepath.Ext(res.Name)
 			switch ext {
 			case ".css":
@@ -193,19 +194,19 @@ func NewThemeList() (themes ThemeList, err error) {
 			case "panel":
 				res.LocID = LocPanel
 			}
-			theme.Resources[i] = res
+			th.Resources[i] = res
 		}
 
-		for _, dock := range theme.Docks {
-			id, ok := DockToID[dock]
-			if ok {
-				theme.DocksID = append(theme.DocksID, id)
+		for _, dock := range th.Docks {
+			if id, ok := DockToID[dock]; ok {
+				th.DocksID = append(th.DocksID, id)
 			}
 		}
 
 		// TODO: Bind the built template, or an interpreted one for any dock overrides this theme has
 
-		themes[theme.Name] = theme
+		themes[th.Name] = th
+		ThemesSlice = append(ThemesSlice, th)
 	}
 	if defaultTheme == "" {
 		defaultTheme = lastTheme
@@ -221,18 +222,18 @@ func (t ThemeList) LoadActiveStatus() error {
 	ChangeDefaultThemeMutex.Lock()
 	defer ChangeDefaultThemeMutex.Unlock()
 
-	rows, err := themeStmts.getAll.Query()
-	if err != nil {
-		return err
+	rows, e := themeStmts.getAll.Query()
+	if e != nil {
+		return e
 	}
 	defer rows.Close()
 
 	var uname string
 	var defaultThemeSwitch bool
 	for rows.Next() {
-		err = rows.Scan(&uname, &defaultThemeSwitch)
-		if err != nil {
-			return err
+		e = rows.Scan(&uname, &defaultThemeSwitch)
+		if e != nil {
+			return e
 		}
 
 		// Was the theme deleted at some point?
@@ -258,8 +259,8 @@ func (t ThemeList) LoadActiveStatus() error {
 
 func (t ThemeList) LoadStaticFiles() error {
 	for _, theme := range t {
-		if err := theme.LoadStaticFiles(); err != nil {
-			return err
+		if e := theme.LoadStaticFiles(); e != nil {
+			return e
 		}
 	}
 	return nil
