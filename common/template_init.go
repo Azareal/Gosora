@@ -108,9 +108,10 @@ func tmplInitUsers() (*User, *User, *User) {
 
 func tmplInitHeaders(u, u2, u3 *User) (*Header, *Header, *Header) {
 	header := &Header{
-		Site:            Site,
-		Settings:        SettingBox.Load().(SettingMap),
-		Themes:          Themes,
+		Site:     Site,
+		Settings: SettingBox.Load().(SettingMap),
+		//Themes:          Themes,
+		ThemesSlice:     ThemesSlice,
 		Theme:           Themes[DefaultThemeBox.Load().(string)],
 		CurrentUser:     u,
 		NoticeList:      []string{"test"},
