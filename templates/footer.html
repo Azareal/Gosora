@@ -12,7 +12,7 @@
 		{{if .CurrentUser.IsAdmin}}<div title="start to before tmpl"class="elapsed">{{.Header.Elapsed1}}</div><div title="start to footer"class="elapsed">{{elapsed .Header.StartedAt}}</div>{{end}}
 		<form action="/theme/"method="post">
 			<div id="themeSelector">
-				<select id="themeSelectorSelect"name="theme"aria-label="{{lang "footer_theme_selector_aria"}}">{{range .Header.Themes}}{{if not .HideFromThemes}}
+				<select id="themeSelectorSelect"name="theme"aria-label="{{lang "footer_theme_selector_aria"}}">{{range .Header.ThemesSlice}}{{if not .HideFromThemes}}
 					<option value="{{.Name}}"{{if eq $.Header.Theme.Name .Name}}selected{{end}}>{{.FriendlyName}}</option>
 				{{end}}{{end}}</select>
 				<noscript><input type="submit"></noscript>
