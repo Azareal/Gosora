@@ -1505,6 +1505,8 @@ func TestPolls(t *testing.T) {
 	tid, e := c.Topics.Create(2, "Poll Test", "Filler Body", 1, "")
 	expectNilErr(t, e)
 	topic, e := c.Topics.Get(tid)
+	expectNilErr(t, e)
+	exf(topic.Poll == 0, "t.Poll should be %d not %d", 0, topic.Poll)
 	/*Options      map[int]string
 		Results      map[int]int  // map[optionIndex]points
 		QuickOptions []PollOption // TODO: Fix up the template transpiler so we don't need to use this hack anymore
@@ -1515,6 +1517,9 @@ func TestPolls(t *testing.T) {
 	exf(pid == 1, "poll id should be 1 not %d", pid)
 	ex(c.Polls.Exists(1), "poll 1 should exist")
 	exf(c.Polls.Count() == 1, "count should be %d not %d", 1, c.Polls.Count())
+	topic, e = c.Topics.BypassGet(tid)
+	expectNilErr(t, e)
+	exf(topic.Poll == pid, "t.Poll should be %d not %d", pid, topic.Poll)
 
 	testPoll := func(p *c.Poll, id, parentID int, parentTable string, ptype int, antiCheat bool, voteCount int) {
 		ef := exf
@@ -1549,6 +1554,24 @@ func TestPolls(t *testing.T) {
 	_, e = c.Polls.Get(1)
 	recordMustNotExist(t, e, "poll 1 should no longer exist")
 	exf(c.Polls.Count() == 0, "count should be %d not %d", 0, c.Polls.Count())
+	topic, e = c.Topics.BypassGet(tid)
+	expectNilErr(t, e)
+	exf(topic.Poll == pid, "t.Poll should be %d not %d", pid, topic.Poll)
+
+	expectNilErr(t, topic.SetPoll(999))
+	topic, e = c.Topics.BypassGet(tid)
+	expectNilErr(t, e)
+	exf(topic.Poll == pid, "t.Poll should be %d not %d", pid, topic.Poll)
+
+	expectNilErr(t, topic.SetPoll(0))
+	topic, e = c.Topics.BypassGet(tid)
+	expectNilErr(t, e)
+	exf(topic.Poll == pid, "t.Poll should be %d not %d", pid, topic.Poll)
+
+	expectNilErr(t, topic.RemovePoll())
+	topic, e = c.Topics.BypassGet(tid)
+	expectNilErr(t, e)
+	exf(topic.Poll == 0, "t.Poll should be %d not %d", 0, topic.Poll)
 }
 
 func TestSearch(t *testing.T) {

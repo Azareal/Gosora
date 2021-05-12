@@ -199,6 +199,7 @@ type TopicStmts struct {
 	deleteActivity      *sql.Stmt
 	edit                *sql.Stmt
 	setPoll             *sql.Stmt
+	removePoll          *sql.Stmt
 	testSetCreatedAt    *sql.Stmt
 	createAction        *sql.Stmt
 
@@ -235,6 +236,7 @@ func init() {
 			deleteActivity:      acc.Delete("activity_stream").Where("elementID=? AND elementType='topic'").Prepare(),
 			edit:                set("title=?,content=?,parsed_content=?"), // TODO: Only run the content update bits on non-polls, does this matter?
 			setPoll:             acc.Update(t).Set("poll=?").Where("tid=? AND poll=0").Prepare(),
+			removePoll:          acc.Update(t).Set("poll=0").Where("tid=?").Prepare(),
 			testSetCreatedAt:    set("createdAt=?"),
 			createAction:        acc.Insert("replies").Columns("tid,actionType,ip,createdBy,createdAt,lastUpdated,content,parsed_content").Fields("?,?,?,?,UTC_TIMESTAMP(),UTC_TIMESTAMP(),'',''").Prepare(),
 
@@ -515,6 +517,12 @@ func (t *Topic) Update(name, content string) error {
 
 func (t *Topic) SetPoll(pollID int) error {
 	_, e := topicStmts.setPoll.Exec(pollID, t.ID) // TODO: Sniff if this changed anything to see if we hit an existing poll
+	t.cacheRemove()
+	return e
+}
+
+func (t *Topic) RemovePoll() error {
+	_, e := topicStmts.removePoll.Exec(t.ID) // TODO: Sniff if this changed anything to see if we hit an existing poll
 	t.cacheRemove()
 	return e
 }
