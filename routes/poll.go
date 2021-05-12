@@ -1,13 +1,13 @@
 package routes
 
 import (
+	"bytes"
 	"database/sql"
 	"errors"
 	"net/http"
 	"strconv"
 
 	c "github.com/Azareal/Gosora/common"
-	qgen "github.com/Azareal/Gosora/query_gen"
 )
 
 func PollVote(w http.ResponseWriter, r *http.Request, u *c.User, sPollID string) c.RouteError {
@@ -78,29 +78,23 @@ func PollResults(w http.ResponseWriter, r *http.Request, u *c.User, sPollID stri
 		return c.InternalError(err, w, r)
 	}
 
-	// TODO: Abstract this
-	rows, err := qgen.NewAcc().Select("polls_options").Columns("votes").Where("pollID=?").Orderby("option ASC").Query(poll.ID)
-	if err != nil {
-		return c.InternalError(err, w, r)
-	}
-	defer rows.Close()
-
-	optList := ""
-	var votes int
-	for rows.Next() {
-		if e := rows.Scan(&votes); e != nil {
-			return c.InternalError(e, w, r)
-		}
-		optList += strconv.Itoa(votes) + ","
-	}
-	if err = rows.Err(); err != nil {
-		return c.InternalError(err, w, r)
-	}
-
 	// TODO: Implement a version of this which doesn't rely so much on sequential order
-	if len(optList) > 0 {
-		optList = optList[:len(optList)-1]
+	var ob bytes.Buffer
+	ob.WriteRune('[')
+	var i int
+	e := poll.Resultsf(func(votes int) error {
+		if i != 0 {
+			ob.WriteRune(',')
+		}
+		ob.WriteString(strconv.Itoa(votes))
+		i++
+		return nil
+	})
+	if e != nil && e != sql.ErrNoRows {
+		return c.InternalError(e, w, r)
 	}
-	w.Write([]byte("[" + optList + "]"))
+	ob.WriteRune(']')
+	w.Write(ob.Bytes())
+
 	return nil
 }

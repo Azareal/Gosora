@@ -1546,6 +1546,32 @@ func TestPolls(t *testing.T) {
 	expectNilErr(t, e)
 	testPoll(p, 1, tid, "topics", 0, false, 1)
 
+	var vslice []int
+	expectNilErr(t, p.Resultsf(func(votes int) error {
+		vslice = append(vslice, votes)
+		return nil
+	}))
+	//fmt.Printf("vslice: %+v\n", vslice)
+	exf(vslice[0] == 1, "vslice[0] should be %d not %d", 0, vslice[0])
+	exf(vslice[1] == 0, "vslice[1] should be %d not %d", 1, vslice[1])
+	exf(vslice[2] == 0, "vslice[2] should be %d not %d", 0, vslice[2])
+
+	expectNilErr(t, p.CastVote(2, 1, ""))
+	expectNilErr(t, c.Polls.Reload(p.ID))
+	p, e = c.Polls.Get(1)
+	expectNilErr(t, e)
+	testPoll(p, 1, tid, "topics", 0, false, 2)
+
+	vslice = nil
+	expectNilErr(t, p.Resultsf(func(votes int) error {
+		vslice = append(vslice, votes)
+		return nil
+	}))
+	//fmt.Printf("vslice: %+v\n", vslice)
+	exf(vslice[0] == 1, "vslice[0] should be %d not %d", 1, vslice[0])
+	exf(vslice[1] == 0, "vslice[1] should be %d not %d", 0, vslice[1])
+	exf(vslice[2] == 1, "vslice[2] should be %d not %d", 1, vslice[2])
+
 	expectNilErr(t, c.Polls.ClearIPs())
 	// TODO: Test to see if it worked
 
