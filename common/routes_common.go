@@ -39,7 +39,11 @@ func simpleForumUserCheck(w http.ResponseWriter, r *http.Request, u *User, fid i
 	}
 
 	// Is there a better way of doing the skip AND the success flag on this hook like multiple returns?
-	skip, rerr := h.Hooks.VhookSkippable("simple_forum_check_pre_perms", w, r, u, &fid, h)
+	/*skip, rerr := h.Hooks.VhookSkippable("simple_forum_check_pre_perms", w, r, u, &fid, h)
+	if skip || rerr != nil {
+		return h, rerr
+	}*/
+	skip, rerr := H_simple_forum_check_pre_perms_hook(h.Hooks, w, r, u, &fid, h)
 	if skip || rerr != nil {
 		return h, rerr
 	}
@@ -162,18 +166,23 @@ func panelUserCheck(w http.ResponseWriter, r *http.Request, u *User) (h *Header,
 	stats.Themes = len(Themes)
 	stats.Reports = 0 // TODO: Do the report count. Only show open threads?
 
-	addPreScript := func(name string) {
+	addPreScript := func(name string, i int) {
 		// TODO: Optimise this by removing a superfluous string alloc
-		var tname string
 		if theme.OverridenMap != nil {
+			//fmt.Printf("name %+v\n", name)
+			//fmt.Printf("theme.OverridenMap %+v\n", theme.OverridenMap)
 			if _, ok := theme.OverridenMap[name]; ok {
-				tname = "_" + theme.Name
+				tname := "_" + theme.Name
+				//fmt.Printf("tname %+v\n", tname)
+				h.AddPreScriptAsync("tmpl_" + name + tname + ".js")
+				return
 			}
 		}
-		h.AddPreScriptAsync("tmpl_" + name + tname + ".js")
+		//fmt.Printf("tname %+v\n", tname)
+		h.AddPreScriptAsync(ucstrs[i])
 	}
-	addPreScript("alert")
-	addPreScript("notice")
+	addPreScript("alert", 3)
+	addPreScript("notice", 4)
 
 	return h, stats, nil
 }
@@ -203,7 +212,6 @@ func GetThemeByReq(r *http.Request) *Theme {
 	if theme.Name == "" {
 		theme = Themes[DefaultThemeBox.Load().(string)]
 	}
-
 	return theme
 }
 
@@ -341,32 +349,38 @@ func preRoute(w http.ResponseWriter, r *http.Request) (User, bool) {
 
 	// TODO: WIP. Refactor this to eliminate the unnecessary query
 	// TODO: Better take proxies into consideration
-	host, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		_ = PreError("Bad IP", w, r)
-		return *usercpy, false
-	}
-
-	// TODO: Prefer Cf-Connecting-Ip header, fewer shenanigans
-	if Site.HasProxy {
-		// TODO: Check the right-most IP, might get tricky with multiple proxies, maybe have a setting for the number of hops we jump through
-		xForwardedFor := r.Header.Get("X-Forwarded-For")
-		if xForwardedFor != "" {
-			forwardedFor := strings.Split(xForwardedFor, ",")
-			// TODO: Check if this is a valid IP Address, reject if not
-			host = forwardedFor[len(forwardedFor)-1]
+	if !Config.DisableIP {
+		var host string
+		// TODO: Prefer Cf-Connecting-Ip header, fewer shenanigans
+		if Site.HasProxy {
+			// TODO: Check the right-most IP, might get tricky with multiple proxies, maybe have a setting for the number of hops we jump through
+			xForwardedFor := r.Header.Get("X-Forwarded-For")
+			if xForwardedFor != "" {
+				forwardedFor := strings.Split(xForwardedFor, ",")
+				// TODO: Check if this is a valid IP Address, reject if not
+				host = forwardedFor[len(forwardedFor)-1]
+			}
 		}
-	}
 
-	if !Config.DisableLastIP && usercpy.Loggedin && host != usercpy.GetIP() {
-		mon := time.Now().Month()
-		err = usercpy.UpdateIP(strconv.Itoa(int(mon)) + "-" + host)
-		if err != nil {
-			_ = InternalError(err, w, r)
-			return *usercpy, false
+		if host == "" {
+			var e error
+			host, _, e = net.SplitHostPort(r.RemoteAddr)
+			if e != nil {
+				_ = PreError("Bad IP", w, r)
+				return *usercpy, false
+			}
 		}
+
+		if !Config.DisableLastIP && usercpy.Loggedin && host != usercpy.GetIP() {
+			mon := time.Now().Month()
+			e := usercpy.UpdateIP(strconv.Itoa(int(mon)) + "-" + host)
+			if e != nil {
+				_ = InternalError(e, w, r)
+				return *usercpy, false
+			}
+		}
+		usercpy.LastIP = host
 	}
-	usercpy.LastIP = host
 
 	return *usercpy, true
 }
@@ -513,11 +527,11 @@ func NoSessionMismatch(w http.ResponseWriter, r *http.Request, u *User) RouteErr
 	if e := r.ParseForm(); e != nil {
 		return LocalError("Bad Form", w, r, u)
 	}
-	// TODO: Try to eliminate some of these allocations
-	sess := []byte(u.Session)
-	if len(sess) == 0 {
+	if len(u.Session) == 0 {
 		return SecurityError(w, r, u)
 	}
+	// TODO: Try to eliminate some of these allocations
+	sess := []byte(u.Session)
 	if subtle.ConstantTimeCompare([]byte(r.FormValue("session")), sess) != 1 && subtle.ConstantTimeCompare([]byte(r.FormValue("s")), sess) != 1 {
 		return SecurityError(w, r, u)
 	}
@@ -536,19 +550,19 @@ func HandleUploadRoute(w http.ResponseWriter, r *http.Request, u *User, maxFileS
 	}
 	r.Body = http.MaxBytesReader(w, r.Body, r.ContentLength)
 
-	err := r.ParseMultipartForm(int64(Megabyte))
-	if err != nil {
+	e := r.ParseMultipartForm(int64(Megabyte))
+	if e != nil {
 		return LocalError("Bad Form", w, r, u)
 	}
 	return nil
 }
 
 func NoUploadSessionMismatch(w http.ResponseWriter, r *http.Request, u *User) RouteError {
-	// TODO: Try to eliminate some of these allocations
-	sess := []byte(u.Session)
-	if len(sess) == 0 {
+	if len(u.Session) == 0 {
 		return SecurityError(w, r, u)
 	}
+	// TODO: Try to eliminate some of these allocations
+	sess := []byte(u.Session)
 	if subtle.ConstantTimeCompare([]byte(r.FormValue("session")), sess) != 1 && subtle.ConstantTimeCompare([]byte(r.FormValue("s")), sess) != 1 {
 		return SecurityError(w, r, u)
 	}

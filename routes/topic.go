@@ -204,12 +204,12 @@ func ViewTopic(w http.ResponseWriter, r *http.Request, user *c.User, h *c.Header
 }
 
 func AttachTopicActCommon(w http.ResponseWriter, r *http.Request, u *c.User, stid string) (t *c.Topic, ferr c.RouteError) {
-	tid, err := strconv.Atoi(stid)
-	if err != nil {
+	tid, e := strconv.Atoi(stid)
+	if e != nil {
 		return t, c.LocalErrorJS(p.GetErrorPhrase("id_must_be_integer"), w, r)
 	}
-	t, err = c.Topics.Get(tid)
-	if err != nil {
+	t, e = c.Topics.Get(tid)
+	if e != nil {
 		return t, c.NotFoundJS(w, r)
 	}
 	_, ferr = c.SimpleForumUserCheck(w, r, u, t.ParentID)

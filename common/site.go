@@ -99,6 +99,7 @@ type config struct {
 	LogPruneCutoff int
 	//SelfDeleteTruncCutoff int // Personal data is stripped from the mod action rows only leaving the TID and the action for later investigation.
 
+	DisableIP       bool
 	DisableLastIP   bool
 	DisablePostIP   bool
 	DisablePollIP   bool
@@ -304,6 +305,12 @@ func ProcessConfig() (err error) {
 	}
 	Config.Noavatar = strings.Replace(Config.Noavatar, "{site_url}", Site.URL, -1)
 	guestAvatar = GuestAvatar{buildNoavatar(0, 200), buildNoavatar(0, 48)}
+
+	if Config.DisableIP {
+		Config.DisableLastIP = true
+		Config.DisablePostIP = true
+		Config.DisablePollIP = true
+	}
 
 	if Config.PostIPCutoff == 0 {
 		Config.PostIPCutoff = 90 // Default cutoff

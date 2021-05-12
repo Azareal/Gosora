@@ -92,6 +92,8 @@ PostIPCutoff - The number of days which need to pass before the IP data for a po
 
 PollIPCutoff - The number of days which need to pass before the IP data for a poll is automatically deleted. 0 defaults to whatever the current default is, currently 90 and -1 disables this feature.
 
+DisableIP - Master switch to disable tracking user IPs for any purpose. May not entirely clear already stored data, or data logged by an upstream like a reverse-proxy. Currently doesn't cover net/http ErrorLog. Default: false
+
 DisableLastIP - Disable storing last IPs for users and purge any existing user last IP data. Default: false
 
 DisablePostIP - Disable storing post IPs for users and purge any existing post IP data. Default: false

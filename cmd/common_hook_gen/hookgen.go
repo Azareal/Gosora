@@ -29,6 +29,7 @@ func AddHooks(add func(name, params, ret, htype string, multiHook, skip bool, de
 	vhookskip := func(name, params string) {
 		add(name, params, "(bool,RouteError)", "VhookSkippable_", false, true, "false,nil", "")
 	}
+	vhookskip("simple_forum_check_pre_perms", "w http.ResponseWriter,r *http.Request,u *User,fid *int,h *HeaderLite")
 	vhookskip("forum_check_pre_perms", "w http.ResponseWriter,r *http.Request,u *User,fid *int,h *Header")
 	vhookskip("router_after_filters", "w http.ResponseWriter,r *http.Request,prefix string")
 	vhookskip("router_pre_route", "w http.ResponseWriter,r *http.Request,u *User,prefix string")
@@ -36,6 +37,7 @@ func AddHooks(add func(name, params, ret, htype string, multiHook, skip bool, de
 	vhookskip("route_topic_list_start", "w http.ResponseWriter,r *http.Request,u *User,h *Header")
 	vhookskip("route_attach_start", "w http.ResponseWriter,r *http.Request,u *User,fname string")
 	vhookskip("route_attach_post_get", "w http.ResponseWriter,r *http.Request,u *User,a *Attachment")
+
 	vhooknoret := func(name, params string) {
 		add(name, params, "", "Vhooks", false, false, "false,nil", "")
 	}
@@ -47,15 +49,18 @@ func AddHooks(add func(name, params, ret, htype string, multiHook, skip bool, de
 	/*hook := func(name, params, ret, pure string) {
 		add(name,params,ret,"Hooks",true,false,ret,pure)
 	}*/
+
 	hooknoret := func(name, params string) {
 		add(name, params, "", "HooksNoRet", true, false, "", "")
 	}
 	hooknoret("forums_frow_assign", "f *Forum")
+
 	hookskip := func(name, params string) {
 		add(name, params, "(skip bool)", "HooksSkip", true, true, "", "")
 	}
 	//hookskip("forums_frow_assign","f *Forum")
 	hookskip("topic_create_frow_assign", "f *Forum")
+
 	hookss := func(name string) {
 		add(name, "d string", "string", "Sshooks", true, false, "", "d")
 	}
