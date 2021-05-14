@@ -60,18 +60,30 @@ func tickLoop(thumbChan chan bool) error {
 	}
 
 	tick := func(name string, tasks c.TaskSet, secs int) error {
+		tw := c.NewTickWatch()
+		tw.Name = name
+		tw.Set(&tw.Start, uutils.Nanotime())
+		tw.Run()
+		defer tw.Stop()
 		if c.StartTick() {
 			return nil
 		}
+		tw.Set(&tw.DBCheck, uutils.Nanotime())
 		if e := runHook("before_" + name + "_tick"); e != nil {
 			return e
 		}
 		cn := uutils.Nanotime()
+		tw.Set(&tw.StartHook, cn)
 		if e := tasks.Run(); e != nil {
 			return e
 		}
+		tw.Set(&tw.Tasks, uutils.Nanotime())
 		handleLogLongTick(name, cn, secs)
-		return runHook("after_" + name + "_tick")
+		if e := runHook("after_" + name + "_tick"); e != nil {
+			return e
+		}
+		tw.Set(&tw.EndHook, uutils.Nanotime())
+		return nil
 	}
 
 	tl.HalfSecf = func() error {
@@ -220,6 +232,8 @@ func sched() error {
 	return nil
 }
 
+var pingLastTopicCount = 1
+
 // TODO: Move somewhere else
 func PingLastTopicTick() error {
 	g, e := c.Groups.Get(c.GuestUser.Group)
@@ -258,6 +272,15 @@ func PingLastTopicTick() error {
 	dur := time.Duration(uutils.Nanotime() - cn)
 	if dur.Seconds() > 5 {
 		c.Log("topic " + sid + " completed in " + dur.String())
+	} else if c.Dev.Log4thLongRoute {
+		pingLastTopicCount++
+		if pingLastTopicCount == 4 {
+			c.Log("topic " + sid + " completed in " + dur.String())
+		}
+		if pingLastTopicCount >= 4 {
+			pingLastTopicCount = 1
+		}
 	}
+
 	return nil
 }

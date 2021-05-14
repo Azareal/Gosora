@@ -1,12 +1,15 @@
 package common
 
 import (
+	"fmt"
 	"log"
 	"strconv"
+	"strings"
 	"sync/atomic"
 	"time"
 
 	qgen "github.com/Azareal/Gosora/query_gen"
+	"github.com/Azareal/Gosora/uutils"
 	"github.com/pkg/errors"
 )
 
@@ -214,4 +217,98 @@ func Dailies() (e error) {
 	}
 
 	return nil
+}
+
+type TickWatch struct {
+	Name      string
+	Start     int64
+	DBCheck   int64
+	StartHook int64
+	Tasks     int64
+	EndHook   int64
+
+	Ticker   *time.Ticker
+	Deadline *time.Ticker
+	EndChan  chan bool
+}
+
+func NewTickWatch() *TickWatch {
+	return &TickWatch{
+		Ticker:   time.NewTicker(time.Second * 5),
+		Deadline: time.NewTicker(time.Hour),
+	}
+}
+
+func (w *TickWatch) DumpElapsed() {
+	var sb strings.Builder
+	f := func(str string) {
+		sb.WriteString(str)
+	}
+	ff := func(str string, args ...interface{}) {
+		f(fmt.Sprintf(str, args...))
+	}
+	secs := func(name string, bef, v int64) {
+		if bef == 0 || v == 0 {
+			ff("%s: %d\n", v)
+		}
+		ff("%s: %d - %.2f secs\n", name, v, time.Duration(bef-v).Seconds())
+	}
+
+	f("Name: " + w.Name + "\n")
+	ff("Start: %d\n", w.Start)
+	secs("DBCheck", w.Start, w.DBCheck)
+	secs("StartHook", w.DBCheck, w.StartHook)
+	secs("Tasks", w.StartHook, w.Tasks)
+	secs("EndHook", w.Tasks, w.EndHook)
+
+	Log(sb.String())
+}
+
+func (w *TickWatch) Run() {
+	w.EndChan = make(chan bool)
+	// Use a goroutine to circumvent ticks which never end
+	go func() {
+		defer w.Ticker.Stop()
+		defer close(w.EndChan)
+		defer EatPanics()
+		var n int
+		for {
+			select {
+			case <-w.Ticker.C:
+				Logf("%d seconds elapsed since tick %s started", 5*n, w.Name)
+				n++
+			case <-w.Deadline.C:
+				Log("Hit TickWatch deadline")
+				dur := time.Duration(uutils.Nanotime() - w.Start)
+				if dur.Seconds() > 5 {
+					Log("tick " + w.Name + " has run for " + dur.String())
+					w.DumpElapsed()
+				}
+				return
+			case <-w.EndChan:
+				dur := time.Duration(uutils.Nanotime() - w.Start)
+				if dur.Seconds() > 5 {
+					Log("tick " + w.Name + " completed in " + dur.String())
+					w.DumpElapsed()
+				}
+				return
+			}
+		}
+	}()
+}
+
+func (w *TickWatch) Stop() {
+	w.EndChan <- true
+}
+
+func (w *TickWatch) Set(a *int64, v int64) {
+	atomic.StoreInt64(a, v)
+}
+
+func (w *TickWatch) Clear() {
+	w.Start = 0
+	w.DBCheck = 0
+	w.StartHook = 0
+	w.Tasks = 0
+	w.EndHook = 0
 }

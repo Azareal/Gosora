@@ -33,6 +33,7 @@ import (
 	_ "github.com/Azareal/Gosora/extend"
 	qgen "github.com/Azareal/Gosora/query_gen"
 	"github.com/Azareal/Gosora/routes"
+	"github.com/Azareal/Gosora/uutils"
 	"github.com/fsnotify/fsnotify"
 
 	//"github.com/lucas-clemente/quic-go/http3"
@@ -602,15 +603,32 @@ func main() {
 		sig := <-sigs
 		log.Print("Received a signal to shutdown: ", sig)
 		// TODO: Gracefully shutdown the HTTP server
-		if e := runHook("before_shutdown_tick"); e != nil {
-			log.Print("before_shutdown_tick err:", e)
+		tw, cn := c.NewTickWatch(), uutils.Nanotime()
+		tw.Name = "shutdown"
+		tw.Set(&tw.Start, cn)
+		tw.Set(&tw.DBCheck, cn)
+		tw.Run()
+		n, e := func() (string, error) {
+			if e := runHook("before_shutdown_tick"); e != nil {
+				return "before_shutdown_tick ", e
+			}
+			tw.Set(&tw.StartHook, uutils.Nanotime())
+			log.Print("Running shutdown tasks")
+			if e := c.Tasks.Shutdown.Run(); e != nil {
+				return "shutdown tasks ", e
+			}
+			tw.Set(&tw.Tasks, uutils.Nanotime())
+			log.Print("Ran shutdown tasks")
+			if e := runHook("after_shutdown_tick"); e != nil {
+				return "after_shutdown_tick ", e
+			}
+			tw.Set(&tw.EndHook, uutils.Nanotime())
+			return "", nil
+		}()
+		if e != nil {
+			log.Print(n+" err:", e)
 		}
-		log.Print("Running shutdown tasks")
-		c.Tasks.Shutdown.Run()
-		log.Print("Ran shutdown tasks")
-		if e := runHook("after_shutdown_tick"); e != nil {
-			log.Print("after_shutdown_tick err:", e)
-		}
+		tw.Stop()
 		log.Print("Stopping server")
 		c.StoppedServer("Stopped server")
 	}()
@@ -650,26 +668,19 @@ func main() {
 }
 
 func startServer() {
-	// We might not need the timeouts, if we're behind a reverse-proxy like Nginx
+	// We might not need timeouts, if we're behind a reverse-proxy like Nginx
 	newServer := func(addr string, h http.Handler) *http.Server {
-		rtime := c.Config.ReadTimeout
-		if rtime == 0 {
-			rtime = 8
-		} else if rtime == -1 {
-			rtime = 0
+		f := func(timeout, dval int) int {
+			if timeout == 0 {
+				timeout = dval
+			} else if timeout == -1 {
+				timeout = 0
+			}
+			return timeout
 		}
-		wtime := c.Config.WriteTimeout
-		if wtime == 0 {
-			wtime = 10
-		} else if wtime == -1 {
-			wtime = 0
-		}
-		itime := c.Config.IdleTimeout
-		if itime == 0 {
-			itime = 120
-		} else if itime == -1 {
-			itime = 0
-		}
+		rtime := f(c.Config.ReadTimeout, 8)
+		wtime := f(c.Config.WriteTimeout, 10)
+		itime := f(c.Config.IdleTimeout, 120)
 		return &http.Server{
 			Addr:      addr,
 			Handler:   h,
