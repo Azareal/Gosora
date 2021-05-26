@@ -247,19 +247,29 @@ func (w *TickWatch) DumpElapsed() {
 	ff := func(str string, args ...interface{}) {
 		f(fmt.Sprintf(str, args...))
 	}
-	secs := func(name string, bef, v int64) {
+	elapse := func(name string, bef, v int64) {
 		if bef == 0 || v == 0 {
 			ff("%s: %d\n", v)
 		}
-		ff("%s: %d - %.2f secs\n", name, v, time.Duration(bef-v).Seconds())
+		dur := time.Duration(v - bef)
+		milli := dur.Milliseconds()
+		if milli < 1000 {
+			ff("%s: %d - %d ms\n", name, v, milli)
+		} else if milli > 60000 {
+			secs := milli / 1000
+			mins := secs / 60
+			ff("%s: %d - m%d s%.2f\n", name, v, mins, float64(milli-(mins*60*1000))/1000)
+		} else {
+			ff("%s: %d - %.2f secs\n", name, v, dur.Seconds())
+		}
 	}
 
 	f("Name: " + w.Name + "\n")
 	ff("Start: %d\n", w.Start)
-	secs("DBCheck", w.Start, w.DBCheck)
-	secs("StartHook", w.DBCheck, w.StartHook)
-	secs("Tasks", w.StartHook, w.Tasks)
-	secs("EndHook", w.Tasks, w.EndHook)
+	elapse("DBCheck", w.Start, w.DBCheck)
+	elapse("StartHook", w.DBCheck, w.StartHook)
+	elapse("Tasks", w.StartHook, w.Tasks)
+	elapse("EndHook", w.Tasks, w.EndHook)
 
 	Log(sb.String())
 }
@@ -272,10 +282,20 @@ func (w *TickWatch) Run() {
 		defer close(w.EndChan)
 		defer EatPanics()
 		var n int
+		var downOnce bool
 		for {
 			select {
 			case <-w.Ticker.C:
-				Logf("%d seconds elapsed since tick %s started", 5*n, w.Name)
+				// Less noisy logs
+				if n > 2 && n%2 != 0 {
+					Logf("%d seconds elapsed since tick %s started", 5*n, w.Name)
+				}
+				if !downOnce && w.DBCheck == 0 {
+					qgen.Builder.GetConn().SetConnMaxLifetime(time.Second / 2) // Drop all the connections and start over
+					LogWarning(ErrDBDown)
+					atomic.StoreInt32(&IsDBDown, 1)
+					downOnce = true
+				}
 				n++
 			case <-w.Deadline.C:
 				Log("Hit TickWatch deadline")
