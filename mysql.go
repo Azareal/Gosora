@@ -45,6 +45,7 @@ func initMySQL() (err error) {
 
 	// Only hold connections open for five seconds to avoid accumulating a large number of stale connections
 	//db.SetConnMaxLifetime(5 * time.Second)
+	db.SetConnMaxLifetime(c.DBTimeout())
 
 	// Build the generated prepared statements, we are going to slowly move the queries over to the query generator rather than writing them all by hand, this'll make it easier for us to implement database adapters for other databases like PostgreSQL, MSSQL, SQlite, etc.
 	err = _gen_mysql()

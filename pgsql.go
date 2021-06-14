@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	c "github.com/Azareal/Gosora/common"
-	"github.com/Azareal/Gosora/query_gen"
+	qgen "github.com/Azareal/Gosora/query_gen"
 	_ "github.com/lib/pq"
 )
 
@@ -45,6 +45,7 @@ func initPgsql() (err error) {
 
 	// Only hold connections open for five seconds to avoid accumulating a large number of stale connections
 	//db.SetConnMaxLifetime(5 * time.Second)
+	db.SetConnMaxLifetime(c.DBTimeout())
 
 	err = _gen_pgsql()
 	if err != nil {

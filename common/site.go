@@ -161,6 +161,8 @@ type devConfig struct {
 	LogLongTick     bool // unlisted setting
 	LogNewLongRoute bool // unlisted setting
 	Log4thLongRoute bool // unlisted setting
+
+	HourDBTimeout bool // unlisted setting
 }
 
 // configHolder is purely for having a big struct to unmarshal data into

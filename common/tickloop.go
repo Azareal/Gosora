@@ -67,13 +67,21 @@ func (l *TickLoop) Loop() {
 
 var ErrDBDown = errors.New("The database is down")
 
+func DBTimeout() time.Duration {
+	if Dev.HourDBTimeout {
+		return time.Hour
+	}
+	//db.SetConnMaxLifetime(time.Second * 60 * 5) // Make this infinite as the temporary lifetime change will purge the stale connections?
+	return -1
+}
+
 func StartTick() (abort bool) {
 	db := qgen.Builder.GetConn()
 	isDBDown := atomic.LoadInt32(&IsDBDown)
 	if e := db.Ping(); e != nil {
 		// TODO: There's a bit of a race here, but it doesn't matter if this error appears multiple times in the logs as it's capped at three times, we just want to cut it down 99% of the time
 		if isDBDown == 0 {
-			db.SetConnMaxLifetime(time.Second / 2) // Drop all the connections and start over
+			db.SetConnMaxLifetime(time.Second / 4) // Drop all the connections and start over
 			LogWarning(e, ErrDBDown.Error())
 		}
 		atomic.StoreInt32(&IsDBDown, 1)
@@ -82,8 +90,7 @@ func StartTick() (abort bool) {
 	if isDBDown == 1 {
 		log.Print("The database is back")
 	}
-	//db.SetConnMaxLifetime(time.Second * 60 * 5) // Make this infinite as the temporary lifetime change will purge the stale connections?
-	db.SetConnMaxLifetime(-1)
+	db.SetConnMaxLifetime(DBTimeout())
 	atomic.StoreInt32(&IsDBDown, 0)
 	return false
 }
@@ -250,6 +257,7 @@ func (w *TickWatch) DumpElapsed() {
 	elapse := func(name string, bef, v int64) {
 		if bef == 0 || v == 0 {
 			ff("%s: %d\n", v)
+			return
 		}
 		dur := time.Duration(v - bef)
 		milli := dur.Milliseconds()
@@ -267,8 +275,20 @@ func (w *TickWatch) DumpElapsed() {
 	f("Name: " + w.Name + "\n")
 	ff("Start: %d\n", w.Start)
 	elapse("DBCheck", w.Start, w.DBCheck)
+	if w.DBCheck == 0 {
+		Log(sb.String())
+		return
+	}
 	elapse("StartHook", w.DBCheck, w.StartHook)
+	if w.StartHook == 0 {
+		Log(sb.String())
+		return
+	}
 	elapse("Tasks", w.StartHook, w.Tasks)
+	if w.Tasks == 0 {
+		Log(sb.String())
+		return
+	}
 	elapse("EndHook", w.Tasks, w.EndHook)
 
 	Log(sb.String())
@@ -287,11 +307,13 @@ func (w *TickWatch) Run() {
 			select {
 			case <-w.Ticker.C:
 				// Less noisy logs
-				if n > 2 && n%2 != 0 {
+				if n > 20 && n%5 == 0 {
+					Logf("%d seconds elapsed since tick %s started", 5*n, w.Name)
+				} else if n > 2 && n%2 != 0 {
 					Logf("%d seconds elapsed since tick %s started", 5*n, w.Name)
 				}
 				if !downOnce && w.DBCheck == 0 {
-					qgen.Builder.GetConn().SetConnMaxLifetime(time.Second / 2) // Drop all the connections and start over
+					qgen.Builder.GetConn().SetConnMaxLifetime(time.Second / 4) // Drop all the connections and start over
 					LogWarning(ErrDBDown)
 					atomic.StoreInt32(&IsDBDown, 1)
 					downOnce = true
