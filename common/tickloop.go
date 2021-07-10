@@ -75,7 +75,10 @@ func DBTimeout() time.Duration {
 	return -1
 }
 
+var pint int64
+
 func StartTick() (abort bool) {
+	opint := pint
 	db := qgen.Builder.GetConn()
 	isDBDown := atomic.LoadInt32(&IsDBDown)
 	if e := db.Ping(); e != nil {
@@ -92,7 +95,7 @@ func StartTick() (abort bool) {
 	}
 	db.SetConnMaxLifetime(DBTimeout())
 	atomic.StoreInt32(&IsDBDown, 0)
-	return false
+	return opint != pint
 }
 
 // TODO: Move these into DailyTick() methods?
@@ -234,9 +237,10 @@ type TickWatch struct {
 	Tasks     int64
 	EndHook   int64
 
-	Ticker   *time.Ticker
-	Deadline *time.Ticker
-	EndChan  chan bool
+	Ticker     *time.Ticker
+	Deadline   *time.Ticker
+	EndChan    chan bool
+	OutEndChan chan bool
 }
 
 func NewTickWatch() *TickWatch {
@@ -297,6 +301,7 @@ func (w *TickWatch) DumpElapsed() {
 func (w *TickWatch) Run() {
 	w.EndChan = make(chan bool)
 	// Use a goroutine to circumvent ticks which never end
+	// TODO: Reuse goroutines across multiple *TickWatch?
 	go func() {
 		defer w.Ticker.Stop()
 		defer close(w.EndChan)
@@ -332,6 +337,10 @@ func (w *TickWatch) Run() {
 				if dur.Seconds() > 5 {
 					Log("tick " + w.Name + " completed in " + dur.String())
 					w.DumpElapsed()
+				}
+				if w.OutEndChan != nil {
+					w.OutEndChan <- true
+					close(w.OutEndChan)
 				}
 				return
 			}

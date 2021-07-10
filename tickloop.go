@@ -59,13 +59,25 @@ func tickLoop(thumbChan chan bool) error {
 		return e
 	}
 
+	startTick := func(ch chan bool) (ret bool) {
+		if c.Dev.HourDBTimeout {
+			go func() {
+				defer c.EatPanics()
+				ch <- c.StartTick()
+			}()
+			return <-ch
+		}
+		return c.StartTick()
+	}
 	tick := func(name string, tasks c.TaskSet, secs int) error {
 		tw := c.NewTickWatch()
 		tw.Name = name
 		tw.Set(&tw.Start, uutils.Nanotime())
 		tw.Run()
 		defer tw.Stop()
-		if c.StartTick() {
+		ch := make(chan bool)
+		tw.OutEndChan = ch
+		if startTick(ch) {
 			return nil
 		}
 		tw.Set(&tw.DBCheck, uutils.Nanotime())
@@ -83,6 +95,7 @@ func tickLoop(thumbChan chan bool) error {
 			return e
 		}
 		tw.Set(&tw.EndHook, uutils.Nanotime())
+		//close(tw.OutEndChan)
 		return nil
 	}
 
