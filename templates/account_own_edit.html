@@ -20,13 +20,6 @@
 	</div>
 	<div id="dash_right" class="coldyn_item">
 		<div class="rowitem">{{if not .MFASetup}}<a href="/user/edit/mfa/setup/">{{lang "account_dash_2fa_setup"}}</a>{{else}}<a href="/user/edit/mfa/">{{lang "account_dash_2fa_manage"}}</a>{{end}} <span class="dash_security">{{lang "account_dash_security_notice"}}</span></div>
-		<div class="rowitem level_inprogress">
-			<div class="levelBit">
-				<a href="/user/levels/">{{level .CurrentUser.Level}}</a>
-			</div>
-			<div class="progressWrap" style="width:{{.Percentage}}%;">
-				<div>{{.CurrentScore}} / {{.NextScore}}</div>
-			</div>
-		</div>
+		{{template "account_own_edit_level.html" .}}
 	</div>
 </div>

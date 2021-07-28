@@ -2,6 +2,7 @@ package routes
 
 import (
 	"database/sql"
+	"math"
 	"net/http"
 	"time"
 
@@ -97,8 +98,11 @@ func ViewProfile(w http.ResponseWriter, r *http.Request, user *c.User, h *c.Head
 
 	// Normalise the score so that the user sees their relative progress to the next level rather than showing them their total score
 	prevScore := c.GetLevelScore(puser.Level)
-	currentScore := puser.Score - prevScore
+	score := puser.Score
+	//score = 23
+	currentScore := score - prevScore
 	nextScore := c.GetLevelScore(puser.Level+1) - prevScore
+	perc := int(math.Floor((float64(currentScore) / float64(nextScore)) * 100))
 	var blocked, blockedInv bool
 	if user.Loggedin {
 		blocked, err = c.UserBlocks.IsBlockedBy(user.ID, puser.ID)
@@ -121,6 +125,6 @@ func ViewProfile(w http.ResponseWriter, r *http.Request, user *c.User, h *c.Head
 		canMessage = false
 	}
 
-	ppage := c.ProfilePage{h, reList, *puser, currentScore, nextScore, blocked, canMessage, canComment, showComments}
+	ppage := c.ProfilePage{h, reList, *puser, currentScore, nextScore, perc, blocked, canMessage, canComment, showComments}
 	return renderTemplate("profile", w, r, h, ppage)
 }

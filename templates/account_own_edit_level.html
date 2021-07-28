@@ -1,0 +1,8 @@
+<div class="rowitem level_inprogress">
+	<div class="levelBit"{{if ne .CurrentScore 0}}style="width:{{.Percentage}}%;"{{end}}>
+		<a href="/user/levels/">{{level .CurrentUser.Level}}</a>
+	</div>
+	<div class="progressWrap"{{/**{{if ne .CurrentScore 0}}style="width:{{.Percentage}}%;"{{end}}**/}}>
+		<div>{{.CurrentScore}} / {{.NextScore}}</div>
+	</div>
+</div>

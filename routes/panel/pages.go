@@ -118,14 +118,14 @@ func PagesEditSubmit(w http.ResponseWriter, r *http.Request, u *c.User, spid str
 		return c.LocalError("No body was provided for this page", w, r, u)
 	}
 
-	page, err := c.Pages.Get(pid)
+	p, err := c.Pages.Get(pid)
 	if err != nil {
 		return c.NotFound(w, r, nil)
 	}
-	page.Name = name
-	page.Title = title
-	page.Body = body
-	err = page.Commit()
+	p.Name = name
+	p.Title = title
+	p.Body = body
+	err = p.Commit()
 	if err != nil {
 		return c.InternalError(err, w, r)
 	}

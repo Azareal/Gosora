@@ -32,9 +32,10 @@ type DefaultActivityStream struct {
 
 func NewDefaultActivityStream(acc *qgen.Accumulator) (*DefaultActivityStream, error) {
 	as := "activity_stream"
+	cols := "actor,targetUser,event,elementType,elementID,createdAt,extra"
 	return &DefaultActivityStream{
-		add:                 acc.Insert(as).Columns("actor,targetUser,event,elementType,elementID,createdAt,extra").Fields("?,?,?,?,?,UTC_TIMESTAMP(),?").Prepare(),
-		get:                 acc.Select(as).Columns("actor,targetUser,event,elementType,elementID,createdAt,extra").Where("asid=?").Prepare(),
+		add:                 acc.Insert(as).Columns(cols).Fields("?,?,?,?,?,UTC_TIMESTAMP(),?").Prepare(),
+		get:                 acc.Select(as).Columns(cols).Where("asid=?").Prepare(),
 		delete:              acc.Delete(as).Where("asid=?").Prepare(),
 		deleteByParams:      acc.Delete(as).Where("event=? AND elementID=? AND elementType=?").Prepare(),
 		deleteByParamsExtra: acc.Delete(as).Where("event=? AND elementID=? AND elementType=? AND extra=?").Prepare(),

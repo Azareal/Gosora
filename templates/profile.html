@@ -14,10 +14,10 @@
 		<div class="levelBlock">
 			<div class="rowitem passive">
 				<div class="profile_menu_item level_inprogress">
-					<div class="levelBit">
+					<div class="levelBit"{{if ne .CurrentScore 0}}style="width:{{.Percentage}}%"{{end}}>
 						<a>{{level .ProfileOwner.Level}}</a>
 					</div>
-					<div class="progressWrap"{{if ne .CurrentScore 0}}style="width:40%"{{end}}>
+					<div class="progressWrap"{{/**{{if ne .CurrentScore 0}}style="width:40%"{{end}}**/}}>
 						<div>{{.CurrentScore}} / {{.NextScore}}</div>
 					</div>
 				</div>

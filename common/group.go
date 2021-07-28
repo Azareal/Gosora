@@ -61,7 +61,7 @@ func (g *Group) ChangeRank(isAdmin, isMod, isBanned bool) (err error) {
 	if err != nil {
 		return err
 	}
-	Groups.Reload(g.ID)
+	_ = Groups.Reload(g.ID)
 	return nil
 }
 
@@ -70,7 +70,7 @@ func (g *Group) Update(name, tag string) (err error) {
 	if err != nil {
 		return err
 	}
-	Groups.Reload(g.ID)
+	_ = Groups.Reload(g.ID)
 	return nil
 }
 

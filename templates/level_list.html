@@ -6,9 +6,9 @@
 	{{range .Levels}}
 	<div class="rowblock">
 		<div class="rowitem passive rowmsg level_{{.Status}}">
-			<div class="levelBit">{{level .Level}}</div>
-			<div class="progressWrap"{{if eq .Status "inprogress"}}style="width:{{.Percentage}}%;"{{end}}>
-				<div>Score: {{.Score}}</div>
+			<div class="levelBit"{{if eq .Status "inprogress"}}style="width:{{.Percentage}}%;"{{end}}>{{level .Level}}</div>
+			<div class="progressWrap"{{/**{{if eq .Status "inprogress"}}style="width:{{.Percentage}}%;"{{end}}**/}}>
+				<div>{{if eq .Status "inprogress"}}{{$.CurrentUser.Score}} / {{.Score}}{{else if eq .Status "complete"}}{{.Score}} / {{.Score}}{{else}}Next: {{.Score}}{{end}}</div>
 			</div>
 		</div>
 	</div>

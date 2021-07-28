@@ -179,9 +179,9 @@ func (s *DefaultAttachmentStore) BulkMiniGetList(originTable string, ids []int) 
 
 func (s *DefaultAttachmentStore) FGet(id int) (*Attachment, error) {
 	a := &Attachment{ID: id}
-	err := s.fget.QueryRow(id).Scan(&a.OriginTable, &a.OriginID, &a.SectionTable, &a.SectionID, &a.UploadedBy, &a.Path, &a.Extra)
-	if err != nil {
-		return nil, err
+	e := s.fget.QueryRow(id).Scan(&a.OriginTable, &a.OriginID, &a.SectionTable, &a.SectionID, &a.UploadedBy, &a.Path, &a.Extra)
+	if e != nil {
+		return nil, e
 	}
 	a.Ext = strings.TrimPrefix(filepath.Ext(a.Path), ".")
 	if len(a.Ext) == 0 {

@@ -405,11 +405,14 @@ func AccountEdit(w http.ResponseWriter, r *http.Request, u *c.User, h *c.Header)
 
 	// Normalise the score so that the user sees their relative progress to the next level rather than showing them their total score
 	prevScore := c.GetLevelScore(u.Level)
-	currentScore := u.Score - prevScore
+	score := u.Score
+	//score = 23
+	currentScore := score - prevScore
 	nextScore := c.GetLevelScore(u.Level+1) - prevScore
-	perc := int(math.Ceil((float64(nextScore) / float64(currentScore)) * 100))
+	//perc := int(math.Ceil((float64(nextScore) / float64(currentScore)) * 100)) * 2
+	perc := int(math.Floor((float64(currentScore) / float64(nextScore)) * 100)) // * 2
 
-	pi := c.Account{h, "dashboard", "account_own_edit", c.AccountDashPage{h, mfaSetup, currentScore, nextScore, u.Level + 1, perc * 2}}
+	pi := c.Account{h, "dashboard", "account_own_edit", c.AccountDashPage{h, mfaSetup, currentScore, nextScore, u.Level + 1, perc}}
 	return renderTemplate("account", w, r, h, pi)
 }
 
@@ -833,20 +836,24 @@ func AccountBlocked(w http.ResponseWriter, r *http.Request, user *c.User, h *c.H
 func LevelList(w http.ResponseWriter, r *http.Request, u *c.User, h *c.Header) c.RouteError {
 	h.Title = p.GetTitlePhrase("account_level_list")
 
-	fScores := c.GetLevels(20)
+	fScores := c.GetLevels(21)
 	levels := make([]c.LevelListItem, len(fScores))
 	for i, fScore := range fScores {
+		if i == 0 {
+			continue
+		}
 		var status string
-		if u.Level > i {
+		if u.Level > (i - 1) {
 			status = "complete"
-		} else if u.Level < i {
+		} else if u.Level < (i - 1) {
 			status = "future"
 		} else {
 			status = "inprogress"
 		}
 		iScore := int(math.Ceil(fScore))
-		perc := int(math.Ceil((fScore / float64(u.Score)) * 100))
-		levels[i] = c.LevelListItem{i, iScore, status, perc * 2}
+		//perc := int(math.Ceil((fScore/float64(u.Score))*100)) * 2
+		perc := int(math.Ceil((float64(u.Score) / fScore) * 100))
+		levels[i] = c.LevelListItem{i - 1, iScore, status, perc}
 	}
 
 	return renderTemplate("level_list", w, r, h, c.LevelListPage{h, levels[1:]})

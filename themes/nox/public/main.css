@@ -1220,6 +1220,9 @@ input[type=checkbox]:not(:checked):hover + label .sel {
 .level_complete, .level_future, .level_inprogress, .progressWrap {
 	display: flex;
 }
+.level_inprogress {
+	position: relative;
+}
 .level_complete {
 	background-color: rgb(68, 93, 68) !important;
 	width: 100%;
@@ -1245,20 +1248,25 @@ input[type=checkbox]:not(:checked):hover + label .sel {
 	padding-bottom: 12px;
 	padding-left: 12px;
 	border-radius: 3px;
-	width: 100%;
+	/*width: 100%;*/
+}
+.level_inprogress:not(.level_zero) .levelBit {
 	background-color: rgb(68, 93, 68) !important;
 }
 .level_inprogress .levelBit {
 	display: inline;
+	position: absolute;
+	z-index: 1;
 }
 .level_inprogress .levelBit a {
 	white-space: nowrap;
 }
 .level_inprogress .progressWrap {
-	width: 100%;
+	/*width: 100%;*/
 	padding-left: 0px;
 	padding-right: 12px;
-	background-color: rgb(68, 68, 68) !important;
+	/*background-color: rgb(68, 68, 68) !important;*/
+	z-index: 2;
 }
 .level_inprogress .progressWrap div {
 	margin-left: auto;
