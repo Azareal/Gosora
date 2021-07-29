@@ -13,7 +13,7 @@
 		</div>
 		<div class="levelBlock">
 			<div class="rowitem passive">
-				<div class="profile_menu_item level_inprogress">
+				<div class="profile_menu_item level_inprogress{{if eq .CurrentScore 0}} level_zero{{end}}">
 					<div class="levelBit"{{if ne .CurrentScore 0}}style="width:{{.Percentage}}%"{{end}}>
 						<a>{{level .ProfileOwner.Level}}</a>
 					</div>

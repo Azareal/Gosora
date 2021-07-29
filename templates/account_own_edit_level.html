@@ -1,4 +1,4 @@
-<div class="rowitem level_inprogress">
+<div class="rowitem level_inprogress{{if eq .CurrentScore 0}} level_zero{{end}}">
 	<div class="levelBit"{{if ne .CurrentScore 0}}style="width:{{.Percentage}}%;"{{end}}>
 		<a href="/user/levels/">{{level .CurrentUser.Level}}</a>
 	</div>
