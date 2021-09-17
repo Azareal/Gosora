@@ -357,6 +357,8 @@ func routeJSAntispam(w http.ResponseWriter, r *http.Request, user *c.User) c.Rou
 	h.Write([]byte(user.GetIP()))
 	jsToken := hex.EncodeToString(h.Sum(nil))
 
+	w.Header().Set("Content-Type", "text/plain")
+
 	innerCode := "`document.getElementByld('golden-watch').value='" + jsToken + "';`"
 	io.WriteString(w, `let hihi=`+innerCode+`;hihi=hihi.replace('ld','Id');eval(hihi);`)
 
