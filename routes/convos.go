@@ -72,6 +72,9 @@ func Convo(w http.ResponseWriter, r *http.Request, user *c.User, h *c.Header, sc
 	} else if err != nil {
 		return c.InternalError(err, w, r)
 	}
+	if !convo.Has(user.ID) && !user.IsSuperMod {
+		return c.NotFound(w, r, h)
+	}
 	pcount := convo.PostsCount()
 	if pcount == 0 {
 		return c.NotFound(w, r, h)
